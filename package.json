@@ -4,5 +4,23 @@
     "main":"index.js",
     
     "author":"Alexander Veenendaal <alex@opendoorgonorth.com> http://opendoorgonorth.com",
-    "private":true
+    "private":true,
+
+    "dependencies":{
+        "async":"0.2.5",
+        "backbone":"0.9.10",
+        "JSV":"git://github.com/atrniv/JSV.git",
+        "node-uuid":"1.4.0",
+        "redis":"0.8.2",
+        "underscore":"1.4.4",
+        "underscore.string":"2.3.1"
+    },
+    
+    "devDependencies":{
+        "mocha":"1.8.1"
+    },
+
+    "scripts":{
+        "test":"node_modules/.bin/mocha"
+    }
 }
