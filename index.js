@@ -1,3 +1,4 @@
+require('./lib/common');
 var entity = require('./lib/entity');
 var collection = require('./lib/entity_collection');
 require('./lib/entity.server');

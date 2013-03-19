@@ -1,6 +1,5 @@
-// var Common = require( '../src/common.js' );
-// var MainServer = require( '../src/main.server' );
 var Entity = require('../lib/entity');
+var assert = require('assert');
 
 describe('Entity', function(){
     
@@ -24,14 +23,14 @@ describe('Entity', function(){
     
     describe('create', function(){
 
-        it('should create from a type', function(){
+        it.only('should create from a type', function(){
             var inst = Entity.create( Entity.TYPE_TEST_A );
-            assert( inst instanceof Entity.TestA.entity );
+            assert( inst instanceof Entity.TestA.Entity );
         });
 
         it('should create from a hash', function(){
             var inst = Entity.create( { type:'test_a', id:'mail.001'} );
-            assert( inst instanceof Entity.TestA.entity );
+            assert( inst instanceof Entity.TestA.Entity );
         });
 
         it('should create from an entity', function(){
