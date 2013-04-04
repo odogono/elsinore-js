@@ -35,6 +35,7 @@ describe('Schema', function(){
         assert( schema.validate( {id:"test_id"}, "http://entity.odogono.com/entity" ) );
     });
 
+
     it('should return a list of defined fields', function(){
         
         schema.register({
@@ -57,7 +58,7 @@ describe('Schema', function(){
         
     });
 
-    it.only('should return a list of defined fields from a child', function(){
+    it('should return a list of defined fields from a child', function(){
         schema.register({
             id:"http://entity.odogono.com/entity",
             properties: {
@@ -80,6 +81,5 @@ describe('Schema', function(){
             schema.propertyNames("http://entity.odogono.com/company"),
             ["id", "status", "company_id"]
         );
-        // console.log( schema.properties("http://entity.odogono.com/company") );
     });
 });
