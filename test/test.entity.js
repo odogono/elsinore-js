@@ -23,12 +23,12 @@ describe('Entity', function(){
     
     describe('create', function(){
 
-        it.only('should create from a type', function(){
+        it('should create from a type', function(){
             var inst = Entity.create( Entity.TYPE_TEST_A );
             assert( inst instanceof Entity.TestA.Entity );
         });
 
-        it('should create from a hash', function(){
+        it('should create from an object', function(){
             var inst = Entity.create( { type:'test_a', id:'mail.001'} );
             assert( inst instanceof Entity.TestA.Entity );
         });
@@ -36,13 +36,13 @@ describe('Entity', function(){
         it('should create from an entity', function(){
             var inst = Entity.create( 'test_a', "mail.001" );
             var oinst = Entity.create( inst );
-            assert( oinst instanceof Entity.TestA.entity );
+            assert( oinst instanceof Entity.TestA.Entity );
         });
 
         it('should create with a valid id', function(){
             var inst = Entity.create( Entity.TYPE_TEST_A, '001' );
             assert.equal( inst.id, '001');
-            assert( inst instanceof Entity.TestA.entity);
+            assert( inst instanceof Entity.TestA.Entity);
             inst = Entity.create( Entity.TYPE_TEST_A, {id:'002'} );
             assert.equal( inst.id, '002');
         });
@@ -58,14 +58,14 @@ describe('Entity', function(){
             assert.equal( inst.get('name'), 'pink');
         });
 
-        it('should have a default status of active', function(){
+        it.only('should have a default status of active', function(){
             var inst = Entity.create( {type:'test_a', id:'101'} );
-            assert.equal( inst.get('status'), jstonkers.Status.ACTIVE );
+            assert.equal( inst.get('status'), Entity.Status.ACTIVE );
         });
 
         it('should set status', function(){
-            var inst = Entity.create( {type:'test_a', status:jstonkers.Status.ACTIVE, id:'101'} );
-            assert.equal( inst.get('status'), jstonkers.Status.ACTIVE );
+            var inst = Entity.create( {type:'test_a', status:Entity.Status.ACTIVE, id:'101'} );
+            assert.equal( inst.get('status'), Entity.Status.ACTIVE );
         });
     });//*/
 

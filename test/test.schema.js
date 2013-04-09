@@ -32,7 +32,7 @@ describe('Schema', function(){
             additionalProperties:true
         });
 
-        assert( schema.validate( {id:"test_id"}, "http://entity.odogono.com/entity" ) );
+        assert( schema.validate( "http://entity.odogono.com/entity", {id:"test_id"} ) );
     });
 
 
@@ -75,7 +75,7 @@ describe('Schema', function(){
             }
         });
 
-        assert( !schema.validate( {id:"test_id", status:3}, "http://entity.odogono.com/company" ) );
+        assert( !schema.validate( "http://entity.odogono.com/company", {id:"test_id", status:3} ) );
         // console.log( schema.errors );
         assert.deepEqual(
             schema.propertyNames("http://entity.odogono.com/company"),

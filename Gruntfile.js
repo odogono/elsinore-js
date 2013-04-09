@@ -1,13 +1,23 @@
-console.log('running Gruntfile');
+// Nodejs libs.
+var path = require('path');
+
+// External libs.
+var Mocha = require('mocha');
+
 module.exports = function(grunt){
     // setup
     grunt.initConfig({
-        mochacli: {
+        simplemocha: {
             options: {
-                reporter: 'nyan',
-                bail: true
+              timeout: 3000,
+              ignoreLeaks: false,
+              grep:'poo',// '*-test',
+              // ui: 'bdd',
+              reporter: 'tap'
             },
-            all: ['test/nodejs/*.js']
+            all: { 
+                src:['test/**/*.js']
+            }
         },
         jshint: {
             // define the files to lint
@@ -27,10 +37,10 @@ module.exports = function(grunt){
         }
     });
 
-    grunt.loadNpmTasks('grunt-mocha-cli');
+    grunt.loadNpmTasks('grunt-simple-mocha');
     grunt.loadNpmTasks('grunt-contrib-jshint');
     grunt.loadNpmTasks('grunt-contrib-watch');
 
-    grunt.registerTask( 'test', ['mochacli'] );
+    grunt.registerTask( 'test', ['simplemocha'] );
     grunt.registerTask( 'lint', ['jshint'] );
 };

@@ -1,0 +1,15 @@
+{
+    "entityId":"child",
+    "extends":{ "$ref":"entity://odgn/parent" },
+
+    "properties": {
+        "id": {
+            "type":"integer", "required":true, "pk":true 
+        },
+        "name": {
+            "type":"string", "required":true
+        }
+    },
+
+    "additionalProperties":true
+}
