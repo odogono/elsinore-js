@@ -8,6 +8,5 @@ module.exports = entity;
 
 entity.setSync = function( lib, config ){
     lib.initialise( config );
-    console.log( Backbone );
     Backbone.sync = lib.sync;
 };
