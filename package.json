@@ -6,6 +6,7 @@
   "dependencies": {
     "async": "~0.2.6",
     "backbone": "~1.0.0",
+    "jsonpointer":"~1.x",
     "JSV": "git://github.com/atrniv/JSV.git",
     "node-uuid": "1.4.0",
     "pg": "~1.0.0",
