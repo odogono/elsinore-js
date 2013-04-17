@@ -1,5 +1,11 @@
+require('../index');
+
 var fs = require('fs'), path = require('path');
 var rootDir = path.join( path.dirname(__filename), '../' );
+
+Entity = require('../lib/entity');
+assert = require('assert');
+path = require('path');
 
 Common = {
     paths:{ 

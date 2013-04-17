@@ -1,16 +1,14 @@
 require('./lib/common');
-var entity = require('./lib/entity');
-var collection = require('./lib/entity_collection');
+var entity = module.exports = require('./lib/entity');
+entity.entityCollection = require('./lib/entity_collection');
+entity.EntityCollection = entity.entityCollection.EntityCollection;
 require('./lib/entity.server');
 require('./lib/entity_relationship');
-entity.Collection = collection;
-module.exports = entity;
 
 entity.initialise = function( options ){
     options = options || {};
 
     if( options.schema ){
-        log.debug('initialising json schema');
         entity.schema = require('./lib/schema');
         entity.schema.initialise();
         // import entity schema functions

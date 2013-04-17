@@ -1,32 +1,43 @@
-var Common = require( '../src/common.js' );
-var MainServer = require( '../src/main.server' );
-var CommandQueue = require('../src/command_queue');
+require('./common');
+
+// var Common = require( '../src/common.js' );
+// var MainServer = require( '../src/main.server' );
+var CommandQueue = require('../lib/command_queue');
 
 var CmdTestA = CommandQueue.Command.extend({
     execute: function(options,callback){
         callback( null, true, this );
+    },
+    testFunction: function(){
+        console.log('here');
     },
     isCmdTestA: function(){
         return true;
     }
 });
 
-jstonkers.entity.registerEntity( 'cmd_test_a', CmdTestA );
+// var t = new CmdTestA();
+// console.log( t.testFunction() ); process.exit();
 
-jstonkers.entity.registerEntity({ type:'test_a' });
+Entity.registerEntity( 'cmd_test_a', CmdTestA, {debug:true} );
 
-jstonkers.entity.registerEntity({
-    type: 'test_container', ER:[ { type:'cmd_queue' }, {oneToOne:'test_a', name:'friend'}, { oneToMany:'test_a', name:'friends'} ]
+// if( true ){
+//     print_ins( CmdTestA );
+//     process.exit();
+// }
+
+Entity.registerEntity({ entityType:'test_a' });
+
+Entity.registerEntity({
+    entityType: 'test_container', ER:[ { entityType:'cmd_queue' }, {oneToOne:'test_a', name:'friend'}, { oneToMany:'test_a', name:'friends'} ]
 });
+
 
 describe('Command Queue', function(){
 
     beforeEach( function(done){
         this.queue = CommandQueue.create();
-        jstonkers.sync.clear( function(err){
-            if( err ) return done(err);
-            done();
-        });
+        done();
     });
 
     after(function(){
@@ -39,11 +50,9 @@ describe('Command Queue', function(){
         });
 
         
-        it('should add commands correctly', function(){
-            // var a = jstonkers.Entity.create( CmdTestA, {execute_time:201} );
-            this.queue.add( { id:'cmd_001', type:'cmd_test_a', execute_time:201 } );
-            // print_ins( this.queue.at(0) );
-
+        it.only('should add commands correctly', function(){
+            var cmd = CmdTestA.create({ id:'cmd_001', execute_time:201 } );
+            this.queue.add( cmd );
             assert( this.queue.at(0).isCmdTestA() );
         });
     });//*/
@@ -117,10 +126,10 @@ describe('Command Queue', function(){
         });
 
         it('should order added commands', function(){
-            this.queue.add( { id:'cmd_001', type:'cmd_test_a', execute_time:201 } );
-            this.queue.add( { id:'cmd_002', type:'cmd_test_a', execute_time:0 } );
-            this.queue.add( { id:'cmd_003', type:'cmd_test_a', execute_time:20 } );
-            this.queue.add( { id:'cmd_004', type:'cmd_test_a', execute_time:-1 } );
+            this.queue.add( { id:'cmd_001', entityType:'cmd_test_a', execute_time:201 } );
+            this.queue.add( { id:'cmd_002', entityType:'cmd_test_a', execute_time:0 } );
+            this.queue.add( { id:'cmd_003', entityType:'cmd_test_a', execute_time:20 } );
+            this.queue.add( { id:'cmd_004', entityType:'cmd_test_a', execute_time:-1 } );
 
             assert.equal( this.queue.at(0).id, 'cmd_004' );
             assert.equal( this.queue.at(1).id, 'cmd_002' );
@@ -152,10 +161,10 @@ describe('Command Queue', function(){
         it('should persist to JSON', function(){
 
             this.queue.set('id', 'cq_000');
-            this.queue.add( [{ id:'cmd_001', type:'cmd_test_a', execute_time:201 },
-                            { id:'cmd_002', type:'cmd_test_a', execute_time:0 },
-                            { id:'cmd_003', type:'cmd_test_a', execute_time:20 },
-                            { id:'cmd_004', type:'cmd_test_a', execute_time:-1 }] );
+            this.queue.add( [{ id:'cmd_001', entityType:'cmd_test_a', execute_time:201 },
+                            { id:'cmd_002', entityType:'cmd_test_a', execute_time:0 },
+                            { id:'cmd_003', entityType:'cmd_test_a', execute_time:20 },
+                            { id:'cmd_004', entityType:'cmd_test_a', execute_time:-1 }] );
 
             var expected = {
                 "id": "cq_000",
@@ -192,10 +201,10 @@ describe('Command Queue', function(){
         
         it('should reference items', function(){
             this.queue.set('id', 'cq_000');
-            this.queue.add( [{ id:'cmd_001', type:'cmd_test_a', execute_time:201 },
-                            { id:'cmd_002', type:'cmd_test_a', execute_time:0 },
-                            { id:'cmd_003', type:'cmd_test_a', execute_time:20 },
-                            { id:'cmd_004', type:'cmd_test_a', execute_time:-1 }] );
+            this.queue.add( [{ id:'cmd_001', entityType:'cmd_test_a', execute_time:201 },
+                            { id:'cmd_002', entityType:'cmd_test_a', execute_time:0 },
+                            { id:'cmd_003', entityType:'cmd_test_a', execute_time:20 },
+                            { id:'cmd_004', entityType:'cmd_test_a', execute_time:-1 }] );
 
             var expected = {
                 "id": "cq_000",
@@ -212,10 +221,10 @@ describe('Command Queue', function(){
 
         it('should flatten to JSON', function(){
             this.queue.set('id', 'cq_000');
-            this.queue.add( [{ id:'cmd_001', type:'cmd_test_a', execute_time:201 },
-                            { id:'cmd_002', type:'cmd_test_a', execute_time:0 },
-                            { id:'cmd_003', type:'cmd_test_a', execute_time:20 },
-                            { id:'cmd_004', type:'cmd_test_a', execute_time:-1 }] );
+            this.queue.add( [{ id:'cmd_001', entityType:'cmd_test_a', execute_time:201 },
+                            { id:'cmd_002', entityType:'cmd_test_a', execute_time:0 },
+                            { id:'cmd_003', entityType:'cmd_test_a', execute_time:20 },
+                            { id:'cmd_004', entityType:'cmd_test_a', execute_time:-1 }] );
 
             var expected = {
                 "cq_000": {
@@ -274,7 +283,7 @@ describe('Command Queue', function(){
                     "cmd_queue":[ {"type":"cmd_test_a", "execute_time":10} ]
                 }
             };
-            var a = jstonkers.Entity.create( {type:'test_container', id:'test.001'} );
+            var a = jstonkers.Entity.create( {entityType:'test_container', id:'test.001'} );
             var data = a.parse(ser,null,{parseFor:'test.001'});
             a.set( data );
 
@@ -294,8 +303,8 @@ describe('Command Queue', function(){
         });//*/
 
         it('should flatten to JSON with an empty queue', function(){
-            var a = jstonkers.Entity.create( {type:'test_container', id:'test.001'} );
-            var fr = jstonkers.Entity.create( {type:'test_a', id:'test.a.001'} );
+            var a = jstonkers.Entity.create( {entityType:'test_container', id:'test.001'} );
+            var fr = jstonkers.Entity.create( {entityType:'test_a', id:'test.a.001'} );
 
             a.friends.add(fr);
             a.set('friend', fr);
@@ -415,10 +424,10 @@ describe('Command Queue', function(){
         it('should persist as part of a parent entity', function(done){
             var self = this;
 
-            var container = jstonkers.Entity.create( jstonkers.entity.TYPE_TEST_CONTAINER, {name:'game', colour:'red'} );
+            var container = jstonkers.Entity.create( Entity.TYPE_TEST_CONTAINER, {name:'game', colour:'red'} );
 
-            assert.equal( container.type, jstonkers.entity.TYPE_TEST_CONTAINER );
-            assert.equal( container.cmd_queue.type, jstonkers.entity.TYPE_CMD_QUEUE );
+            assert.equal( container.type, Entity.TYPE_TEST_CONTAINER );
+            assert.equal( container.cmd_queue.type, Entity.TYPE_CMD_QUEUE );
 
             var a = jstonkers.Entity.create( CmdTestA, {execute_time:201} );
             var b = jstonkers.Entity.create( CmdTestA, {execute_time:101} );
@@ -434,7 +443,7 @@ describe('Command Queue', function(){
                     if( err ) throw( err );
                     var flat = result.flatten({toJSON:true});
                     assert.equal( flat['2'].type, 'cmd_queue' );
-                    var newContainer = jstonkers.Entity.create( jstonkers.entity.TYPE_TEST_CONTAINER, {id:result.id} );
+                    var newContainer = jstonkers.Entity.create( Entity.TYPE_TEST_CONTAINER, {id:result.id} );
                     newContainer.fetchRelatedCB( this );
                 },
                 function(err,result){
