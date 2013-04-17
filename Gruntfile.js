@@ -19,6 +19,9 @@ module.exports = function(grunt){
                 src:['test/**/*.js']
             }
         },
+        jsbeautifier: {
+            files: ['Gruntfile.js']
+        },
         jshint: {
             // define the files to lint
             files: ['gruntfile.js', 'lib/**/*.js', 'test/**/*.js'],
@@ -40,7 +43,8 @@ module.exports = function(grunt){
     grunt.loadNpmTasks('grunt-simple-mocha');
     grunt.loadNpmTasks('grunt-contrib-jshint');
     grunt.loadNpmTasks('grunt-contrib-watch');
+    grunt.loadNpmTasks('grunt-jsbeautifier');
 
     grunt.registerTask( 'test', ['simplemocha'] );
-    grunt.registerTask( 'lint', ['jshint'] );
+    grunt.registerTask( 'lint', ['jsbeautifier', 'jshint']);
 };
