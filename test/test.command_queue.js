@@ -60,7 +60,7 @@ describe('Command Queue', function(){
     
     describe('process', function(){
         
-        it.only('should process multiple commands', function(done){
+        it('should process multiple commands', function(done){
             var self = this, processCount = 0;
             var Cmd = CommandQueue.Command.extend({
                 execute: function(options,callback){
@@ -68,7 +68,6 @@ describe('Command Queue', function(){
                     callback();
                 }
             });
-
 
             this.queue.add( new Cmd({id:'cmd_a'}) );
             this.queue.add( new Cmd({id:'cmd_b'}) );
@@ -101,7 +100,7 @@ describe('Command Queue', function(){
             })
         });
 
-        /*
+        
         it('should run the callback', function(done){
             var self = this, processed = false;
             var cmd = new CommandQueue.Command();
@@ -112,13 +111,14 @@ describe('Command Queue', function(){
 
             this.queue.add( cmd );
             assert.equal( this.queue.length, 1 );
-            this.queue.process(function(){
+            this.queue.process(function(err,executeCount,removeCount){
                 assert( processed );
-                assert.equal( self.queue.length, 0 );
+                assert.equal( executeCount, 1 );
                 done();
             });
         });
 
+        
         it('should process multiple commands', function(done){
             var self = this, processCount = 0;
             var Cmd = CommandQueue.Command.extend({
@@ -138,9 +138,10 @@ describe('Command Queue', function(){
             this.queue.add( new Cmd({execute_time:200}) );
             
             assert.equal( this.queue.length, 3 );
-            this.queue.process(function(){
+            this.queue.process(function(err, executeCount, removeCount ){
                 assert.equal( processCount, 1 );
-                assert.equal( self.queue.length, 2 );
+                assert.equal( executeCount, 1 );
+                assert.equal( self.queue.length, 3 );
                 done();
             });
         });
@@ -188,35 +189,33 @@ describe('Command Queue', function(){
 
             var expected = {
                 "id": "cq_000",
-                "type":"cmd_queue",
+                "entityType":"cmd_queue",
                 "items": [
                     {
                         "id": "cmd_004",
-                        "type": "cmd_test_a",
+                        "entityType": "cmd_test_a",
                         "execute_time": -1
                     },
                     {
                         "id": "cmd_002",
-                        "type": "cmd_test_a",
-                        "execute_time": 0
+                        "entityType": "cmd_test_a",
                     },
                     {
                         "id": "cmd_003",
-                        "type": "cmd_test_a",
+                        "entityType": "cmd_test_a",
                         "execute_time": 20
                     },
                     {
                         "id": "cmd_001",
-                        "type": "cmd_test_a",
+                        "entityType": "cmd_test_a",
                         "execute_time": 201
                     }
                 ]
             };
             
-            // print_ins( this.queue.toJSON({noDates:true}) );
+            // console.log( this.queue.toJSON({noDates:true, debug:true}) );
             // print_var( this.queue.attributes );
             assert.deepEqual( this.queue.toJSON({noDates:true}), expected );
-            
         });
         
         it('should reference items', function(){
@@ -228,7 +227,7 @@ describe('Command Queue', function(){
 
             var expected = {
                 "id": "cq_000",
-                "type":"cmd_queue",
+                "entityType":"cmd_queue",
                 "items": [
                     "cmd_004",
                     "cmd_002",
@@ -250,26 +249,25 @@ describe('Command Queue', function(){
                 "cq_000": {
                     "id": "cq_000",
                     "items": [ "cmd_004", "cmd_002", "cmd_003", "cmd_001" ],
-                    "type": "cmd_queue"
+                    "entityType": "cmd_queue"
                 },
                 "cmd_004": {
                     "id": "cmd_004",
-                    "type": "cmd_test_a",
+                    "entityType": "cmd_test_a",
                     "execute_time": -1
                 },
                 "cmd_002": {
                     "id": "cmd_002",
-                    "type": "cmd_test_a",
-                    "execute_time": 0
+                    "entityType": "cmd_test_a"
                 },
                 "cmd_003": {
                     "id": "cmd_003",
-                    "type": "cmd_test_a",
+                    "entityType": "cmd_test_a",
                     "execute_time": 20
                 },
                 "cmd_001": {
                     "id": "cmd_001",
-                    "type": "cmd_test_a",
+                    "entityType": "cmd_test_a",
                     "execute_time": 201
                 }
             };
@@ -281,14 +279,14 @@ describe('Command Queue', function(){
         it('should set from a JSON form', function(){
             var ser = {
                 "id":"test.001",
-                "type":"test_container",
+                "entityType":"test_container",
                 "cmd_queue":[
-                    { "id":"cmd.001", "type": "cmd_test_a", "execute_time":10 },
-                    { "id":"cmd.002", "type": "cmd_test_a", "execute_time":11 },
+                    { "id":"cmd.001", "entityType": "cmd_test_a", "execute_time":10 },
+                    { "id":"cmd.002", "entityType": "cmd_test_a", "execute_time":11 },
                 ]
             };
 
-            var a = jstonkers.Entity.create( ser );
+            var a = Entity.create( ser );
 
             // var data = a.parse(ser,null,{parseFor:'test.001',removeId:false,debug:true});
             // print_var( data );
@@ -300,10 +298,10 @@ describe('Command Queue', function(){
         it('should parse from a serialised form', function(){
             var ser = {
                 "test.001":{
-                    "cmd_queue":[ {"type":"cmd_test_a", "execute_time":10} ]
+                    "cmd_queue":[ {"entityType":"cmd_test_a", "execute_time":10} ]
                 }
             };
-            var a = jstonkers.Entity.create( {entityType:'test_container', id:'test.001'} );
+            var a = Entity.create( {entityType:'test_container', id:'test.001'} );
             var data = a.parse(ser,null,{parseFor:'test.001'});
             a.set( data );
 
@@ -314,17 +312,17 @@ describe('Command Queue', function(){
             this.queue.set({
                 "id":"test.001",
                 "items":[
-                    { "id":"cmd.001", "type": "cmd_test_a", "execute_time":10 },
-                    { "id":"cmd.002", "type": "cmd_test_a", "execute_time":11 },
+                    { "id":"cmd.001", "entityType": "cmd_test_a", "execute_time":10 },
+                    { "id":"cmd.002", "entityType": "cmd_test_a", "execute_time":11 },
                 ]
             });
 
-            assert.deepEqual( this.queue.toJSON({relations:false}), { "type":"cmd_queue", "id":"test.001"});
+            assert.deepEqual( this.queue.toJSON({relations:false}), { "entityType":"cmd_queue", "id":"test.001"});
         });//*/
 
-        it('should flatten to JSON with an empty queue', function(){
-            var a = jstonkers.Entity.create( {entityType:'test_container', id:'test.001'} );
-            var fr = jstonkers.Entity.create( {entityType:'test_a', id:'test.a.001'} );
+        it.skip('should flatten to JSON with an empty queue', function(){
+            var a = Entity.create( {entityType:'test_container', id:'test.001'} );
+            var fr = Entity.create( {entityType:'test_a', id:'test.a.001'} );
 
             a.friends.add(fr);
             a.set('friend', fr);
@@ -333,7 +331,7 @@ describe('Command Queue', function(){
             var flat = a.flatten({toJSON:true, debug:false});
             var expected = {
                 "test.001":{
-                    "type":"test_container",
+                    "entityType":"test_container",
                     "id":"test.001",
                     "friend":"test.a.001",
                     "cmd_queue":"cq",
@@ -344,21 +342,22 @@ describe('Command Queue', function(){
                 "cq":{
                     "id":"cq",
                     "debug":true,
-                    "type":"cmd_queue"
+                    "entityType":"cmd_queue"
                 },
                 "test.a.001":{
-                    "type":"test_a",
+                    "entityType":"test_a",
                     "id":"test.a.001"
                 }
             };
 
             // print_ins( flat );
-            // print_var( flat );
+            print_var( flat );
             assert.deepEqual( flat, expected );
         });
     });
 
 
+    /*
     describe('persistence', function(){
         
         it('should add and remove commands', function(done){
@@ -371,7 +370,7 @@ describe('Command Queue', function(){
                     self.queue.saveCB( this );
                 },
                 function createCommandAndAdd(err,result){
-                    cmd = jstonkers.Entity.create( CmdTestA, {execute_time:-1} );
+                    cmd = Entity.create( CmdTestA, {execute_time:-1} );
                     self.queue.add( cmd );
                     assert.equal( self.queue.length, 1 );
                     self.queue.saveCB( this );
@@ -415,7 +414,7 @@ describe('Command Queue', function(){
                 },
                 function createCommandAndAdd(err,result){
                     if( err ) throw err;
-                    var cmd = jstonkers.Entity.create( CmdTestA, {execute_time:-1} );
+                    var cmd = Entity.create( CmdTestA, {execute_time:-1} );
                     self.queue.add( cmd );
                     assert.equal( self.queue.length, 1 );
                     self.queue.saveCB( this );
@@ -444,13 +443,13 @@ describe('Command Queue', function(){
         it('should persist as part of a parent entity', function(done){
             var self = this;
 
-            var container = jstonkers.Entity.create( Entity.TYPE_TEST_CONTAINER, {name:'game', colour:'red'} );
+            var container = Entity.create( Entity.TYPE_TEST_CONTAINER, {name:'game', colour:'red'} );
 
-            assert.equal( container.type, Entity.TYPE_TEST_CONTAINER );
-            assert.equal( container.cmd_queue.type, Entity.TYPE_CMD_QUEUE );
+            assert.equal( container.entityType, Entity.TYPE_TEST_CONTAINER );
+            assert.equal( container.cmd_queue.entityType, Entity.TYPE_CMD_QUEUE );
 
-            var a = jstonkers.Entity.create( CmdTestA, {execute_time:201} );
-            var b = jstonkers.Entity.create( CmdTestA, {execute_time:101} );
+            var a = Entity.create( CmdTestA, {execute_time:201} );
+            var b = Entity.create( CmdTestA, {execute_time:101} );
 
             container.cmd_queue.add( a );
             container.cmd_queue.add( b );
@@ -462,20 +461,20 @@ describe('Command Queue', function(){
                 function(err,result){
                     if( err ) throw( err );
                     var flat = result.flatten({toJSON:true});
-                    assert.equal( flat['2'].type, 'cmd_queue' );
-                    var newContainer = jstonkers.Entity.create( Entity.TYPE_TEST_CONTAINER, {id:result.id} );
+                    assert.equal( flat['2'].entityType, 'cmd_queue' );
+                    var newContainer = Entity.create( Entity.TYPE_TEST_CONTAINER, {id:result.id} );
                     newContainer.fetchRelatedCB( this );
                 },
                 function(err,result){
                     if( err ) throw err;
                     var flat = result.flatten({toJSON:true});
-                    assert.equal( flat['2'].type, 'cmd_queue' );
+                    assert.equal( flat['2'].entityType, 'cmd_queue' );
                     // print_var( flat );
                     assert( result.cmd_queue.at(0).isCmdTestA() );
                     done();
                 }
             );
-        });//*/
-    });
+        });
+    });//*/
 
 });
