@@ -50,7 +50,7 @@ describe('Command Queue', function(){
         });
 
         
-        it.only('should add commands correctly', function(){
+        it('should add commands correctly', function(){
             var cmd = CmdTestA.create({ id:'cmd_001', execute_time:201 } );
             this.queue.add( cmd );
             assert( this.queue.at(0).isCmdTestA() );
@@ -60,7 +60,7 @@ describe('Command Queue', function(){
     
     describe('process', function(){
         
-        it('should process multiple commands', function(done){
+        it.only('should process multiple commands', function(done){
             var self = this, processCount = 0;
             var Cmd = CommandQueue.Command.extend({
                 execute: function(options,callback){
@@ -68,20 +68,40 @@ describe('Command Queue', function(){
                     callback();
                 }
             });
-            this.queue.add( new Cmd() );
-            this.queue.add( new Cmd() );
-            this.queue.add( new Cmd() );
+
+
+            this.queue.add( new Cmd({id:'cmd_a'}) );
+            this.queue.add( new Cmd({id:'cmd_b'}) );
+            this.queue.add( new Cmd({id:'cmd_c'}) );
 
             assert.equal( this.queue.length, 3 );
 
-            this.queue.process(function(){
-                assert.equal( processCount, 3 );
-                assert.equal( self.queue.length, 0 );
+            async.waterfall([
+                function(callback){
+                    self.queue.process({isBlocking:true},function(err, executeCount, removeCount){
+                        assert.equal( processCount, 3 );
+                        assert.equal( executeCount, 3 );
+                        assert.equal( removeCount, 0 );
+                        assert.equal( self.queue.length, 3 );
+                        callback();
+                    });
+                },
+                function(callback){
+                    self.queue.process({isBlocking:true},function(err, executeCount, removeCount){
+                        assert.equal( processCount, 3 );
+                        assert.equal( executeCount, 0 );
+                        assert.equal( removeCount, 3 );
+                        assert.equal( self.queue.length, 0 );
+                        callback();
+                    });
+                }
+            ],
+            function(err){
                 done();
-            }); 
+            })
         });
 
-        
+        /*
         it('should run the callback', function(done){
             var self = this, processed = false;
             var cmd = new CommandQueue.Command();
@@ -151,9 +171,9 @@ describe('Command Queue', function(){
                 assert.equal( finishedCount, 0 );
                 done();
             });
-        });
+        });//*/
 
-    });//*/
+    });
 
 
     describe('serialisation', function(){

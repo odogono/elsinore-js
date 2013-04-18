@@ -5,9 +5,11 @@ entity.EntityCollection = entity.entityCollection.EntityCollection;
 require('./lib/entity.server');
 require('./lib/entity_relationship');
 
+Backbone.sync = require('./lib/sync/default').sync;
+
 entity.initialise = function( options ){
     options = options || {};
-
+    
     if( options.schema ){
         entity.schema = require('./lib/schema');
         entity.schema.initialise();
