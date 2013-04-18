@@ -8,9 +8,6 @@ var CmdTestA = CommandQueue.Command.extend({
     execute: function(options,callback){
         callback( null, true, this );
     },
-    testFunction: function(){
-        console.log('here');
-    },
     isCmdTestA: function(){
         return true;
     }
@@ -174,6 +171,61 @@ describe('Command Queue', function(){
             });
         });//*/
 
+        it('should not block on long running commands', function(done){
+            var self = this;
+            var currentIndex = 0;
+
+            // a function that each complete command calls to ensure they were completed in sequence
+            var onComplete = function(index){
+                assert( index > currentIndex );
+                currentIndex = index;
+            };
+
+            var CmdWait = CommandQueue.CommandQueue.extend({
+                execute: function(options,callback){
+                    var self = this;
+                    // log.debug(Date.now() + ' cmdWait started ' + self.id +'/' + self.cid);
+                    setTimeout(function(){
+                        // log.debug(Date.now() + ' cmdWait complete ' + self.id +'/' + self.cid);
+                        onComplete( self.get('index') );
+                        callback();
+                    }, 200);
+                }
+            });
+
+            var CmdShort = CommandQueue.CommandQueue.extend({
+                execute: function(options,callback){
+                    // log.debug(Date.now() + ' cmdShort complete ' + this.id +'/' + this.cid);
+                    onComplete( this.get('index') );
+                    callback();
+                }
+            });
+
+            // so that only one command can execute at once
+            this.queue.set({isSerial:true});
+            this.queue.add( new CmdShort({id:'cmd_002', index:1}) );
+            this.queue.add( new CmdWait( {id:'cmd_001', index:2}) );
+            this.queue.add( new CmdShort({id:'cmd_003', index:3}) );
+
+            async.whilst(
+                function(){
+                    return self.queue.length > 0;
+                },
+                function(callback){
+                    self.queue.process( function(err, executeCount, finishedCount){
+                        // if( executeCount != 0 || finishedCount !== 0 )
+                        //     log.debug( Date.now() + ' process ' + executeCount + ' - ' + finishedCount );
+                        callback();
+                    });
+                },
+                function(err){
+                    log.debug('finished');
+                    assert.equal( self.queue.length, 0 );
+                    done();
+                }
+            );
+
+        })
     });
 
 
