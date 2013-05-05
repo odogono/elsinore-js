@@ -419,13 +419,13 @@ describe('Command Queue', function(){
             // this.queue.set('auto_save',true);
             Step(
                 function saveQueueFirst(){
-                    self.queue.saveCB( this );
+                    self.queue.saveCb( this );
                 },
                 function createCommandAndAdd(err,result){
                     cmd = Entity.create( CmdTestA, {execute_time:-1} );
                     self.queue.add( cmd );
                     assert.equal( self.queue.length, 1 );
-                    self.queue.saveCB( this );
+                    self.queue.saveCb( this );
                 },
                 function destroyCommand(err,result){
                     if( err ) throw err;
@@ -462,14 +462,14 @@ describe('Command Queue', function(){
             var self = this;
             Step(
                 function saveQueueFirst(){
-                    self.queue.saveCB( this );
+                    self.queue.saveCb( this );
                 },
                 function createCommandAndAdd(err,result){
                     if( err ) throw err;
                     var cmd = Entity.create( CmdTestA, {execute_time:-1} );
                     self.queue.add( cmd );
                     assert.equal( self.queue.length, 1 );
-                    self.queue.saveCB( this );
+                    self.queue.saveCb( this );
                 },
                 function processQueue(err,result){
                     if( err ) throw err;
@@ -508,7 +508,7 @@ describe('Command Queue', function(){
             
             Step(
                 function(){
-                    container.saveCB(this);
+                    container.saveCb(this);
                 },
                 function(err,result){
                     if( err ) throw( err );

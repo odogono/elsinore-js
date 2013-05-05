@@ -70,7 +70,7 @@ describe('Sync.Redis', function(){
                 function(){
                     assert( user.isNew() );
                     assert( !user.id );
-                    user.saveCB( this );
+                    user.saveCb( this );
                 },
                 function(err,result){
                     if( err ) throw err;
@@ -93,7 +93,7 @@ describe('Sync.Redis', function(){
             a.set( {comrade:b} );
             Step(
                 function(){
-                    a.saveCB( this );
+                    a.saveCb( this );
                 },
                 function(err,result){
                     Entity.create( Entity.TYPE_TEST_E, a.id ).fetchCB( this );
@@ -121,7 +121,7 @@ describe('Sync.Redis', function(){
                 function(){
                     assert( a.isNew() );
                     assert( b.isNew() );
-                    a.saveRelatedCB( this );
+                    a.saveRelatedCb( this );
                 },
                 function(err,result){
                     if( err ) throw err;
@@ -152,7 +152,7 @@ describe('Sync.Redis', function(){
                 function (){
                     assert( a.isNew() );
                     assert( b.isNew() );
-                    a.saveRelatedCB( this );
+                    a.saveRelatedCb( this );
                 },
                 function(err,result){
                     assert( !a.isNew() );
@@ -184,7 +184,7 @@ describe('Sync.Redis', function(){
             a.set('colleague',b);
             Step(
                 function(){
-                    a.saveRelatedCB( null, this ); 
+                    a.saveRelatedCb( null, this ); 
                 },
                 function(err,result){
                     var copy = Entity.create( Entity.TYPE_TEST_D, result.id );
@@ -211,7 +211,7 @@ describe('Sync.Redis', function(){
 
             Step(
                 function(){
-                    a.saveRelatedCB( null, this ); 
+                    a.saveRelatedCb( null, this ); 
                 },
                 function(err,result){
                     Entity.create( Entity.TYPE_TEST_E, result.id ).fetchRelatedCB( this );
@@ -256,7 +256,7 @@ describe('Sync.Redis', function(){
 
             Step(
                 function(){
-                    a.saveRelatedCB(this);
+                    a.saveRelatedCb(this);
                 },
                 function(err,result){
                     var json = a.toJSON();
@@ -276,7 +276,7 @@ describe('Sync.Redis', function(){
             assert.equal( a.get('status'), jstonkers.Status.ACTIVE );
             Step(
                 function(){
-                    a.saveCB( null, this);
+                    a.saveCb( null, this);
                 },
                 function(err,result){
                     Entity.create( Entity.TYPE_TEST_A, a.id ).fetchCB( this );
@@ -315,7 +315,7 @@ describe('Sync.Redis', function(){
                 function(err, result){
                     initialKeys = result;
                     initialCount = result.length;
-                    a.saveCB( null, this );
+                    a.saveCb( null, this );
                 },
                 function(err,result){
                     result.destroyCB({destroyHard:true},this);
@@ -367,7 +367,7 @@ describe('Sync.Redis', function(){
 
             Step(
                 function(){
-                    a.saveRelatedCB( this);
+                    a.saveRelatedCb( this);
                 },
                 function(err,result){
                     Entity.create( Entity.TYPE_TEST_E, a.id ).fetchRelatedCB( this );
@@ -427,7 +427,7 @@ describe('Sync.Redis', function(){
                 function countCurrentKeysAndSave(err, result){
                     initialKeys = result;
                     initialCount = result.length;
-                    a.saveRelatedCB( null, this );
+                    a.saveRelatedCb( null, this );
                 },
                 function destroyEntity(err,result){
                     result.destroyRelatedCB({destroyHard:true},this);
@@ -469,8 +469,8 @@ describe('Sync.Redis', function(){
             Step(
                 function(){
                     // var ent = Entity.create( TestEntity, { ans_id:'sigma5', variance:'none' } );
-                    col.saveCB(this);
-                    // ent.saveCB(this);
+                    col.saveCb(this);
+                    // ent.saveCb(this);
                 },
                 function(err,result){
                     if( err ) throw err;
@@ -514,14 +514,14 @@ describe('Sync.Redis', function(){
                 function countCurrentKeysAndSave(err, result){
                     initialKeys = result;
                     initialCount = result.length;
-                    q.saveRelatedCB( this );
+                    q.saveRelatedCb( this );
                 },
                 function createCommandAndAdd(err,result){
                     if( err ) throw err;
                     var cmd = Entity.create( CmdTestA, {execute_time:-1} );
                     q.add( cmd );
                     assert.equal( q.length, 1 );
-                    q.saveRelatedCB( this );
+                    q.saveRelatedCb( this );
                 },
                 function processQueue(err,result){
                     if( err ) throw err;
@@ -569,7 +569,7 @@ describe('Sync.Redis', function(){
 
             Step(
                 function(){
-                    col.saveCB( this );
+                    col.saveCb( this );
                 },
                 function(err,result){
                     if( err ) throw err;
@@ -603,7 +603,7 @@ describe('Sync.Redis', function(){
 
             Step(
                 function(){
-                    col.saveCB( this );
+                    col.saveCb( this );
                 },
                 function(err,result){
                     if( err ) throw err;

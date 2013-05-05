@@ -20,6 +20,14 @@ describe('Entity', function(){
         Entity.registerEntity(e);
     });
     
+    describe('register', function(){
+        it('should unregister an entity', function(){
+            var entityDef = entity.registerEntity({ entityType:'test_alpha'} );
+            assert( entity.ids[ entityDef.entityType ] );
+            entity.unregisterEntity( entityDef.entityType );
+            assert( !entity.ids[ entityDef.entityType ] );
+        });
+    });
     
     describe('create', function(){
 

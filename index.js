@@ -1,11 +1,13 @@
 require('./lib/common');
 var entity = module.exports = require('./lib/entity');
+
 entity.entityCollection = require('./lib/entity_collection');
 entity.EntityCollection = entity.entityCollection.EntityCollection;
+
 require('./lib/entity.server');
 require('./lib/entity_relationship');
 
-Backbone.sync = require('./lib/sync/default').sync;
+
 
 entity.initialise = function( options ){
     options = options || {};
@@ -18,7 +20,12 @@ entity.initialise = function( options ){
     }
 }
 
-entity.setSync = function( lib, config ){
-    lib.initialise( config );
-    Backbone.sync = lib.sync;
+
+entity.useSync = function( sync ){
+    Backbone.sync = sync.sync;
 };
+
+
+entity.EntitySync = require('./lib/sync/default').EntitySync;
+
+entity.useSync( require('./lib/sync/default').create() );
