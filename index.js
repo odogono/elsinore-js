@@ -8,7 +8,6 @@ require('./lib/entity.server');
 require('./lib/entity_relationship');
 
 
-
 entity.initialise = function( options ){
     options = options || {};
     
@@ -26,6 +25,6 @@ entity.useSync = function( sync ){
 };
 
 
+// import and use the default sync - which does nothing
 entity.EntitySync = require('./lib/sync/default').EntitySync;
-
 entity.useSync( require('./lib/sync/default').create() );
