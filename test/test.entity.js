@@ -27,14 +27,14 @@ describe('Entity', function(){
 
     it('should create an entity instance from a schema id', function(){
         this.registry.register({
-            id: '/entity/actor',
+            id: '/entity/actor#',
             type:'object',
             properties:{
                 name: { type:'string' }
             }
         });
 
-        var oinst = this.registry.create('/entity/actor');
+        var oinst = this.registry.create('/entity/actor#');
         assert( oinst instanceof odgn.Entity.ActorEntityDef.model );
     });
 });
