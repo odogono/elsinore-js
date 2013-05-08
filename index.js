@@ -1,4 +1,6 @@
-require('./lib/common');
+module.exports = require('./lib/odgn-entity');
+
+/*require('./lib/common');
 var entity = module.exports = require('./lib/entity');
 
 entity.entityCollection = require('./lib/entity_collection');
@@ -27,4 +29,4 @@ entity.useSync = function( sync ){
 
 // import and use the default sync - which does nothing
 entity.EntitySync = require('./lib/sync/default').EntitySync;
-entity.useSync( require('./lib/sync/default').create() );
+entity.useSync( require('./lib/sync/default').create() );//*/

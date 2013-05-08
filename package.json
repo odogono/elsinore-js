@@ -6,15 +6,9 @@
   "dependencies": {
     "async": "~0.2.6",
     "backbone": "~1.0.0",
-    "jsonpointer":"~1.1.0",
-    "JSV": "git://github.com/atrniv/JSV.git",
-    "node-uuid": "~1.4.0",
-    "pg": "~1.0.0",
-    "redis": "~0.8.2",
-    "step": "~0.0.5",
+    "tv4": "~1.0.1",
     "underscore": "~1.4.4",
-    "underscore.string": "~2.3.1",
-    "winston": "~0.6.2"
+    "underscore.string": "~2.3.1"
   },
   "devDependencies": {
     "grunt": "~0.4.1",

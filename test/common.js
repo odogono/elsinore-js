@@ -1,12 +1,25 @@
 require('../index');
 
-var fs = require('fs'), path = require('path');
-var rootDir = path.join( path.dirname(__filename), '../' );
 
-Entity = require('../lib/entity');
-assert = require('assert');
-path = require('path');
 async = require('async');
+assert = require('assert');
+fs = require('fs');
+path = require('path');
+util = require('util');
+
+_ = require('underscore');
+Backbone = require('backbone');
+// _.str = require( 'underscore.string' );
+// _.mixin(_.str.exports());
+// 
+// winston = require('winston');
+// log = new (winston.Logger)({
+//     transports:[
+//         new (winston.transports.Console)( {colorize:true,prettyPrint:false,timestamp:true, silent:false} )
+//     ]
+// });
+
+var rootDir = path.join( path.dirname(__filename), '../' );
 
 
 Common = {
@@ -30,7 +43,16 @@ Common.readFixture = function( subPath, parseJson ){
     return parseJson ? JSON.parse(data) : data;
 }
 
+root.print_ins = function(arg,showHidden,depth,colors){
+    if( _.isUndefined(depth) ) depth = 5;
+    util.log( util.inspect(arg,showHidden,depth,colors) );
+};
 
-print_var = function(arg, options){
-    log.debug( JSON.stringify(arg,null,'\t') );
+root.print_var = function(arg, options){
+    util.log( JSON.stringify(arg,null,'\t') );
+}
+
+root.log = {
+    debug: util.log,
+    info: util.log
 }
