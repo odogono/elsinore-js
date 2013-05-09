@@ -49,6 +49,8 @@ root.print_ins = function(arg,showHidden,depth,colors){
 };
 
 root.print_var = function(arg, options){
+    if( arg === undefined )
+        return util.log('undefined');
     util.log( JSON.stringify(arg,null,'\t') );
 }
 
