@@ -12,7 +12,7 @@ describe('Entity', function(){
 
     describe('registration', function(){
 
-        it.only('should normalise', function(){
+        /*it.only('should normalise', function(){
             var schema = {
                 "id":"/user",
                 "title": "User",
@@ -37,7 +37,7 @@ describe('Entity', function(){
             var result = tv4.validate( username, "/user" );// "/user#/properties/username");
             print_var( tv4.error );
             print_var( tv4.resolveUrl('/user', '/required/0'));
-        });
+        });//*/
 
         it('should register a new entity',function(){
             
@@ -47,7 +47,16 @@ describe('Entity', function(){
             });
 
             var inst = ActorEntityDef.create();
-            assert( inst instanceof odgn.Entity.ActorEntityDef.model );
+            assert( inst instanceof odgn.Entity.ActorEntityDef.Model );
+        });
+
+        it('should register an entity with a title', function(){
+            this.registry.register({
+                id: "/entity/misc",
+                title:"primary"
+            });
+            var inst = this.registry.create('primary');
+            assert( inst instanceof odgn.Entity.PrimaryEntityDef.Model );
         });
 
         it('should create an entity instance from a schema id', function(){
@@ -57,28 +66,12 @@ describe('Entity', function(){
             });
 
             var oinst = this.registry.create("/entity/actor");
-            assert( oinst instanceof odgn.Entity.ActorEntityDef.model );
+            assert( oinst instanceof odgn.Entity.ActorEntityDef.Model );
         });
 
         it('should retrieve an entity definition', function(){
             this.registry.register({ "id":"/entity/person", "type":"object" });
             assert.equal( odgn.Entity.PersonEntityDef, this.registry.get("/entity/person") );
-        });
-
-        it.skip('should register multiple entities', function(){
-            this.registry.register({
-                "id":"/root",
-                "cmdqueue":{
-                    "id":"/cmdqueue",
-                    "type":"object"
-                },
-                "cmd":{
-                    "id":"/cmd",
-                    "type":"object"
-                }
-            });
-            print_var( this.registry.tv4.context );
-            print_var( this.registry.tv4.getSchema('/root/cmd') );
         });
     });
 
@@ -112,25 +105,30 @@ describe('Entity', function(){
         it('should o2o', function(){
 
             this.registry.register({
-                id: "/entity/actor",
-                type:"object",
-                properties:{
-                    name: { type:"string" },
-                    home: {
-                        type: "object",
-                        properties:{
-                            address:{ type:"string" }
-                        }
+                "id":"/entity/cmd",
+                "type":"object",
+                "properties":{
+                    "execute_time":{ "type":"integer" }
+                }
+            });
+
+            this.registry.register({
+                "id":"/entity/cmd_queue",
+                "type":"object",
+                "properties":{
+                    "cmd":{
+                        "$ref":"/entity/cmd"
                     }
                 }
             });
 
-            var def = this.registry.get("/entity/actor");
+            var CmdQueueDef = this.registry.get("/entity/cmd_queue");
+            print_ins( CmdQueueDef, false, 2 );
+            print_ins( CmdQueueDef.Model.entityDef, false, 1 );
 
-            var inst = def.parse({
-                name: 'eric',
-                home:{
-                    address: '59 Long Lane'
+            var inst = CmdQueueDef.parse({
+                cmd:{
+                    execute_time: 400
                 }
             });
 
