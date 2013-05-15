@@ -97,6 +97,54 @@ describe('Entity', function(){
             assert.equal( inst.get('age'), 56 );
         });
 
+        it('should parse an identified serialised entity', function(){
+            this.registry.register({
+                "id":"/entity/cmd",
+                "type":"object",
+                "properties":{
+                    "execute_time":{ "type":"integer" }
+                }
+            });
+
+            var inst = this.registry.parse({
+                "schema_id":"/entity/cmd",
+                "execute_time": 1234
+            });
+
+            assert( inst instanceof odgn.Entity.CmdEntityDef.Model );
+
+            // the schemaId can also be specified in the options
+            var inst = this.registry.parse({ "execute_time": 909}, {schemaId:"/entity/cmd"} );
+            assert( inst instanceof odgn.Entity.CmdEntityDef.Model );
+            assert.equal( inst.get('execute_time'), 909 );            
+        });
+
+        it('should parse an array of serialised entities', function(){
+            this.registry.register({
+                "title":"cmd",
+                "properties":{
+                    "execute_time":{ "type":"integer" }
+                }
+            });
+
+            var instArray = this.registry.parse([
+                { "schema_id":"cmd", "execute_time": 1234 },
+                { "execute_time": 25 },
+                { "execute_time": 256 }
+            ]);
+
+            assert.equal( instArray.length, 3 );
+            assert( instArray[2] instanceof odgn.Entity.CmdEntityDef.Model );
+
+            instArray = this.registry.parse([
+                { "execute_time":23 },
+                { "execute_time":1908, "exeute_count":5 },
+                { "execute_time":668 },
+            ], {schemaId:'cmd'} );
+
+            assert( instArray[0] instanceof odgn.Entity.CmdEntityDef.Model );
+            assert.equal( instArray[1].get('exeute_count'), 5 );
+        });
     });
 
 
@@ -123,8 +171,8 @@ describe('Entity', function(){
             });
 
             var CmdQueueDef = this.registry.get("/entity/cmd_queue");
-            print_ins( CmdQueueDef, false, 2 );
-            print_ins( CmdQueueDef.Model.entityDef, false, 1 );
+            // print_ins( CmdQueueDef, false, 2 );
+            // print_ins( CmdQueueDef.Model.entityDef, false, 1 );
 
             var inst = CmdQueueDef.parse({
                 cmd:{
@@ -139,8 +187,13 @@ describe('Entity', function(){
             // print_ins( tv4.context );
             // print_ins( tv4.getSchema('/entity/actor#/properties/home') );
         });
-
-
-
     });
+
+    describe('one to many', function(){
+    });
+
+
+    describe('toJSON', function(){
+    });
+
 });
