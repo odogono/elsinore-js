@@ -1,6 +1,51 @@
 require('./common');
 var tv4 = require('tv4').tv4;
 
+describe('Registry', function(){
+    beforeEach( function(){
+        // unload and reload the odgn module
+        delete require.cache[ require.resolve('../index') ];
+        odgn = require('../index')();
+        this.registry = odgn.Entity.Registry.create();
+    });
+
+    describe('resolving', function(){
+
+        it('should resolve an integer', function(){
+            assert.strictEqual( this.registry.resolve( "209", {"type":"integer"} ), 209 );
+        });
+        it('should resolve a number', function(){
+            assert.strictEqual( this.registry.resolve( "1.34", {"type":"number"} ), 1.34 );
+        });
+
+        it('should resolve a string', function(){
+            assert.strictEqual( this.registry.resolve( 209, {"type":"string"} ), "209" );
+        });
+
+        it('should resolve a boolean', function(){
+            assert.strictEqual( this.registry.resolve( "true", {"type":"boolean"} ), true );
+            assert.strictEqual( this.registry.resolve( "yes", {"type":"boolean"} ), true );
+            assert.strictEqual( this.registry.resolve( "1", {"type":"boolean"} ), true );
+            assert.strictEqual( this.registry.resolve( "0", {"type":"boolean"} ), false );
+            assert.strictEqual( this.registry.resolve( "no", {"type":"boolean"} ), false );
+            assert.strictEqual( this.registry.resolve( "false", {"type":"boolean"} ), false );
+        });
+
+        it('should resolve a reference to an entity', function(){
+            this.registry.register({
+                "id":"/entity/cmd",
+                "type":"object",
+                "properties":{
+                    "execute_time":{ "type":"integer" }
+                }
+            });
+            var result = this.registry.resolve( {"execute_time":"1234"}, {"$ref":"/entity/cmd"} );
+            assert( result instanceof odgn.Entity.CmdEntityDef.Model );
+            assert.strictEqual( result.get("execute_time"), 1234 );
+        });
+    });
+});
+
 describe('Entity', function(){
 
     beforeEach( function(){
@@ -150,8 +195,25 @@ describe('Entity', function(){
 
     describe('one to one', function(){
 
+        it('should retrieve properties from the schema', function(){
+            this.registry.register({
+                "id":"/entity/cmd",
+                "type":"object",
+                "properties":{
+                    "type":{ "type":"integer" },
+                    "execute_time":{ "type":"integer" },
+                    "created_at":{ "type":"string" }
+                }
+            });
+
+            assert.deepEqual( 
+                this.registry.get("/entity/cmd").retrieveSchemaProperties(['type', 'created_at']),
+                { "type":{ "type":"integer" }, "created_at":{ "type":"string" } } ); 
+        });
+
         it('should o2o', function(){
 
+            // register a command, which has an execute time attribute
             this.registry.register({
                 "id":"/entity/cmd",
                 "type":"object",
@@ -160,32 +222,36 @@ describe('Entity', function(){
                 }
             });
 
+            // register a command queue, which has an id and a
+            // single command reference
             this.registry.register({
                 "id":"/entity/cmd_queue",
                 "type":"object",
                 "properties":{
+                    "id":{ "type":"string" },
                     "cmd":{
                         "$ref":"/entity/cmd"
                     }
                 }
             });
 
-            var CmdQueueDef = this.registry.get("/entity/cmd_queue");
-            // print_ins( CmdQueueDef, false, 2 );
-            // print_ins( CmdQueueDef.Model.entityDef, false, 1 );
-
-            var inst = CmdQueueDef.parse({
-                cmd:{
-                    execute_time: 400
+            // parse the JSON into an entity
+            var inst = odgn.Entity.CmdQueueEntityDef.parse({
+                "id":"cq.001",
+                "cmd":{
+                    "id":"cmd.001",
+                    "execute_time": 400
                 }
             });
 
-            // assert( oinst instanceof odgn.Entity.ActorEntityDef.model );
+            // the result is an instance of the command queue
+            assert( inst instanceof odgn.Entity.CmdQueueEntityDef.Model );
+            assert.equal( inst.id, "cq.001" );
 
-            // assert( odgn.Entity.HomeEntityDef );
-
-            // print_ins( tv4.context );
-            // print_ins( tv4.getSchema('/entity/actor#/properties/home') );
+            // retrieving the command attribute returns a command entity instance
+            assert( inst.get('cmd') instanceof odgn.Entity.CmdEntityDef.Model );
+            assert.equal( inst.get('cmd').id, "cmd.001" );
+            assert.equal( inst.get('cmd').get('execute_time'), 400 );
         });
     });
 
