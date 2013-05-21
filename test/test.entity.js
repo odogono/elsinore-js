@@ -22,6 +22,10 @@ describe('Registry', function(){
             assert.strictEqual( this.registry.resolve( 209, {"type":"string"} ), "209" );
         });
 
+        it('should resolve an object', function(){
+            assert.deepEqual( this.registry.resolve( '{ "msg":"hello", "parts":[3,1,12] }', {"type":"object"} ), { "msg":"hello", "parts":[3,1,12] } );
+        });
+
         it('should resolve a boolean', function(){
             assert.strictEqual( this.registry.resolve( "true", {"type":"boolean"} ), true );
             assert.strictEqual( this.registry.resolve( "yes", {"type":"boolean"} ), true );
@@ -43,6 +47,26 @@ describe('Registry', function(){
             assert( result instanceof odgn.Entity.CmdEntityDef.Model );
             assert.strictEqual( result.get("execute_time"), 1234 );
         });
+    });
+
+    describe('Registration', function(){
+
+        it('should retrieve properties from the schema', function(){
+            this.registry.register({
+                "id":"/entity/cmd",
+                "type":"object",
+                "properties":{
+                    "type":{ "type":"integer" },
+                    "execute_time":{ "type":"integer" },
+                    "created_at":{ "type":"string" }
+                }
+            });
+
+            assert.deepEqual( 
+                this.registry.get("/entity/cmd").retrieveSchemaProperties(['type', 'created_at']),
+                { "type":{ "type":"integer" }, "created_at":{ "type":"string" } } ); 
+        });
+
     });
 });
 
@@ -195,23 +219,7 @@ describe('Entity', function(){
 
     describe('one to one', function(){
 
-        it('should retrieve properties from the schema', function(){
-            this.registry.register({
-                "id":"/entity/cmd",
-                "type":"object",
-                "properties":{
-                    "type":{ "type":"integer" },
-                    "execute_time":{ "type":"integer" },
-                    "created_at":{ "type":"string" }
-                }
-            });
-
-            assert.deepEqual( 
-                this.registry.get("/entity/cmd").retrieveSchemaProperties(['type', 'created_at']),
-                { "type":{ "type":"integer" }, "created_at":{ "type":"string" } } ); 
-        });
-
-        it('should o2o', function(){
+        it('should have a o2o', function(){
 
             // register a command, which has an execute time attribute
             this.registry.register({
@@ -252,6 +260,31 @@ describe('Entity', function(){
             assert( inst.get('cmd') instanceof odgn.Entity.CmdEntityDef.Model );
             assert.equal( inst.get('cmd').id, "cmd.001" );
             assert.equal( inst.get('cmd').get('execute_time'), 400 );
+        });
+
+        it.skip('can maintain a back reference to the parent', function(){
+            // register a command, which has an execute time attribute
+            this.registry.register({
+                "id":"/entity/cmd",
+                "type":"object",
+                "properties":{
+                    "execute_time":{ "type":"integer" },
+                    "queue":{ "$ref":"/entity/cmd_queue", "$backRef":"cmd" }
+                }
+            });
+
+            // register a command queue, which has an id and a
+            // single command reference
+            this.registry.register({
+                "id":"/entity/cmd_queue",
+                "type":"object",
+                "properties":{
+                    "id":{ "type":"string" },
+                    "cmd":{
+                        "$ref":"/entity/cmd"
+                    }
+                }
+            });
         });
     });
 
