@@ -6,7 +6,7 @@ describe('Registry', function(){
         // unload and reload the odgn module
         delete require.cache[ require.resolve('../index') ];
         odgn = require('../index')();
-        this.registry = odgn.Entity.Registry.create();
+        this.registry = odgn.entity.Registry.create();
     });
 
     describe('resolving', function(){
@@ -44,7 +44,7 @@ describe('Registry', function(){
                 }
             });
             var result = this.registry.resolve( {"execute_time":"1234"}, {"$ref":"/entity/cmd"} );
-            assert( result instanceof odgn.Entity.CmdEntityDef.Model );
+            assert( result instanceof odgn.entity.CmdEntityDef.Model );
             assert.strictEqual( result.get("execute_time"), 1234 );
         });
     });
@@ -76,7 +76,7 @@ describe('Entity', function(){
         // unload and reload the odgn module
         delete require.cache[ require.resolve('../index') ];
         odgn = require('../index')();
-        this.registry = odgn.Entity.Registry.create();
+        this.registry = odgn.entity.Registry.create();
     });
 
     describe('registration', function(){
@@ -116,7 +116,7 @@ describe('Entity', function(){
             });
 
             var inst = ActorEntityDef.create();
-            assert( inst instanceof odgn.Entity.ActorEntityDef.Model );
+            assert( inst instanceof odgn.entity.ActorEntityDef.Model );
         });
 
         it('should register an entity with a title', function(){
@@ -125,7 +125,7 @@ describe('Entity', function(){
                 title:"primary"
             });
             var inst = this.registry.create('primary');
-            assert( inst instanceof odgn.Entity.PrimaryEntityDef.Model );
+            assert( inst instanceof odgn.entity.PrimaryEntityDef.Model );
         });
 
         it('should create an entity instance from a schema id', function(){
@@ -135,12 +135,12 @@ describe('Entity', function(){
             });
 
             var oinst = this.registry.create("/entity/actor");
-            assert( oinst instanceof odgn.Entity.ActorEntityDef.Model );
+            assert( oinst instanceof odgn.entity.ActorEntityDef.Model );
         });
 
         it('should retrieve an entity definition', function(){
             this.registry.register({ "id":"/entity/person", "type":"object" });
-            assert.equal( odgn.Entity.PersonEntityDef, this.registry.get("/entity/person") );
+            assert.equal( odgn.entity.PersonEntityDef, this.registry.get("/entity/person") );
         });
     });
 
@@ -180,11 +180,11 @@ describe('Entity', function(){
                 "execute_time": 1234
             });
 
-            assert( inst instanceof odgn.Entity.CmdEntityDef.Model );
+            assert( inst instanceof odgn.entity.CmdEntityDef.Model );
 
             // the schemaId can also be specified in the options
             var inst = this.registry.parse({ "execute_time": 909}, {schemaId:"/entity/cmd"} );
-            assert( inst instanceof odgn.Entity.CmdEntityDef.Model );
+            assert( inst instanceof odgn.entity.CmdEntityDef.Model );
             assert.equal( inst.get('execute_time'), 909 );            
         });
 
@@ -203,7 +203,7 @@ describe('Entity', function(){
             ]);
 
             assert.equal( instArray.length, 3 );
-            assert( instArray[2] instanceof odgn.Entity.CmdEntityDef.Model );
+            assert( instArray[2] instanceof odgn.entity.CmdEntityDef.Model );
 
             instArray = this.registry.parse([
                 { "execute_time":23 },
@@ -211,7 +211,7 @@ describe('Entity', function(){
                 { "execute_time":668 },
             ], {schemaId:'cmd'} );
 
-            assert( instArray[0] instanceof odgn.Entity.CmdEntityDef.Model );
+            assert( instArray[0] instanceof odgn.entity.CmdEntityDef.Model );
             assert.equal( instArray[1].get('exeute_count'), 5 );
         });
     });
@@ -244,7 +244,7 @@ describe('Entity', function(){
             });
 
             // parse the JSON into an entity
-            var inst = odgn.Entity.CmdQueueEntityDef.parse({
+            var inst = odgn.entity.CmdQueueEntityDef.parse({
                 "id":"cq.001",
                 "cmd":{
                     "id":"cmd.001",
@@ -253,11 +253,11 @@ describe('Entity', function(){
             });
 
             // the result is an instance of the command queue
-            assert( inst instanceof odgn.Entity.CmdQueueEntityDef.Model );
+            assert( inst instanceof odgn.entity.CmdQueueEntityDef.Model );
             assert.equal( inst.id, "cq.001" );
 
             // retrieving the command attribute returns a command entity instance
-            assert( inst.get('cmd') instanceof odgn.Entity.CmdEntityDef.Model );
+            assert( inst.get('cmd') instanceof odgn.entity.CmdEntityDef.Model );
             assert.equal( inst.get('cmd').id, "cmd.001" );
             assert.equal( inst.get('cmd').get('execute_time'), 400 );
         });
