@@ -6,7 +6,7 @@ describe('Registry', function(){
         // unload and reload the odgn module
         delete require.cache[ require.resolve('../index') ];
         odgn = require('../index')();
-        this.registry = odgn.entity.Registry.create();
+        this.registry = odgn.entity.ModelRegistry.create();
     });
 
     describe('resolving', function(){
@@ -35,16 +35,16 @@ describe('Registry', function(){
             assert.strictEqual( this.registry.resolve( "false", {"type":"boolean"} ), false );
         });
 
-        it('should resolve a reference to an entity', function(){
+        it('should resolve a reference to an model', function(){
             this.registry.register({
-                "id":"/entity/cmd",
+                "id":"/model/cmd",
                 "type":"object",
                 "properties":{
                     "execute_time":{ "type":"integer" }
                 }
             });
-            var result = this.registry.resolve( {"execute_time":"1234"}, {"$ref":"/entity/cmd"} );
-            assert( result instanceof odgn.entity.CmdEntityDef.Model );
+            var result = this.registry.resolve( {"execute_time":"1234"}, {"$ref":"/model/cmd"} );
+            assert( result instanceof odgn.entity.CmdModelDef.Model );
             assert.strictEqual( result.get("execute_time"), 1234 );
         });
     });
@@ -53,7 +53,7 @@ describe('Registry', function(){
 
         it('should retrieve properties from the schema', function(){
             this.registry.register({
-                "id":"/entity/cmd",
+                "id":"/model/cmd",
                 "type":"object",
                 "properties":{
                     "type":{ "type":"integer" },
@@ -63,84 +63,57 @@ describe('Registry', function(){
             });
 
             assert.deepEqual( 
-                this.registry.get("/entity/cmd").retrieveSchemaProperties(['type', 'created_at']),
+                this.registry.get("/model/cmd").retrieveSchemaProperties(['type', 'created_at']),
                 { "type":{ "type":"integer" }, "created_at":{ "type":"string" } } ); 
         });
 
     });
 });
 
-describe('Entity', function(){
+describe('Model', function(){
 
     beforeEach( function(){
         // unload and reload the odgn module
         delete require.cache[ require.resolve('../index') ];
         odgn = require('../index')();
-        this.registry = odgn.entity.Registry.create();
+        this.registry = odgn.entity.ModelRegistry.create();
     });
 
     describe('registration', function(){
 
-        /*it.only('should normalise', function(){
-            var schema = {
-                "id":"/user",
-                "title": "User",
-                "type": "object",
-                "properties": {
-                    "username": {
-                        "title": "User name",
-                        "type": "string",
-                        "pattern": "[a-zA-Z][a-zA-Z0-9]*",
-                        "minLength": 4,
-                        "maxLength": 20,
-                    }
-                },
-                "required": [ "username" ]
-            };
-            // tv4.normSchema( schema );
-            print_var( schema );
-            tv4.addSchema( schema.id, schema );
-
-            var username = { "user": "kip" };
-
-            var result = tv4.validate( username, "/user" );// "/user#/properties/username");
-            print_var( tv4.error );
-            print_var( tv4.resolveUrl('/user', '/required/0'));
-        });//*/
-
-        it('should register a new entity',function(){
+        it('should register a new model',function(){
             
-            var ActorEntityDef = this.registry.register({
-                id: "/entity/actor",
+            var ActorModelDef = this.registry.register({
+                id: "/model/actor",
                 type:"object"
             });
 
-            var inst = ActorEntityDef.create();
-            assert( inst instanceof odgn.entity.ActorEntityDef.Model );
+            var inst = ActorModelDef.create();
+            assert( inst instanceof odgn.entity.ActorModelDef.Model );
         });
 
-        it('should register an entity with a title', function(){
+        it('should register an model with a title', function(){
             this.registry.register({
-                id: "/entity/misc",
+                id: "/model/misc",
                 title:"primary"
             });
             var inst = this.registry.create('primary');
-            assert( inst instanceof odgn.entity.PrimaryEntityDef.Model );
+            assert( inst instanceof odgn.entity.PrimaryModelDef.Model );
         });
 
-        it('should create an entity instance from a schema id', function(){
+        it('should create an model instance from a schema id', function(){
             this.registry.register({
-                id: "/entity/actor",
+                id: "/model/actor",
                 type:"object"
             });
 
-            var oinst = this.registry.create("/entity/actor");
-            assert( oinst instanceof odgn.entity.ActorEntityDef.Model );
+            var oinst = this.registry.create("/model/actor");
+            assert( oinst instanceof odgn.entity.ActorModelDef.Model );
         });
 
-        it('should retrieve an entity definition', function(){
-            this.registry.register({ "id":"/entity/person", "type":"object" });
-            assert.equal( odgn.entity.PersonEntityDef, this.registry.get("/entity/person") );
+        it('should retrieve an model definition', function(){
+            this.registry.register({ "id":"/model/person", "type":"object" });
+            assert.equal( odgn.entity.PersonModelDef, this.registry.get("/model/person") );
         });
     });
 
@@ -150,15 +123,15 @@ describe('Entity', function(){
     describe('parsing', function(){
         
         it('should parse', function(){
-            var ActorEntityDef = this.registry.register({
-                id: "/entity/actor",
+            var ActorModelDef = this.registry.register({
+                id: "/model/actor",
                 type:"object",
                 properties:{
                     name: { type:"string" }
                 }
             });
 
-            var inst = ActorEntityDef.parse({
+            var inst = ActorModelDef.parse({
                 name: 'alec',
                 age:56
             });
@@ -166,9 +139,9 @@ describe('Entity', function(){
             assert.equal( inst.get('age'), 56 );
         });
 
-        it('should parse an identified serialised entity', function(){
+        it('should parse an identified serialised model', function(){
             this.registry.register({
-                "id":"/entity/cmd",
+                "id":"/model/cmd",
                 "type":"object",
                 "properties":{
                     "execute_time":{ "type":"integer" }
@@ -176,15 +149,15 @@ describe('Entity', function(){
             });
 
             var inst = this.registry.parse({
-                "schema_id":"/entity/cmd",
+                "schema_id":"/model/cmd",
                 "execute_time": 1234
             });
 
-            assert( inst instanceof odgn.entity.CmdEntityDef.Model );
+            assert( inst instanceof odgn.entity.CmdModelDef.Model );
 
             // the schemaId can also be specified in the options
-            var inst = this.registry.parse({ "execute_time": 909}, {schemaId:"/entity/cmd"} );
-            assert( inst instanceof odgn.entity.CmdEntityDef.Model );
+            var inst = this.registry.parse({ "execute_time": 909}, {schemaId:"/model/cmd"} );
+            assert( inst instanceof odgn.entity.CmdModelDef.Model );
             assert.equal( inst.get('execute_time'), 909 );            
         });
 
@@ -203,7 +176,7 @@ describe('Entity', function(){
             ]);
 
             assert.equal( instArray.length, 3 );
-            assert( instArray[2] instanceof odgn.entity.CmdEntityDef.Model );
+            assert( instArray[2] instanceof odgn.entity.CmdModelDef.Model );
 
             instArray = this.registry.parse([
                 { "execute_time":23 },
@@ -211,7 +184,7 @@ describe('Entity', function(){
                 { "execute_time":668 },
             ], {schemaId:'cmd'} );
 
-            assert( instArray[0] instanceof odgn.entity.CmdEntityDef.Model );
+            assert( instArray[0] instanceof odgn.entity.CmdModelDef.Model );
             assert.equal( instArray[1].get('exeute_count'), 5 );
         });
     });
@@ -223,7 +196,7 @@ describe('Entity', function(){
 
             // register a command, which has an execute time attribute
             this.registry.register({
-                "id":"/entity/cmd",
+                "id":"/model/cmd",
                 "type":"object",
                 "properties":{
                     "execute_time":{ "type":"integer" }
@@ -233,18 +206,18 @@ describe('Entity', function(){
             // register a command queue, which has an id and a
             // single command reference
             this.registry.register({
-                "id":"/entity/cmd_queue",
+                "id":"/model/cmd_queue",
                 "type":"object",
                 "properties":{
                     "id":{ "type":"string" },
                     "cmd":{
-                        "$ref":"/entity/cmd"
+                        "$ref":"/model/cmd"
                     }
                 }
             });
 
-            // parse the JSON into an entity
-            var inst = odgn.entity.CmdQueueEntityDef.parse({
+            // parse the JSON into an model
+            var inst = odgn.entity.CmdQueueModelDef.parse({
                 "id":"cq.001",
                 "cmd":{
                     "id":"cmd.001",
@@ -253,11 +226,11 @@ describe('Entity', function(){
             });
 
             // the result is an instance of the command queue
-            assert( inst instanceof odgn.entity.CmdQueueEntityDef.Model );
+            assert( inst instanceof odgn.entity.CmdQueueModelDef.Model );
             assert.equal( inst.id, "cq.001" );
 
-            // retrieving the command attribute returns a command entity instance
-            assert( inst.get('cmd') instanceof odgn.entity.CmdEntityDef.Model );
+            // retrieving the command attribute returns a command model instance
+            assert( inst.get('cmd') instanceof odgn.entity.CmdModelDef.Model );
             assert.equal( inst.get('cmd').id, "cmd.001" );
             assert.equal( inst.get('cmd').get('execute_time'), 400 );
         });
@@ -265,23 +238,23 @@ describe('Entity', function(){
         it.skip('can maintain a back reference to the parent', function(){
             // register a command, which has an execute time attribute
             this.registry.register({
-                "id":"/entity/cmd",
+                "id":"/model/cmd",
                 "type":"object",
                 "properties":{
                     "execute_time":{ "type":"integer" },
-                    "queue":{ "$ref":"/entity/cmd_queue", "$backRef":"cmd" }
+                    "queue":{ "$ref":"/model/cmd_queue", "$backRef":"cmd" }
                 }
             });
 
             // register a command queue, which has an id and a
             // single command reference
             this.registry.register({
-                "id":"/entity/cmd_queue",
+                "id":"/model/cmd_queue",
                 "type":"object",
                 "properties":{
                     "id":{ "type":"string" },
                     "cmd":{
-                        "$ref":"/entity/cmd"
+                        "$ref":"/model/cmd"
                     }
                 }
             });
