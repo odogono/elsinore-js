@@ -30,6 +30,21 @@ describe('Registry', function(){
         assert.equal( component.constructor.componentDef.defId, componentDef.defId );
     });
 
+    it('should create a component with data', function(){
+        this.registry.register({
+            "id":"/component/data",
+            "type":"object",
+            "properties":{
+                "name":{ "type":"string" },
+                "count":{ "type":"integer" }
+            }
+        });
+
+        var com = this.registry.create("/component/data", {"name":"diamond", "count":23} );
+        assert.equal( com.get("name"), "diamond" );
+        assert.equal( com.get("count"), 23 );
+    });
+
     it('should retrieve all components of a type', function(){
         var defA = this.registry.register( {"id":"/component/example_a"} );
         var defB = this.registry.register( {"id":"/component/example_b"} );
