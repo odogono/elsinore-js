@@ -1,5 +1,4 @@
 require('./common');
-var tv4 = require('tv4').tv4;
 var odgn = require('../index')();
 
 describe('Component', function(){
@@ -7,7 +6,7 @@ describe('Component', function(){
         this.cRegistry = odgn.entity.ComponentRegistry.create();
     });
 
-    it.only('should register a new component', function(done){
+    it('should register a new component', function(done){
         var self = this;
         var schema = { "id":"/component/example" }
 

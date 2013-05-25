@@ -1,5 +1,5 @@
 require('./common');
-var tv4 = require('tv4').tv4;
+
 
 describe('Registry', function(){
     beforeEach( function(){
