@@ -54,6 +54,7 @@ describe('Component', function(){
         var self = this;
 
         async.waterfall([
+            // register two components
             function(cb){
                 self.cRegistry.register( [{"id":"/component/example_a"}, {"id":"/component/example_b"}], cb );
             },
