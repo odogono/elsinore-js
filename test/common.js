@@ -43,7 +43,7 @@ Common.readFixture = function( subPath, parseJson ){
     return parseJson ? JSON.parse(data) : data;
 }
 
-root.print_ins = function(arg,showHidden,depth,colors){
+root.print_ins = function(arg,depth,showHidden,colors){
     if( _.isUndefined(depth) ) depth = 5;
     util.log( util.inspect(arg,showHidden,depth,colors) );
 };
