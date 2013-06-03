@@ -7,7 +7,7 @@ fs = require('fs');
 path = require('path');
 util = require('util');
 
-_ = require('underscore');
+require('underscore');
 Backbone = require('backbone');
 // _.str = require( 'underscore.string' );
 // _.mixin(_.str.exports());
