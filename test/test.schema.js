@@ -21,7 +21,6 @@ describe('Schema', function(){
 
         Schema.addSchema( schema );
 
-        // var props = Schema.getProperties( schema.id );
         assert.deepEqual( 
             _.pluck(Schema.getProperties(schema.id),'name'), 
             ['id', 'name', 'count', 'status']);

@@ -61,7 +61,7 @@ describe('Component', function(){
             function(defs, cb){
                 var def = self.cRegistry.getComponentDef("/component/example_a");
                 async.times(10, function(n,next){
-                    def.createComponent(function(err,com){
+                    def.create(function(err,com){
                         next(err,com);
                     });
                 }, cb);
@@ -70,7 +70,7 @@ describe('Component', function(){
             function( comsA, cb ){
                 var def = self.cRegistry.getComponentDef("/component/example_b");
                 async.times(10, function(n,next){
-                    def.createComponent(function(err,com){
+                    def.create(function(err,com){
                         next(err,com);
                     });
                 }, cb );
