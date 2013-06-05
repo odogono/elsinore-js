@@ -36,6 +36,24 @@ describe('Component', function(){
         });
     });
 
+    it('should create an identifiable component', function(done){
+        var self = this, componentDefs;
+        async.waterfall([
+            function(cb){
+                self.registry.registerComponent(
+                    [{"id":"/component/test/ident_a"},{"id":"/component/test/ident_b"}], 
+                    cb);
+            },
+            function(cDefs,cb){
+                componentDefs = cDefs;
+                self.registry.createComponent('/component/test/ident_b', cb);
+            }
+        ], function(err, component){
+            assert.equal(component.defId, componentDefs[1].id );
+            done();
+        });
+    });
+
     it('should create a component with data', function(done){
         var self = this;
         this.registry.registerComponent({
