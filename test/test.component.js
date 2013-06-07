@@ -72,6 +72,32 @@ describe('Component', function(){
         });
     });
 
+    it('should create a component with default data', function(done){
+        var self = this;
+        var schema = {
+            "id":"/component/customer",
+            "type":"object",
+            "properties":{
+                "name":{ "type":"string", "default":"peter" },
+                "age":{ "type":"integer", "default":32 }
+            }
+        };
+
+        async.waterfall([
+            // register two components
+            function(cb){
+                self.registry.registerComponent( schema, cb );
+            },
+            function(def, cb){
+                self.registry.createComponent( def, cb );
+            }
+        ], function(err,component){
+            assert.equal( component.get("name"), "peter" );
+            assert.equal( component.get("age"), 32 );
+            done();
+        });
+    });
+
     it('should retrieve all components of a type', function(done){
         var self = this;
 

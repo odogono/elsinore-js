@@ -25,6 +25,22 @@ describe('Entity', function(){
                 done();
             });
         });
+
+        it('should retrieve an existing entity', function(done){
+            var self = this, eid;
+            async.waterfall([
+                function(cb){
+                    self.registry.createEntity(cb);
+                },
+                function(entity,cb){
+                    eid = entity.id;
+                    self.registry.getEntity( entity.id, cb );
+                },
+                function(entity,cb){
+                    assert.equal( entity.id, eid );
+                }
+            ], done);
+        });
     });
 
 
@@ -80,6 +96,11 @@ describe('Entity', function(){
                 },
                 function(result, cb){
                     entity = result;
+                    self.registry.getEntitiesWithComponents('/component/tmpl/c', cb);
+                },
+                function(entities,cb){
+                    assert.equal( entities.length, 1 );
+                    assert.equal( entities[0].id, entity.id );
                     // retrieve all the components for this entity
                     self.registry.getEntityComponents( entity, cb );
                 },
