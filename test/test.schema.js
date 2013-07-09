@@ -60,7 +60,7 @@ describe('Schema', function(){
            ['name', 'count']);
        
         // because B has an allOf, A's properties will be added
-        assert.deepEqual( 
+        assert.deepEqual(
            _.pluck(Schema.getProperties(schemaB.id),'name'), 
            ['name', 'status', 'count']);
 
