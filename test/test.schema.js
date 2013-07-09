@@ -12,10 +12,15 @@ describe('Schema', function(){
             "id":"/schema/sorted",
             "type":"object",
             "properties":{
-                "status":{ "type":"integer", "orderPriority":-1 },
-                "name":{ "type": "string", "orderPriority":2 },
-                "id":{ "type": "integer", "orderPriority":3 },
+                "status":{ "type":"integer" },
+                "name":{ "type": "string" },
+                "id":{ "type": "integer" },
                 "count":{ "type": "integer" }
+            },
+            "propertyPriorities":{
+                "status":-1,
+                "name":2,
+                "id":3
             }
         };
 
@@ -30,8 +35,12 @@ describe('Schema', function(){
         var schemaA = {
             "id":"/schema/merge_a", "type":"object",
             "properties":{
-                "count":{ "type":"integer", "orderPriority":-4 },
-                "name":{ "type":"string", "orderPriority":4 }
+                "count":{ "type":"integer" },
+                "name":{ "type":"string" }
+            },
+            "propertyPriorities":{
+                "count":-4,
+                "name":4
             }
         };
         var schemaB = {
@@ -74,6 +83,21 @@ describe('Schema', function(){
         Schema.addSchema( schemaA );
         assert.deepEqual(
             Schema.getDefaultValues( schemaA.id ),
-            [{name:'count', value:1}, {name:'name', value:'unknown'}] );
+            {count:1, name:'unknown'} );
+    });
+
+    it('should return no default properties if not defined', function(){
+        var schemaA = {
+            "id":"/schema/def_a", "type":"object",
+            "properties":{
+                "count":{ "type":"integer" },
+                "name":{ "type":"string", "default":"unknown" }
+            }
+        };
+
+        Schema.addSchema( schemaA );
+        assert.deepEqual(
+            Schema.getDefaultValues( schemaA.id ),
+            {count:null, name:'unknown'} );
     });
 });
