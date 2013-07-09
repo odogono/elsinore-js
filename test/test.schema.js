@@ -59,6 +59,21 @@ describe('Schema', function(){
         assert.deepEqual( 
            _.pluck(Schema.getProperties([schemaA.id, schemaB.id]),'name'), 
            ['name', 'status', 'count']);
+    });
 
+
+    it('should return default properties', function(){
+        var schemaA = {
+            "id":"/schema/def_a", "type":"object",
+            "properties":{
+                "count":{ "type":"integer", "default":1 },
+                "name":{ "type":"string", "default":"unknown" }
+            }
+        };
+
+        Schema.addSchema( schemaA );
+        assert.deepEqual(
+            Schema.getDefaultValues( schemaA.id ),
+            [{name:'count', value:1}, {name:'name', value:'unknown'}] );
     });
 });
