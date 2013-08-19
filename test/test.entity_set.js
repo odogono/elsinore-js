@@ -33,6 +33,25 @@ var entityTemplate = {
 };
 
 
+var createEntityAndEntitySet = function(options, callback){
+    var registry = options.registry, entity, entitySet;
+    async.waterfall([
+        function createEntitySet(cb){
+            // create an entity set for all entities
+            registry.createEntitySet( null, {}, cb );
+        },
+        function createEntity(result, cb){
+            entitySet = result;
+            registry.createEntity(cb);
+        }
+    ], function(err,result){
+        entity = result;
+        return callback(err,entity,entitySet);
+    });
+};
+
+
+
 describe('EntitySet', function(){
     beforeEach( function(done){
         var self = this;
@@ -102,15 +121,11 @@ describe('EntitySet', function(){
     it('should return a component for an entity', function(done){
         var self = this, entitySet, entityId;
         async.waterfall([
-            function createEntitySet(cb){
-                // create an entity set for all entities
-                self.registry.createEntitySet( null, {}, cb );
+            function(cb){
+                createEntityAndEntitySet({registry:self.registry}, cb);
             },
-            function createEntity(result, cb){
-                entitySet = result;
-                self.registry.createEntity(cb);
-            },
-            function addComponentToEntity(entity,cb){
+            function addComponentToEntity( pEntity, pEntitySet, cb ){
+                entity = pEntity; entitySet = pEntitySet;
                 entityId = entity.id;
                 entity.addComponent('/component/es_c', cb);
             },
@@ -121,5 +136,27 @@ describe('EntitySet', function(){
         });
     });
 
-    describe('ordering of components within an entityset');
+    it.only('should handle removed components correctly', function(done){
+        var self = this, entitySet, entity, entityId;
+        async.waterfall([
+            function(cb){
+                createEntityAndEntitySet({registry:self.registry}, cb);
+            },
+            function addComponentToEntity( pEntity, pEntitySet, cb ){
+                entity = pEntity; entitySet = pEntitySet;
+                entityId = entity.id;
+                entity.addComponent('/component/es_c', cb);
+            },
+            function removeComponentFromEntity( pComponent, pEntity, cb ){
+                var component = entitySet.getComponent( "/component/es_c", entityId );
+                assert.equal( component.schemaId, '/component/es_c' );
+                entity.removeComponent('/component/es_c', cb );
+            },
+        ], function retrieveComponentFromEntity(err,component){
+            assert( !entitySet.getComponent( "/component/es_c", entityId ) );
+            done();
+        });
+    });
+
+    // describe('ordering of components within an entityset');
 });
