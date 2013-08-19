@@ -46,7 +46,7 @@ describe('EntitySet', function(){
             },
             function registerEntityTemplate(components, cb){
                 self.registry.registerEntityTemplate( entityTemplate, cb );
-            },
+            }
         ], function(err){
             if( err ) throw err;
             return done();
@@ -115,11 +115,11 @@ describe('EntitySet', function(){
                 entity.addComponent('/component/es_c', cb);
             },
         ], function retrieveComponentFromEntity(err,component){
-            if( err ) throw err;
             var component = entitySet.getComponent( "/component/es_c", entityId );
-            // print_ins( component,1 );
             assert.equal( component.schemaId, '/component/es_c' );
             done();
         });
     });
+
+    describe('ordering of components within an entityset');
 });
