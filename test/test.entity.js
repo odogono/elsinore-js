@@ -43,21 +43,18 @@ describe('Entity', function(){
 
     describe('Entity Components', function(){
         it.only('should add a component to an entity', function(done){
-            var self = this, cEntity;
+            var self = this, entity;
             async.waterfall([
                 function(cb){
                     self.registry.createEntity(cb);
                 },
-                function(entity,cb){
-                    cEntity = entity;
+                function(pEntity,cb){
+                    entity = pEntity;
                     entity.addComponent("/component/test/b", cb);
-                },
-                function(component,cb){
-                    assert( odgn.entity.Component.isComponent(component) );
-                    self.registry.getEntitiesWithComponents("/component/test/b", cb);
                 }
-            ], function(err,entities){
-                assert.equal( entities[0].id, cEntity.id );
+            ], function(err, component,entity){
+                assert( odgn.entity.Component.isComponent(component) );
+                assert( entity.hasComponent('/component/test/b') );
                 done();
             });
         });
