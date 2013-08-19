@@ -10,16 +10,46 @@ var components = [
         }
     },
     {
-        "id":"/component_es_b"
+        "id":"/component/es_b",
+        "properties":{
+            "is_active":{ "type":"boolean" }
+        }
+    },
+    {
+        "id":"/component/es_c",
+        "properties":{
+            "age":{ "type":"integer" }
+        }
     }
 ];
+
+var entityTemplate = {
+    "id":"/entity_template/a",
+    "type":"object",
+    "properties":{
+        "a":{ "$ref":"/component/es_a" },
+        "c":{ "$ref":"/component/es_c" },
+    }
+};
+
 
 describe('EntitySet', function(){
     beforeEach( function(done){
         var self = this;
-        odgn.entity.Registry.create({initialise:true}, function(err,registry){
-            self.registry = registry;
-            self.registry.registerComponent( components, done ); 
+        async.waterfall([
+            function createRegistry(cb){
+                odgn.entity.Registry.create({initialise:true}, cb);
+            },
+            function registerComponents(registry,cb){
+                self.registry = registry;
+                self.registry.registerComponent( components, cb ); 
+            },
+            function registerEntityTemplate(components, cb){
+                self.registry.registerEntityTemplate( entityTemplate, cb );
+            },
+        ], function(err){
+            if( err ) throw err;
+            return done();
         });
     });
 
@@ -69,4 +99,27 @@ describe('EntitySet', function(){
         });
     });
 
+    it('should return a component for an entity', function(done){
+        var self = this, entitySet, entityId;
+        async.waterfall([
+            function createEntitySet(cb){
+                // create an entity set for all entities
+                self.registry.createEntitySet( null, {}, cb );
+            },
+            function createEntity(result, cb){
+                entitySet = result;
+                self.registry.createEntity(cb);
+            },
+            function addComponentToEntity(entity,cb){
+                entityId = entity.id;
+                entity.addComponent('/component/es_c', cb);
+            },
+        ], function retrieveComponentFromEntity(err,component){
+            if( err ) throw err;
+            var component = entitySet.getComponent( "/component/es_c", entityId );
+            // print_ins( component,1 );
+            assert.equal( component.schemaId, '/component/es_c' );
+            done();
+        });
+    });
 });

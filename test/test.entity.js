@@ -26,26 +26,23 @@ describe('Entity', function(){
             });
         });
 
+
         it('should retrieve an existing entity', function(done){
-            var self = this, eid;
-            async.waterfall([
-                function(cb){
-                    self.registry.createEntity(cb);
-                },
-                function(entity,cb){
-                    eid = entity.id;
-                    self.registry.getEntity( entity.id, cb );
-                },
-                function(entity,cb){
-                    assert.equal( entity.id, eid );
-                }
-            ], done);
+            var self = this, registry = self.registry, eid;
+            
+            registry.createEntity( function(err, entity){
+                var oentity = registry.getEntity( entity.id );
+                assert.equal( oentity.id, entity.id );
+                done();
+            });
         });
+
+        it('should not retrieve a non-existent entity');
     });
 
 
     describe('Entity Components', function(){
-        it('should add a component to an entity', function(done){
+        it.only('should add a component to an entity', function(done){
             var self = this, cEntity;
             async.waterfall([
                 function(cb){
