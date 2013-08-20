@@ -2,37 +2,6 @@ require('./common');
 var odgn = require('../index')();
 
 
-var components = [
-    {
-        "id":"/component/es_a",
-        "properties":{
-            "name":{"type":"string"}
-        }
-    },
-    {
-        "id":"/component/es_b",
-        "properties":{
-            "is_active":{ "type":"boolean" }
-        }
-    },
-    {
-        "id":"/component/es_c",
-        "properties":{
-            "age":{ "type":"integer" }
-        }
-    }
-];
-
-var entityTemplate = {
-    "id":"/entity_template/a",
-    "type":"object",
-    "properties":{
-        "a":{ "$ref":"/component/es_a" },
-        "c":{ "$ref":"/component/es_c" },
-    }
-};
-
-
 var createEntityAndEntitySet = function(options, callback){
     var registry = options.registry, entity, entitySet;
     async.waterfall([
@@ -61,10 +30,12 @@ describe('EntitySet', function(){
             },
             function registerComponents(registry,cb){
                 self.registry = registry;
+                var components = JSON.parse( fs.readFileSync( Common.pathFixture('components.json') ) );
                 self.registry.registerComponent( components, cb ); 
             },
             function registerEntityTemplate(components, cb){
-                self.registry.registerEntityTemplate( entityTemplate, cb );
+                var entityTemplates = JSON.parse( fs.readFileSync(Common.pathFixture('entity_templates.json')) );
+                self.registry.registerEntityTemplate( entityTemplates, cb );
             }
         ], function(err){
             if( err ) throw err;
