@@ -8,12 +8,10 @@ describe('Entity', function(){
         // passing a callback to create will initialise
         this.registry = odgn.entity.Registry.create({initialise:true}, function(err,registry){
             self.registry = registry;
-            self.registry.registerComponent([ 
-                "/component/test/a", "/component/test/b", "/component/test/c" 
-            ], function(){
-                done();    
+            var components = JSON.parse( fs.readFileSync( Common.pathFixture('components.json') ) );
+            self.registry.registerComponent( components, function(){
+                done();
             });
-            
         });
     });
 
@@ -42,7 +40,7 @@ describe('Entity', function(){
 
 
     describe('Entity Components', function(){
-        it.only('should add a component to an entity', function(done){
+        it('should add a component to an entity', function(done){
             var self = this, entity;
             async.waterfall([
                 function(cb){
@@ -52,9 +50,11 @@ describe('Entity', function(){
                     entity = pEntity;
                     entity.addComponent("/component/test/b", cb);
                 }
-            ], function(err, component,entity){
-                assert( odgn.entity.Component.isComponent(component) );
+            ], function(err, pComponent,entity){
+                assert( odgn.entity.Component.isComponent(pComponent) );
+                assert( !entity.hasComponent('/component/test/a') );
                 assert( entity.hasComponent('/component/test/b') );
+                assert.equal( entity.getComponent('/component/test/b').schemaId, '/component/test/b' );
                 done();
             });
         });
@@ -92,11 +92,11 @@ describe('Entity', function(){
                     entity = result;
                     self.registry.getEntitiesWithComponents('/component/tmpl/c', cb);
                 },
-                function(entities,cb){
-                    assert.equal( entities.length, 1 );
-                    assert.equal( entities[0].id, entity.id );
+                function( pEntities,pComponentDefs, cb){
+                    assert.equal( pEntities.length, 1 );
+                    assert.equal( pEntities[0].id, entity.id );
                     // retrieve all the components for this entity
-                    self.registry.getEntityComponents( entity, cb );
+                    self.registry.getEntityComponents( entity, {}, cb );
                 },
             ], function(err, components){
                 assert.equal( components[0].schemaId, '/component/tmpl/a' );

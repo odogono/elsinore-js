@@ -1,3 +1,7 @@
+/**
+ * Test Common Functions
+ */
+
 require('../index');
 
 async = require('async');
