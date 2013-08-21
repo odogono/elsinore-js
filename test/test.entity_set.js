@@ -47,7 +47,7 @@ describe('EntitySet', function(){
     });
 
 
-    it.only('should populate with existing components', function(done){
+    it('should populate with existing components', function(done){
         var self = this;
         var entityId;
         async.waterfall([
@@ -64,9 +64,6 @@ describe('EntitySet', function(){
             }
         ], function(err,entitySet){
             assert( entitySet.getEntity( entityId ) );
-            // print_ins( entitySet, 1 );
-            // assert.equal( entitySet.length, 1 );
-            // assert.equal( entitySet.at(0).id, entityId );
             done(); 
         });
     });
@@ -85,11 +82,11 @@ describe('EntitySet', function(){
             },
             function(entity,cb){
                 entityId = entity.id;
+                assert( !entitySet.getEntity(entityId) );
                 entity.addComponent('/component/es_a', cb);
             }
         ], function(err){
-            assert.equal( entitySet.length, 1 );
-            assert.equal( entitySet.at(0).id, entityId );
+            assert( entitySet.getEntity(entityId) );
             done();
         });
     });
