@@ -8,6 +8,9 @@ describe('Entity', function(){
         // passing a callback to create will initialise
         this.registry = odgn.entity.Registry.create({initialise:true}, function(err,registry){
             self.registry = registry;
+            // self.registry.on('component:register', function(componentDef){
+            //     log.debug('registry registered component: ' + componentDef.schema.id + '(' + componentDef.id + ')');
+            // });
             var components = JSON.parse( fs.readFileSync( Common.pathFixture('components.json') ) );
             self.registry.registerComponent( components, function(){
                 done();
@@ -50,11 +53,15 @@ describe('Entity', function(){
                 function(pEntity,cb){
                     entity = pEntity;
                     entity.addComponent("/component/test/b", cb);
+                },
+                function(pComponent,pEntity,cb){
+                    assert( odgn.entity.Component.isComponent(pComponent) );
+                    // note - getting a component direct from the entity is
+                    // not a great way to do it. better from an entityset
+                    pEntity.getComponent('/component/test/b', cb);
                 }
-            ], function(err, pComponent,entity){
-                assert( odgn.entity.Component.isComponent(pComponent) );
-                assert( !entity.hasComponent('/component/test/a') );
-                assert( entity.hasComponent('/component/test/b') );
+            ], function(err, pComponent,pEntity){
+                assert( pComponent );
                 done();
             });
         });
