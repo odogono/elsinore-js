@@ -38,5 +38,9 @@
             "added_at":{ "type":"string", "format":"date-time" },
             "executed_at":{ "type":"string", "format":"date-time" }
         }
+    },
+
+    {
+        "id":"/component/test/d"
     }
 ]

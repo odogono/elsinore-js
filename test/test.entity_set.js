@@ -3,19 +3,20 @@ var odgn = require('../index')();
 
 
 var createEntityAndEntitySet = function(options, callback){
-    var registry = options.registry, entity, entitySet;
+    var registry = options.registry;
+    var host = options.host || {};
     async.waterfall([
         function createEntitySet(cb){
             // create an entity set for all entities
             registry.createEntitySet( null, cb );
         },
         function createEntity(result, cb){
-            entitySet = result;
+            host.entitySet = result;
             registry.createEntity(cb);
         }
     ], function(err,result){
-        entity = result;
-        return callback(err,entity,entitySet);
+        host.entity = result;
+        return callback(err,host.entity,host.entitySet);
     });
 };
 
@@ -57,14 +58,31 @@ describe('EntitySet', function(){
             function(entity,cb){
                 entity.addComponent('/component/es_a', cb);
             },
-            function(entity,component,cb){
-                entityId = entity.id;
+            function(pEntity,pComponent,cb){
+                entityId = pEntity.id;
                 // create an entityset interested in a single component
                 self.registry.createEntitySet( {componentDefs:'/component/es_a'}, cb );
             }
         ], function(err,pEntitySet){
             assert( pEntitySet.hasEntity( entityId ) );
             done(); 
+        });
+    });
+
+    it('should by default contain all components', function(done){
+        var self = this, entitySet, entityId;
+        async.waterfall([
+            function(cb){
+                createEntityAndEntitySet({host:self, registry:self.registry}, cb);
+            },
+            function addComponentToEntity( pEntity, pEntitySet, cb ){
+                pEntity.addComponent(['/component/es_a', '/component/es_b','/component/es_c'], cb);
+            },
+        ], function retrieveComponentFromEntity(err,pComponents, pEntity){
+            assert( self.entitySet.getComponent( "/component/es_a", self.entity.id ) );
+            assert( self.entitySet.getComponent( "/component/es_b", self.entity.id ) );
+            assert( self.entitySet.getComponent( "/component/es_c", self.entity.id ) );
+            done();
         });
     });
 
@@ -95,7 +113,7 @@ describe('EntitySet', function(){
         var self = this, entitySet, entityId;
         async.waterfall([
             function(cb){
-                createEntityAndEntitySet({registry:self.registry}, cb);
+                createEntityAndEntitySet({host:self, registry:self.registry}, cb);
             },
             function addComponentToEntity( pEntity, pEntitySet, cb ){
                 entity = pEntity; entitySet = pEntitySet;
@@ -113,7 +131,7 @@ describe('EntitySet', function(){
         var self = this, entitySet, entity, entityId;
         async.waterfall([
             function(cb){
-                createEntityAndEntitySet({registry:self.registry}, cb);
+                createEntityAndEntitySet({host:self,registry:self.registry}, cb);
             },
             function addComponentToEntity( pEntity, pEntitySet, cb ){
                 entity = pEntity; entitySet = pEntitySet;
@@ -132,5 +150,33 @@ describe('EntitySet', function(){
         });
     });
 
-    // describe('ordering of components within an entityset');
+    it('should allow a subclass to decide component membership', function(done){
+        var self = this, entity, entitySet;
+        var MyEntitySet = odgn.entity.EntitySet.Model.extend({
+            isComponentOfInterest: function( component ){
+                return component.schemaId == '/component/es_b';
+            }
+        });
+
+        async.waterfall([
+            function createEntitySet(cb){
+                self.registry.createEntitySet( {Model:MyEntitySet}, cb );
+            },
+            function createEntity(pEntitySet, cb){
+                entitySet = pEntitySet;
+                self.registry.createEntity(cb);
+            },
+            function( pEntity, cb ){
+                entity = pEntity;
+                entity.addComponent(['/component/es_a', '/component/es_b', '/component/es_c'], cb);
+            }
+        ], function(err, pComponents, pEntity){
+            assert( !entitySet.getComponent( "/component/es_a", entity ) );
+            assert( entitySet.getComponent( "/component/es_b", entity ) );
+            assert( !entitySet.getComponent( "/component/es_c", entity ) );
+            done();
+        });
+        
+    });
+    
 });
