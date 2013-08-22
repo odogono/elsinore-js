@@ -1,0 +1,42 @@
+[
+    {
+        "id":"/component/es_a",
+        "properties":{
+            "name":{"type":"string"}
+        }
+    },
+    {
+        "id":"/component/es_b",
+        "properties":{
+            "is_active":{ "type":"boolean" }
+        }
+    },
+    {
+        "id":"/component/es_c",
+        "properties":{
+            "age":{ "type":"integer" }
+        }
+    },
+    
+    {
+        "id":"/component/test/a"
+    },
+    
+    {
+        "id":"/component/test/b"
+    },
+
+    {
+        "id":"/component/test/c"
+    },
+
+    {
+        "id":"/component/queue_item",
+        "description":"an item that exists in a queue",
+        "properties":{
+            "priority":{ "type":"integer" },
+            "added_at":{ "type":"string", "format":"date-time" },
+            "executed_at":{ "type":"string", "format":"date-time" }
+        }
+    }
+]

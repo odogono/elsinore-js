@@ -28,15 +28,15 @@ describe('EntitySet', function(){
             function createRegistry(cb){
                 odgn.entity.Registry.create({initialise:true}, cb);
             },
-            function registerComponents(registry,cb){
-                self.registry = registry;
+            function registerComponents(pRegistry,cb){
+                self.registry = pRegistry;
                 // self.registry.on('component:register', function(componentDef){
                 //     log.debug('registry registered component: ' + componentDef.schema.id + '(' + componentDef.id + ')');
                 // });
                 var components = JSON.parse( fs.readFileSync( Common.pathFixture('components.json') ) );
                 self.registry.registerComponent( components, cb ); 
             },
-            function registerEntityTemplate(components, cb){
+            function registerEntityTemplate(pComponents, cb){
                 var entityTemplates = JSON.parse( fs.readFileSync(Common.pathFixture('entity_templates.json')) );
                 self.registry.registerEntityTemplate( entityTemplates, cb );
             }
