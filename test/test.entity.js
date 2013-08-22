@@ -29,9 +29,10 @@ describe('Entity', function(){
             var self = this, registry = self.registry, eid;
             
             registry.createEntity( function(err, entity){
-                var oentity = registry.getEntity( entity.id );
-                assert.equal( oentity.id, entity.id );
-                done();
+                registry.hasEntity( entity.id, function(err,entityId){
+                    assert.equal( entity.id, entityId );
+                    done();
+                });
             });
         });
 
@@ -54,7 +55,6 @@ describe('Entity', function(){
                 assert( odgn.entity.Component.isComponent(pComponent) );
                 assert( !entity.hasComponent('/component/test/a') );
                 assert( entity.hasComponent('/component/test/b') );
-                assert.equal( entity.getComponent('/component/test/b').schemaId, '/component/test/b' );
                 done();
             });
         });

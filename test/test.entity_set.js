@@ -63,7 +63,7 @@ describe('EntitySet', function(){
                 self.registry.createEntitySet( '/component/es_a', {}, cb );
             }
         ], function(err,entitySet){
-            assert( entitySet.getEntity( entityId ) );
+            assert( entitySet.hasEntity( entityId ) );
             done(); 
         });
     });
@@ -82,11 +82,11 @@ describe('EntitySet', function(){
             },
             function(entity,cb){
                 entityId = entity.id;
-                assert( !entitySet.getEntity(entityId) );
+                assert( !entitySet.hasEntity(entityId) );
                 entity.addComponent('/component/es_a', cb);
             }
         ], function(err){
-            assert( entitySet.getEntity(entityId) );
+            assert( entitySet.hasEntity(entityId) );
             done();
         });
     });
