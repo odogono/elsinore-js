@@ -7,7 +7,7 @@ var createEntityAndEntitySet = function(options, callback){
     async.waterfall([
         function createEntitySet(cb){
             // create an entity set for all entities
-            registry.createEntitySet( null, {}, cb );
+            registry.createEntitySet( null, cb );
         },
         function createEntity(result, cb){
             entitySet = result;
@@ -60,10 +60,10 @@ describe('EntitySet', function(){
             function(entity,component,cb){
                 entityId = entity.id;
                 // create an entityset interested in a single component
-                self.registry.createEntitySet( '/component/es_a', {}, cb );
+                self.registry.createEntitySet( {componentDefs:'/component/es_a'}, cb );
             }
-        ], function(err,entitySet){
-            assert( entitySet.hasEntity( entityId ) );
+        ], function(err,pEntitySet){
+            assert( pEntitySet.hasEntity( entityId ) );
             done(); 
         });
     });
@@ -73,7 +73,7 @@ describe('EntitySet', function(){
         var entitySet, entityId;
         async.waterfall([
             function(cb){
-                self.registry.createEntitySet( '/component/es_a', {}, cb );
+                self.registry.createEntitySet( {componentDefs:'/component/es_a'}, cb );
             },
             function(result,cb){
                 entitySet = result;
