@@ -12,7 +12,7 @@ describe('Entity', function(){
             //     log.debug('registry registered component: ' + componentDef.schema.id + '(' + componentDef.id + ')');
             // });
             var components = JSON.parse( fs.readFileSync( Common.pathFixture('components.json') ) );
-            self.registry.registerComponent( components, function(){
+            self.registry.registerComponent( components, null, function(){
                 done();
             });
         });
@@ -87,7 +87,7 @@ describe('Entity', function(){
 
             async.waterfall([
                 function(cb){
-                    self.registry.registerComponent([ "/component/tmpl/a", "/component/tmpl/b", "/component/tmpl/c" ], cb);
+                    self.registry.registerComponent([ "/component/tmpl/a", "/component/tmpl/b", "/component/tmpl/c" ], null, cb);
                 },
                 function(components, cb){
                     self.registry.registerEntityTemplate( entityTemplate, cb);

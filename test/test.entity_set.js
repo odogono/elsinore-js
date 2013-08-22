@@ -34,7 +34,7 @@ describe('EntitySet', function(){
                 //     log.debug('registry registered component: ' + componentDef.schema.id + '(' + componentDef.id + ')');
                 // });
                 var components = JSON.parse( fs.readFileSync( Common.pathFixture('components.json') ) );
-                self.registry.registerComponent( components, cb ); 
+                self.registry.registerComponent( components, null, cb ); 
             },
             function registerEntityTemplate(pComponents, cb){
                 var entityTemplates = JSON.parse( fs.readFileSync(Common.pathFixture('entity_templates.json')) );
