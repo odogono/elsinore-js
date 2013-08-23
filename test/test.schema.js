@@ -100,4 +100,44 @@ describe('Schema', function(){
             Schema.getDefaultValues( schemaA.id ),
             {count:null, name:'unknown'} );
     });
+
+    describe('resolving', function(){
+
+        it('should resolve an integer', function(){
+            assert.strictEqual( Schema.resolveProperty( "209", {"type":"integer"} ), 209 );
+        });
+        it('should resolve a number', function(){
+            assert.strictEqual( Schema.resolveProperty( "1.34", {"type":"number"} ), 1.34 );
+        });
+
+        it('should resolve a string', function(){
+            assert.strictEqual( Schema.resolveProperty( 209, {"type":"string"} ), "209" );
+        });
+
+        it('should resolve an object', function(){
+            assert.deepEqual( Schema.resolveProperty( '{ "msg":"hello", "parts":[3,1,12] }', {"type":"object"} ), { "msg":"hello", "parts":[3,1,12] } );
+        });
+
+        it('should resolve a boolean', function(){
+            assert.strictEqual( Schema.resolveProperty( "true", {"type":"boolean"} ), true );
+            assert.strictEqual( Schema.resolveProperty( "yes", {"type":"boolean"} ), true );
+            assert.strictEqual( Schema.resolveProperty( "1", {"type":"boolean"} ), true );
+            assert.strictEqual( Schema.resolveProperty( "0", {"type":"boolean"} ), false );
+            assert.strictEqual( Schema.resolveProperty( "no", {"type":"boolean"} ), false );
+            assert.strictEqual( Schema.resolveProperty( "false", {"type":"boolean"} ), false );
+        });
+
+        // it('should resolve a reference to an model', function(){
+        //     this.registry.register({
+        //         "id":"/model/cmd",
+        //         "type":"object",
+        //         "properties":{
+        //             "execute_time":{ "type":"integer" }
+        //         }
+        //     });
+        //     var result = Schema.resolveProperty( {"execute_time":"1234"}, {"$ref":"/model/cmd"} );
+        //     assert( result instanceof odgn.entity.CmdModelDef.Model );
+        //     assert.strictEqual( result.get("execute_time"), 1234 );
+        // });
+    });
 });
