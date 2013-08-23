@@ -47,6 +47,7 @@ describe('EntitySystem', function(){
             var SysB = EntitySystem.Model.extend({
                 update: function( deltaTime, startTime, currentTime, options, callback ){
                     isExecuted = true;
+                    return callback();
                 }
             });
             this.registry.addSystem( {Model:SysA,id:'/system/test/a'} );
@@ -61,16 +62,40 @@ describe('EntitySystem', function(){
             var SysB = EntitySystem.Model.extend({
                 update: function( deltaTime, startTime, currentTime, options, callback ){
                     isExecuted = true;
+                    return callback();
                 }
             });
 
             this.registry.addSystem( {Model:SysB,id:'/system/test/b'}, {update:false} );
-            this.registry.listenTo( this.registry, 'system:update:finish', function(system,registry){
+            this.registry.update(function(err){
                 assert(!isExecuted);
                 done();
             });
-            this.registry.update();
         });
+
+        it('should execute systems serially', function(done){
+            var isExecuted = false;
+            var SysA = EntitySystem.Model.extend({
+                update: function( deltaTime, startTime, currentTime, options, callback ){
+                    return async.nextTick( function(){
+                        isExecuted = true;
+                        return callback();
+                    });
+                }
+            });
+            var SysB = EntitySystem.Model.extend({
+                update: function( deltaTime, startTime, currentTime, options, callback ){
+                    return callback();
+                }
+            });
+            this.registry.addSystem( {Model:SysA,id:'/system/test/a'} );
+            this.registry.addSystem( {Model:SysB,id:'/system/test/b'} );
+
+            this.registry.update(function(err){
+                assert(isExecuted);
+                done();
+            });
+        })
 
     });
 });
