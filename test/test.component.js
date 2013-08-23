@@ -21,7 +21,7 @@ describe('Component', function(){
         // - it can be looked up by its schema id
         // - it will receive a global id that can be used to reference it
         // - it may be persisted in the attached datastore
-        this.registry.registerComponent(schema, function(err, componentDef){
+        this.registry.registerComponent(schema, null, function(err, componentDef){
             // Def can be retrieved by schema id. schema is attached to def. 
             assert.equal( self.registry.getComponentDef('/component/example').schema, componentDef.schema );
 
@@ -42,7 +42,7 @@ describe('Component', function(){
             function(cb){
                 self.registry.registerComponent(
                     [{"id":"/component/test/ident_a"},{"id":"/component/test/ident_b"}], 
-                    cb);
+                    null, cb);
             },
             function(cDefs,cb){
                 componentDefs = cDefs;
@@ -63,7 +63,7 @@ describe('Component', function(){
                 "name":{ "type":"string" },
                 "count":{ "type":"integer" }
             }
-        }, function(err,cDef){
+        }, null, function(err,cDef){
             self.registry.createComponent("/component/data", {"name":"diamond", "count":23}, function(err,com){
                 assert.equal( com.get("name"), "diamond" );
                 assert.equal( com.get("count"), 23 );
@@ -86,7 +86,7 @@ describe('Component', function(){
         async.waterfall([
             // register two components
             function(cb){
-                self.registry.registerComponent( schema, cb );
+                self.registry.registerComponent( schema, null, cb );
             },
             function(def, cb){
                 self.registry.createComponent( def, cb );
@@ -104,7 +104,7 @@ describe('Component', function(){
         async.waterfall([
             // register two components
             function(cb){
-                self.registry.registerComponent( [{"id":"/component/example_a"}, {"id":"/component/example_b"}], cb );
+                self.registry.registerComponent( [{"id":"/component/example_a"}, {"id":"/component/example_b"}], null, cb );
             },
             // create 10 example_a components
             function(defs, cb){
