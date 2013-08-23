@@ -10,4 +10,22 @@ describe('EntitySystem', function(){
             done();
         });
     });
+
+    it('should add a system to the registry', function(done){
+        var SystemModel = odgn.entity.EntitySystem.Model.extend({});
+        this.registry.listenTo( this.registry, 'system:add', function(system,registry){
+            done();
+        });
+        this.registry.addSystem( SystemModel );
+    });
+
+    it('should add a system to the registry which is then updated', function(done){
+        var SystemModel = odgn.entity.EntitySystem.Model.extend({
+            update: function( deltaTime, startTime, currentTime, options, callback ){
+                done();
+            },
+        });
+        this.registry.addSystem( {Model:SystemModel,id:'/system/test'} );
+        this.registry.update();
+    });
 });
