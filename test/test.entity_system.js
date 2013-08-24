@@ -14,7 +14,12 @@ describe('EntitySystem', function(){
 
     describe('Registration', function(){
 
-
+        it('should recognise a system as a backbone model', function(){
+            var SystemModel = EntitySystem.Model.extend({});
+            var systemInstance = new SystemModel();
+            assert( systemInstance instanceof Backbone.Model );
+            // print_ins( systemInstance,2 );
+        });
 
         it('should add a system to the registry', function(done){
             var SystemModel = EntitySystem.Model.extend({});

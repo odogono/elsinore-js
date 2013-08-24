@@ -47,7 +47,7 @@ Common.readFixture = function( subPath, parseJson ){
 }
 
 root.print_ins = function(arg,depth,showHidden,colors){
-    if( _.isUndefined(depth) ) depth = 5;
+    if( _.isUndefined(depth) ) depth = 1;
     var stack = __stack[1];
     var fnName = stack.getFunctionName();
     var line = stack.getLineNumber();
