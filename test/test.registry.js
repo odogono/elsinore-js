@@ -7,7 +7,7 @@ describe('EntityRegistry', function(){
         var self = this;
         async.waterfall([
             function createRegistry(cb){
-                odgn.entity.Registry.create({initialise:true}, cb);
+                odgn.entity.Registry.create({initialize:true}, cb);
             },
         ], function(err, pRegistry){
             if( err ) throw err;

@@ -7,7 +7,7 @@ var schema = require('../lib/schema.pg');
 describe('Schema.pg', function(){
     beforeEach(function(){
         // reset schema
-        schema.initialise();
+        schema.initialize();
     });
 
 

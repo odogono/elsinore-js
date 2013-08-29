@@ -11,13 +11,13 @@ var schema = require('../lib/schema');
 describe('Schema', function(){
     beforeEach(function(){
         // reset schema
-        schema.initialise();
+        schema.initialize();
     });
 
     it('should register an entity', function(){
 
         // initialise with a default namespace
-        schema.initialise();
+        schema.initialize();
 
         // schema.register({
         //     id:"http://entity.odogono.com",

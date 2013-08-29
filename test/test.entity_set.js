@@ -27,7 +27,7 @@ describe('EntitySet', function(){
         var self = this;
         async.waterfall([
             function createRegistry(cb){
-                odgn.entity.Registry.create({initialise:true}, cb);
+                odgn.entity.Registry.create({initialize:true}, cb);
             },
             function registerComponents(pRegistry,cb){
                 self.registry = pRegistry;
