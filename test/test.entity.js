@@ -90,7 +90,7 @@ describe('Entity', function(){
                     self.registry.registerComponent([ "/component/tmpl/a", "/component/tmpl/b", "/component/tmpl/c" ], null, cb);
                 },
                 function(components, cb){
-                    self.registry.registerEntityTemplate( entityTemplate, cb);
+                    self.registry.registerEntityTemplate( entityTemplate, null, cb);
                 },
                 function( defs, cb ){
                     self.registry.createEntityFromTemplate( '/entity/template/example', cb );

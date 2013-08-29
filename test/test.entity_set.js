@@ -39,7 +39,7 @@ describe('EntitySet', function(){
             },
             function registerEntityTemplate(pComponents, cb){
                 var entityTemplates = JSON.parse( fs.readFileSync(Common.pathFixture('entity_templates.json')) );
-                self.registry.registerEntityTemplate( entityTemplates, cb );
+                self.registry.registerEntityTemplate( entityTemplates, null, cb );
             }
         ], function(err){
             if( err ) throw err;
@@ -47,7 +47,7 @@ describe('EntitySet', function(){
         });
     });
 
-
+    // TODO: convert from integration test
     it('should populate with existing components', function(done){
         var self = this;
         var entityId;
@@ -69,6 +69,7 @@ describe('EntitySet', function(){
         });
     });
 
+    // TODO: convert from integration test
     it('should by default contain all components', function(done){
         var self = this, entitySet, entityId;
         async.waterfall([
@@ -86,6 +87,7 @@ describe('EntitySet', function(){
         });
     });
 
+    // TODO: convert from integration test
     it('should keep updated with existing components', function(done){
         var self = this;
         var entitySet, entityId;
@@ -109,6 +111,7 @@ describe('EntitySet', function(){
         });
     });
 
+    // TODO: convert from integration test
     it('should return a component for an entity', function(done){
         var self = this, entitySet, entityId;
         async.waterfall([
@@ -127,6 +130,7 @@ describe('EntitySet', function(){
         });
     });
 
+    // TODO: convert from integration test
     it('should handle removed components correctly', function(done){
         var self = this, entitySet, entity, entityId;
         async.waterfall([
@@ -150,6 +154,7 @@ describe('EntitySet', function(){
         });
     });
 
+    // TODO: convert from integration test
     it('should allow a subclass to decide component membership', function(done){
         var self = this, entity, entitySet;
         var MyEntitySet = odgn.entity.EntitySet.Model.extend({
@@ -178,5 +183,55 @@ describe('EntitySet', function(){
         });
         
     });
-    
+
+    // TODO: convert from integration test
+    it('should iterate over entities using forEach', function(done){
+        var self = this, entity, entitySet;
+        async.waterfall([
+            function createEntitySet(cb){
+                self.registry.createEntitySet( null, cb );
+            },
+            function createFiveEntities(pEntitySet, cb){
+                entitySet = pEntitySet;
+                async.times(5, function(n,next){
+                    self.registry.createEntityFromTemplate("/entity_template/simple",next);
+                }, cb);
+            }
+        ], function(err, pEntities){
+            var last = -1;
+            entitySet.forEach( function(entity){
+                assert( entity.id > last );
+                last = entity.id;
+            });
+            assert( last > -1 );
+            done();
+        });
+    });
+
+    it.only('should iterate over entities using forEach async', function(done){
+        var self = this, entity, entitySet;
+        async.waterfall([
+            function createEntitySet(cb){
+                self.registry.createEntitySet( null, cb );
+            },
+            function createFiveEntities(pEntitySet, cb){
+                entitySet = pEntitySet;
+                async.times(5, function(n,next){
+                    self.registry.createEntityFromTemplate("/entity_template/simple",next);
+                }, cb);
+            }
+        ], function(err, pEntities){
+            var last = -1;
+            entitySet.forEach( function(entity,entitySet,cb){
+                assert( entity.id > last );
+                last = entity.id;
+                return cb();
+            }, function(err){
+                assert( last > -1 );
+                done();    
+            });
+        });
+    });
+
+
 });
