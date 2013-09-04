@@ -34,4 +34,25 @@ describe('EntityRegistry', function(){
             
         });
     });
+
+
+    describe('Destroying', function(){
+        it('should destroy an entity', function(done){
+            var evtSpy = sinon.spy();
+            var storageStub = sinon.stub( this.registry.storage, 'destroyEntity', function(entity,cb){
+                return cb(null,entity);
+            });
+
+            this.registry.bind('entity:destroy', evtSpy );
+
+            this.registry.destroyEntity( 101, function(err,entity){
+                assert.equal( evtSpy.getCall(0).args[0].id, 101 );
+                assert( Entity.isEntity(entity) );
+                assert.equal( entity.id, 101 );
+                assert( storageStub.called );
+                assert( evtSpy.called );
+                done();
+            });
+        });
+    });
 });

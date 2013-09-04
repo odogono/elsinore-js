@@ -9,7 +9,7 @@ assert = require('assert');
 fs = require('fs');
 path = require('path');
 util = require('util');
-
+sinon = require('sinon');
 require('underscore');
 Backbone = require('backbone');
 // _.str = require( 'underscore.string' );
