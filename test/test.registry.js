@@ -38,19 +38,34 @@ describe('EntityRegistry', function(){
 
     describe('Destroying', function(){
         it('should destroy an entity', function(done){
-            var evtSpy = sinon.spy();
+            var destroyEvent = sinon.spy();
             var storageStub = sinon.stub( this.registry.storage, 'destroyEntity', function(entity,cb){
                 return cb(null,entity);
             });
 
-            this.registry.bind('entity:destroy', evtSpy );
+            this.registry.bind('entity:destroy', destroyEvent );
 
             this.registry.destroyEntity( 101, function(err,entity){
-                assert.equal( evtSpy.getCall(0).args[0].id, 101 );
+                assert.equal( destroyEvent.getCall(0).args[0].id, 101 );
                 assert( Entity.isEntity(entity) );
                 assert.equal( entity.id, 101 );
-                assert( storageStub.called );
-                assert( evtSpy.called );
+                sinon.assert.calledOnce(storageStub);
+                sinon.assert.calledOnce(destroyEvent);
+                done();
+            });
+        });
+
+        it('destroys an entity with a component', function(done){
+            var self = this;
+
+            async.waterfall([
+                function createEntity(cb){
+                    self.registry.createEntityFromTemplate("/entity_template/simple",next);
+                },
+                function destroyEntity(pEntity, cb){
+                    self.registry.destroyEntity( entity, cb );
+                }
+            ], function(err,results){
                 done();
             });
         });

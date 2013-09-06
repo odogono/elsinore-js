@@ -1,12 +1,12 @@
 require('./common');
-var odgn = require('../index')();
+require('../index');
 
 
 describe('Entity', function(){
     beforeEach( function(done){
         var self = this;
         // passing a callback to create will initialise
-        this.registry = odgn.entity.Registry.create({initialize:true}, function(err,registry){
+        this.registry = odgnEntity.Registry.create({initialize:true}, function(err,registry){
             self.registry = registry;
             // self.registry.on('component:register', function(componentDef){
             //     log.debug('registry registered component: ' + componentDef.schema.id + '(' + componentDef.id + ')');
@@ -55,7 +55,7 @@ describe('Entity', function(){
                     entity.addComponent("/component/test/b", cb);
                 },
                 function(pComponent,pEntity,cb){
-                    assert( odgn.entity.Component.isComponent(pComponent) );
+                    assert( odgnEntity.Component.isComponent(pComponent) );
                     // note - getting a component direct from the entity is
                     // not a great way to do it. better from an entityset
                     pEntity.getComponent('/component/test/b', cb);

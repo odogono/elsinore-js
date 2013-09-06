@@ -6,11 +6,11 @@
   "dependencies": {
     "async": "~0.2.9",
     "backbone": "~1.0.0",
+    "bit-array": "~0.2.2",
     "tv4": "~1.0.7",
     "underscore": "~1.5.1",
     "underscore.string": "~2.3.3",
-    "jsonpointer": "~1.1.0",
-    "underscore-contrib": "~0.1.4"
+    "jsonpointer": "~1.1.0"
   },
   "devDependencies": {
     "grunt": "~0.4.1",
