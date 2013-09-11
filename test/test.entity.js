@@ -112,4 +112,20 @@ describe('Entity', function(){
             });
         });
     });
+
+    describe("Events", function(){
+        it('should forward an event to the registry', function(done){
+            var self = this, entityId;
+            self.registry.on( 'test_event', function(entity, number){
+                assert.equal( entity.id, entityId );
+                assert.equal( number, 66 );
+                done();
+            });
+
+            self.registry.createEntity(function(err,entity){
+                entityId = entity.id;
+                entity.trigger('test_event', 66 );
+            });        
+        });
+    });
 });

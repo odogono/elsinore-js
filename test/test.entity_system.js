@@ -103,6 +103,15 @@ describe('EntitySystem', function(){
     });
 
     describe('events', function(){
-
+        it('should publish an event via an entity', function(){
+            // var SysA = EntitySystem.Model.extend({
+            //     update: function( deltaTime, startTime, currentTime, options, callback ){
+            //         return async.nextTick( function(){
+            //             isExecuted = true;
+            //             return callback();
+            //         });
+            //     }
+            // });
+        })
     });
 });
