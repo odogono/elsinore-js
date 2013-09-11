@@ -1,5 +1,4 @@
 require('./common');
-var odgn = require('../index')();
 
 
 var createEntityAndEntitySet = function(options, callback){
@@ -27,7 +26,7 @@ describe('EntitySet', function(){
         var self = this;
         async.waterfall([
             function createRegistry(cb){
-                odgn.entity.Registry.create({initialize:true}, cb);
+                odgnEntity.Registry.create({initialize:true}, cb);
             },
             function registerComponents(pRegistry,cb){
                 self.registry = pRegistry;
@@ -157,7 +156,7 @@ describe('EntitySet', function(){
     // TODO: convert from integration test
     it('should allow a subclass to decide component membership', function(done){
         var self = this, entity, entitySet;
-        var MyEntitySet = odgn.entity.EntitySet.Model.extend({
+        var MyEntitySet = odgnEntity.EntitySet.Model.extend({
             isComponentOfInterest: function( component ){
                 return component.schemaId == '/component/es_b';
             }

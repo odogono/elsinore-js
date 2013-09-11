@@ -1,5 +1,4 @@
 require('./common');
-var odgn = require('../index')();
 
 describe('EntityRegistry', function(){
 
@@ -7,7 +6,7 @@ describe('EntityRegistry', function(){
         var self = this;
         async.waterfall([
             function createRegistry(cb){
-                odgn.entity.Registry.create({initialize:true}, cb);
+                odgnEntity.Registry.create({initialize:true}, cb);
             },
         ], function(err, pRegistry){
             if( err ) throw err;
@@ -54,6 +53,7 @@ describe('EntityRegistry', function(){
                 done();
             });
         });
+
 
         it('destroys an entity with a component', function(done){
             var self = this;

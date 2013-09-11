@@ -1,6 +1,5 @@
 require('./common');
-var odgn = require('../index')();
-var Schema = odgn.entity.Schema;
+var Schema = odgnEntity.Schema;
 
 describe('Schema', function(){
     beforeEach( function(){
