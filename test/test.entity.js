@@ -22,6 +22,7 @@ describe('Entity', function(){
         it('should create a new entity with an id', function(done){
             var self = this;
             self.registry.createEntity(function(err,entity){
+                // print_ins( entity.toJSON() );
                 assert( entity.id );
                 done();
             });
