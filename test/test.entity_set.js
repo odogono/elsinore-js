@@ -7,7 +7,7 @@ var createEntityAndEntitySet = function(options, callback){
     async.waterfall([
         function createEntitySet(cb){
             // create an entity set for all entities
-            registry.createEntitySet( null, cb );
+            registry.createEntitySet( null, null, cb );
         },
         function createEntity(result, cb){
             host.entitySet = result;
@@ -60,7 +60,7 @@ describe('EntitySet', function(){
             function(pEntity,pComponent,cb){
                 entityId = pEntity.id;
                 // create an entityset interested in a single component
-                self.registry.createEntitySet( {componentDefs:'/component/es_a'}, cb );
+                self.registry.createEntitySet( null, {componentDefs:'/component/es_a'}, cb );
             }
         ], function(err,pEntitySet){
             assert( pEntitySet.hasEntity( entityId ) );
@@ -92,7 +92,7 @@ describe('EntitySet', function(){
         var entitySet, entityId;
         async.waterfall([
             function(cb){
-                self.registry.createEntitySet( {componentDefs:'/component/es_a'}, cb );
+                self.registry.createEntitySet( null, {componentDefs:'/component/es_a'}, cb );
             },
             function(result,cb){
                 entitySet = result;
@@ -164,7 +164,7 @@ describe('EntitySet', function(){
 
         async.waterfall([
             function createEntitySet(cb){
-                self.registry.createEntitySet( {Model:MyEntitySet}, cb );
+                self.registry.createEntitySet( null, {Model:MyEntitySet}, cb );
             },
             function createEntity(pEntitySet, cb){
                 entitySet = pEntitySet;
@@ -188,7 +188,7 @@ describe('EntitySet', function(){
         var self = this, entity, entitySet;
         async.waterfall([
             function createEntitySet(cb){
-                self.registry.createEntitySet( null, cb );
+                self.registry.createEntitySet( null, null, cb );
             },
             function createFiveEntities(pEntitySet, cb){
                 entitySet = pEntitySet;
@@ -211,7 +211,7 @@ describe('EntitySet', function(){
         var self = this, entity, entitySet;
         async.waterfall([
             function createEntitySet(cb){
-                self.registry.createEntitySet( null, cb );
+                self.registry.createEntitySet( null, null, cb );
             },
             function createFiveEntities(pEntitySet, cb){
                 entitySet = pEntitySet;
