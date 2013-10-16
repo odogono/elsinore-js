@@ -5,7 +5,7 @@
   "author": "Alexander Veenendaal <alex@opendoorgonorth.com> http://opendoorgonorth.com",
   "dependencies": {
     "async": "~0.2.9",
-    "backbone": "~1.0.0",
+    "backbone":"~1.1.0",
     "bit-array": "~0.2.2",
     "tv4": "~1.0.7",
     "underscore": "~1.5.1",
