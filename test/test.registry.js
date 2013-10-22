@@ -44,7 +44,7 @@ describe('EntityRegistry', function(){
 
             this.registry.bind('entity:destroy', destroyEvent );
 
-            this.registry.destroyEntity( 101, function(err,entity){
+            this.registry.destroyEntity( 101, null, function(err,entity){
                 assert.equal( destroyEvent.getCall(0).args[0].id, 101 );
                 assert( Entity.isEntity(entity) );
                 assert.equal( entity.id, 101 );
