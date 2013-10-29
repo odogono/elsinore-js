@@ -1,6 +1,6 @@
 {
   "name": "odgn-entity",
-  "version": "0.0.1",
+  "version": "0.1.2",
   "main": "index.js",
   "author": "Alexander Veenendaal <alex@opendoorgonorth.com> http://opendoorgonorth.com",
   "dependencies": {
