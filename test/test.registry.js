@@ -15,7 +15,11 @@ describe('EntityRegistry', function(){
         });
     });
 
+
     describe('Registering Components', function(){
+
+        it('should reject a non component def instance');
+
         it('should return a component def from a schema id', function(){
             var componentDef = this.registry.registerComponent({"id":"/component/tr/a"} );
             var result = this.registry.getComponentDef('/component/tr/a');

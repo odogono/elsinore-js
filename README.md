@@ -1,4 +1,4 @@
 
-A Backbone.js based Entity system with sync support for various databases.
+A node.js Entity Component system.
 
-Nothing to worth seeing yet - move along.
+Nothing worth seeing yet - move along.

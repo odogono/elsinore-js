@@ -1,11 +1,14 @@
 {
   "name": "odgn-entity",
-  "version": "0.1.3",
+  "version": "0.1.6",
   "main": "index.js",
-  "author": "Alexander Veenendaal <alex@opendoorgonorth.com> http://opendoorgonorth.com",
+  "author": {
+    "name": "Alexander Veenendaal",
+    "email": "alex@opendoorgonorth.com"
+  },
   "dependencies": {
     "async": "~0.2.9",
-    "backbone":"~1.1.0",
+    "backbone": "~1.1.0",
     "bit-array": "~0.2.2",
     "tv4": "~1.0.7",
     "underscore": "~1.5.1",
@@ -19,7 +22,7 @@
     "grunt-contrib-watch": "~0.3.1",
     "grunt-jsbeautifier": "~0.1.8",
     "grunt-simple-mocha": "~0.4.0",
-    "mocha": "~1.12.1",
+    "mocha": "~1.14.0",
     "sinon": "~1.7.3"
   },
   "directories": {
@@ -32,5 +35,14 @@
   "scripts": {
     "name": "mocha",
     "config": ""
-  }
+  },
+  "readme": "\nA node.js Entity Component system.\n\nNothing worth seeing yet - move along.",
+  "readmeFilename": "README.md",
+  "description": "A node.js Entity Component system.",
+  "bugs": {
+    "url": "https://github.com/odogono/odgn-entity/issues"
+  },
+  "homepage": "https://github.com/odogono/odgn-entity",
+  "_id": "odgn-entity@0.1.6",
+  "_from": "odgn-entity@0.1.x"
 }
