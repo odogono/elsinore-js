@@ -1,7 +1,30 @@
 require('./common');
 
+var Registry = odgnEntity.Registry;
+var MemoryStorage = odgnEntity.storage.MemoryStorage;
+
 describe('EntityRegistry', function(){
 
+    describe('creating a registry', function(){
+
+        it('create should return a promise', function(){
+            assert( Promise.is( Registry.create() ) );
+        });
+
+        it('should return a registry instance', function(){
+            Registry.create().should.eventually.be.an("object");
+        });
+
+        it('should use memory storage by default', function(){
+            var spy = sinon.spy( Registry.prototype, 'useStorage' );
+            Registry.create().then( function(registry){
+                assert(spy.calledWith( MemoryStorage, {} ));
+                Registry.prototype.useStorage.restore();
+            });
+        });
+    });
+
+    /*
     beforeEach( function(done){
         var self = this;
         async.waterfall([
@@ -73,5 +96,5 @@ describe('EntityRegistry', function(){
                 done();
             });
         });
-    });
+    });//*/
 });

@@ -1,29 +1,28 @@
 {
   "name": "odgn-entity",
-  "version": "0.1.6",
+  "version": "0.2.1",
   "main": "index.js",
   "author": {
     "name": "Alexander Veenendaal",
     "email": "alex@opendoorgonorth.com"
   },
   "dependencies": {
-    "async": "~0.2.9",
     "backbone": "~1.1.0",
     "bit-array": "~0.2.2",
-    "tv4": "~1.0.7",
-    "underscore": "~1.5.1",
-    "underscore.string": "~2.3.3",
-    "jsonpointer": "~1.1.0"
+    "bluebird": "~1.0.0",
+    "jsonpointer": "~1.1.0",
+    "tv4": "~1.0.12",
+    "underscore": "~1.5.2",
+    "underscore.string": "~2.3.3"
   },
   "devDependencies": {
-    "grunt": "~0.4.1",
-    "grunt-contrib-clean": "~0.4.1",
-    "grunt-contrib-jshint": "~0.3.0",
-    "grunt-contrib-watch": "~0.3.1",
-    "grunt-jsbeautifier": "~0.1.8",
-    "grunt-simple-mocha": "~0.4.0",
-    "mocha": "~1.14.0",
-    "sinon": "~1.7.3"
+    "mocha": "~1.17.0",
+    "sinon": "~1.7.3",
+    "gulp-util": "~2.2.13",
+    "gulp": "~3.5.0",
+    "mocha-as-promised": "~2.0.0",
+    "chai": "~1.8.1",
+    "chai-as-promised": "~4.1.0"
   },
   "directories": {
     "lib": "lib"
@@ -43,6 +42,6 @@
     "url": "https://github.com/odogono/odgn-entity/issues"
   },
   "homepage": "https://github.com/odogono/odgn-entity",
-  "_id": "odgn-entity@0.1.6",
-  "_from": "odgn-entity@0.1.x"
+  "_id": "odgn-entity@0.2.1",
+  "_from": "odgn-entity@0.2.x"
 }

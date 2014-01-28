@@ -4,7 +4,6 @@
 
 require('../index');
 
-async = require('async');
 assert = require('assert');
 fs = require('fs');
 path = require('path');
@@ -12,15 +11,17 @@ util = require('util');
 sinon = require('sinon');
 require('underscore');
 Backbone = require('backbone');
-// _.str = require( 'underscore.string' );
-// _.mixin(_.str.exports());
-// 
-// winston = require('winston');
-// log = new (winston.Logger)({
-//     transports:[
-//         new (winston.transports.Console)( {colorize:true,prettyPrint:false,timestamp:true, silent:false} )
-//     ]
-// });
+Promise = require('bluebird');
+
+require("mocha-as-promised")();
+
+chai = require("chai");
+chaiAsPromised = require("chai-as-promised");
+
+chai.use(chaiAsPromised);
+
+// expect = chai.expect;
+chai.should();
 
 var rootDir = path.join( path.dirname(__filename), '../' );
 
