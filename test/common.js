@@ -2,7 +2,7 @@
  * Test Common Functions
  */
 
-require('../index');
+Elsinore = require('../index');
 
 assert = require('assert');
 fs = require('fs');

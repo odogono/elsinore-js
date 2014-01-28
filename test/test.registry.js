@@ -1,7 +1,7 @@
 require('./common');
 
-var Registry = odgnEntity.Registry;
-var MemoryStorage = odgnEntity.storage.MemoryStorage;
+var Registry = Elsinore.Registry;
+var MemoryStorage = Elsinore.storage.MemoryStorage;
 
 describe('EntityRegistry', function(){
 
@@ -22,6 +22,10 @@ describe('EntityRegistry', function(){
                 Registry.prototype.useStorage.restore();
             });
         });
+    });
+
+    describe('creating an entity', function(){
+        
     });
 
     /*
