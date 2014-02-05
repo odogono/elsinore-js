@@ -9,7 +9,7 @@ fs = require('fs');
 path = require('path');
 util = require('util');
 sinon = require('sinon');
-require('underscore');
+var _ = require('underscore');
 Backbone = require('backbone');
 Promise = require('bluebird');
 
