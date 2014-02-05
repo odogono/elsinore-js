@@ -24,8 +24,12 @@ describe('EntityRegistry', function(){
         });
     });
 
-    describe('creating an entity', function(){
-        
+    describe.skip('creating an entity', function(){
+        it('should return an entity instance', function(){
+            Registry.create().then( function(registry){
+
+            });
+        });
     });
 
     /*

@@ -45,7 +45,27 @@ describe('MemoryStorage', function(){
                 entity.should.be.an('object');
                 expect( entity.id ).to.equal( 1 );
             });
+        });
 
+        it('should retrieve an entity', function(){
+            var entity = {}, storage, entityId;
+
+            var registryMock = { toEntity:function(e){
+                return {id:e};
+            }};
+
+            MemoryStorage.create(null, {initialize:true})
+            .then( function(store){
+                storage = store;
+                storage.registry = registryMock;
+                return storage.createEntity(entity);
+            }).then( function(entity){
+                entityId = entity.id;
+                return storage.retrieveEntity( entityId );
+            }).then( function(entity){
+                entity.should.be.an('object');
+                expect( entity.id ).to.equal( entityId );
+            });
         });
     });
 });
