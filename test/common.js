@@ -17,14 +17,11 @@ require("mocha-as-promised")();
 
 chai = require("chai");
 chaiAsPromised = require("chai-as-promised");
-
 chai.use(chaiAsPromised);
-
-// expect = chai.expect;
+expect = chai.expect;
 chai.should();
 
 var rootDir = path.join( path.dirname(__filename), '../' );
-
 
 Common = {
     paths:{ 
