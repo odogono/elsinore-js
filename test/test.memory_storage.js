@@ -32,7 +32,6 @@ describe('MemoryStorage', function(){
         });
     });
 
-
     describe('creating an entity', function(){
         
         it('should create an entity with an id', function(){
@@ -67,5 +66,63 @@ describe('MemoryStorage', function(){
                 expect( entity.id ).to.equal( entityId );
             });
         });
+
+        it('should destroy an entity', function(){
+            var entity = {}, storage, entityId;
+            MemoryStorage.create(null, {initialize:true})
+            .then( function(store){
+                storage = store;
+                return storage.createEntity(entity);
+            }).then( function(entity){
+                entityId = entity.id;
+                return storage.destroyEntity( entityId );
+            });
+        });
+    });
+
+    describe('retrieving entity', function(){
+        before( function(){
+            var self = this;
+            var toEntity = sinon.stub(MemoryStorage.prototype, 'toEntity');
+            toEntity.withArgs(1).returns( {id:1} );
+            toEntity.withArgs(2).returns( {id:2} );
+
+            // create a memory store with a single entity
+            return MemoryStorage.create( null, {initialize:true} )
+                .then( function(storage){
+                    self.storage = storage;
+                    return storage.createEntity({id:1});
+                });
+        });
+
+        after( function(){
+            MemoryStorage.prototype.toEntity.restore();
+        });
+
+        it('should determine whether an entity exists', function(){
+            return this.storage.hasEntity( 1 ).should.eventually.equal(true);
+        });
+
+        it('should report a missing entity', function(){
+            return this.storage.hasEntity( 2 ).should.eventually.equal(false);
+        });
+
+        it('should retrieve an entity', function(){
+            return this.storage.retrieveEntity( 1 ).should.eventually.be.an('object');
+        });
+
+        it('should not retrieve an unknown entity', function(){
+            return this.storage.retrieveEntity( 2 ).should.be.rejectedWith(Error);
+        });
     });
 });
+
+/**
+*   Returns a promise of a MemoryStorage
+*/  
+function createStorage(){
+    var registryMock = { toEntity:function(e){
+        return {id:e};
+    }};
+    return MemoryStorage.create( registryMock, {initialize:true} );
+}
