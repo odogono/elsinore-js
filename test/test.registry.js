@@ -22,6 +22,10 @@ describe('EntityRegistry', function(){
                 Registry.prototype.useStorage.restore();
             });
         });
+
+        it('should initialize', function(){
+
+        });
     });
 
     describe.skip('creating an entity', function(){
