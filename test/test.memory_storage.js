@@ -18,18 +18,6 @@ describe('MemoryStorage', function(){
                 assert.equal( storage, st );
             });
         });
-
-        it('should initialize from options', function(){
-            var registry = {};
-            var initializeSpy = sinon.spy( MemoryStorage.prototype, 'initialize' );
-            var storage = MemoryStorage.create(registry, {initialize:true} );
-            assert( Promise.is( storage ) );
-            storage.then( function(st){
-                assert( initializeSpy.calledOnce );
-                st.registry.should.equal( registry );
-                initializeSpy.restore();
-            });
-        });
     });
 
     describe('creating an entity', function(){
@@ -37,11 +25,8 @@ describe('MemoryStorage', function(){
             var self = this;
 
             // create a memory store with a single entity
-            return MemoryStorage.create( null, {initialize:true} )
-                .then( function(storage){
-                    self.storage = storage;
-                });
-            
+            this.storage = MemoryStorage.create();
+            return this.storage.initialize();
         });
 
         afterEach( function(){
@@ -82,15 +67,13 @@ describe('MemoryStorage', function(){
         });
 
         it('should destroy an entity', function(){
-            var entity = {}, storage, entityId;
-            MemoryStorage.create(null, {initialize:true})
-            .then( function(store){
-                storage = store;
-                return storage.createEntity(entity);
-            }).then( function(entity){
-                entityId = entity.id;
-                return storage.destroyEntity( entityId );
-            });
+            var self = this, entity = {}, entityId;
+
+            this.storage.createEntity(entity)
+                .then( function(entity){
+                    entityId = entity.id;
+                    return self.storage.destroyEntity( entityId );
+                });
         });
 
     });
@@ -103,9 +86,9 @@ describe('MemoryStorage', function(){
             toEntity.withArgs(2).returns( {id:2} );
 
             // create a memory store with a single entity
-            return MemoryStorage.create( null, {initialize:true} )
+            this.storage = MemoryStorage.create();
+            return this.storage.initialize()
                 .then( function(storage){
-                    self.storage = storage;
                     return storage.createEntity({id:1});
                 });
         });
