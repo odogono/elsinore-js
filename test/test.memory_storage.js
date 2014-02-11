@@ -20,6 +20,21 @@ describe('MemoryStorage', function(){
         });
     });
 
+    describe.only('uninitialised storage', function(){
+        beforeEach( function(){
+            this.storage = MemoryStorage.create();
+        });
+
+        it('should not allow creation of an entity before initialisation', function(){
+            this.storage.createEntity({})
+                .catch(Error, function(e){
+                    e.message.should.equal('memory storage is uninitialized');
+                });
+            // NOTE - doesn't seem to work
+            // return this.storage.createEntity({}).should.be.rejectedWith(Error, 'memory storage is ');
+        });
+    })
+
     describe('creating an entity', function(){
         beforeEach( function(){
             var self = this;
