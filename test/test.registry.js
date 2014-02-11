@@ -23,8 +23,27 @@ describe('EntityRegistry', function(){
             });
         });
 
-        it('should initialize', function(){
+        it('should initialize storage in creation', function(){
+            Registry.create({initialize:true})
+                .then( function(registry){
+                    
+                });
+        })
 
+    });
+
+    describe('initializing a registry', function(){
+        beforeEach(function(){
+            var self = this;
+            // create a memory store with a single entity
+            return Registry.create()
+                .then( function(registry){
+                    self.registry = registry;
+                });
+        });
+
+        it('should initialize', function(){
+            this.registry.initialize().should.eventually.equal( this.registry );
         });
     });
 
