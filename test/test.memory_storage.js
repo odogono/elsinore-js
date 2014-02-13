@@ -128,6 +128,12 @@ describe('MemoryStorage', function(){
             return this.storage.retrieveEntity( 2 ).should.be.rejectedWith(Error);
         });
     });
+
+    describe('registering components', function(){
+        it('should assign an id to a component def', function(){
+
+        });
+    });
 });
 
 /**

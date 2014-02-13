@@ -1,33 +1,29 @@
 require('./common');
+var _ = require('underscore');
 
 var Registry = Elsinore.Registry;
 var MemoryStorage = Elsinore.storage.MemoryStorage;
+var ComponentDef = Elsinore.ComponentDef;
 
-describe('EntityRegistry', function(){
+
+describe('Registry', function(){
 
     describe('creating a registry', function(){
 
-        it('create should return a promise', function(){
-            assert( Promise.is( Registry.create() ) );
-        });
-
         it('should return a registry instance', function(){
-            Registry.create().should.eventually.be.an("object");
+            Registry.create().should.be.instanceof( Registry );
         });
 
         it('should use memory storage by default', function(){
             var spy = sinon.spy( Registry.prototype, 'useStorage' );
-            Registry.create().then( function(registry){
+            Registry.create().initialize().then( function(registry){
                 assert(spy.calledWith( MemoryStorage, {} ));
                 Registry.prototype.useStorage.restore();
             });
         });
 
         it('should initialize storage in creation', function(){
-            Registry.create({initialize:true})
-                .then( function(registry){
-                    
-                });
+            Registry.create().initialize().should.be.fulfilled;
         })
 
     });
@@ -35,10 +31,9 @@ describe('EntityRegistry', function(){
     describe('initializing a registry', function(){
         beforeEach(function(){
             var self = this;
-            // create a memory store with a single entity
-            return Registry.create()
+            return Registry.create().initialize()
                 .then( function(registry){
-                    self.registry = registry;
+                    return self.registry = registry;
                 });
         });
 
@@ -54,6 +49,66 @@ describe('EntityRegistry', function(){
             });
         });
     });
+
+    describe('registering components', function(){
+
+        beforeEach(function(){
+            self = this;
+            return Registry.create().initialize().then( function(registry){
+                return self.registry = registry;
+            });
+        });
+
+        it('should register a component', function(){
+            this.registry.registerComponent( {id:'example'} ).should.eventually.be.an.instanceof( ComponentDef.Model );
+        });
+
+        it('should create a constant for the ComponentDef on the registry', function(done){
+            this.registry.registerComponent( {id:'test'} ).then( function(cDef){
+                expect( cDef.id ).to.equal( self.registry.ComponentDef.Test );
+                done();
+            });
+        })
+    });
+
+
+    describe('systems', function(){
+        beforeEach(function(){
+            self = this;
+            return Registry.create().initialize().then( function(registry){
+                return self.registry = registry;
+            });
+        });
+
+        it('should update a system', function(){
+            var self = this;
+            var System = Backbone.Model.extend({
+                update: function(dt, updatedAt, now, options){
+                    log.debug('system update');
+                    return Promise.resolve(true);
+                }
+            });
+            var systems = [ new System(), new System() ];
+            var mocks = systems.map( function(s){ return sinon.mock(s); });
+
+            mocks.forEach( function(mock){
+                mock.expects('update').once();
+            });
+
+            systems.forEach( function(system){ self.registry.systems.add( system ); });
+
+            // print_ins( self.registry.systems.at(0) );
+            // print_ins( systemMocks[0] );
+            // print_ins( new System() );
+
+            this.registry.update().then( function(){
+                mocks.forEach( function(mock){
+                    mock.verify();
+                });
+            });
+        });
+    });
+
 
     /*
     beforeEach( function(done){
