@@ -1,11 +1,11 @@
 require('./common');
-var Schema = Elsinore.Schema;
+var SchemaRegistry = Elsinore.SchemaRegistry;
 
-describe('Schema', function(){
+describe('SchemaRegistry', function(){
 
     describe('registration', function(){
         beforeEach( function(){
-            this.schema = Schema.create();
+            this.schema = SchemaRegistry.create();
         });
 
         it('should register a schema', function(){
@@ -32,7 +32,7 @@ describe('Schema', function(){
             }
         };
         beforeEach( function(){
-            this.schema = Schema.create();
+            this.schema = SchemaRegistry.create();
         });
 
         it('should retrieve a schema fragment', function(){
