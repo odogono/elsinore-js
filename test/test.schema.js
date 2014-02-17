@@ -1,15 +1,53 @@
 require('./common');
-var Schema = odgnEntity.Schema;
+var Schema = Elsinore.Schema;
 
 describe('Schema', function(){
-    beforeEach( function(){
 
+    describe('registration', function(){
+        beforeEach( function(){
+            this.schema = Schema.create();
+        });
+
+        it('should register a schema', function(){
+            var schema = {
+                id:'/schema/basic'
+            };
+            this.schema.register( schema );
+            this.schema.get( schema.id ).should.deep.equal( {id:'/schema/basic' } );
+        });
     });
 
+    describe('fragments', function(){
+        var schema = {
+            id: '/schema/def',
+            definitions:{
+                foo: { type: 'integer' },
+                bar: { id:'#bar', type: 'string' }
+            },
+            bum:{
+                id: '/schema/other',
+                hole:{
+                    fix: {id:'#fix/this'}
+                }
+            }
+        };
+        beforeEach( function(){
+            this.schema = Schema.create();
+        });
+
+        it('should retrieve a schema fragment', function(){
+            this.schema.register( schema );
+            this.schema.get('/schema/def#definitions/foo').should.deep.equal( {type: 'integer'} );
+            this.schema.get('/schema/def#bar').should.deep.equal( {id:'#bar', type:'string'} );
+            this.schema.get('/schema/def#definitions/bar').should.deep.equal( {id:'#bar', type:'string'} );
+        });
+    });
+
+
+    /*
     it('should return properties sorted', function(){
         var schema = {
             "id":"/schema/sorted",
-            "type":"object",
             "properties":{
                 "status":{ "type":"integer" },
                 "name":{ "type": "string" },
@@ -32,7 +70,7 @@ describe('Schema', function(){
 
     it('should merge two schemas properties together', function(){
         var schemaA = {
-            "id":"/schema/merge_a", "type":"object",
+            "id":"/schema/merge_a",
             "properties":{
                 "count":{ "type":"integer" },
                 "name":{ "type":"string" }
@@ -43,7 +81,7 @@ describe('Schema', function(){
             }
         };
         var schemaB = {
-            "id":"/schema/merge_b", "type":"object",
+            "id":"/schema/merge_b",
             "allOf":[ {"$ref":"/schema/merge_a"} ],
             "properties":{
                 "status":{ "type":"integer" }
@@ -138,5 +176,5 @@ describe('Schema', function(){
         //     assert( result instanceof odgn.entity.CmdModelDef.Model );
         //     assert.strictEqual( result.get("execute_time"), 1234 );
         // });
-    });
+    });//*/
 });
