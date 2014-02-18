@@ -4,16 +4,13 @@ var SchemaRegistry = Elsinore.SchemaRegistry;
 describe('SchemaRegistry', function(){
 
     describe('registration', function(){
-        beforeEach( function(){
-            this.schema = SchemaRegistry.create();
-        });
-
         it('should register a schema', function(){
             var schema = {
                 id:'/schema/basic'
             };
-            this.schema.register( schema );
-            this.schema.get( schema.id ).should.deep.equal( {id:'/schema/basic' } );
+            var registry = SchemaRegistry.create();
+            registry.register( schema );
+            registry.get( schema.id ).should.deep.equal( {id:'/schema/basic' } );
         });
     });
 
@@ -24,22 +21,64 @@ describe('SchemaRegistry', function(){
                 foo: { type: 'integer' },
                 bar: { id:'#bar', type: 'string' }
             },
-            bum:{
+            misc:{
                 id: '/schema/other',
-                hole:{
-                    fix: {id:'#fix/this'}
+                sub:{
+                    prop: {id:'#fix/this'}
                 }
             }
         };
-        beforeEach( function(){
-            this.schema = SchemaRegistry.create();
-        });
 
         it('should retrieve a schema fragment', function(){
-            this.schema.register( schema );
-            this.schema.get('/schema/def#definitions/foo').should.deep.equal( {type: 'integer'} );
-            this.schema.get('/schema/def#bar').should.deep.equal( {id:'#bar', type:'string'} );
-            this.schema.get('/schema/def#definitions/bar').should.deep.equal( {id:'#bar', type:'string'} );
+            var registry = SchemaRegistry.create();
+            registry.register( schema );
+            registry.get('/schema/def#definitions/foo').should.deep.equal( {type: 'integer'} );
+            registry.get('/schema/def#bar').should.deep.equal( {id:'#bar', type:'string'} );
+            registry.get('/schema/def#definitions/bar').should.deep.equal( {id:'#bar', type:'string'} );
+        });
+    });
+
+    describe('properties', function(){
+        
+        it('should return an array of properties', function(){
+            var schema = {
+                id: '/schema/props',
+                properties:{
+                    name:{ type:'string' },
+                    age: { type:'integer' },
+                    address: { type:'string' }
+                }
+            };
+            var registry = SchemaRegistry.create();
+            registry.register( schema );
+            registry.getProperties('/schema/props').should.deep.equal([
+                { name:'name', type:'string' }, { name:'age', type:'integer' }, { name:'address', type:'string' }
+            ]);
+        });
+
+        it('should return an array of sorted properties', function(){
+            var schema = {
+                id:'/schema/sorted',
+                properties:{
+                    status:{ type:"integer" },
+                    name:{ type: "string" },
+                    id:{ type: "integer" },
+                    count:{ type: "integer" }
+                },
+                propertyPriorities:{
+                    status:-1,
+                    name:2,
+                    id:3
+                }
+            };
+            var registry = SchemaRegistry.create();
+            registry.register( schema );
+            registry.getProperties('/schema/sorted').should.deep.equal([
+                { name:'id', priority:3, type:'integer' }, 
+                { name:'name', priority:2, type:'string' }, 
+                { name:'count', type:'integer' }, 
+                { name:'status', priority:-1, type:'integer' }
+            ]);
         });
     });
 
