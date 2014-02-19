@@ -99,7 +99,7 @@ describe('SchemaRegistry', function(){
                 .should.deep.equal([ 'id', 'name', 'status', 'count' ]);
         });
 
-        it.skip('should merge two schemas', function(){
+        it('should merge two schemas', function(){
             var schemaA = {
                 id:'/schema/merge_a',
                 properties:{
@@ -121,7 +121,6 @@ describe('SchemaRegistry', function(){
             var registry = SchemaRegistry.create().register( schemaA ).register( schemaB );
 
             _.pluck( registry.getProperties(schemaA.id), 'name' ).should.deep.equal( ['name', 'count'] );
-
             _.pluck( registry.getProperties(schemaB.id), 'name' ).should.deep.equal( ['name', 'status', 'count'] );
         })
     });
