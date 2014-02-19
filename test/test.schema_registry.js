@@ -1,4 +1,5 @@
 require('./common');
+var _ = require('underscore');
 var SchemaRegistry = Elsinore.SchemaRegistry;
 
 describe('SchemaRegistry', function(){
@@ -8,8 +9,7 @@ describe('SchemaRegistry', function(){
             var schema = {
                 id:'/schema/basic'
             };
-            var registry = SchemaRegistry.create();
-            registry.register( schema );
+            var registry = SchemaRegistry.create().register( schema );
             registry.get( schema.id ).should.deep.equal( {id:'/schema/basic' } );
         });
     });
@@ -30,8 +30,7 @@ describe('SchemaRegistry', function(){
         };
 
         it('should retrieve a schema fragment', function(){
-            var registry = SchemaRegistry.create();
-            registry.register( schema );
+            var registry = SchemaRegistry.create().register( schema );
             registry.get('/schema/def#definitions/foo').should.deep.equal( {type: 'integer'} );
             registry.get('/schema/def#bar').should.deep.equal( {id:'#bar', type:'string'} );
             registry.get('/schema/def#definitions/bar').should.deep.equal( {id:'#bar', type:'string'} );
@@ -49,8 +48,7 @@ describe('SchemaRegistry', function(){
                     address: { type:'string' }
                 }
             };
-            var registry = SchemaRegistry.create();
-            registry.register( schema );
+            var registry = SchemaRegistry.create().register( schema );
             registry.getProperties('/schema/props').should.deep.equal([
                 { name:'name', type:'string' }, { name:'age', type:'integer' }, { name:'address', type:'string' }
             ]);
@@ -71,8 +69,8 @@ describe('SchemaRegistry', function(){
                     id:3
                 }
             };
-            var registry = SchemaRegistry.create();
-            registry.register( schema );
+            var registry = SchemaRegistry.create().register( schema );
+
             registry.getProperties('/schema/sorted').should.deep.equal([
                 { name:'id', priority:3, type:'integer' }, 
                 { name:'name', priority:2, type:'string' }, 
@@ -80,6 +78,52 @@ describe('SchemaRegistry', function(){
                 { name:'status', priority:-1, type:'integer' }
             ]);
         });
+
+        it('should return properties from multiple schemas', function(){
+            var schemaA = {
+                id:'/multiple/alpha',
+                properties:{
+                    id: { type:'integer' },
+                    name: { type:'string' }
+                }
+            };
+            var schemaB = {
+                id:'/multiple/beta',
+                properties:{
+                    status: { type:'integer' },
+                    count: { type:'integer' }
+                }
+            };
+            var registry = SchemaRegistry.create().register( schemaA ).register(schemaB);
+            _.pluck( registry.getProperties( [ schemaA.id, schemaB.id ] ), 'name' )
+                .should.deep.equal([ 'id', 'name', 'status', 'count' ]);
+        });
+
+        it.skip('should merge two schemas', function(){
+            var schemaA = {
+                id:'/schema/merge_a',
+                properties:{
+                    count:{ type:'integer' },
+                    name:{ type:'string' }
+                },
+                propertyPriorities:{
+                    count:-4,
+                    name:4
+                }
+            };
+            var schemaB = {
+                id:'/schema/merge_b',
+                allOf:[ {'$ref':'/schema/merge_a'} ],
+                properties:{
+                    status:{ type:'integer' }
+                }
+            };
+            var registry = SchemaRegistry.create().register( schemaA ).register( schemaB );
+
+            _.pluck( registry.getProperties(schemaA.id), 'name' ).should.deep.equal( ['name', 'count'] );
+
+            _.pluck( registry.getProperties(schemaB.id), 'name' ).should.deep.equal( ['name', 'status', 'count'] );
+        })
     });
 
 
