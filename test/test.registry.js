@@ -63,14 +63,42 @@ describe('Registry', function(){
             this.registry.registerComponent( {id:'example'} ).should.eventually.be.an.instanceof( ComponentDef.Model );
         });
 
-        it('should create a constant for the ComponentDef on the registry', function(done){
+        it('should create a constant for the ComponentDef on the registry', function(){
             this.registry.registerComponent( {id:'test'} ).then( function(cDef){
                 expect( cDef.id ).to.equal( self.registry.ComponentDef.Test );
-                done();
+                // done();
             });
-        })
+        });
+
+        
     });
 
+    describe('importing component definitions', function(){
+        beforeEach(function(){
+            self = this;
+            this.registry = Registry.create();
+            // return Registry.create().initialize().then( function(registry){
+            //     return self.registry = registry;
+            // });
+
+
+        });
+
+        it('importing should register each component', function(){
+            var data = [
+                { id:'/component/alpha' },
+                { id:'/component/beta' }
+            ];
+            // var register = { registerComponent: function(data,options){} };
+            var registerMock = sinon.mock( this.registry );
+
+            registerMock.expects('registerComponent').twice();
+
+            this.registry.importComponents( data ).then( function(){
+                registerMock.verify();
+            });
+        });
+    });
 
     describe('systems', function(){
         beforeEach(function(){
@@ -80,11 +108,10 @@ describe('Registry', function(){
             });
         });
 
-        it('should update a system', function(){
+        it('should call update on a system when updating', function(){
             var self = this;
             var System = Backbone.Model.extend({
                 update: function(dt, updatedAt, now, options){
-                    log.debug('system update');
                     return Promise.resolve(true);
                 }
             });
@@ -96,10 +123,6 @@ describe('Registry', function(){
             });
 
             systems.forEach( function(system){ self.registry.systems.add( system ); });
-
-            // print_ins( self.registry.systems.at(0) );
-            // print_ins( systemMocks[0] );
-            // print_ins( new System() );
 
             this.registry.update().then( function(){
                 mocks.forEach( function(mock){
