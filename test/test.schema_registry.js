@@ -122,104 +122,33 @@ describe('SchemaRegistry', function(){
 
             _.pluck( registry.getProperties(schemaA.id), 'name' ).should.deep.equal( ['name', 'count'] );
             _.pluck( registry.getProperties(schemaB.id), 'name' ).should.deep.equal( ['name', 'status', 'count'] );
-        })
+        });
+
+        it('should return default properties', function(){
+            var schema = {
+                id:'/schema/default',
+                properties:{
+                    name:{ type:'string', 'default':'unknown' },
+                    age:{ type:'integer', 'default':22 },
+                    address: { type:'string' }
+                }
+            };
+            var registry = SchemaRegistry.create().register( schema );
+            registry.getPropertiesObject( schema.id ).should.deep.equal({
+                age: 22,
+                name: 'unknown'
+            });
+
+            registry.getPropertiesObject( schema.id, {includeNull:true}).should.deep.equal({
+                address: null,
+                age: 22,
+                name: 'unknown'
+            });
+        });
     });
 
 
     /*
-    it('should return properties sorted', function(){
-        var schema = {
-            "id":"/schema/sorted",
-            "properties":{
-                "status":{ "type":"integer" },
-                "name":{ "type": "string" },
-                "id":{ "type": "integer" },
-                "count":{ "type": "integer" }
-            },
-            "propertyPriorities":{
-                "status":-1,
-                "name":2,
-                "id":3
-            }
-        };
-
-        Schema.addSchema( schema );
-
-        assert.deepEqual( 
-            _.pluck(Schema.getProperties(schema.id),'name'), 
-            ['id', 'name', 'count', 'status']);
-    });
-
-    it('should merge two schemas properties together', function(){
-        var schemaA = {
-            "id":"/schema/merge_a",
-            "properties":{
-                "count":{ "type":"integer" },
-                "name":{ "type":"string" }
-            },
-            "propertyPriorities":{
-                "count":-4,
-                "name":4
-            }
-        };
-        var schemaB = {
-            "id":"/schema/merge_b",
-            "allOf":[ {"$ref":"/schema/merge_a"} ],
-            "properties":{
-                "status":{ "type":"integer" }
-            }
-        };
-
-        Schema.addSchema( schemaA );
-        Schema.addSchema( schemaB );
-
-        // getting just the properties of A
-        assert.deepEqual( 
-           _.pluck(Schema.getProperties(schemaA.id),'name'), 
-           ['name', 'count']);
-       
-        // because B has an allOf, A's properties will be added
-        assert.deepEqual(
-           _.pluck(Schema.getProperties(schemaB.id),'name'), 
-           ['name', 'status', 'count']);
-
-        // specifying two schemas will join them
-        assert.deepEqual( 
-           _.pluck(Schema.getProperties([schemaA.id, schemaB.id]),'name'), 
-           ['name', 'status', 'count']);
-    });
-
-
-    it('should return default properties', function(){
-        var schemaA = {
-            "id":"/schema/def_a", "type":"object",
-            "properties":{
-                "count":{ "type":"integer", "default":1 },
-                "name":{ "type":"string", "default":"unknown" }
-            }
-        };
-
-        Schema.addSchema( schemaA );
-        assert.deepEqual(
-            Schema.getDefaultValues( schemaA.id ),
-            {count:1, name:'unknown'} );
-    });
-
-    it('should return no default properties if not defined', function(){
-        var schemaA = {
-            "id":"/schema/def_a", "type":"object",
-            "properties":{
-                "count":{ "type":"integer" },
-                "name":{ "type":"string", "default":"unknown" }
-            }
-        };
-
-        Schema.addSchema( schemaA );
-        assert.deepEqual(
-            Schema.getDefaultValues( schemaA.id ),
-            {count:null, name:'unknown'} );
-    });
-
     describe('resolving', function(){
 
         it('should resolve an integer', function(){
