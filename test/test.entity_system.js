@@ -1,85 +1,81 @@
 require('./common');
-var EntitySystem = odgnEntity.EntitySystem;
+var Registry = Elsinore.Registry;
+var EntityProcessor = Elsinore.EntityProcessor;
 
 describe('EntitySystem', function(){
-    beforeEach( function(done){
-        var self = this;
-        // passing a callback to create will initialise
-        this.registry = odgnEntity.Registry.create({initialize:true}, function(err,registry){
-            self.registry = registry;
-            done();
-        });
+    beforeEach( function(){
+        this.registry = Registry.create();
+        return this.registry.initialize();
     });
 
     describe('Registration', function(){
 
-        it('should recognise a system as a backbone model', function(){
-            var SystemModel = EntitySystem.Model.extend({});
-            var systemInstance = new SystemModel();
-            assert( systemInstance instanceof Backbone.Model );
-            // print_ins( systemInstance,2 );
+        it('should recognise a processor as a backbone model', function(){
+            var SystemProcessor = EntityProcessor.extend({});
+            var processorInstance = new SystemProcessor();
+            assert( processorInstance instanceof Backbone.Model );
         });
 
-        it('should add a system to the registry', function(done){
-            var SystemModel = EntitySystem.Model.extend({});
-            this.registry.listenTo( this.registry, 'system:add', function(system,registry){
+        it('should add a processor to the registry', function(done){
+            var SystemProcessor = EntityProcessor.extend({});
+            this.registry.listenTo( this.registry, 'processor:add', function(processor,registry){
                 done();
             });
-            this.registry.addSystem( SystemModel );
+            this.registry.addProcessor( SystemProcessor );
         });
 
-        it('should add a system to the registry which is then updated', function(done){
-            var SystemModel = EntitySystem.Model.extend({
+        it('should add a processor to the registry which is then updated', function(done){
+            var SystemProcessor = EntityProcessor.extend({
                 update: function(){
                     done();
                 },
             });
-            this.registry.addSystem( {Model:SystemModel,id:'/system/test'} );
+            this.registry.addProcessor( {Model:SystemProcessor,id:'/processor/test'} );
             this.registry.update();
         });
 
 
 
-        it('should execute systems in order', function(done){
+        it('should execute processors in order', function(done){
             var isExecuted = false;
-            var SysA = EntitySystem.Model.extend({
+            var SysA = EntityProcessor.extend({
                 update: function( deltaTime, startTime, currentTime, options, callback ){
                     assert( isExecuted );
                     done();
                 }
             });
-            var SysB = EntitySystem.Model.extend({
+            var SysB = EntityProcessor.extend({
                 update: function( deltaTime, startTime, currentTime, options, callback ){
                     isExecuted = true;
                     return callback();
                 }
             });
-            this.registry.addSystem( {Model:SysA,id:'/system/test/a'} );
-            this.registry.addSystem( {Model:SysB,id:'/system/test/b'}, {priority:1} );
+            this.registry.addProcessor( {Model:SysA,id:'/processor/test/a'} );
+            this.registry.addProcessor( {Model:SysB,id:'/processor/test/b'}, {priority:1} );
 
             this.registry.update();
         });
 
 
-        it('should not update non-updateable systems', function(done){
+        it('should not update non-updateable processors', function(done){
             var isExecuted = false;
-            var SysB = EntitySystem.Model.extend({
+            var SysB = EntityProcessor.extend({
                 update: function( deltaTime, startTime, currentTime, options, callback ){
                     isExecuted = true;
                     return callback();
                 }
             });
 
-            this.registry.addSystem( {Model:SysB,id:'/system/test/b'}, {update:false} );
+            this.registry.addProcessor( {Model:SysB,id:'/processor/test/b'}, {update:false} );
             this.registry.update(function(err){
                 assert(!isExecuted);
                 done();
             });
         });
 
-        it('should execute systems serially', function(done){
+        it('should execute processors serially', function(done){
             var isExecuted = false;
-            var SysA = EntitySystem.Model.extend({
+            var SysA = EntityProcessor.extend({
                 update: function( deltaTime, startTime, currentTime, options, callback ){
                     return async.nextTick( function(){
                         isExecuted = true;
@@ -87,13 +83,13 @@ describe('EntitySystem', function(){
                     });
                 }
             });
-            var SysB = EntitySystem.Model.extend({
+            var SysB = EntityProcessor.extend({
                 update: function( deltaTime, startTime, currentTime, options, callback ){
                     return callback();
                 }
             });
-            this.registry.addSystem( {Model:SysA,id:'/system/test/a'} );
-            this.registry.addSystem( {Model:SysB,id:'/system/test/b'} );
+            this.registry.addProcessor( {Model:SysA,id:'/processor/test/a'} );
+            this.registry.addProcessor( {Model:SysB,id:'/processor/test/b'} );
 
             this.registry.update(function(err){
                 assert(isExecuted);
@@ -104,7 +100,7 @@ describe('EntitySystem', function(){
 
     describe('events', function(){
         it('should publish an event via an entity', function(){
-            // var SysA = EntitySystem.Model.extend({
+            // var SysA = EntityProcessor.extend({
             //     update: function( deltaTime, startTime, currentTime, options, callback ){
             //         return async.nextTick( function(){
             //             isExecuted = true;
