@@ -53,10 +53,11 @@ describe('Registry', function(){
     describe('registering components', function(){
 
         beforeEach(function(){
-            self = this;
-            return Registry.create().initialize().then( function(registry){
-                return self.registry = registry;
-            });
+            this.registry = Registry.create();
+            this.storageObj = {
+                registerComponent: function(){}
+            };
+            return this.registry.initialize();
         });
 
         it('should register a component', function(){
@@ -64,27 +65,27 @@ describe('Registry', function(){
         });
 
         it('should create a constant for the ComponentDef on the registry', function(){
-            this.registry.registerComponent( {id:'test'} ).then( function(cDef){
-                expect( cDef.id ).to.equal( self.registry.ComponentDef.Test );
-                // done();
-            });
-        });
+            var self = this, 
+                storageMock = sinon.mock( this.registry.storage );
+            
+            storageMock.expects('registerComponent').once().returns(
+                Promise.resolve({id:34, schema:'test'})
+            );
 
-        
+            this.registry.registerComponent( {id:'test'} )
+                .then( function(cDef){
+                    expect( cDef.id ).to.equal( self.registry.ComponentDef.Test );
+                    storageMock.verify();
+                });
+        });        
     });
 
     describe('importing component definitions', function(){
         beforeEach(function(){
-            self = this;
             this.registry = Registry.create();
-            // return Registry.create().initialize().then( function(registry){
-            //     return self.registry = registry;
-            // });
-
-
         });
 
-        it('importing should register each component', function(){
+        it('should register each component', function(){
             var data = [
                 { id:'/component/alpha' },
                 { id:'/component/beta' }
@@ -98,9 +99,15 @@ describe('Registry', function(){
                 registerMock.verify();
             });
         });
+
+        it('should unregister all existing components if the option is set');
+        it('should remove unreferenced components if the option is set');
     });
 
-    describe('systems', function(){
+
+
+
+    describe('processors', function(){
         beforeEach(function(){
             self = this;
             return Registry.create().initialize().then( function(registry){
@@ -108,21 +115,21 @@ describe('Registry', function(){
             });
         });
 
-        it('should call update on a system when updating', function(){
+        it('should call update on a processor when updating', function(){
             var self = this;
-            var System = Backbone.Model.extend({
+            var Processor = Backbone.Model.extend({
                 update: function(dt, updatedAt, now, options){
                     return Promise.resolve(true);
                 }
             });
-            var systems = [ new System(), new System() ];
-            var mocks = systems.map( function(s){ return sinon.mock(s); });
+            var processors = [ new Processor(), new Processor() ];
+            var mocks = processors.map( function(s){ return sinon.mock(s); });
 
             mocks.forEach( function(mock){
                 mock.expects('update').once();
             });
 
-            systems.forEach( function(system){ self.registry.systems.add( system ); });
+            processors.forEach( function(processor){ self.registry.processors.add( processor ); });
 
             this.registry.update().then( function(){
                 mocks.forEach( function(mock){
