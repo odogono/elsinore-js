@@ -12,6 +12,15 @@ describe('SchemaRegistry', function(){
             var registry = SchemaRegistry.create().register( schema );
             registry.get( schema.id ).should.deep.equal( {id:'/schema/basic' } );
         });
+
+        it('should ignore registration of a duplicate schema', function(){
+            var schema = { id:'/schema/original', properties:{ name:{ type:'string' }} };
+            var schemaCopy = { id:'/schema/original', properties:{ age:{ type:'integer' }} };
+            var registry = SchemaRegistry.create()
+                .register( schema )
+                .register( schemaCopy );
+            registry.get( schema.id ).should.deep.equal( _.extend({}, schema) );
+        });
     });
 
     describe('fragments', function(){
