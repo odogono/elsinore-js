@@ -20,7 +20,7 @@ describe('MemoryStorage', function(){
         });
     });
 
-    describe.only('uninitialised storage', function(){
+    describe('uninitialised storage', function(){
         beforeEach( function(){
             this.storage = MemoryStorage.create();
         });
@@ -51,9 +51,9 @@ describe('MemoryStorage', function(){
             var counter = 0;
             this.storage.createEntity({})
                 .then( function(entity){
-                    counter.should.equal(1);
+                    (++counter).should.equal(1);
                 });
-            (counter++).should.equal(0);
+            counter.should.equal(0);
         });
 
         it('should create an entity with an id', function(){
@@ -132,6 +132,35 @@ describe('MemoryStorage', function(){
     describe('registering components', function(){
         it('should assign an id to a component def', function(){
 
+        });
+    });
+
+    describe('creating components', function(){
+        beforeEach( function(){
+            this.storage = MemoryStorage.create();
+            return this.storage.initialize();
+        });
+
+        it('should save a component', function(){
+            var component = new Backbone.Model();
+            expect(component.isNew()).to.be.true;
+            this.storage.saveComponent( component ).then( function(component){
+                // print_ins( component );
+                // log.debug('hey ' + component.isNew() + ' ' + component.has('id') );
+                expect(component.isNew()).to.be.false;
+                expect(component.id).to.equal(1);
+            })
+        });
+
+        it('should save an array of components', function(){
+            var idCount = 1;
+            var components = [ new Backbone.Model(), new Backbone.Model(), new Backbone.Model() ];
+            this.storage.saveComponent( components ).then(function(components){
+                components.forEach(function(component){
+                    expect(component.isNew()).to.be.false;
+                    expect(component.id).to.equal( idCount++ );
+                });
+            });
         });
     });
 });
