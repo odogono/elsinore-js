@@ -9,7 +9,7 @@
   "dependencies": {
     "backbone": "~1.1.2",
     "bit-array": "~0.2.2",
-    "bluebird": "~1.0.5",
+    "bluebird": "~1.0.7",
     "jsonpointer": "~1.1.0",
     "underscore": "~1.5.2",
     "underscore.string": "~2.3.3"

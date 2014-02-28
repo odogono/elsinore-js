@@ -2,6 +2,8 @@ require('./common');
 
 var Registry = Elsinore.Registry;
 var MemoryStorage = Elsinore.storage.MemoryStorage;
+var ComponentDef = Elsinore.ComponentDef;
+
 
 describe('MemoryStorage', function(){
     
@@ -130,14 +132,32 @@ describe('MemoryStorage', function(){
     });
 
     describe('registering components', function(){
+        beforeEach( function(){
+            this.storage = MemoryStorage.create();
+            return this.storage.initialize();
+        });
+        
         it('should assign an id to a component def', function(){
+            var def = new Backbone.Model({schema:{id:'test'}});
+            this.storage.registerComponent( def ).should.be.fulfilled;
+        });
 
+        it('should assign an id to a component def', function(){
+            var def = new Backbone.Model({schema:{id:'test'}});
+            this.storage.registerComponent( def )
+                .then(function(def){
+                    expect(def.id).to.equal(1);
+                });
         });
     });
 
     describe('creating components', function(){
         beforeEach( function(){
             this.storage = MemoryStorage.create();
+            // this.storage.on('all', function(evt){
+            //     log.debug('storage evt ' + evt );
+            //     print_ins( arguments );
+            // })
             return this.storage.initialize();
         });
 
@@ -145,11 +165,9 @@ describe('MemoryStorage', function(){
             var component = new Backbone.Model();
             expect(component.isNew()).to.be.true;
             this.storage.saveComponent( component ).then( function(component){
-                // print_ins( component );
-                // log.debug('hey ' + component.isNew() + ' ' + component.has('id') );
                 expect(component.isNew()).to.be.false;
                 expect(component.id).to.equal(1);
-            })
+            });
         });
 
         it('should save an array of components', function(){
@@ -162,6 +180,20 @@ describe('MemoryStorage', function(){
                 });
             });
         });
+    });
+
+
+    describe('adding components to entities', function(){
+        beforeEach( function(){
+            this.storage = MemoryStorage.create();
+            // this.storage.on('all', function(evt){
+            //     log.debug('storage evt ' + evt );
+            //     print_ins( arguments );
+            // })
+            return this.storage.initialize();
+        });
+
+
     });
 });
 

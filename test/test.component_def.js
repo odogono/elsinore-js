@@ -56,5 +56,22 @@ describe('ComponentDef', function(){
                 name:'daisy', colour: 'red', height: 1.0
             });
         });
+
+        it('should have a schema property', function(){
+            var def = ComponentDef.create( {id:'/component/flower'} );
+            def.get('schema').should.deep.equal({id:'/component/flower'});
+        });
+
+        it('should have a name property', function(){
+           var def = ComponentDef.create( {id:'/component/flower'} );
+           def.get('name').should.equal('FlowerComDef');
+        });
+
+        it('should set its id on component instances', function(){
+            var def = ComponentDef.create( {id:'/component/flower'} );
+            def.id = 22;
+            var com = def.create();
+            com.defId.should.equal( def.id );
+        });
     });
 });

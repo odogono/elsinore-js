@@ -4,6 +4,8 @@ var _ = require('underscore');
 var Registry = Elsinore.Registry;
 var MemoryStorage = Elsinore.storage.MemoryStorage;
 var ComponentDef = Elsinore.ComponentDef;
+var Entity = Elsinore.Entity;
+
 
 
 describe('Registry', function(){
@@ -42,11 +44,19 @@ describe('Registry', function(){
         });
     });
 
-    describe.skip('creating an entity', function(){
-        it('should return an entity instance', function(){
-            Registry.create().then( function(registry){
+    describe('creating an entity', function(){
+        beforeEach( function(){
+            this.registry = Registry.create();
+            return this.registry.initialize();
+        });
 
-            });
+        it('should return an entity instance', function(){
+            this.registry.createEntity().should.eventually.be.an.instanceof( Entity );
+        });
+
+        it('should accept an id', function(){
+            this.registry.createEntity({id:980})
+                .should.eventually.have.property('id', 980);
         });
     });
 
@@ -61,7 +71,7 @@ describe('Registry', function(){
         });
 
         it('should register a component', function(){
-            this.registry.registerComponent( {id:'example'} ).should.eventually.be.an.instanceof( ComponentDef.Model );
+            this.registry.registerComponent( {id:'example'} ).should.eventually.be.an.instanceof( ComponentDef );
         });
 
         it('should create a constant for the ComponentDef on the registry', function(){
@@ -69,7 +79,7 @@ describe('Registry', function(){
                 storageMock = sinon.mock( this.registry.storage );
             
             storageMock.expects('registerComponent').once().returns(
-                Promise.resolve({id:34, schema:'test'})
+                Promise.resolve( new Backbone.Model({id:34, schema:'test'}) )
             );
 
             this.registry.registerComponent( {id:'test'} )
@@ -77,7 +87,20 @@ describe('Registry', function(){
                     expect( cDef.id ).to.equal( self.registry.ComponentDef.Test );
                     storageMock.verify();
                 });
-        });        
+        });
+
+        // it('should set the component def id on the component', function(){
+        //     var self = this, 
+        //         storageMock = sinon.mock( this.registry.storage );
+        //     storageMock.expects('registerComponent').once().returns(
+        //         Promise.resolve({id:10, schema:'test'})
+        //     );
+
+        //     this.registry.registerComponent( {id:'test'} )
+        //         .then( function(cDef){
+
+        //         });
+        // });
     });
 
     describe('importing component definitions', function(){
@@ -105,7 +128,64 @@ describe('Registry', function(){
     });
 
 
+    describe('creating components', function(){
+        beforeEach( function(){
+            return setupRegistry( this, true );
+        });
 
+        it('should set the component def id on the component', function(){
+            var registryMock = sinon.mock( this.registry );
+            var storageMock = sinon.mock( this.registry.storage );
+            var eventSpy = sinon.spy();
+
+            // the operation should trigger an event
+            this.registry.on('component:create', eventSpy);
+
+            registryMock.expects('getComponentDef')
+                .once().withArgs('/component/idtest');
+
+            storageMock.expects('saveComponent').once().returns( Promise.resolve(['comA','comB']) );
+
+            this.registry.createComponent('/component/idtest')
+                .then( function(){
+                    registryMock.verify();
+                    storageMock.verify();
+                    expect(eventSpy.calledWith(['comA','comB'])).to.be.ok;
+                });
+        });
+
+        it('should add a component to an entity using the component def url', function(){
+            var entity = {};
+            var registerMock = sinon.mock( this.registry );
+            var storageMock = sinon.mock( this.registry.storage );
+
+            registerMock.expects('createComponent').once().returns( Promise.resolve( {} ) );
+            storageMock.expects('addComponent').once().returns( Promise.resolve() );
+
+            this.registry.addComponent('/component/test', entity)
+                .then( function(){
+                    registerMock.verify();
+                    storageMock.verify();
+                });
+        });
+
+        // for the time being, registry operations only operate on single instances - multiple
+        // instances will come later as an optimisation step
+        it.skip('should add an array of component defs to an entity', function(){
+            var entity = {};
+            var registerMock = sinon.mock( this.registry );
+            var storageMock = sinon.mock( this.registry.storage );
+
+            registerMock.expects('createComponent').exactly(3).returns( Promise.resolve( {} ) );
+            storageMock.expects('addComponent').once.returns( Promise.resolve() );
+
+            this.registry.addComponent(['/component/alpha', '/component/beta', '/component/gamma', '/component/zeta'], entity)
+                .then( function(){
+                    registerMock.verify();
+                    storageMock.verify();
+                });
+        })
+    });
 
     describe('processors', function(){
         beforeEach(function(){
@@ -214,3 +294,11 @@ describe('Registry', function(){
         });
     });//*/
 });
+
+function setupRegistry( self, doInitialize ){
+    var registry = self.registry = Registry.create();
+    if( doInitialize ){
+        return registry.initialize();
+    }
+    return Promise.resolve( registry );
+}
