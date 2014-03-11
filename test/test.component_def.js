@@ -64,14 +64,21 @@ describe('ComponentDef', function(){
 
         it('should have a name property', function(){
            var def = ComponentDef.create( {id:'/component/flower'} );
-           def.get('name').should.equal('FlowerComDef');
+           def.get('className').should.equal('FlowerComDef');
+           def.get('name').should.equal('Flower');
+        });
+
+        it('should set the component def on the component instance', function(){
+            var def = ComponentDef.create( {id:'/component/flower'} );
+            var com = def.create();
+            com.ComponentDef.should.deep.equal( def );
         });
 
         it('should set its id on component instances', function(){
             var def = ComponentDef.create( {id:'/component/flower'} );
             def.id = 22;
             var com = def.create();
-            com.defId.should.equal( def.id );
+            com.ComponentDef.id.should.equal( def.id );
         });
     });
 });

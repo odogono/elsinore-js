@@ -212,22 +212,21 @@ describe('MemoryStorage', function(){
         });
 
 
-        it.only('should add a component to an entity', function(){
+        it('should add a component to an entity', function(){
             var entity = Entity.create(29);
             
             var component = new Backbone.Model();
             component.defId = 4;
 
             var componentDef = {
-                defId: 1,
+                defId: 4,
                 get: function(){}
             };
             var componentDefMock = sinon.mock(componentDef);
             componentDefMock.expects('get').once().withArgs('name').returns('MyComponent');
 
-            var getComponentDefStub = sinon.stub().returns( componentDef );
             this.storage.registry = {
-                getComponentDef:getComponentDefStub
+                getComponentDef:sinon.stub().returns( componentDef )
             };
 
             var eventSpy = sinon.spy();
@@ -246,10 +245,7 @@ describe('MemoryStorage', function(){
 
                     entity.MyComponent.should.equal( component );
                 });
-                
         });
-
-
 
     });
 });

@@ -79,7 +79,7 @@ describe('Registry', function(){
                 storageMock = sinon.mock( this.registry.storage );
             
             storageMock.expects('registerComponent').once().returns(
-                Promise.resolve( new Backbone.Model({id:34, schema:'test'}) )
+                Promise.resolve( new Backbone.Model({id:34, schema:'test', name:'Test'}) )
             );
 
             this.registry.registerComponent( {id:'test'} )
@@ -158,9 +158,11 @@ describe('Registry', function(){
             var entity = {};
             var registerMock = sinon.mock( this.registry );
             var storageMock = sinon.mock( this.registry.storage );
+            var def = ComponentDef.create('/component/test');
 
+            registerMock.expects('getComponentDef').once().returns( def );
             registerMock.expects('createComponent').once().returns( Promise.resolve( {} ) );
-            storageMock.expects('addComponent').once().returns( Promise.resolve() );
+            storageMock.expects('addComponent').withArgs([ {} ],entity).once().returns( Promise.resolve() );
 
             this.registry.addComponent('/component/test', entity)
                 .then( function(){
@@ -171,13 +173,15 @@ describe('Registry', function(){
 
         // for the time being, registry operations only operate on single instances - multiple
         // instances will come later as an optimisation step
-        it.skip('should add an array of component defs to an entity', function(){
+        it('should add an array of component defs to an entity', function(){
             var entity = {};
             var registerMock = sinon.mock( this.registry );
             var storageMock = sinon.mock( this.registry.storage );
-
-            registerMock.expects('createComponent').exactly(3).returns( Promise.resolve( {} ) );
-            storageMock.expects('addComponent').once.returns( Promise.resolve() );
+            
+            var def = ComponentDef.create('/component/test');
+            registerMock.expects('getComponentDef').once().returns( [def,def,def] );
+            registerMock.expects('createComponent').once().returns( Promise.resolve( {} ) );
+            storageMock.expects('addComponent').once().returns( Promise.resolve() );
 
             this.registry.addComponent(['/component/alpha', '/component/beta', '/component/gamma', '/component/zeta'], entity)
                 .then( function(){
