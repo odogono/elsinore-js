@@ -213,11 +213,7 @@ describe('MemoryStorage', function(){
 
 
         it('should add a component to an entity', function(){
-            var entity = Entity.create(29);
-            
-            var component = new Backbone.Model();
-            component.defId = 4;
-
+            var entity = Entity.create(29);            
             var componentDef = {
                 defId: 4,
                 get: function(){}
@@ -225,9 +221,9 @@ describe('MemoryStorage', function(){
             var componentDefMock = sinon.mock(componentDef);
             componentDefMock.expects('get').once().withArgs('name').returns('MyComponent');
 
-            this.storage.registry = {
-                getComponentDef:sinon.stub().returns( componentDef )
-            };
+            var component = new Backbone.Model();
+            component.ComponentDef = componentDef;
+
 
             var eventSpy = sinon.spy();
             // the operation should trigger an event
