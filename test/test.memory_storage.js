@@ -3,7 +3,7 @@ require('./common');
 var Registry = Elsinore.Registry;
 var MemoryStorage = Elsinore.storage.MemoryStorage;
 var ComponentDef = Elsinore.ComponentDef;
-
+var Entity = Elsinore.Entity;
 
 describe('MemoryStorage', function(){
     
@@ -67,6 +67,17 @@ describe('MemoryStorage', function(){
                 });
         });
 
+        it('should create from an array of entities', function(){
+            var entities = [{},{},{}];
+            this.storage.createEntity( entities )
+                .then( function(result){
+                    result.should.be.an('array');
+                    expect( result[0].id ).to.equal(1);
+                    expect( result[1].id ).to.equal(2);
+                    expect( result[2].id ).to.equal(3);
+                })
+        });
+
         it('should retrieve an entity', function(){
             var self = this, entity = {}, entityId;
 
@@ -86,10 +97,17 @@ describe('MemoryStorage', function(){
         it('should destroy an entity', function(){
             var self = this, entity = {}, entityId;
 
+            var toEntity = sinon.stub(MemoryStorage.prototype, 'toEntity');
+            toEntity.returns(entity);
+
             this.storage.createEntity(entity)
                 .then( function(entity){
                     entityId = entity.id;
-                    return self.storage.destroyEntity( entityId );
+                    return self.storage.destroyEntity( entity, true );
+                })
+                .then( function(){
+                    self.storage.hasEntity( entityId, true ).should.eventually.equal(false);
+                    toEntity.restore();
                 });
         });
 
@@ -192,6 +210,45 @@ describe('MemoryStorage', function(){
             // })
             return this.storage.initialize();
         });
+
+
+        it.only('should add a component to an entity', function(){
+            var entity = Entity.create(29);
+            
+            var component = new Backbone.Model();
+            component.defId = 4;
+
+            var componentDef = {
+                defId: 1,
+                get: function(){}
+            };
+            var componentDefMock = sinon.mock(componentDef);
+            componentDefMock.expects('get').once().withArgs('name').returns('MyComponent');
+
+            var getComponentDefStub = sinon.stub().returns( componentDef );
+            this.storage.registry = {
+                getComponentDef:getComponentDefStub
+            };
+
+            var eventSpy = sinon.spy();
+            // the operation should trigger an event
+            this.storage.on('component:add', eventSpy);
+
+            this.storage.addComponent( [ component ], entity )
+                .then( function(entity){
+                    // component should have an entity id
+                    component.get('entityId').should.equal(entity.id);
+
+                    // the add event should have been called once
+                    expect(eventSpy.calledWith(component,entity)).to.be.ok;
+
+                    componentDefMock.verify();
+
+                    entity.MyComponent.should.equal( component );
+                });
+                
+        });
+
 
 
     });
