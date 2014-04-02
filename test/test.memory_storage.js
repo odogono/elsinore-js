@@ -1,3 +1,4 @@
+
 require('./common');
 
 var Registry = Elsinore.Registry;
@@ -94,6 +95,15 @@ describe('MemoryStorage', function(){
                 });
         });
 
+        it('should throw an error for an unknown entity', function(){
+            var self = this, entity = {}, entityId;
+
+            var toEntityStub = sinon.stub().returns( {id:23} );
+            this.storage.registry = {toEntity:toEntityStub};
+
+            return this.storage.retrieveEntity( {id:23} ).should.be.rejectedWith( Error, 'entity 23 not found');
+        });
+
         it('should destroy an entity', function(){
             var self = this, entity = {}, entityId;
 
@@ -156,15 +166,21 @@ describe('MemoryStorage', function(){
         });
         
         it('should assign an id to a component def', function(){
-            var def = new Backbone.Model({schema:{id:'test'}});
-            this.storage.registerComponent( def ).should.be.fulfilled;
-        });
-
-        it('should assign an id to a component def', function(){
-            var def = new Backbone.Model({schema:{id:'test'}});
-            this.storage.registerComponent( def )
+            var self = this;
+            var def = createComponentDef('/component/test');
+            return this.storage.registerComponent( def )
                 .then(function(def){
                     expect(def.id).to.equal(1);
+                    self.storage.isComponentRegistered('/component/test').should.eventually.equal(true);
+                });
+        });
+
+        it('should reject registering the same component def', function(){
+            var self = this;
+            var def = createComponentDef('/component/reject');
+            return this.storage.registerComponent( def )
+                .then(function(def){
+                    self.storage.registerComponent( def ).should.eventually.be.rejectedWith( Error, 'componentDef /component/reject is already registrered' );
                 });
         });
     });
@@ -243,6 +259,47 @@ describe('MemoryStorage', function(){
                 });
         });
 
+        
+
+    });
+
+    describe('retrieving components', function(){
+        beforeEach( function(){
+            var self = this;
+            this.storage = MemoryStorage.create();
+            // this.storage.on('all', function(evt){
+            //     log.debug('storage evt ' + evt );
+            //     print_ins( arguments );
+            // })
+            return this.storage.initialize()
+                .then( function(storage){
+                    return registerComponents( self.storage, '/component/alpha', '/component/beta', '/component/gamma', {create:true} );
+                })
+                .then( function(components){
+                    self.components = {};
+                    components.forEach( function(com){
+                        self.components[ com.ComponentDef.get('name') ] = com;
+                    })
+                })
+        });
+
+
+        // NOTE : integration
+        it.only('should return an entities components', function(){
+            var self = this;
+            var entity = Entity.create(2);
+
+            this.storage.createEntity(entity)
+                .then( function(entity){
+                    return self.storage.addComponent( [ self.components.Beta, self.components.Gamma ], entity );
+                })
+                .then( function(entity){
+                    return self.storage.getEntityComponents( entity );
+                })
+                .then( function(components){
+                    // print_ins( components );
+                });
+        });
     });
 });
 
@@ -255,3 +312,57 @@ function createStorage(){
     }};
     return MemoryStorage.create( registryMock, {initialize:true} );
 }
+
+function createComponentDef( schemaId, schemaAttrs ){
+    var schema = {id:schemaId};
+    if( schemaAttrs )
+        schema = _.extend(schema,schemaAttrs);
+    return new Backbone.Model( {schema:schema} );
+}
+
+function createEntity(id){
+    var attrs = {};
+    if( id ){
+        attrs.id = id;
+    }
+    return new Backbone.Model(attrs);
+}
+
+function createAndInitialize(options){
+    var registryMock = { toEntity:function(e){
+        return {id:e};
+    }};
+    return MemoryStorage.create( registryMock, {initialize:true} );
+}
+
+/**
+* Util function which will register an array of components
+*/
+function registerComponents(storage, components, options ){
+    var andCreate = options ? options.create;
+    components = Array.prototype.slice.call(arguments, 1);
+    var current = Promise.fulfilled();
+
+    return Promise.all( components.map( function(componentDef){
+        componentDef = ComponentDef.create({id:componentDef});
+        return current = current.then(function(){
+            return storage.registerComponent( componentDef );
+        });
+    })).then( function(componentDefs){
+        if( andCreate )
+            return createComponents( storage, componentDefs );
+        return componentDefs;
+    });
+}
+
+function createComponents( storage, componentDefs ){
+    var current = Promise.fulfilled();
+    return Promise.all( componentDefs.map( function(def){
+        var component = def.create();
+
+        return current = current.then(function(){
+            return storage.saveComponent(component);
+        });
+    }) );
+}
+

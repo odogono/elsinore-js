@@ -117,6 +117,8 @@ describe('Registry', function(){
             var registerMock = sinon.mock( this.registry );
 
             registerMock.expects('registerComponent').twice();
+            registerMock.expects('begin').once().returns( Promise.resolve() );
+            registerMock.expects('end').once().returns( Promise.resolve() );
 
             this.registry.importComponents( data ).then( function(){
                 registerMock.verify();
@@ -154,7 +156,7 @@ describe('Registry', function(){
                 });
         });
 
-        it('should add a component to an entity using the component def url', function(){
+        it.only('should add a component to an entity using the component def url', function(){
             var entity = {};
             var registerMock = sinon.mock( this.registry );
             var storageMock = sinon.mock( this.registry.storage );
@@ -162,7 +164,8 @@ describe('Registry', function(){
 
             registerMock.expects('getComponentDef').once().returns( def );
             registerMock.expects('createComponent').once().returns( Promise.resolve( {} ) );
-            storageMock.expects('addComponent').withArgs([ {} ],entity).once().returns( Promise.resolve() );
+            
+            storageMock.expects('addComponent').withArgs( {} ,entity).once().returns( Promise.resolve() );
 
             this.registry.addComponent('/component/test', entity)
                 .then( function(){

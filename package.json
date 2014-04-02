@@ -9,19 +9,19 @@
   "dependencies": {
     "backbone": "~1.1.2",
     "bit-array": "~0.2.2",
-    "bluebird": "~1.0.8",
+    "bluebird": "~1.2.0",
     "jsonpointer": "~1.1.0",
     "underscore": "^1.6.0",
     "underscore.string": "~2.3.3"
   },
   "devDependencies": {
-    "mocha": "~1.17.0",
-    "sinon": "~1.7.3",
-    "gulp-util": "~2.2.13",
-    "gulp": "~3.5.0",
+    "mocha": "~1.18.2",
+    "sinon": "~1.9.0",
+    "gulp-util": "~2.2.14",
+    "gulp": "~3.6.0",
     "mocha-as-promised": "~2.0.0",
-    "chai": "~1.8.1",
-    "chai-as-promised": "~4.1.0"
+    "chai": "~1.9.1",
+    "chai-as-promised": "~4.1.1"
   },
   "directories": {
     "lib": "lib"
