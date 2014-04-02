@@ -6,6 +6,8 @@ var MemoryStorage = Elsinore.storage.MemoryStorage;
 var ComponentDef = Elsinore.ComponentDef;
 var Entity = Elsinore.Entity;
 
+var testOptions = {};
+
 describe('MemoryStorage', function(){
     
     describe('creation', function(){
@@ -17,7 +19,7 @@ describe('MemoryStorage', function(){
 
         it('should resolve to an instance', function(){
             var storage = MemoryStorage.create();
-            storage.initialize().then(function(st){
+            return storage.initialize().then(function(st){
                 assert.equal( storage, st );
             });
         });
@@ -29,7 +31,7 @@ describe('MemoryStorage', function(){
         });
 
         it('should not allow creation of an entity before initialisation', function(){
-            this.storage.createEntity({})
+            return this.storage.createEntity({})
                 .catch(Error, function(e){
                     e.message.should.equal('memory storage is uninitialized');
                 });
@@ -61,7 +63,7 @@ describe('MemoryStorage', function(){
 
         it('should create an entity with an id', function(){
             var entity = {};
-            this.storage.createEntity(entity)
+            return this.storage.createEntity(entity)
                 .then( function(entity){
                     entity.should.be.an('object');
                     expect( entity.id ).to.equal( 1 );
@@ -70,7 +72,7 @@ describe('MemoryStorage', function(){
 
         it('should create from an array of entities', function(){
             var entities = [{},{},{}];
-            this.storage.createEntity( entities )
+            return this.storage.createEntity( entities )
                 .then( function(result){
                     result.should.be.an('array');
                     expect( result[0].id ).to.equal(1);
@@ -85,7 +87,7 @@ describe('MemoryStorage', function(){
             var toEntityStub = sinon.stub().returns( {id:1} );
             this.storage.registry = {toEntity:toEntityStub};
 
-            this.storage.createEntity(entity)
+            return this.storage.createEntity(entity)
                 .then( function(entity){
                     entityId = entity.id;
                     return self.storage.retrieveEntity( entityId );
@@ -110,7 +112,7 @@ describe('MemoryStorage', function(){
             var toEntity = sinon.stub(MemoryStorage.prototype, 'toEntity');
             toEntity.returns(entity);
 
-            this.storage.createEntity(entity)
+            return this.storage.createEntity(entity)
                 .then( function(entity){
                     entityId = entity.id;
                     return self.storage.destroyEntity( entity, true );
@@ -161,8 +163,8 @@ describe('MemoryStorage', function(){
 
     describe('registering components', function(){
         beforeEach( function(){
-            this.storage = MemoryStorage.create();
-            return this.storage.initialize();
+            var self = this;
+            return createAndInitialize(testOptions).then(function(storage){ self.storage = storage; });
         });
         
         it('should assign an id to a component def', function(){
@@ -183,6 +185,7 @@ describe('MemoryStorage', function(){
                     self.storage.registerComponent( def ).should.eventually.be.rejectedWith( Error, 'componentDef /component/reject is already registrered' );
                 });
         });
+
     });
 
     describe('creating components', function(){
@@ -198,7 +201,7 @@ describe('MemoryStorage', function(){
         it('should save a component', function(){
             var component = new Backbone.Model();
             expect(component.isNew()).to.be.true;
-            this.storage.saveComponent( component ).then( function(component){
+            return this.storage.saveComponent( component ).then( function(component){
                 expect(component.isNew()).to.be.false;
                 expect(component.id).to.equal(1);
             });
@@ -207,7 +210,7 @@ describe('MemoryStorage', function(){
         it('should save an array of components', function(){
             var idCount = 1;
             var components = [ new Backbone.Model(), new Backbone.Model(), new Backbone.Model() ];
-            this.storage.saveComponent( components ).then(function(components){
+            return this.storage.saveComponent( components ).then(function(components){
                 components.forEach(function(component){
                     expect(component.isNew()).to.be.false;
                     expect(component.id).to.equal( idCount++ );
@@ -240,17 +243,17 @@ describe('MemoryStorage', function(){
             var component = new Backbone.Model();
             component.ComponentDef = componentDef;
 
-
             var eventSpy = sinon.spy();
             // the operation should trigger an event
             this.storage.on('component:add', eventSpy);
 
-            this.storage.addComponent( [ component ], entity )
+            return this.storage.addComponent( [ component ], entity )
                 .then( function(entity){
                     // component should have an entity id
                     component.get('entityId').should.equal(entity.id);
 
                     // the add event should have been called once
+                    // print_ins( eventSpy.getCall(0).args );
                     expect(eventSpy.calledWith(component,entity)).to.be.ok;
 
                     componentDefMock.verify();
@@ -273,7 +276,7 @@ describe('MemoryStorage', function(){
             // })
             return this.storage.initialize()
                 .then( function(storage){
-                    return registerComponents( self.storage, '/component/alpha', '/component/beta', '/component/gamma', {create:true} );
+                    return registerComponents( self.storage, ['/component/alpha', '/component/beta', '/component/gamma'], {create:true} );
                 })
                 .then( function(components){
                     self.components = {};
@@ -285,11 +288,11 @@ describe('MemoryStorage', function(){
 
 
         // NOTE : integration
-        it.only('should return an entities components', function(){
+        it('should return an entities components', function(){
             var self = this;
             var entity = Entity.create(2);
 
-            this.storage.createEntity(entity)
+            return this.storage.createEntity(entity)
                 .then( function(entity){
                     return self.storage.addComponent( [ self.components.Beta, self.components.Gamma ], entity );
                 })
@@ -328,19 +331,24 @@ function createEntity(id){
     return new Backbone.Model(attrs);
 }
 
+// function createAndInitialize(options){
+//     var registryMock = { toEntity:function(e){
+//         return {id:e};
+//     }};
+//     return MemoryStorage.create( registryMock, {initialize:true} );
+// }
+
 function createAndInitialize(options){
-    var registryMock = { toEntity:function(e){
-        return {id:e};
-    }};
-    return MemoryStorage.create( registryMock, {initialize:true} );
+    var storage = MemoryStorage.create();
+    return storage.initialize(options);
 }
 
 /**
 * Util function which will register an array of components
 */
 function registerComponents(storage, components, options ){
-    var andCreate = options ? options.create;
-    components = Array.prototype.slice.call(arguments, 1);
+    var andCreate = options ? options.create : false;
+    components = !_.isArray(components) ? [components] : components; //Array.prototype.slice.call(arguments, 1);
     var current = Promise.fulfilled();
 
     return Promise.all( components.map( function(componentDef){

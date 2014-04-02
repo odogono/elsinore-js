@@ -82,25 +82,12 @@ describe('Registry', function(){
                 Promise.resolve( new Backbone.Model({id:34, schema:'test', name:'Test'}) )
             );
 
-            this.registry.registerComponent( {id:'test'} )
+            return this.registry.registerComponent( {id:'test'} )
                 .then( function(cDef){
                     expect( cDef.id ).to.equal( self.registry.ComponentDef.Test );
                     storageMock.verify();
                 });
         });
-
-        // it('should set the component def id on the component', function(){
-        //     var self = this, 
-        //         storageMock = sinon.mock( this.registry.storage );
-        //     storageMock.expects('registerComponent').once().returns(
-        //         Promise.resolve({id:10, schema:'test'})
-        //     );
-
-        //     this.registry.registerComponent( {id:'test'} )
-        //         .then( function(cDef){
-
-        //         });
-        // });
     });
 
     describe('importing component definitions', function(){
@@ -120,7 +107,7 @@ describe('Registry', function(){
             registerMock.expects('begin').once().returns( Promise.resolve() );
             registerMock.expects('end').once().returns( Promise.resolve() );
 
-            this.registry.importComponents( data ).then( function(){
+            return this.registry.importComponents( data ).then( function(){
                 registerMock.verify();
             });
         });
@@ -135,28 +122,30 @@ describe('Registry', function(){
             return setupRegistry( this, true );
         });
 
-        it('should set the component def id on the component', function(){
+        it('should create a component from a def schema id', function(){
             var registryMock = sinon.mock( this.registry );
-            var storageMock = sinon.mock( this.registry.storage );
+            // var storageMock = sinon.mock( this.registry.storage );
+            var def = ComponentDef.create('/component/test');
             var eventSpy = sinon.spy();
 
             // the operation should trigger an event
             this.registry.on('component:create', eventSpy);
 
             registryMock.expects('getComponentDef')
-                .once().withArgs('/component/idtest');
+                .once().withArgs('/component/idtest').returns( def );
 
-            storageMock.expects('saveComponent').once().returns( Promise.resolve(['comA','comB']) );
+            // storageMock.expects('saveComponent').once().returns( Promise.resolve( ['savedComA'] ) );
 
-            this.registry.createComponent('/component/idtest')
-                .then( function(){
+            return this.registry.createComponent('/component/idtest',null,{save:false})
+                .then( function(component){
                     registryMock.verify();
-                    storageMock.verify();
-                    expect(eventSpy.calledWith(['comA','comB'])).to.be.ok;
+                    // storageMock.verify();
+                    // expect(eventSpy.called).to.be.ok;
+                    eventSpy.getCall(0).args[0].should.equal( component );
                 });
         });
 
-        it.only('should add a component to an entity using the component def url', function(){
+        it('should add a component to an entity using the component def url', function(){
             var entity = {};
             var registerMock = sinon.mock( this.registry );
             var storageMock = sinon.mock( this.registry.storage );
@@ -167,7 +156,7 @@ describe('Registry', function(){
             
             storageMock.expects('addComponent').withArgs( {} ,entity).once().returns( Promise.resolve() );
 
-            this.registry.addComponent('/component/test', entity)
+            return this.registry.addComponent('/component/test', entity)
                 .then( function(){
                     registerMock.verify();
                     storageMock.verify();
@@ -186,7 +175,7 @@ describe('Registry', function(){
             registerMock.expects('createComponent').once().returns( Promise.resolve( {} ) );
             storageMock.expects('addComponent').once().returns( Promise.resolve() );
 
-            this.registry.addComponent(['/component/alpha', '/component/beta', '/component/gamma', '/component/zeta'], entity)
+            return this.registry.addComponent(['/component/alpha', '/component/beta', '/component/gamma', '/component/zeta'], entity)
                 .then( function(){
                     registerMock.verify();
                     storageMock.verify();
@@ -218,7 +207,7 @@ describe('Registry', function(){
 
             processors.forEach( function(processor){ self.registry.processors.add( processor ); });
 
-            this.registry.update().then( function(){
+            return this.registry.update().then( function(){
                 mocks.forEach( function(mock){
                     mock.verify();
                 });
