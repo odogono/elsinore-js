@@ -78,14 +78,13 @@ describe('Registry', function(){
                 storageMock = sinon.mock( this.registry.storage );
             
             storageMock.expects('registerComponent').once().returns(
-                Promise.resolve( new Backbone.Model({id:34, schema:'test', name:'Test'}) )
+                Promise.resolve( ComponentDef.create( '/component/test', null,null, {id:34} ) )
             );
 
-            return this.registry.registerComponent( {id:'test'} )
+            return this.registry.registerComponent( {id:'/component/test'} )
                 .then( function(cDef){
                     expect( cDef.id ).to.equal( self.registry.ComponentDef.Test );
                     assert( Elsinore.Utils.isInteger(cDef.id) );
-                    expect( cDef.get('schema') ).to.equal('test');
                     storageMock.verify();
                 });
         });
