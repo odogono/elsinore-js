@@ -21,6 +21,18 @@ describe('ComponentDef', function(){
         });
     });
 
+    describe('schema', function(){
+        it('should return the schemaId from its object property', function(){
+            var def = ComponentDef.create( {id:'/component/flower'} );
+            expect( def.get('schemaId') ).to.equal('/component/flower');
+        });
+
+        it('should return the schemaId from a string property', function(){
+            var def = ComponentDef.create( '/component/flower' );
+            expect( def.get('schemaId') ).to.equal('/component/flower');
+        })
+    });
+
 
     describe('default properties', function(){
         it('should return default properties', function(){
