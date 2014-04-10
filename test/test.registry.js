@@ -1,6 +1,5 @@
 require('./common');
 var _ = require('underscore');
-
 var Registry = Elsinore.Registry;
 var MemoryStorage = Elsinore.storage.MemoryStorage;
 var ComponentDef = Elsinore.ComponentDef;
@@ -85,10 +84,36 @@ describe('Registry', function(){
             return this.registry.registerComponent( {id:'test'} )
                 .then( function(cDef){
                     expect( cDef.id ).to.equal( self.registry.ComponentDef.Test );
+                    assert( Elsinore.Utils.isInteger(cDef.id) );
+                    expect( cDef.get('schema') ).to.equal('test');
                     storageMock.verify();
                 });
         });
     });
+
+    describe('retrieving component defs', function(){
+        beforeEach( function(){
+            var self = this;
+            this.registry = Registry.create();
+            return this.registry.initialize().then( function(){
+                self.componentDef = ComponentDef.create( '/component/get_test', null,null, {id:34} );
+                self.registry._addComponentToRegistry( self.componentDef );
+            });
+        });
+
+        it('should return from an instance', function(){
+            expect( this.registry.getComponentDef( this.componentDef ) ).to.deep.equal( this.componentDef );
+        });
+
+        it('should return from its integer id', function(){
+            expect( this.registry.getComponentDef(34) ).to.deep.equal( this.componentDef );
+        });
+
+        it('should return from its string schema-id', function(){
+            expect( this.registry.getComponentDef('/component/get_test').id ).to.equal( 34 );
+        }); 
+    });
+
 
     describe('importing component definitions', function(){
         beforeEach(function(){
@@ -182,6 +207,8 @@ describe('Registry', function(){
                 });
         })
     });
+
+    
 
     describe('processors', function(){
         beforeEach(function(){
