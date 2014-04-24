@@ -92,5 +92,17 @@ describe('ComponentDef', function(){
             var com = def.create();
             com.ComponentDef.id.should.equal( def.id );
         });
+
+        it('should parse component data into attributes', function(){
+            var def = ComponentDef.create( '/component/animal' );
+            var com = def.create( {name:'tiger'});
+            com.get('name').should.equal( 'tiger' );
+        });
+
+        it('should parse component entityId into attributes', function(){
+            var def = ComponentDef.create( '/component/animal' );
+            var com = def.create( {entityId:152});
+            com.getEntityId().should.equal( 152 );
+        });
     });
 });
