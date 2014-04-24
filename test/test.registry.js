@@ -25,8 +25,7 @@ describe('Registry', function(){
 
         it('should initialize storage in creation', function(){
             Registry.create().initialize().should.be.fulfilled;
-        })
-
+        });
     });
 
     describe('initializing a registry', function(){
@@ -204,7 +203,24 @@ describe('Registry', function(){
                     registerMock.verify();
                     storageMock.verify();
                 });
-        })
+        });
+
+
+        it('should instantiate with attributes', function(){
+            var registryMock = sinon.mock( this.registry );
+            var storageMock = sinon.mock( this.registry.storage );
+            var def = ComponentDef.create('/component/create');
+
+            registryMock.expects('getComponentDef').once().returns( def );
+            storageMock.expects('saveComponent').never();
+
+            return this.registry.createComponent( 100, { name:'tiger', age:12}, {save:false} )
+                .then( function(component){
+                    expect( component.get('name') ).to.equal('tiger');
+                    registryMock.verify();
+                    storageMock.verify();
+                });
+        });
     });
 
     
