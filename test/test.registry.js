@@ -214,12 +214,30 @@ describe('Registry', function(){
             registryMock.expects('getComponentDef').once().returns( def );
             storageMock.expects('saveComponent').never();
 
-            return this.registry.createComponent( 100, { name:'tiger', age:12}, {save:false} )
-                .then( function(component){
-                    expect( component.get('name') ).to.equal('tiger');
-                    registryMock.verify();
-                    storageMock.verify();
-                });
+            var component = this.registry.instantiateComponent( 100, { name:'tiger', age:12} );
+                
+            expect( component.get('name') ).to.equal('tiger');
+            registryMock.verify();
+            storageMock.verify();
+        });
+
+        it('should instantiate with attributes', function(){
+            var registryMock = sinon.mock( this.registry );
+            var storageMock = sinon.mock( this.registry.storage );
+            var def = ComponentDef.create('/component/create');
+
+            registryMock.expects('getComponentDef').once().returns( def );
+            storageMock.expects('saveComponent').never();
+
+            var components = this.registry.instantiateComponent( 100, 
+                [{ name:'tiger', age:12}, { name:'lion', age:4} ]
+            );
+            // print_ins( components, 2 );
+
+            expect( components[0].get('name') ).to.equal('tiger');
+            expect( components[1].get('name') ).to.equal('lion');
+            registryMock.verify();
+            storageMock.verify();
         });
     });
 
