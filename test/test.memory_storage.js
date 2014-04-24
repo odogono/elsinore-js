@@ -43,10 +43,7 @@ describe('MemoryStorage', function(){
     describe('creating an entity', function(){
         beforeEach( function(){
             var self = this;
-
-            // create a memory store with a single entity
-            this.storage = MemoryStorage.create();
-            return this.storage.initialize();
+            return createAndInitialize(testOptions).then(function(storage){ self.storage = storage; });
         });
 
         afterEach( function(){
@@ -82,15 +79,14 @@ describe('MemoryStorage', function(){
         });
 
         it('should retrieve an entity', function(){
-            var self = this, entity = {}, entityId;
-
-            var toEntityStub = sinon.stub().returns( {id:1} );
-            this.storage.registry = {toEntity:toEntityStub};
+            var self = this;
+            var entity = createEntity();
+            var entityId;
 
             return this.storage.createEntity(entity)
                 .then( function(entity){
                     entityId = entity.id;
-                    return self.storage.retrieveEntity( entityId );
+                    return self.storage.retrieveEntity( {id:entityId} );
                 }).then( function(entity){
                     entity.should.be.an('object');
                     expect( entity.id ).to.equal( entityId );
@@ -125,39 +121,51 @@ describe('MemoryStorage', function(){
 
     });
 
+    describe('destroying an entity', function(){
+        beforeEach( function(){
+            var self = this;
+            return createAndInitialize(testOptions).then(function(storage){ self.storage = storage; });
+        });
+
+        it('should destroy an entity', function(){
+            var self = this, entity = createEntity(34);
+
+            return this.storage.createEntity( entity )
+                .then( function(entity){
+                    return self.storage.destroyEntity( entity );
+                })
+                .then( function(){
+                    return self.storage.retrieveEntity( {id:34} ).should.be.rejectedWith( Error, 'entity 34 not found');
+                });
+        });
+    });
+
     describe('retrieving entity', function(){
         before( function(){
             var self = this;
-            var toEntity = sinon.stub(MemoryStorage.prototype, 'toEntity');
-            toEntity.withArgs(1).returns( {id:1} );
-            toEntity.withArgs(2).returns( {id:2} );
 
             // create a memory store with a single entity
-            this.storage = MemoryStorage.create();
-            return this.storage.initialize()
-                .then( function(storage){
+            return createAndInitialize(testOptions)
+                .then(function(storage){ 
+                    self.storage = storage; 
                     return storage.createEntity({id:1});
                 });
         });
 
-        after( function(){
-            MemoryStorage.prototype.toEntity.restore();
-        });
-
         it('should determine whether an entity exists', function(){
-            return this.storage.hasEntity( 1 ).should.eventually.equal(true);
+            return this.storage.hasEntity( {id:1} ).should.eventually.equal(true);
         });
 
         it('should report a missing entity', function(){
-            return this.storage.hasEntity( 2 ).should.eventually.equal(false);
+            return this.storage.hasEntity( {id:2} ).should.eventually.equal(false);
         });
 
         it('should retrieve an entity', function(){
-            return this.storage.retrieveEntity( 1 ).should.eventually.be.an('object');
+            return this.storage.retrieveEntity( {id:1} ).should.eventually.be.an('object');
         });
 
         it('should not retrieve an unknown entity', function(){
-            return this.storage.retrieveEntity( 2 ).should.be.rejectedWith(Error);
+            return this.storage.retrieveEntity( {id:2} ).should.be.rejectedWith(Error);
         });
     });
 
@@ -324,22 +332,17 @@ function createComponentDef( schemaId, schemaAttrs ){
 }
 
 function createEntity(id){
-    var attrs = {};
-    if( id ){
-        attrs.id = id;
-    }
-    return new Backbone.Model(attrs);
+    return Entity.create(id);
 }
-
-// function createAndInitialize(options){
-//     var registryMock = { toEntity:function(e){
-//         return {id:e};
-//     }};
-//     return MemoryStorage.create( registryMock, {initialize:true} );
-// }
 
 function createAndInitialize(options){
     var storage = MemoryStorage.create();
+
+    storage.registry = {toEntity:function(id){
+        var result = Entity.toEntity(id);
+        return result;
+    }};
+
     return storage.initialize(options);
 }
 
