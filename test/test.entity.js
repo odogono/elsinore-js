@@ -2,7 +2,74 @@ require('./common');
 require('../index');
 
 
+var Registry = Elsinore.Registry;
+var MemoryStorage = Elsinore.storage.MemoryStorage;
+var ComponentDef = Elsinore.ComponentDef;
+var Entity = Elsinore.Entity;
+
+var PositionComponent = {
+    id: 'position',
+    properties:{
+        x: { type:'number' },
+        y: { type:'number' }
+    }
+};
+
+var ScoreComponent = {
+    id: 'score',
+    properties: {
+        score: { type:'integer' },
+        lives: { type:'integer', 'default': 3 }
+    }
+}
+
+
 describe('Entity', function(){
+
+    describe('create an entity with components', function(){
+
+        beforeEach( function(){
+            var self = this;
+            return Registry.create().initialize()
+                .then( function(registry){
+                    self.registry = registry;
+                    return registry.registerComponent( [ PositionComponent, ScoreComponent ] );
+                });
+        });
+
+        it('should emit events for the new position component', function(){
+            var self = this;
+            var eventSpy = sinon.spy();
+            this.registry.on('component:create', eventSpy);
+            var PositionComDef = this.registry.ComponentDef.Position;
+            return this.registry.createEntity( 'position' )
+                .then( function(entity){
+                    eventSpy.getCall(0).args[0].ComponentDef.id.should.equal( PositionComDef );
+                });
+        });
+
+        it('should have properties for each component', function(){
+            return this.registry.createEntity( ['position', 'score'] )
+                .then( function(entity){
+                    // log.debug('created entity ' + entity.id);
+                    expect( entity.Position ).to.not.be.undefined;
+                    expect( entity.Score ).to.not.be.undefined;
+                });
+        });
+
+        it('should have a lives default of 3', function(){
+            return this.registry.createEntity( ['position', 'score'] )
+                .then( function(entity){
+                    expect( entity.Score.get('lives') ).to.equal(3);
+                });
+        });
+
+    });
+});
+
+
+
+describe.skip('Entity.old', function(){
     beforeEach( function(done){
         var self = this;
         // passing a callback to create will initialise
@@ -22,7 +89,6 @@ describe('Entity', function(){
         it('should create a new entity with an id', function(done){
             var self = this;
             self.registry.createEntity(function(err,entity){
-                // print_ins( entity.toJSON() );
                 assert( entity.id );
                 done();
             });

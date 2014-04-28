@@ -12,6 +12,12 @@ describe('ComponentDef', function(){
             };
             ComponentDef.nameFromSchema( schema ).should.equal( 'ExampleComDef' );
         });
+        it('should create a name from a shortened schema id', function(){
+            var schema = {
+                id: 'position'
+            };
+            ComponentDef.nameFromSchema( schema ).should.equal('PositionComDef');
+        });
         it('should create a name from a schema id', function(){
             var schema = {
                 id: '/component/example',

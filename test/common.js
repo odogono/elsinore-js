@@ -5,9 +5,9 @@
 Elsinore = require('../index');
 
 assert = require('assert');
-fs = require('fs');
-path = require('path');
-util = require('util');
+Fs = require('fs');
+Path = require('path');
+Util = require('util');
 sinon = require('sinon');
 _ = require('underscore');
 Backbone = require('backbone');
@@ -15,32 +15,32 @@ Promise = require('bluebird');
 
 require("mocha-as-promised")();
 
-chai = require("chai");
-chaiAsPromised = require("chai-as-promised");
-chai.use(chaiAsPromised);
-expect = chai.expect;
-chai.should();
+Chai = require("chai");
+ChaiAsPromised = require("chai-as-promised");
+Chai.use(ChaiAsPromised);
+expect = Chai.expect;
+Chai.should();
 
-var rootDir = path.join( path.dirname(__filename), '../' );
+var rootDir = Path.join( Path.dirname(__filename), '../' );
 
 Common = {
     paths:{ 
         root: rootDir,
-        fixtures: path.join( rootDir, 'test', 'fixtures' )
+        fixtures: Path.join( rootDir, 'test', 'fixtures' )
     }
 };
 
 Common.path = function( dir, subPath ){
-    return path.join( Common.paths[dir], subPath );
+    return Path.join( Common.paths[dir], subPath );
 };
 
 Common.pathFixture = function( subPath ){
-    return path.join( Common.paths.fixtures, subPath );
+    return Path.join( Common.paths.fixtures, subPath );
 };
 
 Common.readFixture = function( subPath, parseJson ){
     var fixturePath = Common.pathFixture( subPath );
-    var data = fs.readFileSync( fixturePath, 'utf8' );
+    var data = Fs.readFileSync( fixturePath, 'utf8' );
     return parseJson ? JSON.parse(data) : data;
 }
 
@@ -49,27 +49,27 @@ root.print_ins = function(arg,depth,showHidden,colors){
     var stack = __stack[1];
     var fnName = stack.getFunctionName();
     var line = stack.getLineNumber();
-    // util.log( fnName + ':' + line + ' ' + util.inspect(arg,showHidden,depth,colors) );
-    util.log( util.inspect(arg,showHidden,depth,colors) );
+    // Util.log( fnName + ':' + line + ' ' + Util.inspect(arg,showHidden,depth,colors) );
+    Util.log( Util.inspect(arg,showHidden,depth,colors) );
 };
 
 root.print_var = function(arg, options){
     var stack = __stack[1];
     var fnName = stack.getFunctionName();
     var line = stack.getLineNumber();
-    // util.log( fnName + ':' + line + ' ' + JSON.stringify(arg,null,'\t') );
-    util.log( JSON.stringify(arg,null,"\t") );
+    // Util.log( fnName + ':' + line + ' ' + JSON.stringify(arg,null,'\t') );
+    Util.log( JSON.stringify(arg,null,"\t") );
 }
 
 root.log = {
-    warn:util.log,
-    error: util.log,
-    debug: util.log,
-    info: util.log
+    warn:Util.log,
+    error: Util.log,
+    debug: Util.log,
+    info: Util.log
 }
 
 root.print_stack = function(){
-    var rootPath = path.join(path.dirname(__filename),'../');
+    var rootPath = Path.join(Path.dirname(__filename),'../');
     var stack = _.map(__stack, function(entry,i){
         var filename = entry.getFileName();
         if( filename.indexOf(rootPath) === 0  ){
@@ -78,7 +78,7 @@ root.print_stack = function(){
         return _.repeat("  ", i) + filename + ' ' + entry.getFunctionName() + ':' + entry.getLineNumber()
     });
     stack.shift();
-    util.log( "\n" + stack.join("\n") );
+    Util.log( "\n" + stack.join("\n") );
 }
 
 Object.defineProperty(global, '__stack', {

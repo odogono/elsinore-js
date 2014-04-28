@@ -41,6 +41,22 @@ or removed:
     registry.removeComponent( '/component/position', entity ).done( function(entity){ });
 
 
+Entities can also be created with components already attached:
+
+    registry.createEntity( ['position','velocity'] ).done( function(entity){ });
+
+Which is the same as:
+
+    registry.createEntity()
+    registry.addComponent('position', entity)
+    registry.addComponent('velocity', entity)
+
+and then referenced:
+
+    entity.Position.get('x');
+    entity.Velocity.get('y');
+
+
 EntitySets are collections of entities.
 
     registry.createEntitySet().done( function(entitySet){ });
