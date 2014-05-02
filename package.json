@@ -6,6 +6,20 @@
     "name": "Alexander Veenendaal",
     "email": "alex@opendoorgonorth.com"
   },
+  "files":[
+    "index.js",
+    "lib/odgn-entity.js",
+    "lib/entity.js",
+    "lib/entity_set.js",
+    "lib/component.js",
+    "lib/component_def.js",
+    "lib/component_pool.js",
+    "lib/entity_processor.js",
+    "lib/memory_storage.js",
+    "lib/schema_registry.js",
+    "lib/registry.js",
+    "lib/utils.js"
+  ],
   "dependencies": {
     "backbone": "~1.1.2",
     "bit-array": "~0.2.2",
