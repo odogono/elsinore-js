@@ -1,13 +1,4 @@
-require('./common');
-
-var _ = require('underscore');
-var Backbone = require('backbone');
-var Promise = require('bluebird');
-
-var Registry = Elsinore.Registry;
-var MemoryStorage = require('../index');
-var ComponentDef = Elsinore.ComponentDef;
-var Entity = Elsinore.Entity;
+var Common = require('./common');
 
 var testOptions = {};
 
@@ -17,14 +8,14 @@ describe('MemoryStorage', function(){
 
         beforeEach( function(){
             var self = this;
-            return createAndInitialize(testOptions).then(function(storage){ self.storage = storage; });
+            return Common.createAndInitialize(testOptions).then(function(storage){ self.storage = storage; });
         });
 
         afterEach( function(){
         });
 
         it('should create an entity with an id', function(){
-            var entity = createEntity();
+            var entity = Common.createEntity();
             expect( entity.isNew() ).to.be.true;
             return this.storage.createEntity( entity )
                 .then( function(entity){
@@ -33,7 +24,7 @@ describe('MemoryStorage', function(){
         });
 
         it('should create an array of entities', function(){
-            var entities = createEntities(3);
+            var entities = Common.createEntities(3);
             return this.storage.createEntity( entities )
                 .then( function(result){
                     result.should.be.an('array');
@@ -44,17 +35,17 @@ describe('MemoryStorage', function(){
         });
 
         it('should create an entity with a predefined id', function(){
-            var entity = createEntity(34);
+            var entity = Common.createEntity(34);
             expect( entity.isNew() ).to.be.false;
             return this.storage.createEntity( entity )
                 .then( function(entity){
                     expect( entity.id ).to.equal(34);
                 });
-        })
+        });
 
         it('should throw an error when attempting to create an entity with an existing id', function(){
             var self = this;
-            var entity = createEntity(35);
+            var entity = Common.createEntity(35);
             return this.storage.createEntity( entity )
                 .then( function(result){
                     return self.storage.createEntity( entity ).should.be.rejectedWith( Error, 'entity 35 already exists');
@@ -63,7 +54,7 @@ describe('MemoryStorage', function(){
 
         it('should retrieve an existing entity by its id', function(){
             var self = this;
-            var entity = createEntity(36);
+            var entity = Common.createEntity(36);
 
             return this.storage.createEntity(entity)
                 .then( function(entity){
@@ -77,9 +68,24 @@ describe('MemoryStorage', function(){
             return this.storage.retrieveEntity( {id:37} ).should.be.rejectedWith( Error, 'entity 37 not found' );
         });
 
+        it('should reuse entity ids', function(){
+            var self = this;
+            var storage = this.storage;
+            var entity = Common.createEntity();
+
+            return this.storage.createEntity( entity )
+                .then( function(entity){
+                    createdEntityId = entity.id;
+                    return storage.destroyEntity( entity );
+                })
+                .then( function(){
+                    return storage.createEntity( Common.createEntity() ).should.eventually.have.property('id', createdEntityId);
+                });
+        });
+
         it('should know that an entity exists', function(){
             var self = this;
-            var entity = createEntity(38);
+            var entity = Common.createEntity(38);
             return this.storage.createEntity(entity)
                 .then( function(entity){
                     return self.storage.hasEntity( {id:38} ).should.eventually.equal( true );
@@ -93,7 +99,7 @@ describe('MemoryStorage', function(){
 
         describe('destroying an entity', function(){
             beforeEach( function(){
-                var entity = createEntity(981);
+                var entity = Common.createEntity(981);
                 return this.storage.createEntity(entity);
             });
 
@@ -106,7 +112,7 @@ describe('MemoryStorage', function(){
             });
 
             it('should emit an event when the entity is destroyed', function(){
-                var eventSpy = sinon.spy();
+                var eventSpy = Sinon.spy();
                 this.storage.on('entity:destroy', eventSpy);
 
                 return this.storage.destroyEntity({id:981})
@@ -118,22 +124,4 @@ describe('MemoryStorage', function(){
         });
 
     });
-
 });
-
-
-function createAndInitialize(options){
-    var registry = Registry.create();
-    return registry.initialize()
-        .then( function(registry){
-            return registry.storage;
-        });
-}
-
-function createEntity(id){
-    return Entity.create(id);
-}
-
-function createEntities( count ){
-    return _.times( count, function(i){ return createEntity() });
-}

@@ -64,6 +64,20 @@ describe('Entity', function(){
                 });
         });
 
+        it('should have a lives default of 3', function(){
+            return this.registry.createEntity()
+                .then( function(entity){
+                    expect( entity.Score.get('lives') ).to.equal(3);
+                });
+        });
+
+        it('should initialise component with data', function(){
+            return this.registry.createEntity( { schema:'position', x:34, y:-98 } )
+                .then( function(entity){
+                    expect( entity.Position.get('y') ).to.equal(-98);
+                })
+        })
+
     });
 });
 

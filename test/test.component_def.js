@@ -64,9 +64,9 @@ describe('ComponentDef', function(){
                     height: { type:'number', 'default':1.0 }
                 }
             };
-            var defaults = { name:'daisy', colour:'red', height:1.0 };
+            // var defaults = { name:'daisy', colour:'red', height:1.0 };
 
-            var def = ComponentDef.create( schema, null, defaults );
+            var def = ComponentDef.create( schema, null, null );
             ComponentDef.isComponentDef(def).should.equal(true);
             var com = def.create();
 

@@ -8,7 +8,7 @@ assert = require('assert');
 Fs = require('fs');
 Path = require('path');
 Util = require('util');
-sinon = require('sinon');
+Sinon = require('sinon');
 _ = require('underscore');
 Backbone = require('backbone');
 Promise = require('bluebird');
@@ -106,3 +106,31 @@ get: function() {
         return __stack[1].getFunctionName();
     }
 });
+
+function createAndInitialize(options){
+    var registry = Elsinore.Registry.create();
+    return registry.initialize()
+        .then( function(registry){
+            return registry.storage;
+        });
+}
+
+function createEntity(id){
+    return Elsinore.Entity.create(id);
+}
+
+function createEntities( count ){
+    return _.times( count, function(i){ return createEntity() });
+}
+
+function createComponentDef( schemaId, schemaAttrs ){
+    return Elsinore.ComponentDef.create( schemaId, schemaAttrs );
+}
+
+module.exports = {
+    Entity: Elsinore.Entity,
+    createAndInitialize: createAndInitialize,
+    createEntity: createEntity,
+    createEntities: createEntities,
+    createComponentDef: createComponentDef    
+};

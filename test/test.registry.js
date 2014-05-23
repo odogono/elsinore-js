@@ -58,6 +58,28 @@ describe('Registry', function(){
         });
     });
 
+    describe('entity id reuse', function(){
+        beforeEach( function(){
+            this.registry = Registry.create();
+            return this.registry.initialize();
+        });
+
+        it.only('should reuse a destroyed entity id', function(){
+            var self = this;
+            var registry = this.registry;
+            var createdEntityId;
+            return registry.createEntity()
+                .then( function(entity){
+                    createdEntityId = entity.id;
+                    return registry.destroyEntity( entity.id );
+                })
+                .then( function(){
+                    return registry.createEntity()
+                        .should.eventually.have.property('id', createdEntityId);
+                });
+        });
+    });
+
     describe('registering components', function(){
 
         beforeEach(function(){
