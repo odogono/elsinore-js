@@ -39,7 +39,7 @@ describe('Entity', function(){
 
         it('should emit events for the new position component', function(){
             var self = this;
-            var eventSpy = sinon.spy();
+            var eventSpy = Sinon.spy();
             this.registry.on('component:create', eventSpy);
             var PositionComDef = this.registry.ComponentDef.Position;
             return this.registry.createEntity( 'position' )
@@ -51,7 +51,6 @@ describe('Entity', function(){
         it('should have properties for each component', function(){
             return this.registry.createEntity( ['position', 'score'] )
                 .then( function(entity){
-                    // log.debug('created entity ' + entity.id);
                     expect( entity.Position ).to.not.be.undefined;
                     expect( entity.Score ).to.not.be.undefined;
                 });
@@ -64,8 +63,8 @@ describe('Entity', function(){
                 });
         });
 
-        it('should have a lives default of 3', function(){
-            return this.registry.createEntity()
+        it.only('should have a lives default of 3', function(){
+            return this.registry.createEntity( 'score' )
                 .then( function(entity){
                     expect( entity.Score.get('lives') ).to.equal(3);
                 });

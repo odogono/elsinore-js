@@ -6,7 +6,7 @@
     "name": "Alexander Veenendaal",
     "email": "alex@opendoorgonorth.com"
   },
-  "files":[
+  "files": [
     "index.js",
     "lib/odgn-entity.js",
     "lib/entity.js",
@@ -26,16 +26,24 @@
     "bluebird": "~1.2.4",
     "jsonpointer": "~1.1.0",
     "underscore": "^1.6.0",
-    "underscore.string": "~2.3.3"
+    "underscore.string": "~2.3.3",
+    "uri-js": "^1.4.2"
   },
   "devDependencies": {
-    "mocha": "~1.19.0",
-    "sinon": "~1.9.0",
-    "gulp-util": "~2.2.14",
-    "gulp": "~3.6.2",
-    "mocha-as-promised": "~2.0.0",
+    "browserify": "^4.1.5",
+    "browserify-shim": "^3.5.0",
     "chai": "~1.9.1",
-    "chai-as-promised": "~4.1.1"
+    "chai-as-promised": "~4.1.1",
+    "connect": "^2.17.1",
+    "gulp": "~3.6.2",
+    "gulp-livereload": "^1.5.0",
+    "gulp-uglify": "^0.3.0",
+    "gulp-util": "~2.2.14",
+    "mocha": "~1.19.0",
+    "mocha-as-promised": "~2.0.0",
+    "sinon": "~1.9.0",
+    "vinyl-buffer": "0.0.0",
+    "vinyl-source-stream": "^0.1.1"
   },
   "directories": {
     "lib": "lib"
@@ -56,5 +64,15 @@
   },
   "homepage": "https://github.com/odogono/odgn-entity",
   "_id": "odgn-entity@0.2.1",
-  "_from": "odgn-entity@0.2.x"
+  "_from": "odgn-entity@0.2.x",
+  "browserify": {
+    "transform": [
+      "browserify-shim"
+    ]
+  },
+  "browserify-shim": {
+    "backbone": "global:backbone",
+    "bluebird": "global:bluebird",
+    "underscore": "global:underscore"
+  }
 }

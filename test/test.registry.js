@@ -16,7 +16,7 @@ describe('Registry', function(){
         });
 
         it('should use memory storage by default', function(){
-            var spy = sinon.spy( Registry.prototype, 'useStorage' );
+            var spy = Sinon.spy( Registry.prototype, 'useStorage' );
             Registry.create().initialize().then( function(registry){
                 assert(spy.calledWith( MemoryStorage, {} ));
                 Registry.prototype.useStorage.restore();
@@ -53,7 +53,7 @@ describe('Registry', function(){
         });
 
         it('should accept an id', function(){
-            this.registry.createEntity({id:980})
+            this.registry.createEntity(null, {id:980})
                 .should.eventually.have.property('id', 980);
         });
     });
@@ -64,7 +64,7 @@ describe('Registry', function(){
             return this.registry.initialize();
         });
 
-        it.only('should reuse a destroyed entity id', function(){
+        it('should reuse a destroyed entity id', function(){
             var self = this;
             var registry = this.registry;
             var createdEntityId;
@@ -96,7 +96,7 @@ describe('Registry', function(){
 
         it('should create a constant for the ComponentDef on the registry', function(){
             var self = this, 
-                storageMock = sinon.mock( this.registry.storage );
+                storageMock = Sinon.mock( this.registry.storage );
             
             storageMock.expects('registerComponent').once().returns(
                 Promise.resolve( ComponentDef.create( '/component/test', null,null, {id:34} ) )
@@ -131,7 +131,15 @@ describe('Registry', function(){
 
         it('should return from its string schema-id', function(){
             expect( this.registry.getComponentDef('/component/get_test').id ).to.equal( 34 );
-        }); 
+        });
+
+        it('should return from its shortened schema-id', function(){
+            expect( this.registry.getComponentDef('get_test').id ).to.equal( 34 );
+        });
+
+        it('should return from an object property', function(){
+            expect( this.registry.getComponentDef({schema:'get_test'}).id ).to.equal(34);
+        });
     });
 
 
@@ -146,7 +154,7 @@ describe('Registry', function(){
                 { id:'/component/beta' }
             ];
             // var register = { registerComponent: function(data,options){} };
-            var registerMock = sinon.mock( this.registry );
+            var registerMock = Sinon.mock( this.registry );
 
             registerMock.expects('registerComponent').twice();
             registerMock.expects('begin').once().returns( Promise.resolve() );
@@ -168,10 +176,10 @@ describe('Registry', function(){
         });
 
         it('should create a component from a def schema id', function(){
-            var registryMock = sinon.mock( this.registry );
-            // var storageMock = sinon.mock( this.registry.storage );
+            var registryMock = Sinon.mock( this.registry );
+            // var storageMock = Sinon.mock( this.registry.storage );
             var def = ComponentDef.create('/component/test');
-            var eventSpy = sinon.spy();
+            var eventSpy = Sinon.spy();
 
             // the operation should trigger an event
             this.registry.on('component:create', eventSpy);
@@ -192,13 +200,11 @@ describe('Registry', function(){
 
         it('should add a component to an entity using the component def url', function(){
             var entity = {};
-            var registerMock = sinon.mock( this.registry );
-            var storageMock = sinon.mock( this.registry.storage );
+            var registerMock = Sinon.mock( this.registry );
+            var storageMock = Sinon.mock( this.registry.storage );
             var def = ComponentDef.create('/component/test');
 
-            registerMock.expects('getComponentDef').once().returns( def );
             registerMock.expects('createComponent').once().returns( Promise.resolve( {} ) );
-            
             storageMock.expects('addComponent').withArgs( {} ,entity).once().returns( Promise.resolve() );
 
             return this.registry.addComponent('/component/test', entity)
@@ -212,11 +218,10 @@ describe('Registry', function(){
         // instances will come later as an optimisation step
         it('should add an array of component defs to an entity', function(){
             var entity = {};
-            var registerMock = sinon.mock( this.registry );
-            var storageMock = sinon.mock( this.registry.storage );
+            var registerMock = Sinon.mock( this.registry );
+            var storageMock = Sinon.mock( this.registry.storage );
             
             var def = ComponentDef.create('/component/test');
-            registerMock.expects('getComponentDef').once().returns( [def,def,def] );
             registerMock.expects('createComponent').once().returns( Promise.resolve( {} ) );
             storageMock.expects('addComponent').once().returns( Promise.resolve() );
 
@@ -229,37 +234,55 @@ describe('Registry', function(){
 
 
         it('should instantiate with attributes', function(){
-            var registryMock = sinon.mock( this.registry );
-            var storageMock = sinon.mock( this.registry.storage );
+            var registryMock = Sinon.mock( this.registry );
+            var storageMock = Sinon.mock( this.registry.storage );
             var def = ComponentDef.create('/component/create');
 
             registryMock.expects('getComponentDef').once().returns( def );
             storageMock.expects('saveComponent').never();
 
+            // var component = this.registry.createComponent( 100, {name:'tiger', age:12} );
             var component = this.registry.instantiateComponent( 100, { name:'tiger', age:12} );
-                
+
             expect( component.get('name') ).to.equal('tiger');
             registryMock.verify();
             storageMock.verify();
         });
 
         it('should instantiate with attributes', function(){
-            var registryMock = sinon.mock( this.registry );
-            var storageMock = sinon.mock( this.registry.storage );
+            var registryMock = Sinon.mock( this.registry );
+            var storageMock = Sinon.mock( this.registry.storage );
             var def = ComponentDef.create('/component/create');
 
-            registryMock.expects('getComponentDef').once().returns( def );
+            registryMock.expects('getComponentDef').twice().returns( def );
             storageMock.expects('saveComponent').never();
 
-            var components = this.registry.instantiateComponent( 100, 
-                [{ name:'tiger', age:12}, { name:'lion', age:4} ]
+            var components = this.registry.instantiateComponent( 
+                [{ schema:100, name:'tiger', age:12}, { schema:100, name:'lion', age:4} ]
             );
-            // print_ins( components, 2 );
-
+            
+            expect( components[0].isNew() ).to.be.true;
             expect( components[0].get('name') ).to.equal('tiger');
             expect( components[1].get('name') ).to.equal('lion');
             registryMock.verify();
             storageMock.verify();
+        });
+
+        it('should instantiate with a component id', function(){
+            var registryMock = Sinon.mock( this.registry );
+            var def = ComponentDef.create('/component/comident');
+
+            registryMock.expects('getComponentDef').twice().returns( def );
+
+            var components = this.registry.instantiateComponent( 
+                [{ schema:'comident', id:456, name:'tiger', age:12}, { schema:'comident', id:457, name:'lion', age:4} ]
+            );
+
+            expect( components[0].isNew() ).to.be.false;
+            expect( components[0].id ).to.equal( 456 );
+            expect( components[1].id ).to.equal( 457 );
+
+            registryMock.verify();
         });
     });
 
@@ -281,7 +304,7 @@ describe('Registry', function(){
                 }
             });
             var processors = [ new Processor(), new Processor() ];
-            var mocks = processors.map( function(s){ return sinon.mock(s); });
+            var mocks = processors.map( function(s){ return Sinon.mock(s); });
 
             mocks.forEach( function(mock){
                 mock.expects('update').once();
@@ -338,8 +361,8 @@ describe('Registry', function(){
 
     describe('Destroying', function(){
         it('should destroy an entity', function(done){
-            var destroyEvent = sinon.spy();
-            var storageStub = sinon.stub( this.registry.storage, 'destroyEntity', function(entity,cb){
+            var destroyEvent = Sinon.spy();
+            var storageStub = Sinon.stub( this.registry.storage, 'destroyEntity', function(entity,cb){
                 return cb(null,entity);
             });
 
@@ -349,8 +372,8 @@ describe('Registry', function(){
                 assert.equal( destroyEvent.getCall(0).args[0].id, 101 );
                 assert( Entity.isEntity(entity) );
                 assert.equal( entity.id, 101 );
-                sinon.assert.calledOnce(storageStub);
-                sinon.assert.calledOnce(destroyEvent);
+                Sinon.assert.calledOnce(storageStub);
+                Sinon.assert.calledOnce(destroyEvent);
                 done();
             });
         });

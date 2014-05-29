@@ -55,7 +55,7 @@ describe('ComponentDef', function(){
 
     describe('creating', function(){
         it('should create with defaults', function(){
-            var schemaRegistry = SchemaRegistry.create();
+            
             var schema = {
                 id: '/component/flower',
                 properties:{
@@ -64,9 +64,9 @@ describe('ComponentDef', function(){
                     height: { type:'number', 'default':1.0 }
                 }
             };
-            // var defaults = { name:'daisy', colour:'red', height:1.0 };
+            var defaults = { name: 'daisy', colour: 'red', height:1.0 };
 
-            var def = ComponentDef.create( schema, null, null );
+            var def = ComponentDef.create( schema, null, defaults );
             ComponentDef.isComponentDef(def).should.equal(true);
             var com = def.create();
 
