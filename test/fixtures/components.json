@@ -1,46 +1,35 @@
 [
     {
-        "id":"/component/es_a",
+        "id": "/component/position",
         "properties":{
-            "name":{"type":"string"}
-        }
-    },
-    {
-        "id":"/component/es_b",
-        "properties":{
-            "is_active":{ "type":"boolean" }
-        }
-    },
-    {
-        "id":"/component/es_c",
-        "properties":{
-            "age":{ "type":"integer" }
-        }
-    },
-    
-    {
-        "id":"/component/test/a"
-    },
-    
-    {
-        "id":"/component/test/b"
-    },
-
-    {
-        "id":"/component/test/c"
-    },
-
-    {
-        "id":"/component/queue_item",
-        "description":"an item that exists in a queue",
-        "properties":{
-            "priority":{ "type":"integer" },
-            "added_at":{ "type":"string", "format":"date-time" },
-            "executed_at":{ "type":"string", "format":"date-time" }
+            "x": { "type":"number" },
+            "y": { "type":"number" }
         }
     },
 
     {
-        "id":"/component/test/d"
+        "id": "/component/score",
+        "properties": {
+            "score": { "type":"integer" },
+            "lives": { "type":"integer", "default": 3 }
+        }
+    },
+
+    {
+        "id":"/component/nickname",
+        "description":"an entity identifiable by a name",
+        "properties":{
+            "nick":{ 
+                "type":"string",
+                "pattern":"^[a-z_\\-\\[\\]\\\\^{}|`][a-z0-9_\\-\\[\\]\\\\^{}|`]{2,15}"
+            }
+        }
+    },
+
+    {
+        "id":"/component/realname",
+        "properties":{
+            "realname":{  "type":"string", "minLength":3, "maxLength":50 }
+        }
     }
 ]

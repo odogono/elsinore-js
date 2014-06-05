@@ -1,27 +1,86 @@
-require('./common');
+var Common = require('./common');
 
+var Registry = Elsinore.Registry;
+var MemoryStorage = Elsinore.storage.MemoryStorage;
+var ComponentDef = Elsinore.ComponentDef;
+var Entity = Elsinore.Entity;
+var EntitySet = Elsinore.EntitySet;
 
-var createEntityAndEntitySet = function(options, callback){
-    var registry = options.registry;
-    var host = options.host || {};
-    async.waterfall([
-        function createEntitySet(cb){
-            // create an entity set for all entities
-            registry.createEntitySet( null, null, cb );
-        },
-        function createEntity(result, cb){
-            host.entitySet = result;
-            registry.createEntity(cb);
-        }
-    ], function(err,result){
-        host.entity = result;
-        return callback(err,host.entity,host.entitySet);
-    });
-};
-
-
+var FixtureComponents = Common.fixtures.components;
 
 describe('EntitySet', function(){
+
+    beforeEach( function(){
+        var self = this;
+        return Registry.create().initialize()
+            .then( function(registry){
+                self.registry = registry;
+                return registry.registerComponent( FixtureComponents );
+            })
+    });
+
+    beforeEach( function(){
+        var self = this;
+
+        self.entities = [
+            [{schema:'position', x:10, y:-10}, {schema:'nickname', nick:'john'} ],
+            [{schema:'score', score:3}, {schema:'nickname', nick:'peter'}],
+            [{schema:'position', x:-32, y:10}, {schema:'score', score:10}]
+        ];
+
+        var current = Promise.resolve();
+        return Promise.map( self.entities, function(entitySpec){
+            current = current.then( function(){
+                return self.registry.createEntity( entitySpec );
+            });
+            return current;
+        })
+        .then( function(entities){
+            self.entities = entities;
+        });
+    });
+
+    it('should return the number of entities contained', function(){
+        var es = EntitySet.create();
+        var entity = this.entities[0];
+        es.addComponent( entity.Position );
+        es.length.should.equal(1);
+        es.addComponent( entity.Nickname );
+        es.length.should.equal(1);
+    });
+
+    it('should return an added entity', function(){
+        var es = EntitySet.create();
+        var entity = this.entities[0];
+        es.addComponent( entity.Position );
+        es.at(0).id.should.equal( entity.id );
+    });
+
+
+});
+
+
+
+describe.skip('EntitySet.Old', function(){
+    var createEntityAndEntitySet = function(options, callback){
+        var registry = options.registry;
+        var host = options.host || {};
+        async.waterfall([
+            function createEntitySet(cb){
+                // create an entity set for all entities
+                registry.createEntitySet( null, null, cb );
+            },
+            function createEntity(result, cb){
+                host.entitySet = result;
+                registry.createEntity(cb);
+            }
+        ], function(err,result){
+            host.entity = result;
+            return callback(err,host.entity,host.entitySet);
+        });
+    };
+
+
     beforeEach( function(done){
         var self = this;
         async.waterfall([
@@ -207,7 +266,7 @@ describe('EntitySet', function(){
         });
     });
 
-    it.only('should iterate over entities using forEach async', function(done){
+    it('should iterate over entities using forEach async', function(done){
         var self = this, entity, entitySet;
         async.waterfall([
             function createEntitySet(cb){

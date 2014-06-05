@@ -208,5 +208,8 @@ module.exports = {
     createComponents: createComponents,
     registerComponentDef: registerComponentDef,
     ComponentDef: registeredComponentDefs,
-    getComponentDef: getComponentDef
+    getComponentDef: getComponentDef,
+    fixtures:{
+        components: require('./fixtures/components.json')
+    }
 };
