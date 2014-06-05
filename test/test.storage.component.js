@@ -51,10 +51,10 @@ describe('Storage', function(){
             var self = this;
             var component = Common.createComponent(102);
 
-            var registry = { instantiateComponent:function(){} };
+            var registry = { createComponent:function(){} };
             var registryMock = Sinon.mock(registry);
 
-            registryMock.expects('instantiateComponent').once().withArgs().returns( Common.createComponent(102) );
+            registryMock.expects('createComponent').once().withArgs().returns( Common.createComponent(102) );
             this.storage.registry = registry;
 
             return this.storage.saveComponents( [component] )
@@ -77,12 +77,12 @@ describe('Storage', function(){
 
             it('should retrieve components by a schema id', function(){
                 var self = this;
-                var registry = { instantiateComponent:function(){} };
+                var registry = { createComponent:function(){} };
                 var registryMock = Sinon.mock(registry);
 
-                registryMock.expects('instantiateComponent')
+                registryMock.expects('createComponent')
                     .once()
-                    .withArgs(2001, { id: 3001, name: "alex" })
+                    .withArgs(2001, { id: 3001, name: "alex" }, {save:false} )
                     .returns( Common.createComponent() );
 
                 this.storage.registry = registry;
@@ -106,7 +106,7 @@ describe('Storage', function(){
         describe('deleting components', function(){
             beforeEach( function(){
                 var self = this;
-                this.storage.registry.instantiateComponent = function( defId, attrs){
+                this.storage.registry.createComponent = function( defId, attrs, options){
                     return Common.createComponent( defId, attrs );
                 };
                 return Common.registerComponentDef( self.storage, ['/component/vegetable', '/component/mineral'] )

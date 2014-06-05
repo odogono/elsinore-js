@@ -23,6 +23,9 @@ Chai.use(ChaiAsPromised);
 expect = Chai.expect;
 Chai.should();
 
+var registeredComponentDefs = {};
+var registeredComponentDefIds = {};
+
 var rootDir = Path.join( Path.dirname(__filename), '../' );
 
 Common = {
@@ -126,7 +129,15 @@ function createEntities( count ){
 }
 
 function createComponentDef( schemaId, schemaAttrs ){
-    return Elsinore.ComponentDef.create( schemaId, schemaAttrs );
+    var schema = {id:schemaId};
+    if( schemaAttrs )
+        schema = _.extend(schema,schemaAttrs);
+    var result = Elsinore.ComponentDef.create( schema, schemaAttrs );
+    // var result = new Backbone.Model( {schema:schema} );
+    // result.getSchemaId = function(){
+    //     return schemaId;
+    // }
+    return result;
 }
 
 function createComponent(componentDefId, attrs){
@@ -137,11 +148,65 @@ function createComponent(componentDefId, attrs){
     return def.create( attrs );
 }
 
+
+function registerComponentDef( storage, schema ){
+    if( _.isArray(schema) ){
+        var current = Promise.fulfilled();
+        return Promise.all( schema.map( function(sch){
+            return current = current.then(function(){
+                return registerComponentDef( storage, sch );
+            });
+        }));
+    }
+    var def = ComponentDef.create( schema );
+    return storage.registerComponentDef( def ).then( function(def){
+        registeredComponentDefs[ def.getSchemaId() ] = def;
+        registeredComponentDefIds[ def.id ] = def;
+        return def;
+    });
+}
+
+function createComponents( storage, components, options ){
+    if( _.isArray(storage) ){
+        components = storage;
+        storage = null;
+    }
+
+    // var save = options ? options.save || false;
+    // we store each array of components seperatley
+    var comTypes = {};
+    // convert components data into instances
+    components = components.map(function(com){
+        var schemaId = com['schema'];
+        var def = registeredComponentDefs[schemaId];
+        delete com['schema'];
+        var result = def.create( com );
+        var typeArray = comTypes[ def.id ] || (comTypes[ def.id ] = []);
+        typeArray.push( result );
+        // log.debug('creating component ' + def.getSchemaId() + ' ' + JSON.stringify(com) );
+        return result;
+    });
+
+    if( storage ){
+        return storage.saveComponents( components );
+    }
+
+    return components;
+}
+
+function getComponentDef( schemaId ){
+    return registeredComponentDefs[ schemaId ];
+}
+
 module.exports = {
     Entity: Elsinore.Entity,
     createAndInitialize: createAndInitialize,
     createEntity: createEntity,
     createEntities: createEntities,
     createComponentDef: createComponentDef,
-    createComponent: createComponent
+    createComponent: createComponent,
+    createComponents: createComponents,
+    registerComponentDef: registerComponentDef,
+    ComponentDef: registeredComponentDefs,
+    getComponentDef: getComponentDef
 };
