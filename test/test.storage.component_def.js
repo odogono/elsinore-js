@@ -1,28 +1,12 @@
-require('./common');
+var Common = require('./common');
 
-var _ = require('underscore');
-var Backbone = require('backbone');
-var Promise = require('bluebird');
-
-var Registry = Elsinore.Registry;
-var RedisStorage = require('../index');
-var ComponentDef = Elsinore.ComponentDef;
-var Entity = Elsinore.Entity;
-
-var testOptions = {
-    key_prefix: 'test-elsinore-redis',
-    db_id: 0
-};
-
-
-
-describe('RedisStorage', function(){
+describe('Storage', function(){
 
     describe('ComponentDef', function(){
 
         beforeEach( function(){
             var self = this;
-            return createAndInitialize(testOptions).then(function(storage){ self.storage = storage; });
+            return Common.createAndInitialize().then(function(storage){ self.storage = storage; });
         });
 
         afterEach( function(){
@@ -30,56 +14,78 @@ describe('RedisStorage', function(){
 
 
         it('should register a componentDef', function(){
-
+            var self = this;
+            var def = Common.createComponentDef('/component/test');
+            return this.storage.registerComponentDef( def )
+                .then(function(def){
+                    return self.storage.isComponentDefRegistered('/component/test').should.eventually.equal(true);
+                });
         });
 
         it('should throw an error when attempting to register an existing componentDef', function(){
-
-        });
-
-        it('should unregister a componentDef', function(){
-
-        });
-
-        it('should retrieve an existing componentDef', function(){
-
-        });
-
-        it('should throw an error when retrieving an unknown componentDef', function(){
-
+            var self = this;
+            var def = Common.createComponentDef('/component/test');
+            return this.storage.registerComponentDef( def )
+                .then(function(def){
+                    return self.storage.registerComponentDef( def ).should.be.rejectedWith( Error, '/component/test already registered' );
+                });
         });
 
         it('should indicate that a componentDef exists', function(){
-
+            var self = this;
+            var def = Common.createComponentDef('/component/test');
+            return this.storage.registerComponentDef( def )
+                .then(function(def){
+                    return self.storage.isComponentDefRegistered( '/component/test' ).should.eventually.equal( true );
+                });
         });
 
         it('should indicate that a componentDef does not exist', function(){
+            var self = this;
+            return self.storage.isComponentDefRegistered( '/component/test' ).should.eventually.equal( false );
+        });
 
+        it('should unregister a componentDef', function(){
+            var self = this;
+            var def = Common.createComponentDef('/component/test');
+            return this.storage.registerComponentDef( def )
+                .then(function(def){
+                    return self.storage.unregisterComponentDef( '/component/test' );
+                })
+                .then(function(def){
+                    return self.storage.isComponentDefRegistered( '/component/test' ).should.eventually.equal( false );
+                });
+        });
+
+
+        it.only('should retrieve an existing componentDef', function(){
+            var self = this;
+            var schema = {
+                id: '/component/flower',
+                properties:{
+                    name: { type:'string', 'default':'daisy' },
+                    colour: { type:'string', 'default':'red' },
+                    height: { type:'number', 'default':1.0 }
+                }
+            };
+            var defaults = { name:'daisy', colour:'red', height:1.0 };
+            var def = ComponentDef.create( schema, null, defaults );
+
+            // var def = Common.createComponentDef('/component/rtest');
+            return this.storage.registerComponentDef( def )
+                .then(function(def){
+                    return self.storage.retrieveComponentDef( '/component/flower' );
+                })
+                .then(function(def){
+                    def.get('schema').id.should.equal('/component/flower');
+                    def.get('schema').properties.name.should.deep.equal( { type:'string', 'default':'daisy' } );
+                });
+        });
+
+        it('should throw an error when retrieving an unknown componentDef', function(){
+            return this.storage.retrieveComponentDef( '/component/test' ).should.be.rejectedWith( Error, '/component/test is not registered' );
         });
         
     });
 
 });
-
-
-function createAndInitialize(options){
-    var storage = RedisStorage.create();
-    storage.registry = {toEntity:function(id){
-        var result = Entity.toEntity(id);
-        // log.debug('creating with ' + JSON.stringify(id));
-        return result;
-    }};
-
-    return storage.initialize(options)
-        .then( function(storage){
-            return storage.clear();
-        });
-}
-
-function createEntity(id){
-    return Entity.create(id);
-}
-
-function createEntities( count ){
-    return _.times( count, function(i){ return createEntity() });
-}

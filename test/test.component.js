@@ -1,7 +1,7 @@
 require('./common');
 require('../index');
 
-describe('Component', function(){
+describe.skip('Component.Old', function(){
     beforeEach( function(done){
         var self = this;
         // passing a callback to create will initialise

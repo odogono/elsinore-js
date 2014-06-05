@@ -3,6 +3,8 @@
  */
 
 Elsinore = require('../index');
+ComponentDef = Elsinore.ComponentDef;
+
 
 assert = require('assert');
 Fs = require('fs');
@@ -127,10 +129,19 @@ function createComponentDef( schemaId, schemaAttrs ){
     return Elsinore.ComponentDef.create( schemaId, schemaAttrs );
 }
 
+function createComponent(componentDefId, attrs){
+    if( !componentDefId ){
+        return Elsinore.Component.create();
+    }
+    var def = createComponentDef( componentDefId );
+    return def.create( attrs );
+}
+
 module.exports = {
     Entity: Elsinore.Entity,
     createAndInitialize: createAndInitialize,
     createEntity: createEntity,
     createEntities: createEntities,
-    createComponentDef: createComponentDef    
+    createComponentDef: createComponentDef,
+    createComponent: createComponent
 };

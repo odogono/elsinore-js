@@ -1,14 +1,13 @@
 var Common = require('./common');
 
-var testOptions = {};
 
-describe('MemoryStorage', function(){
+describe('Storage', function(){
 
     describe('Entity', function(){
 
         beforeEach( function(){
             var self = this;
-            return Common.createAndInitialize(testOptions).then(function(storage){ self.storage = storage; });
+            return Common.createAndInitialize().then(function(storage){ self.storage = storage; });
         });
 
         afterEach( function(){
@@ -124,4 +123,5 @@ describe('MemoryStorage', function(){
         });
 
     });
+
 });
