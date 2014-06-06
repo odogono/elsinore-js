@@ -10,8 +10,11 @@ var FixtureComponents = Common.fixtures.components;
 
 describe('EntitySet', function(){
 
-    beforeEach( function(){
+    beforeEach( function initializeRegistry(){
         var self = this;
+
+        this.entitySet = EntitySet.create();
+
         return Registry.create().initialize()
             .then( function(registry){
                 self.registry = registry;
@@ -19,11 +22,11 @@ describe('EntitySet', function(){
             })
     });
 
-    beforeEach( function(){
+    beforeEach( function initializeEntities(){
         var self = this;
 
         self.entities = [
-            [{schema:'position', x:10, y:-10}, {schema:'nickname', nick:'john'} ],
+            [{schema:'position', x:10, y:-10}, {schema:'nickname', nick:'john'}, {schema:'realname', realname:'John Smith'} ],
             [{schema:'score', score:3}, {schema:'nickname', nick:'peter'}],
             [{schema:'position', x:-32, y:10}, {schema:'score', score:10}]
         ];
@@ -41,21 +44,45 @@ describe('EntitySet', function(){
     });
 
     it('should return the number of entities contained', function(){
-        var es = EntitySet.create();
         var entity = this.entities[0];
-        es.addComponent( entity.Position );
-        es.length.should.equal(1);
-        es.addComponent( entity.Nickname );
-        es.length.should.equal(1);
+        this.entitySet.addComponent( entity.Position );
+        this.entitySet.length.should.equal(1);
+        this.entitySet.addComponent( entity.Nickname );
+        this.entitySet.length.should.equal(1);
     });
 
     it('should return an added entity', function(){
-        var es = EntitySet.create();
         var entity = this.entities[0];
-        es.addComponent( entity.Position );
-        es.at(0).id.should.equal( entity.id );
+        this.entitySet.addComponent( entity.Position );
+        var addedEntity = this.entitySet.at(0);
+        addedEntity.id.should.equal( entity.id );
+        addedEntity.Position.id.should.equal( entity.Position.id );
     });
 
+    it('should remove the entity belonging to a component', function(){
+        var entity = this.entities[0];
+        this.entitySet.addComponent( entity.Position );
+        this.entitySet.removeComponent( entity.Position );
+        this.entitySet.length.should.equal(0);
+    });
+
+    it('should remove a component reference from an entity', function(){
+        var entity = this.entities[0];
+        this.entitySet.addComponent( [entity.Position, entity.Nickname, entity.Realname] );
+        var addedEntity = this.entitySet.at(0);
+        expect( addedEntity.Realname ).to.not.be.undefined;
+        this.entitySet.removeComponent( entity.Realname );
+        addedEntity = this.entitySet.at(0);
+        expect( addedEntity.Realname ).to.be.undefined;
+    });
+
+
+
+    it('should emit an event when an entity is added');
+    it('should emit an event when an entity is removed');
+
+    it('should emit an event when a component is added');
+    it('should emit an event when a component is removed');
 
 });
 
