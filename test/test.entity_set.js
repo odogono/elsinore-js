@@ -59,7 +59,7 @@ describe('EntitySet', function(){
         addedEntity.Position.id.should.equal( entity.Position.id );
     });
 
-    it('should remove the entity belonging to a component', function(){
+    it.only('should remove the entity belonging to a component', function(){
         var entity = this.entities[0];
         this.entitySet.addComponent( entity.Position );
         this.entitySet.removeComponent( entity.Position );
@@ -76,7 +76,23 @@ describe('EntitySet', function(){
         expect( addedEntity.Realname ).to.be.undefined;
     });
 
+    it('should add an entity', function(){
+        var entity = this.entities[0];
+        this.entitySet.addEntity( entity );
+        this.entitySet.length.should.equal(1);
+        this.entitySet.addEntity( entity );
+        this.entitySet.length.should.equal(1);
+    });
 
+    it('should remove an entity', function(){
+        var entity = this.entities[0];
+        this.entitySet.addEntity( entity );
+        this.entitySet.length.should.equal(1);
+        this.entitySet.removeEntity( entity );
+        this.entitySet.length.should.equal(0);
+    });
+
+    it('should add the components of an entity');
 
     it('should emit an event when an entity is added');
     it('should emit an event when an entity is removed');
