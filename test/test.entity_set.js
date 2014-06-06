@@ -43,6 +43,8 @@ describe('EntitySet', function(){
         });
     });
 
+    
+
     it('should return the number of entities contained', function(){
         var entity = this.entities[0];
         this.entitySet.addComponent( entity.Position );
@@ -59,7 +61,7 @@ describe('EntitySet', function(){
         addedEntity.Position.id.should.equal( entity.Position.id );
     });
 
-    it.only('should remove the entity belonging to a component', function(){
+    it('should remove the entity belonging to a component', function(){
         var entity = this.entities[0];
         this.entitySet.addComponent( entity.Position );
         this.entitySet.removeComponent( entity.Position );
@@ -100,6 +102,24 @@ describe('EntitySet', function(){
     it('should emit an event when a component is added');
     it('should emit an event when a component is removed');
 
+    it('should only add a component of an accepted type');
+
+    it('should only add the components of an entity which are accepted');
+
+
+    it('should filter', function(){
+        var self = this;
+        this.entitySet.on('all', function(evt){
+            log.debug('evt ' + JSON.stringify( _.toArray(arguments) ) );
+        });
+        this.entitySet.addEntity( this.entities, {addComponents:true} );
+
+        var selected = this.entitySet.filter( function(e){
+            return e.hasComponent( self.registry.ComponentDef.Position );
+        });
+
+        selected.length.should.equal(2);
+    });
 });
 
 
