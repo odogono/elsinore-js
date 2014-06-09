@@ -112,6 +112,18 @@ get: function() {
     }
 });
 
+function debugPrintEntity(entity){
+    entity = Elsinore.Entity.toEntity(entity);
+    var componentDefNames = _.compact( _.map( entity.components, function(c){
+        return c.ComponentDef;
+    }) );
+    componentDefNames = _.map(componentDefNames, function(c){ 
+        return c.getName() + ' (' + c.id + ')'; 
+    });
+    log.debug('entity ' + entity.id );
+    log.debug('  components ' + componentDefNames.join(', ') );
+}
+
 function createAndInitialize(options){
     var registry = Elsinore.Registry.create();
     return registry.initialize()
@@ -211,5 +223,6 @@ module.exports = {
     getComponentDef: getComponentDef,
     fixtures:{
         components: require('./fixtures/components.json')
-    }
+    },
+    debugPrintEntity: debugPrintEntity
 };

@@ -5,6 +5,8 @@ var MemoryStorage = Elsinore.storage.MemoryStorage;
 var ComponentDef = Elsinore.ComponentDef;
 var Entity = Elsinore.Entity;
 var EntitySet = Elsinore.EntitySet;
+// var BitArray = require('bit-array');
+// var BitField = require('bit_field');
 
 var FixtureComponents = Common.fixtures.components;
 
@@ -40,6 +42,7 @@ describe('EntitySet', function(){
         })
         .then( function(entities){
             self.entities = entities;
+            self.ComponentDefs = self.registry.ComponentDef;
         });
     });
 
@@ -94,31 +97,93 @@ describe('EntitySet', function(){
         this.entitySet.length.should.equal(0);
     });
 
-    it('should add the components of an entity');
+    it('should add the components of an entity', function(){
+        this.entitySet.addEntity( this.entities[0] );
+        var addedEntity = this.entitySet.at(0);
+        expect( addedEntity.Realname ).to.not.be.undefined;
+    });
 
-    it('should emit an event when an entity is added');
-    it('should emit an event when an entity is removed');
+    it('should emit an event when an entity is added', function(){
+        var spy = Sinon.spy();
+        this.entitySet.on('add:entity', spy );
+        this.entitySet.addEntity( this.entities[0] );
+        expect( spy.called ).to.be.true;
+    });
+
+    it('should emit an event when an entity is removed', function(){
+        var spy = Sinon.spy();
+        var entity = this.entities[0];
+        this.entitySet.on('remove:entity', spy );
+        this.entitySet.addEntity( entity );
+        this.entitySet.removeEntity( entity );
+        expect( spy.called ).to.be.true; 
+    });
 
     it('should emit an event when a component is added');
     it('should emit an event when a component is removed');
 
-    it('should only add a component of an accepted type');
+    it('should only add an entity with components', function(){
+        this.entitySet.addEntity( 345 );
+        this.entitySet.length.should.equal(0);
+    });
+
+    it('should only add a component of an accepted type', function(){
+        var RCDef = this.registry.ComponentDef;
+        this.entitySet.setIncludedComponents( RCDef.Position );
+
+        this.entitySet.addEntity( this.entities[1] );
+        this.entitySet.length.should.equal(0);
+        this.entitySet.addEntity( this.entities[0] );
+        this.entitySet.length.should.equal(1);
+    });
+
+    it('should not add entities that have excluded components', function(){
+        this.entitySet.setExcludedComponents( this.ComponentDefs.Score );
+        this.entitySet.addEntity( this.entities[1] );
+        this.entitySet.length.should.equal(0);
+        this.entitySet.addEntity( this.entities[0] );
+        this.entitySet.length.should.equal(1); 
+    });
 
     it('should only add the components of an entity which are accepted');
 
 
     it('should filter', function(){
         var self = this;
-        this.entitySet.on('all', function(evt){
-            log.debug('evt ' + JSON.stringify( _.toArray(arguments) ) );
-        });
-        this.entitySet.addEntity( this.entities, {addComponents:true} );
+        // this.entitySet.on('all', function(evt){
+        //     log.debug('evt ' + JSON.stringify( _.toArray(arguments) ) );
+        // });
+        this.entitySet.addEntity( this.entities );
 
         var selected = this.entitySet.filter( function(e){
             return e.hasComponent( self.registry.ComponentDef.Position );
         });
 
         selected.length.should.equal(2);
+    });
+
+    it('should remove components for an entity', function(){
+        var entity = this.entities[0];
+
+        // this.entitySet.on('all', function(evt){
+        //     log.debug('evt ' + JSON.stringify( _.toArray(arguments) ) );
+        // });
+
+        this.entitySet.addEntity( entity );
+
+        this.entitySet.removeEntity( entity );
+    });
+
+    it('should emit events when components change', function(){
+        var entity = this.entities[0];
+        var spy = Sinon.spy();
+
+        this.entitySet.on('change:component', spy);
+        
+        this.entitySet.addEntity( entity );
+        entity.Position.set('x',100);
+
+        expect( spy.called ).to.be.true;
     });
 });
 
