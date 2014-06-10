@@ -100,17 +100,21 @@ describe('EntitySet', function(){
 
     it('should emit an event when an entity is added', function(){
         var spy = Sinon.spy();
+        
         this.entitySet.on('add:entity', spy );
         this.entitySet.addEntity( this.entities[0] );
+        
         expect( spy.called ).to.be.true;
     });
 
     it('should emit an event when an entity is removed', function(){
         var spy = Sinon.spy();
         var entity = this.entities[0];
+        
         this.entitySet.on('remove:entity', spy );
         this.entitySet.addEntity( entity );
         this.entitySet.removeEntity( entity );
+        
         expect( spy.called ).to.be.true; 
     });
 
@@ -123,13 +127,19 @@ describe('EntitySet', function(){
     });
 
     it('should only add a component of an accepted type', function(){
-        var RCDef = this.registry.ComponentDef;
-        this.entitySet.setIncludedComponents( RCDef.Position );
+        this.entitySet.setIncludedComponents( this.ComponentDefs.Position );
 
         this.entitySet.addEntity( this.entities[1] );
         this.entitySet.length.should.equal(0);
         this.entitySet.addEntity( this.entities[0] );
         this.entitySet.length.should.equal(1);
+    });
+
+    it('should only retain the included component on entity', function(){
+        this.entitySet.setIncludedComponents( this.ComponentDefs.Nickname );
+        this.entitySet.addEntity( this.entities[0] );
+        // the entity won't have any of the other components
+        expect( this.entitySet.at(0).getComponentCount() ).to.equal(1);
     });
 
     it('should not add entities that have excluded components', function(){
@@ -169,9 +179,7 @@ describe('EntitySet', function(){
     it('should remove components for an entity', function(){
         var entity = this.entities[0];
 
-        // this.entitySet.on('all', function(evt){
-        //     log.debug('evt ' + JSON.stringify( _.toArray(arguments) ) );
-        // });
+        
 
         this.entitySet.addEntity( entity );
 
@@ -193,9 +201,9 @@ describe('EntitySet', function(){
 
     it('should clear all contained entities by calling reset', function(){
         var spy = Sinon.spy();
-        this.entitySet.on('all', function(evt){
-            log.debug('evt ' + JSON.stringify( _.toArray(arguments) ) );
-        });
+        // this.entitySet.on('all', function(evt){
+        //     log.debug('evt ' + JSON.stringify( _.toArray(arguments) ) );
+        // });
         this.entitySet.on('reset', spy);
         this.entitySet.addEntity( this.entities );
         this.entitySet.length.should.equal( this.entities.length );
