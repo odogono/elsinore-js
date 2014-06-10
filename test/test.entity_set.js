@@ -30,20 +30,15 @@ describe('EntitySet', function(){
         self.entities = [
             [{schema:'position', x:10, y:-10}, {schema:'nickname', nick:'john'}, {schema:'realname', realname:'John Smith'} ],
             [{schema:'score', score:3}, {schema:'nickname', nick:'peter'}],
-            [{schema:'position', x:-32, y:10}, {schema:'score', score:10}]
+            [{schema:'position', x:-32, y:10}, {schema:'score', score:10}],
+            [{schema:'realname', name:'susan mayall'}],
         ];
 
-        var current = Promise.resolve();
-        return Promise.map( self.entities, function(entitySpec){
-            current = current.then( function(){
-                return self.registry.createEntity( entitySpec );
+        return this.registry.createEntities( self.entities )
+            .then( function(entities){
+                self.entities = entities;
+                self.ComponentDefs = self.registry.ComponentDef;
             });
-            return current;
-        })
-        .then( function(entities){
-            self.entities = entities;
-            self.ComponentDefs = self.registry.ComponentDef;
-        });
     });
 
     
@@ -145,8 +140,17 @@ describe('EntitySet', function(){
         this.entitySet.length.should.equal(1); 
     });
 
-    it('should only add the components of an entity which are accepted');
+    it('should only add entities that are included', function(){
+        this.entitySet.setIncludedComponents( [this.ComponentDefs.Position, this.ComponentDefs.Nickname] );
+        this.entitySet.addEntity( this.entities );
+        this.entitySet.length.should.equal(3);
+    });
 
+    it('should only add entities that are optional', function(){
+        this.entitySet.setOptionalComponents( [this.ComponentDefs.Position, this.ComponentDefs.Nickname] );
+        this.entitySet.addEntity( this.entities );
+        this.entitySet.length.should.equal(3);
+    });
 
     it('should filter', function(){
         var self = this;
@@ -156,7 +160,7 @@ describe('EntitySet', function(){
         this.entitySet.addEntity( this.entities );
 
         var selected = this.entitySet.filter( function(e){
-            return e.hasComponent( self.registry.ComponentDef.Position );
+            return e.hasComponent( self.ComponentDefs.Position );
         });
 
         selected.length.should.equal(2);
@@ -183,6 +187,21 @@ describe('EntitySet', function(){
         this.entitySet.addEntity( entity );
         entity.Position.set('x',100);
 
+        expect( spy.called ).to.be.true;
+    });
+
+
+    it('should clear all contained entities by calling reset', function(){
+        var spy = Sinon.spy();
+        this.entitySet.on('all', function(evt){
+            log.debug('evt ' + JSON.stringify( _.toArray(arguments) ) );
+        });
+        this.entitySet.on('reset', spy);
+        this.entitySet.addEntity( this.entities );
+        this.entitySet.length.should.equal( this.entities.length );
+
+        this.entitySet.reset();
+        this.entitySet.length.should.equal(0);
         expect( spy.called ).to.be.true;
     });
 });
