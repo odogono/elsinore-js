@@ -29,7 +29,17 @@
     {
         "id":"/component/realname",
         "properties":{
-            "realname":{  "type":"string", "minLength":3, "maxLength":50 }
+            "name":{  "type":"string", "minLength":3, "maxLength":50 }
+        }
+    },
+
+    {
+        "id":"/component/tag",
+        "properties":{
+            "code":{ "type":"string" },
+            "name":{ "type":"string" },
+            "type":{ "type":"integer" }
         }
     }
+
 ]
