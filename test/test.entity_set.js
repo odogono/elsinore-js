@@ -127,7 +127,7 @@ describe('EntitySet', function(){
     });
 
     it('should only add a component of an accepted type', function(){
-        this.entitySet.setIncludedComponents( this.ComponentDefs.Position );
+        this.entitySet.setComponentMask( EntitySet.INCLUDE, this.ComponentDefs.Position );
 
         this.entitySet.addEntity( this.entities[1] );
         this.entitySet.length.should.equal(0);
@@ -136,28 +136,36 @@ describe('EntitySet', function(){
     });
 
     it('should only retain the included component on entity', function(){
-        this.entitySet.setIncludedComponents( this.ComponentDefs.Nickname );
+        this.entitySet.setComponentMask( EntitySet.INCLUDE, this.ComponentDefs.Nickname );
         this.entitySet.addEntity( this.entities[0] );
         // the entity won't have any of the other components
         expect( this.entitySet.at(0).getComponentCount() ).to.equal(1);
     });
 
     it('should not add entities that have excluded components', function(){
-        this.entitySet.setExcludedComponents( this.ComponentDefs.Score );
+        this.entitySet.setComponentMask( EntitySet.EXCLUDE, this.ComponentDefs.Score );
         this.entitySet.addEntity( this.entities[1] );
         this.entitySet.length.should.equal(0);
         this.entitySet.addEntity( this.entities[0] );
-        this.entitySet.length.should.equal(1); 
+        this.entitySet.length.should.equal(1);
+    });
+
+    it('should not add entities that have excluded components', function(){
+        this.entitySet.setComponentMask( EntitySet.EXCLUDE, [this.ComponentDefs.Score, this.ComponentDefs.Nickname] );
+        this.entitySet.addEntity( this.entities );
+        this.entitySet.length.should.equal(1);
     });
 
     it('should only add entities that are included', function(){
-        this.entitySet.setIncludedComponents( [this.ComponentDefs.Position, this.ComponentDefs.Nickname] );
+        // this means that any entity MUST have a Position and Nickname
+        this.entitySet.setComponentMask( EntitySet.INCLUDE, [this.ComponentDefs.Position, this.ComponentDefs.Nickname] );
         this.entitySet.addEntity( this.entities );
-        this.entitySet.length.should.equal(3);
+        this.entitySet.length.should.equal(1);
     });
 
     it('should only add entities that are optional', function(){
-        this.entitySet.setOptionalComponents( [this.ComponentDefs.Position, this.ComponentDefs.Nickname] );
+        // this means that the entity MAY have Position and/or Nickname
+        this.entitySet.setComponentMask( EntitySet.OPTIONAL, [this.ComponentDefs.Position, this.ComponentDefs.Nickname] );
         this.entitySet.addEntity( this.entities );
         this.entitySet.length.should.equal(3);
     });
@@ -179,14 +187,13 @@ describe('EntitySet', function(){
     it('should remove components for an entity', function(){
         var entity = this.entities[0];
 
-        
-
         this.entitySet.addEntity( entity );
 
         this.entitySet.removeEntity( entity );
     });
 
-    it('should emit events when components change', function(){
+    // NOTE - don't think this is needed? 
+    it.skip('should emit events when components change', function(){
         var entity = this.entities[0];
         var spy = Sinon.spy();
 
