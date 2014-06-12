@@ -54,14 +54,63 @@ describe('BitField', function(){
 
         a.set(4, true);
         a.set(6, true);
+
+        a.and(null,b).should.be.false;
+        a.and(null,b,a).should.be.false;
         
+
         b.set(4, true);
         b.set(6, true);
         b.set(8, true);
-
-        a.and(null,b,a).should.be.true;
-
+        // returns true because of a match
+        a.and(null,b).should.be.true;
         b.set(4,false);
+        // log.debug( a.toString() + ' ' + b.toString() );
+        // 001010000
+        // 101000000
+        // true because a&b == 0
+        a.and(null,b).should.be.true;
+        // false because a&b != a
+        a.and(null,b,a).should.be.false;
+    });
+
+    it('should bibble', function(){
+        var a = BitField.create('1110000');
+        var b = BitField.create('0000000');
+        a.and(null,b).should.be.false;
+        a.and(null,b,a).should.be.false;
+        // var c = BitField.create('010000');
+    });
+
+    var examples = [
+        ['110100', 'and', '011000', '010000', true, false],
+        ['110100', 'and', '011000', '010000', true, false]
+    ]
+
+
+    it('should pass the examples', function(){
+        examples.forEach( function(ex){
+            var t1, t2;
+            var a = BitField.create(ex[0]);
+            var b = BitField.create(ex[2]);
+            var c = BitField.create(ex[3]);
+
+            if( a[1] == 'and' ){
+                t1 = a.and(c,b);
+                t1.should.equal( ex[4] );
+                t1 = a.and(c,b,a);
+                t1.should.equal( ex[5] );
+                c.toString().should.equal( ex[3] );
+            }
+        });
+    });
+
+    it('should wibble', function(){
+        var a = BitField.create('110100');
+        var b = BitField.create('011000');
+        var c = BitField.create('010000');
+
+        a.and(null,b).should.be.true;
         a.and(null,b,a).should.be.false;
     });
 
@@ -102,5 +151,11 @@ describe('BitField', function(){
         bf.set(5, true);
         bf.set(6, true);
         bf.toBinaryString().should.equal('0000011');
-    })
+    });
+
+    it('should set from a string', function(){
+        var a = BitField.create(  '1000');
+        var b = BitField.create('110100');
+        a.and( null, b, a ).should.be.false;
+    });
 });
