@@ -156,8 +156,10 @@ function createComponent(componentDefId, attrs){
     if( !componentDefId ){
         return Elsinore.Component.create();
     }
-    var def = createComponentDef( componentDefId );
-    return def.create( attrs );
+    return getComponentDef(componentDefId).create( attrs );
+    
+    // var def = createComponentDef( componentDefId );
+    // return def.create( attrs );
 }
 
 

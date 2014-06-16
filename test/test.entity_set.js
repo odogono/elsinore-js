@@ -170,6 +170,16 @@ describe('EntitySet', function(){
         this.entitySet.length.should.equal(3);
     });
 
+
+    it('should only add entities that pass include/exclude', function(){
+        // this means that the entity MAY have Position and/or Nickname
+        this.entitySet.setComponentMask( EntitySet.INCLUDE, [this.ComponentDefs.Position] );
+        this.entitySet.setComponentMask( EntitySet.EXCLUDE, [this.ComponentDefs.Realname] );
+        this.entitySet.addEntity( this.entities );
+        this.entitySet.length.should.equal(1);
+    });
+
+
     it('should filter', function(){
         var self = this;
         // this.entitySet.on('all', function(evt){
@@ -190,6 +200,22 @@ describe('EntitySet', function(){
         this.entitySet.addEntity( entity );
 
         this.entitySet.removeEntity( entity );
+    });
+
+    it('should emit an event when a component is changed', function(){
+        var entity = this.entities[0];
+        var component = entity.Position;
+        var spy = Sinon.spy();
+
+        this.entitySet.on('change:component', spy);
+
+        this.entitySet.addEntity( entity );
+
+        component = component.clone();
+        component.set({x:0,y:-2});
+        this.entitySet.addComponent( component );
+
+        expect( spy.called ).to.be.true;
     });
 
     // NOTE - don't think this is needed? 

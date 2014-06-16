@@ -18,6 +18,10 @@ describe('Storage', function(){
 
         beforeEach( function initializeEntities(){
             var self = this;
+            
+            // this.storage.on('all', function(){
+            //     log.debug('evt ' + JSON.stringify( _.toArray(arguments) ) );
+            // });
 
             self.entities = [
                 [{schema:'position', x:10, y:-10}, {schema:'nickname', nick:'john'}, {schema:'realname', realname:'John Smith'} ],
@@ -40,11 +44,23 @@ describe('Storage', function(){
                 });
         });
 
+        it('should create an entityset with selected entities in storage', function(){
+            return this.storage.createEntitySet({include:[ this.ComponentDefs.Position ]})
+                .then(function(es){
+                    es.length.should.equal(2);
+                });
+        });
+
+        it('should create an entityset with selected included/excluded entities in storage', function(){
+            return this.storage.createEntitySet({include:[ this.ComponentDefs.Position ], exclude:[ this.ComponentDefs.Realname], debug:true})
+                .then(function(es){
+                    es.length.should.equal(1);
+                });
+        });
+
+
         it('should add a new entity with component', function(){
             var self = this;
-            // this.storage.on('all', function(){
-            //     log.debug('evt ' + JSON.stringify( _.toArray(arguments) ) );
-            // });
             return this.storage.createEntitySet()
                 .then(function(es){
                     self.entitySet = es;
