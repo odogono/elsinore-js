@@ -1,4 +1,4 @@
-require('./common');
+var Common = require('./common');
 require('../index');
 
 
@@ -6,23 +6,6 @@ var Registry = Elsinore.Registry;
 var MemoryStorage = Elsinore.storage.MemoryStorage;
 var ComponentDef = Elsinore.ComponentDef;
 var Entity = Elsinore.Entity;
-
-var PositionComponent = {
-    id: 'position',
-    properties:{
-        x: { type:'number' },
-        y: { type:'number' }
-    }
-};
-
-var ScoreComponent = {
-    id: 'score',
-    properties: {
-        score: { type:'integer' },
-        lives: { type:'integer', 'default': 3 }
-    }
-}
-
 
 describe('Entity', function(){
 
@@ -33,8 +16,11 @@ describe('Entity', function(){
             return Registry.create().initialize()
                 .then( function(registry){
                     self.registry = registry;
-                    return registry.registerComponent( [ PositionComponent, ScoreComponent ] );
                 });
+        });
+
+        beforeEach( function registerComponentDefs(){
+            return this.registry.registerComponent( Common.loadJSONFixture('components.json') );
         });
 
         it('should emit events for the new position component', function(){
@@ -63,7 +49,7 @@ describe('Entity', function(){
                 });
         });
 
-        it.only('should have a lives default of 3', function(){
+        it('should have a lives default of 3', function(){
             return this.registry.createEntity( 'score' )
                 .then( function(entity){
                     expect( entity.Score.get('lives') ).to.equal(3);

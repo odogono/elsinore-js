@@ -1,10 +1,10 @@
-require('./common');
+var Common = require('./common');
 var _ = require('underscore');
 var Registry = Elsinore.Registry;
 var MemoryStorage = Elsinore.storage.MemoryStorage;
 var ComponentDef = Elsinore.ComponentDef;
 var Entity = Elsinore.Entity;
-
+var Component = Elsinore.Component;
 
 
 describe('Registry', function(){
@@ -170,26 +170,33 @@ describe('Registry', function(){
         beforeEach( function(){
             return setupRegistry( this, true );
         });
-        beforeEach( function(){
-            return this.registry.registerComponent( {id:'/component/test'} );
+        beforeEach( function registerComponentDefs(){
+            return this.registry.registerComponent( Common.loadJSONFixture('components.json') );
         });
+        // beforeEach( function(){
+        //     return this.registry.registerComponent( {id:'/component/test'} );
+        // });
 
-        it.only('should create a component from a def schema id', function(){
+        it('should create a component from a def schema id', function(){
+            var storageMock = Sinon.mock( this.registry.storage );
             var registryMock = Sinon.mock( this.registry );
-            // var def = this.registry.getComponentDef('/component/test');// 
-            var def = ComponentDef.create('/component/test');
+            var def = ComponentDef.create('/component/position');
             var eventSpy = Sinon.spy();
 
             // the operation should trigger an event
             this.registry.on('component:create', eventSpy);
 
             registryMock.expects('getComponentDef')
-                .once().withArgs('/component/idtest').returns( def );
+                .once().withArgs('/component/position').returns( def );
+            
+            storageMock.expects('saveComponents')
+                .once().returns( Promise.resolve([ Component.create() ]) );
 
-            return this.registry.createComponent({schema:'/component/idtest', entityId:25},{save:true})
+            return this.registry.createComponent({schema:'/component/position', entityId:25},{save:true})
                 .then( function(component){
                     registryMock.verify();
-                    eventSpy.getCall(0).args[0].should.equal( component );
+                    storageMock.verify();
+                    expect( eventSpy.called ).to.be.true; 
                 });
         });//*/
 

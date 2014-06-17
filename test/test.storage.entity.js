@@ -17,58 +17,14 @@ describe('Storage', function(){
         afterEach( function(){
         });
 
-        it('should create an entity with an id', function(){
-            var entity = Common.createEntity();
-            expect( entity.isNew() ).to.be.true;
-            return this.storage.createEntity( entity )
-                .then( function(entity){
-                    expect( entity.isNew() ).to.be.false;
-                })
-        });
-
-        it('should create an array of entities', function(){
-            var entities = Common.createEntities(3);
-            return this.storage.createEntity( entities )
-                .then( function(result){
-                    result.should.be.an('array');
-                    expect( result[0].isNew() ).to.be.false;
-                    expect( result[1].isNew() ).to.be.false;
-                    expect( result[2].isNew() ).to.be.false;
-                });
-        });
-
-        it('should create an entity with a predefined id', function(){
-            var entity = Common.createEntity(34);
-            expect( entity.isNew() ).to.be.false;
-            return this.storage.createEntity( entity )
-                .then( function(entity){
-                    expect( entity.id ).to.equal(34);
-                });
-        });
-
-        it('should throw an error when attempting to create an entity with an existing id', function(){
-            var self = this;
-            var entity = Common.createEntity(35);
-            return this.storage.createEntity( entity )
-                .then( function(result){
-                    return self.storage.createEntity( entity ).should.be.rejectedWith( Error, 'entity 35 already exists');
-                });
-        });
-
         it('should not retrieve an entity by its id without it having a component', function(){
             var self = this;
-            var entity = Common.createEntity(36);
-
-            return this.storage.createEntity(entity)
-                .then( function(entity){
-                    return self.storage.retrieveEntity( {id:36} ).should.be.rejectedWith( Error, 'entity 36 not found');
-                });
+            return self.storage.retrieveEntity( {id:36} ).should.be.rejectedWith( Error, 'entity 36 not found');
         });
 
         it('should retrieve an entity with a component', function(){
             var self = this;
-            var def = Common.getComponentDef('/component/flower');
-            var component = def.create({colour:'yellow', _e:36});
+            var component = Common.createComponent('/component/flower', {colour:'yellow', _e:36});
 
             this.storage.saveComponents( [component] )
                 .then(function(){
@@ -84,39 +40,29 @@ describe('Storage', function(){
             return this.storage.retrieveEntity( {id:37} ).should.be.rejectedWith( Error, 'entity 37 not found' );
         });
 
-        it('should reuse entity ids', function(){
-            var self = this;
-            var storage = this.storage;
-            var entity = Common.createEntity();
-
-            return this.storage.createEntity( entity )
-                .then( function(entity){
-                    createdEntityId = entity.id;
-                    return storage.destroyEntity( entity );
-                })
-                .then( function(){
-                    return storage.createEntity( Common.createEntity() ).should.eventually.have.property('id', createdEntityId);
-                });
-        });
-
-        it('should know that an entity exists', function(){
-            var self = this;
-            var entity = Common.createEntity(38);
-            return this.storage.createEntity(entity)
-                .then( function(entity){
-                    return self.storage.hasEntity( {id:38} ).should.eventually.equal( true );
-                });
-        });
 
         it('should know that an entity does not exist', function(){
             return this.storage.hasEntity( {id:39} ).should.eventually.equal( false );
         });
 
+        it('should create a new entity', function(){
+            // this.storage.on('all', function(evt){
+            //     log.debug('storage evt ' + JSON.stringify( _.toArray(arguments)) );
+            // });
+            var component = Common.createComponent('/component/animal', {name:'tiger'});
+
+            expect(component.getEntityId()).to.equal(undefined);
+
+            this.storage.saveComponents( [component], {createEntity:true} )
+                .then( function(components){
+                    expect( component.getEntityId() ).to.not.be.undefined;
+                });
+        });
 
         describe('destroying an entity', function(){
             beforeEach( function(){
-                var entity = Common.createEntity(981);
-                return this.storage.createEntity(entity);
+                var component = Common.createComponent('/component/mineral', {name:'rock', _e:981});
+                return this.storage.saveComponents([component]);
             });
 
             it('should destroy an entity', function(){
@@ -128,8 +74,11 @@ describe('Storage', function(){
             });
 
             it('should emit an event when the entity is destroyed', function(){
+                // this.storage.on('all', function(evt){
+                //     log.debug('storage evt ' + JSON.stringify( _.toArray(arguments)) );
+                // });
                 var eventSpy = Sinon.spy();
-                this.storage.on('entity:destroy', eventSpy);
+                this.storage.on('entity:remove', eventSpy);
 
                 return this.storage.destroyEntity({id:981})
                     .then( function(){

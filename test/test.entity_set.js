@@ -120,7 +120,7 @@ describe('EntitySet', function(){
     it('should emit an event when an entity is added', function(){
         var spy = Sinon.spy();
         
-        this.entitySet.on('add:entity', spy );
+        this.entitySet.on('entity:add', spy );
         this.entitySet.addEntity( this.entities[0] );
         
         expect( spy.called ).to.be.true;
@@ -130,7 +130,7 @@ describe('EntitySet', function(){
         var spy = Sinon.spy();
         var entity = this.entities[0];
         
-        this.entitySet.on('remove:entity', spy );
+        this.entitySet.on('entity:remove', spy );
         this.entitySet.addEntity( entity );
         this.entitySet.removeEntity( entity );
         
@@ -226,7 +226,7 @@ describe('EntitySet', function(){
         var component = entity.Position;
         var spy = Sinon.spy();
 
-        this.entitySet.on('change:component', spy);
+        this.entitySet.on('component:change', spy);
 
         this.entitySet.addEntity( entity );
 
@@ -242,7 +242,7 @@ describe('EntitySet', function(){
         var entity = this.entities[0];
         var spy = Sinon.spy();
 
-        this.entitySet.on('change:component', spy);
+        this.entitySet.on('component:change', spy);
         
         this.entitySet.addEntity( entity );
         entity.Position.set('x',100);

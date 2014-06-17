@@ -69,13 +69,19 @@
         }
     },
     {
-        "id":"/component/vegetable",
+        "id":"/component/animal",
         "properties":{
             "name":{ "type":"string" }
         }
     },
     {
         "id":"/component/mineral",
+        "properties":{
+            "name":{ "type":"string" }
+        }
+    },
+    {
+        "id":"/component/vegetable",
         "properties":{
             "name":{ "type":"string" }
         }
