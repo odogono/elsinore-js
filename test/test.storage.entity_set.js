@@ -1,5 +1,8 @@
 var Common = require('./common');
+var Es = require('event-stream');
 var FixtureComponents = Common.fixtures.components;
+var JSONComponentParser = require('../lib/streams').JSONComponentParser;
+
 
 describe('Storage', function(){
 
@@ -10,32 +13,29 @@ describe('Storage', function(){
             return Common.createAndInitialize().then(function(storage){ 
                 self.storage = storage;
                 self.registry = storage.registry;
+                self.ComponentDefs = self.registry.ComponentDef;
             })
             .then( function(){
                 return self.registry.registerComponent( FixtureComponents );
             })
         });
 
-        beforeEach( function initializeEntities(){
+        beforeEach( function initializeEntities(done){
             var self = this;
-            
-            // this.storage.on('all', function(){
-            //     log.debug('evt ' + JSON.stringify( _.toArray(arguments) ) );
-            // });
-
-            self.entities = [
-                [{schema:'position', x:10, y:-10}, {schema:'nickname', nick:'john'}, {schema:'realname', realname:'John Smith'} ],
-                [{schema:'score', score:3}, {schema:'nickname', nick:'peter'}],
-                [{schema:'position', x:-32, y:10}, {schema:'score', score:10}],
-                [{schema:'realname', name:'susan mayall'}],
-            ];
-
-            return this.registry.createEntities( self.entities )
-                .then( function(entities){
-                    self.entities = entities;
-                    self.ComponentDefs = self.registry.ComponentDef;
-                });
+            var s = Common.createFixtureReadStream('entity_set.entities.ldjson')
+                // convert JSON objects into components by loading into registry
+                .pipe( JSONComponentParser(this.registry) )
+                .pipe(Es.through( null, function end(){
+                    self.entities = self.registry.storage.entities;
+                    done();
+                }));
         });
+
+        // beforeEach( function(){
+        //     this.storage.on('all', function(){
+        //         log.debug('evt ' + JSON.stringify( _.toArray(arguments) ) );
+        //     });
+        // })
 
         it('should create an entityset with all the entities in storage', function(){
             return this.storage.createEntitySet()
@@ -62,13 +62,28 @@ describe('Storage', function(){
         it('should add a new entity with component', function(){
             var self = this;
             return this.storage.createEntitySet()
+                .then(function(es){ return self.entitySet = es; })
                 .then(function(es){
-                    self.entitySet = es;
                     return self.registry.createEntity( [{schema:'realname', name:'jon snow'}, 'score'] );
                 })
                 .then(function(ent){
                     self.entitySet.length.should.equal(5);
                 });
+        });
+
+        it('should remove a component', function(){
+            var self = this;
+            return this.storage.createEntitySet()
+                .then(function(es){ return self.entitySet = es; })
+                .then(function(es){
+                    self.entitySet.length.should.equal(4);
+                    // grab the first component
+                    var ents = self.entitySet.entities;
+                    return self.registry.destroyEntity( ents[0] );
+                })
+                .then( function(){
+                    self.entitySet.length.should.equal(3);
+                })
         });
 
     });

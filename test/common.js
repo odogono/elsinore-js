@@ -8,6 +8,7 @@ ComponentDef = Elsinore.ComponentDef;
 
 assert = require('assert');
 var Fs = require('fs');
+var Es = require('event-stream');
 Path = require('path');
 Util = require('util');
 Sinon = require('sinon');
@@ -214,7 +215,9 @@ function getComponentDef( schemaId ){
 
 function createFixtureReadStream( fixturePath ){
     var path = Path.join( paths.fixtures, fixturePath );
-    return Fs.createReadStream( path, { encoding: 'utf-8' });
+    return Fs.createReadStream( path, { encoding: 'utf-8' })
+        .pipe(Es.split())
+        .pipe(Es.parse());
 }
 
 function loadJSONFixture( fixturePath ){

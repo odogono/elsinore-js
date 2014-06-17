@@ -6,7 +6,7 @@ var ComponentDef = Elsinore.ComponentDef;
 var Entity = Elsinore.Entity;
 var EntitySet = Elsinore.EntitySet;
 
-var JSONStreamParser = require('../lib/streams').JSONComponentParser;
+var JSONComponentParser = require('../lib/streams').JSONComponentParser;
 
 // var BitArray = require('bit-array');
 // var BitField = require('bit_field');
@@ -17,50 +17,26 @@ describe('EntitySet', function(){
 
     beforeEach( function initializeRegistry(){
         var self = this;
-
         this.entitySet = EntitySet.create();
-
         return Registry.create().initialize()
             .then( function(registry){
                 self.registry = registry;
                 return registry.registerComponent( FixtureComponents );
-            })
+            }).then( function(){
+                self.ComponentDefs = self.registry.ComponentDef;
+            });
     });
 
     beforeEach( function initializeEntities(done){
         var self = this;
-
-        Common.createFixtureReadStream('entity_set.entities.ldjson')
-            .pipe(Es.split())
-            .pipe(Es.parse())
-            .pipe( JSONStreamParser(this.registry) )
-            .pipe(Es.through(
-                null,
-                // function write(data) {
-                //     console.error('? ' + JSON.stringifydata )
-                //     return this.emit('data', data);
-                // }, 
-                function end(){
-                    log.debug('finished!');
-                    process.exit();
-                    done();
-                }))
-
-        // self.entities = [
-        //     [{schema:'position', x:10, y:-10}, {schema:'nickname', nick:'john'}, {schema:'realname', realname:'John Smith'} ],
-        //     [{schema:'score', score:3}, {schema:'nickname', nick:'peter'}],
-        //     [{schema:'position', x:-32, y:10}, {schema:'score', score:10}],
-        //     [{schema:'realname', name:'susan mayall'}],
-        // ];
-
-        // return this.registry.createEntities( self.entities )
-        //     .then( function(entities){
-        //         self.entities = entities;
-        //         self.ComponentDefs = self.registry.ComponentDef;
-        //     });
+        var s = Common.createFixtureReadStream('entity_set.entities.ldjson')
+            // convert JSON objects into components by loading into registry
+            .pipe( JSONComponentParser(this.registry) )
+            .pipe(Es.through( null, function end(){
+                self.entities = self.registry.storage.entities;
+                done();
+            }));
     });
-
-    
 
     it('should return the number of entities contained', function(){
         var entity = this.entities[0];
