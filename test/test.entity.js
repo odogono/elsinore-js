@@ -56,7 +56,7 @@ describe('Entity', function(){
                 });
         });
 
-        it('should have a lives default of 3', function(){
+        it('should have a lives default of 3 from multiple components', function(){
             return this.registry.createEntity( ['position', 'score'] )
                 .then( function(entity){
                     expect( entity.Score.get('lives') ).to.equal(3);

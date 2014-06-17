@@ -1,0 +1,11 @@
+{"_e":1, "_s":"position", "x":10, "y":-10}
+{"_e":1, "_s":"nickname", "nick":"john"}
+{"_e":1, "_s":"realname", "realname":"John Smith"}
+
+{"_e":2, "_s":"score", "score":3}
+{"_e":2, "_s":"nickname", "nick":"peter"}
+
+{"_e":3, "_s":"position", "x":-32, "y":10}
+{"_e":3, "_s":"score", "score":10}
+
+{"_e":4, "_s":"realname", "name":"susan mayall"}

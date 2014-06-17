@@ -7,7 +7,7 @@ ComponentDef = Elsinore.ComponentDef;
 
 
 assert = require('assert');
-Fs = require('fs');
+var Fs = require('fs');
 Path = require('path');
 Util = require('util');
 Sinon = require('sinon');
@@ -28,23 +28,23 @@ var registeredComponentDefIds = {};
 
 var rootDir = Path.join( Path.dirname(__filename), '../' );
 
-Common = {
-    paths:{ 
-        root: rootDir,
-        fixtures: Path.join( rootDir, 'test', 'fixtures' )
-    }
+
+var paths = { 
+    root: rootDir,
+    fixtures: Path.join( rootDir, 'test', 'fixtures' )
 };
 
-Common.path = function( dir, subPath ){
-    return Path.join( Common.paths[dir], subPath );
-};
 
-Common.pathFixture = function( subPath ){
-    return Path.join( Common.paths.fixtures, subPath );
-};
+// Common.path = function( dir, subPath ){
+//     return Path.join( paths[dir], subPath );
+// };
 
-Common.readFixture = function( subPath, parseJson ){
-    var fixturePath = Common.pathFixture( subPath );
+// Common.pathFixture = function( subPath ){
+//     return Path.join( paths.fixtures, subPath );
+// };
+
+function readFixture( subPath, parseJson ){
+    var fixturePath = Path.join( paths.fixtures, subPath );
     var data = Fs.readFileSync( fixturePath, 'utf8' );
     return parseJson ? JSON.parse(data) : data;
 }
@@ -212,6 +212,17 @@ function getComponentDef( schemaId ){
     return registeredComponentDefs[ schemaId ];
 }
 
+function createFixtureReadStream( fixturePath ){
+    var path = Path.join( paths.fixtures, fixturePath );
+    return Fs.createReadStream( path, { encoding: 'utf-8' });
+}
+
+function loadJSONFixture( fixturePath ){
+    var path = Path.join( paths.fixtures, fixturePath );
+    var data = Fs.readFileSync( path, 'utf8' );
+    return JSON.parse(data);
+}
+
 module.exports = {
     Entity: Elsinore.Entity,
     createAndInitialize: createAndInitialize,
@@ -226,5 +237,8 @@ module.exports = {
     fixtures:{
         components: require('./fixtures/components.json')
     },
-    debugPrintEntity: debugPrintEntity
+    debugPrintEntity: debugPrintEntity,
+    readFixture: readFixture,
+    createFixtureReadStream: createFixtureReadStream,
+    loadJSONFixture: loadJSONFixture
 };

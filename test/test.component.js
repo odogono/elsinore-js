@@ -1,6 +1,14 @@
 require('./common');
 require('../index');
 
+
+describe('Component', function(){
+
+    it('should produce a clone of itself', function(){
+
+    });
+});
+
 describe.skip('Component.Old', function(){
     beforeEach( function(done){
         var self = this;

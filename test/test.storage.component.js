@@ -12,7 +12,7 @@ describe('Storage', function(){
         });
 
         beforeEach( function registerComponentDefs(){
-            return Common.registerComponentDef( this.storage, ['/component/flower','/component/vegetable', '/component/mineral'] )
+            return Common.registerComponentDef( this.storage, Common.loadJSONFixture('components.json') );
         });
 
         afterEach( function(){

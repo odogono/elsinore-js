@@ -1,10 +1,13 @@
 var Common = require('./common');
-
+var Es = require('event-stream');
 var Registry = Elsinore.Registry;
 var MemoryStorage = Elsinore.storage.MemoryStorage;
 var ComponentDef = Elsinore.ComponentDef;
 var Entity = Elsinore.Entity;
 var EntitySet = Elsinore.EntitySet;
+
+var JSONStreamParser = require('../lib/streams').JSONComponentParser;
+
 // var BitArray = require('bit-array');
 // var BitField = require('bit_field');
 
@@ -24,21 +27,37 @@ describe('EntitySet', function(){
             })
     });
 
-    beforeEach( function initializeEntities(){
+    beforeEach( function initializeEntities(done){
         var self = this;
 
-        self.entities = [
-            [{schema:'position', x:10, y:-10}, {schema:'nickname', nick:'john'}, {schema:'realname', realname:'John Smith'} ],
-            [{schema:'score', score:3}, {schema:'nickname', nick:'peter'}],
-            [{schema:'position', x:-32, y:10}, {schema:'score', score:10}],
-            [{schema:'realname', name:'susan mayall'}],
-        ];
+        Common.createFixtureReadStream('entity_set.entities.ldjson')
+            .pipe(Es.split())
+            .pipe(Es.parse())
+            .pipe( JSONStreamParser(this.registry) )
+            .pipe(Es.through(
+                null,
+                // function write(data) {
+                //     console.error('? ' + JSON.stringifydata )
+                //     return this.emit('data', data);
+                // }, 
+                function end(){
+                    log.debug('finished!');
+                    process.exit();
+                    done();
+                }))
 
-        return this.registry.createEntities( self.entities )
-            .then( function(entities){
-                self.entities = entities;
-                self.ComponentDefs = self.registry.ComponentDef;
-            });
+        // self.entities = [
+        //     [{schema:'position', x:10, y:-10}, {schema:'nickname', nick:'john'}, {schema:'realname', realname:'John Smith'} ],
+        //     [{schema:'score', score:3}, {schema:'nickname', nick:'peter'}],
+        //     [{schema:'position', x:-32, y:10}, {schema:'score', score:10}],
+        //     [{schema:'realname', name:'susan mayall'}],
+        // ];
+
+        // return this.registry.createEntities( self.entities )
+        //     .then( function(entities){
+        //         self.entities = entities;
+        //         self.ComponentDefs = self.registry.ComponentDef;
+        //     });
     });
 
     

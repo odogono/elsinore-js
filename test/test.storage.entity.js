@@ -10,6 +10,10 @@ describe('Storage', function(){
             return Common.createAndInitialize().then(function(storage){ self.storage = storage; });
         });
 
+        beforeEach( function registerComponentDefs(){
+            return Common.registerComponentDef( this.storage, Common.loadJSONFixture('components.json') );
+        });
+
         afterEach( function(){
         });
 
@@ -51,15 +55,28 @@ describe('Storage', function(){
                 });
         });
 
-        it('should retrieve an existing entity by its id', function(){
+        it('should not retrieve an entity by its id without it having a component', function(){
             var self = this;
             var entity = Common.createEntity(36);
 
             return this.storage.createEntity(entity)
                 .then( function(entity){
-                    return self.storage.retrieveEntity( {id:36} );
-                }).then( function(entity){
-                    expect( entity.id ).to.equal( 36 );
+                    return self.storage.retrieveEntity( {id:36} ).should.be.rejectedWith( Error, 'entity 36 not found');
+                });
+        });
+
+        it('should retrieve an entity with a component', function(){
+            var self = this;
+            var def = Common.getComponentDef('/component/flower');
+            var component = def.create({colour:'yellow', _e:36});
+
+            this.storage.saveComponents( [component] )
+                .then(function(){
+                    return self.storage.retrieveEntity({id:36});
+                })
+                .then(function(entity){
+                    expect( entity.id ).to.equal(36);
+                    expect( entity.Flower.get('colour') ).to.equal('yellow');
                 });
         });
 

@@ -3,7 +3,8 @@
         "id": "/component/position",
         "properties":{
             "x": { "type":"number" },
-            "y": { "type":"number" }
+            "y": { "type":"number" },
+            "z": { "type":"number" }
         }
     },
 
@@ -40,6 +41,43 @@
             "name":{ "type":"string" },
             "type":{ "type":"integer" }
         }
-    }
+    },
 
+    {
+        "id":"/component/geo_location",
+        "description": "A geographical coordinate",
+        "properties": {
+            "latitude": { "type": "number" },
+            "longitude": { "type": "number" },
+            "altitude":{ "type":"number" },
+            "accuracy": { "type":"number" }
+        }
+    },
+
+    {
+        "id":"/component/radius",
+        "properties":{
+            "radius":{ "type":"number" }
+        }
+    },
+
+    {
+        "id":"/component/flower",
+        "properties":{
+            "name":{ "type":"string" },
+            "colour":{ "type":"string" }
+        }
+    },
+    {
+        "id":"/component/vegetable",
+        "properties":{
+            "name":{ "type":"string" }
+        }
+    },
+    {
+        "id":"/component/mineral",
+        "properties":{
+            "name":{ "type":"string" }
+        }
+    }
 ]

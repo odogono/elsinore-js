@@ -170,9 +170,13 @@ describe('Registry', function(){
         beforeEach( function(){
             return setupRegistry( this, true );
         });
+        beforeEach( function(){
+            return this.registry.registerComponent( {id:'/component/test'} );
+        });
 
-        it('should create a component from a def schema id', function(){
+        it.only('should create a component from a def schema id', function(){
             var registryMock = Sinon.mock( this.registry );
+            // var def = this.registry.getComponentDef('/component/test');// 
             var def = ComponentDef.create('/component/test');
             var eventSpy = Sinon.spy();
 
@@ -182,12 +186,12 @@ describe('Registry', function(){
             registryMock.expects('getComponentDef')
                 .once().withArgs('/component/idtest').returns( def );
 
-            return this.registry.createComponent('/component/idtest',null,{save:true})
+            return this.registry.createComponent({schema:'/component/idtest', entityId:25},{save:true})
                 .then( function(component){
                     registryMock.verify();
                     eventSpy.getCall(0).args[0].should.equal( component );
                 });
-        });
+        });//*/
 
         it('should add a component to an entity using the component def url', function(){
             var entity = {};
