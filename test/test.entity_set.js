@@ -1,3 +1,4 @@
+var test = require('blue-tape');
 var Common = require('./common');
 var Es = require('event-stream');
 var Registry = Elsinore.Registry;
@@ -12,6 +13,11 @@ var JSONComponentParser = require('../lib/streams').JSONComponentParser;
 // var BitField = require('bit_field');
 
 var FixtureComponents = Common.fixtures.components;
+
+test.skip('bitfield', function(t){
+
+    t.end();
+});
 
 describe('EntitySet', function(){
 
@@ -139,13 +145,14 @@ describe('EntitySet', function(){
 
     it('should not add entities that have excluded components', function(){
         this.entitySet.setComponentMask( EntitySet.EXCLUDE, this.ComponentDefs.Score );
+
         this.entitySet.addEntity( this.entities[1] );
         this.entitySet.length.should.equal(0);
-        this.entitySet.addEntity( this.entities[0] );
+        this.entitySet.addEntity( this.entities[0], {debug:true} );
         this.entitySet.length.should.equal(1);
     });
 
-    it('should not add entities that have excluded components', function(){
+    it('should not add entities that have multiple excluded components', function(){
         this.entitySet.setComponentMask( EntitySet.EXCLUDE, [this.ComponentDefs.Score, this.ComponentDefs.Nickname] );
         this.entitySet.addEntity( this.entities );
         this.entitySet.length.should.equal(1);
@@ -174,6 +181,40 @@ describe('EntitySet', function(){
         this.entitySet.length.should.equal(1);
     });
 
+    it('should remove entities that are excluded after their components change', function(){
+        // this.entitySet.on('all', function(evt){
+        //     log.debug('evt ' + JSON.stringify( _.toArray(arguments) ) );
+        // });
+        var RealnameDefId = this.ComponentDefs.Realname;
+        var RealnameDef = this.registry.getComponentDef( RealnameDefId );
+        this.entitySet.setComponentMask( EntitySet.EXCLUDE, [RealnameDefId] );
+        this.entitySet.addEntity( this.entities );
+        this.entitySet.length.should.equal(2);
+        // log.debug('go');
+
+        var entity = this.entities[1];
+        var component = RealnameDef.create({name:'mike smith', _e:entity.id});
+        // this action should cause the entity to be removed
+        this.entitySet.addComponent( component );
+        this.entitySet.length.should.equal(1);
+    });
+
+    it('should remove entities that no longer included after their components change', function(){
+        // this.entitySet.on('all', function(evt){
+        //     log.debug('evt ' + JSON.stringify( _.toArray(arguments) ) );
+        // });
+
+        this.entitySet.setComponentMask( EntitySet.INCLUDE, this.ComponentDefs.Nickname );
+        this.entitySet.setComponentMask( EntitySet.OPTIONAL, this.ComponentDefs.Position );
+        this.entitySet.addEntity( this.entities );
+        
+        this.entitySet.length.should.equal(2);
+        var entity = this.entities[0];
+
+        // removing the Nickname component should mean the entity is also removed
+        this.entitySet.removeComponent( entity.Nickname );
+        this.entitySet.length.should.equal(1);
+    });
 
     it('should filter', function(){
         var self = this;

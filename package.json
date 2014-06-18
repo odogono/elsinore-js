@@ -32,6 +32,7 @@
     "uri-js": "^1.4.2"
   },
   "devDependencies": {
+    "blue-tape": "^0.1.6",
     "browserify": "^4.1.10",
     "browserify-shim": "^3.5.0",
     "chai": "~1.9.1",
@@ -44,6 +45,7 @@
     "mocha": "~1.20.1",
     "mocha-as-promised": "~2.0.0",
     "sinon": "~1.10.2",
+    "tape": "^2.13.3",
     "vinyl-buffer": "0.0.0",
     "vinyl-source-stream": "^0.1.1"
   },
@@ -55,8 +57,7 @@
     "url": "https://github.com/odogono/odgn-entity.git"
   },
   "scripts": {
-    "name": "mocha",
-    "config": ""
+    "test": "set -e; for test in test/*.js; do node $test; done"
   },
   "readme": "\nA node.js Entity Component system.\n\nNothing worth seeing yet - move along.",
   "readmeFilename": "README.md",

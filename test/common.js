@@ -226,6 +226,38 @@ function loadJSONFixture( fixturePath ){
     return JSON.parse(data);
 }
 
+
+
+// Adds beforeEach to tape tests
+function beforeEach(test, handler) {
+    return function tapish(name, listener) {
+        test(name, function (assert) {
+            var _end = assert.end
+            assert.end = function () {
+                assert.end = _end
+                listener(assert)
+            }
+
+            handler(assert)
+        })
+    }
+}
+
+// Adds afterEach to tape tests
+function afterEach(test, handler) {
+    return function tapish(name, listener) {
+        test(name, function (assert) {
+            var _end = assert.end
+            assert.end = function () {
+                assert.end = _end
+                handler(assert)
+            }
+
+            listener(assert)
+        })
+    }
+}
+
 module.exports = {
     Entity: Elsinore.Entity,
     createAndInitialize: createAndInitialize,
@@ -243,5 +275,7 @@ module.exports = {
     debugPrintEntity: debugPrintEntity,
     readFixture: readFixture,
     createFixtureReadStream: createFixtureReadStream,
-    loadJSONFixture: loadJSONFixture
+    loadJSONFixture: loadJSONFixture,
+    beforeEach:beforeEach,
+    afterEach:afterEach
 };
