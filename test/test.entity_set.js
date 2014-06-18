@@ -216,11 +216,20 @@ describe('EntitySet', function(){
         this.entitySet.length.should.equal(1);
     });
 
-    it('should filter', function(){
-        var self = this;
+    it('should remove entities that are no longer allowed when the component mask changes', function(){
         // this.entitySet.on('all', function(evt){
         //     log.debug('evt ' + JSON.stringify( _.toArray(arguments) ) );
         // });
+        this.entitySet.addEntity( this.entities );
+        this.entitySet.length.should.equal(4);
+
+        this.entitySet.setComponentMask( EntitySet.EXCLUDE, this.ComponentDefs.Score );
+        this.entitySet.length.should.equal(2);
+    });
+
+    it('should filter', function(){
+        var self = this;
+        
         this.entitySet.addEntity( this.entities );
 
         var selected = this.entitySet.filter( function(e){

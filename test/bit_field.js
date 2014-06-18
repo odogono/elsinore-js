@@ -1,35 +1,48 @@
-var Common = require('./common');
-var BitField = Elsinore.BitField;
+var test = require('blue-tape');
+// var test = require('tape');
+// var Common = require('./common');
+var BitField = require('../lib/bit_field');
 
-describe('BitField', function(){
 
-    it('should', function(){
+test('bitfield', function(t){
+
+    test('getting', function (t) {
+
         var bf = BitField.create();
         bf.set( 2, true );
         bf.set( 128, true );
-        bf.get(0).should.be.false;
-        bf.get(2).should.be.true;
-        bf.get(128).should.be.true;
-        bf.get(9456).should.be.false;
+
+        t.notOk( bf.get(0) );
+        t.ok( bf.get(2) );
+
+        t.ok( bf.get(128) );
+        t.notOk( bf.get(9456) );
+
+        t.end();
     });
 
-    it('should print a binary string', function(){
+    test('to binary string', function(t){
         var bf = BitField.create();
         bf.set(0,true);
         bf.set(5,true);
-        bf.toString().should.equal('100001')
+        t.isEqual( bf.toBinaryString(), '100001' );
+        t.end();
     });
 
-    it('should return the number of values set to true', function(){
+
+    test('count the number of true values', function(t){
         var bf = BitField.create();
-        bf.count().should.equal( 0 );
+        
+        t.equals( bf.count(), 0 );
         bf.set( 2, true );
         bf.set( 12, true );
         bf.set( 125, true );
-        bf.count().should.equal( 3 );
+        t.equals( bf.count(), 3 );
+
+        t.end();
     });
 
-    it('should and with another instance', function(){
+    test('logicaly AND with another instance', function(t){
         var a = new BitField(),
             b = new BitField(),
             c = new BitField();
@@ -45,34 +58,64 @@ describe('BitField', function(){
         b.set(13, false);
 
         a.and(c, b);
-        c.toString().should.equal('10000000000');
+        t.equals( c.toString(), '10000000000');
+        t.end();
     });
 
-    it('should and and return a value indicating difference', function(){
+    test('logically AND and return value indicating difference', function(t){
         var a = new BitField(),
             b = new BitField();
 
         a.set(4, true);
         a.set(6, true);
 
-        a.and(null,b).should.be.false;
-        a.and(null,b,a).should.be.false;
+        t.notOk( a.and(null,b) );
+        t.notOk( a.and(null,b,a) );
         
 
         b.set(4, true);
         b.set(6, true);
         b.set(8, true);
         // returns true because of a match
-        a.and(null,b).should.be.true;
+        t.ok( a.and(null,b) );
         b.set(4,false);
         // log.debug( a.toString() + ' ' + b.toString() );
         // 001010000
         // 101000000
         // true because a&b == 0
-        a.and(null,b).should.be.true;
+        t.ok( a.and(null,b) );
         // false because a&b != a
-        a.and(null,b,a).should.be.false;
+        t.notOk( a.and(null,b,a) );
+
+        t.end();
     });
+
+    test('equality', function(t){
+        var a = new BitField(),
+            b = new BitField();
+
+        a.set(2000,true);
+        a.set(16,true);
+        b.set(16,true);
+
+        t.notOk( a.equals(b) );
+        a.set(2000,false);
+        t.ok( a.equals(b) );
+        t.end();
+    });
+
+    test('should set from a string',  function(t){
+        var a = BitField.create(  '1000');
+        var b = BitField.create('110100');
+        t.notOk( a.and( null, b, a ) );
+        t.end();
+    });
+
+    t.end();
+});//*/
+
+/*
+describe('BitField', function(){
 
     it('should bibble', function(){
         var a = BitField.create('1110000');
@@ -114,20 +157,6 @@ describe('BitField', function(){
         a.and(null,b,a).should.be.false;
     });
 
-    it('should return equality', function(){
-        var a = new BitField(),
-            b = new BitField();
-
-        a.set(2000,true);
-        a.set(16,true);
-        
-        b.set(16,true);
-
-        a.equals(b).should.equal(false);
-        a.set(2000,false);
-        a.equals(b).should.equal(true);
-    })
-
     it('should return a value indicating difference for and', function(){
         var a = new BitField(),
             b = new BitField(),
@@ -153,9 +182,5 @@ describe('BitField', function(){
         bf.toBinaryString().should.equal('0000011');
     });
 
-    it('should set from a string', function(){
-        var a = BitField.create(  '1000');
-        var b = BitField.create('110100');
-        a.and( null, b, a ).should.be.false;
-    });
-});
+    
+});//*/
