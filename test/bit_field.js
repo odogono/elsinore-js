@@ -26,6 +26,8 @@ test('bitfield', function(t){
         bf.set(0,true);
         bf.set(5,true);
         t.isEqual( bf.toBinaryString(), '100001' );
+
+        t.equals( BitField.create().toBinaryString(), '0' );
         t.end();
     });
 
@@ -108,6 +110,31 @@ test('bitfield', function(t){
         var a = BitField.create(  '1000');
         var b = BitField.create('110100');
         t.notOk( a.and( null, b, a ) );
+        t.end();
+    });
+
+    test('special mode all', function(t){
+        var a = BitField.create('all');
+        var b = BitField.create('all');
+
+        t.ok( a.get(68434038716), 'will get true for all values' );
+
+        t.equals( a.toString(), 'all' );
+
+        // both are equal
+        t.ok( a.equals(b), 'will equal another all bitfield' );
+
+        // will AND fine
+        b = BitField.create('0110010');
+        t.ok( a.and(null,b), 'will always return true for an AN' );
+
+        a.set( 23, true );
+        t.equals( a.toString(), '100000000000000000000000', 'setting a value will revert it to normal' );
+
+        // the countfield of an All bitfield will be max value
+        a = BitField.create('all');
+        t.equals( a.count(), Number.MAX_VALUE, 'will have a count of MAX_VALUE' );
+
         t.end();
     });
 
