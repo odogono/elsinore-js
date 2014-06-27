@@ -134,21 +134,14 @@ describe('Registry', function(){
                     storageMock.verify();
                     expect( eventSpy.called ).to.be.true; 
                 });
-        });//*/
+        });
 
-        it.only('should add a component to an entity using the component def url', function(){
+        it('should add a component to an entity using the component def url', function(){
             var entity = {};
-            var registerMock = Sinon.mock( this.registry );
-            var storageMock = Sinon.mock( this.registry.storage );
-            var def = ComponentDef.create('/component/test');
-
-            registerMock.expects('createComponent').once().returns( Promise.resolve( {} ) );
-            // storageMock.expects('addComponent').withArgs( {} ,entity).once().returns( Promise.resolve() );
-
-            return this.registry.addComponent('/component/test', entity)
-                .then( function(){
-                    registerMock.verify();
-                    storageMock.verify();
+            var def = this.registry.getComponentDef('/component/position'); 
+            return this.registry.addComponent('/component/position', entity)
+                .then( function(entity){
+                    assert( entity.hasComponent(def) );
                 });
         });
 
@@ -156,71 +149,75 @@ describe('Registry', function(){
         // instances will come later as an optimisation step
         it('should add an array of component defs to an entity', function(){
             var entity = {};
-            var registerMock = Sinon.mock( this.registry );
-            var storageMock = Sinon.mock( this.registry.storage );
+            var coms = ['/component/geo_location', '/component/channel_member', '/component/realname', '/component/score'];
+            var componentsBf = this.registry.getComponentDefBitfield(coms);
+            var altBf = this.registry.getComponentDefBitfield(['/component/position','/component/tag']);
+            // var registerMock = Sinon.mock( this.registry );
+            // var storageMock = Sinon.mock( this.registry.storage );
             
-            var def = ComponentDef.create('/component/test');
-            registerMock.expects('createComponent').once().returns( Promise.resolve( {} ) );
-            storageMock.expects('addComponent').once().returns( Promise.resolve() );
+            // var def = ComponentDef.create('/component/test');
+            // registerMock.expects('createComponent').once().returns( Promise.resolve( {} ) );
+            // storageMock.expects('addComponent').once().returns( Promise.resolve() );
 
-            return this.registry.addComponent(['/component/alpha', '/component/beta', '/component/gamma', '/component/zeta'], entity)
-                .then( function(){
-                    registerMock.verify();
-                    storageMock.verify();
+            return this.registry.addComponent(coms, entity)
+                .then( function(entity){
+                    assert( entity.hasComponent(componentsBf) );
+                    assert( !entity.hasComponent(altBf) );
+                    // registerMock.verify();
+                    // storageMock.verify();
                 });
         });
 
 
         it('should instantiate with attributes', function(){
-            var registryMock = Sinon.mock( this.registry );
-            var storageMock = Sinon.mock( this.registry.storage );
-            var def = ComponentDef.create('/component/create');
-
-            registryMock.expects('getComponentDef').once().returns( def );
-            storageMock.expects('saveComponents').never();
-
-            return this.registry.createComponent( 100, {name:'tiger', age:12}, {save:false} )
-                .then( function(component){
-                    expect( component.get('name') ).to.equal('tiger');
-                    registryMock.verify();
-                    storageMock.verify();
-                });
+            var component = this.registry.createComponent( {_s:'/component/animal', name:'tiger', age:12}, {save:false} );
+            expect( component.get('name') ).to.equal('tiger');
         });
 
-        it('should instantiate with attributes', function(){
-            var registryMock = Sinon.mock( this.registry );
-            var storageMock = Sinon.mock( this.registry.storage );
-            var def = ComponentDef.create('/component/create');
+        it('should instantiate with attributes again', function(){
+            // var registryMock = Sinon.mock( this.registry );
+            // var storageMock = Sinon.mock( this.registry.storage );
+            // var def = ComponentDef.create('/component/create');
 
-            registryMock.expects('getComponentDef').twice().returns( def );
-            storageMock.expects('saveComponents').never();
+            // registryMock.expects('getComponentDef').twice().returns( def );
+            // storageMock.expects('saveComponents').never();
 
-            return this.registry.createComponent( 
-                [{ schema:100, name:'tiger', age:12}, { schema:100, name:'lion', age:4} ], null, {save:false} )
-                .then( function(components){
-                    expect( components[0].isNew() ).to.be.true;
-                    expect( components[0].get('name') ).to.equal('tiger');
-                    expect( components[1].get('name') ).to.equal('lion');
-                    registryMock.verify();
-                    storageMock.verify();
-                });
+            var components = this.registry.createComponent([ 
+                {_s:'/component/animal', name:'tiger', age:12},
+                {_s:'/component/animal', name:'lion', age:4},
+            ], {save:false});
+
+            // return this.registry.createComponent( 
+                // [{ schema:100, name:'tiger', age:12}, { schema:100, name:'lion', age:4} ], null, {save:false} )
+                // .then( function(components){
+            expect( components[0].isNew() ).to.be.true;
+            expect( components[0].get('name') ).to.equal('tiger');
+            expect( components[1].get('name') ).to.equal('lion');
+                    // registryMock.verify();
+                    // storageMock.verify();
+                // });
         });
 
         it('should instantiate with a component id', function(){
-            var registryMock = Sinon.mock( this.registry );
-            var def = ComponentDef.create('/component/comident');
 
-            registryMock.expects('getComponentDef').twice().returns( def );
+            var component = this.registry.createComponent( {_s:'/component/animal', id:456, name:'tiger', age:12}, {save:false} );
+            expect( component.isNew() ).to.be.false;
+            expect( component.id ).to.equal( 456 );
 
-            return this.registry.createComponent( 
-                [{ schema:'comident', id:456, name:'tiger', age:12}, { schema:'comident', id:457, name:'lion', age:4} ], null, {save:false})
-                .then( function(components){
-                    expect( components[0].isNew() ).to.be.false;
-                    expect( components[0].id ).to.equal( 456 );
-                    expect( components[1].id ).to.equal( 457 );
+            // var registryMock = Sinon.mock( this.registry );
+            // var def = ComponentDef.create('/component/comident');
 
-                    registryMock.verify();
-                });
+            // registryMock.expects('getComponentDef').twice().returns( def );
+
+            // return this.registry.createComponent( 
+            //     [{ schema:'comident', id:456, name:'tiger', age:12}, { schema:'comident', id:457, name:'lion', age:4} ], null, {save:false})
+            //     .then( function(components){
+            //         expect( components[0].isNew() ).to.be.false;
+            //         expect( components[0].id ).to.equal( 456 );
+            //         expect( components[1].id ).to.equal( 457 );
+
+            //         registryMock.verify();
+            //     });
         });
     });
 

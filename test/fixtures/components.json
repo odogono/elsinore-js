@@ -35,6 +35,41 @@
     },
 
     {
+        "id":"/component/command",
+        "properties":{
+            "id":{ "type":"string" },
+            "keyword": { "type":"string" },
+            "parameters":{  "type":"array" },
+            "command":{ "type":"object", "description":"command object" },
+            "status":{ "type":"string", "enum":[ "unprocessed", "processed" ] }
+        },
+        "transient":true
+    },
+
+    {
+        "id":"/component/channel",
+
+        "properties":{
+        }
+    },
+
+    {
+        "id":"/component/channel_member",
+
+        "properties":{
+            "channel":{ "type":"integer", "format":"entity" }
+        }
+    },
+
+    {
+        "id":"/component/channel/topic",
+
+        "properties":{
+            "topic":{ "type":"string" }
+        }
+    },
+
+    {
         "id":"/component/tag",
         "properties":{
             "code":{ "type":"string" },
