@@ -6,8 +6,6 @@ var EntityProcessor = Elsinore.EntityProcessor;
 
 /**
 
-
-
 // 
 // Registers to listen to events sent to entities
 // the 1st arg describes which components the entity should have
@@ -39,5 +37,3 @@ this.registry.triggerEntityEvent( null, 'msg', 'welcome to the room' );
 describe('Entity Events', function(){
 
 });
-
-

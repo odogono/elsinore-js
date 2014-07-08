@@ -153,33 +153,30 @@ function createComponentDef( schemaId, schemaAttrs ){
     return result;
 }
 
-function createComponent(componentDefId, attrs){
-    if( !componentDefId ){
-        return Elsinore.Component.create();
-    }
-    return getComponentDef(componentDefId).create( attrs );
-    
-    // var def = createComponentDef( componentDefId );
-    // return def.create( attrs );
-}
+// function createComponent(componentDefId, attrs){
+//     if( !componentDefId ){
+//         return Elsinore.Component.create();
+//     }
+//     return getComponentDef(componentDefId).create( attrs );
+// }
 
 
-function registerComponentDef( storage, schema ){
-    if( _.isArray(schema) ){
-        var current = Promise.fulfilled();
-        return Promise.all( schema.map( function(sch){
-            return current = current.then(function(){
-                return registerComponentDef( storage, sch );
-            });
-        }));
-    }
-    var def = ComponentDef.create( schema );
-    return storage.registerComponentDef( def ).then( function(def){
-        registeredComponentDefs[ def.getSchemaId() ] = def;
-        registeredComponentDefIds[ def.id ] = def;
-        return def;
-    });
-}
+// function registerComponentDef( storage, schema ){
+//     if( _.isArray(schema) ){
+//         var current = Promise.fulfilled();
+//         return Promise.all( schema.map( function(sch){
+//             return current = current.then(function(){
+//                 return registerComponentDef( storage, sch );
+//             });
+//         }));
+//     }
+//     var def = ComponentDef.create( schema );
+//     return storage.registerComponentDef( def ).then( function(def){
+//         registeredComponentDefs[ def.getSchemaId() ] = def;
+//         registeredComponentDefIds[ def.id ] = def;
+//         return def;
+//     });
+// }
 
 function createComponents( storage, components, options ){
     if( _.isArray(storage) ){
@@ -229,7 +226,7 @@ function loadJSONFixture( fixturePath ){
 
 
 // Adds beforeEach to tape tests
-function beforeEach(test, handler) {
+global.beforeEach = function beforeEach(test, handler) {
     return function tapish(name, listener) {
         test(name, function (assert) {
             var _end = assert.end
@@ -244,7 +241,7 @@ function beforeEach(test, handler) {
 }
 
 // Adds afterEach to tape tests
-function afterEach(test, handler) {
+global.afterEach = function afterEach(test, handler) {
     return function tapish(name, listener) {
         test(name, function (assert) {
             var _end = assert.end
@@ -264,9 +261,9 @@ module.exports = {
     createEntity: createEntity,
     createEntities: createEntities,
     createComponentDef: createComponentDef,
-    createComponent: createComponent,
+    // createComponent: createComponent,
     createComponents: createComponents,
-    registerComponentDef: registerComponentDef,
+    // registerComponentDef: registerComponentDef,
     ComponentDef: registeredComponentDefs,
     getComponentDef: getComponentDef,
     fixtures:{

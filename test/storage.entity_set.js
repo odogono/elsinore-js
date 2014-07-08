@@ -41,7 +41,7 @@ test('create an entityset with selected included/excluded entities in storage', 
 });
 
 test('add a new entity with component', function(t){
-    var self = {};
+    var self = this;
     return beforeEach()
         .then( function(){
             return storage.createEntitySet();
@@ -85,7 +85,7 @@ test('remove a component', function(t){
 //     });
 // })
 
-function beforeEach(t) {
+function beforeEach() {
     var FixtureComponents = Common.fixtures.components;
     return Common.createAndInitialize().then(function(pStorage){ 
         storage = pStorage;

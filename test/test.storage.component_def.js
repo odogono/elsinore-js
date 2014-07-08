@@ -58,7 +58,7 @@ describe('Storage', function(){
         });
 
 
-        it.only('should retrieve an existing componentDef', function(){
+        it('should retrieve an existing componentDef', function(){
             var self = this;
             var schema = {
                 id: '/component/flower',
