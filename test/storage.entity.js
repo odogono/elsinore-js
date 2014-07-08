@@ -42,7 +42,7 @@ test('should know that an entity does not exist', function(t){
         });
 });
 
-test('should create a new entity', function(t){
+test('create a new entity', function(t){
     return beforeEach().then( function(){
         // storage.on('all', function(evt){
         //     log.debug('storage evt ' + JSON.stringify( _.toArray(arguments)) );
@@ -59,7 +59,7 @@ test('should create a new entity', function(t){
 
 
 
-test('should destroy an entity', function(t){
+test('destroy an entity', function(t){
     return beforeEach().then( createTestComponent )
     .then( function(){
         return storage.destroyEntity( {id:981} )
@@ -73,7 +73,7 @@ test('should destroy an entity', function(t){
         });
 });
 
-test('should emit an event when the entity is destroyed', function(t){
+test('emit an event when the entity is destroyed', function(t){
     return beforeEach().then( createTestComponent )
     .then( function(){
         // storage.on('all', function(evt){

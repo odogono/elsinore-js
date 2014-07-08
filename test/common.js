@@ -206,9 +206,9 @@ function createComponents( storage, components, options ){
     return components;
 }
 
-function getComponentDef( schemaId ){
-    return registeredComponentDefs[ schemaId ];
-}
+// function getComponentDef( schemaId ){
+//     return registeredComponentDefs[ schemaId ];
+// }
 
 function createFixtureReadStream( fixturePath ){
     var path = Path.join( paths.fixtures, fixturePath );
@@ -258,17 +258,17 @@ global.afterEach = function afterEach(test, handler) {
 module.exports = {
     Entity: Elsinore.Entity,
     createAndInitialize: createAndInitialize,
-    createEntity: createEntity,
-    createEntities: createEntities,
-    createComponentDef: createComponentDef,
+    // createEntity: createEntity,
+    // createEntities: createEntities,
+    // createComponentDef: createComponentDef,
     // createComponent: createComponent,
-    createComponents: createComponents,
+    // createComponents: createComponents,
     // registerComponentDef: registerComponentDef,
-    ComponentDef: registeredComponentDefs,
-    getComponentDef: getComponentDef,
-    fixtures:{
-        components: require('./fixtures/components.json')
-    },
+    // ComponentDef: registeredComponentDefs,
+    // getComponentDef: getComponentDef,
+    // fixtures:{
+    //     components: require('./fixtures/components.json')
+    // },
     debugPrintEntity: debugPrintEntity,
     readFixture: readFixture,
     createFixtureReadStream: createFixtureReadStream,
