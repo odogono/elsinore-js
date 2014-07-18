@@ -2,6 +2,8 @@
 
 var Browserify = require('browserify');
 var Gulp = require('gulp');
+var Exec = require('child_process').exec;
+
 // var gutil = require('gulp-util');
 // var notify = require("gulp-notify");
 var Source = require('vinyl-source-stream');
@@ -10,7 +12,7 @@ var Uglify = require('gulp-uglify');
 var packageObj = require('./package.json');
 var externals = Object.keys( packageObj.dependencies );
 
-console.log( externals );
+// console.log( externals );
 
 function handleErrors(err) {
     var args = Array.prototype.slice.call(arguments);
@@ -54,6 +56,22 @@ Gulp.task('browserify', function(){
             .pipe(Gulp.dest('./dist/'));
 });
 
+Gulp.task('test.run', function(){
+    Exec('./bin/test test/test.entity_set.js', {}, function (error, stdout, stderr) {
+        console.log('STDOUT');
+        console.log(stdout);
+        console.log('STDERR');
+        console.log(stderr);
+        // if (error) {
+        //     console.log('-------ERROR-------');
+        //     console.log(error);
+        // }
+    });
+})
+
+Gulp.task('watch', function() {
+  Gulp.watch( [ 'test/**/*', 'lib/**/*' ] , ['test.run']);
+});
 
 Gulp.task('default', function(){
     // place code for your default task here

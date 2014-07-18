@@ -24,7 +24,7 @@
   "dependencies": {
     "backbone": "~1.1.2",
     "bit-array": "~0.2.2",
-    "bluebird": "~2.1.2",
+    "bluebird": "~2.2.2",
     "event-stream": "^3.1.5",
     "jsonpointer": "~1.1.0",
     "underscore": "^1.6.0",
@@ -32,7 +32,6 @@
     "uri-js": "^1.4.2"
   },
   "devDependencies": {
-    "blue-tape": "^0.1.6",
     "browserify": "^4.1.10",
     "browserify-shim": "^3.5.0",
     "chai": "~1.9.1",

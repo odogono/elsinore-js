@@ -1,6 +1,4 @@
-var test = require('blue-tape');
-// var test = require('tape');
-// var Common = require('./common');
+var test = require('tape');
 var BitField = require('../lib/bit_field');
 
 
@@ -63,6 +61,73 @@ test('bitfield', function(t){
         t.equals( c.toString(), '10000000000');
         t.end();
     });
+
+    test('AND', function(t){
+        t.ok( BitField.and( 
+            BitField.create(  '1000'),
+            BitField.create(  '1000')
+            ));
+        t.ok( BitField.and( 
+            BitField.create( '10000100000010000'),
+            BitField.create( '10000100000010010')
+            ));
+        t.notOk( BitField.and( 
+            BitField.create( '01010'),
+            BitField.create( '01100')
+            ));
+
+        t.end();
+    });
+
+    test('OR', function(t){
+        t.ok( BitField.or( 
+            BitField.create(  '1000'),
+            BitField.create(  '1000')
+            ));
+        t.ok( BitField.or( 
+            BitField.create(  '1000'),
+            BitField.create(  '1010')
+            ));
+        t.ok( BitField.or( 
+            BitField.create(  '1000'),
+            BitField.create(  '1100')
+            ));
+        t.notOk( BitField.or( 
+            BitField.create(  '0110'),
+            BitField.create(  '1001')
+            ));
+        t.notOk( BitField.or( 
+            BitField.create(  '0000'),
+            BitField.create(  '0000')
+            ));
+
+        t.end();
+    })
+
+    test.only('NOR', function(t){
+        
+        t.ok( BitField.nor( 
+            BitField.create(  'all'),
+            BitField.create(  '0')
+            ));
+
+        t.ok( BitField.nor( 
+            BitField.create(  '1000'),
+            BitField.create(  '0100')
+            ));
+
+        t.notOk( BitField.nor( 
+            BitField.create(  '1000'),
+            BitField.create(  '1000')
+            ));
+
+        t.notOk( BitField.nor( 
+            BitField.create(  '1000'),
+            BitField.create(  'all')
+            ));
+
+        t.end();
+    })
 
     test('logically AND and return value indicating difference', function(t){
         var a = new BitField(),

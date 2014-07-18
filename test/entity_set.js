@@ -8,7 +8,7 @@ var EntitySet = Elsinore.EntitySet;
 var Registry = Elsinore.Registry;
 
 var JSONComponentParser = require('../lib/streams').JSONComponentParser;
-var FixtureComponents = Common.fixtures.components;
+
 
 var entitySet, entities, registry, storage, ComponentDefs;
 
@@ -86,9 +86,11 @@ test('should remove an entity', function(t){
 });
 
 test('should add the components of an entity', function(t){
-    return beforeEach().then( function(){
-        entitySet.addEntity( entities[0] );
+    return beforeEach(true).then( function(entitySet){
+        log.debug( '+++ ' + entitySet.cid + ' add here');
+        entitySet.addEntity( entities[0], {debug:true} );
         var addedEntity = entitySet.at(0);
+        // print_ins( entitySet.entities );
         t.notEqual( addedEntity.Realname, undefined );
         t.end();
     });
@@ -144,7 +146,7 @@ test('should only add a component of an accepted type', function(t){
     });
 });
 
-test('should only retain the included component on entity', function(t){
+test.only('should only retain the included component on entity', function(t){
     return beforeEach().then( function(){
         entitySet.setComponentMask( EntitySet.INCLUDE, ComponentDefs.Nickname );
         entitySet.addEntity( entities[0] );
@@ -209,9 +211,6 @@ test('should only add entities that pass include/exclude', function(t){
 
 test('should remove entities that are excluded after their components change', function(t){
     return beforeEach().then( function(){
-        // entitySet.on('all', function(evt){
-        //     log.debug('evt ' + JSON.stringify( _.toArray(arguments) ) );
-        // });
         var RealnameDefId = ComponentDefs.Realname;
         var RealnameDef = registry.getComponentDef( RealnameDefId );
         entitySet.setComponentMask( EntitySet.EXCLUDE, [RealnameDefId] );
@@ -340,12 +339,17 @@ test('should clear all contained entities by calling reset', function(t){
     });
 });
 
-function beforeEach(){
+function beforeEach(logEvents){
     entitySet = EntitySet.create();
+    if( logEvents ){
+        entitySet.on('all', function(evt){
+            log.debug('evt ' + JSON.stringify( _.toArray(arguments) ) );
+        });
+    }
     return Registry.create().initialize()
         .then( function(reg){
             registry = reg;
-            return registry.registerComponent( FixtureComponents );
+            return registry.registerComponent( Common.loadJSONFixture('components.json') );
         }).then( function(){
             ComponentDefs = registry.ComponentDef;
         }).then( function(){
@@ -358,5 +362,7 @@ function beforeEach(){
                         return resolve(entities);
                     }));
             });
-        })
+        }).then( function(){
+            return entitySet;
+        });
 }
