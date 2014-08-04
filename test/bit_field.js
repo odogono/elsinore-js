@@ -71,40 +71,68 @@ test('bitfield', function(t){
             BitField.create( '10000100000010000'),
             BitField.create( '10000100000010010')
             ));
+        t.ok( BitField.and( 
+            BitField.create(  '1001000'),
+            BitField.create(  '1101011')
+            ));
+        t.notOk( BitField.and( 
+            BitField.create(  '1101011'),
+            BitField.create(  '1001000')
+            ));
         t.notOk( BitField.and( 
             BitField.create( '01010'),
             BitField.create( '01100')
             ));
-
+        t.notOk( BitField.and(
+            BitField.create(      '11010'),
+            BitField.create( '1000000010')
+            ));
         t.end();
     });
 
-    test('OR', function(t){
-        t.ok( BitField.or( 
+    test('AND++', function(t){
+        t.ok( BitField.and(
+            BitField.create('10000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'),
+            BitField.create('10000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000')
+            // true
+            ));
+        t.end();
+    });
+
+    test('AAND', function(t){
+        t.ok( BitField.aand( 
             BitField.create(  '1000'),
             BitField.create(  '1000')
             ));
-        t.ok( BitField.or( 
+        t.ok( BitField.aand( 
             BitField.create(  '1000'),
             BitField.create(  '1010')
             ));
-        t.ok( BitField.or( 
+        t.ok( BitField.aand( 
             BitField.create(  '1000'),
             BitField.create(  '1100')
             ));
-        t.notOk( BitField.or( 
+        t.notOk( BitField.aand( 
             BitField.create(  '0110'),
             BitField.create(  '1001')
             ));
-        t.notOk( BitField.or( 
+        t.notOk( BitField.aand( 
             BitField.create(  '0000'),
             BitField.create(  '0000')
             ));
 
         t.end();
-    })
+    });
 
-    test.only('NOR', function(t){
+    test('AAND++', function(t){
+        t.ok( BitField.aand(
+            BitField.create('10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000'),
+            BitField.create(                                                                                                                                              '1000000000000000000000000000000010000')
+            ));
+        t.end();
+    });
+
+    test.skip('NOR', function(t){
         
         t.ok( BitField.nor( 
             BitField.create(  'all'),
