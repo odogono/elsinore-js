@@ -231,6 +231,27 @@ test('bitfield', function(t){
         t.end();
     });
 
+    test('setValues', function(t){
+        var a = BitField.create();
+        var values = [ 0, 22, 65, 129, 340, 1198 ];
+        a.setValues( values, true );
+        for( var i=0;i<values.length;i++ )
+            t.ok( a.get(values[i]) );
+        a.setValues( [22,129], false );
+        t.notOk( a.get(22) );
+        t.notOk( a.get(129) );
+        t.end();
+    });
+
+    test('toValues', function(t){
+        var a = BitField.create();
+        var values = [ 1, 29, 96, 311, 432 ];
+        for( var i=0;i<values.length;i++ )
+            a.set( values[i], true );
+        t.deepEqual( a.toValues(), values, 'should produce the same values' );
+        t.end();
+    });
+
     t.end();
 });//*/
 

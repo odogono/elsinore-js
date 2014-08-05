@@ -78,8 +78,9 @@ test('chaining', function(t){
     var e = Entity.create();
     var coms = createComponents();
 
-    var f = EntityFilter.create( EntityFilter.ANY, [13, 178, 96] );
-    f.add( EntityFilter.create(EntityFilter.NONE, [32] ));
+    var f = EntityFilter.create( EntityFilter.ANY, 
+        createComponents('ids',['animal','mineral','vegetable']) );
+    f.next = EntityFilter.create(EntityFilter.NONE, [32] );
 
     e.addComponent( coms.animal );
     t.ok( f.accept(e) );
@@ -89,14 +90,77 @@ test('chaining', function(t){
     t.end();
 });
 
+test('transform will copy an incoming entity', function(t){
+    var e = createComponents('add', ['mineral', 'vegetable', 'doctor'], 22 );
+    e.marked = true;
+    var f = EntityFilter.create();
+    var te = f.transform(e);
 
-function createComponents(){
-    return {
+    t.notOk( te.marked );
+    t.ok( te.Mineral );
+    t.ok( te.Vegetable );
+    t.ok( te.Doctor );
+    t.end();
+});
+
+test('transform will include only specified components on an entity', function(t){
+    var e = createComponents('add', ['mineral', 'robot', 'vegetable'], 23 );
+    var f = EntityFilter.create( EntityFilter.INCLUDE, 
+        createComponents('ids',['animal','robot','doctor']) );
+
+    t.ok( e.Robot, 'entity will have Robot component' );
+    t.ok( e.Mineral, 'entity will have Mineral component' );
+
+    var te = f.transform( e );
+    t.equal( e.id, te.id, 'transformed entity id will be the same' );
+    t.ok( te.Robot, 'transformed entity will have Robot component' );
+    t.notOk( te.Mineral, 'transformed entity will not have Mineral component' );
+    
+    t.end();
+});
+
+test('transform will exclude specified components on an entity', function(t){
+    var e = createComponents('add', ['mineral', 'robot', 'vegetable'], 24 );
+    var f = EntityFilter.create( EntityFilter.EXCLUDE, 
+        createComponents('ids',['vegetable']) );
+    
+
+    var te = f.transform( e );
+    t.equal( e.id, te.id, 'transformed entity id will be the same' );
+    t.ok( te.Mineral, 'transformed entity will have Mineral component' );
+    t.notOk( te.Vegetable, 'transformed entity will not have Vegetable component' );
+
+    t.end();
+});
+
+
+function createComponents(returnType, options, entity){
+    var result = {
         animal: mockComponent( 13, '/component/animal' ),
         mineral: mockComponent( 178, '/component/mineral' ),
         vegetable: mockComponent( 96, '/component/vegetable' ),
-        robot: mockComponent( 32, '/component/robot' )
+        robot: mockComponent( 32, '/component/robot' ),
+        doctor: mockComponent( 5, '/component/doctor' ),
     };
+
+    if( returnType == 'ids'){
+        return _.compact(_.map( result, function(v,k,l){
+            if( _.indexOf(options,k) != -1 )
+                return v.ComponentDef.id;
+            return null;
+        }));
+    }
+    else if( returnType == 'add' ){
+        entity = Entity.toEntity(entity);
+        _.each( result, function(v,k){
+            if( _.indexOf(options,k) != -1 ){
+                entity.addComponent( v );
+            }
+        });
+        return entity;
+    }
+
+    return result;
 }
 
 function mockComponent( componentDefId, componentDefSchemaId ){
