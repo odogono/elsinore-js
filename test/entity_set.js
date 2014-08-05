@@ -2,8 +2,9 @@ var test = require('tape');
 var Common = require('./common');
 var Es = require('event-stream');
 var P = require('bluebird');
-// P.longStackTraces();
+P.longStackTraces();
 
+var EntityFilter = Elsinore.EntityFilter;
 var EntitySet = Elsinore.EntitySet;
 var Registry = Elsinore.Registry;
 
@@ -15,28 +16,28 @@ var entitySet, entities, registry, storage, ComponentDefs;
 
 
 test('should return the number of entities contained', function(t){
-    return beforeEach()
-        .then(function(){
-            var entity = entities[0];
-            entitySet.addComponent( entity.Position );
-            t.equals( entitySet.length, 1);
-            entitySet.addComponent( entity.Nickname );
-            t.equals( entitySet.length, 1);
-            t.end();        
-        });
+    return beforeEach(false,true).then(function(){
+        var pos = registry.getComponentDef( ComponentDefs.Position ).create({_e:3});
+        var nick = registry.getComponentDef( ComponentDefs.Nickname ).create({_e:3});
+        
+        entitySet.addComponent( pos );
+        t.equals( entitySet.length, 1);
+        entitySet.addComponent( nick );
+        t.equals( entitySet.length, 1);
+        t.end();        
+    });
 });
 
 
 test('should return an added entity', function(t){
-    return beforeEach()
-        .then(function(){
-            var entity = entities[0];
-            entitySet.addComponent( entity.Position );
-            var addedEntity = entitySet.at(0);
-            t.equals( addedEntity.id,  entity.id );
-            t.equals( addedEntity.Position.id,  entity.Position.id );
-            t.end();
-        });
+    return beforeEach().then(function(){
+        var entity = entities[0];
+        entitySet.addComponent( entity.Position );
+        var addedEntity = entitySet.at(0);
+        t.equals( addedEntity.id,  entity.id );
+        t.equals( addedEntity.Position.id,  entity.Position.id );
+        t.end();
+    });
 });
 
 test('should remove the entity belonging to a component', function(t){
@@ -86,8 +87,8 @@ test('should remove an entity', function(t){
 });
 
 test('should add the components of an entity', function(t){
-    return beforeEach(true).then( function(entitySet){
-        log.debug( '+++ ' + entitySet.cid + ' add here');
+    return beforeEach(false).then( function(entitySet){
+        // log.debug( '+++ ' + entitySet.cid + ' add here');
         entitySet.addEntity( entities[0], {debug:true} );
         var addedEntity = entitySet.at(0);
         // print_ins( entitySet.entities );
@@ -136,19 +137,20 @@ test('should only add an entity with components', function(t){
 
 test('should only add a component of an accepted type', function(t){
     return beforeEach().then( function(){
-        entitySet.setComponentMask( EntitySet.INCLUDE, ComponentDefs.Position );
+        entitySet.setEntityFilter( EntityFilter.create(EntityFilter.ALL, ComponentDefs.Position) );
 
         entitySet.addEntity( entities[1] );
         t.equals( entitySet.length, 0);
         entitySet.addEntity( entities[0] );
         t.equals( entitySet.length, 1);
+        log.debug('and done');
         t.end();
     });
 });
 
-test.only('should only retain the included component on entity', function(t){
+test('should only retain the included component on entity', function(t){
     return beforeEach().then( function(){
-        entitySet.setComponentMask( EntitySet.INCLUDE, ComponentDefs.Nickname );
+        entitySet.setEntityFilter( EntityFilter.create(EntityFilter.INCLUDE, ComponentDefs.Nickname ) );
         entitySet.addEntity( entities[0] );
         // the entity won't have any of the other components
         expect( entitySet.at(0).getComponentCount() ).to.equal(1);
@@ -158,7 +160,7 @@ test.only('should only retain the included component on entity', function(t){
 
 test('should not add entities that have excluded components', function(t){
     return beforeEach().then( function(){
-        entitySet.setComponentMask( EntitySet.EXCLUDE, ComponentDefs.Score );
+        entitySet.setEntityFilter( EntityFilter.create(EntityFilter.NONE, ComponentDefs.Score ) );
 
         entitySet.addEntity( entities[1] );
         t.equals( entitySet.length, 0);
@@ -170,7 +172,7 @@ test('should not add entities that have excluded components', function(t){
 
 test('should not add entities that have multiple excluded components', function(t){
     return beforeEach().then( function(){
-        entitySet.setComponentMask( EntitySet.EXCLUDE, [ComponentDefs.Score, ComponentDefs.Nickname] );
+        entitySet.setEntityFilter( EntityFilter.create(EntityFilter.NONE, [ComponentDefs.Score, ComponentDefs.Nickname] ) );
         entitySet.addEntity( entities );
         t.equals( entitySet.length, 1);
         t.end();
@@ -180,7 +182,7 @@ test('should not add entities that have multiple excluded components', function(
 test('should only add entities that are included', function(t){
     return beforeEach().then( function(){
         // this means that any entity MUST have a Position and Nickname
-        entitySet.setComponentMask( EntitySet.INCLUDE, [ComponentDefs.Position, ComponentDefs.Nickname] );
+        entitySet.setEntityFilter( EntityFilter.create(EntityFilter.ALL, [ComponentDefs.Position, ComponentDefs.Nickname] ) );
         entitySet.addEntity( entities );
         t.equals( entitySet.length, 1);
         t.end();
@@ -190,7 +192,7 @@ test('should only add entities that are included', function(t){
 test('should only add entities that are optional', function(t){
     return beforeEach().then( function(){
         // this means that the entity MAY have Position and/or Nickname
-        entitySet.setComponentMask( EntitySet.OPTIONAL, [ComponentDefs.Position, ComponentDefs.Nickname] );
+        entitySet.setEntityFilter( EntityFilter.create(EntityFilter.ANY, [ComponentDefs.Position, ComponentDefs.Nickname] ));
         entitySet.addEntity( entities );
         t.equals( entitySet.length, 3);
         t.end();
@@ -201,8 +203,9 @@ test('should only add entities that are optional', function(t){
 test('should only add entities that pass include/exclude', function(t){
     return beforeEach().then( function(){
         // this means that the entity MAY have Position and/or Nickname
-        entitySet.setComponentMask( EntitySet.INCLUDE, [ComponentDefs.Position] );
-        entitySet.setComponentMask( EntitySet.EXCLUDE, [ComponentDefs.Realname] );
+        entitySet.setEntityFilter( EntityFilter.create(EntityFilter.ALL, ComponentDefs.Position) )
+            .setNext( EntityFilter.create(EntityFilter.NONE, ComponentDefs.Realname) );
+
         entitySet.addEntity( entities );
         t.equals( entitySet.length, 1);
         t.end();
@@ -211,9 +214,9 @@ test('should only add entities that pass include/exclude', function(t){
 
 test('should remove entities that are excluded after their components change', function(t){
     return beforeEach().then( function(){
-        var RealnameDefId = ComponentDefs.Realname;
-        var RealnameDef = registry.getComponentDef( RealnameDefId );
-        entitySet.setComponentMask( EntitySet.EXCLUDE, [RealnameDefId] );
+
+        var RealnameDef = registry.getComponentDef( ComponentDefs.Realname );
+        entitySet.setEntityFilter( EntityFilter.NONE, [ComponentDefs.Realname] );
         entitySet.addEntity( entities );
         t.equals( entitySet.length, 2);
         
@@ -228,15 +231,10 @@ test('should remove entities that are excluded after their components change', f
 
 test('should remove entities that no longer included after their components change', function(t){
     return beforeEach().then( function(){
-        // entitySet.on('all', function(evt){
-        //     log.debug('evt ' + JSON.stringify( _.toArray(arguments) ) );
-        // });
-
-        entitySet.setComponentMask( EntitySet.INCLUDE, ComponentDefs.Nickname );
-        entitySet.setComponentMask( EntitySet.OPTIONAL, ComponentDefs.Position );
+        entitySet.setEntityFilter( EntityFilter.ALL, ComponentDefs.Nickname );
         entitySet.addEntity( entities );
         
-        t.equals( entitySet.length, 2);
+        t.equals( entitySet.length, 2, 'two entities which have Nickname and maybe Position');
         var entity = entities[0];
 
         // removing the Nickname component should mean the entity is also removed
@@ -248,13 +246,11 @@ test('should remove entities that no longer included after their components chan
 
 test('should remove entities that are no longer allowed when the component mask changes', function(t){
     return beforeEach().then( function(){
-        // entitySet.on('all', function(evt){
-        //     log.debug('evt ' + JSON.stringify( _.toArray(arguments) ) );
-        // });
+        
         entitySet.addEntity( entities );
-         t.equals( entitySet.length, 4);
+        t.equals( entitySet.length, 4);
 
-        entitySet.setComponentMask( EntitySet.EXCLUDE, ComponentDefs.Score );
+        entitySet.setEntityFilter( EntityFilter.NONE, ComponentDefs.Score );
         t.equals( entitySet.length, 2);
         t.end();
     });
@@ -275,16 +271,15 @@ test('should filter', function(t){
     });
 });
 
-test('should remove components for an entity', function(t){
-    return beforeEach().then( function(){
-        var entity = entities[0];
+// test('should remove components for an entity', function(t){
+//     return beforeEach(true).then( function(){
+//         var entity = entities[0];
 
-        entitySet.addEntity( entity );
-
-        entitySet.removeEntity( entity );
-        t.end();
-    });
-});
+//         entitySet.addEntity( entity );
+//         entitySet.removeEntity( entity );
+//         t.end();
+//     });
+// });
 
 test('should emit an event when a component is changed', function(t){
     return beforeEach().then( function(){
@@ -339,7 +334,7 @@ test('should clear all contained entities by calling reset', function(t){
     });
 });
 
-function beforeEach(logEvents){
+function beforeEach(logEvents, noLoadEntities){
     entitySet = EntitySet.create();
     if( logEvents ){
         entitySet.on('all', function(evt){
@@ -353,6 +348,9 @@ function beforeEach(logEvents){
         }).then( function(){
             ComponentDefs = registry.ComponentDef;
         }).then( function(){
+            if( noLoadEntities ){
+                return entitySet;
+            }
             return new Promise( function(resolve){
                 Common.createFixtureReadStream('entity_set.entities.ldjson')
                     // convert JSON objects into components by loading into registry

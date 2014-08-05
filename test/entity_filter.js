@@ -21,6 +21,17 @@ test('will reject entities without components', function(t){
     t.end();
 });
 
+test('will accept entities with one of the components', function(t){
+    var f = EntityFilter.create( EntityFilter.ANY, 
+        createComponents('ids', ['animal', 'doctor']) );
+
+    t.ok( f.accept(createComponents('add', ['animal'] )) );
+    t.notOk( f.accept(createComponents('add', ['mineral'] )) );
+    t.ok( f.accept(createComponents('add', ['doctor'] )) );
+    t.ok( f.accept(createComponents('add', ['robot', 'animal'] )) );
+
+    t.end();
+});
 
 test('reject an entity which does not have a specific component', function(t){
     var c = mockComponent( 2, '/component/flower' );

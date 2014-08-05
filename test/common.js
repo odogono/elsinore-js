@@ -13,6 +13,8 @@ Path = require('path');
 Util = require('util');
 Sinon = require('sinon');
 _ = require('underscore');
+_.str = require( 'underscore.string' );
+_.mixin(_.str.exports());
 Backbone = require('backbone');
 Promise = require('bluebird');
 
@@ -178,33 +180,33 @@ function createComponentDef( schemaId, schemaAttrs ){
 //     });
 // }
 
-function createComponents( storage, components, options ){
-    if( _.isArray(storage) ){
-        components = storage;
-        storage = null;
-    }
+// function createComponents( storage, components, options ){
+//     if( _.isArray(storage) ){
+//         components = storage;
+//         storage = null;
+//     }
 
-    // var save = options ? options.save || false;
-    // we store each array of components seperatley
-    var comTypes = {};
-    // convert components data into instances
-    components = components.map(function(com){
-        var schemaId = com['schema'];
-        var def = registeredComponentDefs[schemaId];
-        delete com['schema'];
-        var result = def.create( com );
-        var typeArray = comTypes[ def.id ] || (comTypes[ def.id ] = []);
-        typeArray.push( result );
-        // log.debug('creating component ' + def.getSchemaId() + ' ' + JSON.stringify(com) );
-        return result;
-    });
+//     // var save = options ? options.save || false;
+//     // we store each array of components seperatley
+//     var comTypes = {};
+//     // convert components data into instances
+//     components = components.map(function(com){
+//         var schemaId = com['schema'];
+//         var def = registeredComponentDefs[schemaId];
+//         delete com['schema'];
+//         var result = def.create( com );
+//         var typeArray = comTypes[ def.id ] || (comTypes[ def.id ] = []);
+//         typeArray.push( result );
+//         // log.debug('creating component ' + def.getSchemaId() + ' ' + JSON.stringify(com) );
+//         return result;
+//     });
 
-    if( storage ){
-        return storage.saveComponents( components );
-    }
+//     if( storage ){
+//         return storage.saveComponents( components );
+//     }
 
-    return components;
-}
+//     return components;
+// }
 
 // function getComponentDef( schemaId ){
 //     return registeredComponentDefs[ schemaId ];
