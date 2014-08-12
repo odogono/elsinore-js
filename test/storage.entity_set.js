@@ -4,7 +4,13 @@ var Es = require('event-stream');
 var P = require('bluebird');
 P.longStackTraces();
 
-var entities, registry, storage, ComponentDefs;
+var EntityFilter = Elsinore.EntityFilter;
+var EntitySet = Elsinore.EntitySet;
+var Registry = Elsinore.Registry;
+
+var JSONComponentParser = require('../lib/streams').JSONComponentParser;
+
+var entities, registry, storage, ComponentDefs, entitySet;
 
 
 test("create an entityset with all the entities in storage", function (t) {
@@ -21,9 +27,11 @@ test("create an entityset with all the entities in storage", function (t) {
 test('create an entityset with selected entities in storage', function(t){
     return beforeEach()
         .then(function(){
-            return storage.createEntitySet({include:[ ComponentDefs.Position ]})
+            return storage.createEntitySet({filter:EntityFilter.ALL, defs:ComponentDefs.Position})
         })
         .then(function(es){
+            // log.debug('filter set to ' + es.entityFilter + ' ' + es.poop);
+            // print_ins(es);
             t.equals( es.length, 2, "two entities have the Position component" );
             t.end();
         });
@@ -32,9 +40,12 @@ test('create an entityset with selected entities in storage', function(t){
 test('create an entityset with selected included/excluded entities in storage', function(t){
     return beforeEach()
         .then( function(){
-            return storage.createEntitySet({include:[ ComponentDefs.Position ], exclude:[ ComponentDefs.Realname], debug:true});
+            var filter = EntityFilter.create( EntityFilter.ALL, ComponentDefs.Position );
+            filter.setNext( EntityFilter.create( EntityFilter.NONE, ComponentDefs.Realname ) );
+            return storage.createEntitySet({filter:filter});
         })
         .then(function(es){
+            // log.debug('filter set to ' + es.entityFilter);
             t.equals( es.length,1 );
             t.end();
         });
@@ -85,28 +96,29 @@ test('remove a component', function(t){
 //     });
 // })
 
-function beforeEach() {
-    var FixtureComponents = Common.fixtures.components;
-    return Common.createAndInitialize().then(function(pStorage){ 
-        storage = pStorage;
-        registry = storage.registry;
-        ComponentDefs = registry.ComponentDef;
-    })
-    // register components
-    .then( function(){
-        return registry.registerComponent( FixtureComponents );
-    })
-    // load entities into storage
-    .then( function(){
-        var JSONComponentParser = require('../lib/streams').JSONComponentParser;
-        return new Promise(function(resolve){
-            var s = Common.createFixtureReadStream('entity_set.entities.ldjson')
-                // convert JSON objects into components by loading into registry
-                .pipe( JSONComponentParser(registry) )
-                .pipe(Es.through( null, function end(){
-                    entities = registry.storage.entities;
-                    return resolve( entities );
-                }));
+function beforeEach(logEvents) {
+    
+    return Registry.create().initialize()
+        .then( function(reg){
+            registry = reg;
+            storage = registry.storage;
+            if( logEvents ){
+                registry.on('all', function(evt){
+                    log.debug('evt ' + JSON.stringify( _.toArray(arguments) ) );
+                });
+            }
+            return registry.registerComponent( Common.loadJSONFixture('components.json') );
+        }).then( function(){
+            ComponentDefs = registry.ComponentDef;
+        }).then( function(){
+            return new Promise( function(resolve){
+                Common.createFixtureReadStream('entity_set.entities.ldjson')
+                    // convert JSON objects into components by loading into registry
+                    .pipe( JSONComponentParser(registry) )
+                    .pipe(Es.through( null, function end(){
+                        entities = registry.storage.entities;
+                        return resolve(entities);
+                    }));
             });
-    });
+        });
 }

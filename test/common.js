@@ -61,6 +61,50 @@ root.print_ins = function(arg,depth,showHidden,colors){
     Util.log( Util.inspect(arg,showHidden,depth,colors) );
 };
 
+function entityToString(entity, indent){
+    indent || (indent='');
+    var res = [];
+    res.push( indent + '- e(' + entity.id + '/' + entity.cid + ')' );
+    indent += '  ';
+    for( var comDefId in entity.components ){
+        var com = entity.components[comDefId];
+        if( !com )
+            continue;
+        res.push( indent + 'c' + com.ComponentDef.getName() 
+            + ' (' + com.id  + '/' + com.ComponentDef.id + '/' + com.cid 
+            + ') ^' + com.getEntityId() 
+            + ' ' + com.hash()
+            + ' ' + JSON.stringify(_.omit(com.toJSON(),'id') ));
+    }
+    return res;
+}
+
+function entitySetToString(es, indent){
+    indent || (indent='');
+    var res = [];
+    res.push( indent + '- es(' + es.cid + ')' )
+    es.each( function(e){
+        res = res.concat( entityToString(e, indent+'  ') );
+    });
+    return res;
+}
+
+root.print_e = function(entity){
+    var res = [''];
+    if( _.isArray(entity) ){
+        _.each( entity, root.print_e );
+        return;
+    }
+    if( Elsinore.Entity.isEntity(entity) ){
+        res = res.concat( entityToString(entity) );
+    } else if( Elsinore.EntityProcessor.isEntityProcessor(entity) ){
+        res = res.concat( entitySetToString( entity.entitySet ) );
+    } else if( Elsinore.EntitySet.isEntitySet(entity) ){
+        res = res.concat( entitySetToString( entity ) );
+    }
+    console.log( res.join("\n") );
+}
+
 root.print_var = function(arg, options){
     var stack = __stack[1];
     var fnName = stack.getFunctionName();
@@ -76,7 +120,7 @@ root.log = {
     info: Util.log
 }
 
-root.print_stack = function(){
+root.print_stack = function(max){
     var rootPath = Path.join(Path.dirname(__filename),'../');
     var stack = _.map(__stack, function(entry,i){
         var filename = entry.getFileName();
@@ -104,13 +148,13 @@ get: function() {
 });
 
 Object.defineProperty(global, '__line', {
-get: function() {
+    get: function() {
         return __stack[1].getLineNumber();
     }
 });
 
 Object.defineProperty(global, '__function', {
-get: function() {
+    get: function() {
         return __stack[1].getFunctionName();
     }
 });
@@ -260,17 +304,6 @@ global.afterEach = function afterEach(test, handler) {
 module.exports = {
     Entity: Elsinore.Entity,
     createAndInitialize: createAndInitialize,
-    // createEntity: createEntity,
-    // createEntities: createEntities,
-    // createComponentDef: createComponentDef,
-    // createComponent: createComponent,
-    // createComponents: createComponents,
-    // registerComponentDef: registerComponentDef,
-    // ComponentDef: registeredComponentDefs,
-    // getComponentDef: getComponentDef,
-    // fixtures:{
-    //     components: require('./fixtures/components.json')
-    // },
     debugPrintEntity: debugPrintEntity,
     readFixture: readFixture,
     createFixtureReadStream: createFixtureReadStream,
