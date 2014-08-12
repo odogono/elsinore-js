@@ -19,7 +19,7 @@ test("create an entityset with all the entities in storage", function (t) {
             return storage.createEntitySet()
         })
         .then(function(es){
-            t.equals( es.length, 4, "four entities in the entityset" );
+            t.equals( es.length, 5, "four entities in the entityset" );
             t.end();
         });
 });
@@ -30,9 +30,7 @@ test('create an entityset with selected entities in storage', function(t){
             return storage.createEntitySet({filter:EntityFilter.ALL, defs:ComponentDefs.Position})
         })
         .then(function(es){
-            // log.debug('filter set to ' + es.entityFilter + ' ' + es.poop);
-            // print_ins(es);
-            t.equals( es.length, 2, "two entities have the Position component" );
+            t.equals( es.length, 3, "two entities have the Position component" );
             t.end();
         });
 });
@@ -64,7 +62,7 @@ test('add a new entity with component', function(t){
             return registry.createEntity( [{schema:'realname', name:'jon snow'}, 'score'] );
         })
         .then(function(ent){
-            t.equals( self.entitySet.length, 5 );
+            t.equals( self.entitySet.length, 6 );
             t.end();
         });
 });
@@ -79,13 +77,12 @@ test('remove a component', function(t){
             return self.entitySet = es;
         })
         .then(function(es){
-            t.equals( es.length, 4 );
-            // grab the first component
-            var ents = es.entities;
-            return registry.destroyEntity( ents[0] );
+            t.equals( es.length, 5 );
+            var entity = es.at(0);
+            return registry.destroyEntity( entity );
         })
         .then( function(){
-            t.equals( self.entitySet.length, 3 );
+            t.equals( self.entitySet.length, 4 );
             t.end();
         })
 });
@@ -121,4 +118,11 @@ function beforeEach(logEvents) {
                     }));
             });
         });
+}
+
+function logEvents(reg){
+    reg = reg || registry;
+    reg.on('all', function(evt){
+        log.debug('evt ' + JSON.stringify( _.toArray(arguments) ) );
+    });
 }
