@@ -37,13 +37,10 @@ test('adding several components at once generates a single add event', function(
         var eventSpy = Sinon.spy();
         entitySet.on('all', eventSpy);
 
-        // logEvents(entitySet);
         var pos = registry.createComponent( {id:1,_e:2,_s:'position', x:19,y:-2},{save:false} );
         var nick = registry.createComponent( {id:2,_e:2,_s:'nickname', nick:'isaac'}, {save:false} );
 
-        // log.debug('>BEGIN');
         entitySet.addComponent( [pos,nick] );
-        // log.debug('>END');
 
         t.equals( eventSpy.callCount, 2, 'two events should have been emitted' );
         t.ok( eventSpy.calledWith('component:add'), 'component:add should have been called' );
@@ -61,7 +58,6 @@ test('adding an entity with components', function(t){
         var eventSpy = Sinon.spy();
         entitySet.on('all', eventSpy);
 
-        // logEvents( entitySet );
         var entity = Entity.create(16);
         entity.addComponent( createComponent( ComponentDefs.Position, {id:5, x:2,y:-2}) );
         entity.addComponent( createComponent( ComponentDefs.Score, {id:6, score:100}) );
@@ -80,17 +76,13 @@ test('should return the number of entities contained', function(t){
         var pos = registry.getComponentDef( ComponentDefs.Position ).create({id:1,_e:3});
         var nick = registry.getComponentDef( ComponentDefs.Nickname ).create({id:2,_e:3});
         
-        // logEvents(entitySet);
-
         entitySet.addComponent( pos );
         t.equals( entitySet.length, 1, 'should only be one entity' );
-        // log.debug("\n");
+        
         entitySet.addComponent( nick );
         t.equals( entitySet.length, 1, 'should only be one entity' );
 
         var entity = entitySet.getEntity(3);
-        // print_e( entity );
-        // print_ins( entity );
         t.ok( entity.Position, 'entity should have position' );
         t.ok( entity.Nickname, 'entity should have nickname' );
         t.end();
@@ -114,8 +106,6 @@ test('should remove the entity belonging to a component', function(t){
         
         var entity = Entity.create(9);
         entity.addComponent( createComponent( ComponentDefs.Realname, {id:3, name:'tom smith'}) );
-
-        logEvents( entitySet );
         entitySet.addComponent( entity.Realname );
 
         entitySet.removeComponent( entity.Realname );
