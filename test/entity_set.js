@@ -16,6 +16,38 @@ var JSONComponentParser = require('../lib/streams').JSONComponentParser;
 var entitySet, entities, registry, storage, ComponentDefs;
 
 
+
+test('adding a component without an id or an entity id creates a new component and a new entity', function(t){
+    return registerComponents().then(function(){
+        var eventSpy = Sinon.spy();
+        entitySet.on('all', eventSpy);
+        entitySet.addComponent( createComponent( ComponentDefs.Position, {x:15,y:2}) );
+
+        t.ok( eventSpy.calledWith('entity:add'), 'entity:add should have been called');
+        t.ok( entitySet.at(0).hasComponent( ComponentDefs.Position ), 'the entity should have a Position component' );
+
+        return t.end();
+    });
+});
+
+test('adding several components without an entity adds them to the same new entity', function(t){
+    return registerComponents().then(function(){
+        var eventSpy = Sinon.spy();
+        entitySet.on('all', eventSpy);
+        logEvents( entitySet );
+        entitySet.addComponent( [
+            createComponent( ComponentDefs.Flower, {colour:'yellow'}),
+            createComponent( ComponentDefs.Radius, {radius:2.0} ) 
+            ]);
+
+        t.ok( eventSpy.calledWith('entity:add'), 'entity:add should have been called');
+        t.ok( entitySet.at(0).hasComponent( ComponentDefs.Flower ), 'the entity should have a Flower component' );
+        t.ok( entitySet.at(0).hasComponent( ComponentDefs.Radius ), 'the entity should have a Radius component' );
+
+        return t.end();
+    });
+});
+
 test('adding a component generates events', function(t){
     return registerComponents().then(function(){
         var eventSpy = Sinon.spy();
