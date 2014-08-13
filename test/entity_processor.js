@@ -1,7 +1,55 @@
-require('./common');
-var Registry = Elsinore.Registry;
-var EntityProcessor = Elsinore.EntityProcessor;
+var test = require('tape');
+var Common = require('./common');
+var Es = require('event-stream');
+var Sinon = require('sinon');
+var P = require('bluebird');
+P.longStackTraces();
 
+var EntityProcessor = Elsinore.EntityProcessor;
+var EntityFilter = Elsinore.EntityFilter;
+var EntitySet = Elsinore.EntitySet;
+var Entity = Elsinore.Entity;
+var Registry = Elsinore.Registry;
+var Utils = Elsinore.Utils;
+
+test('adding a processor to the registry', function(t){
+    return beforeEach().then( function(){
+        t.end();    
+    });
+});
+
+test('creating should also create an entityset', function(t){
+    return beforeEach().then( function(){
+        t.end();    
+    });
+});
+
+test('creating with a filter should apply that filter to the entityset', function(t){
+    return beforeEach().then( function(){
+        t.end();    
+    });
+});
+
+
+test('executing a processor', function(t){
+    return beforeEach().then( function(){
+        t.end();    
+    });
+});
+
+test('executing processors in order', function(t){
+    return beforeEach().then( function(){
+        t.end();    
+    });
+});
+
+test('not updating non-updateable processors', function(t){
+    return beforeEach().then( function(){
+        t.end();    
+    });
+});
+
+/*
 describe('EntitySystem', function(){
     beforeEach( function(){
         this.registry = Registry.create();
@@ -110,4 +158,25 @@ describe('EntitySystem', function(){
             // });
         })
     });
-});
+});//*/
+
+
+function beforeEach(){
+    return Registry.create().initialize()
+        .then(function(reg){
+            registry = reg;
+            ComponentDefs = registry.ComponentDef;
+            return registry.registerComponent( Common.loadJSONFixture('components.json') );
+        });
+}
+
+function createComponent( type, attrs ){
+    return registry.getComponentDef( type ).create(attrs);
+}
+
+function logEvents(reg){
+    reg = reg || registry;
+    reg.on('all', function(evt){
+        log.debug('evt ' + JSON.stringify( _.toArray(arguments) ) );
+    });
+}
