@@ -21,8 +21,7 @@ test('adding a component generates events', function(t){
         var eventSpy = Sinon.spy();
         entitySet.on('all', eventSpy);
 
-        var pos = registry.createComponent( {id:160,_e:15,_s:'position', x:0,y:20},{save:false} );
-        entitySet.addComponent( pos );
+        entitySet.addComponent( createComponent( ComponentDefs.Position, {id:160,_e:15, x:0, y:20}) );
 
         t.ok( eventSpy.calledWith('component:add'), 'component:add should have been called' );
         t.ok( eventSpy.calledWith('entity:add'), 'entity:add should have been called' );
@@ -37,10 +36,10 @@ test('adding several components at once generates a single add event', function(
         var eventSpy = Sinon.spy();
         entitySet.on('all', eventSpy);
 
-        var pos = registry.createComponent( {id:1,_e:2,_s:'position', x:19,y:-2},{save:false} );
-        var nick = registry.createComponent( {id:2,_e:2,_s:'nickname', nick:'isaac'}, {save:false} );
-
-        entitySet.addComponent( [pos,nick] );
+        entitySet.addComponent( [
+            createComponent( ComponentDefs.Position, {id:1,_e:2, x:19, y:-2}),
+            createComponent( ComponentDefs.Nickname, {id:2,_e:2, nick:'isaac'})
+        ]);
 
         t.equals( eventSpy.callCount, 2, 'two events should have been emitted' );
         t.ok( eventSpy.calledWith('component:add'), 'component:add should have been called' );
