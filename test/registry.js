@@ -1,340 +1,344 @@
+var test = require('tape');
 var Common = require('./common');
-var _ = require('underscore');
-var Registry = Elsinore.Registry;
-var MemoryStorage = Elsinore.storage.MemoryStorage;
-var ComponentDef = Elsinore.ComponentDef;
+var Es = require('event-stream');
+var Sinon = require('sinon');
+var P = require('bluebird');
+P.longStackTraces();
+
+var Elsinore = Common.Elsinore;
+var EntityFilter = Elsinore.EntityFilter;
+var EntitySet = Elsinore.EntitySet;
 var Entity = Elsinore.Entity;
-var Component = Elsinore.Component;
+var ComponentDef = Elsinore.ComponentDef;
+var Registry = Elsinore.Registry;
+var Utils = Elsinore.Utils;
+var JSONComponentParser = require('../lib/streams').JSONComponentParser;
 
 
-describe('Registry', function(){
+var entitySet, entities, registry, storage, ComponentDefs;
 
-    describe('creating a registry', function(){
 
-        it('should return a registry instance', function(){
-            Registry.create().should.be.instanceof( Registry );
-        });
+test('registering a component def', function(t){
+    var registry = Registry.create();
 
-        it('should use memory storage by default', function(){
-            var spy = Sinon.spy( Registry.prototype, 'useStorage' );
-            Registry.create().initialize().then( function(registry){
-                assert(spy.calledWith( MemoryStorage, {} ));
-                Registry.prototype.useStorage.restore();
-            });
-        });
+    t.ok( ComponentDef.isComponentDef( registry.registerComponent({id:'example'}) ), 
+        'registering a component returns a ComponentDef instance' );
 
-        it('should initialize storage in creation', function(){
-            Registry.create().initialize().should.be.fulfilled;
-        });
+    t.end();
+});
+
+
+test('registering a component def attaches the def to the registry', function(t){
+    var registry = Registry.create();
+
+    var def = registry.registerComponent({id:'example'});
+
+    t.equal( registry.getComponentDef('example'), def,
+        'retrieving the def with its id returns a ComponentDef instance' );
+
+    t.equal( registry.ComponentDef.Example, def.id,
+        'the registry adds the ComponentDef id to itself' );
+    t.end();
+});
+
+
+
+test('retrieving component defs', function(t){
+    
+    var registry = Registry.create();
+    var componentDef = ComponentDef.create('/component/get_test');
+    componentDef.set('id', 34);
+
+    registry.registerComponent( componentDef );
+    
+    test('return from an instance', function(t){
+        
+        t.deepEqual(
+            registry.getComponentDef( componentDef ),
+            componentDef, 'retrieve from an instance' );
+        t.end();
     });
 
-    describe('initializing a registry', function(){
-        beforeEach(function(){
-            var self = this;
-            return Registry.create().initialize()
-                .then( function(registry){
-                    return self.registry = registry;
-                });
-        });
-
-        it('should initialize', function(){
-            this.registry.initialize().should.eventually.equal( this.registry );
-        });
+    test('from a non-registered instance', function(t){
+        t.equal(
+            registry.getComponentDef( ComponentDef.create('/component/unknown') ),
+            null, 'not retrieve from an unregistered instance' );
+        t.end();
     });
 
-    describe('registering components', function(){
-
-        beforeEach(function(){
-            return setupRegistry( this, true );
-        });
-
-        it('should register a component', function(){
-            this.registry.registerComponent( {id:'example'} ).should.eventually.be.an.instanceof( ComponentDef );
-        });
-
-        it('should create a constant for the ComponentDef on the registry', function(){
-            var self = this;
-            var storageMock = Sinon.mock( this.registry.storage );
-
-            storageMock.expects('registerComponentDef').once().returns(
-                Promise.resolve( ComponentDef.create( '/component/test', null,null, {id:34} ) )
-            );
-
-            return this.registry.registerComponent( {id:'/component/test'} )
-                .then( function(cDef){
-                    expect( cDef.id ).to.equal( self.registry.ComponentDef.Test );
-                    assert( Elsinore.Utils.isInteger(cDef.id) );
-                    storageMock.verify();
-                });
-        });
+    test('return from its integer id', function(t){
+        t.deepEqual( 
+            registry.getComponentDef(34),
+            componentDef, 'retrieve from integer id' );
+        t.end();
     });
 
-    describe('retrieving component defs', function(){
-        beforeEach( function(){
-            var self = this;
-            this.registry = Registry.create();
-            return this.registry.initialize().then( function(){
-                self.componentDef = ComponentDef.create( '/component/get_test', null,null, {id:34} );
-                self.registry._addComponentToRegistry( self.componentDef );
-            });
-        });
-
-        it('should return from an instance', function(){
-            expect( this.registry.getComponentDef( this.componentDef ) ).to.deep.equal( this.componentDef );
-        });
-
-        it('should return from its integer id', function(){
-            expect( this.registry.getComponentDef(34) ).to.deep.equal( this.componentDef );
-        });
-
-        it('should return from its string schema-id', function(){
-            expect( this.registry.getComponentDef('/component/get_test').id ).to.equal( 34 );
-        });
-
-        it('should return from its shortened schema-id', function(){
-            expect( this.registry.getComponentDef('get_test').id ).to.equal( 34 );
-        });
-
-        it('should return from an object property', function(){
-            expect( this.registry.getComponentDef({schema:'get_test'}).id ).to.equal(34);
-        });
+    test('return from its string schema id', function(t){
+        t.deepEqual( 
+            registry.getComponentDef('/component/get_test'),
+            componentDef, 'retrieve from schema id' );
+        t.end();
     });
 
+    test('return from its shortened schema id', function(t){
+        t.deepEqual( 
+            registry.getComponentDef('get_test'),
+            componentDef, 'retrieve from shortened schema id' );
+        t.end();
+    });
+
+    test('return from an object property', function(t){
+        t.deepEqual( 
+            registry.getComponentDef({schema:'get_test'}),
+            componentDef, 'retrieve from object property' );
+        t.end();
+    });
+
+    t.end();
+});
 
 
-    describe('creating components', function(){
-        beforeEach( function(){
-            return setupRegistry( this, true );
-        });
-        beforeEach( function registerComponentDefs(){
-            return this.registry.registerComponent( Common.loadJSONFixture('components.json') );
-        });
-        // beforeEach( function(){
-        //     return this.registry.registerComponent( {id:'/component/test'} );
-        // });
+test('create entity', function(t){
+    t.end();
+});
 
-        it('should create a component from a def schema id', function(){
-            var storageMock = Sinon.mock( this.registry.storage );
-            var registryMock = Sinon.mock( this.registry );
-            var def = ComponentDef.create('/component/position');
-            var eventSpy = Sinon.spy();
 
-            // the operation should trigger an event
-            this.registry.on('component:create', eventSpy);
+// describe('Registry', function(){
 
-            registryMock.expects('getComponentDef')
-                .once().withArgs('/component/position').returns( def );
+
+//     describe('creating components', function(){
+//         beforeEach( function(){
+//             return setupRegistry( this, true );
+//         });
+//         beforeEach( function registerComponentDefs(){
+//             return this.registry.registerComponent( Common.loadJSONFixture('components.json') );
+//         });
+//         // beforeEach( function(){
+//         //     return this.registry.registerComponent( {id:'/component/test'} );
+//         // });
+
+//         it('should create a component from a def schema id', function(){
+//             var storageMock = Sinon.mock( this.registry.storage );
+//             var registryMock = Sinon.mock( this.registry );
+//             var def = ComponentDef.create('/component/position');
+//             var eventSpy = Sinon.spy();
+
+//             // the operation should trigger an event
+//             this.registry.on('component:create', eventSpy);
+
+//             registryMock.expects('getComponentDef')
+//                 .once().withArgs('/component/position').returns( def );
             
-            storageMock.expects('saveComponents')
-                .once().returns( Promise.resolve([ Component.create() ]) );
+//             storageMock.expects('saveComponents')
+//                 .once().returns( Promise.resolve([ Component.create() ]) );
 
-            return this.registry.createComponent({schema:'/component/position', entityId:25},{save:true})
-                .then( function(component){
-                    registryMock.verify();
-                    storageMock.verify();
-                    expect( eventSpy.called ).to.be.true; 
-                });
-        });
+//             return this.registry.createComponent({schema:'/component/position', entityId:25},{save:true})
+//                 .then( function(component){
+//                     registryMock.verify();
+//                     storageMock.verify();
+//                     expect( eventSpy.called ).to.be.true; 
+//                 });
+//         });
 
-        it('should add a component to an entity using the component def url', function(){
-            var entity = {};
-            var def = this.registry.getComponentDef('/component/position'); 
-            return this.registry.addComponent('/component/position', entity)
-                .then( function(entity){
-                    assert( entity.hasComponent(def) );
-                });
-        });
+//         it('should add a component to an entity using the component def url', function(){
+//             var entity = {};
+//             var def = this.registry.getComponentDef('/component/position'); 
+//             return this.registry.addComponent('/component/position', entity)
+//                 .then( function(entity){
+//                     assert( entity.hasComponent(def) );
+//                 });
+//         });
 
-        // for the time being, registry operations only operate on single instances - multiple
-        // instances will come later as an optimisation step
-        it('should add an array of component defs to an entity', function(){
-            var entity = {};
-            var coms = ['/component/geo_location', '/component/channel_member', '/component/realname', '/component/score'];
-            var componentsBf = this.registry.getComponentDefBitfield(coms);
-            var altBf = this.registry.getComponentDefBitfield(['/component/position','/component/tag']);
-            // var registerMock = Sinon.mock( this.registry );
-            // var storageMock = Sinon.mock( this.registry.storage );
+//         // for the time being, registry operations only operate on single instances - multiple
+//         // instances will come later as an optimisation step
+//         it('should add an array of component defs to an entity', function(){
+//             var entity = {};
+//             var coms = ['/component/geo_location', '/component/channel_member', '/component/realname', '/component/score'];
+//             var componentsBf = this.registry.getComponentDefBitfield(coms);
+//             var altBf = this.registry.getComponentDefBitfield(['/component/position','/component/tag']);
+//             // var registerMock = Sinon.mock( this.registry );
+//             // var storageMock = Sinon.mock( this.registry.storage );
             
-            // var def = ComponentDef.create('/component/test');
-            // registerMock.expects('createComponent').once().returns( Promise.resolve( {} ) );
-            // storageMock.expects('addComponent').once().returns( Promise.resolve() );
+//             // var def = ComponentDef.create('/component/test');
+//             // registerMock.expects('createComponent').once().returns( Promise.resolve( {} ) );
+//             // storageMock.expects('addComponent').once().returns( Promise.resolve() );
 
-            return this.registry.addComponent(coms, entity)
-                .then( function(entity){
-                    assert( entity.hasComponent(componentsBf) );
-                    assert( !entity.hasComponent(altBf) );
-                    // registerMock.verify();
-                    // storageMock.verify();
-                });
-        });
+//             return this.registry.addComponent(coms, entity)
+//                 .then( function(entity){
+//                     assert( entity.hasComponent(componentsBf) );
+//                     assert( !entity.hasComponent(altBf) );
+//                     // registerMock.verify();
+//                     // storageMock.verify();
+//                 });
+//         });
 
 
-        it('should instantiate with attributes', function(){
-            var component = this.registry.createComponent( {_s:'/component/animal', name:'tiger', age:12}, {save:false} );
-            expect( component.get('name') ).to.equal('tiger');
-        });
+//         it('should instantiate with attributes', function(){
+//             var component = this.registry.createComponent( {_s:'/component/animal', name:'tiger', age:12}, {save:false} );
+//             expect( component.get('name') ).to.equal('tiger');
+//         });
 
-        it('should instantiate with attributes again', function(){
-            // var registryMock = Sinon.mock( this.registry );
-            // var storageMock = Sinon.mock( this.registry.storage );
-            // var def = ComponentDef.create('/component/create');
+//         it('should instantiate with attributes again', function(){
+//             // var registryMock = Sinon.mock( this.registry );
+//             // var storageMock = Sinon.mock( this.registry.storage );
+//             // var def = ComponentDef.create('/component/create');
 
-            // registryMock.expects('getComponentDef').twice().returns( def );
-            // storageMock.expects('saveComponents').never();
+//             // registryMock.expects('getComponentDef').twice().returns( def );
+//             // storageMock.expects('saveComponents').never();
 
-            var components = this.registry.createComponent([ 
-                {_s:'/component/animal', name:'tiger', age:12},
-                {_s:'/component/animal', name:'lion', age:4},
-            ], {save:false});
+//             var components = this.registry.createComponent([ 
+//                 {_s:'/component/animal', name:'tiger', age:12},
+//                 {_s:'/component/animal', name:'lion', age:4},
+//             ], {save:false});
 
-            // return this.registry.createComponent( 
-                // [{ schema:100, name:'tiger', age:12}, { schema:100, name:'lion', age:4} ], null, {save:false} )
-                // .then( function(components){
-            expect( components[0].isNew() ).to.be.true;
-            expect( components[0].get('name') ).to.equal('tiger');
-            expect( components[1].get('name') ).to.equal('lion');
-                    // registryMock.verify();
-                    // storageMock.verify();
-                // });
-        });
+//             // return this.registry.createComponent( 
+//                 // [{ schema:100, name:'tiger', age:12}, { schema:100, name:'lion', age:4} ], null, {save:false} )
+//                 // .then( function(components){
+//             expect( components[0].isNew() ).to.be.true;
+//             expect( components[0].get('name') ).to.equal('tiger');
+//             expect( components[1].get('name') ).to.equal('lion');
+//                     // registryMock.verify();
+//                     // storageMock.verify();
+//                 // });
+//         });
 
-        it('should instantiate with a component id', function(){
+//         it('should instantiate with a component id', function(){
 
-            var component = this.registry.createComponent( {_s:'/component/animal', id:456, name:'tiger', age:12}, {save:false} );
-            expect( component.isNew() ).to.be.false;
-            expect( component.id ).to.equal( 456 );
+//             var component = this.registry.createComponent( {_s:'/component/animal', id:456, name:'tiger', age:12}, {save:false} );
+//             expect( component.isNew() ).to.be.false;
+//             expect( component.id ).to.equal( 456 );
 
-            // var registryMock = Sinon.mock( this.registry );
-            // var def = ComponentDef.create('/component/comident');
+//             // var registryMock = Sinon.mock( this.registry );
+//             // var def = ComponentDef.create('/component/comident');
 
-            // registryMock.expects('getComponentDef').twice().returns( def );
+//             // registryMock.expects('getComponentDef').twice().returns( def );
 
-            // return this.registry.createComponent( 
-            //     [{ schema:'comident', id:456, name:'tiger', age:12}, { schema:'comident', id:457, name:'lion', age:4} ], null, {save:false})
-            //     .then( function(components){
-            //         expect( components[0].isNew() ).to.be.false;
-            //         expect( components[0].id ).to.equal( 456 );
-            //         expect( components[1].id ).to.equal( 457 );
+//             // return this.registry.createComponent( 
+//             //     [{ schema:'comident', id:456, name:'tiger', age:12}, { schema:'comident', id:457, name:'lion', age:4} ], null, {save:false})
+//             //     .then( function(components){
+//             //         expect( components[0].isNew() ).to.be.false;
+//             //         expect( components[0].id ).to.equal( 456 );
+//             //         expect( components[1].id ).to.equal( 457 );
 
-            //         registryMock.verify();
-            //     });
-        });
-    });
+//             //         registryMock.verify();
+//             //     });
+//         });
+//     });
 
     
 
-    describe('processors', function(){
-        beforeEach(function(){
-            self = this;
-            return Registry.create().initialize().then( function(registry){
-                return self.registry = registry;
-            });
-        });
+//     describe('processors', function(){
+//         beforeEach(function(){
+//             self = this;
+//             return Registry.create().initialize().then( function(registry){
+//                 return self.registry = registry;
+//             });
+//         });
 
-        it('should call update on a processor when updating', function(){
-            var self = this;
-            var Processor = Backbone.Model.extend({
-                update: function(dt, updatedAt, now, options){
-                    return Promise.resolve(true);
-                }
-            });
-            var processors = [ new Processor(), new Processor() ];
-            var mocks = processors.map( function(s){ return Sinon.mock(s); });
+//         it('should call update on a processor when updating', function(){
+//             var self = this;
+//             var Processor = Backbone.Model.extend({
+//                 update: function(dt, updatedAt, now, options){
+//                     return Promise.resolve(true);
+//                 }
+//             });
+//             var processors = [ new Processor(), new Processor() ];
+//             var mocks = processors.map( function(s){ return Sinon.mock(s); });
 
-            mocks.forEach( function(mock){
-                mock.expects('update').once();
-            });
+//             mocks.forEach( function(mock){
+//                 mock.expects('update').once();
+//             });
 
-            processors.forEach( function(processor){ self.registry.processors.add( processor ); });
+//             processors.forEach( function(processor){ self.registry.processors.add( processor ); });
 
-            return this.registry.update().then( function(){
-                mocks.forEach( function(mock){
-                    mock.verify();
-                });
-            });
-        });
-    });
-
-
-    /*
-    beforeEach( function(done){
-        var self = this;
-        async.waterfall([
-            function createRegistry(cb){
-                odgnEntity.Registry.create({initialize:true}, cb);
-            },
-        ], function(err, pRegistry){
-            if( err ) throw err;
-            self.registry = pRegistry;
-            return done();
-        });
-    });
+//             return this.registry.update().then( function(){
+//                 mocks.forEach( function(mock){
+//                     mock.verify();
+//                 });
+//             });
+//         });
+//     });
 
 
-    describe('Registering Components', function(){
+//     /*
+//     beforeEach( function(done){
+//         var self = this;
+//         async.waterfall([
+//             function createRegistry(cb){
+//                 odgnEntity.Registry.create({initialize:true}, cb);
+//             },
+//         ], function(err, pRegistry){
+//             if( err ) throw err;
+//             self.registry = pRegistry;
+//             return done();
+//         });
+//     });
 
-        it('should reject a non component def instance');
 
-        it('should return a component def from a schema id', function(){
-            var componentDef = this.registry.registerComponent({"id":"/component/tr/a"} );
-            var result = this.registry.getComponentDef('/component/tr/a');
-            assert.equal( result.id, componentDef.id );
-        });
+//     describe('Registering Components', function(){
 
-        it('should register multiple components at once', function(){
-            var componentDefs = this.registry.registerComponent([{"id":"/component/tr/a"},{"id":"/component/tr/b"}] );
-            assert( _.isArray(componentDefs) );
-            assert( this.registry.getComponentDef('/component/tr/a').id, componentDefs[0].id );
-            assert( this.registry.getComponentDef('/component/tr/b').id, componentDefs[1].id );
-        });
+//         it('should reject a non component def instance');
 
-        it('should return a component def from a schema id', function(){
+//         it('should return a component def from a schema id', function(){
+//             var componentDef = this.registry.registerComponent({"id":"/component/tr/a"} );
+//             var result = this.registry.getComponentDef('/component/tr/a');
+//             assert.equal( result.id, componentDef.id );
+//         });
+
+//         it('should register multiple components at once', function(){
+//             var componentDefs = this.registry.registerComponent([{"id":"/component/tr/a"},{"id":"/component/tr/b"}] );
+//             assert( _.isArray(componentDefs) );
+//             assert( this.registry.getComponentDef('/component/tr/a').id, componentDefs[0].id );
+//             assert( this.registry.getComponentDef('/component/tr/b').id, componentDefs[1].id );
+//         });
+
+//         it('should return a component def from a schema id', function(){
             
-        });
-    });
+//         });
+//     });
 
 
-    describe('Destroying', function(){
-        it('should destroy an entity', function(done){
-            var destroyEvent = Sinon.spy();
-            var storageStub = Sinon.stub( this.registry.storage, 'destroyEntity', function(entity,cb){
-                return cb(null,entity);
-            });
+//     describe('Destroying', function(){
+//         it('should destroy an entity', function(done){
+//             var destroyEvent = Sinon.spy();
+//             var storageStub = Sinon.stub( this.registry.storage, 'destroyEntity', function(entity,cb){
+//                 return cb(null,entity);
+//             });
 
-            this.registry.bind('entity:destroy', destroyEvent );
+//             this.registry.bind('entity:destroy', destroyEvent );
 
-            this.registry.destroyEntity( 101, null, function(err,entity){
-                assert.equal( destroyEvent.getCall(0).args[0].id, 101 );
-                assert( Entity.isEntity(entity) );
-                assert.equal( entity.id, 101 );
-                Sinon.assert.calledOnce(storageStub);
-                Sinon.assert.calledOnce(destroyEvent);
-                done();
-            });
-        });
+//             this.registry.destroyEntity( 101, null, function(err,entity){
+//                 assert.equal( destroyEvent.getCall(0).args[0].id, 101 );
+//                 assert( Entity.isEntity(entity) );
+//                 assert.equal( entity.id, 101 );
+//                 Sinon.assert.calledOnce(storageStub);
+//                 Sinon.assert.calledOnce(destroyEvent);
+//                 done();
+//             });
+//         });
 
 
-        it('destroys an entity with a component', function(done){
-            var self = this;
+//         it('destroys an entity with a component', function(done){
+//             var self = this;
 
-            async.waterfall([
-                function createEntity(cb){
-                    self.registry.createEntityFromTemplate("/entity_template/simple",next);
-                },
-                function destroyEntity(pEntity, cb){
-                    self.registry.destroyEntity( entity, cb );
-                }
-            ], function(err,results){
-                done();
-            });
-        });
-    });//*/
-});
+//             async.waterfall([
+//                 function createEntity(cb){
+//                     self.registry.createEntityFromTemplate("/entity_template/simple",next);
+//                 },
+//                 function destroyEntity(pEntity, cb){
+//                     self.registry.destroyEntity( entity, cb );
+//                 }
+//             ], function(err,results){
+//                 done();
+//             });
+//         });
+//     });//*/
+// });
 
-function setupRegistry( self, doInitialize ){
-    var registry = self.registry = Registry.create();
-    if( doInitialize ){
-        return registry.initialize();
-    }
-    return Promise.resolve( registry );
-}
+// function setupRegistry( self, doInitialize ){
+//     var registry = self.registry = Registry.create();
+//     if( doInitialize ){
+//         return registry.initialize();
+//     }
+//     return Promise.resolve( registry );
+// }

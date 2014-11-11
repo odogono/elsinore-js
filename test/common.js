@@ -2,29 +2,29 @@
  * Test Common Functions
  */
 
-Elsinore = require('../index');
-ComponentDef = Elsinore.ComponentDef;
+var Elsinore = require('../index');
+var ComponentDef = Elsinore.ComponentDef;
+var Registry = Elsinore.Registry;
 
-
-assert = require('assert');
+var assert = require('assert');
 var Fs = require('fs');
 var Es = require('event-stream');
-Path = require('path');
-Util = require('util');
-Sinon = require('sinon');
+var Path = require('path');
+var Util = require('util');
+var Sinon = require('sinon');
 _ = require('underscore');
 _.str = require( 'underscore.string' );
 _.mixin(_.str.exports());
-Backbone = require('backbone');
-Promise = require('bluebird');
+var Backbone = require('backbone');
+var Promise = require('bluebird');
 
-require("mocha-as-promised")();
+// require("mocha-as-promised")();
 
-Chai = require("chai");
-ChaiAsPromised = require("chai-as-promised");
-Chai.use(ChaiAsPromised);
-expect = Chai.expect;
-Chai.should();
+// Chai = require("chai");
+// ChaiAsPromised = require("chai-as-promised");
+// Chai.use(ChaiAsPromised);
+// expect = Chai.expect;
+// Chai.should();
 
 var registeredComponentDefs = {};
 var registeredComponentDefIds = {};
@@ -61,48 +61,49 @@ root.print_ins = function(arg,depth,showHidden,colors){
     Util.log( Util.inspect(arg,showHidden,depth,colors) );
 };
 
-function entityToString(entity, indent){
-    indent || (indent='');
-    var res = [];
-    res.push( indent + '- e(' + entity.id + '/' + entity.cid + ')' );
-    indent += '  ';
-    for( var comDefId in entity.components ){
-        var com = entity.components[comDefId];
-        if( !com )
-            continue;
-        res.push( indent + 'c' + com.ComponentDef.getName() 
-            + ' (' + com.id  + '/' + com.ComponentDef.id + '/' + com.cid 
-            + ') ^' + com.getEntityId() 
-            + ' ' + com.hash()
-            + ' ' + JSON.stringify(_.omit(com.toJSON(),'id') ));
-    }
-    return res;
-}
+// function entityToString(entity, indent){
+//     indent || (indent='');
+//     var res = [];
+//     res.push( indent + '- e(' + entity.id + '/' + entity.cid + ')' );
+//     indent += '  ';
+//     for( var comDefId in entity.components ){
+//         var com = entity.components[comDefId];
+//         if( !com )
+//             continue;
+//         res.push( indent + 'c' + com.ComponentDef.getName() 
+//             + ' (' + com.id  + '/' + com.ComponentDef.id + '/' + com.cid 
+//             + ') ^' + com.getEntityId() 
+//             + ' ' + com.hash()
+//             + ' ' + JSON.stringify(_.omit(com.toJSON(),'id') ));
+//     }
+//     return res;
+// }
 
-function entitySetToString(es, indent){
-    indent || (indent='');
-    var res = [];
-    res.push( indent + '- es(' + es.cid + ')' )
-    es.each( function(e){
-        res = res.concat( entityToString(e, indent+'  ') );
-    });
-    return res;
-}
+// function entitySetToString(es, indent){
+//     indent || (indent='');
+//     var res = [];
+//     res.push( indent + '- es(' + es.cid + ')' )
+//     es.each( function(e){
+//         res = res.concat( entityToString(e, indent+'  ') );
+//     });
+//     return res;
+// }
 
 root.print_e = function(entity){
-    var res = [''];
-    if( _.isArray(entity) ){
-        _.each( entity, root.print_e );
-        return;
-    }
-    if( Elsinore.Entity.isEntity(entity) ){
-        res = res.concat( entityToString(entity) );
-    } else if( Elsinore.EntityProcessor.isEntityProcessor(entity) ){
-        res = res.concat( entitySetToString( entity.entitySet ) );
-    } else if( Elsinore.EntitySet.isEntitySet(entity) ){
-        res = res.concat( entitySetToString( entity ) );
-    }
-    console.log( res.join("\n") );
+    console.log( Registry.toString(entity) );
+    // var res = [''];
+    // if( _.isArray(entity) ){
+    //     _.each( entity, root.print_e );
+    //     return;
+    // }
+    // if( Elsinore.Entity.isEntity(entity) ){
+    //     res = res.concat( entityToString(entity) );
+    // } else if( Elsinore.EntityProcessor.isEntityProcessor(entity) ){
+    //     res = res.concat( entitySetToString( entity.entitySet ) );
+    // } else if( Elsinore.EntitySet.isEntitySet(entity) ){
+    //     res = res.concat( entitySetToString( entity ) );
+    // }
+    // console.log( res.join("\n") );
 }
 
 root.print_var = function(arg, options){
@@ -158,18 +159,6 @@ Object.defineProperty(global, '__function', {
         return __stack[1].getFunctionName();
     }
 });
-
-function debugPrintEntity(entity){
-    entity = Elsinore.Entity.toEntity(entity);
-    var componentDefNames = _.compact( _.map( entity.components, function(c){
-        return c.ComponentDef;
-    }) );
-    componentDefNames = _.map(componentDefNames, function(c){ 
-        return c.getName() + ' (' + c.id + ')'; 
-    });
-    log.debug('entity ' + entity.id );
-    log.debug('  components ' + componentDefNames.join(', ') );
-}
 
 function createAndInitialize(options){
     var registry = Elsinore.Registry.create();
@@ -271,43 +260,11 @@ function loadJSONFixture( fixturePath ){
 
 
 
-// Adds beforeEach to tape tests
-global.beforeEach = function beforeEach(test, handler) {
-    return function tapish(name, listener) {
-        test(name, function (assert) {
-            var _end = assert.end
-            assert.end = function () {
-                assert.end = _end
-                listener(assert)
-            }
-
-            handler(assert)
-        })
-    }
-}
-
-// Adds afterEach to tape tests
-global.afterEach = function afterEach(test, handler) {
-    return function tapish(name, listener) {
-        test(name, function (assert) {
-            var _end = assert.end
-            assert.end = function () {
-                assert.end = _end
-                handler(assert)
-            }
-
-            listener(assert)
-        })
-    }
-}
-
 module.exports = {
+    Elsinore: Elsinore,
     Entity: Elsinore.Entity,
     createAndInitialize: createAndInitialize,
-    debugPrintEntity: debugPrintEntity,
     readFixture: readFixture,
     createFixtureReadStream: createFixtureReadStream,
-    loadJSONFixture: loadJSONFixture,
-    beforeEach:beforeEach,
-    afterEach:afterEach
+    loadJSONFixture: loadJSONFixture
 };

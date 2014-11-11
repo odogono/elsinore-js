@@ -2,9 +2,10 @@ var test = require('tape');
 var Common = require('./common');
 var Es = require('event-stream');
 var Sinon = require('sinon');
-var P = require('bluebird');
-P.longStackTraces();
+var Promise = require('bluebird');
+Promise.longStackTraces();
 
+var Elsinore = Common.Elsinore;
 var EntityFilter = Elsinore.EntityFilter;
 var EntitySet = Elsinore.EntitySet;
 var Entity = Elsinore.Entity;
@@ -34,7 +35,7 @@ test('adding several components without an entity adds them to the same new enti
     return registerComponents().then(function(){
         var eventSpy = Sinon.spy();
         entitySet.on('all', eventSpy);
-        logEvents( entitySet );
+        // logEvents( entitySet );
         entitySet.addComponent( [
             createComponent( ComponentDefs.Flower, {colour:'yellow'}),
             createComponent( ComponentDefs.Radius, {radius:2.0} ) 

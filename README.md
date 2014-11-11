@@ -124,8 +124,20 @@ parent retrieves children:
 the argument to getChildEntities is a component matcher. The parents id is added to the matcher
 
 
+### Entity Schemas
 
-### EntitySet
+schemas define what properties a given component has, what types those properties are and what defaults they have if any.
+
+schemas are identified primarily by a schema id, which takes the form of a uri path - eg, '/component/position'
+
+schemas can change, and so therefore are versioned using a hashcode. the hashcode is derived from the properties of the schema. 
+
+Components reference the hashcode, not the id.
+
+?should the hashcode contain a version number and a date?
+
+
+### Entity Set
 
 An EntitySet is like a recordset for a db query. And in fact Elsinore makes it straightforward to allow
 custom EntitySets to directly query the storage to which they are attached.
@@ -153,6 +165,7 @@ the events and translate into marshaling and sending to the other side.
 The criteria for how entities are included in the set are based on:
 
     - which components an entity should have
+
     - which components an entity should not have
 
     - which components should be included in the set

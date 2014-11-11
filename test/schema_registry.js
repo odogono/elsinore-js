@@ -1,7 +1,18 @@
+
+var _ = require('underscore');
 var test = require('tape');
-var Common = require('./common');
+
+
+var Elsinore = require('../lib');
 var SchemaRegistry = Elsinore.SchemaRegistry;
 
+require('./common/utils');
+
+
+test.skip('uri normalization', function(t){
+    t.equal( Elsinore.Utils.normalizeUri( "HTTP://ABC.com/%7Esmith/home.html" ), "http://abc.com/~smith/home.html" );
+    t.end();
+})
 
 test('registering a schema', function(t){
     var registry = SchemaRegistry.create();
@@ -9,19 +20,10 @@ test('registering a schema', function(t){
 
     registry.register( schema );
 
-    t.deepEqual( registry.get(schema.id), {id:'/schema/basic'} );
+    t.deepEqual( registry.get(schema.id), {hash: 'b464f641', id:'/schema/basic'} );
     t.end();
 });
 
-test('ignoring registration of a schema with an identical id', function(t){
-    var schema = { id:'/schema/original', properties:{ name:{ type:'string' }} };
-    var schemaCopy = { id:'/schema/original', properties:{ age:{ type:'integer' }} };
-    var registry = SchemaRegistry.create()
-        .register( schema )
-        .register( schemaCopy );
-    t.deepEqual( registry.get( schema.id ), _.extend({}, schema) );
-    t.end();
-});
 
 test('retrieving schema fragments', function(t){
     var schema = {
@@ -182,3 +184,57 @@ test('returning default properties', function(t){
 
     t.end();
 });
+
+
+test('registration of a schema with an identical id throws an error', function(t){
+    var schema = { id:'/schema/original', properties:{ name:{ type:'string' }} };
+    var schemaCopy = { id:'/schema/original', properties:{ age:{ type:'integer' }} };
+    var registry = SchemaRegistry.create();
+    registry.register( schema );
+    try{
+        registry.register( schemaCopy );
+    } catch(e){
+        t.equal( e.message, 'schema /schema/original already exists' );
+    }
+    t.deepEqual( registry.get( schema.id ), _.extend({}, schema) );
+    t.end();
+});
+
+
+
+test.skip('register a modified schema', function(t){
+    var schemaA = {
+        properties:{
+            x: { type:'number' },
+            y: { type:'number' }
+        },
+        id:'/schema/dupe'
+    };
+
+    var schemaB = {
+        id:'/schema/dupe',
+        properties:{
+            radius: { type:'number' },
+            x: { type:'number' },
+            y: { type:'number' }
+        }
+    };
+
+    var registry = SchemaRegistry.create();
+
+    t.ok( registry.register( schemaA ), 'registers the first version of the schema' );
+    t.ok( registry.register( schemaB ), 'the new version is different and so is accepted' );
+
+    t.deepEqual(
+        registry.getProperties('/schema/dupe'),
+        [{ name:'radius', type:'number' }, { name:'x', type:'number' }, { name:'y', type:'number' }],
+        'the second version is returned' );
+    
+    t.end();
+});
+
+
+test('retrieving different versions of a schema by id', function(t){
+    
+    t.end();
+})
