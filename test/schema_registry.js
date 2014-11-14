@@ -6,7 +6,7 @@ var test = require('tape');
 var Elsinore = require('../lib');
 var SchemaRegistry = Elsinore.SchemaRegistry;
 
-require('./common/utils');
+var Common = require('./common');
 
 
 test.skip('uri normalization', function(t){
@@ -20,7 +20,7 @@ test('registering a schema', function(t){
 
     registry.register( schema );
 
-    t.deepEqual( registry.get(schema.id), {hash: 'b464f641', id:'/schema/basic'} );
+    t.deepEqual( registry.get(schema.id), {id:'/schema/basic'} );
     t.end();
 });
 
@@ -41,6 +41,7 @@ test('retrieving schema fragments', function(t){
     };
 
     var registry = SchemaRegistry.create().register( schema );
+
     t.deepEqual( registry.get('/schema/def#definitions/foo'), {type: 'integer'} );
     t.deepEqual( registry.get('/schema/def#bar'), {id:'#bar', type:'string'} );
     t.deepEqual( registry.get('/schema/def#definitions/bar'), {id:'#bar', type:'string'} );
@@ -58,7 +59,8 @@ test('retrieving an array of properties', function(t){
         }
     };
 
-    var registry = SchemaRegistry.create().register( schema );
+    var registry = SchemaRegistry.create();
+    var schema = registry.register( schema );
 
     t.deepEqual(
         registry.getProperties('/schema/props'),
@@ -83,7 +85,8 @@ test('returning an array of sorted properties', function(t){
             id:3
         }
     };
-    var registry = SchemaRegistry.create().register( schema );
+    var registry = SchemaRegistry.create();
+    var schema = registry.register( schema );
 
     t.deepEqual(
         registry.getProperties('/schema/sorted'),
@@ -112,7 +115,10 @@ test('returning properties from multiple schemas', function(t){
             count: { type:'integer' }
         }
     };
-    var registry = SchemaRegistry.create().register( schemaA ).register(schemaB);
+    var registry = SchemaRegistry.create();
+    
+
+    registry.register( {a:schemaA, b:schemaB} );
 
     t.deepEqual( 
         _.pluck( registry.getProperties( [ schemaA.id, schemaB.id ] ), 'name' ),
@@ -142,13 +148,16 @@ test('merging two schemas', function(t){
             status:{ type:'integer' }
         }
     };
-    var registry = SchemaRegistry.create().register( schemaA ).register( schemaB );
+    var registry = SchemaRegistry.create();
+    registry.register( [schemaA, schemaB] );
 
+    // the order is important
     t.deepEqual(
         _.pluck( registry.getProperties(schemaA.id), 'name' ),
         ['name', 'count']
         );
 
+    // should inherit name and count from other schema
     t.deepEqual(
         _.pluck( registry.getProperties(schemaB.id), 'name' ),
         ['name', 'status', 'count']
@@ -186,23 +195,29 @@ test('returning default properties', function(t){
 });
 
 
-test('registration of a schema with an identical id throws an error', function(t){
+test('registration of an identical schema throws an error', function(t){
     var schema = { id:'/schema/original', properties:{ name:{ type:'string' }} };
     var schemaCopy = { id:'/schema/original', properties:{ age:{ type:'integer' }} };
     var registry = SchemaRegistry.create();
+
     registry.register( schema );
+
     try{
-        registry.register( schemaCopy );
+        registry.register( schema );
     } catch(e){
         t.equal( e.message, 'schema /schema/original already exists' );
     }
-    t.deepEqual( registry.get( schema.id ), _.extend({}, schema) );
+
+    t.deepEqual( 
+        registry.get( schema.id ).properties.name.type, 
+        schema.properties.name.type );
+
     t.end();
 });
 
 
 
-test.skip('register a modified schema', function(t){
+test('register a modified schema', function(t){
     var schemaA = {
         properties:{
             x: { type:'number' },
@@ -222,7 +237,15 @@ test.skip('register a modified schema', function(t){
 
     var registry = SchemaRegistry.create();
 
+    registry.register( {
+        id: '/schema/other',
+        properties:{
+            name:{ type: 'string'}
+        }
+    });
+
     t.ok( registry.register( schemaA ), 'registers the first version of the schema' );
+
     t.ok( registry.register( schemaB ), 'the new version is different and so is accepted' );
 
     t.deepEqual(
@@ -233,8 +256,82 @@ test.skip('register a modified schema', function(t){
     t.end();
 });
 
+test('retrieving schema with definitions', function(t){
+    var sch = {
+        id: 'http://foo.bar/baz',
+        properties: {
+            foo: { $ref: '#/definitions/foo' }
+        },
+        definitions: {
+            foo: { type: 'integer' },
+            bar: { id: '#bar', type: 'string' }
+        }
+    };
+
+    var registry = SchemaRegistry.create();
+    registry.register( sch );
+    t.deepEqual( registry.get(sch.id + '#/definitions/foo'), {type: 'integer'} );
+    t.end();
+});
+
 
 test('retrieving different versions of a schema by id', function(t){
-    
+    var schemaA = { id:'/schema/alpha', properties:{ name:{type:'string'} }};
+    var schemaB = { id:'/schema/alpha', properties:{ fullname:{type:'string'} }};
+
+    var registry = SchemaRegistry.create();
+    // Common.logEvents(registry);
+
+    var registeredA = registry.register( [schemaA], {returnSchemas:true} )[0];
+    var registeredB = registry.register( [schemaB], {returnSchemas:true} )[0];
+
+    t.deepEqual(
+        registry.get( '/schema/alpha', registeredA.hash ),
+        schemaA );
+
+    t.deepEqual(
+        registry.get( '/schema/alpha', registeredB.hash ),
+        schemaB );
+
+    // the last version registered is always returned
+    t.deepEqual(
+        registry.get( '/schema/alpha' ),
+        schemaB );
+
     t.end();
-})
+});
+
+test('retrieving parts', function(t){
+    var schema = {
+        id: '/component/nix',
+        properties: {
+            firstName: { $ref: '#/definitions/firstName' }
+        },
+        definitions: {
+            firstName: { type: 'string' },
+        }
+    };
+
+    var registry = SchemaRegistry.create().register(schema);
+
+    t.deepEqual(
+        registry.getProperties('/component/nix'),
+        [ {name:'firstName', type:'string' }] );
+
+    t.end();
+});
+
+test('emits an event when adding a schema', function(t){
+    t.ok(false);
+    t.end();
+});
+
+test('deleting a schema', function(t){
+    t.ok(false);
+    t.end();
+});
+
+test('deleting the latest version of a schema', function(t){
+    t.ok(false);
+    t.end();
+});

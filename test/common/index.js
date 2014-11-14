@@ -4,8 +4,14 @@ var Path = require('path');
 var Util = require('util');
 
 
+function logEvents(obj){
+    obj.on('all', function(evt){
+        log.debug('evt ' + JSON.stringify( _.toArray(arguments) ) );
+    });
+}
+
 function printIns(arg,depth,showHidden,colors){
-    if( _.isUndefined(depth) ) depth = 1;
+    if( _.isUndefined(depth) ) depth = 2;
     var stack = __stack[1];
     var fnName = stack.getFunctionName();
     var line = stack.getLineNumber();
@@ -42,6 +48,11 @@ Object.defineProperty(global, '__function', {
 
 global.printIns = printIns;
 
+global.log = {
+    debug: console.log
+};
+
 module.exports = {
-    printIns: printIns
+    printIns: printIns,
+    logEvents: logEvents
 }
