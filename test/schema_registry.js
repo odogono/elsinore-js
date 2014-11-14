@@ -268,9 +268,10 @@ test('retrieving schema with definitions', function(t){
         }
     };
 
-    var registry = SchemaRegistry.create();
-    registry.register( sch );
+    var registry = SchemaRegistry.create().register( sch );
+    // printIns( registry, 5 );
     t.deepEqual( registry.get(sch.id + '#/definitions/foo'), {type: 'integer'} );
+    
     t.end();
 });
 
@@ -297,6 +298,23 @@ test('retrieving different versions of a schema by id', function(t){
     t.deepEqual(
         registry.get( '/schema/alpha' ),
         schemaB );
+
+    t.end();
+});
+
+test('obtain full details of a schema', function(t){
+    var schema = {
+        id:'/schema/details',
+        properties:{
+            createDate:{ type:'string', format:'datetime' }
+        }
+    };
+
+    var registry = SchemaRegistry.create().register(schema);
+
+    t.equal( 
+        registry.get('/schema/details', {full:true}).hash,
+         '0214708d' );
 
     t.end();
 });
