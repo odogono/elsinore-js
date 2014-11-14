@@ -339,6 +339,26 @@ test('retrieving parts', function(t){
     t.end();
 });
 
+test('retrieve schema by hash', function(t){
+    var schema = {
+        id:'/schema/switch',
+        properties:{
+            active:{ type:'boolean', 'default':true }
+        }
+    };
+
+    var registry = SchemaRegistry.create().register(schema);
+
+    // get the latest hash for this component
+    var hash = registry.getHash('/schema/switch');
+
+    t.deepEqual(
+        registry.get( hash ),
+        schema );
+
+    t.end();
+})
+
 test('emits an event when adding a schema', function(t){
     t.ok(false);
     t.end();
