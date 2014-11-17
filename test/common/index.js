@@ -19,6 +19,12 @@ function printIns(arg,depth,showHidden,colors){
     Util.log( Util.inspect(arg,showHidden,depth,colors) );
 };
 
+function printVar(){
+    var i, len;
+    for (i = 0, len = arguments.length; i < len; i++) {
+        Util.log( JSON.stringify(arguments[i], null, '\t') );
+    }
+}
 
 Object.defineProperty(global, '__stack', {
     get: function() {
@@ -47,12 +53,14 @@ Object.defineProperty(global, '__function', {
 });
 
 global.printIns = printIns;
+global.printVar = printVar;
 
 global.log = {
     debug: console.log
 };
 
 module.exports = {
+    printVar: printVar,
     printIns: printIns,
     logEvents: logEvents
 }

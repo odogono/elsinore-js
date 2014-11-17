@@ -25,7 +25,7 @@ test('registering a schema', function(t){
 });
 
 
-test('retrieving schema fragments', function(t){
+test.only('retrieving schema fragments', function(t){
     var schema = {
         id: '/schema/def',
         definitions:{
@@ -35,16 +35,18 @@ test('retrieving schema fragments', function(t){
         misc:{
             id: '/schema/other',
             sub:{
-                prop: {id:'#fix/this'}
+                prop: { id:'#fix/this' }
             }
         }
     };
 
     var registry = SchemaRegistry.create().register( schema );
 
+    printVar( registry.schemaByHash );
+
     t.deepEqual( registry.get('/schema/def#definitions/foo'), {type: 'integer'} );
-    t.deepEqual( registry.get('/schema/def#bar'), {id:'#bar', type:'string'} );
-    t.deepEqual( registry.get('/schema/def#definitions/bar'), {id:'#bar', type:'string'} );
+    t.deepEqual( registry.get('/schema/def#bar'), {id:'/schema/def#bar', type:'string'} );
+    t.deepEqual( registry.get('/schema/def#definitions/bar'), {id:'/schema/def#bar', type:'string'} );
 
     t.end();
 });
@@ -356,6 +358,49 @@ test('retrieve schema by hash', function(t){
         registry.get( hash ),
         schema );
 
+    t.end();
+});
+
+
+test('new version of sub schema', function(t){
+    var schema = {
+        id:'/schema/parent',
+
+        components:{
+            'personal':{
+                id:'personal',
+                properties:{
+                    firstName: { '$ref': '#/definitions/firstName'}
+                }
+            },
+
+            'address':{
+                id:'address',
+                properties:{
+                    postCode: { '$ref': '#/definitions/postCode' }
+                }
+            }
+        },
+
+        definitions:{
+            firstName: { type: 'string' },
+            lastName: { type: 'string' },
+            postCode: { type:'string' }
+        }
+    };
+
+    var registry = SchemaRegistry.create().register(schema);
+
+    // registry.register({
+    //     id: '/schema/parent/address',
+    //     properties:{
+    //         streetName:{ type:'string' }
+    //     }
+    // });
+
+    // printIns( registry.schemaByHash, 6 );
+
+    // printIns( registry.get('/schema/parent/address', {resolve:true} ), 6 );
     t.end();
 })
 
