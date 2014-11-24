@@ -25,7 +25,8 @@ test('registering a schema', function(t){
 });
 
 
-test.only('retrieving schema fragments', function(t){
+
+test('retrieving schema fragments', function(t){
     var schema = {
         id: '/schema/def',
         definitions:{
@@ -40,9 +41,10 @@ test.only('retrieving schema fragments', function(t){
         }
     };
 
-    var registry = SchemaRegistry.create().register( schema );
+    var registry = SchemaRegistry.create();
+    registry.register( schema );
 
-    printVar( registry.schemaByHash );
+    // printVar( registry.schemaByHash );
 
     t.deepEqual( registry.get('/schema/def#definitions/foo'), {type: 'integer'} );
     t.deepEqual( registry.get('/schema/def#bar'), {id:'/schema/def#bar', type:'string'} );
@@ -159,6 +161,8 @@ test('merging two schemas', function(t){
         ['name', 'count']
         );
 
+    // printVar( registry.schemaByHash );
+
     // should inherit name and count from other schema
     t.deepEqual(
         _.pluck( registry.getProperties(schemaB.id), 'name' ),
@@ -178,7 +182,8 @@ test('returning default properties', function(t){
             address: { type:'string' }
         }
     };
-    var registry = SchemaRegistry.create().register( schema );
+    var registry = SchemaRegistry.create();
+    registry.register( schema );
     
     t.deepEqual( 
         registry.getPropertiesObject( schema.id ),
@@ -202,7 +207,10 @@ test('registration of an identical schema throws an error', function(t){
     var schemaCopy = { id:'/schema/original', properties:{ age:{ type:'integer' }} };
     var registry = SchemaRegistry.create();
 
+    // Common.logEvents( registry );
+
     registry.register( schema );
+    // printIns( registry, 6 );
 
     try{
         registry.register( schema );
@@ -389,20 +397,52 @@ test('new version of sub schema', function(t){
         }
     };
 
-    var registry = SchemaRegistry.create().register(schema);
+    var registry = SchemaRegistry.create()
+    registryregistry.register(schema);
 
-    // registry.register({
-    //     id: '/schema/parent/address',
-    //     properties:{
-    //         streetName:{ type:'string' }
-    //     }
-    // });
+    registry.register({
+        id: '/schema/parent/address',
+        properties:{
+            streetName:{ type:'string' }
+        }
+    });
 
     // printIns( registry.schemaByHash, 6 );
 
     // printIns( registry.get('/schema/parent/address', {resolve:true} ), 6 );
     t.end();
 })
+
+
+test.only('registering a schema returns the schemas registered', function(t){
+    var registry = SchemaRegistry.create();
+
+    var registered = registry.register({
+        id: '/schema/parent/address',
+        properties:{
+            streetName:{ type:'string' }
+        },
+        sub:{
+            id: '/schema/related',
+            properties:{
+                age:{ type:'integer' }
+            }
+        }
+    });
+
+    t.deepEqual(
+        _.map( registered, function(s){ return s.uri; }),
+        [ '/schema/parent/address', '/schema/related' ] );
+
+    t.end();
+});
+
+test('registering a schema doesnt return non-registered schemas', function(t){
+    t.ok( false );
+    t.end();
+});
+
+
 
 test('emits an event when adding a schema', function(t){
     t.ok(false);

@@ -1,11 +1,13 @@
+var _ = require('underscore');
 var test = require('tape');
+
+
 var Common = require('./common');
 var Es = require('event-stream');
 var Sinon = require('sinon');
-var P = require('bluebird');
-P.longStackTraces();
 
-var Elsinore = Common.Elsinore;
+var Elsinore = require('../lib');
+
 var EntityFilter = Elsinore.EntityFilter;
 var EntitySet = Elsinore.EntitySet;
 var Entity = Elsinore.Entity;
@@ -14,88 +16,174 @@ var Registry = Elsinore.Registry;
 var Utils = Elsinore.Utils;
 var JSONComponentParser = require('../lib/streams').JSONComponentParser;
 
+var componentData = _.reduce( require('./fixtures/components.json'), 
+                        function(memo, entry){
+                            memo[ entry.id ] = entry;
+                            return memo;
+                        }, {});
 
 var entitySet, entities, registry, storage, ComponentDefs;
 
 
-test('registering a component def', function(t){
-    var registry = Registry.create();
+// test('registering a component def', function(t){
+//     var registry = Registry.create();
+//     // Common.logEvents( registry.schemaRegistry );
 
-    t.ok( ComponentDef.isComponentDef( registry.registerComponent({id:'example'}) ), 
-        'registering a component returns a ComponentDef instance' );
+//     var def = registry.registerComponent({id:'example'});
 
-    t.end();
-});
+//     t.ok( ComponentDef.isComponentDef( def ), 
+//         'registering a component returns a ComponentDef instance' );
 
-
-test('registering a component def attaches the def to the registry', function(t){
-    var registry = Registry.create();
-
-    var def = registry.registerComponent({id:'example'});
-
-    t.equal( registry.getComponentDef('example'), def,
-        'retrieving the def with its id returns a ComponentDef instance' );
-
-    t.equal( registry.ComponentDef.Example, def.id,
-        'the registry adds the ComponentDef id to itself' );
-    t.end();
-});
+//     t.end();
+// });
 
 
+// test('registering a component def attaches the def to the registry', function(t){
+//     var registry = Registry.create();
 
-test('retrieving component defs', function(t){
+//     var def = registry.registerComponent({id:'example'});
+
+//     t.equal( registry.getComponentDef('example'), def,
+//         'retrieving the def with its id returns a ComponentDef instance' );
+
+//     t.equal( registry.ComponentDef.Example, def.id,
+//         'the registry adds the ComponentDef id to itself' );
+//     t.end();
+// });
+
+
+
+// test('retrieving component defs', function(t){
+//     var registry = Registry.create();
+//     var componentDef = ComponentDef.create('/component/get_test');
+//     componentDef.set('id', 34);
+
+//     registry.registerComponent( componentDef );
     
-    var registry = Registry.create();
-    var componentDef = ComponentDef.create('/component/get_test');
-    componentDef.set('id', 34);
-
-    registry.registerComponent( componentDef );
-    
-    test('return from an instance', function(t){
+//     test('return from an instance', function(t){
         
-        t.deepEqual(
-            registry.getComponentDef( componentDef ),
-            componentDef, 'retrieve from an instance' );
+//         t.deepEqual(
+//             registry.getComponentDef( componentDef ),
+//             componentDef, 'retrieve from an instance' );
+//         t.end();
+//     });
+
+//     test('from a non-registered instance', function(t){
+//         t.equal(
+//             registry.getComponentDef( ComponentDef.create('/component/unknown') ),
+//             null, 'not retrieve from an unregistered instance' );
+//         t.end();
+//     });
+
+//     test('return from its integer id', function(t){
+//         t.deepEqual( 
+//             registry.getComponentDef(34),
+//             componentDef, 'retrieve from integer id' );
+//         t.end();
+//     });
+
+//     test('return from its string schema id', function(t){
+//         t.deepEqual( 
+//             registry.getComponentDef('/component/get_test'),
+//             componentDef, 'retrieve from schema id' );
+//         t.end();
+//     });
+
+//     test('return from its shortened schema id', function(t){
+//         t.deepEqual( 
+//             registry.getComponentDef('get_test'),
+//             componentDef, 'retrieve from shortened schema id' );
+//         t.end();
+//     });
+
+//     test('return from an object property', function(t){
+//         t.deepEqual( 
+//             registry.getComponentDef({schema:'get_test'}),
+//             componentDef, 'retrieve from object property' );
+//         t.end();
+//     });
+
+
+//     test.skip('return from its hash', function(t){
+//         t.deepEqual(
+//             registry.getComponentDef( componentDef.getHash() ),
+//             componentDef, 'retrieve from hash' );
+
+//         t.end();
+//     });
+
+//     t.end();
+// });
+
+// test.only('creating components', function(t){
+
+    test('create from a schema', function(t){
+        var registry = Registry.create();
+        // Common.logEvents( registry );
+        // Common.logEvents( registry.schemaRegistry );
+
+        // passing a schema as the first argument will cause the component to be
+        // registered at the same time
+        var component = registry.createComponent( componentData['/component/position'], { x:200 } );
+
+        // printIns( component );
+        t.equals( component.schemaId, '/component/position' );
+        t.equals( component.hash, '6f39b39f' );
+        t.equals( component.get('x'), 200 );
+
         t.end();
     });
 
-    test('from a non-registered instance', function(t){
-        t.equal(
-            registry.getComponentDef( ComponentDef.create('/component/unknown') ),
-            null, 'not retrieve from an unregistered instance' );
+    test('create from a schema hash', function(t){
+        var registry = Registry.create();
+        var def = registry.registerComponent( componentData['/component/score'] );
+        var component = registry.createComponent( 'd3f0bf51', {score:200} );
+        
+        t.equals( component.get('score'), 200 );
+        t.equals( component.get('lives'), 3 );
+
         t.end();
     });
 
-    test('return from its integer id', function(t){
-        t.deepEqual( 
-            registry.getComponentDef(34),
-            componentDef, 'retrieve from integer id' );
+    test('create from a pre-registered schema', function(t){
+        var registry = Registry.create();
+
+        registry.registerComponent( componentData['/component/nickname'] );
+
+        var component = registry.createComponent( '/component/nickname', {nick:'peter'} );
+
+        t.equals( component.get('nick'), 'peter' );
+
         t.end();
     });
 
-    test('return from its string schema id', function(t){
-        t.deepEqual( 
-            registry.getComponentDef('/component/get_test'),
-            componentDef, 'retrieve from schema id' );
+    test('create from a pre-registered schema using data object', function(t){
+        var registry = Registry.create();
+
+        registry.registerComponent( componentData['/component/nickname'] );
+
+        var component = registry.createComponent( {_s:'/component/nickname', nick:'susan'} );
+
+        t.equals( component.get('nick'), 'susan' );
+
         t.end();
     });
 
-    test('return from its shortened schema id', function(t){
-        t.deepEqual( 
-            registry.getComponentDef('get_test'),
-            componentDef, 'retrieve from shortened schema id' );
+    test('create from an array of data', function(t){
+        var registry = Registry.create();
+
+        registry.registerComponent( componentData['/component/position'] );
+
+        var components = registry.createComponent( '/component/position', [ {x:0,y:-1}, {x:10,y:0}, {x:15,y:-2} ] );
+
+        t.equals( components.length, 3 );
+        t.equals( components[1].get('x'), 10 );
+
         t.end();
     });
 
-    test('return from an object property', function(t){
-        t.deepEqual( 
-            registry.getComponentDef({schema:'get_test'}),
-            componentDef, 'retrieve from object property' );
-        t.end();
-    });
-
-    t.end();
-});
+//     t.end();
+// });
 
 
 test('create entity', function(t){
