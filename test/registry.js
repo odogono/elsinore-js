@@ -3,7 +3,7 @@ var test = require('tape');
 
 
 var Common = require('./common');
-var Es = require('event-stream');
+// var Es = require('event-stream');
 var Sinon = require('sinon');
 
 var Elsinore = require('../lib');
@@ -14,8 +14,8 @@ var Entity = Elsinore.Entity;
 var ComponentDef = Elsinore.ComponentDef;
 var Registry = Elsinore.Registry;
 var Utils = Elsinore.Utils;
-var JSONComponentParser = require('../lib/streams').JSONComponentParser;
 
+// compile a map of schema id(uri) to schema
 var componentData = _.reduce( require('./fixtures/components.json'), 
                         function(memo, entry){
                             memo[ entry.id ] = entry;
@@ -119,16 +119,12 @@ var entitySet, entities, registry, storage, ComponentDefs;
 
     test('create from a schema', function(t){
         var registry = Registry.create();
-        // Common.logEvents( registry );
-        // Common.logEvents( registry.schemaRegistry );
-
         // passing a schema as the first argument will cause the component to be
         // registered at the same time
         var component = registry.createComponent( componentData['/component/position'], { x:200 } );
 
-        // printIns( component );
-        t.equals( component.schemaId, '/component/position' );
-        t.equals( component.hash, '6f39b39f' );
+        t.equals( component.schemaUri, '/component/position' );
+        t.equals( component.schemaHash, '6f39b39f' );
         t.equals( component.get('x'), 200 );
 
         t.end();
@@ -178,6 +174,8 @@ var entitySet, entities, registry, storage, ComponentDefs;
 
         t.equals( components.length, 3 );
         t.equals( components[1].get('x'), 10 );
+
+        // printIns( components );
 
         t.end();
     });

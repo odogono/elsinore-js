@@ -1,7 +1,27 @@
 var _ = require('underscore');
 
+var Fs = require('fs');
+var Es = require('event-stream');
 var Path = require('path');
 var Util = require('util');
+
+
+var rootDir = Path.join( Path.dirname(__filename), '../../' );
+var fixtureDir = Path.join( rootDir, 'test', 'fixtures' );
+
+var Elsinore = require( Path.join( rootDir ) );
+
+function createFixtureReadStream( fixturePath ){
+    var path = Path.join( fixtureDir, fixturePath );
+    return Fs.createReadStream( path, { encoding: 'utf-8' })
+        .pipe(Es.split())
+        .pipe(Es.parse());
+}
+
+function loadFixture( fixturePath, data ){
+    var path = Path.join( fixtureDir, fixturePath );
+    return Fs.readFileSync( path, 'utf8');
+}
 
 
 function logEvents(obj){
@@ -54,6 +74,9 @@ Object.defineProperty(global, '__function', {
 
 global.printIns = printIns;
 global.printVar = printVar;
+global.printE = function(e){
+    Util.log( Elsinore.Registry.toString(e) );
+}
 
 global.log = {
     debug: console.log
@@ -62,5 +85,7 @@ global.log = {
 module.exports = {
     printVar: printVar,
     printIns: printIns,
-    logEvents: logEvents
+    logEvents: logEvents,
+    createFixtureReadStream: createFixtureReadStream,
+    loadFixture: loadFixture
 }

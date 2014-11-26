@@ -174,9 +174,12 @@ function createComponents(returnType, options, entity){
     return result;
 }
 
-function mockComponent( componentDefId, componentDefSchemaId ){
-    var def = ComponentDef.create( {id:componentDefSchemaId} );
-    def.id = componentDefId;
-    var result = def.create();
-    return result;
+function mockComponent( schemaUri, schemaHash ){
+    var result = Component.create();
+    result.schemaUri = schemaUri;
+    result.schemaHash = schemaHash;
+    // var def = ComponentDef.create( {id:componentDefSchemaId} );
+    // def.id = componentDefId;
+    // var result = def.create();
+    // return result;
 }
