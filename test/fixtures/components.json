@@ -1,22 +1,5 @@
 [
     {
-        "id": "/component/position",
-        "properties":{
-            "x": { "type":"number" },
-            "y": { "type":"number" },
-            "z": { "type":"number" }
-        }
-    },
-
-    {
-        "id": "/component/score",
-        "properties": {
-            "score": { "type":"integer" },
-            "lives": { "type":"integer", "default": 3 }
-        }
-    },
-
-    {
         "id":"/component/nickname",
         "description":"an entity identifiable by a name",
         "properties":{
@@ -26,6 +9,32 @@
             }
         }
     },
+    {
+        "id": "/component/position",
+        "properties":{
+            "x": { "type": "number", "default": 0 },
+            "y": { "type": "number", "default": 0 },
+            "z": { "type": "number", "default": 0 },
+            "w": { "type": "number", "default": 0 }
+        }
+    },
+    {
+        "id": "/component/position",
+        "properties":{
+            "x": { "type":"number" },
+            "y": { "type":"number" },
+            "z": { "type":"number" }
+        }
+    },
+    {
+        "id": "/component/score",
+        "properties": {
+            "score": { "type":"integer" },
+            "lives": { "type":"integer", "default": 3 }
+        }
+    },
+
+    
 
     {
         "id":"/component/realname",

@@ -9,6 +9,16 @@ var SchemaRegistry = Elsinore.SchemaRegistry;
 var Common = require('./common');
 
 
+// compile a map of schema id(uri) to schema
+var componentSchemas = require('./fixtures/components.json');
+var componentByUri = _.reduce( componentSchemas, 
+                        function(memo, entry){
+                            memo[ entry.id ] = entry;
+                            return memo;
+                        }, {});
+
+
+
 test.skip('uri normalization', function(t){
     t.equal( Elsinore.Utils.normalizeUri( "HTTP://ABC.com/%7Esmith/home.html" ), "http://abc.com/~smith/home.html" );
     t.end();
@@ -177,8 +187,8 @@ test('returning default properties', function(t){
     var schema = {
         id:'/schema/default',
         properties:{
-            name:{ type:'string', 'default':'unknown' },
-            age:{ type:'integer', 'default':22 },
+            name:{ type:'string', 'default': 'unknown' },
+            age:{ type:'integer', 'default': 22 },
             address: { type:'string' }
         }
     };
@@ -278,7 +288,9 @@ test('retrieving schema with definitions', function(t){
         }
     };
 
-    var registry = SchemaRegistry.create().register( sch );
+    var registry = SchemaRegistry.create();
+    registry.register( sch );
+
     // printIns( registry, 5 );
     t.deepEqual( registry.get(sch.id + '#/definitions/foo'), {type: 'integer'} );
     
@@ -320,7 +332,9 @@ test('obtain full details of a schema', function(t){
         }
     };
 
-    var registry = SchemaRegistry.create().register(schema);
+    var registry = SchemaRegistry.create();
+
+    registry.register(schema);
 
     t.equal( 
         registry.get('/schema/details', {full:true}).hash,
@@ -340,7 +354,8 @@ test('retrieving parts', function(t){
         }
     };
 
-    var registry = SchemaRegistry.create().register(schema);
+    var registry = SchemaRegistry.create();
+    registry.register(schema);
 
     t.deepEqual(
         registry.getProperties('/component/nix'),
@@ -357,7 +372,8 @@ test('retrieve schema by hash', function(t){
         }
     };
 
-    var registry = SchemaRegistry.create().register(schema);
+    var registry = SchemaRegistry.create()
+    registry.register(schema);
 
     // get the latest hash for this component
     var hash = registry.getHash('/schema/switch');
@@ -398,7 +414,7 @@ test('new version of sub schema', function(t){
     };
 
     var registry = SchemaRegistry.create()
-    registryregistry.register(schema);
+    registry.register(schema);
 
     registry.register({
         id: '/schema/parent/address',
@@ -414,7 +430,7 @@ test('new version of sub schema', function(t){
 })
 
 
-test.only('registering a schema returns the schemas registered', function(t){
+test('registering a schema returns the schemas registered', function(t){
     var registry = SchemaRegistry.create();
 
     var registered = registry.register({
@@ -437,24 +453,41 @@ test.only('registering a schema returns the schemas registered', function(t){
     t.end();
 });
 
-test('registering a schema doesnt return non-registered schemas', function(t){
+
+test('returns an array of schema internal ids from a series of identifiers', function(t){
+    var registry = SchemaRegistry.create();
+    // Common.logEvents( registry );
+    registry.register( componentSchemas );
+
+    // printIns( registry.get('/component/position', null, {full:true}) );
+
+    // printIns( registry );
+
+    t.deepEqual(
+        registry.getIId( '/component/position', 'nuts', '49944f67', 9, '/component/geo_location', 'ea9646ec' ),
+        [ 16, undefined, 12, 9, 7, 4 ] );
+
+    t.end();
+})
+
+test.skip('registering a schema doesnt return non-registered schemas', function(t){
     t.ok( false );
     t.end();
 });
 
 
 
-test('emits an event when adding a schema', function(t){
+test.skip('emits an event when adding a schema', function(t){
     t.ok(false);
     t.end();
 });
 
-test('deleting a schema', function(t){
+test.skip('deleting a schema', function(t){
     t.ok(false);
     t.end();
 });
 
-test('deleting the latest version of a schema', function(t){
+test.skip('deleting the latest version of a schema', function(t){
     t.ok(false);
     t.end();
 });

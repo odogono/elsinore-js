@@ -16,13 +16,15 @@ var Registry = Elsinore.Registry;
 var Utils = Elsinore.Utils;
 
 // compile a map of schema id(uri) to schema
-var componentData = _.reduce( require('./fixtures/components.json'), 
+var componentSchemas = require('./fixtures/components.json');
+var componentByUri = _.reduce( componentSchemas, 
                         function(memo, entry){
                             memo[ entry.id ] = entry;
                             return memo;
                         }, {});
 
-var entitySet, entities, registry, storage, ComponentDefs;
+// var entitySet, entities, registry, storage, ComponentDefs;
+
 
 
 // test('registering a component def', function(t){
@@ -121,7 +123,7 @@ var entitySet, entities, registry, storage, ComponentDefs;
         var registry = Registry.create();
         // passing a schema as the first argument will cause the component to be
         // registered at the same time
-        var component = registry.createComponent( componentData['/component/position'], { x:200 } );
+        var component = registry.createComponent( componentByUri['/component/position'], { x:200 } );
 
         t.equals( component.schemaUri, '/component/position' );
         t.equals( component.schemaHash, '6f39b39f' );
@@ -132,7 +134,7 @@ var entitySet, entities, registry, storage, ComponentDefs;
 
     test('create from a schema hash', function(t){
         var registry = Registry.create();
-        var def = registry.registerComponent( componentData['/component/score'] );
+        var def = registry.registerComponent( componentByUri['/component/score'] );
         var component = registry.createComponent( 'd3f0bf51', {score:200} );
         
         t.equals( component.get('score'), 200 );
@@ -144,9 +146,11 @@ var entitySet, entities, registry, storage, ComponentDefs;
     test('create from a pre-registered schema', function(t){
         var registry = Registry.create();
 
-        registry.registerComponent( componentData['/component/nickname'] );
+        registry.registerComponent( componentByUri['/component/nickname'] );
 
         var component = registry.createComponent( '/component/nickname', {nick:'peter'} );
+
+        // printIns( component );
 
         t.equals( component.get('nick'), 'peter' );
 
@@ -156,7 +160,7 @@ var entitySet, entities, registry, storage, ComponentDefs;
     test('create from a pre-registered schema using data object', function(t){
         var registry = Registry.create();
 
-        registry.registerComponent( componentData['/component/nickname'] );
+        registry.registerComponent( componentByUri['/component/nickname'] );
 
         var component = registry.createComponent( {_s:'/component/nickname', nick:'susan'} );
 
@@ -168,14 +172,12 @@ var entitySet, entities, registry, storage, ComponentDefs;
     test('create from an array of data', function(t){
         var registry = Registry.create();
 
-        registry.registerComponent( componentData['/component/position'] );
+        registry.registerComponent( componentByUri['/component/position'] );
 
         var components = registry.createComponent( '/component/position', [ {x:0,y:-1}, {x:10,y:0}, {x:15,y:-2} ] );
 
         t.equals( components.length, 3 );
         t.equals( components[1].get('x'), 10 );
-
-        // printIns( components );
 
         t.end();
     });
@@ -185,6 +187,27 @@ var entitySet, entities, registry, storage, ComponentDefs;
 
 
 test('create entity', function(t){
+    t.end();
+});
+
+
+// test('convert component url to internal id', function(t){
+//     var registry = Registry.create();
+//     registry.registerComponent( componentSchemas );
+
+//     // var com = registry.createComponent( '/component/position' );//'/component/vegetable' );
+//     // printIns( registry, 2 );
+//     // printIns( com, 6 );
+
+//     t.end();
+// });
+
+test.skip('create entity filter', function(t){
+    var registry = Registry.create();
+    registry.registerComponent( componentSchemas );
+
+    var ef = registry.createEntityFilter( EntityFilter.ALL, '/component/position' );
+
     t.end();
 });
 
