@@ -6,6 +6,7 @@ var Browserify = require('browserify');
 var Buffer = require('vinyl-buffer');
 var Del = require('del');
 var Gulp = require('gulp');
+var Jslint = require('gulp-jslint');
 var Source = require('vinyl-source-stream');
 var Uglify = require('gulp-uglify');
 var Webserver = require('gulp-webserver');
@@ -46,6 +47,22 @@ Gulp.task('clean.vendor', function(){
     return Del( pathExternals );
 });
 
+
+Gulp.task('lint', function(){
+    return Gulp.src('./lib/*.js')
+        .pipe( Jslint({
+            node: true,
+            white: true,
+            'continue': true,
+            bitwise: true,
+            plusplus: true,
+            nomen: true
+        })
+        .on('error', function (error) {
+            console.error(String(error));
+        })
+    );
+});
 
 Gulp.task('build.vendor', function(){
     // console.log( vendorDependencies );

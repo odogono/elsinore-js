@@ -337,15 +337,18 @@ test.only('should only add a component of an accepted type', function(t){
     var registry = initialiseRegistry();
     var entitySet = registry.createEntitySet();
     var eventSpy = Sinon.spy();
-
+    Common.logEvents( entitySet );
     var entities = loadEntities( registry );
 
     // setting an entity filter means that the entitySet will
     // only add components that pass through the filter
-    entitySet.setEntityFilter( EntityFilter.create(EntityFilter.ALL, '/component/position') );
+    entitySet.setEntityFilter( EntityFilter.ALL, registry.getIId('/component/position') );
+    // log.debug( 'c ' + registry.getIId('/component/position') );
 
     entitySet.addEntity( entities.at(1) );
     t.equals( entitySet.length, 0);
+    log.debug('add entity:');
+    printE( entities.at(0) );
     entitySet.addEntity( entities.at(0) );
     t.equals( entitySet.length, 1);
     t.end();
