@@ -16,7 +16,6 @@ var EntitySet = Elsinore.EntitySet;
 var Entity = Elsinore.Entity;
 var Registry = Elsinore.Registry;
 var Utils = Elsinore.Utils;
-// var JSONComponentParser = require('../lib/streams').JSONComponentParser;
 
 
 // var registry, storage, ComponentDefs;
