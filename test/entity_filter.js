@@ -14,6 +14,29 @@ var Registry = Elsinore.Registry;
 
 
 
+test('creating a filter by passing multiple component ids', function(t){
+    var f = EntityFilter.create( EntityFilter.INCLUDE, Components.Animal, Components.Doctor, Components.Flower );
+
+    t.equals( f.type, EntityFilter.INCLUDE );
+    t.deepEqual( f.bitField.toValues(), [Components.Animal, Components.Doctor, Components.Flower] );
+
+    t.end();
+});
+
+test('creating multiple filters by passing an array', function(t){
+    var f = EntityFilter.create( [
+                [EntityFilter.NONE, Components.Mineral, Components.Animal],
+                [EntityFilter.INCLUDE, Components.Animal, Components.Doctor, Components.Flower]] );
+
+    t.equals( f[0].type, EntityFilter.NONE );
+    t.deepEqual( f[0].bitField.toValues(), [Components.Animal, Components.Mineral] );
+
+    t.equals( f[1].type, EntityFilter.INCLUDE );
+    t.deepEqual( f[1].bitField.toValues(), [Components.Animal, Components.Doctor, Components.Flower] );
+
+    t.end();
+});
+
 
 test('an default filter will accept an entity', function(t){
     var e = Entity.create();
@@ -71,7 +94,7 @@ test('accepts an entity which has some of the components', function(t){
     t.notOk( f.accept(e) );
     e.addComponent( createComponent( Components.Robot ) );
     t.notOk( f.accept(e) );
-    log.debug('--- should fail because none');
+    // log.debug('--- should fail because none');
     e.addComponent( createComponent( Components.Animal ) );
     t.ok( f.accept(e), 'has one of the optional components' );
     t.end();
@@ -90,19 +113,6 @@ test('rejects an entity which has any of the components', function(t){
     t.end();
 });
 
-test('chaining', function(t){
-    var e = Entity.create();
-
-    var f = EntityFilter.create( EntityFilter.ANY, Components.Animal, Components.Mineral, Components.Vegetable );
-    f.next = EntityFilter.create(EntityFilter.NONE, Components.Robot );
-
-    e.addComponent( createComponent( Components.Animal ) );
-    t.ok( f.accept(e) );
-    e.addComponent( createComponent( Components.Robot ) );
-    t.notOk( f.accept(e) );
-    
-    t.end();
-});
 
 test('transform will copy an incoming entity', function(t){
     var e = createEntity( Components.Mineral, Components.Vegetable, Components.Doctor );
@@ -161,21 +171,21 @@ var MockComponent = function( attrs ){
 }
 
 var ComponentDefs = {
-    '/animal': { iid:1, name:'Animal', schemaHash:'001' },
-    '/mineral': { iid:2, name:'Mineral', schemaHash:'002' },
-    '/vegetable': { iid:3, name:'Vegetable', schemaHash:'003' },
-    '/doctor': { iid:4, name:'Doctor', schemaHash:'004' },
-    '/robot': { iid:5, name:'Robot', schemaHash:'005' },
-    '/flower': { iid:6, name:'Flower', schemaHash:'006' }
+    '/animal': { schemaIId:1, name:'Animal', schemaHash:'001' },
+    '/mineral': { schemaIId:2, name:'Mineral', schemaHash:'002' },
+    '/vegetable': { schemaIId:3, name:'Vegetable', schemaHash:'003' },
+    '/doctor': { schemaIId:4, name:'Doctor', schemaHash:'004' },
+    '/robot': { schemaIId:5, name:'Robot', schemaHash:'005' },
+    '/flower': { schemaIId:6, name:'Flower', schemaHash:'006' }
 };
 
 var Components = _.reduce( ComponentDefs, function(memo,val,key){
-    memo[ val.name ] = val.iid;
+    memo[ val.name ] = val.schemaIId;
     return memo;
 },{});
 
 var ComponentIIdToObject = _.reduce( ComponentDefs, function(memo,val,key){
-    memo[ parseInt(val.iid,10) ] = val;
+    memo[ parseInt(val.schemaIId,10) ] = val;
     return memo;
 },[]);
 
@@ -198,42 +208,3 @@ function createEntity( componentIIds ){
 function createComponent( componentIId ){
     return MockComponent( ComponentIIdToObject[ componentIId ] );
 }
-
-/*function createComponents(returnType, options, entity){
-    var result = {
-        animal: mockComponent( 13, '/component/animal' ),
-        mineral: mockComponent( 178, '/component/mineral' ),
-        vegetable: mockComponent( 96, '/component/vegetable' ),
-        robot: mockComponent( 32, '/component/robot' ),
-        doctor: mockComponent( 5, '/component/doctor' ),
-    };
-
-    if( returnType == 'ids'){
-        return _.compact(_.map( result, function(v,k,l){
-            if( _.indexOf(options,k) != -1 )
-                return v.ComponentDef.id;
-            return null;
-        }));
-    }
-    else if( returnType == 'add' ){
-        entity = Entity.toEntity(entity);
-        _.each( result, function(v,k){
-            if( _.indexOf(options,k) != -1 ){
-                entity.addComponent( v );
-            }
-        });
-        return entity;
-    }
-
-    return result;
-}//*/
-
-// function mockComponent( schemaUri, schemaHash ){
-//     var result = Component.create();
-//     result.schemaUri = schemaUri;
-//     result.schemaHash = schemaHash;
-//     // var def = ComponentDef.create( {id:componentDefSchemaId} );
-//     // def.id = componentDefId;
-//     // var result = def.create();
-//     // return result;
-// }
