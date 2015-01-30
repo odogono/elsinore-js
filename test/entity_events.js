@@ -1,11 +1,16 @@
+var _ = require('underscore');
 var test = require('tape');
+
 var Common = require('./common');
+
+
 var Es = require('event-stream');
 var Sinon = require('sinon');
 var Promise = require('bluebird');
-Promise.longStackTraces();
+// Promise.longStackTraces();
 
-var Elsinore = Common.Elsinore;
+var Elsinore = require('../lib');
+
 var EntityFilter = Elsinore.EntityFilter;
 var EntitySet = Elsinore.EntitySet;
 var Entity = Elsinore.Entity;
@@ -14,20 +19,32 @@ var Utils = Elsinore.Utils;
 
 
 test.only('triggering an event on an entity', function(t){
-    var self = this;
-    return registerComponents(self).then(function(){
-        var eventSpy = Sinon.spy();
-        self.entitySet.listenToEntityEvent( 'msg', eventSpy );
-        
-        self.entitySet.addComponent( self.createComponent( '/component/animal', {id:5,_e:1, name:'tiger'}) );
+    var registry = initialiseRegistry();
+    var entitySet = registry.createEntitySet();
+    var eventSpy = Sinon.spy();
 
-        self.entitySet.triggerEntityEvent( self.entitySet.at(0), 'msg', 'hello there' );
+    // listen to all msg events from all entities
+    entitySet.listenToEntityEvent( null, 'msg', eventSpy );
+    // entitySet.listenToEntityEvent( 'all', function(){
+    //     log.debug('!eevt ' + JSON.stringify(arguments));
+    // } );
 
-        t.ok( eventSpy.calledWith('msg'), 'msg event should have been called' );
+    // entitySet.listenToEntityEvent( 'msg', function( name ){
+    //     log.debug('2!eevt '  + JSON.stringify(arguments));
+    // } );
+    
+    entitySet.addComponent( registry.createComponent( '/component/animal', {id:5,_e:1, name:'tiger'}) );
 
-        t.end();
-    });
+    // printE( entitySet );
+
+    entitySet.triggerEntityEvent( entitySet.at(0), 'msg', 'hello there' );
+
+    t.ok( eventSpy.called, 'msg event should have been called' );
+
+    t.end();
 });
+
+// test('listen to events on entities that have certain components');
 
 test('triggering an event on all entities', function(t){
     return registerComponents().then( function(){
@@ -36,8 +53,8 @@ test('triggering an event on all entities', function(t){
         entitySet.listenToEntityEvent( 'msg', eventSpy );
 
         entitySet.addComponent([
-            createComponent( ComponentDefs.Animal, {id:6,_e:2, name:'snake'}),
-            createComponent( ComponentDefs.Animal, {id:7,_e:3, name:'chicken'}),
+            registry.createComponent( '/component/animal', {id:6,_e:2, name:'snake'}),
+            registry.createComponent( '/component/animal', {id:7,_e:3, name:'chicken'}),
         ]);
 
         entitySet.triggerEntityEvent( null, 'msg', 'who ate the fish?' );
@@ -84,27 +101,22 @@ this.registry.triggerEntityEvent( null, 'msg', 'welcome to the room' );
 
 
 
-function registerComponents(self, logEvents){
-    self.entitySet = EntitySet.create();
-    self.registry = Registry.create().initialize();
-    self.ComponentDefs = self.registry.ComponentDef;
+// compile a map of schema id(uri) to schema
+var componentData = _.reduce( require('./fixtures/components.json'), 
+                        function(memo, entry){
+                            memo[ entry.id ] = entry;
+                            return memo;
+                        }, {});
+
+
+function initialiseRegistry(logEvents){
+    var registry = Registry.create();
+    // ComponentDefs = registry.ComponentDef;
     if( logEvents ){
-        logEvents( self.registry );
+        Common.logEvents( registry );
     }
 
-    self.createComponent = function( type, attrs ){
-        return self.registry.getComponentDef( type ).create(attrs);    
-    }
+    registry.registerComponent( componentData );
 
-    return new Promise(function(resolve){
-        self.registry.registerComponent( Common.loadJSONFixture('components.json') ); 
-        return resolve( self.registry );
-    });
-}
-
-function logEvents(reg){
-    reg = reg || registry;
-    reg.on('all', function(evt){
-        log.debug('evt ' + JSON.stringify( _.toArray(arguments) ) );
-    });
+    return registry;
 }

@@ -52,9 +52,10 @@ test('retrieving schema fragments', function(t){
     };
 
     var registry = SchemaRegistry.create();
+    // Common.logEvents( registry );
     registry.register( schema );
 
-    // printVar( registry.schemaByHash );
+    // printVar( registry );
 
     t.deepEqual( registry.get('/schema/def#definitions/foo'), {type: 'integer'} );
     t.deepEqual( registry.get('/schema/def#bar'), {id:'/schema/def#bar', type:'string'} );
@@ -456,16 +457,11 @@ test('registering a schema returns the schemas registered', function(t){
 
 test('returns an array of schema internal ids from a series of identifiers', function(t){
     var registry = SchemaRegistry.create();
-    // Common.logEvents( registry );
     registry.register( componentSchemas );
-
-    // printIns( registry.get('/component/position', null, {full:true}) );
-
-    // printIns( registry );
 
     t.deepEqual(
         registry.getIId( '/component/position', 'nuts', '49944f67', 9, '/component/geo_location', 'ea9646ec' ),
-        [ 16, undefined, 12, 9, 7, 4 ] );
+        [ 15, undefined, 11, 9, 6, 3 ] );
 
     t.end();
 })

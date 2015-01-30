@@ -5,11 +5,31 @@ var Es = require('event-stream');
 var Path = require('path');
 var Util = require('util');
 
+var Sh = require('shelljs');
 
 var rootDir = Path.join( Path.dirname(__filename), '../../' );
 var fixtureDir = Path.join( rootDir, 'test', 'fixtures' );
-
+var varDir = Path.join( rootDir, 'var' );
 var Elsinore = require( Path.join( rootDir ) );
+
+
+function pathVar( path, clear ){
+    path = Path.join( varDir, path );
+    Sh.rm('-rf', path );
+    Sh.mkdir('-p', path );
+    return path;
+}
+
+// compile a map of schema id(uri) to schema
+function loadComponents(){
+    var data = loadFixtureJSON( 'components.json' );
+    var componentData = _.reduce( data, 
+                        function(memo, entry){
+                            memo[ entry.id ] = entry;
+                            return memo;
+                        }, {});
+    return componentData;
+}
 
 function createFixtureReadStream( fixturePath ){
     var path = Path.join( fixtureDir, fixturePath );
@@ -18,11 +38,21 @@ function createFixtureReadStream( fixturePath ){
         .pipe(Es.parse());
 }
 
-function loadFixture( fixturePath, data ){
+function loadFixture( fixturePath ){
     var path = Path.join( fixtureDir, fixturePath );
     return Fs.readFileSync( path, 'utf8');
 }
 
+function loadFixtureJSON( fixturePath, data ){
+    try {
+        var data = loadFixture( fixturePath );
+        data = JSON.parse( data );
+        return data;
+    } catch( e ){
+        log.debug('error loading fixture JSON: ' + e );
+        return null;
+    }
+}
 
 function logEvents(obj){
     obj.on('all', function(evt){
@@ -87,5 +117,7 @@ module.exports = {
     printIns: printIns,
     logEvents: logEvents,
     createFixtureReadStream: createFixtureReadStream,
-    loadFixture: loadFixture
+    loadFixture: loadFixture,
+    loadComponents: loadComponents,
+    pathVar: pathVar
 }
