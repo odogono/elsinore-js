@@ -7,7 +7,6 @@ var Common = require('./common');
 var Es = require('event-stream');
 var Sinon = require('sinon');
 var Promise = require('bluebird');
-// Promise.longStackTraces();
 
 var Elsinore = require('../lib');
 
@@ -16,15 +15,6 @@ var EntitySet = Elsinore.EntitySet;
 var Entity = Elsinore.Entity;
 var Registry = Elsinore.Registry;
 var Utils = Elsinore.Utils;
-
-
-// compile a map of schema id(uri) to schema
-var componentData = _.reduce( require('./fixtures/components.json'), 
-                        function(memo, entry){
-                            memo[ entry.id ] = entry;
-                            return memo;
-                        }, {});
-
 
 
 test('adding a component without an id or an entity id creates a new component and a new entity', function(t){
@@ -40,8 +30,8 @@ test('adding a component without an id or an entity id creates a new component a
 
     t.ok( eventSpy.calledWith('entity:add'), 'entity:add should have been called');
     // t.ok( entitySet.doesEntityHaveComponent( 0, '/component/position' ), 'the entity should have a Position component' );
-    t.notStrictEqual( entitySet.at(0).Position, undefined, 'the entity should have the Position component as a property' );
-    // t.ok( entitySet.at(0).hasComponent( '/component/position' ), 'the entity should have a Position component' );
+    t.notStrictEqual( entitySet.atSync(0).Position, undefined, 'the entity should have the Position component as a property' );
+    // t.ok( entitySet.atSync(0).hasComponent( '/component/position' ), 'the entity should have a Position component' );
 
     t.end();
 });
@@ -54,11 +44,11 @@ test('adding an entity to an entitySet adds its id to it', function(t){
     var e = Entity.create( 43 );
 
     entitySet.addEntity( e );
-    // log.debug('entitySet id is ' + entitySet.id );
+    log.debug('entitySet id is ' + entitySet.id );
     // printE( entitySet );
 
-    t.equals( entitySet.at(0).getEntityId(), 43 );
-    t.equals( entitySet.at(0).getEntitySetId(), 1 );
+    t.equals( entitySet.atSync(0).getEntityId(), 43 );
+    t.equals( entitySet.atSync(0).getEntitySetId(), 1 );
 
     t.end();
 });
@@ -79,8 +69,8 @@ test('adding several components without an entity adds them to the same new enti
             ]);
 
         t.ok( eventSpy.calledWith('entity:add'), 'entity:add should have been called');
-        t.notStrictEqual( entitySet.at(0).Flower, undefined, 'the entity should have a Flower component' );
-        t.notStrictEqual( entitySet.at(0).Radius, undefined, 'the entity should have a Radius component' );
+        t.notStrictEqual( entitySet.atSync(0).Flower, undefined, 'the entity should have a Flower component' );
+        t.notStrictEqual( entitySet.atSync(0).Radius, undefined, 'the entity should have a Radius component' );
 
         return t.end();
     // });
@@ -134,7 +124,7 @@ test('adding an entity with components', function(t){
     var registry = initialiseRegistry();
     var entitySet = registry.createEntitySet();
     var eventSpy = Sinon.spy();
-    Common.logEvents( entitySet );
+    // Common.logEvents( entitySet );
 
         entitySet.on('all', eventSpy);
 
@@ -145,7 +135,7 @@ test('adding an entity with components', function(t){
 
         t.equals( eventSpy.callCount, 2, 'four events should have been emitted' );
         // printE( entitySet );
-        t.equals( entitySet.at(0).Position.get('x'), 2 );
+        t.equals( entitySet.atSync(0).Position.get('x'), 2 );
 
         t.end();
     // });
@@ -186,9 +176,9 @@ test('should return an added entity', function(t){
 
     // printE( entities );
 
-    var entity = entities.at(0);
+    var entity = entities.atSync(0);
     entitySet.addComponent( entity.Position );
-    var addedEntity = entitySet.at(0);
+    var addedEntity = entitySet.atSync(0);
     t.equals( addedEntity.getEntityId(),  entity.getEntityId() );
     t.equals( addedEntity.Position.id,  entity.Position.id );
     t.end();
@@ -206,7 +196,7 @@ test('should remove the entities component', function(t){
     entitySet.removeComponent( entity.Realname );
 
     t.equals( entitySet.length, 1, 'the entityset should still have the single entity')
-    t.notOk( entitySet.at(0).hasComponents(), 'the single entity should have no components' );
+    t.notOk( entitySet.atSync(0).hasComponents(), 'the single entity should have no components' );
 
     t.end();
 });
@@ -223,8 +213,6 @@ test('should remove the entity belonging to a component', function(t){
     entitySet.removeComponent( entity.Realname );
 
     t.equals( entitySet.length, 0, 'the entityset should have no entities')
-    // t.notOk( entitySet.at(0).hasComponents(), 'the single entity should have no components' );
-
     t.end();
 });
 
@@ -245,23 +233,24 @@ test('should remove the entity belonging to a component', function(t){
 //     });
 // });
 
-test('should remove a component reference from an entity', function(t){
+test.only('should remove a component reference from an entity', function(t){
     var registry = initialiseRegistry();
     var entitySet = registry.createEntitySet();
     var eventSpy = Sinon.spy();
 
-    var entities = loadEntities( registry );    
+    var entities = loadEntities( registry );
 
-        var entity = entities.at(0);
+        var entity = entities.atSync(0);
         
         entitySet.addComponent( [entity.Position, entity.Nickname, entity.Realname] );
-        var addedEntity = entitySet.at(0);
+        printE( entitySet );
+        var addedEntity = entitySet.atSync(0);
 
         t.ok( addedEntity.Realname !== undefined, 'the entity should have the Realname component' );
         
         entitySet.removeComponent( entity.Realname );
         
-        addedEntity = entitySet.at(0);
+        addedEntity = entitySet.atSync(0);
         
         t.ok( addedEntity.Realname === undefined, 'the entity should not have the Realname component' );
         t.end();
@@ -275,11 +264,11 @@ test('should add an entity', function(t){
 
     var entities = loadEntities( registry );  
 
-        var entity = entities.at(0);
+        var entity = entities.atSync(0);
         entitySet.addEntity( entity );
-        t.equals( entitySet.length, 1);
+        t.equals( entitySet.size(), 1);
         entitySet.addEntity( entity );
-        t.equals( entitySet.length, 1);
+        t.equals( entitySet.size(), 1);
         t.end();
     // });
 });
@@ -292,7 +281,7 @@ test('should remove an entity', function(t){
 
     var entities = loadEntities( registry );  
 
-    var entity = entities.at(0);
+    var entity = entities.atSync(0);
     entitySet.addEntity( entity );
     t.equals( entitySet.length, 1);
 
@@ -309,9 +298,9 @@ test('should add the components of an entity', function(t){
 
     var entities = loadEntities( registry );
 
-    entitySet.addEntity( entities.at(0) );
+    entitySet.addEntity( entities.atSync(0) );
     
-    var addedEntity = entitySet.at(0);
+    var addedEntity = entitySet.atSync(0);
     t.notEqual( addedEntity.Realname, undefined );
     t.end();
 });
@@ -324,7 +313,7 @@ test('should emit an event when an entity is added', function(t){
     var entities = loadEntities( registry );
         
     entitySet.on('entity:add', eventSpy );
-    entitySet.addEntity( entities.at(0) );
+    entitySet.addEntity( entities.atSync(0) );
     
     t.ok( eventSpy.called, 'entity:add should have been called' );
     t.end();
@@ -336,7 +325,7 @@ test('should emit an event when an entity is removed', function(t){
     var eventSpy = Sinon.spy();
 
     var entities = loadEntities( registry );
-    var entity = entities.at(0);
+    var entity = entities.atSync(0);
         
     entitySet.on('entity:remove', eventSpy );
     entitySet.addEntity( entity );
@@ -371,14 +360,14 @@ test('should only add a component of an accepted type', function(t){
     entitySet.setEntityFilter( EntityFilter.ALL, '/component/position' );
     // log.debug( 'c ' + registry.getIId('/component/position') );
 
-    entitySet.addEntity( entities.at(1) );
+    entitySet.addEntity( entities.atSync(1) );
     t.equals( entitySet.length, 0);
 
     // printE( entitySet );
     // log.debug('add entity:');
-    // printE( entities.at(0) );
+    // printE( entities.atSync(0) );
     
-    entitySet.addEntity( entities.at(0) );
+    entitySet.addEntity( entities.atSync(0) );
     t.equals( entitySet.length, 1);
     t.end();
 });
@@ -390,9 +379,9 @@ test('should only retain the included component on entity', function(t){
     var entities = loadEntities( registry );
 
         entitySet.setEntityFilter( EntityFilter.INCLUDE, '/component/nickname' );
-        entitySet.addEntity( entities.at(0) );
+        entitySet.addEntity( entities.atSync(0) );
         // the entity won't have any of the other components
-        t.equals( entitySet.at(0).getComponentCount(), 1);
+        t.equals( entitySet.atSync(0).getComponentCount(), 1);
         t.end();
     // });
 });
@@ -404,9 +393,9 @@ test('should not add entities that have excluded components', function(t){
 
         entitySet.setEntityFilter( EntityFilter.NONE, '/component/score' );
 
-        entitySet.addEntity( entities.at(1) );
+        entitySet.addEntity( entities.atSync(1) );
         t.equals( entitySet.length, 0);
-        entitySet.addEntity( entities.at(0) );
+        entitySet.addEntity( entities.atSync(0) );
         t.equals( entitySet.length, 1);
         t.end();
     // });
@@ -479,7 +468,7 @@ test('should remove entities that are excluded after their components change', f
         entitySet.addEntity( entities.toArray() );
         t.equals( entitySet.length, 2);
         
-        var entity = entities.at(1);
+        var entity = entities.atSync(1);
         var component = registry.createComponent( '/component/realname', {name:'mike smith', _e:entity.getEntityId()});
         // this action should cause the entity to be removed
         entitySet.addComponent( component );
@@ -497,12 +486,12 @@ test('should remove entities that no longer included after their components chan
         entitySet.setEntityFilter( EntityFilter.ALL,'/component/nickname' );
         entitySet.addEntity( entities.toArray() );
         
-        t.equals( entitySet.length, 3, 'two entities which have Nickname');
-        var entity = entities.at(0);
+        t.equals( entitySet.size(), 3, 'two entities which have Nickname');
+        var entity = entities.atSync(0);
 
         // removing the Nickname component should mean the entity is also removed
         entitySet.removeComponent( entity.Nickname );
-        t.equals( entitySet.length, 2);
+        t.equals( entitySet.size(), 2);
         t.end();
     // });
 });
@@ -513,10 +502,10 @@ test('should remove entities that are no longer allowed when the component mask 
     var entities = loadEntities( registry );
         
         entitySet.addEntity( entities.toArray() );
-        t.equals( entitySet.length, 5);
+        t.equals( entitySet.size(), 5);
 
         entitySet.setEntityFilter( EntityFilter.NONE,'/component/score' );
-        t.equals( entitySet.length, 2);
+        t.equals( entitySet.size(), 2);
         t.end();
     // });
 });
@@ -534,13 +523,13 @@ test('should filter', function(t){
         return e.getComponentBitfield().get( positionIId );
     });
 
-    t.equals( selected.length, 3);
+    t.equals( selected.size(), 3);
     t.end();
 });
 
 // test('should remove components for an entity', function(t){
 //     return beforeEach(true).then( function(){
-//         var entity = entities.at(0);
+//         var entity = entities.atSync(0);
 
 //         entitySet.addEntity( entity );
 //         entitySet.removeEntity( entity );
@@ -554,7 +543,7 @@ test('should emit an event when a component is changed', function(t){
     var entities = loadEntities( registry );
     // Common.logEvents( entitySet );
 
-        var entity = entities.at(0);
+        var entity = entities.atSync(0);
         var component = entity.Position;
         var spy = Sinon.spy();
 
@@ -578,7 +567,7 @@ test.skip('should emit events when components change', function(t){
     var entitySet = registry.createEntitySet();
     var entities = loadEntities( registry );
 
-        var entity = entities.at(0);
+        var entity = entities.atSync(0);
         var spy = Sinon.spy();
 
         entitySet.on('component:change', spy);
@@ -624,8 +613,8 @@ test('attached entitysets', function(t){
 
         oEntitySet.attachTo( entitySet );
 
-        entitySet.addEntity( entities.at(0) );
-        entitySet.addEntity( entities.at(4) );
+        entitySet.addEntity( entities.atSync(0) );
+        entitySet.addEntity( entities.atSync(4) );
 
         // these added entities should end up in the other entityset
         t.equals( oEntitySet.length, 2 );
@@ -634,7 +623,74 @@ test('attached entitysets', function(t){
     // });
 });
 
+test('iterator', function(t){
+    var it, entity, count;
+    var registry = initialiseRegistry();
+    var entitySet = registry.createEntitySet();
+    var entities = loadEntities( registry );
 
+    entitySet.addEntity( entities );
+
+    entitySet.removeEntity( entities.atSync(3) );
+
+    count = 0;
+    it = entitySet.iteratorSync();
+
+    while( (entity = it.next().value) ){
+        count++;
+    }
+    t.equals( it.next().done, true, 'the iterator will be marked as finished');
+    t.equals( it.next().value, undefined, 'the iterator will not return any values');
+    t.equals( count, 4, 'four entities should have been returned' );
+
+    t.end();
+});
+
+test('async iterator completest with a rejection', function(t){
+    var it, entity, count;
+    var registry = initialiseRegistry();
+    var entitySet = registry.createEntitySet();
+    var entities = loadEntities( registry );
+
+    // add a single entity
+    entitySet.addEntity( entities.atSync(0) );
+
+    it = entitySet.iterator();
+
+    // the first call will return the entity
+    it.next().then( function(e){
+        // the second call should be rejected
+        it.next().then( null, function(state){
+            t.ok( state.done, true, 'the state should be done' );
+            t.end();
+        })
+    });
+});
+
+test('async iterator', function(t){
+    var it, entity, count;
+    var registry = initialiseRegistry();
+    var entitySet = registry.createEntitySet();
+    var entities = loadEntities( registry );
+
+    entitySet.addEntity( entities );
+
+    entitySet.removeEntity( entities.atSync(3) );
+
+    count = 0;
+
+    it = entitySet.iterator();
+
+    return Utils.reduceIterator( it, function(memo,item){
+        memo.push( item );
+        // printE( item );
+    }, [] )
+    .then( function(results){
+        // printE( results );
+        t.equals( results.length, 4, 'four entities should have been returned' );
+        t.end();
+    });
+});
 
 
 function loadEntities( registry, fixtureName ){
@@ -661,19 +717,17 @@ function loadEntities( registry, fixtureName ){
 
 
 function initialiseRegistry(logEvents){
+    var componentData;
     var registry = Registry.create();
     // ComponentDefs = registry.ComponentDef;
     if( logEvents ){
         Common.logEvents( registry );
     }
-
+    
+    componentData = Common.loadComponents();
     registry.registerComponent( componentData );
 
     return registry;
-}
-
-function createComponent( type, attrs ){
-    return registry.getComponentDef( type ).create(attrs);
 }
 
 function logEvents(reg){
