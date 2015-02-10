@@ -233,7 +233,7 @@ test('should remove the entity belonging to a component', function(t){
 //     });
 // });
 
-test.only('should remove a component reference from an entity', function(t){
+test('should remove a component reference from an entity', function(t){
     var registry = initialiseRegistry();
     var entitySet = registry.createEntitySet();
     var eventSpy = Sinon.spy();
@@ -629,68 +629,65 @@ test('iterator', function(t){
     var entitySet = registry.createEntitySet();
     var entities = loadEntities( registry );
 
+
     entitySet.addEntity( entities );
-
     entitySet.removeEntity( entities.atSync(3) );
-
     count = 0;
-    it = entitySet.iteratorSync();
 
-    while( (entity = it.next().value) ){
+    for( entity of entitySet ){
         count++;
     }
-    t.equals( it.next().done, true, 'the iterator will be marked as finished');
-    t.equals( it.next().value, undefined, 'the iterator will not return any values');
+    
     t.equals( count, 4, 'four entities should have been returned' );
 
     t.end();
 });
 
-test('async iterator completest with a rejection', function(t){
-    var it, entity, count;
-    var registry = initialiseRegistry();
-    var entitySet = registry.createEntitySet();
-    var entities = loadEntities( registry );
+// test('async iterator completest with a rejection', function(t){
+//     var it, entity, count;
+//     var registry = initialiseRegistry();
+//     var entitySet = registry.createEntitySet();
+//     var entities = loadEntities( registry );
 
-    // add a single entity
-    entitySet.addEntity( entities.atSync(0) );
+//     // add a single entity
+//     entitySet.addEntity( entities.atSync(0) );
 
-    it = entitySet.iterator();
+//     it = entitySet.iterator();
 
-    // the first call will return the entity
-    it.next().then( function(e){
-        // the second call should be rejected
-        it.next().then( null, function(state){
-            t.ok( state.done, true, 'the state should be done' );
-            t.end();
-        })
-    });
-});
+//     // the first call will return the entity
+//     it.next().then( function(e){
+//         // the second call should be rejected
+//         it.next().then( null, function(state){
+//             t.ok( state.done, true, 'the state should be done' );
+//             t.end();
+//         })
+//     });
+// });
 
-test('async iterator', function(t){
-    var it, entity, count;
-    var registry = initialiseRegistry();
-    var entitySet = registry.createEntitySet();
-    var entities = loadEntities( registry );
+// test('async iterator', function(t){
+//     var it, entity, count;
+//     var registry = initialiseRegistry();
+//     var entitySet = registry.createEntitySet();
+//     var entities = loadEntities( registry );
 
-    entitySet.addEntity( entities );
+//     entitySet.addEntity( entities );
 
-    entitySet.removeEntity( entities.atSync(3) );
+//     entitySet.removeEntity( entities.atSync(3) );
 
-    count = 0;
+//     count = 0;
 
-    it = entitySet.iterator();
+//     it = entitySet.iterator();
 
-    return Utils.reduceIterator( it, function(memo,item){
-        memo.push( item );
-        // printE( item );
-    }, [] )
-    .then( function(results){
-        // printE( results );
-        t.equals( results.length, 4, 'four entities should have been returned' );
-        t.end();
-    });
-});
+//     return Utils.reduceIterator( it, function(memo,item){
+//         memo.push( item );
+//         // printE( item );
+//     }, [] )
+//     .then( function(results){
+//         // printE( results );
+//         t.equals( results.length, 4, 'four entities should have been returned' );
+//         t.end();
+//     });
+// });
 
 
 function loadEntities( registry, fixtureName ){

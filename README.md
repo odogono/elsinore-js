@@ -1,7 +1,9 @@
 
-A node.js Entity Component system.
+A Javascript Entity Component system.
 
-Nothing worth seeing yet - move along.
+
+
+
 
 ```javascript
     registry.createEntity({"_e":1, "_s":"/component/position", "x":10, "y":-10}).done( function(entity){ });

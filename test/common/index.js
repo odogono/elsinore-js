@@ -119,5 +119,6 @@ module.exports = {
     createFixtureReadStream: createFixtureReadStream,
     loadFixture: loadFixture,
     loadComponents: loadComponents,
-    pathVar: pathVar
+    pathVar: pathVar,
+    Elsinore: Elsinore
 }

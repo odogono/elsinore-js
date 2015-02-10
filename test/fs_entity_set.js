@@ -193,7 +193,7 @@ test.only('should remove a component reference from an entity', function(t){
             entity = Entity.create();
             // entity.addComponent( registry.createComponent( '/component/position', {id:5, x:2,y:-2}) );
             // entity.addComponent( registry.createComponent( '/component/score', {id:6, score:100}) );
-
+            
             entitySet.removeEntity( 2 , {debug:true})
                 .then( function(){
                     t.end();
