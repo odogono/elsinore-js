@@ -7,6 +7,7 @@ var Sinon = require('sinon');
 
 var Elsinore = require('../lib');
 
+var Component = Elsinore.Component;
 var Entity = Elsinore.Entity;
 var EntityFilter = Elsinore.EntityFilter;
 var EntitySet = Elsinore.EntitySet;
@@ -157,6 +158,32 @@ test('transform will exclude specified components on an entity', function(t){
 
 
 
+test('iteratorSync iterates allowable entities from a source', function(t){
+    var entity;
+    var it;
+    var count;
+    var f = EntityFilter.create( EntityFilter.ANY, Components.Animal, Components.Mineral, Components.Vegetable );
+    var entitySet = createEntitySet();
+    // Common.logEvents( es );
+
+    entitySet.addEntity( createEntity( Components.Animal ) );
+    entitySet.addEntity( createEntity( Components.Flower ) );
+    entitySet.addEntity( createEntity( Components.Mineral ) );
+    entitySet.addEntity( createEntity( Components.Vegetable ) );
+    entitySet.addEntity( createEntity( Components.Robot ) );
+
+    // use the entitySet as the source of entities
+    it = f.iteratorSync( entitySet );
+    count = 0;
+
+    while( (entity = it.next().value) ){
+        count++;
+    }
+
+    t.equal( count, 3, 'three entities should have been returned' );
+
+    t.end();
+});
 
 
 
@@ -190,15 +217,15 @@ var ComponentIIdToObject = _.reduce( ComponentDefs, function(memo,val,key){
 },[]);
 
 
-
 function createEntity( componentIIds ){
     var i,len,com;
     var args = Array.prototype.slice.call( arguments );
 
     var entity = Entity.create();
-
+    entity.setEntityId( _.uniqueId() );
+    
     for(i=0,len=args.length;i<len;i++){
-        com = MockComponent( ComponentIIdToObject[ args[i] ] );
+        com = createComponent( args[i] );
         entity.addComponent( com );
     }
 
@@ -206,5 +233,18 @@ function createEntity( componentIIds ){
 }
 
 function createComponent( componentIId ){
-    return MockComponent( ComponentIIdToObject[ componentIId ] );
+    var result = Component.create({id: _.uniqueId() });
+    var data = ComponentIIdToObject[ componentIId ];
+    _.each( data, function(val,key){
+        result[ key ] = val;
+    });
+    return result;
+}
+
+function createEntitySet(){
+    var result = EntitySet.create();
+    result._createComponentId = function(){
+        return _.uniqueId();
+    };
+    return result;
 }

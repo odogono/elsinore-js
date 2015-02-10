@@ -8,13 +8,18 @@ var Elsinore = Common.Elsinore;
 // Original example from https://github.com/BlackDice/scent
 //
 test('main', function(t){
-    var registry = Elsinore.Registry.create();
-    var cDoor = registry.registerComponent({id:'/door', properties:{open:{type:'boolean'}, material:{type:'string'} } });
-    
-    var Proc = Elsinore.EntityProcessor.extend({
-        // specifies that entities MUST have the /door component
-        entityFilter: '/door',
+    var cDoor;
+    var entitySet;
+    var eDoor;
+    var door;
+    var processor;
+    var registry;
+    var DoorProcessor;
 
+    registry = Elsinore.Registry.create();
+    cDoor = registry.registerComponent({id:'/door', properties:{open:{type:'boolean'}, material:{type:'string'} } });
+    
+    DoorProcessor = Elsinore.EntityProcessor.extend({
         // handle entity events
         events:{
             'doorOpen': function( entity, entitySet ){
@@ -41,19 +46,19 @@ test('main', function(t){
         }
     });
 
-    var entitySet = registry.createEntitySet();
+    entitySet = registry.createEntitySet();
 
     // attach the processor to the entityset. the priority will
     // be normal
-    var processor = registry.addProcessor( Proc, entitySet );
+    processor = registry.addProcessor( DoorProcessor, entitySet );
     
-    var door = registry.createComponent( cDoor, {material: 'wood'} );
+    door = registry.createComponent( cDoor, {material: 'wood'} );
     
     // adding the component to the entityset will create an entity
     entitySet.addComponent( door );
 
     // retrieve the first (and only entity) from the set
-    var eDoor = entitySet.atSync( 0 );
+    eDoor = entitySet.atSync( 0 );
 
     // trigger an event on the entity set - this will open all door
     // components
