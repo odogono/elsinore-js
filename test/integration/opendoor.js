@@ -17,6 +17,7 @@ test('main', function(t){
     var DoorProcessor;
 
     registry = Elsinore.Registry.create();
+    entitySet = registry.createEntitySet();
     cDoor = registry.registerComponent({id:'/door', properties:{open:{type:'boolean'}, material:{type:'string'} } });
     
     DoorProcessor = Elsinore.EntityProcessor.extend({
@@ -46,7 +47,7 @@ test('main', function(t){
         }
     });
 
-    entitySet = registry.createEntitySet();
+    
 
     // attach the processor to the entityset. the priority will
     // be normal

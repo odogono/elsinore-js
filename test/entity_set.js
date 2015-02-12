@@ -350,11 +350,9 @@ test('should only add a component of an accepted type', function(t){
     // Common.logEvents( entitySet );
     var entities = loadEntities( registry );
 
-    // printE( entities );
     // setting an entity filter means that the entitySet will
     // only add components that pass through the filter
     entitySet.setEntityFilter( EntityFilter.ALL, '/component/position' );
-    // log.debug( 'c ' + registry.getIId('/component/position') );
 
     entitySet.addEntity( entities.atSync(1) );
     t.equals( entitySet.size(), 0);
