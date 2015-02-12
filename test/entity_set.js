@@ -153,10 +153,10 @@ test('should return the number of entities contained', function(t){
         var nick = registry.createComponent( '/component/nickname', {id:2,_e:3});
 
         entitySet.addComponent( pos );
-        t.equals( entitySet.length, 1, 'should only be one entity' );
+        t.equals( entitySet.size(), 1, 'should only be one entity' );
 
         entitySet.addComponent( nick );
-        t.equals( entitySet.length, 1, 'should only be one entity' );
+        t.equals( entitySet.size(), 1, 'should only be one entity' );
 
         var entity = entitySet.getEntity(3);
     
@@ -195,7 +195,7 @@ test('should remove the entities component', function(t){
     entitySet.addComponent( entity.Realname );
     entitySet.removeComponent( entity.Realname );
 
-    t.equals( entitySet.length, 1, 'the entityset should still have the single entity')
+    t.equals( entitySet.size(), 1, 'the entityset should still have the single entity')
     t.notOk( entitySet.atSync(0).hasComponents(), 'the single entity should have no components' );
 
     t.end();
@@ -212,7 +212,7 @@ test('should remove the entity belonging to a component', function(t){
     entitySet.addComponent( entity.Realname );
     entitySet.removeComponent( entity.Realname );
 
-    t.equals( entitySet.length, 0, 'the entityset should have no entities')
+    t.equals( entitySet.size(), 0, 'the entityset should have no entities')
     t.end();
 });
 
@@ -243,7 +243,6 @@ test('should remove a component reference from an entity', function(t){
         var entity = entities.atSync(0);
         
         entitySet.addComponent( [entity.Position, entity.Nickname, entity.Realname] );
-        printE( entitySet );
         var addedEntity = entitySet.atSync(0);
 
         t.ok( addedEntity.Realname !== undefined, 'the entity should have the Realname component' );
@@ -283,11 +282,11 @@ test('should remove an entity', function(t){
 
     var entity = entities.atSync(0);
     entitySet.addEntity( entity );
-    t.equals( entitySet.length, 1);
+    t.equals( entitySet.size(), 1);
 
     // log.debug('>----- from here');
     entitySet.removeEntity( entity );
-    t.equals( entitySet.length, 0);
+    t.equals( entitySet.size(), 0);
     t.end();
 });
 
@@ -335,15 +334,12 @@ test('should emit an event when an entity is removed', function(t){
     t.end();
 });
 
-// test('should emit an event when a component is added');
-// test('should emit an event when a component is removed');
-
 
 
 test('should only add an entity with components', function(t){
     var entitySet = EntitySet.create({allowEmptyEntities:false});
         entitySet.addEntity( 345 );
-        t.equals( entitySet.length, 0);
+        t.equals( entitySet.size(), 0);
         t.end();
 });
 
@@ -361,14 +357,14 @@ test('should only add a component of an accepted type', function(t){
     // log.debug( 'c ' + registry.getIId('/component/position') );
 
     entitySet.addEntity( entities.atSync(1) );
-    t.equals( entitySet.length, 0);
+    t.equals( entitySet.size(), 0);
 
     // printE( entitySet );
     // log.debug('add entity:');
     // printE( entities.atSync(0) );
     
     entitySet.addEntity( entities.atSync(0) );
-    t.equals( entitySet.length, 1);
+    t.equals( entitySet.size(), 1);
     t.end();
 });
 
@@ -394,9 +390,9 @@ test('should not add entities that have excluded components', function(t){
         entitySet.setEntityFilter( EntityFilter.NONE, '/component/score' );
 
         entitySet.addEntity( entities.atSync(1) );
-        t.equals( entitySet.length, 0);
+        t.equals( entitySet.size(), 0);
         entitySet.addEntity( entities.atSync(0) );
-        t.equals( entitySet.length, 1);
+        t.equals( entitySet.size(), 1);
         t.end();
     // });
 });
@@ -409,7 +405,7 @@ test('should not add entities that have multiple excluded components', function(
         entitySet.setEntityFilter( EntityFilter.NONE, '/component/score','/component/nickname');
         entitySet.addEntity( entities.toArray() );
         // printE( entitySet );
-        t.equals( entitySet.length, 1);
+        t.equals( entitySet.size(), 1);
         t.end();
     // });
 });
@@ -422,7 +418,7 @@ test('should only add entities that are included', function(t){
         // this means that any entity MUST have a Position and Nickname
         entitySet.setEntityFilter( EntityFilter.ALL, '/component/position','/component/nickname' );
         entitySet.addEntity( entities.toArray() );
-        t.equals( entitySet.length, 2);
+        t.equals( entitySet.size(), 2);
         t.end();
     // });
 });
@@ -435,7 +431,7 @@ test('should only add entities that are optional', function(t){
         // this means that the entity MAY have Position and/or Nickname
         entitySet.setEntityFilter( EntityFilter.ANY, '/component/position','/component/nickname' );
         entitySet.addEntity( entities.toArray() );
-        t.equals( entitySet.length, 4);
+        t.equals( entitySet.size(), 4);
         t.end();
     // });
 });
@@ -453,7 +449,7 @@ test('should only add entities that pass include/exclude', function(t){
         entitySet.addEntity( entities.toArray() );
 
         // printE( entitySet );
-        t.equals( entitySet.length, 1);
+        t.equals( entitySet.size(), 1);
         t.end();
     // });
 });
@@ -466,13 +462,13 @@ test('should remove entities that are excluded after their components change', f
         // var RealnameDef = registry.getComponentDef('/component/realname' );
         entitySet.setEntityFilter( EntityFilter.NONE, '/component/realname' );
         entitySet.addEntity( entities.toArray() );
-        t.equals( entitySet.length, 2);
+        t.equals( entitySet.size(), 2);
         
         var entity = entities.atSync(1);
         var component = registry.createComponent( '/component/realname', {name:'mike smith', _e:entity.getEntityId()});
         // this action should cause the entity to be removed
         entitySet.addComponent( component );
-        t.equals( entitySet.length, 1);
+        t.equals( entitySet.size(), 1);
 
         t.end();
     // });
@@ -523,7 +519,7 @@ test('should filter', function(t){
         return e.getComponentBitfield().get( positionIId );
     });
 
-    t.equals( selected.size(), 3);
+    t.equals( selected.length, 3);
     t.end();
 });
 
@@ -592,10 +588,10 @@ test('should clear all contained entities by calling reset', function(t){
 
         entitySet.on('reset', spy);
         entitySet.addEntity( entities );
-        t.equals( entitySet.length,  entities.length );
+        t.equals( entitySet.size(),  entities.size() );
 
         entitySet.reset(null);
-        t.equals( entitySet.length, 0);
+        t.equals( entitySet.size(), 0);
         t.ok( spy.called, 'reset should have been called' );
         t.end();
     // });
@@ -617,13 +613,13 @@ test('attached entitysets', function(t){
         entitySet.addEntity( entities.atSync(4) );
 
         // these added entities should end up in the other entityset
-        t.equals( oEntitySet.length, 2 );
+        t.equals( oEntitySet.size(), 2 );
 
         t.end();
     // });
 });
 
-test('iterator', function(t){
+test.skip('iterator', function(t){
     var it, entity, count;
     var registry = initialiseRegistry();
     var entitySet = registry.createEntitySet();
@@ -690,6 +686,9 @@ test('iterator', function(t){
 // });
 
 
+/**
+*   Returns an entityset with the given entities
+*/
 function loadEntities( registry, fixtureName ){
     var data;
     var lines;
