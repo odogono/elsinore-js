@@ -147,19 +147,24 @@ test('should return the number of entities contained', function(t){
     var registry = initialiseRegistry();
     var entitySet = registry.createEntitySet();
     var eventSpy = Sinon.spy();
-    // Common.logEvents( entitySet );
+    Common.logEvents( entitySet );
 
         var pos = registry.createComponent( '/component/position', {id:1,_e:3});
         var nick = registry.createComponent( '/component/nickname', {id:2,_e:3});
 
+        t.ok( pos.getEntityId(), 3 );
+        t.ok( nick.getEntityId(), 3 );
+        
         entitySet.addComponent( pos );
+
         t.equals( entitySet.size(), 1, 'should only be one entity' );
 
         entitySet.addComponent( nick );
         t.equals( entitySet.size(), 1, 'should only be one entity' );
 
+        // retrieve an entity by id 3
         var entity = entitySet.getEntity(3);
-    
+        
         t.ok( entity.Position, 'entity should have position' );
         t.ok( entity.Nickname, 'entity should have nickname' );
         t.end();
@@ -401,8 +406,7 @@ test('should not add entities that have multiple excluded components', function(
     var entities = loadEntities( registry );
 
         entitySet.setEntityFilter( EntityFilter.NONE, '/component/score','/component/nickname');
-        entitySet.addEntity( entities.toArray() );
-        // printE( entitySet );
+        entitySet.addEntity( entities );
         t.equals( entitySet.size(), 1);
         t.end();
     // });
@@ -415,7 +419,7 @@ test('should only add entities that are included', function(t){
 
         // this means that any entity MUST have a Position and Nickname
         entitySet.setEntityFilter( EntityFilter.ALL, '/component/position','/component/nickname' );
-        entitySet.addEntity( entities.toArray() );
+        entitySet.addEntity( entities );
         t.equals( entitySet.size(), 2);
         t.end();
     // });
@@ -428,7 +432,7 @@ test('should only add entities that are optional', function(t){
 
         // this means that the entity MAY have Position and/or Nickname
         entitySet.setEntityFilter( EntityFilter.ANY, '/component/position','/component/nickname' );
-        entitySet.addEntity( entities.toArray() );
+        entitySet.addEntity( entities );
         t.equals( entitySet.size(), 4);
         t.end();
     // });
@@ -443,10 +447,8 @@ test('should only add entities that pass include/exclude', function(t){
         entitySet.setEntityFilter( [[EntityFilter.ALL, '/component/position'],
                                     [EntityFilter.NONE, '/component/realname']] );
 
-        // printIns( entitySet );
-        entitySet.addEntity( entities.toArray() );
+        entitySet.addEntity( entities );
 
-        // printE( entitySet );
         t.equals( entitySet.size(), 1);
         t.end();
     // });
@@ -459,7 +461,7 @@ test('should remove entities that are excluded after their components change', f
 
         // var RealnameDef = registry.getComponentDef('/component/realname' );
         entitySet.setEntityFilter( EntityFilter.NONE, '/component/realname' );
-        entitySet.addEntity( entities.toArray() );
+        entitySet.addEntity( entities );
         t.equals( entitySet.size(), 2);
         
         var entity = entities.atSync(1);
@@ -478,7 +480,7 @@ test('should remove entities that no longer included after their components chan
     var entities = loadEntities( registry );
 
         entitySet.setEntityFilter( EntityFilter.ALL,'/component/nickname' );
-        entitySet.addEntity( entities.toArray() );
+        entitySet.addEntity( entities );
         
         t.equals( entitySet.size(), 3, 'two entities which have Nickname');
         var entity = entities.atSync(0);
@@ -495,7 +497,7 @@ test('should remove entities that are no longer allowed when the component mask 
     var entitySet = registry.createEntitySet();
     var entities = loadEntities( registry );
         
-        entitySet.addEntity( entities.toArray() );
+        entitySet.addEntity( entities );
         t.equals( entitySet.size(), 5);
 
         entitySet.setEntityFilter( EntityFilter.NONE,'/component/score' );
@@ -511,7 +513,7 @@ test('should filter', function(t){
 
     var positionIId = registry.getIId( '/component/position' );
         
-    entitySet.addEntity( entities.toArray() );
+    entitySet.addEntity( entities );
 
     var selected = entitySet.filter( function(e){
         return e.getComponentBitfield().get( positionIId );
