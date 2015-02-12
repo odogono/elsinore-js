@@ -65,12 +65,12 @@ test('will accept entities with one of the components', function(t){
 });
 
 test('reject an entity which does not have a specific component', function(t){
-    var c = createComponent( Components.Flower );
     var e = Entity.create();
     var f = EntityFilter.create(EntityFilter.ALL, Components.Flower );
 
     t.notOk( f.accept(e), 'filter rejects because the component is missing');
-    e.addComponent(c);
+    e.addComponent( createComponent( Components.Flower ) );
+    e.addComponent( createComponent( Components.Robot ) );
     t.ok( f.accept(e), 'filter accepts because the component is present');
     t.end();
 });
@@ -157,6 +157,22 @@ test('transform will exclude specified components on an entity', function(t){
 });
 
 
+test('creating a filter with a custom accept function', function(t){
+
+    var f = EntityFilter.create( function accept(entity,options){
+        if( entity.Robot && entity.Robot.get('age') > 40  ){
+            return true;
+        }
+        return false;
+    });
+
+
+    t.notOk( f.accept( createEntity( {_c:Components.Robot, age:32} )));
+    t.ok( f.accept( createEntity( {_c:Components.Robot, age:41} )));
+    t.notOk( f.accept( createEntity( Components.Animal ) ));
+
+    t.end();
+});
 
 test('iteratorSync iterates allowable entities from a source', function(t){
     var entity;
@@ -233,8 +249,15 @@ function createEntity( componentIIds ){
 }
 
 function createComponent( componentIId ){
-    var result = Component.create({id: _.uniqueId() });
-    var data = ComponentIIdToObject[ componentIId ];
+    var attrs;
+    var result;
+    var data;
+    if( _.isObject(componentIId) ){
+        attrs = _.omit( componentIId, '_c' );
+        componentIId = componentIId._c;
+    }
+    result = Component.create(_.extend( attrs, {id: _.uniqueId() }) );
+    data = ComponentIIdToObject[ componentIId ];
     _.each( data, function(val,key){
         result[ key ] = val;
     });

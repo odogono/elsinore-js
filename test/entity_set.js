@@ -361,10 +361,6 @@ test('should only add a component of an accepted type', function(t){
 
     entitySet.addEntity( entities.atSync(1) );
     t.equals( entitySet.size(), 0);
-
-    // printE( entitySet );
-    // log.debug('add entity:');
-    // printE( entities.atSync(0) );
     
     entitySet.addEntity( entities.atSync(0) );
     t.equals( entitySet.size(), 1);
