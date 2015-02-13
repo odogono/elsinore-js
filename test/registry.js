@@ -23,100 +23,6 @@ var componentByUri = _.reduce( componentSchemas,
                             return memo;
                         }, {});
 
-// var entitySet, entities, registry, storage, ComponentDefs;
-
-
-
-// test('registering a component def', function(t){
-//     var registry = Registry.create();
-//     // Common.logEvents( registry.schemaRegistry );
-
-//     var def = registry.registerComponent({id:'example'});
-
-//     t.ok( ComponentDef.isComponentDef( def ), 
-//         'registering a component returns a ComponentDef instance' );
-
-//     t.end();
-// });
-
-
-// test('registering a component def attaches the def to the registry', function(t){
-//     var registry = Registry.create();
-
-//     var def = registry.registerComponent({id:'example'});
-
-//     t.equal( registry.getComponentDef('example'), def,
-//         'retrieving the def with its id returns a ComponentDef instance' );
-
-//     t.equal( registry.ComponentDef.Example, def.id,
-//         'the registry adds the ComponentDef id to itself' );
-//     t.end();
-// });
-
-
-
-// test('retrieving component defs', function(t){
-//     var registry = Registry.create();
-//     var componentDef = ComponentDef.create('/component/get_test');
-//     componentDef.set('id', 34);
-
-//     registry.registerComponent( componentDef );
-    
-//     test('return from an instance', function(t){
-        
-//         t.deepEqual(
-//             registry.getComponentDef( componentDef ),
-//             componentDef, 'retrieve from an instance' );
-//         t.end();
-//     });
-
-//     test('from a non-registered instance', function(t){
-//         t.equal(
-//             registry.getComponentDef( ComponentDef.create('/component/unknown') ),
-//             null, 'not retrieve from an unregistered instance' );
-//         t.end();
-//     });
-
-//     test('return from its integer id', function(t){
-//         t.deepEqual( 
-//             registry.getComponentDef(34),
-//             componentDef, 'retrieve from integer id' );
-//         t.end();
-//     });
-
-//     test('return from its string schema id', function(t){
-//         t.deepEqual( 
-//             registry.getComponentDef('/component/get_test'),
-//             componentDef, 'retrieve from schema id' );
-//         t.end();
-//     });
-
-//     test('return from its shortened schema id', function(t){
-//         t.deepEqual( 
-//             registry.getComponentDef('get_test'),
-//             componentDef, 'retrieve from shortened schema id' );
-//         t.end();
-//     });
-
-//     test('return from an object property', function(t){
-//         t.deepEqual( 
-//             registry.getComponentDef({schema:'get_test'}),
-//             componentDef, 'retrieve from object property' );
-//         t.end();
-//     });
-
-
-//     test.skip('return from its hash', function(t){
-//         t.deepEqual(
-//             registry.getComponentDef( componentDef.getHash() ),
-//             componentDef, 'retrieve from hash' );
-
-//         t.end();
-//     });
-
-//     t.end();
-// });
-
 // test.only('creating components', function(t){
 
     test('create from a schema', function(t){
@@ -186,21 +92,7 @@ var componentByUri = _.reduce( componentSchemas,
 // });
 
 
-test('create entity', function(t){
-    t.end();
-});
 
-
-// test('convert component url to internal id', function(t){
-//     var registry = Registry.create();
-//     registry.registerComponent( componentSchemas );
-
-//     // var com = registry.createComponent( '/component/position' );//'/component/vegetable' );
-//     // printIns( registry, 2 );
-//     // printIns( com, 6 );
-
-//     t.end();
-// });
 
 test.skip('create entity filter', function(t){
     var registry = Registry.create();

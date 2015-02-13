@@ -23,8 +23,6 @@ test('adding a component without an id or an entity id creates a new component a
     var eventSpy = Sinon.spy();
     // Common.logEvents( entitySet );
 
-    // return registerComponents().then(function(){
-        
     entitySet.on('all', eventSpy);
     entitySet.addComponent( registry.createComponent( '/component/position', {x:15,y:2}) );
 
@@ -37,18 +35,20 @@ test('adding a component without an id or an entity id creates a new component a
 });
 
 
-test('adding an entity to an entitySet adds its id to it', function(t){
+test('you cant add an empty entity to an entityset', function(t){
     var registry = initialiseRegistry(true);
     var entitySet = registry.createEntitySet();
 
     var e = Entity.create( 43 );
 
     entitySet.addEntity( e );
-    log.debug('entitySet id is ' + entitySet.id );
+
+    t.equals( entitySet.size(), 0 );
+    // log.debug('entitySet id is ' + entitySet.id );
     // printE( entitySet );
 
-    t.equals( entitySet.atSync(0).getEntityId(), 43 );
-    t.equals( entitySet.atSync(0).getEntitySetId(), 1 );
+    // t.equals( entitySet.atSync(0).getEntityId(), 43 );
+    // t.equals( entitySet.atSync(0).getEntitySetId(), 1 );
 
     t.end();
 });
@@ -81,19 +81,16 @@ test('adding a component generates events', function(t){
     var entitySet = registry.createEntitySet();
     var eventSpy = Sinon.spy();
     // Common.logEvents( entitySet );
-        entitySet.on('all', eventSpy);
+    
+    entitySet.on('all', eventSpy);
 
-        entitySet.addComponent( 
-            registry.createComponent( '/component/position', {id:160,_e:15, x:0, y:20}) );
+    entitySet.addComponent(
+        registry.createComponent( '/component/position', {id:160,_e:15, x:0, y:20}) );
 
-        t.ok( eventSpy.calledWith('component:add'), 'component:add should have been called' );
-        t.ok( eventSpy.calledWith('entity:add'), 'entity:add should have been called' );
-        
-        // printIns( eventSpy.args[1] );
-        // t.equals( eventSpy.args[1][1].id, 15, 'single argument of the component' );
-
-        t.end();
-    // });
+    t.ok( eventSpy.calledWith('component:add'), 'component:add should have been called' );
+    t.ok( eventSpy.calledWith('entity:add'), 'entity:add should have been called' );
+    
+    t.end();
 });
 
 test('adding several components at once generates a single add event', function(t){
@@ -101,19 +98,19 @@ test('adding several components at once generates a single add event', function(
     var entitySet = registry.createEntitySet();
     var eventSpy = Sinon.spy();
     // Common.logEvents( entitySet );
-        entitySet.on('all', eventSpy);
+    entitySet.on('all', eventSpy);
 
-        entitySet.addComponent( [
-            registry.createComponent( '/component/position', {id:1,_e:2, x:19, y:-2}),
-            registry.createComponent( '/component/nickname', {id:2,_e:2, nick:'isaac'})
-        ]);
+    entitySet.addComponent( [
+        registry.createComponent( '/component/position', {id:1,_e:2, x:19, y:-2}),
+        registry.createComponent( '/component/nickname', {id:2,_e:2, nick:'isaac'})
+    ]);
 
-        t.equals( eventSpy.callCount, 2, 'two events should have been emitted' );
-        t.ok( eventSpy.calledWith('component:add'), 'component:add should have been called' );
-        t.ok( eventSpy.calledWith('entity:add'), 'entity:add should have been called' );
-        // t.equals( eventSpy.args[1][1].length, 2, 'should contain an array of components added' );
+    t.equals( eventSpy.callCount, 2, 'two events should have been emitted' );
+    t.ok( eventSpy.calledWith('component:add'), 'component:add should have been called' );
+    t.ok( eventSpy.calledWith('entity:add'), 'entity:add should have been called' );
+    // t.equals( eventSpy.args[1][1].length, 2, 'should contain an array of components added' );
 
-        t.end();
+    t.end();
     // });
     
 });
@@ -147,7 +144,7 @@ test('should return the number of entities contained', function(t){
     var registry = initialiseRegistry();
     var entitySet = registry.createEntitySet();
     var eventSpy = Sinon.spy();
-    Common.logEvents( entitySet );
+    // Common.logEvents( entitySet );
 
         var pos = registry.createComponent( '/component/position', {id:1,_e:3});
         var nick = registry.createComponent( '/component/nickname', {id:2,_e:3});
@@ -440,14 +437,13 @@ test('should only add entities that pass include/exclude', function(t){
     var entitySet = registry.createEntitySet();
     var entities = loadEntities( registry );
 
-        entitySet.setEntityFilter( [[EntityFilter.ALL, '/component/position'],
-                                    [EntityFilter.NONE, '/component/realname']] );
+    entitySet.setEntityFilter( [[EntityFilter.ALL, '/component/position'],
+                                [EntityFilter.NONE, '/component/realname']] );
 
-        entitySet.addEntity( entities );
+    entitySet.addEntity( entities );
 
-        t.equals( entitySet.size(), 1);
-        t.end();
-    // });
+    t.equals( entitySet.size(), 1);
+    t.end();
 });
 
 test('should remove entities that are excluded after their components change', function(t){
@@ -578,19 +574,16 @@ test('should clear all contained entities by calling reset', function(t){
     var entitySet = registry.createEntitySet();
     var entities = loadEntities( registry );
 
-    // Common.logEvents( entitySet );
+    var spy = Sinon.spy();
 
-        var spy = Sinon.spy();
+    entitySet.on('reset', spy);
+    entitySet.addEntity( entities );
+    t.equals( entitySet.size(),  entities.size() );
 
-        entitySet.on('reset', spy);
-        entitySet.addEntity( entities );
-        t.equals( entitySet.size(),  entities.size() );
-
-        entitySet.reset(null);
-        t.equals( entitySet.size(), 0);
-        t.ok( spy.called, 'reset should have been called' );
-        t.end();
-    // });
+    entitySet.reset(null);
+    t.equals( entitySet.size(), 0);
+    t.ok( spy.called, 'reset should have been called' );
+    t.end();
 });
 
 
@@ -614,6 +607,28 @@ test('attached entitysets', function(t){
         t.end();
     // });
 });
+
+
+test('map transfers an entitySet through a filter into another entityset', function(t){
+    var eventSpy = Sinon.spy();
+    var registry = initialiseRegistry();
+    var loadedEntitySet = loadEntities( registry );
+    var oEntitySet = registry.createEntitySet();
+    var entityFilter = registry.createEntityFilter( EntityFilter.INCLUDE, '/component/score' );
+
+    oEntitySet.on('all', eventSpy);
+
+    // map the entities from the loaded set into the other set, using the entityfilter
+    loadedEntitySet.map( entityFilter, oEntitySet );
+
+    t.equal( _.size(eventSpy.args[1][1]), 3, 'three components reported as being added' );
+    t.equal( _.size(eventSpy.args[2][1]), 3, 'three entities reported as being added' );
+    
+    t.end();
+});
+
+
+
 
 test.skip('iterator', function(t){
     var it, entity, count;

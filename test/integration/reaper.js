@@ -9,7 +9,8 @@ var EntityFilter = Elsinore.EntityFilter;
 
 
 /**
-    This test 
+    This test demonstrates processors that use filters to determine which
+    components it should operate on
 */
 test('reaper', function(t){
 
