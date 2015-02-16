@@ -174,7 +174,7 @@ test('should return an added entity', function(t){
     var entitySet = registry.createEntitySet();
     var eventSpy = Sinon.spy();
 
-    var entities = loadEntities( registry );    
+    var entities = loadEntities( registry );  
 
     // printE( entities );
 
@@ -735,11 +735,4 @@ function initialiseRegistry(logEvents){
     registry.registerComponent( componentData );
 
     return registry;
-}
-
-function logEvents(reg){
-    reg = reg || registry;
-    reg.on('all', function(evt){
-        log.debug('evt ' + JSON.stringify( _.toArray(arguments) ) );
-    });
 }

@@ -54,9 +54,10 @@ function loadFixtureJSON( fixturePath, data ){
     }
 }
 
-function logEvents(obj){
+function logEvents(obj, prefix){
+    prefix = prefix || 'evt';
     obj.on('all', function(evt){
-        log.debug('evt ' + JSON.stringify( _.toArray(arguments) ) );
+        log.debug(prefix + ' ' + JSON.stringify( _.toArray(arguments) ) );
     });
 }
 
