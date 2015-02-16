@@ -37,7 +37,7 @@ test('removing an entity from the entitySet should also remove it from the colle
     Common.logEvents( entitySet, 'entitySet' );
     Common.logEvents( collection, 'collection' );
 
-    entitySet.removeEntity( entitySet.atSync(0) );
+    entitySet.remove( entitySet.atSync(0) );
     
     t.equals( entitySet.size(), collection.length, 'same number of entities');
 
