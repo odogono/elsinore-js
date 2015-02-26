@@ -14,26 +14,48 @@ var EntitySet = Elsinore.EntitySet;
 var Registry = Elsinore.Registry;
 
 
+test.skip('quick test', function(t){
 
-test('creating a filter by passing multiple component ids', function(t){
-    var f = EntityFilter.create( EntityFilter.INCLUDE, Components.Animal, Components.Doctor, Components.Flower );
+    var mixin = {
+        hello: function(){
+            log.debug('hello there');
+        }
+    };
 
-    t.equals( f.type, EntityFilter.INCLUDE );
-    t.deepEqual( f.bitField.toValues(), [Components.Animal, Components.Doctor, Components.Flower] );
+    var base = function(){};
+
+    var prot = _.extend( base.prototype, {soup:'tasty', colour:'beige'}, mixin );
+    var instance = Object.create( prot ); //, { colour:function(){ return 'white' } } );
+
+    instance.hello();
+
+    log.debug('good ' + instance.soup + ' ' + instance.colour );
+
+    // var derp = new mixin();
+    // derp.hello();
 
     t.end();
 });
 
-test('creating multiple filters by passing an array', function(t){
-    var f = EntityFilter.create( [
+test('creating a filter by passing multiple component ids', function(t){
+    var f = EntityFilter.create( EntityFilter.INCLUDE, Components.Animal, Components.Doctor, Components.Flower );
+    t.equals( f.type, EntityFilter.INCLUDE );
+    t.deepEqual( f.toArray(), [EntityFilter.INCLUDE, Components.Animal, Components.Doctor, Components.Flower] );
+    t.end();
+});
+
+test('creating an array filter by passing an array', function(t){
+    var f = EntityFilter.create(
                 [EntityFilter.NONE, Components.Mineral, Components.Animal],
-                [EntityFilter.INCLUDE, Components.Animal, Components.Doctor, Components.Flower]] );
+                [EntityFilter.INCLUDE, Components.Animal, Components.Doctor, Components.Flower] );
 
-    t.equals( f[0].type, EntityFilter.NONE );
-    t.deepEqual( f[0].bitField.toValues(), [Components.Animal, Components.Mineral] );
-
-    t.equals( f[1].type, EntityFilter.INCLUDE );
-    t.deepEqual( f[1].bitField.toValues(), [Components.Animal, Components.Doctor, Components.Flower] );
+    t.equals( f.size(), 2 );
+    t.equals( f.type, EntityFilter.ARRAY );
+    
+    t.deepEqual( f.toArray(),[
+        [EntityFilter.NONE, Components.Animal, Components.Mineral],
+        [EntityFilter.INCLUDE, Components.Animal, Components.Doctor, Components.Flower]
+        ]);
 
     t.end();
 });
@@ -114,6 +136,24 @@ test('rejects an entity which has any of the components', function(t){
     t.end();
 });
 
+test('rejects an entity which has any of the components with multiple filters', function(t){
+    var f = EntityFilter.create(
+        [EntityFilter.NONE, Components.Vegetable],
+        [EntityFilter.ALL, Components.Animal] );
+
+    var e = Entity.create();
+    t.notOk( f.accept(e) );
+    
+    e.addComponent( createComponent( Components.Animal ) );
+    t.ok( f.accept(e) );
+
+    e.addComponent( createComponent( Components.Vegetable ) );
+    t.notOk( f.accept(e) );
+
+    t.end();
+});
+
+
 
 test('transform will copy an incoming entity', function(t){
     var e = createEntity( Components.Mineral, Components.Vegetable, Components.Doctor );
@@ -182,11 +222,11 @@ test('iteratorSync iterates allowable entities from a source', function(t){
     var entitySet = createEntitySet();
     // Common.logEvents( es );
 
-    entitySet.addEntity( createEntity( Components.Animal ) );
-    entitySet.addEntity( createEntity( Components.Flower ) );
-    entitySet.addEntity( createEntity( Components.Mineral ) );
-    entitySet.addEntity( createEntity( Components.Vegetable ) );
-    entitySet.addEntity( createEntity( Components.Robot ) );
+    entitySet.add( createEntity( Components.Animal ) );
+    entitySet.add( createEntity( Components.Flower ) );
+    entitySet.add( createEntity( Components.Mineral ) );
+    entitySet.add( createEntity( Components.Vegetable ) );
+    entitySet.add( createEntity( Components.Robot ) );
 
     // use the entitySet as the source of entities
     it = f.iteratorSync( entitySet );
