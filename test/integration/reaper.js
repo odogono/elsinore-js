@@ -1,26 +1,29 @@
 var _ = require('underscore');
 var test = require('tape');
+var Sinon = require('sinon');
 
 var Common = require('../common');
 var Elsinore = Common.Elsinore;
 
 var EntityProcessor = Elsinore.EntityProcessor;
 var EntityFilter = Elsinore.EntityFilter;
-
+var EntitySet = Elsinore.EntitySet;
 
 /**
     This test demonstrates processors that use filters to determine which
     components it should operate on
 */
 test('reaper', function(t){
-
     var registry, entitySet;
     var cConnection, cTimeToLive, cDead;
     var ConnectionProcessor, ReaperProcessor;
 
+    var eventSpy = Sinon.spy();
+
     registry = Elsinore.Registry.create();
     entitySet = registry.createEntitySet();
-    Common.logEvents( entitySet );
+    entitySet.on('all', eventSpy);
+    // Common.logEvents( entitySet );
 
     cConnection = registry.registerComponent({id:'/connection', addr:{ type:'string' }});
     cTimeToLive = registry.registerComponent({id:'/ttl', expires_at:{ type:'number' }});
@@ -39,8 +42,6 @@ test('reaper', function(t){
         onUpdate: function( entityArray, timeMs ){
             var entity, i, len;
             
-            // log.debug('updating /p/reaper with ' + entityArray.length + ' entities');
-
             // any entities marked as dead should be removed
             for( i=0,len=entityArray.length;i<len;i++ ){
                 entity = entityArray[i];
@@ -66,18 +67,50 @@ test('reaper', function(t){
                 if( entity.Ttl.get('expires_at') <= timeMs ){
                     // adding the /dead component means that the entity will 
                     // no longer be processed by this processor
-                    log.debug('adding /dead to entity ' + entity.Connection.get('addr') );
+                    // log.debug('adding /dead to entity ' + entity.Connection.get('addr') );
                     this.addComponentToEntity( entity, '/dead' );
                 }
             }
         }
     });
 
+    entitySet = createTestEntitySet( registry, entitySet );
 
     processor = registry.addProcessor( ReaperProcessor, entitySet, {priority:200} );
     processor = registry.addProcessor( ConnectionProcessor, entitySet );
 
-    entitySet = populateEntitySet( registry, entitySet, [
+    registry.updateSync( Date.now() + 1200, {debug:true} );
+    // on the first update, two components should have the /dead component
+    // log.debug('1st check');
+    // printE( FilterEntitySet( entitySet, [EntityFilter.ALL, '/dead'] ) );
+    t.equals(
+        FilterEntitySet( entitySet, [EntityFilter.ALL, '/dead'] ).length,
+        2, 'there should be two components with /dead' );
+
+
+    registry.updateSync( Date.now() + 1300, {debug:true} );
+
+    // after the second update, two entities (with the /dead component) should have been removed
+    // log.debug('2nd check');
+    t.ok( eventSpy.calledWith('entity:remove'), 'entity:remove should have been called');
+
+    t.end();
+});
+
+
+
+function FilterEntitySet( entitySet, entityFilter ){
+    var registry = entitySet.getRegistry();
+    entityFilter = registry.createEntityFilter( entityFilter );
+
+    var collection = EntitySet.createCollection( entitySet, entityFilter, {listen:false} );
+    return collection.models;
+}
+
+
+
+function createTestEntitySet( registry, entitySet ){
+    return populateEntitySet( registry, entitySet, [
         [
             [ '/connection', { 'addr': '192.3.0.1'} ],
             [ '/ttl', { expires_at:Date.now()-300 } ]
@@ -97,19 +130,7 @@ test('reaper', function(t){
             [ '/connection', { 'addr': '192.3.0.5'} ]
         ]
     ] );
-
-    
-    registry.updateSync( Date.now() + 1200, {debug:true} );
-    // on the first update, two components should have the /dead component
-
-    registry.updateSync( Date.now() + 1300, {debug:true} );
-
-    // printE( entitySet );
-
-    t.end();
-});
-
-
+}
 
 function populateEntitySet( registry, entitySet, data ){
     return _.reduce( data, function( entitySet, entityData ){
