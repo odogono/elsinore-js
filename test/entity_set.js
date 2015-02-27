@@ -352,12 +352,13 @@ test('should only add a component of an accepted type', function(t){
     // Common.logEvents( entitySet );
     var entities = loadEntities( registry );
 
+    // printE( entities );
     // setting an entity filter means that the entitySet will
     // only add components that pass through the filter
     EntitySet.setEntityFilter( entitySet, EntityFilter.ALL, '/component/position' );
 
-    entitySet.add( entities.atSync(1) );
-    t.equals( entitySet.size(), 0);
+    // entitySet.add( entities.atSync(1) );
+    // t.equals( entitySet.size(), 0);
     
     entitySet.add( entities.atSync(0) );
     t.equals( entitySet.size(), 1);
@@ -398,11 +399,10 @@ test('should not add entities that have multiple excluded components', function(
     var entitySet = registry.createEntitySet();
     var entities = loadEntities( registry );
 
-        EntitySet.setEntityFilter( entitySet, EntityFilter.NONE, '/component/score','/component/nickname');
-        entitySet.add( entities );
-        t.equals( entitySet.size(), 1);
-        t.end();
-    // });
+    EntitySet.setEntityFilter( entitySet, EntityFilter.NONE, '/component/score','/component/nickname' );
+    entitySet.add( entities );
+    t.equals( entitySet.size(), 1);
+    t.end();
 });
 
 test('should only add entities that are included', function(t){
@@ -437,8 +437,9 @@ test('should only add entities that pass include/exclude', function(t){
     var entitySet = registry.createEntitySet();
     var entities = loadEntities( registry );
 
-    EntitySet.setEntityFilter( entitySet, [[EntityFilter.ALL, '/component/position'],
-                                [EntityFilter.NONE, '/component/realname']] );
+    EntitySet.setEntityFilter( entitySet, 
+        [EntityFilter.ALL, '/component/position'],
+        [EntityFilter.NONE, '/component/realname'] );
 
     entitySet.add( entities );
 

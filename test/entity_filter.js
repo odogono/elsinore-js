@@ -197,6 +197,18 @@ test('transform will exclude specified components on an entity', function(t){
 });
 
 
+test('transform all on a single component', function(t){
+    var e = createEntity( Components.Mineral, Components.Vegetable, Components.Robot );
+    var f = EntityFilter.create( EntityFilter.ALL, Components.Vegetable );
+
+    var te = f.transform( e );
+    t.ok( te.Mineral, 'transformed entity will have Mineral component' );
+    t.ok( te.Robot, 'transformed entity will have Robot component' );
+    t.ok( te.Vegetable, 'transformed entity will not have Vegetable component' );
+
+    t.end();
+});
+
 test('creating a filter with a custom accept function', function(t){
 
     var f = EntityFilter.create( function accept(entity,options){
