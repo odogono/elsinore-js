@@ -35,10 +35,15 @@ test('reaper', function(t){
         // the processor will receive entities which have the /dead component
         entityFilter: [ EntityFilter.ALL, '/dead' ],
         priority: 200,
-        onUpdate: function( entitySet, timeMs ){
+        
+        onUpdate: function( entityArray, timeMs ){
+            var entity, i, len;
+            
+            // log.debug('updating /p/reaper with ' + entityArray.length + ' entities');
+
             // any entities marked as dead should be removed
-            var it = entitySet.iteratorSync();
-            while( (entity = it.next().value) ){
+            for( i=0,len=entityArray.length;i<len;i++ ){
+                entity = entityArray[i];
                 this.destroyEntity( entity );
             }
         }
@@ -50,15 +55,18 @@ test('reaper', function(t){
         // the processor will not receive any entities which have the /dead component
         entityFilter: [ [EntityFilter.ALL, '/ttl'], [ EntityFilter.NONE, '/dead' ] ],
 
-        onUpdate: function( entitySet, timeMs ){
+        onUpdate: function( entityArray, timeMs ){
+            var entity, i, len;
+            // log.debug('updating /p/connection with ' + entityArray.length + ' entities');
             // any entities which have an expired ttl should be marked as dead
-            var it = entitySet.iteratorSync();
-            while( (entity = it.next().value) ){
-                printE( entity );
+            for( i=0,len=entityArray.length;i<len;i++ ){
+                entity = entityArray[i];
+                // printE( entity );
 
                 if( entity.Ttl.get('expires_at') <= timeMs ){
                     // adding the /dead component means that the entity will 
                     // no longer be processed by this processor
+                    log.debug('adding /dead to entity ' + entity.Connection.get('addr') );
                     this.addComponentToEntity( entity, '/dead' );
                 }
             }
@@ -71,27 +79,32 @@ test('reaper', function(t){
 
     entitySet = populateEntitySet( registry, entitySet, [
         [
-            [ '/connection', { 'addr': '214.140.36.160'} ],
+            [ '/connection', { 'addr': '192.3.0.1'} ],
             [ '/ttl', { expires_at:Date.now()-300 } ]
         ],
         [
-            [ '/connection', { 'addr': '217.146.191.19'} ]
+            [ '/connection', { 'addr': '192.3.0.2'} ]
         ],
         [
-            [ '/connection', { 'addr': '76.210.45.4'} ],
-            [ '/ttl', { expires_at:Date.now()+300, 'comment':'a' }]
+            [ '/connection', { 'addr': '192.3.0.3'} ],
+            [ '/ttl', { expires_at:Date.now()+600, 'comment':'a' }]
         ],
         [
-            [ '/connection', { 'addr': '178.65.210.178'} ],
-            [ '/ttl', { expires_at:Date.now()+600, 'comment':'b' } ]
+            [ '/connection', { 'addr': '192.3.0.4'} ],
+            [ '/ttl', { expires_at:Date.now()+2000, 'comment':'b' } ]
         ],
         [
-            [ '/connection', { 'addr': '217.146.191.19'} ]
+            [ '/connection', { 'addr': '192.3.0.5'} ]
         ]
     ] );
 
+    
     registry.updateSync( Date.now() + 1200, {debug:true} );
+    // on the first update, two components should have the /dead component
 
+    registry.updateSync( Date.now() + 1300, {debug:true} );
+
+    // printE( entitySet );
 
     t.end();
 });

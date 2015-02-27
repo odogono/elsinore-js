@@ -23,7 +23,7 @@ var componentByUri = _.reduce( componentSchemas,
                             return memo;
                         }, {});
 
-// test.only('creating components', function(t){
+test('creating components', function(t){
 
     test('create from a schema', function(t){
         var registry = Registry.create();
@@ -88,22 +88,76 @@ var componentByUri = _.reduce( componentSchemas,
         t.end();
     });
 
-//     t.end();
-// });
-
-
-
-
-test.skip('create entity filter', function(t){
-    var registry = Registry.create();
-    registry.registerComponent( componentSchemas );
-
-    var ef = registry.createEntityFilter( EntityFilter.ALL, '/component/position' );
-
     t.end();
 });
 
 
+
+
+
+test( 'creating entity filters', function(t){
+
+    test('create an entity filter', function(t){
+        var registry = Registry.create();
+        registry.registerComponent( componentSchemas );
+
+        EntityFilter.create = function( entityFilter ){
+            t.deepEqual( entityFilter, [EntityFilter.ALL,registry.getIId('/component/position')] );
+        }
+
+        registry.createEntityFilter( EntityFilter.ALL, '/component/position' );
+
+        t.end();
+    });
+
+    test('create an entity filter with an array', function(t){
+        var registry = Registry.create();
+        registry.registerComponent( componentSchemas );
+
+        EntityFilter.create = function( entityFilter ){
+            t.deepEqual( entityFilter, 
+                [EntityFilter.EXCLUDE, registry.getIId('/component/score'), registry.getIId('/component/nickname') ] );
+        }
+        // printIns( registry );
+        registry.createEntityFilter( [EntityFilter.EXCLUDE, '/component/score', '/component/nickname'] );
+
+        t.end();
+    });
+
+    test('create an entity filter with multiple arrays', function(t){
+        var registry = Registry.create();
+        registry.registerComponent( componentSchemas );
+
+        EntityFilter.create = function( entityFilterA, entityFilterB ){
+            t.deepEqual( entityFilterA, 
+                [EntityFilter.ALL, registry.getIId('/component/realname') ] );
+            t.deepEqual( entityFilterB, 
+                [EntityFilter.NONE, registry.getIId('/component/position') ] );
+        };
+
+        registry.createEntityFilter( [EntityFilter.ALL, '/component/realname'], [EntityFilter.NONE, '/component/position'] );
+
+        t.end();
+    });
+
+    test('create an entity filter with an array of arrays', function(t){
+        var registry = Registry.create();
+        registry.registerComponent( componentSchemas );
+
+        EntityFilter.create = function( entityFilterA, entityFilterB ){
+            t.deepEqual( entityFilterA, 
+                [EntityFilter.SOME, registry.getIId('/component/realname') ] );
+            t.deepEqual( entityFilterB, 
+                [EntityFilter.ANY, registry.getIId('/component/position') ] );
+        };
+        
+        registry.createEntityFilter( [[EntityFilter.SOME, '/component/realname'], [EntityFilter.ANY, '/component/position']] );
+
+        t.end();
+    });
+
+    t.end();
+});
 // describe('Registry', function(){
 
 
