@@ -37,7 +37,6 @@ test('reaper', function(t){
         name:'/p/reaper',
         // the processor will receive entities which have the /dead component
         entityFilter: [ EntityFilter.ALL, '/dead' ],
-        priority: 200,
         
         onUpdate: function( entityArray, timeMs ){
             var entity, i, len;
@@ -54,7 +53,7 @@ test('reaper', function(t){
         name:'/p/connection',
         
         // the processor will not receive any entities which have the /dead component
-        entityFilter: [ [EntityFilter.ALL, '/ttl'], [ EntityFilter.NONE, '/dead' ] ],
+        entityFilter: [EntityFilter.ALL, '/ttl'],
 
         onUpdate: function( entityArray, timeMs ){
             var entity, i, len;
@@ -65,9 +64,12 @@ test('reaper', function(t){
                 // printE( entity );
 
                 if( entity.Ttl.get('expires_at') <= timeMs ){
+                    // removing /ttl means that this will no longer be processed
+                    // by this processor
+                    this.removeComponentFromEntity( entity, entity.Ttl );
+
                     // adding the /dead component means that the entity will 
-                    // no longer be processed by this processor
-                    // log.debug('adding /dead to entity ' + entity.Connection.get('addr') );
+                    // eventually be destroyed by the reaper processor
                     this.addComponentToEntity( entity, '/dead' );
                 }
             }
@@ -80,9 +82,6 @@ test('reaper', function(t){
     processor = registry.addProcessor( ConnectionProcessor, entitySet );
 
     registry.updateSync( Date.now() + 1200, {debug:true} );
-    // on the first update, two components should have the /dead component
-    // log.debug('1st check');
-    // printE( FilterEntitySet( entitySet, [EntityFilter.ALL, '/dead'] ) );
     t.equals(
         FilterEntitySet( entitySet, [EntityFilter.ALL, '/dead'] ).length,
         2, 'there should be two components with /dead' );
@@ -92,7 +91,7 @@ test('reaper', function(t){
 
     // after the second update, two entities (with the /dead component) should have been removed
     // log.debug('2nd check');
-    t.ok( eventSpy.calledWith('entity:remove'), 'entity:remove should have been called');
+    t.ok( eventSpy.calledWith('entity:remove'), 'entity:remove should have been called twice');
 
     t.end();
 });

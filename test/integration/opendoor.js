@@ -34,11 +34,12 @@ test('main', function(t){
             'stone': 500
         },
 
-        onUpdate: function( entitySet, timeMs ){
-            var entity;
+        onUpdate: function( entityArray, timeMs ){
+            var entity, i, len;
             var closeTime;
-            var it = entitySet.iteratorSync();
-            while( (entity = it.next().value) ){
+            
+            for( i=0,len=entityArray.length;i<len;i++ ){
+                entity = entityArray[i];
                 closeTime = this.closingTime[ entity.Door.get('material') ];
                 if (timeMs >= entity.Door.get('open') + closeTime ) {
                     entity.Door.set({open:false});
