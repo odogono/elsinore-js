@@ -31,7 +31,6 @@
     "deep-equal": "^0.2.1"
   },
   "devDependencies": {
-    "babel": "^4.0.1",
     "browserify": "^9.0.3",
     "browserify-tape-spec": "^1.1.2",
     "del": "^1.1.1",
