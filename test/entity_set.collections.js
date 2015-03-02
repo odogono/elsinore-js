@@ -12,10 +12,6 @@ var Registry = Elsinore.Registry;
 var Utils = Elsinore.Utils;
 
 
-/***
-
-
-*/
 
 test('the collection should have the same entities', function(t){
     var registry = initialiseRegistry();
@@ -34,11 +30,14 @@ test('removing an entity from the entitySet should also remove it from the colle
 
     var entitySet = loadEntities( registry );
     var collection = EntitySet.createCollection( entitySet );
-    Common.logEvents( entitySet, 'entitySet' );
-    Common.logEvents( collection, 'collection' );
+
+    // Common.logEvents( entitySet, 'entitySet' );
+    // Common.logEvents( collection, 'collection' );
 
     entitySet.remove( entitySet.atSync(0) );
+    collection.update();
     
+    // printE( collection );
     t.equals( entitySet.size(), collection.length, 'same number of entities');
 
     t.end();    
@@ -47,7 +46,7 @@ test('removing an entity from the entitySet should also remove it from the colle
 test('adding an entity should also see it appear in the collection', function(t){
     var registry = initialiseRegistry();
     var entitySet = registry.createEntitySet();
-    var collection = EntitySet.createCollection( entitySet );
+    var collection = EntitySet.createCollection( entitySet, null, {updateOnEvent:true} );
 
     entitySet.addComponent( 
         registry.createComponent( '/component/position', {x:-2,y:5}) );
@@ -61,11 +60,16 @@ test('removing a component from an entity', function(t){
     var entity;
     var registry = initialiseRegistry();
     var entitySet = registry.createEntitySet();
-    var collection = EntitySet.createCollection( entitySet );
+    var collection = EntitySet.createCollection( entitySet, null, {updateOnEvent:true} );
 
-    entitySet.addComponent([ 
-        registry.createComponent( '/component/flower', {colour:'red'}),
-        registry.createComponent( '/component/position', {x:-2,y:5})] );
+    entitySet.add(
+        registry.createEntity([
+            { id:'/component/flower', colour:'red'},
+            { id:'/component/position', x:-2, y:5 }] ));
+        
+    // collection.update();
+    
+    // printE( collection );
 
     t.ok( collection.at(0).Position, 'the entity should have position' );
 

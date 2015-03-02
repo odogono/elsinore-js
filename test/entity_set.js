@@ -75,7 +75,7 @@ test('removing a component from returns the removed component', function(t){
     entitySet.on('all', eventSpy);
 
     component = entitySet.addComponent( registry.createComponent( '/component/position', {x:15,y:2}) );
-    component = entitySet.removeComponent( component, {debug:true} );
+    component = entitySet.removeComponent( component );
 
     t.ok( eventSpy.calledWith('entity:remove'), 'entity:remove should have been called');
     t.equals( component.getEntityId(), 0, 'component should not have an entity id');
@@ -279,21 +279,17 @@ test('should remove a component reference from an entity', function(t){
     var eventSpy = Sinon.spy();
 
     var entities = loadEntities( registry );
+    var addedEntity = entitySet.add( entities.at(0) );
 
-        var entity = entities.atSync(0);
-        
-        entitySet.addComponent( [entity.Position, entity.Nickname, entity.Realname] );
-        var addedEntity = entitySet.atSync(0);
+    t.ok( addedEntity.Realname !== undefined, 'the entity should have the Realname component' );
+    
+    entitySet.removeComponent( addedEntity.Realname );
 
-        t.ok( addedEntity.Realname !== undefined, 'the entity should have the Realname component' );
-        
-        entitySet.removeComponent( entity.Realname );
-        
-        addedEntity = entitySet.atSync(0);
-        
-        t.ok( addedEntity.Realname === undefined, 'the entity should not have the Realname component' );
-        t.end();
-    // });
+    addedEntity = entitySet.atSync(0);
+    
+    t.ok( addedEntity.Realname === undefined, 'the entity should not have the Realname component' );
+
+    t.end();
 });
 
 test('should add an entity', function(t){
@@ -302,14 +298,13 @@ test('should add an entity', function(t){
     var eventSpy = Sinon.spy();
 
     var entities = loadEntities( registry );  
+    var entity = entities.at(0);
 
-        var entity = entities.atSync(0);
-        entitySet.add( entity );
-        t.equals( entitySet.size(), 1);
-        entitySet.add( entity );
-        t.equals( entitySet.size(), 1);
-        t.end();
-    // });
+    entitySet.add( entity );
+    t.equals( entitySet.size(), 1);
+    entitySet.add( entity );
+    t.equals( entitySet.size(), 1);
+    t.end();
 });
 
 
@@ -632,17 +627,21 @@ test('attached entitysets', function(t){
     
     // other ES will accept only entities with Position and Realname
     var oEntitySet = registry.createEntitySet();
-        EntitySet.setEntityFilter( oEntitySet, EntityFilter.ALL, '/component/position','/component/realname' );
+    // set a filter on the other entitySet so that it will only accept components that
+    // have /position and /realname
+    EntitySet.setEntityFilter( oEntitySet, EntityFilter.ALL, '/component/position','/component/realname' );
 
-        oEntitySet.attachTo( entitySet );
+    // make the other entitySet listen to the origin entitySet
+    oEntitySet.attachTo( entitySet );
 
-        entitySet.add( entities.atSync(0) );
-        entitySet.add( entities.atSync(4) );
+    // add some entities to the origin entitySet
+    entitySet.add( entities.at(0) );
+    entitySet.add( entities.at(4) );
 
-        // these added entities should end up in the other entityset
-        t.equals( oEntitySet.size(), 2 );
+    // these added entities should end up in the other entityset
+    t.equals( oEntitySet.size(), 2 );
 
-        t.end();
+    t.end();
     // });
 });
 

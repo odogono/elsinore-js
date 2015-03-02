@@ -31,19 +31,23 @@ test('creating a filesystem entityset', function(t){
 
 
 test('adding a component without an id or an entity id creates a new component and a new entity', function(t){
-    return initialiseAndOpenEntitySet()
+    return initialiseAndOpenEntitySet( true )
         .then( function(entitySet){
             var registry = entitySet.getRegistry();
-            return entitySet.addComponent( registry.createComponent( '/component/position', {x:15,y:2}) );
+            return entitySet.addComponent( 
+                registry.createComponent( '/component/position', {x:15,y:2}) )
+                .then( function(){
+                    return entitySet;
+                });
         })
         .then( function(entitySet){
+            log.debug('retrieve back');
             // retrieve the first entity in the set
-            return entitySet.at(0)
-                .then( function(entity){
-                    t.ok( entity.Position, 'entity should have position' );
-                    t.equals( entity.Position.get('x'), 15 );
-                    t.end();
-                });
+            return entitySet.at(0).then( function(entity){
+                t.ok( entity.Position, 'entity should have position' );
+                t.equals( entity.Position.get('x'), 15 );
+                t.end();
+            });
         });
 });
 
@@ -62,12 +66,15 @@ test('retrieving an existant entity', function(t){
     return initialiseAndOpenEntitySet()
         .then( function(entitySet){
             var e = Entity.create( 43 );
-            return entitySet.addEntity( e );
+            return entitySet.add( e )
+                .then( function(){
+                    return entitySet;
+                });
         })
         .then( function(entitySet){
             return entitySet.getEntity( 43 )
                 .then( function(entity){
-                    t.equal( entity.id, 43 );
+                    t.equal( entity.id, 43, 'the id should be the same' );
                     t.end();
                 });
         });
@@ -76,13 +83,10 @@ test('retrieving an existant entity', function(t){
 
 test('adding several components without an entity adds them to the same new entity', function(t){
     var eventSpy = Sinon.spy();
-    var entitySet;
-    var registry;
 
     return initialiseAndOpenEntitySet()
-        .then( function(es){
-            entitySet = es;
-            registry = entitySet.getRegistry();
+        .then( function(entitySet){
+            var registry = entitySet.getRegistry();
             entitySet.on('all', eventSpy);
 
             return entitySet.addComponent( [
@@ -136,10 +140,10 @@ test('adding an entity with components', function(t){
             entity.addComponent( registry.createComponent( '/component/position', {id:5, x:2,y:-2}) );
             entity.addComponent( registry.createComponent( '/component/score', {id:6, score:100}) );
             
-            return entitySet.addEntity( entity )
-                .then( function(){
-                    return entitySet.at(0);
-                })
+            return entitySet.add( entity );
+                // .then( function(){
+                //     return entitySet.at(0);
+                // })
         })
         .then( function(entity){
             t.equals( eventSpy.callCount, 2, 'four events should have been emitted' );
@@ -178,40 +182,41 @@ test('should remove the entities component', function(t){
 });
 
 
-test.only('should remove a component reference from an entity', function(t){
-    var entity;
-    var entitySet;
-    var registry;
-    var loadedEntitySet;
-
+test('should remove a component reference from an entity', function(t){
     return initialiseAndOpenEntitySet()
-        .then( function(es){
-            entitySet = es;
-            registry = entitySet.getRegistry();
-            loadedEntitySet = loadEntities( registry, null, {memory:true} );
-
-            entity = Entity.create();
-            // entity.addComponent( registry.createComponent( '/component/position', {id:5, x:2,y:-2}) );
-            // entity.addComponent( registry.createComponent( '/component/score', {id:6, score:100}) );
+        .then( function(entitySet){
+            var registry = entitySet.getRegistry();
+            var loadedEntitySet = loadEntities( registry, null, {memory:true} );
+            var entityId;
             
-            entitySet.removeEntity( 2 , {debug:true})
-                .then( function(){
+            entitySet.add( loadedEntitySet.at(0) )
+                .then( function(entity){
+                    entityId = entity.getEntityId();
+                    t.ok( entity.Realname !== undefined, 'the entity should have the Realname component' );
+                    return entitySet.removeComponent( entity.Realname );
+                })
+                .then( function(removedComponent){
+                    return entitySet.getEntity( entityId );
+                })
+                .then( function(entity){
+                    t.ok( entity.Realname === undefined, 'the entity should not have the Realname component' );
                     t.end();
                 });
         });
-
 });
 
 
-function initialiseAndOpenEntitySet(){
-    var registry = initialiseRegistry( true );
+function initialiseAndOpenEntitySet( logEvents ){
+    var registry = initialiseRegistry( logEvents );
     var entitySet = createEntitySet( registry );
     return entitySet.open();
 }
 
 function createEntitySet( registry ){
-    var path = Common.pathVar( 'test/fes', true );
-    var entitySet = registry.createEntitySet( FileSystemEntitySet, {path: path} );
+    var entitySet;
+    var path;
+    path = Common.pathVar( 'test/fes', true );
+    entitySet = registry.createEntitySet( FileSystemEntitySet, {path: path} );
     return entitySet;
 }
 
@@ -262,6 +267,7 @@ function loadEntities( registry, fixtureName, options ){
             result.addComponent( com );
             return com;
         });
+        return result;
     } 
         
     return _.reduce( _.compact(lines), function(current, line){
