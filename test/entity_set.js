@@ -23,7 +23,7 @@ test('adding an entity with a component returns the added entity', function(t){
     var registry = initialiseRegistry();
     var entitySet = registry.createEntitySet();
 
-    entity = registry.createEntity( { _s:'/component/position', x:2, y:-2 } );
+    entity = registry.createEntity( { id:'/component/position', x:2, y:-2 } );
     entity = entitySet.add( entity );
 
     t.ok( entity.getEntityId() > 0, 'the entity should have an id' );
@@ -85,7 +85,7 @@ test('removing a component from returns the removed component', function(t){
 
 
 test('you cant add an empty entity to an entityset', function(t){
-    var registry = initialiseRegistry(true);
+    var registry = initialiseRegistry();
     var entitySet = registry.createEntitySet();
 
     var e = Entity.create( 43 );
@@ -119,6 +119,7 @@ test('adding several components without an entity adds them to the same new enti
         return t.end();
     // });
 });
+
 
 test('adding a component generates events', function(t){
     var registry = initialiseRegistry();

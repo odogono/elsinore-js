@@ -10,6 +10,15 @@ var Elsinore = require('../lib');
 var Entity = Elsinore.Entity;
 
 
+test('is an entity', function(t){
+    var e = Entity.create();
+    t.equals( e.type, 'Entity' );
+    t.equals( Entity.prototype.type, 'Entity' );
+    // printIns( Entity.prototype );
+    t.end();
+});
+
+
 test('setting the id', function(t){
     var e = Entity.create();
     // e.setEntitySetId( 2000 );

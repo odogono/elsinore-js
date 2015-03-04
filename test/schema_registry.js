@@ -36,12 +36,13 @@ test('registering a schema', function(t){
 
 
 
+
 test('retrieving schema fragments', function(t){
     var schema = {
-        id: '/schema/def',
+        id: 'elsinore:/schema',
         definitions:{
             foo: { type: 'integer' },
-            bar: { id:'#bar', type: 'string' }
+            bar: { id:'#baz', type: 'string' }
         },
         misc:{
             id: '/schema/other',
@@ -55,18 +56,16 @@ test('retrieving schema fragments', function(t){
     // Common.logEvents( registry );
     registry.register( schema );
 
-    // printVar( registry );
-
-    t.deepEqual( registry.get('/schema/def#definitions/foo'), {type: 'integer'} );
-    t.deepEqual( registry.get('/schema/def#bar'), {id:'/schema/def#bar', type:'string'} );
-    t.deepEqual( registry.get('/schema/def#definitions/bar'), {id:'/schema/def#bar', type:'string'} );
+    t.deepEqual( registry.get('elsinore:/schema#definitions/foo'), {type: 'integer'} );
+    t.deepEqual( registry.get('elsinore:/schema#baz'), {id:'elsinore:/schema#baz', type:'string'} );
+    t.deepEqual( registry.get('elsinore:/schema#definitions/bar'), {id:'elsinore:/schema#baz', type:'string'} );
 
     t.end();
 });
 
 test('retrieving an array of properties', function(t){
     var schema = {
-        id: '/schema/props',
+        id: 'elsinore:/schema/props',
         properties:{
             name:{ type:'string' },
             age: { type:'integer' },
@@ -78,7 +77,7 @@ test('retrieving an array of properties', function(t){
     var schema = registry.register( schema );
 
     t.deepEqual(
-        registry.getProperties('/schema/props'),
+        registry.getProperties('elsinore:/schema/props'),
         [{ name:'name', type:'string' }, { name:'age', type:'integer' }, { name:'address', type:'string' }]
         )
     
@@ -87,7 +86,7 @@ test('retrieving an array of properties', function(t){
 
 test('returning an array of sorted properties', function(t){
     var schema = {
-        id:'/schema/sorted',
+        id:'elsinore:/schema/sorted',
         properties:{
             status:{ type:"integer" },
             name:{ type: "string" },
@@ -104,7 +103,7 @@ test('returning an array of sorted properties', function(t){
     var schema = registry.register( schema );
 
     t.deepEqual(
-        registry.getProperties('/schema/sorted'),
+        registry.getProperties('elsinore:/schema/sorted'),
         [
             { name:'id', priority:3, type:'integer' }, 
             { name:'name', priority:2, type:'string' }, 
@@ -325,6 +324,35 @@ test('retrieving different versions of a schema by id', function(t){
     t.end();
 });
 
+test('something or other', function(t){
+    var schema = {
+        id: 'elsinore:/schema',
+
+        boat:{
+            properties:{
+                name: { '$ref':'#definitions/name' },
+                length: { '$ref':'#definitions/length' }
+            }
+        },
+
+        definitions:{
+            length: { type: 'integer' },
+            name: { type: 'string' }
+        },
+    };
+
+    var registry = SchemaRegistry.create();
+    // Common.logEvents( registry );
+    registry.register( schema );
+
+    t.deepEqual(
+        registry.get('elsinore:/schema#boat'),
+        {id: 'elsinore:/schema#boat', properties: { length: {}, name: {} }} );
+    
+    t.end();
+
+});
+
 test('obtain full details of a schema', function(t){
     var schema = {
         id:'/schema/details',
@@ -457,11 +485,15 @@ test('registering a schema returns the schemas registered', function(t){
 
 test('returns an array of schema internal ids from a series of identifiers', function(t){
     var registry = SchemaRegistry.create();
+    // Common.logEvents( registry );
     registry.register( componentSchemas );
 
+    // printIns( registry.getIId('elsinore:/component#position') );
+    // printIns( registry.schemasByHash );
+
     t.deepEqual(
-        registry.getIId( '/component/position', 'nuts', '49944f67', 9, '/component/geo_location', 'ea9646ec' ),
-        [ 15, undefined, 11, 9, 6, 3 ] );
+        registry.getIId( '/component/position', 'nuts', 'c6c1bcdf', 9, '/component/geo_location', 'bd12d7de' ),
+        [ 14, undefined, 11, 9, 7, 3 ] );
 
     t.end();
 })

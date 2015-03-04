@@ -1,16 +1,16 @@
-{"_e":1, "_s":"/component/position", "x":10, "y":-10}
-{"_e":1, "_s":"/component/nickname", "nick":"john"}
-{"_e":1, "_s":"/component/realname", "realname":"John Smith"}
+{"_e":1, "id":"/component/position", "x":10, "y":-10}
+{"_e":1, "id":"/component/nickname", "nick":"john"}
+{"_e":1, "id":"/component/realname", "realname":"John Smith"}
 
-{"_e":2, "_s":"/component/nickname", "nick":"peter"}
-{"_e":2, "_s":"/component/score", "score":3}
+{"_e":2, "id":"/component/nickname", "nick":"peter"}
+{"_e":2, "id":"/component/score", "score":3}
 
-{"_e":3, "_s":"/component/position", "x":-32, "y":10}
-{"_e":3, "_s":"/component/score", "score":10}
+{"_e":3, "id":"/component/position", "x":-32, "y":10}
+{"_e":3, "id":"/component/score", "score":10}
 
-{"_e":4, "_s":"/component/realname", "name":"susan mayall"}
+{"_e":4, "id":"/component/realname", "name":"susan mayall"}
 
-{"_e":5, "_s":"/component/position", "x":-6, "y":0}
-{"_e":5, "_s":"/component/nickname", "nick":"terry"}
-{"_e":5, "_s":"/component/realname", "realname":"Terry June"}
-{"_e":5, "_s":"/component/score", "score":123}
+{"_e":5, "id":"/component/position", "x":-6, "y":0}
+{"_e":5, "id":"/component/nickname", "nick":"terry"}
+{"_e":5, "id":"/component/realname", "realname":"Terry June"}
+{"_e":5, "id":"/component/score", "score":123}

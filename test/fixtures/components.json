@@ -1,5 +1,7 @@
-[
-    {
+{
+    "id":"elsinore/component",
+
+    "nickname": {
         "id":"/component/nickname",
         "description":"an entity identifiable by a name",
         "properties":{
@@ -9,7 +11,8 @@
             }
         }
     },
-    {
+
+    "position": {
         "id": "/component/position",
         "properties":{
             "x": { "type": "number", "default": 0 },
@@ -18,15 +21,9 @@
             "w": { "type": "number", "default": 0 }
         }
     },
-    {
-        "id": "/component/position",
-        "properties":{
-            "x": { "type":"number" },
-            "y": { "type":"number" },
-            "z": { "type":"number" }
-        }
-    },
-    {
+
+
+    "score": {
         "id": "/component/score",
         "properties": {
             "score": { "type":"integer" },
@@ -34,52 +31,46 @@
         }
     },
 
-    
-
-    {
-        "id":"/component/realname",
+    "realname": {
+        "id": "/component/realname",
         "properties":{
             "name":{  "type":"string", "minLength":3, "maxLength":50 }
         }
     },
 
-    {
-        "id":"/component/command",
+    "command": {
+        "id": "/component/command",
         "properties":{
             "id":{ "type":"string" },
             "keyword": { "type":"string" },
             "parameters":{  "type":"array" },
             "command":{ "type":"object", "description":"command object" },
             "status":{ "type":"string", "enum":[ "unprocessed", "processed" ] }
-        },
-        "transient":true
+        }
     },
 
-    {
-        "id":"/component/channel",
-
+    "channel": {
+        "id": "/component/channel",
         "properties":{
         }
     },
 
-    {
-        "id":"/component/channel_member",
-
+    "channel_member": {
+        "id": "/component/channel_member",
         "properties":{
             "channel":{ "type":"integer", "format":"entity" }
         }
     },
 
-    {
-        "id":"/component/channel/topic",
-
+    "channel": {
+        "id": "/component/channel",
         "properties":{
             "topic":{ "type":"string" }
         }
     },
 
-    {
-        "id":"/component/tag",
+    "tag": {
+        "id": "/component/tag",
         "properties":{
             "code":{ "type":"string" },
             "name":{ "type":"string" },
@@ -87,8 +78,8 @@
         }
     },
 
-    {
-        "id":"/component/geo_location",
+    "geo_location": {
+        "id": "/component/geo_location",
         "description": "A geographical coordinate",
         "properties": {
             "latitude": { "type": "number" },
@@ -98,36 +89,36 @@
         }
     },
 
-    {
-        "id":"/component/radius",
+    "radius": {
+        "id": "/component/radius",
         "properties":{
             "radius":{ "type":"number" }
         }
     },
 
-    {
-        "id":"/component/flower",
+    "flower": {
+        "id": "/component/flower",
         "properties":{
             "name":{ "type":"string" },
             "colour":{ "type":"string" }
         }
     },
-    {
-        "id":"/component/animal",
+    "animal": {
+        "id": "/component/animal",
         "properties":{
             "name":{ "type":"string" }
         }
     },
-    {
-        "id":"/component/mineral",
+    "mineral": {
+        "id": "/component/mineral",
         "properties":{
             "name":{ "type":"string" }
         }
     },
-    {
-        "id":"/component/vegetable",
+    "vegetable": {
+        "id": "/component/vegetable",
         "properties":{
             "name":{ "type":"string" }
         }
     }
-]
+}

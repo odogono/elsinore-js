@@ -21,7 +21,7 @@ var FileSystemEntitySet = require('../lib/fs_entity_set');
 
 
 test('creating a filesystem entityset', function(t){
-    var registry = initialiseRegistry(true);
+    var registry = initialiseRegistry();
     var entitySet = registry.createEntitySet( FileSystemEntitySet );
 
     t.ok( FileSystemEntitySet.isFileSystemEntitySet(entitySet), 'the created entityset should be a FileSystemEntitySet' );
@@ -31,7 +31,7 @@ test('creating a filesystem entityset', function(t){
 
 
 test('adding a component without an id or an entity id creates a new component and a new entity', function(t){
-    return initialiseAndOpenEntitySet( true )
+    return initialiseAndOpenEntitySet()
         .then( function(entitySet){
             var registry = entitySet.getRegistry();
             return entitySet.addComponent( 
@@ -41,7 +41,7 @@ test('adding a component without an id or an entity id creates a new component a
                 });
         })
         .then( function(entitySet){
-            log.debug('retrieve back');
+            // log.debug('retrieve back');
             // retrieve the first entity in the set
             return entitySet.at(0).then( function(entity){
                 t.ok( entity.Position, 'entity should have position' );

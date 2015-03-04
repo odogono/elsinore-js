@@ -27,12 +27,13 @@ test('creating components', function(t){
 
     test('create from a schema', function(t){
         var registry = Registry.create();
+        // Common.logEvents( registry );
         // passing a schema as the first argument will cause the component to be
         // registered at the same time
         var component = registry.createComponent( componentByUri['/component/position'], { x:200 } );
 
         t.equals( component.schemaUri, '/component/position' );
-        t.equals( component.schemaHash, '6f39b39f' );
+        t.equals( component.schemaHash, '9db8f95b' );
         t.equals( component.get('x'), 200 );
 
         t.end();
@@ -56,8 +57,6 @@ test('creating components', function(t){
 
         var component = registry.createComponent( '/component/nickname', {nick:'peter'} );
 
-        // printIns( component );
-
         t.equals( component.get('nick'), 'peter' );
 
         t.end();
@@ -68,7 +67,7 @@ test('creating components', function(t){
 
         registry.registerComponent( componentByUri['/component/nickname'] );
 
-        var component = registry.createComponent( {_s:'/component/nickname', nick:'susan'} );
+        var component = registry.createComponent( {id:'/component/nickname', nick:'susan'} );
 
         t.equals( component.get('nick'), 'susan' );
 
