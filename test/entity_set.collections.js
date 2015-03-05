@@ -62,6 +62,9 @@ test('removing a component from an entity', function(t){
     var entitySet = registry.createEntitySet();
     var collection = EntitySet.createCollection( entitySet, null, {updateOnEvent:true} );
 
+    // Common.logEvents( collection );
+    // Common.logEvents( entitySet );
+
     entitySet.add(
         registry.createEntity([
             { id:'/component/flower', colour:'red'},
@@ -79,6 +82,33 @@ test('removing a component from an entity', function(t){
     t.ok( _.isUndefined( collection.at(0).Position ), 'the entity should have no position' );
     t.end();
 });
+
+test('removing a relevant component from an entity should trigger a component:remove event', function(t){
+    var entity;
+    var eventSpy = Sinon.spy();
+    var registry = initialiseRegistry();
+    var entitySet = loadEntities( registry );
+    var entityFilter = registry.createEntityFilter( EntityFilter.ALL, '/component/score' );
+    var collection = EntitySet.createCollection( entitySet, entityFilter, {updateOnEvent:true} );
+
+    collection.on('all', eventSpy);
+
+    // Common.logEvents( entitySet );
+    // Common.logEvents( collection );
+
+    // remove an unrelated component to the collection
+    entitySet.removeComponent( entitySet.at( 0 ).Position );
+    
+    // remove the score component from the first entity in the collection
+    // printIns( collection.at( 0 ).Score );
+    entitySet.removeComponent( collection.at( 0 ).Score );
+
+    t.ok( eventSpy.calledOnce, 'only one event emitted from the collection' );
+    t.ok( eventSpy.calledWith('component:remove'), 'component:remove should have been called');
+
+    t.end();
+});
+
 
 test('applying a filter', function(t){
     var entity;

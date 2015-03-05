@@ -66,7 +66,7 @@ test('adding a component without an id or an entity id creates a new component a
     t.end();
 });
 
-test('removing a component from returns the removed component', function(t){
+test('removing a component from an entity with only one component', function(t){
     var registry = initialiseRegistry();
     var entitySet = registry.createEntitySet();
     var eventSpy = Sinon.spy();
@@ -77,12 +77,40 @@ test('removing a component from returns the removed component', function(t){
     component = entitySet.addComponent( registry.createComponent( '/component/position', {x:15,y:2}) );
     component = entitySet.removeComponent( component );
 
+    t.ok( eventSpy.calledWith('component:remove'), 'component:remove should have been called');
     t.ok( eventSpy.calledWith('entity:remove'), 'entity:remove should have been called');
-    t.equals( component.getEntityId(), 0, 'component should not have an entity id');
+    // t.equals( component.getEntityId(), 0, 'component should not have an entity id');
 
     t.end();
 });
 
+test('removing a component from an entity with multiple components', function(t){
+    var registry = initialiseRegistry();
+    var entitySet = registry.createEntitySet();
+    var eventSpy = Sinon.spy();
+    var entity;
+    var components;
+    // Common.logEvents( entitySet );
+
+    entitySet.on('all', eventSpy);
+
+    components = registry.createComponent([
+        { id:'/component/position', x:-100, y:20 },
+        { id:'/component/radius', radius:30 },
+    ]);
+
+    entity = entitySet.add( registry.createEntity(components) );
+    component = entitySet.removeComponent( components[0] );
+
+    // printE( component );
+    // log.debug( component.getEntityId() );
+    // printIns( eventSpy.getCall(2).args, 3 );
+
+    t.ok( eventSpy.calledWith('component:remove'), 'component:remove should have been called');
+    t.equals( entity.Position, undefined, 'the component is removed from the entity');
+
+    t.end();
+});
 
 test('you cant add an empty entity to an entityset', function(t){
     var registry = initialiseRegistry();
