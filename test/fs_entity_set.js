@@ -66,7 +66,7 @@ test('retrieving an existant entity', function(t){
     return initialiseAndOpenEntitySet()
         .then( function(entitySet){
             var e = Entity.create( 43 );
-            return entitySet.add( e )
+            return entitySet.addEntity( e )
                 .then( function(){
                     return entitySet;
                 });
@@ -140,7 +140,7 @@ test('adding an entity with components', function(t){
             entity.addComponent( registry.createComponent( '/component/position', {id:5, x:2,y:-2}) );
             entity.addComponent( registry.createComponent( '/component/score', {id:6, score:100}) );
             
-            return entitySet.add( entity );
+            return entitySet.addEntity( entity );
                 // .then( function(){
                 //     return entitySet.at(0);
                 // })
@@ -189,7 +189,7 @@ test('should remove a component reference from an entity', function(t){
             var loadedEntitySet = loadEntities( registry, null, {memory:true} );
             var entityId;
             
-            entitySet.add( loadedEntitySet.at(0) )
+            entitySet.addEntity( loadedEntitySet.at(0) )
                 .then( function(entity){
                     entityId = entity.getEntityId();
                     t.ok( entity.Realname !== undefined, 'the entity should have the Realname component' );

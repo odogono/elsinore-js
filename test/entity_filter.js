@@ -234,11 +234,11 @@ test('iteratorSync iterates allowable entities from a source', function(t){
     var entitySet = createEntitySet();
     // Common.logEvents( es );
 
-    entitySet.add( createEntity( Components.Animal ) );
-    entitySet.add( createEntity( Components.Flower ) );
-    entitySet.add( createEntity( Components.Mineral ) );
-    entitySet.add( createEntity( Components.Vegetable ) );
-    entitySet.add( createEntity( Components.Robot ) );
+    entitySet.addEntity( createEntity( Components.Animal ) );
+    entitySet.addEntity( createEntity( Components.Flower ) );
+    entitySet.addEntity( createEntity( Components.Mineral ) );
+    entitySet.addEntity( createEntity( Components.Vegetable ) );
+    entitySet.addEntity( createEntity( Components.Robot ) );
 
     // use the entitySet as the source of entities
     it = f.iteratorSync( entitySet );

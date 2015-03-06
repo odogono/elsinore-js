@@ -1,52 +1,41 @@
+var _ = require('underscore');
 var test = require('tape');
-var Common = require('./common');
-var Es = require('event-stream');
 var Sinon = require('sinon');
-var P = require('bluebird');
-P.longStackTraces();
 
-var EntityProcessor = Elsinore.EntityProcessor;
+var Common = require('./common');
+var Elsinore = require('../lib');
+
 var EntityFilter = Elsinore.EntityFilter;
 var EntitySet = Elsinore.EntitySet;
 var Entity = Elsinore.Entity;
 var Registry = Elsinore.Registry;
 var Utils = Elsinore.Utils;
 
+
+
 test('adding a processor to the registry', function(t){
-    return beforeEach().then( function(){
-        t.end();    
-    });
+    t.end();
 });
 
 test('creating should also create an entityset', function(t){
-    return beforeEach().then( function(){
-        t.end();    
-    });
+    t.end();
 });
 
 test('creating with a filter should apply that filter to the entityset', function(t){
-    return beforeEach().then( function(){
-        t.end();    
-    });
+    t.end();
 });
 
 
 test('executing a processor', function(t){
-    return beforeEach().then( function(){
-        t.end();    
-    });
+    t.end();
 });
 
 test('executing processors in order', function(t){
-    return beforeEach().then( function(){
-        t.end();    
-    });
+    t.end();
 });
 
 test('not updating non-updateable processors', function(t){
-    return beforeEach().then( function(){
-        t.end();    
-    });
+    t.end();
 });
 
 /*
