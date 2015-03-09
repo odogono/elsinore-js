@@ -226,7 +226,7 @@ test('creating a filter with a custom accept function', function(t){
     t.end();
 });
 
-test('iteratorSync iterates allowable entities from a source', function(t){
+test('iterator iterates allowable entities from a source', function(t){
     var entity;
     var it;
     var count;
@@ -241,7 +241,7 @@ test('iteratorSync iterates allowable entities from a source', function(t){
     entitySet.addEntity( createEntity( Components.Robot ) );
 
     // use the entitySet as the source of entities
-    it = f.iteratorSync( entitySet );
+    it = f.iterator( entitySet );
     count = 0;
 
     while( (entity = it.next().value) ){

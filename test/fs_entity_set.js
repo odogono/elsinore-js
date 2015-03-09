@@ -24,8 +24,10 @@ test('creating a filesystem entityset', function(t){
     var registry = initialiseRegistry();
     var entitySet = registry.createEntitySet( FileSystemEntitySet );
 
-    t.ok( FileSystemEntitySet.isFileSystemEntitySet(entitySet), 'the created entityset should be a FileSystemEntitySet' );
-
+    t.ok( entitySet.isEntitySet, 'its a type of entityset');
+    t.ok( entitySet.isAsync, 'its asynchronous in operation');
+    t.ok( entitySet.isFileSystemEntitySet, 'its a FileSystemEntitySet' );
+    
     t.end();
 });
 

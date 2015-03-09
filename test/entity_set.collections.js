@@ -29,13 +29,13 @@ test('removing an entity from the entitySet should also remove it from the colle
     var eventSpy = Sinon.spy();
 
     var entitySet = loadEntities( registry );
-    var collection = EntitySet.createCollection( entitySet );
+    var collection = EntitySet.createCollection( entitySet, null, {updateOnEvent:true} );
 
     // Common.logEvents( entitySet, 'entitySet' );
     // Common.logEvents( collection, 'collection' );
 
-    entitySet.remove( entitySet.atSync(0) );
-    collection.update();
+    entitySet.removeEntity( entitySet.at(0) );
+    // collection.update();
     
     // printE( collection );
     t.equals( entitySet.size(), collection.length, 'same number of entities');
@@ -51,7 +51,7 @@ test('adding an entity should also see it appear in the collection', function(t)
     entitySet.addComponent( 
         registry.createComponent( '/component/position', {x:-2,y:5}) );
 
-    t.equals( entitySet.size(), collection.length, 'same number of entities');
+    t.equals( entitySet.size(), collection.size(), 'same number of entities');
     t.end();
 });
 
@@ -65,7 +65,7 @@ test('removing a component from an entity', function(t){
     // Common.logEvents( collection );
     // Common.logEvents( entitySet );
 
-    entitySet.add(
+    entitySet.addEntity(
         registry.createEntity([
             { id:'/component/flower', colour:'red'},
             { id:'/component/position', x:-2, y:5 }] ));
@@ -76,7 +76,7 @@ test('removing a component from an entity', function(t){
 
     t.ok( collection.at(0).Position, 'the entity should have position' );
 
-    entity = entitySet.atSync(0);
+    entity = entitySet.at(0);
     entitySet.removeComponent( entity.Position );
 
     t.ok( _.isUndefined( collection.at(0).Position ), 'the entity should have no position' );
