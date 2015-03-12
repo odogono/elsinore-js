@@ -13,45 +13,45 @@ var Utils = Elsinore.Utils;
 
 
 
-test('the collection should have the same entities', function(t){
+test('the view should have the same entities', function(t){
     var registry = initialiseRegistry();
     var eventSpy = Sinon.spy();
 
     var entitySet = loadEntities( registry );
-    var collection = EntitySet.createCollection( entitySet );
-    t.equals( entitySet.size(), collection.length, 'same number of entities');
+    var view = EntitySet.createView( entitySet );
+    t.equals( entitySet.size(), view.length, 'same number of entities');
 
     t.end();
 });
 
-test('removing an entity from the entitySet should also remove it from the collection', function(t){
+test('removing an entity from the entitySet should also remove it from the view', function(t){
     var registry = initialiseRegistry();
     var eventSpy = Sinon.spy();
 
     var entitySet = loadEntities( registry );
-    var collection = EntitySet.createCollection( entitySet, null, {updateOnEvent:true} );
+    var view = EntitySet.createView( entitySet, null, {updateOnEvent:true} );
 
     // Common.logEvents( entitySet, 'entitySet' );
-    // Common.logEvents( collection, 'collection' );
+    // Common.logEvents( view, 'view' );
 
     entitySet.removeEntity( entitySet.at(0) );
-    // collection.update();
+    // view.update();
     
-    // printE( collection );
-    t.equals( entitySet.size(), collection.length, 'same number of entities');
+    // printE( view );
+    t.equals( entitySet.size(), view.length, 'same number of entities');
 
     t.end();    
 });
 
-test('adding an entity should also see it appear in the collection', function(t){
+test('adding an entity should also see it appear in the view', function(t){
     var registry = initialiseRegistry();
     var entitySet = registry.createEntitySet();
-    var collection = EntitySet.createCollection( entitySet, null, {updateOnEvent:true} );
+    var view = EntitySet.createView( entitySet, null, {updateOnEvent:true} );
 
-    entitySet.addComponent( 
-        registry.createComponent( '/component/position', {x:-2,y:5}) );
+    var component = registry.createComponent( '/component/position', {x:-2,y:5} );
+    entitySet.addComponent( component );
 
-    t.equals( entitySet.size(), collection.size(), 'same number of entities');
+    t.equals( entitySet.size(), view.size(), 'same number of entities');
     t.end();
 });
 
@@ -60,9 +60,9 @@ test('removing a component from an entity', function(t){
     var entity;
     var registry = initialiseRegistry();
     var entitySet = registry.createEntitySet();
-    var collection = EntitySet.createCollection( entitySet, null, {updateOnEvent:true} );
+    var view = EntitySet.createView( entitySet, null, {updateOnEvent:true} );
 
-    // Common.logEvents( collection );
+    // Common.logEvents( view );
     // Common.logEvents( entitySet );
 
     entitySet.addEntity(
@@ -70,44 +70,123 @@ test('removing a component from an entity', function(t){
             { id:'/component/flower', colour:'red'},
             { id:'/component/position', x:-2, y:5 }] ));
         
-    // collection.update();
-    
-    // printE( collection );
+    // view.update();
+    // printE( view );
 
-    t.ok( collection.at(0).Position, 'the entity should have position' );
+    t.ok( view.at(0).Position, 'the entity should have position' );
 
     entity = entitySet.at(0);
     entitySet.removeComponent( entity.Position );
 
-    t.ok( _.isUndefined( collection.at(0).Position ), 'the entity should have no position' );
+    // printE( entitySet );
+    // printE( view );
+
+    t.ok( _.isUndefined( view.at(0).Position ), 'the entity should have no position' );
     t.end();
 });
 
-test('removing a relevant component from an entity should trigger a component:remove event', function(t){
+test('adding a component to an entity', function(t){
+    var component;
+    var registry = initialiseRegistry();
+    var entitySet = registry.createEntitySet();
+    var view = EntitySet.createView( entitySet, null, {updateOnEvent:true} );
+
+    entitySet.addEntity(
+        registry.createEntity( { id:'/component/flower', colour:'white'} ));
+
+    t.ok( view.at(0).Flower, 'the entity should have flower' );
+
+    component = registry.createComponent( {id:'/component/position', x:-2, y:5}, entitySet.at(0) );
+
+    t.equals( component.getEntityId(), entitySet.at(0).getEntityId() );
+
+    entitySet.addComponent( component );
+
+    t.ok( view.at(0).Position, 'the views entity should have position' );
+
+    t.end();
+});
+
+test('removing a relevant component from an entity should trigger a entity:remove event', function(t){
     var entity;
     var eventSpy = Sinon.spy();
     var registry = initialiseRegistry();
     var entitySet = loadEntities( registry );
     var entityFilter = registry.createEntityFilter( EntityFilter.ALL, '/component/score' );
-    var collection = EntitySet.createCollection( entitySet, entityFilter, {updateOnEvent:true} );
+    var view = EntitySet.createView( entitySet, entityFilter, {updateOnEvent:true} );
 
-    collection.on('all', eventSpy);
+    view.on('all', eventSpy);
 
-    // Common.logEvents( entitySet );
-    // Common.logEvents( collection );
+    // Common.logEvents( entitySet, 'e es' );
+    // Common.logEvents( view, 'e view' );
 
-    // remove an unrelated component to the collection
+    // remove an unrelated component to the view
     entitySet.removeComponent( entitySet.at( 0 ).Position );
     
-    // remove the score component from the first entity in the collection
-    // printIns( collection.at( 0 ).Score );
-    entitySet.removeComponent( collection.at( 0 ).Score );
+    // remove the score component from the first entity in the view
+    entitySet.removeComponent( view.at( 0 ).Score );
 
-    t.ok( eventSpy.calledOnce, 'only one event emitted from the collection' );
-    t.ok( eventSpy.calledWith('component:remove'), 'component:remove should have been called');
+    t.ok( eventSpy.calledOnce, 'only one event emitted from the view' );
+    t.ok( eventSpy.calledWith('entity:remove'), 'entity:remove should have been called');
 
     t.end();
 });
+
+test('removing a relevant component from an entity should eventually trigger a entity:remove event', function(t){
+    var entity;
+    var eventSpy = Sinon.spy();
+    var registry = initialiseRegistry();
+    var entitySet = loadEntities( registry );
+    var entityFilter = registry.createEntityFilter( EntityFilter.ALL, '/component/score' );
+    var view = EntitySet.createView( entitySet, entityFilter );
+
+    view.on('all', eventSpy);
+
+    // Common.logEvents( entitySet, 'e es' );
+    // Common.logEvents( view, 'e view' );
+
+    // remove an unrelated component to the view
+    entitySet.removeComponent( entitySet.at( 0 ).Position );
+    
+    // remove the score component from the first entity in the view
+    entitySet.removeComponent( view.at( 0 ).Score );
+
+    view.applyEvents();
+
+    t.ok( eventSpy.calledOnce, 'only one event emitted from the view' );
+    t.ok( eventSpy.calledWith('entity:remove'), 'entity:remove should have been called');
+
+    t.end();
+});
+
+test('deferred addition of components with a filter', function(t){
+    var eventSpy = Sinon.spy();
+    var registry = initialiseRegistry();
+    var entitySet = registry.createEntitySet();
+    var entityFilter = registry.createEntityFilter( EntityFilter.ALL, '/component/position' )
+    var view = EntitySet.createView( entitySet, entityFilter );
+
+    view.on('all', eventSpy);
+
+    var entity = entitySet.addEntity(
+        registry.createEntity([
+            { id:'/component/flower', colour:'blue'}] ));
+
+    view.applyEvents();
+
+    t.equals( view.length, 0, 'no entities yet' );
+
+    entitySet.addComponent(
+        registry.createComponent({id:'/component/position', x:10, y:100}, entity ) );
+
+    view.applyEvents();
+
+    t.equals( view.length, 1, 'only one entity added' );
+
+    t.end();
+});
+
+
 
 
 test('applying a filter', function(t){
@@ -115,33 +194,87 @@ test('applying a filter', function(t){
     var registry = initialiseRegistry();
     var entitySet = loadEntities( registry );
     var entityFilter = registry.createEntityFilter( EntityFilter.ALL, '/component/position', '/component/realname' )
-    var collection = EntitySet.createCollection( entitySet, entityFilter );
+    var view = EntitySet.createView( entitySet, entityFilter );
 
-    t.ok( collection.at(0).Position, 'the entity should have /position' );
-    t.ok( collection.at(0).Realname, 'the entity should have /realname' );
+    t.ok( view.at(0).Position, 'the entity should have /position' );
+    t.ok( view.at(0).Realname, 'the entity should have /realname' );
 
-    t.ok( collection.at(1).Position, 'the entity should have /position' );
-    t.ok( collection.at(1).Realname, 'the entity should have /realname' );
+    t.ok( view.at(1).Position, 'the entity should have /position' );
+    t.ok( view.at(1).Realname, 'the entity should have /realname' );
 
     t.end();
 });
 
-test('collections created with a filter', function(t){
+test('views created with a filter', function(t){
     var entity;
     var registry = initialiseRegistry();
     var entitySet = loadEntities( registry );
     var entityFilter = registry.createEntityFilter( EntityFilter.NONE, '/component/position' )
-    var collection = EntitySet.createCollection( entitySet, entityFilter );
+    var view = EntitySet.createView( entitySet, entityFilter );
 
-    entitySet.addComponent([ 
+    entitySet.addComponent([
         registry.createComponent( '/component/flower', {colour:'red'}),
         registry.createComponent( '/component/position', {x:-2,y:5})] );
 
-    t.equals( collection.length, 2, 'two entities');
+    t.equals( view.length, 2, 'two entities');
 
     t.end();
 });
 
+
+test('deferred addition of a component', function(t){
+    var registry = initialiseRegistry();
+    var entitySet = registry.createEntitySet();
+    var view = EntitySet.createView( entitySet );
+
+    // Common.logEvents( entitySet, 'e es' );
+    // Common.logEvents( view, 'e view' );
+
+    entitySet.addComponent( 
+        registry.createComponent( '/component/position', {x:-2,y:5}) );
+
+    t.equals( view.size(), 0, 'no components added yet');
+
+    t.ok( view.isModified, 'the view has been modified' );
+
+    view.applyEvents();
+
+    t.equals( view.size(), 1, 'components added');
+
+    t.end();
+});
+
+test('deferred removal of an entity', function(t){
+    var registry = initialiseRegistry();
+    var entitySet = registry.createEntitySet();
+    var view = EntitySet.createView( entitySet );
+
+    // Common.logEvents( entitySet );
+
+    entitySet.addEntity(
+        registry.createEntity([
+            { id:'/component/flower', colour:'blue'},
+            { id:'/component/position', x:10, y:60 }] ));
+
+    entitySet.addEntity(
+        registry.createEntity([
+            { id:'/component/vegetable', name:'cauliflower'},
+            { id:'/component/radius', radius:0.3 }] ));
+
+    view.applyEvents();
+
+    t.equals( view.length, 2, 'two entities added' );
+
+    entitySet.removeEntity( entitySet.at(1) );
+
+    t.equals( view.length, 2, 'still two entities' );    
+
+    view.applyEvents();
+
+    t.equals( view.length, 1, 'now one entity' );    
+
+    t.end();
+});
 
 
 /**

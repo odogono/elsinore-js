@@ -18,6 +18,22 @@ var Registry = Elsinore.Registry;
 var Utils = Elsinore.Utils;
 
 
+test('type of entityset', function(t){
+    var registry = initialiseRegistry();
+    var entitySet = registry.createEntitySet();
+    t.ok( entitySet.isEntitySet, 'it is an entitySet' );
+    t.end();
+});
+
+test('non existence of an entity', function(t){
+    var registry = initialiseRegistry();
+    var entitySet = registry.createEntitySet();
+
+    t.ok( !entitySet.hasEntity(1001), 'entity not exist');
+
+    t.end();
+});
+
 test('adding an entity with a component returns the added entity', function(t){
     var entity;
     var registry = initialiseRegistry();
@@ -27,6 +43,8 @@ test('adding an entity with a component returns the added entity', function(t){
     entity = entitySet.addEntity( entity );
 
     t.ok( entity.getEntityId() > 0, 'the entity should have an id' );
+    t.ok( entitySet.hasEntity(entity.getEntityId()), 'the entity should exist');
+    
     t.end();
 });
 
@@ -354,6 +372,28 @@ test('should remove an entity', function(t){
     t.end();
 });
 
+test('should really remove an entity', function(t){
+    var registry = initialiseRegistry();
+    var entitySet = registry.createEntitySet();
+
+    // Common.logEvents( entitySet );
+
+    var entityA = entitySet.addEntity(
+        registry.createEntity([
+            { id:'/component/flower', colour:'blue'},
+            { id:'/component/position', x:10, y:60 }] ));
+
+    var entityB = entitySet.addEntity(
+        registry.createEntity([
+            { id:'/component/vegetable', name:'cauliflower'},
+            { id:'/component/radius', radius:0.3 }] ));
+
+    entitySet.removeEntity( entityB );
+
+    t.equals( entitySet.length, 1 );
+    t.end();
+});
+
 test('should add the components of an entity', function(t){
     var registry = initialiseRegistry();
     var entitySet = registry.createEntitySet();
@@ -398,6 +438,18 @@ test('should emit an event when an entity is removed', function(t){
     t.end();
 });
 
+test('should not emit an event when a non-existent component is removed', function(t){
+    var registry = initialiseRegistry();
+    var eventSpy = Sinon.spy();
+    var entitySet = loadEntities( registry );
+    var component = registry.createComponent( '/component/position', {x:-1,y:-1}, {eid:26} );
+
+    component = entitySet.removeComponent( component );
+
+    t.notOk( eventSpy.calledWith('component:remove'), 'component:remove should not have been called');
+
+    t.end();
+});
 
 
 test('should only add an entity with components', function(t){
@@ -433,12 +485,11 @@ test('should only retain the included component on entity', function(t){
     var entitySet = registry.createEntitySet();
     var entities = loadEntities( registry );
 
-        EntitySet.setEntityFilter( entitySet, EntityFilter.INCLUDE, '/component/nickname' );
-        entitySet.addEntity( entities.at(0) );
-        // the entity won't have any of the other components
-        t.equals( entitySet.at(0).getComponentCount(), 1);
-        t.end();
-    // });
+    EntitySet.setEntityFilter( entitySet, EntityFilter.INCLUDE, '/component/nickname' );
+    entitySet.addEntity( entities.at(0) );
+    // the entity won't have any of the other components
+    t.equals( entitySet.at(0).getComponentCount(), 1);
+    t.end();
 });
 
 test('should not add entities that have excluded components', function(t){
@@ -446,14 +497,14 @@ test('should not add entities that have excluded components', function(t){
     var entitySet = registry.createEntitySet();
     var entities = loadEntities( registry );
 
-        EntitySet.setEntityFilter( entitySet, EntityFilter.NONE, '/component/score' );
+    EntitySet.setEntityFilter( entitySet, EntityFilter.NONE, '/component/score' );
 
-        entitySet.addEntity( entities.at(1) );
-        t.equals( entitySet.size(), 0);
-        entitySet.addEntity( entities.at(0) );
-        t.equals( entitySet.size(), 1);
-        t.end();
-    // });
+    entitySet.addEntity( entities.at(1) );
+    t.equals( entitySet.size(), 0);
+    entitySet.addEntity( entities.at(0) );
+    t.equals( entitySet.size(), 1);
+
+    t.end();
 });
 
 test('should not add entities that have multiple excluded components', function(t){
@@ -485,12 +536,12 @@ test('should only add entities that are optional', function(t){
     var entitySet = registry.createEntitySet();
     var entities = loadEntities( registry );
 
-        // this means that the entity MAY have Position and/or Nickname
-        EntitySet.setEntityFilter( entitySet, EntityFilter.ANY, '/component/position','/component/nickname' );
-        entitySet.addEntity( entities );
-        t.equals( entitySet.size(), 4);
-        t.end();
-    // });
+    // this means that the entity MAY have Position and/or Nickname
+    EntitySet.setEntityFilter( entitySet, EntityFilter.ANY, '/component/position','/component/nickname' );
+    entitySet.addEntity( entities );
+    t.equals( entitySet.size(), 4);
+
+    t.end();
 });
 
 
@@ -514,18 +565,17 @@ test('should remove entities that are excluded after their components change', f
     var entitySet = registry.createEntitySet({allowEmptyEntities:false});
     var entities = loadEntities( registry );
 
-        EntitySet.setEntityFilter( entitySet, EntityFilter.NONE, '/component/realname' );
-        entitySet.addEntity( entities );
-        t.equals( entitySet.size(), 2);
-        
-        var entity = entities.at(1);
-        var component = registry.createComponent( '/component/realname', {name:'mike smith', _e:entity.getEntityId()});
-        // this action should cause the entity to be removed
-        entitySet.addComponent( component );
-        t.equals( entitySet.size(), 1);
+    EntitySet.setEntityFilter( entitySet, EntityFilter.NONE, '/component/realname' );
+    entitySet.addEntity( entities );
+    t.equals( entitySet.size(), 2);
+    
+    var entity = entities.at(1);
+    var component = registry.createComponent( '/component/realname', {name:'mike smith', _e:entity.getEntityId()});
+    // this action should cause the entity to be removed
+    entitySet.addComponent( component );
+    t.equals( entitySet.size(), 1);
 
-        t.end();
-    // });
+    t.end();
 });
 
 test('should remove entities that no longer included after their components change', function(t){
@@ -551,13 +601,12 @@ test('should remove entities that are no longer allowed when the component mask 
     var entitySet = registry.createEntitySet();
     var entities = loadEntities( registry );
         
-        entitySet.addEntity( entities );
-        t.equals( entitySet.size(), 5);
+    entitySet.addEntity( entities );
+    t.equals( entitySet.size(), 5);
 
-        EntitySet.setEntityFilter( entitySet, EntityFilter.NONE,'/component/score' );
-        t.equals( entitySet.size(), 2);
-        t.end();
-    // });
+    EntitySet.setEntityFilter( entitySet, EntityFilter.NONE,'/component/score' );
+    t.equals( entitySet.size(), 2);
+    t.end();
 });
 
 test.skip('should filter', function(t){

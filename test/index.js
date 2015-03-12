@@ -5,3 +5,5 @@ require('./entity_set.collections');
 require('./entity_filter');
 require('./fs_entity_set');
 require('./schema_registry');
+require('./integration/opendoor');
+require('./integration/reaper');

@@ -40,7 +40,6 @@ test('reaper', function(t){
         
         onUpdate: function( entityArray, timeMs ){
             var entity, i, len;
-            
             // any entities marked as dead should be removed
             for( i=0,len=entityArray.length;i<len;i++ ){
                 entity = entityArray[i];
@@ -78,20 +77,35 @@ test('reaper', function(t){
 
     entitySet = createTestEntitySet( registry, entitySet );
 
-    processor = registry.addProcessor( ReaperProcessor, entitySet, {priority:200} );
+    var reaperProcessor = registry.addProcessor( ReaperProcessor, entitySet, {priority:200} );
     processor = registry.addProcessor( ConnectionProcessor, entitySet );
 
+    // Common.logEvents( entitySet );
+    log.debug('reaper processor is ' + reaperProcessor.get('view').cid );
+
     registry.updateSync( Date.now() + 1200, {debug:true} );
+
     t.equals(
         FilterEntitySet( entitySet, [EntityFilter.ALL, '/dead'] ).length,
         2, 'there should be two components with /dead' );
 
 
-    registry.updateSync( Date.now() + 1300, {debug:true} );
+    // printE( processor.get('view') );    
+
+    // log.debug('--- 2nd update');
+    // printE( entitySet );
+    // printE( reaperProcessor.get('view') );
+    registry.updateSync( Date.now() + 1300, {debug:false} );
+
+
+    registry.updateSync( Date.now() + 1500, {debug:false} );
+
+    // printE( entitySet );
 
     // after the second update, two entities (with the /dead component) should have been removed
     // log.debug('2nd check');
-    t.ok( eventSpy.calledWith('entity:remove'), 'entity:remove should have been called twice');
+    // t.ok( eventSpy.calledWith('entity:remove'), 'entity:remove should have been called twice');
+    t.equals( entitySet.length, 3, 'three connection entities remain' );
 
     t.end();
 });
@@ -102,7 +116,7 @@ function FilterEntitySet( entitySet, entityFilter ){
     var registry = entitySet.getRegistry();
     entityFilter = registry.createEntityFilter( entityFilter );
 
-    var collection = EntitySet.createCollection( entitySet, entityFilter, {listen:false} );
+    var collection = EntitySet.createView( entitySet, entityFilter, {listen:false} );
     return collection.models;
 }
 
