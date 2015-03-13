@@ -1,3 +1,5 @@
+'use strict';
+
 var _ = require('underscore');
 var test = require('tape');
 
@@ -107,6 +109,7 @@ test('removing a component from an entity with multiple components', function(t)
     var entitySet = registry.createEntitySet();
     var eventSpy = Sinon.spy();
     var entity;
+    var component;
     var components;
     // Common.logEvents( entitySet );
 

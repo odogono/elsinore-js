@@ -1,3 +1,5 @@
+'use strict';
+
 var _ = require('underscore');
 var test = require('tape');
 var Sinon = require('sinon');
@@ -17,6 +19,7 @@ test('reaper', function(t){
     var registry, entitySet;
     var cConnection, cTimeToLive, cDead;
     var ConnectionProcessor, ReaperProcessor;
+    var reaperProcessor, connectionProcessor;
 
     var eventSpy = Sinon.spy();
 
@@ -77,11 +80,11 @@ test('reaper', function(t){
 
     entitySet = createTestEntitySet( registry, entitySet );
 
-    var reaperProcessor = registry.addProcessor( ReaperProcessor, entitySet, {priority:200} );
-    processor = registry.addProcessor( ConnectionProcessor, entitySet );
+    reaperProcessor = registry.addProcessor( ReaperProcessor, entitySet, {priority:200} );
+    connectionProcessor = registry.addProcessor( ConnectionProcessor, entitySet );
 
     // Common.logEvents( entitySet );
-    log.debug('reaper processor is ' + reaperProcessor.get('view').cid );
+    // log.debug('reaper processor is ' + reaperProcessor.get('view').cid );
 
     registry.updateSync( Date.now() + 1200, {debug:true} );
 

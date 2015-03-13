@@ -1,3 +1,5 @@
+'use strict';
+
 var _ = require('underscore');
 var test = require('tape');
 var Sinon = require('sinon');
@@ -23,6 +25,8 @@ test('the view should have the same entities', function(t){
 
     t.end();
 });
+
+
 
 test('removing an entity from the entitySet should also remove it from the view', function(t){
     var registry = initialiseRegistry();
@@ -275,6 +279,29 @@ test('deferred removal of an entity', function(t){
 
     t.end();
 });
+
+test('altering a component in the view also changes the component in the entityset', function(t){
+    var registry = initialiseRegistry();
+    var entitySet = registry.createEntitySet();
+    var view = EntitySet.createView( entitySet );
+
+    // Common.logEvents( entitySet );
+
+    entitySet.addEntity(
+        registry.createEntity([
+            { id:'/component/flower', colour:'blue'},
+            { id:'/component/radius', radius:0.1 }] ));
+
+    view.applyEvents();
+
+    view.at(0).Flower.set('colour', 'cyan');
+
+    t.equals( entitySet.at(0).Flower.get('colour'), 'cyan', 'colours should match');
+
+    t.end();
+});
+
+
 
 
 /**

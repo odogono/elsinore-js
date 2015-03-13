@@ -1,3 +1,5 @@
+'use strict';
+
 var _ = require('underscore');
 var test = require('tape');
 
@@ -18,7 +20,13 @@ test('main', function(t){
 
     registry = Elsinore.Registry.create();
     entitySet = registry.createEntitySet();
-    cDoor = registry.registerComponent({id:'/door', properties:{open:{type:'boolean'}, material:{type:'string'} } });
+    cDoor = registry.registerComponent({
+        id:'/door', 
+        properties:{
+            open:{type:'boolean'}, 
+            material:{type:'string'} 
+        } 
+    });
     
     DoorProcessor = Elsinore.EntityProcessor.extend({
         // handle entity events
@@ -60,7 +68,7 @@ test('main', function(t){
     entitySet.addComponent( door );
 
     // retrieve the first (and only entity) from the set
-    eDoor = entitySet.atSync( 0 );
+    eDoor = entitySet.at( 0 );
 
     // trigger an event on the entity set - this will open all door
     // components
