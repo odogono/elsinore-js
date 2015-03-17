@@ -91,6 +91,7 @@ test('removing a component from an entity', function(t){
 
 test('adding a component to an entity', function(t){
     var component;
+    var eventSpy = Sinon.spy();
     var registry = initialiseRegistry();
     var entitySet = registry.createEntitySet();
     var view = EntitySet.createView( entitySet, null, {updateOnEvent:true} );
@@ -102,7 +103,7 @@ test('adding a component to an entity', function(t){
 
     component = registry.createComponent( {id:'/component/position', x:-2, y:5}, entitySet.at(0) );
 
-    t.equals( component.getEntityId(), entitySet.at(0).getEntityId() );
+    t.equals( component.getEntityId(), entitySet.at(0).getEntityId(), 'the entity ids are identical' );
 
     entitySet.addComponent( component );
 
@@ -110,6 +111,24 @@ test('adding a component to an entity', function(t){
 
     t.end();
 });
+
+test('adding a component to an entity triggers an entity:add event', function(t){
+    var eventSpy = Sinon.spy();
+    var registry = initialiseRegistry();
+    var entitySet = registry.createEntitySet();
+    var view = EntitySet.createView( entitySet, null, {updateOnEvent:true} );
+
+    // Common.logEvents( entitySet, 'es ' );
+    // Common.logEvents( view, 'vi ' );
+    view.on('all', eventSpy);
+
+    entitySet.addEntity(
+        registry.createEntity( { id:'/component/flower', colour:'magenta'} ));
+
+    t.ok( eventSpy.calledWith('entity:add'), 'entity:add should have been called');
+    t.end();
+});
+
 
 test('removing a relevant component from an entity should trigger a entity:remove event', function(t){
     var entity;
