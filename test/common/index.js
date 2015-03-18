@@ -105,8 +105,11 @@ Object.defineProperty(global, '__function', {
 
 global.printIns = printIns;
 global.printVar = printVar;
+
+var toStringPath = Path.join( rootDir, 'lib/util/to_string' )
+
 global.printE = function(e){
-    Util.log( Elsinore.Registry.toString(e) );
+    Util.log( require(toStringPath).toString(e) );
 }
 
 global.log = {

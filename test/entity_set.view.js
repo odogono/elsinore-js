@@ -14,6 +14,18 @@ var Registry = Elsinore.Registry;
 var Utils = Elsinore.Utils;
 
 
+test('the view should be identified as a view', function(t){
+    var registry = initialiseRegistry();
+    var entitySet = registry.createEntitySet();
+    var view = EntitySet.createView( entitySet );
+
+    t.ok( view.isEntitySetView, 'its an entityset view');
+    t.ok( view.isEntitySet, 'its an entityset');
+    t.equals( view.type, 'EntitySetView', 'its type is EntitySetView');
+
+    t.end();
+});
+
 
 test('the view should have the same entities', function(t){
     var registry = initialiseRegistry();

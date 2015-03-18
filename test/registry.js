@@ -15,13 +15,27 @@ var ComponentDef = Elsinore.ComponentDef;
 var Registry = Elsinore.Registry;
 var Utils = Elsinore.Utils;
 
-// compile a map of schema id(uri) to schema
-var componentSchemas = require('./fixtures/components.json');
-var componentByUri = _.reduce( componentSchemas, 
-                        function(memo, entry){
-                            memo[ entry.id ] = entry;
-                            return memo;
-                        }, {});
+
+test.only('keeping a map of entitySets and views', function(t){
+    var registry = Registry.create();
+    var es = registry.createEntitySet();
+    var filter = registry.createEntityFilter( EntityFilter.ALL, '/component/position' );
+    var eso = registry.createEntitySet();
+
+    // printE( es );
+
+    var view = EntitySet.createView( es, filter );
+    var oview = EntitySet.createView( es, filter );
+    var tview = EntitySet.createView( es );
+
+    log.debug( 'es hash ' + es.hash() );
+    // log.debug( 'eso hash ' + eso.hash() );
+    log.debug( 'view hash ' + view.hash() );
+    log.debug( 'oview hash ' + oview.hash() );
+    log.debug( 'tview hash ' + tview.hash() );
+
+    t.end();
+});
 
 test('creating components', function(t){
 
@@ -396,3 +410,12 @@ test( 'creating entity filters', function(t){
 //     }
 //     return Promise.resolve( registry );
 // }
+
+
+// compile a map of schema id(uri) to schema
+var componentSchemas = require('./fixtures/components.json');
+var componentByUri = _.reduce( componentSchemas, 
+                        function(memo, entry){
+                            memo[ entry.id ] = entry;
+                            return memo;
+                        }, {});
