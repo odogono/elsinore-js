@@ -653,7 +653,7 @@ test('should emit an event when a component is changed', function(t){
 
         entitySet.addEntity( entity );
 
-        component = entitySet.cloneComponent( component );
+        component = registry.cloneComponent( component );
         component.set({x:0,y:-2});
 
         entitySet.addComponent( component );

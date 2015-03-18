@@ -26,8 +26,7 @@ test('reaper', function(t){
     registry = Elsinore.Registry.create();
     entitySet = registry.createEntitySet();
     entitySet.on('all', eventSpy);
-    // Common.logEvents( entitySet );
-
+    
     cConnection = registry.registerComponent({id:'/connection', addr:{ type:'string' }});
     cTimeToLive = registry.registerComponent({id:'/ttl', expires_at:{ type:'number' }});
     cDead = registry.registerComponent({id:'/dead'});
@@ -43,9 +42,12 @@ test('reaper', function(t){
         
         onUpdate: function( entityArray, timeMs ){
             var entity, i, len;
+            // log.debug('/p/reaper ' + entityArray.length + ' models' );
             // any entities marked as dead should be removed
             for( i=0,len=entityArray.length;i<len;i++ ){
                 entity = entityArray[i];
+                // log.debug('destroying entity ' + entity.id );
+                // printE( entity );
                 this.destroyEntity( entity );
             }
         }
@@ -72,6 +74,7 @@ test('reaper', function(t){
 
                     // adding the /dead component means that the entity will 
                     // eventually be destroyed by the reaper processor
+                    // log.debug('adding dead to ' + entity.id );
                     this.addComponentToEntity( entity, '/dead' );
                 }
             }
@@ -86,29 +89,44 @@ test('reaper', function(t){
     // Common.logEvents( entitySet );
     // log.debug('reaper processor is ' + reaperProcessor.get('view').cid );
 
-    registry.updateSync( Date.now() + 1200, {debug:true} );
+    // printE( entitySet );
 
-    t.equals(
-        FilterEntitySet( entitySet, [EntityFilter.ALL, '/dead'] ).length,
-        2, 'there should be two components with /dead' );
+    // Common.logEvents( entitySet );
 
+    registry.updateSync( Date.now() + 500, {debug:false} );
 
-    // printE( processor.get('view') );    
+    // log.debug('called ' + eventSpy.callCount );
+    t.ok( eventSpy.calledWith('entity:remove'), 'two entities will have been removed' );
+    t.equals( entitySet.length, 4, 'four connection entities remain' );
+
+    // process.exit();
+    // t.equals(
+    //     FilterEntitySet( entitySet, [EntityFilter.ALL, '/dead'] ).length,
+    //     2, 'there should be two components with /dead' );
+
+    // t.equals( reaperProcessor.get('view').length, 0, 'reaper should have no entities');
+
+    // process.exit();
 
     // log.debug('--- 2nd update');
+    // log.debug( 'entityset ' + reaperProcessor.get('entitySet').cid );
+    // log.debug( 'reaper view ' + reaperProcessor.get('view').cid );
+    // log.debug( 'connection view ' + connectionProcessor.get('view').cid );
     // printE( entitySet );
     // printE( reaperProcessor.get('view') );
     registry.updateSync( Date.now() + 1300, {debug:false} );
+    t.equals( entitySet.length, 3, 'three connection entities remain' );
+    // printE( reaperProcessor.get('view') ); //connectionProcessor.get('view') );    
 
-
-    registry.updateSync( Date.now() + 1500, {debug:false} );
+    registry.updateSync( Date.now() + 2500, {debug:false} );
+    t.equals( entitySet.length, 2, 'three connection entities remain' );
 
     // printE( entitySet );
 
     // after the second update, two entities (with the /dead component) should have been removed
     // log.debug('2nd check');
     // t.ok( eventSpy.calledWith('entity:remove'), 'entity:remove should have been called twice');
-    t.equals( entitySet.length, 3, 'three connection entities remain' );
+    
 
     t.end();
 });
@@ -119,6 +137,7 @@ function FilterEntitySet( entitySet, entityFilter ){
     var registry = entitySet.getRegistry();
     entityFilter = registry.createEntityFilter( entityFilter );
 
+    // TODO: replace with entitySet.where( entityFilter );
     var collection = EntitySet.createView( entitySet, entityFilter, {listen:false} );
     return collection.models;
 }

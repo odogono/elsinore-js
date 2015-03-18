@@ -185,12 +185,12 @@ test('should remove the entities component', function(t){
 
 
 test('should remove a component reference from an entity', function(t){
-    return initialiseAndOpenEntitySet()
+    return initialiseAndOpenEntitySet(false)
         .then( function(entitySet){
             var registry = entitySet.getRegistry();
             var loadedEntitySet = loadEntities( registry, null, {memory:true} );
             var entityId;
-            
+
             entitySet.addEntity( loadedEntitySet.at(0) )
                 .then( function(entity){
                     entityId = entity.getEntityId();
@@ -264,9 +264,12 @@ function loadEntities( registry, fixtureName, options ){
     // to the resultant entityset
     if( memoryEntitySet ){
         _.map( _.compact( lines ), function(line){
+            var com;
             line = JSON.parse( line );
-            var com = registry.createComponent( line );
-            result.addComponent( com );
+            com = registry.createComponent( line );
+            com = result.addComponent( com );
+            // printIns( com ); process.exit();
+
             return com;
         });
         return result;

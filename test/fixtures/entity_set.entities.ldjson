@@ -1,4 +1,4 @@
-{"_e":1, "id":"/component/position", "x":10, "y":-10}
+{"_e":1, "id":"/component/position", "x":10, "y":-10 }
 {"_e":1, "id":"/component/nickname", "nick":"john"}
 {"_e":1, "id":"/component/realname", "realname":"John Smith"}
 
