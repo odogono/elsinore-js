@@ -226,6 +226,26 @@ test('creating a filter with a custom accept function', function(t){
     t.end();
 });
 
+test('creating a filter with a standard and a custom function', function(t){
+    
+    var f = EntityFilter.create( 
+        [ EntityFilter.ALL, Components.Robot ],
+        function accept(entity,options){
+            if( entity.Robot.get('age') > 40  ){
+                return true;
+            }
+            return false;
+        });
+
+
+    t.ok( f.accept( createEntity( {_c:Components.Robot, age:41} )), 'accepting a robot aged 41');
+    t.notOk( f.accept( createEntity( {_c:Components.Robot, age:32} )), 'not accepting a robot aged 32');
+    t.notOk( f.accept( createEntity( {_c:Components.Animal, age:51} )), 'not accepting an animal age 51');
+
+    t.end();
+
+});
+
 test('iterator iterates allowable entities from a source', function(t){
     var entity;
     var it;

@@ -343,6 +343,29 @@ test('altering a component in the view also changes the component in the entitys
 
 
 
+test('.where returns an entityset of entities', function(t){
+    var registry = initialiseRegistry();
+    var entitySet = loadEntities( registry );
+    
+    var result = entitySet.where('/component/realname');
+    t.ok( result.isEntitySet, 'the result is an entityset');
+    t.equals( result.length, 3, '3 entities returned');
+
+    t.end();
+});
+
+test('.where returns entities which the attributes', function(t){
+    var registry = initialiseRegistry();
+    var entitySet = loadEntities( registry );
+    
+    var result = entitySet.where('/component/status', {status:'active'} );
+    t.ok( result.isEntitySet, 'the result is an entityset');
+    t.equals( result.length, 2, '3 entities returned');
+
+    t.end();
+});
+
+
 
 /**
 *   Returns an entityset with the given entities
@@ -360,7 +383,7 @@ function loadEntities( registry, fixtureName ){
 
     _.map( _.compact( lines ), function(line){
         line = JSON.parse( line );
-        var com = registry.createComponent( line );
+        var com = registry.createComponent( line, null, {schemaKey:'id'} );
         result.addComponent( com );
         return com;
     });

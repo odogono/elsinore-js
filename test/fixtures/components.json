@@ -120,5 +120,11 @@
         "properties":{
             "name":{ "type":"string" }
         }
+    },
+    "active":{
+        "id": "/component/status",
+        "properties":{
+            "status":{ "type":"string" }
+        }
     }
 }
