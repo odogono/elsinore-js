@@ -36,7 +36,7 @@ test('reaper', function(t){
     *   deletes them from the entitySet
     */
     ReaperProcessor = EntityProcessor.extend({
-        name:'/p/reaper',
+        type:'ReaperProcessor',
         // the processor will receive entities which have the /dead component
         entityFilter: [ EntityFilter.ALL, '/dead' ],
         
@@ -54,7 +54,7 @@ test('reaper', function(t){
     });
 
     ConnectionProcessor = EntityProcessor.extend({
-        name:'/p/connection',
+        type:'ConnectionProcessor',
         
         // the processor will not receive any entities which have the /dead component
         entityFilter: [EntityFilter.ALL, '/ttl'],
@@ -83,8 +83,8 @@ test('reaper', function(t){
 
     entitySet = createTestEntitySet( registry, entitySet );
 
-    reaperProcessor = registry.addProcessor( ReaperProcessor, entitySet, {priority:200} );
-    connectionProcessor = registry.addProcessor( ConnectionProcessor, entitySet );
+    reaperProcessor = registry.addProcessor( ReaperProcessor, entitySet );
+    connectionProcessor = registry.addProcessor( ConnectionProcessor, entitySet, {priority:200} );
 
     // Common.logEvents( entitySet );
     // log.debug('reaper processor is ' + reaperProcessor.get('view').cid );
@@ -98,6 +98,8 @@ test('reaper', function(t){
     // log.debug('called ' + eventSpy.callCount );
     t.ok( eventSpy.calledWith('entity:remove'), 'two entities will have been removed' );
     t.equals( entitySet.length, 4, 'four connection entities remain' );
+
+
 
     // process.exit();
     // t.equals(

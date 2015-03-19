@@ -83,7 +83,7 @@ Gulp.task('build.vendor', function(){
 Gulp.task('build.lib', function(cb){
     var b = Browserify({
             // entries:[ './lib/index.js' ],
-            debug: true
+            debug: false
         });
     b.require('./lib/index.js', {expose:'elsinore'});
     // browserify external doesn't currently appear to work with an array,
