@@ -14,10 +14,38 @@ var Registry = Elsinore.Registry;
 var Utils = Elsinore.Utils;
 
 
+
+test('.where returns an entityset of entities', function(t){
+    var registry = initialiseRegistry();
+    var entitySet = loadEntities( registry );
+    
+    var result = entitySet.where('/component/realname');
+    t.ok( result.isEntitySet, 'the result is an entityset');
+    t.equals( result.length, 3, '3 entities returned');
+
+    t.end();
+});
+
+test('.where returns entities which the attributes', function(t){
+    var registry = initialiseRegistry();
+    var entitySet = loadEntities( registry );
+    
+    var result = entitySet.where('/component/status', {status:'active'} );
+    // printE( result );
+    t.ok( result.isEntitySet, 'the result is an entityset');
+    t.equals( result.length, 2, '3 entities returned');
+
+    t.end();
+});
+
+
+
 test('the view should be identified as a view', function(t){
     var registry = initialiseRegistry();
     var entitySet = registry.createEntitySet();
-    var view = EntitySet.createView( entitySet );
+    var view;
+
+    view = entitySet.where(null, null, {view:true});
 
     t.ok( view.isEntitySetView, 'its an entityset view');
     t.ok( view.isEntitySet, 'its an entityset');
@@ -32,7 +60,7 @@ test('the view should have the same entities', function(t){
     var eventSpy = Sinon.spy();
 
     var entitySet = loadEntities( registry );
-    var view = EntitySet.createView( entitySet );
+    var view = entitySet.where(null, null, {view:true});
     t.equals( entitySet.size(), view.length, 'same number of entities');
 
     t.end();
@@ -45,7 +73,7 @@ test('removing an entity from the entitySet should also remove it from the view'
     var eventSpy = Sinon.spy();
 
     var entitySet = loadEntities( registry );
-    var view = EntitySet.createView( entitySet, null, {updateOnEvent:true} );
+    var view = entitySet.where(null, null, {view:true, updateOnEvent:true});
 
     // Common.logEvents( entitySet, 'entitySet' );
     // Common.logEvents( view, 'view' );
@@ -62,7 +90,7 @@ test('removing an entity from the entitySet should also remove it from the view'
 test('adding an entity should also see it appear in the view', function(t){
     var registry = initialiseRegistry();
     var entitySet = registry.createEntitySet();
-    var view = EntitySet.createView( entitySet, null, {updateOnEvent:true} );
+    var view = entitySet.where(null, null, {view:true, updateOnEvent:true});
 
     var component = registry.createComponent( '/component/position', {x:-2,y:5} );
     entitySet.addComponent( component );
@@ -76,7 +104,7 @@ test('removing a component from an entity', function(t){
     var entity;
     var registry = initialiseRegistry();
     var entitySet = registry.createEntitySet();
-    var view = EntitySet.createView( entitySet, null, {updateOnEvent:true} );
+    var view = entitySet.where(null, null, {view:true, updateOnEvent:true});
 
     // Common.logEvents( view );
     // Common.logEvents( entitySet );
@@ -106,7 +134,7 @@ test('adding a component to an entity', function(t){
     var eventSpy = Sinon.spy();
     var registry = initialiseRegistry();
     var entitySet = registry.createEntitySet();
-    var view = EntitySet.createView( entitySet, null, {updateOnEvent:true} );
+    var view = entitySet.where(null, null, {view:true, updateOnEvent:true});
 
     entitySet.addEntity(
         registry.createEntity( { id:'/component/flower', colour:'white'} ));
@@ -128,7 +156,7 @@ test('adding a component to an entity triggers an entity:add event', function(t)
     var eventSpy = Sinon.spy();
     var registry = initialiseRegistry();
     var entitySet = registry.createEntitySet();
-    var view = EntitySet.createView( entitySet, null, {updateOnEvent:true} );
+    var view = entitySet.where(null, null, {view:true, updateOnEvent:true});
 
     // Common.logEvents( entitySet, 'es ' );
     // Common.logEvents( view, 'vi ' );
@@ -148,7 +176,7 @@ test('removing a relevant component from an entity should trigger a entity:remov
     var registry = initialiseRegistry();
     var entitySet = loadEntities( registry );
     var entityFilter = registry.createEntityFilter( EntityFilter.ALL, '/component/score' );
-    var view = EntitySet.createView( entitySet, entityFilter, {updateOnEvent:true} );
+    var view = entitySet.where(entityFilter, null, {view:true, updateOnEvent:true});
 
     view.on('all', eventSpy);
 
@@ -172,8 +200,7 @@ test('removing a relevant component from an entity should eventually trigger a e
     var eventSpy = Sinon.spy();
     var registry = initialiseRegistry();
     var entitySet = loadEntities( registry );
-    var entityFilter = registry.createEntityFilter( EntityFilter.ALL, '/component/score' );
-    var view = EntitySet.createView( entitySet, entityFilter );
+    var view = entitySet.where('/component/score', null, {view:true});
 
     view.on('all', eventSpy);
 
@@ -198,8 +225,7 @@ test('deferred addition of components with a filter', function(t){
     var eventSpy = Sinon.spy();
     var registry = initialiseRegistry();
     var entitySet = registry.createEntitySet();
-    var entityFilter = registry.createEntityFilter( EntityFilter.ALL, '/component/position' )
-    var view = EntitySet.createView( entitySet, entityFilter );
+    var view = entitySet.where('/component/position', null, {view:true});
 
     view.on('all', eventSpy);
 
@@ -229,7 +255,7 @@ test('applying a filter', function(t){
     var registry = initialiseRegistry();
     var entitySet = loadEntities( registry );
     var entityFilter = registry.createEntityFilter( EntityFilter.ALL, '/component/position', '/component/realname' )
-    var view = EntitySet.createView( entitySet, entityFilter );
+    var view = entitySet.where( entityFilter, null, {view:true});
 
     t.ok( view.at(0).Position, 'the entity should have /position' );
     t.ok( view.at(0).Realname, 'the entity should have /realname' );
@@ -245,7 +271,7 @@ test('views created with a filter', function(t){
     var registry = initialiseRegistry();
     var entitySet = loadEntities( registry );
     var entityFilter = registry.createEntityFilter( EntityFilter.NONE, '/component/position' )
-    var view = EntitySet.createView( entitySet, entityFilter );
+    var view = entitySet.where( entityFilter, null, {view:true});
 
     entitySet.addComponent([
         registry.createComponent( '/component/flower', {colour:'red'}),
@@ -260,7 +286,7 @@ test('views created with a filter', function(t){
 test.skip('deferred addition of a component', function(t){
     var registry = initialiseRegistry();
     var entitySet = registry.createEntitySet();
-    var view = EntitySet.createView( entitySet );
+    var view = entitySet.where( null, null, {view:true});
     var entity;
 
     // Common.logEvents( entitySet, 'e es' );
@@ -291,7 +317,7 @@ test.skip('deferred addition of a component', function(t){
 test('deferred removal of an entity', function(t){
     var registry = initialiseRegistry();
     var entitySet = registry.createEntitySet();
-    var view = EntitySet.createView( entitySet );
+    var view = entitySet.where( null, null, {view:true});
 
     // Common.logEvents( entitySet );
 
@@ -323,7 +349,7 @@ test('deferred removal of an entity', function(t){
 test('altering a component in the view also changes the component in the entityset', function(t){
     var registry = initialiseRegistry();
     var entitySet = registry.createEntitySet();
-    var view = EntitySet.createView( entitySet );
+    var view = entitySet.where( null, null, {view:true});
 
     // Common.logEvents( entitySet );
 
@@ -342,29 +368,6 @@ test('altering a component in the view also changes the component in the entitys
 });
 
 
-
-test('.where returns an entityset of entities', function(t){
-    var registry = initialiseRegistry();
-    var entitySet = loadEntities( registry );
-    
-    var result = entitySet.where('/component/realname');
-    t.ok( result.isEntitySet, 'the result is an entityset');
-    t.equals( result.length, 3, '3 entities returned');
-
-    t.end();
-});
-
-test('.where returns entities which the attributes', function(t){
-    var registry = initialiseRegistry();
-    var entitySet = loadEntities( registry );
-    
-    var result = entitySet.where('/component/status', {status:'active'} );
-    // printE( result );
-    t.ok( result.isEntitySet, 'the result is an entityset');
-    t.equals( result.length, 2, '3 entities returned');
-
-    t.end();
-});
 
 
 

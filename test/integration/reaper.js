@@ -103,7 +103,7 @@ test('reaper', function(t){
 
     // process.exit();
     // t.equals(
-    //     FilterEntitySet( entitySet, [EntityFilter.ALL, '/dead'] ).length,
+    //      entitySet.where( '/dead ).length    FilterEntitySet( entitySet, [EntityFilter.ALL, '/dead'] ).length,
     //     2, 'there should be two components with /dead' );
 
     // t.equals( reaperProcessor.get('view').length, 0, 'reaper should have no entities');
@@ -138,9 +138,7 @@ test('reaper', function(t){
 function FilterEntitySet( entitySet, entityFilter ){
     var registry = entitySet.getRegistry();
     entityFilter = registry.createEntityFilter( entityFilter );
-
-    // TODO: replace with entitySet.where( entityFilter );
-    var collection = EntitySet.createView( entitySet, entityFilter, {listen:false} );
+    var collection = entitySet.where( entityFilter );
     return collection.models;
 }
 

@@ -24,9 +24,9 @@ test.only('keeping a map of entitySets and views', function(t){
 
     // printE( es );
 
-    var view = EntitySet.createView( es, filter );
-    var oview = EntitySet.createView( es, filter );
-    var tview = EntitySet.createView( es );
+    var view = es.where( filter, null, {view:true} );
+    var oview = es.where( filter, null, {view:true} );
+    var tview = es.where( null, null, {view:true} );
 
     log.debug( 'es hash ' + es.hash() );
     // log.debug( 'eso hash ' + eso.hash() );

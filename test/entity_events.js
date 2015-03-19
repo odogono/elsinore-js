@@ -42,6 +42,16 @@ test.only('triggering an event on an entity', function(t){
     t.end();
 });
 
+
+test('the registry passes the event on to interested entitysets and views', function(t){
+    var registry = initialiseRegistry();
+    var entitySet = registry.createEntitySet();
+
+    
+
+    t.end();
+});
+
 // test('listen to events on entities that have certain components');
 
 test('triggering an event on all entities', function(t){
