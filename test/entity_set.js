@@ -763,7 +763,7 @@ test('map transfers an entitySet through a filter into another entityset again',
     EntitySet.map( loadedEntitySet, entityFilter, oEntitySet );
     // loadedEntitySet.map( entityFilter, oEntitySet );
 
-    t.equal( _.size(eventSpy.args[1][1]), 3, 'three components reported as being added' );
+    t.equal( _.size(eventSpy.args[1][1]), 5, 'three components reported as being added' );
     t.equal( _.size(eventSpy.args[2][1]), 2, 'two entities reported as being added' );
 
     t.end();

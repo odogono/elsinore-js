@@ -243,7 +243,21 @@ test('creating a filter with a standard and a custom function', function(t){
     t.notOk( f.accept( createEntity( {_c:Components.Animal, age:51} )), 'not accepting an animal age 51');
 
     t.end();
+});
 
+
+test('attribute filter filters attributes', function(t){
+    var f = EntityFilter.create( EntityFilter.ATTRIBUTES, Components.Robot, {colour:'blue'} );
+
+    log.debug( 'f is ' + JSON.stringify(f.toArray()) );
+
+    t.ok(
+        f.accept( createEntity( {_c:Components.Robot, colour:'blue'})),
+        'accepting a blue robot' );
+    t.notOk(
+        f.accept( createEntity( {_c:Components.Robot, colour:'white'})),
+        'not accepting a white robot' );
+    t.end();
 });
 
 test('iterator iterates allowable entities from a source', function(t){

@@ -359,6 +359,7 @@ test('.where returns entities which the attributes', function(t){
     var entitySet = loadEntities( registry );
     
     var result = entitySet.where('/component/status', {status:'active'} );
+    // printE( result );
     t.ok( result.isEntitySet, 'the result is an entityset');
     t.equals( result.length, 2, '3 entities returned');
 
