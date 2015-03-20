@@ -61,7 +61,8 @@ test('the view should have the same entities', function(t){
 
     var entitySet = loadEntities( registry );
     var view = entitySet.where(null, null, {view:true});
-    t.equals( entitySet.size(), view.length, 'same number of entities');
+    
+    t.equals( entitySet.length, view.length, 'same number of entities');
 
     t.end();
 });
@@ -248,15 +249,15 @@ test('deferred addition of components with a filter', function(t){
 });
 
 
-
-
 test('applying a filter', function(t){
-    var entity;
-    var registry = initialiseRegistry();
-    var entitySet = loadEntities( registry );
-    var entityFilter = registry.createEntityFilter( EntityFilter.ALL, '/component/position', '/component/realname' )
-    var view = entitySet.where( entityFilter, null, {view:true});
+    var entity, entitySet, registry, view, entityFilter;
 
+    registry = initialiseRegistry();
+    entitySet = loadEntities( registry );
+    
+    entityFilter = registry.createEntityFilter( EntityFilter.ALL, '/component/position', '/component/realname' );
+    view = entitySet.where( entityFilter, null, {view:true});
+    
     t.ok( view.at(0).Position, 'the entity should have /position' );
     t.ok( view.at(0).Realname, 'the entity should have /realname' );
 
@@ -265,6 +266,7 @@ test('applying a filter', function(t){
 
     t.end();
 });
+
 
 test('views created with a filter', function(t){
     var entity;

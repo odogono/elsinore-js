@@ -31,11 +31,9 @@ test.skip('quick test', function(t){
 
     log.debug('good ' + instance.soup + ' ' + instance.colour );
 
-    // var derp = new mixin();
-    // derp.hello();
-
     t.end();
 });
+
 
 test('creating a filter by passing multiple component ids', function(t){
     var f = EntityFilter.create( EntityFilter.INCLUDE, Components.Animal, Components.Doctor, Components.Flower );
@@ -43,6 +41,8 @@ test('creating a filter by passing multiple component ids', function(t){
     t.deepEqual( f.toArray(), [EntityFilter.INCLUDE, Components.Animal, Components.Doctor, Components.Flower] );
     t.end();
 });
+
+
 
 test('creating an array filter by passing an array', function(t){
     var f = EntityFilter.create(
@@ -56,6 +56,21 @@ test('creating an array filter by passing an array', function(t){
         [EntityFilter.NONE, Components.Animal, Components.Mineral],
         [EntityFilter.INCLUDE, Components.Animal, Components.Doctor, Components.Flower]
         ]);
+
+    t.end();
+});
+
+test('filters will have identical hashes', function(t){
+    t.equals(
+        EntityFilter.create( EntityFilter.INCLUDE, Components.Animal ).hash(),
+        EntityFilter.create( EntityFilter.INCLUDE, Components.Animal ).hash()
+        );
+    t.notEqual(
+        EntityFilter.create( EntityFilter.INCLUDE, Components.Animal ).hash(),
+        EntityFilter.create( EntityFilter.EXCLUDE, Components.Animal ).hash()
+        );
+
+
 
     t.end();
 });
@@ -249,7 +264,7 @@ test('creating a filter with a standard and a custom function', function(t){
 test('attribute filter filters attributes', function(t){
     var f = EntityFilter.create( EntityFilter.ATTRIBUTES, Components.Robot, {colour:'blue'} );
 
-    log.debug( 'f is ' + JSON.stringify(f.toArray()) );
+    // log.debug( 'f is ' + JSON.stringify(f.toArray()) );
 
     t.ok(
         f.accept( createEntity( {_c:Components.Robot, colour:'blue'})),
