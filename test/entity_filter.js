@@ -36,9 +36,9 @@ test.skip('quick test', function(t){
 
 
 test('creating a filter by passing multiple component ids', function(t){
-    var f = EntityFilter.create( EntityFilter.INCLUDE, Components.Animal, Components.Doctor, Components.Flower );
+    var f = EntityFilter.create( EntityFilter.INCLUDE, [Components.Animal, Components.Doctor, Components.Flower] );
     t.equals( f.type, EntityFilter.INCLUDE );
-    t.deepEqual( f.toArray(), [EntityFilter.INCLUDE, Components.Animal, Components.Doctor, Components.Flower] );
+    t.deepEqual( f.toArray(), [EntityFilter.INCLUDE, [Components.Animal, Components.Doctor, Components.Flower]] );
     t.end();
 });
 
@@ -46,28 +46,29 @@ test('creating a filter by passing multiple component ids', function(t){
 
 test('creating an array filter by passing an array', function(t){
     var f = EntityFilter.create(
-                [EntityFilter.NONE, Components.Mineral, Components.Animal],
-                [EntityFilter.INCLUDE, Components.Animal, Components.Doctor, Components.Flower] );
+                [   [EntityFilter.NONE, [Components.Mineral, Components.Animal]],
+                    [EntityFilter.INCLUDE, [Components.Animal, Components.Doctor, Components.Flower]]  ] );
 
     t.equals( f.size(), 2 );
     t.equals( f.type, EntityFilter.ARRAY );
     
     t.deepEqual( f.toArray(),[
-        [EntityFilter.NONE, Components.Animal, Components.Mineral],
-        [EntityFilter.INCLUDE, Components.Animal, Components.Doctor, Components.Flower]
+        [EntityFilter.NONE, [Components.Animal, Components.Mineral]],
+        [EntityFilter.INCLUDE, [Components.Animal, Components.Doctor, Components.Flower]]
         ]);
 
     t.end();
 });
 
 test('filters will have identical hashes', function(t){
+    var hashFn = EntityFilter.hash;
     t.equals(
-        EntityFilter.create( EntityFilter.INCLUDE, Components.Animal ).hash(),
-        EntityFilter.create( EntityFilter.INCLUDE, Components.Animal ).hash()
+        hashFn( EntityFilter.create( EntityFilter.INCLUDE, Components.Animal ) ),
+        hashFn( EntityFilter.create( EntityFilter.INCLUDE, Components.Animal ) )
         );
     t.notEqual(
-        EntityFilter.create( EntityFilter.INCLUDE, Components.Animal ).hash(),
-        EntityFilter.create( EntityFilter.EXCLUDE, Components.Animal ).hash()
+        hashFn( EntityFilter.create( EntityFilter.INCLUDE, Components.Animal ) ),
+        hashFn( EntityFilter.create( EntityFilter.EXCLUDE, Components.Animal ) )
         );
 
 
@@ -91,7 +92,7 @@ test('will reject entities without components', function(t){
 });
 
 test('will accept entities with one of the components', function(t){
-    var f = EntityFilter.create( EntityFilter.ANY, Components.Animal, Components.Doctor );
+    var f = EntityFilter.create( EntityFilter.ANY, [Components.Animal, Components.Doctor] );
 
     t.ok( f.accept( createEntity( Components.Animal ) ) );
     t.notOk( f.accept( createEntity( Components.Mineral ) ) );
@@ -114,7 +115,7 @@ test('reject an entity which does not have a specific component', function(t){
 
 test('reject an entity which does not have the specific components', function(t){
     var e = Entity.create();
-    var f = EntityFilter.create( EntityFilter.ALL, Components.Mineral, Components.Vegetable );
+    var f = EntityFilter.create( EntityFilter.ALL, [Components.Mineral, Components.Vegetable] );
 
     e.addComponent( createComponent( Components.Animal ) );
     e.addComponent( createComponent( Components.Mineral ) );
@@ -127,7 +128,7 @@ test('reject an entity which does not have the specific components', function(t)
 
 test('accepts an entity which has some of the components', function(t){
     var e = Entity.create();
-    var f = EntityFilter.create( EntityFilter.ANY, Components.Animal, Components.Mineral, Components.Vegetable );
+    var f = EntityFilter.create( EntityFilter.ANY, [Components.Animal, Components.Mineral, Components.Vegetable] );
     
     t.notOk( f.accept(e) );
     e.addComponent( createComponent( Components.Robot ) );
@@ -153,8 +154,8 @@ test('rejects an entity which has any of the components', function(t){
 
 test('rejects an entity which has any of the components with multiple filters', function(t){
     var f = EntityFilter.create(
-        [EntityFilter.NONE, Components.Vegetable],
-        [EntityFilter.ALL, Components.Animal] );
+        [[EntityFilter.NONE, Components.Vegetable],
+        [EntityFilter.ALL, Components.Animal]] );
 
     var e = Entity.create();
     t.notOk( f.accept(e) );
@@ -186,7 +187,7 @@ test('transform will copy an incoming entity', function(t){
 test('transform will include only specified components on an entity', function(t){
     var e = createEntity( Components.Mineral, Components.Vegetable, Components.Robot );
 
-    var f = EntityFilter.create( EntityFilter.INCLUDE, Components.Animal, Components.Robot, Components.Doctor );
+    var f = EntityFilter.create( EntityFilter.INCLUDE, [Components.Animal, Components.Robot, Components.Doctor] );
 
     t.ok( e.Robot, 'entity will have Robot component' );
     t.ok( e.Mineral, 'entity will have Mineral component' );
@@ -202,7 +203,7 @@ test('transform will include only specified components on an entity', function(t
 test('transform will exclude specified components on an entity', function(t){
     var e = createEntity( Components.Mineral, Components.Vegetable, Components.Robot );
     var f = EntityFilter.create( EntityFilter.EXCLUDE, Components.Vegetable );
-    
+
     var te = f.transform( e );
     t.equal( e.id, te.id, 'transformed entity id will be the same' );
     t.ok( te.Mineral, 'transformed entity will have Mineral component' );
@@ -241,10 +242,10 @@ test('creating a filter with a custom accept function', function(t){
     t.end();
 });
 
-test('creating a filter with a standard and a custom function', function(t){
+test.skip('creating a filter with a standard and a custom function', function(t){
     
     var f = EntityFilter.create( 
-        [ EntityFilter.ALL, Components.Robot ],
+        EntityFilter.ALL, Components.Robot,
         function accept(entity,options){
             if( entity.Robot.get('age') > 40  ){
                 return true;
@@ -264,8 +265,6 @@ test('creating a filter with a standard and a custom function', function(t){
 test('attribute filter filters attributes', function(t){
     var f = EntityFilter.create( EntityFilter.ATTRIBUTES, Components.Robot, {colour:'blue'} );
 
-    // log.debug( 'f is ' + JSON.stringify(f.toArray()) );
-
     t.ok(
         f.accept( createEntity( {_c:Components.Robot, colour:'blue'})),
         'accepting a blue robot' );
@@ -279,7 +278,7 @@ test('iterator iterates allowable entities from a source', function(t){
     var entity;
     var it;
     var count;
-    var f = EntityFilter.create( EntityFilter.ANY, Components.Animal, Components.Mineral, Components.Vegetable );
+    var f = EntityFilter.create( EntityFilter.ANY, [Components.Animal, Components.Mineral, Components.Vegetable] );
     var entitySet = createEntitySet();
     // Common.logEvents( es );
 

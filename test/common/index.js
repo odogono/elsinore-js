@@ -73,8 +73,8 @@ function printIns(arg,depth,showHidden,colors){
 function printVar(){
     var i, len;
     for (i = 0, len = arguments.length; i < len; i++) {
-        // Util.log( JSON.stringify(arguments[i], null, '\t') );
-        Util.log( Util.inspect(arguments[i], {depth:1}) );
+        Util.log( JSON.stringify(arguments[i], null, '\t') );
+        // Util.log( Util.inspect(arguments[i], {depth:1}) );
     }
 }
 

@@ -16,7 +16,7 @@ var Registry = Elsinore.Registry;
 var Utils = Elsinore.Utils;
 
 
-test.only('keeping a map of entitySets and views', function(t){
+test('keeping a map of entitySets and views', function(t){
     var registry = Registry.create();
     var es = registry.createEntitySet();
     var filter = registry.createEntityFilter( EntityFilter.ALL, '/component/position' );
@@ -37,141 +37,136 @@ test.only('keeping a map of entitySets and views', function(t){
     t.end();
 });
 
-test('creating components', function(t){
+// creating components
 
-    test('create from a schema', function(t){
-        var registry = Registry.create();
-        // Common.logEvents( registry );
-        // passing a schema as the first argument will cause the component to be
-        // registered at the same time
-        var component = registry.createComponent( componentByUri['/component/position'], { x:200 } );
+test('create from a schema', function(t){
+    var registry = Registry.create();
+    // Common.logEvents( registry );
+    // passing a schema as the first argument will cause the component to be
+    // registered at the same time
+    var component = registry.createComponent( componentByUri['/component/position'], { x:200 } );
 
-        t.equals( component.schemaUri, '/component/position' );
-        t.equals( component.schemaHash, '9db8f95b' );
-        t.equals( component.get('x'), 200 );
+    t.equals( component.schemaUri, '/component/position' );
+    t.equals( component.schemaHash, '9db8f95b' );
+    t.equals( component.get('x'), 200 );
 
-        t.end();
-    });
+    t.end();
+});
 
-    test('create from a schema hash', function(t){
-        var registry = Registry.create();
-        var def = registry.registerComponent( componentByUri['/component/score'] );
-        var component = registry.createComponent( 'd3f0bf51', {score:200} );
-        
-        t.equals( component.get('score'), 200 );
-        t.equals( component.get('lives'), 3 );
+test('create from a schema hash', function(t){
+    var registry = Registry.create();
+    var def = registry.registerComponent( componentByUri['/component/score'] );
+    var component = registry.createComponent( 'd3f0bf51', {score:200} );
+    
+    t.equals( component.get('score'), 200 );
+    t.equals( component.get('lives'), 3 );
 
-        t.end();
-    });
+    t.end();
+});
 
-    test('create from a pre-registered schema', function(t){
-        var registry = Registry.create();
+test('create from a pre-registered schema', function(t){
+    var registry = Registry.create();
 
-        registry.registerComponent( componentByUri['/component/nickname'] );
+    registry.registerComponent( componentByUri['/component/nickname'] );
 
-        var component = registry.createComponent( '/component/nickname', {nick:'peter'} );
+    var component = registry.createComponent( '/component/nickname', {nick:'peter'} );
 
-        t.equals( component.get('nick'), 'peter' );
+    t.equals( component.get('nick'), 'peter' );
 
-        t.end();
-    });
+    t.end();
+});
 
-    test('create from a pre-registered schema using data object', function(t){
-        var registry = Registry.create();
+test('create from a pre-registered schema using data object', function(t){
+    var registry = Registry.create();
 
-        registry.registerComponent( componentByUri['/component/nickname'] );
+    registry.registerComponent( componentByUri['/component/nickname'] );
 
-        var component = registry.createComponent( {id:'/component/nickname', nick:'susan'} );
+    var component = registry.createComponent( {id:'/component/nickname', nick:'susan'} );
 
-        t.equals( component.get('nick'), 'susan' );
+    t.equals( component.get('nick'), 'susan' );
 
-        t.end();
-    });
+    t.end();
+});
 
-    test('create from an array of data', function(t){
-        var registry = Registry.create();
+test('create from an array of data', function(t){
+    var registry = Registry.create();
 
-        registry.registerComponent( componentByUri['/component/position'] );
+    registry.registerComponent( componentByUri['/component/position'] );
 
-        var components = registry.createComponent( '/component/position', [ {x:0,y:-1}, {x:10,y:0}, {x:15,y:-2} ] );
+    var components = registry.createComponent( '/component/position', [ {x:0,y:-1}, {x:10,y:0}, {x:15,y:-2} ] );
 
-        t.equals( components.length, 3 );
-        t.equals( components[1].get('x'), 10 );
-
-        t.end();
-    });
+    t.equals( components.length, 3 );
+    t.equals( components[1].get('x'), 10 );
 
     t.end();
 });
 
 
 
+// EntityFilter creation
 
+test('create an entity filter', function(t){
+    var registry = Registry.create();
+    registry.registerComponent( componentSchemas );
 
-test( 'creating entity filters', function(t){
+    EntityFilter.create = function( type, componentIds ){
+        t.equal( EntityFilter.SOME, type );
+        t.equal( registry.getIId('/component/position'), componentIds );
+    }
 
-    test('create an entity filter', function(t){
-        var registry = Registry.create();
-        registry.registerComponent( componentSchemas );
-
-        EntityFilter.create = function( entityFilter ){
-            t.deepEqual( entityFilter, [EntityFilter.ALL,registry.getIId('/component/position')] );
-        }
-
-        registry.createEntityFilter( EntityFilter.ALL, '/component/position' );
-
-        t.end();
-    });
-
-    test('create an entity filter with an array', function(t){
-        var registry = Registry.create();
-        registry.registerComponent( componentSchemas );
-
-        EntityFilter.create = function( entityFilter ){
-            t.deepEqual( entityFilter, 
-                [EntityFilter.EXCLUDE, registry.getIId('/component/score'), registry.getIId('/component/nickname') ] );
-        }
-        // printIns( registry );
-        registry.createEntityFilter( [EntityFilter.EXCLUDE, '/component/score', '/component/nickname'] );
-
-        t.end();
-    });
-
-    test('create an entity filter with multiple arrays', function(t){
-        var registry = Registry.create();
-        registry.registerComponent( componentSchemas );
-
-        EntityFilter.create = function( entityFilterA, entityFilterB ){
-            t.deepEqual( entityFilterA, 
-                [EntityFilter.ALL, registry.getIId('/component/realname') ] );
-            t.deepEqual( entityFilterB, 
-                [EntityFilter.NONE, registry.getIId('/component/position') ] );
-        };
-
-        registry.createEntityFilter( [EntityFilter.ALL, '/component/realname'], [EntityFilter.NONE, '/component/position'] );
-
-        t.end();
-    });
-
-    test('create an entity filter with an array of arrays', function(t){
-        var registry = Registry.create();
-        registry.registerComponent( componentSchemas );
-
-        EntityFilter.create = function( entityFilterA, entityFilterB ){
-            t.deepEqual( entityFilterA, 
-                [EntityFilter.SOME, registry.getIId('/component/realname') ] );
-            t.deepEqual( entityFilterB, 
-                [EntityFilter.ANY, registry.getIId('/component/position') ] );
-        };
-        
-        registry.createEntityFilter( [[EntityFilter.SOME, '/component/realname'], [EntityFilter.ANY, '/component/position']] );
-
-        t.end();
-    });
+    registry.createEntityFilter( EntityFilter.SOME, '/component/position' );
 
     t.end();
 });
-// describe('Registry', function(){
+
+test('create an entity filter with an array', function(t){
+    var registry = Registry.create();
+    registry.registerComponent( componentSchemas );
+
+    EntityFilter.create = function( type, componentIds ){
+        printIns( arguments );
+        t.equal( EntityFilter.EXCLUDE, type );
+        t.deepEqual( [registry.getIId('/component/score'), registry.getIId('/component/nickname')], componentIds );
+    }
+
+    registry.createEntityFilter( EntityFilter.EXCLUDE, ['/component/score', '/component/nickname'] );
+
+    t.end();
+});
+
+test('create an entity filter with multiple arrays', function(t){
+    var registry = Registry.create();
+    registry.registerComponent( componentSchemas );
+
+    EntityFilter.create = function( entityFilterA, entityFilterB ){
+        t.deepEqual( entityFilterA, 
+            [EntityFilter.INCLUDE, registry.getIId('/component/realname') ] );
+        t.deepEqual( entityFilterB, 
+            [EntityFilter.SOME, registry.getIId('/component/position') ] );
+    };
+
+    registry.createEntityFilter( [EntityFilter.INCLUDE, '/component/realname'], [EntityFilter.SOME, '/component/position'] );
+
+    t.end();
+});
+
+test('create an entity filter with an array of arrays', function(t){
+    var registry = Registry.create();
+    registry.registerComponent( componentSchemas );
+
+    EntityFilter.create = function( entityFilterA, entityFilterB ){
+        t.deepEqual( entityFilterA, 
+            [EntityFilter.SOME, registry.getIId('/component/realname') ] );
+        t.deepEqual( entityFilterB, 
+            [EntityFilter.ANY, registry.getIId('/component/position') ] );
+    };
+    
+    registry.createEntityFilter( [[EntityFilter.SOME, '/component/realname'], [EntityFilter.ANY, '/component/position']] );
+
+    t.end();
+});
+
+
 
 
 //     describe('creating components', function(){

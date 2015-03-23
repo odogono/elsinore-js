@@ -527,7 +527,7 @@ test('should only add entities that are included', function(t){
     var entities = loadEntities( registry );
 
         // this means that any entity MUST have a Position and Nickname
-        EntitySet.setEntityFilter( entitySet, EntityFilter.ALL, '/component/position','/component/nickname' );
+        EntitySet.setEntityFilter( entitySet, EntityFilter.ALL, ['/component/position','/component/nickname'] );
         entitySet.addEntity( entities );
         t.equals( entitySet.size(), 2);
         t.end();
@@ -540,7 +540,7 @@ test('should only add entities that are optional', function(t){
     var entities = loadEntities( registry );
 
     // this means that the entity MAY have Position and/or Nickname
-    EntitySet.setEntityFilter( entitySet, EntityFilter.ANY, '/component/position','/component/nickname' );
+    EntitySet.setEntityFilter( entitySet, EntityFilter.ANY, ['/component/position','/component/nickname'] );
     entitySet.addEntity( entities );
     t.equals( entitySet.size(), 4);
 
@@ -554,8 +554,8 @@ test('should only add entities that pass include/exclude', function(t){
     var entities = loadEntities( registry );
 
     EntitySet.setEntityFilter( entitySet, 
-        [EntityFilter.ALL, '/component/position'],
-        [EntityFilter.NONE, '/component/realname'] );
+        [   [EntityFilter.ALL, '/component/position'],
+            [EntityFilter.NONE, '/component/realname']  ]);
 
     entitySet.addEntity( entities );
 
