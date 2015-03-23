@@ -74,6 +74,9 @@ test('main', function(t){
     // components
     eDoor.triggerEntityEvent( 'doorOpen' );
 
+    // an update has to occur for events to be processed
+    registry.updateSync();
+
     // as a result of the event, the door should now be open
     t.assert( eDoor.Door.get('open'), 'the door should be open' );
 

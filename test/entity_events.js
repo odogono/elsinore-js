@@ -16,13 +16,13 @@ var Registry = Elsinore.Registry;
 var Utils = Elsinore.Utils;
 
 
-test.only('triggering an event on an entity', function(t){
-    var registry = initialiseRegistry();
+test('triggering an event on an entity', function(t){
+    var entity, registry = initialiseRegistry();
     var entitySet = registry.createEntitySet();
     var eventSpy = Sinon.spy();
 
     // listen to all msg events from all entities
-    entitySet.listenToEntityEvent( null, 'msg', eventSpy );
+    entitySet.on( 'msg', eventSpy );
     // entitySet.listenToEntityEvent( 'all', function(){
     //     log.debug('!eevt ' + JSON.stringify(arguments));
     // } );
@@ -31,11 +31,12 @@ test.only('triggering an event on an entity', function(t){
     //     log.debug('2!eevt '  + JSON.stringify(arguments));
     // } );
     
-    entitySet.addComponent( registry.createComponent( '/component/animal', {id:5,_e:1, name:'tiger'}) );
+    entity = registry.createEntity( { id:'/component/animal', name:'tiger' } );
+    entity = entitySet.addEntity( entity );
 
-    // printE( entitySet );
+    // entitySet.addComponent( registry.createComponent( '/component/animal', {id:5,_e:1, name:'tiger'}) );
 
-    entitySet.triggerEntityEvent( entitySet.at(0), 'msg', 'hello there' );
+    entitySet.triggerEntityEvent( 'msg', entitySet.at(0), 'hello there' );
 
     t.ok( eventSpy.called, 'msg event should have been called' );
 
@@ -43,18 +44,64 @@ test.only('triggering an event on an entity', function(t){
 });
 
 
-test('the registry passes the event on to interested entitysets and views', function(t){
-    var registry = initialiseRegistry();
+test('the registry triggers the event on entitysets', function(t){
+    var entity, registry = initialiseRegistry();
     var entitySet = registry.createEntitySet();
+    var eventSpy = Sinon.spy();
 
-    
+    // Common.logEvents( entitySet, 'ese!' );
+    entitySet.on('all', eventSpy );
+    entitySet.on('all', function( entity ){
+        // printIns( arguments );
+        // log.debug('called msg with ' + entity.id );
+    });
+
+    entity = entitySet.addEntity( 
+        registry.createEntity( { id:'/component/animal', name:'tiger' } ) );
+
+    // registry.triggerEntityEvent( 'msg', entity, 'close the door' );
+    entity.triggerEntityEvent( 'msg', 'close the door');
+
+    t.ok( eventSpy.calledWith('msg', entity, 'close the door'), 'entity was called with event' );
 
     t.end();
 });
 
+
+test('the registry triggers the event on a compatible entityset', function(t){
+    var entity, registry = initialiseRegistry();
+    var entitySet = registry.createEntitySet();
+    
+    var mineralCalled = false, animalCalled = false, mainCalled = false;
+
+    var mineralEntitySet = entitySet.where('/component/mineral');
+    var animalEntitySet = entitySet.where('/component/animal');
+
+    registry.addEntitySet( mineralEntitySet );
+    registry.addEntitySet( animalEntitySet );
+
+    entitySet.on('msg', function(){ mainCalled = true; });    
+    mineralEntitySet.on('msg', function(){ mineralCalled = true; });
+    animalEntitySet.on('msg', function(){ animalCalled = true; });
+
+    entity = entitySet.addEntity( 
+        registry.createEntity( { id:'/component/animal', name:'tiger' } ) );
+
+    entity.triggerEntityEvent( 'msg', 'welcome' );
+    // registry.triggerEntityEvent( 'msg', entity, 'welcome' );
+
+    t.notOk( mineralCalled, 'events triggered only on base entitySet and animal entitySet');
+    t.ok( animalCalled, 'events triggered only on base entitySet and animal entitySet');
+    
+    t.end();
+});
+
+
+
+
 // test('listen to events on entities that have certain components');
 
-test('triggering an event on all entities', function(t){
+test.skip('triggering an event on all entities', function(t){
     return registerComponents().then( function(){
 
         var eventSpy = Sinon.spy();
