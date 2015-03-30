@@ -8,13 +8,14 @@ var Common = require('./common');
 
 var Elsinore = require('../lib');
 var Entity = Elsinore.Entity;
+var Component = Elsinore.Component;
 
 
 test('is an entity', function(t){
     var e = Entity.create();
     t.equals( e.type, 'Entity' );
     t.equals( Entity.prototype.type, 'Entity' );
-    // printIns( Entity.prototype );
+    t.ok( Entity.isEntity(e) );
     t.end();
 });
 
@@ -32,5 +33,24 @@ test('setting the id', function(t){
     t.equals( e.getEntitySetId(), 2000 );
     t.equals( e.getEntityId(), 22 );
     
+    t.end();
+});
+
+test('hashing', function(t){
+    var e = Entity.create();
+    // because an entity is the sum of its components, without components it is nothing
+    t.equals( e.hash(), 0 );
+
+    var c = Component.create({name:'douglas'});
+    e.addComponent( c );
+
+    t.equals( e.hash(true), '7c7ecfd3' );
+
+    var oe = Entity.create();
+    var oc = Component.create({name:'douglas'});
+    oe.addComponent( oc );
+
+    t.equals( e.hash(), oe.hash() );
+
     t.end();
 });

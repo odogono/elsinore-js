@@ -372,6 +372,15 @@ test('should remove an entity', function(t){
     // log.debug('>----- from here');
     entitySet.removeEntity( entity );
     t.equals( entitySet.size(), 0);
+
+    // printE( entities );
+    // printE( entities.at(1).Status );
+    // printE( entities.at(3).Status );
+
+    // log.debug('1st ' + entities.at(1).Status.hash(true) );
+    // log.debug('1st ' + entities.at(3).Status.hash(true) );
+
+
     t.end();
 });
 
@@ -643,44 +652,51 @@ test('should emit an event when a component is changed', function(t){
     var registry = initialiseRegistry();
     var entitySet = registry.createEntitySet();
     var entities = loadEntities( registry );
-    // Common.logEvents( entitySet );
 
-        var entity = entities.at(0);
-        var component = entity.Position;
-        var spy = Sinon.spy();
+    var entity = entities.at(0);
+    var cloned, component = entity.Position;
+    var spy = Sinon.spy();
 
-        entitySet.on('component:change', spy);
+    entitySet.on('component:change', spy);
 
-        entitySet.addEntity( entity );
+    entitySet.addEntity( entity );
 
-        component = registry.cloneComponent( component );
-        component.set({x:0,y:-2});
+    cloned = registry.cloneComponent( component );
+    cloned.set({x:0,y:-2});
 
-        entitySet.addComponent( component );
+    entitySet.addComponent( cloned );
 
-        t.ok( spy.called, 'component:change should have been called' );
-        t.end();
-    // });
+    t.ok( spy.called, 'component:change should have been called' );
+
+    // printE( entitySet );
+
+    t.end();
 });
 
-// NOTE - don't think this is needed? 
-test.skip('should emit events when components change', function(t){
+test('emit event when an entity component is changed', function(t){
     var registry = initialiseRegistry();
     var entitySet = registry.createEntitySet();
-    var entities = loadEntities( registry );
+    var spy = Sinon.spy();
+    // Common.logEvents( entitySet );
+    
+    entitySet.on('component:change', spy);
 
-        var entity = entities.at(0);
-        var spy = Sinon.spy();
+    var entityA = registry.createEntity( { id:'/component/flower', colour:'white'} );
+    entityA = entitySet.addEntity( entityA );
 
-        entitySet.on('component:change', spy);
-        
-        entitySet.addEntity( entity );
-        entity.Position.set('x',100);
+    // printE( entitySet );
 
-        t.ok( spy.called, 'component:change should have been called' );
-        t.end();
-    // });
+    var entityB = registry.createEntity( { id:'/component/flower', colour:'blue'}, {id:entityA.getEntityId()} );
+    t.equal( entityA.getEntityId(), entityB.getEntityId(), 'the entity ids should be equal' );
+    entityB = entitySet.addEntity( entityB );    
+
+    t.ok( spy.called, 'component:change should have been called' );
+
+    // printE( entitySet );
+
+    t.end();
 });
+
 
 
 test('should clear all contained entities by calling reset', function(t){

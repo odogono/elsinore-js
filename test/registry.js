@@ -1,3 +1,5 @@
+'use strict';
+
 var _ = require('underscore');
 var test = require('tape');
 
@@ -17,7 +19,7 @@ var Utils = Elsinore.Utils;
 
 
 test('keeping a map of entitySets and views', function(t){
-    var registry = Registry.create();
+    var registry = initializeRegistry();
     var es = registry.createEntitySet();
     var filter = registry.createEntityFilter( EntityFilter.ALL, '/component/position' );
     var eso = registry.createEntitySet();
@@ -106,65 +108,72 @@ test('create from an array of data', function(t){
 // EntityFilter creation
 
 test('create an entity filter', function(t){
-    var registry = Registry.create();
-    registry.registerComponent( componentSchemas );
+    var registry = initializeRegistry();
+    var filter = registry.createEntityFilter( EntityFilter.SOME, '/component/position' );
 
-    EntityFilter.create = function( type, componentIds ){
-        t.equal( EntityFilter.SOME, type );
-        t.equal( registry.getIId('/component/position'), componentIds );
-    }
+    // log.debug('iid is ' + registry.getIId('/component/score') );
 
-    registry.createEntityFilter( EntityFilter.SOME, '/component/position' );
+    
+
+    t.deepEqual( filter.toArray(), 
+        [ EntityFilter.SOME, [registry.getIId('/component/position')]] );
+
+
+    // log.debug('iid is ' + registry.getIId('/component/score') );
 
     t.end();
 });
 
+test('create an entity filter with a simple array??', function(t){
+    var registry = initializeRegistry();
+    var filter = registry.createEntityFilter( [EntityFilter.INCLUDE, '/component/realname'] );
+
+    t.deepEqual( filter.toArray(), 
+        [ EntityFilter.INCLUDE, [registry.getIId('/component/realname')]] );
+    
+    t.end();
+});
+
 test('create an entity filter with an array', function(t){
-    var registry = Registry.create();
-    registry.registerComponent( componentSchemas );
+    var registry = initializeRegistry();
+    var filter = registry.createEntityFilter( EntityFilter.EXCLUDE, ['/component/score', '/component/nickname'] );
 
-    EntityFilter.create = function( type, componentIds ){
-        printIns( arguments );
-        t.equal( EntityFilter.EXCLUDE, type );
-        t.deepEqual( [registry.getIId('/component/score'), registry.getIId('/component/nickname')], componentIds );
-    }
+    t.deepEqual( 
+        filter.toArray(), 
+        [ EntityFilter.EXCLUDE, [registry.getIId('/component/score'), registry.getIId('/component/nickname')]] );
 
-    registry.createEntityFilter( EntityFilter.EXCLUDE, ['/component/score', '/component/nickname'] );
 
     t.end();
 });
 
 test('create an entity filter with multiple arrays', function(t){
-    var registry = Registry.create();
-    registry.registerComponent( componentSchemas );
+    var registry = initializeRegistry();
 
-    EntityFilter.create = function( entityFilterA, entityFilterB ){
-        t.deepEqual( entityFilterA, 
-            [EntityFilter.INCLUDE, registry.getIId('/component/realname') ] );
-        t.deepEqual( entityFilterB, 
-            [EntityFilter.SOME, registry.getIId('/component/position') ] );
-    };
+    var filter = registry.createEntityFilter([ 
+        [EntityFilter.INCLUDE, '/component/realname'], 
+        [EntityFilter.SOME, '/component/position'] ]);
 
-    registry.createEntityFilter( [EntityFilter.INCLUDE, '/component/realname'], [EntityFilter.SOME, '/component/position'] );
+    t.deepEqual( 
+        filter.toArray(), 
+        [  [EntityFilter.INCLUDE, [registry.getIId('/component/realname')]], 
+           [EntityFilter.SOME, [registry.getIId('/component/position')]] ] );
 
     t.end();
 });
 
 test('create an entity filter with an array of arrays', function(t){
-    var registry = Registry.create();
-    registry.registerComponent( componentSchemas );
+    var registry = initializeRegistry();
+    var filter = registry.createEntityFilter( 
+        [   [EntityFilter.SOME, '/component/realname'], 
+            [EntityFilter.ANY, '/component/position']   ]);
 
-    EntityFilter.create = function( entityFilterA, entityFilterB ){
-        t.deepEqual( entityFilterA, 
-            [EntityFilter.SOME, registry.getIId('/component/realname') ] );
-        t.deepEqual( entityFilterB, 
-            [EntityFilter.ANY, registry.getIId('/component/position') ] );
-    };
-    
-    registry.createEntityFilter( [[EntityFilter.SOME, '/component/realname'], [EntityFilter.ANY, '/component/position']] );
+    t.deepEqual( 
+        filter.toArray(), 
+        [  [EntityFilter.SOME, [registry.getIId('/component/realname')]], 
+           [EntityFilter.ANY, [registry.getIId('/component/position')]] ] );
 
     t.end();
-});
+});//*/
 
 
 
@@ -406,6 +415,11 @@ test('create an entity filter with an array of arrays', function(t){
 //     return Promise.resolve( registry );
 // }
 
+function initializeRegistry(){
+    var registry = Registry.create();
+    registry.registerComponent( componentSchemas );
+    return registry;
+}
 
 // compile a map of schema id(uri) to schema
 var componentSchemas = require('./fixtures/components.json');

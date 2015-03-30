@@ -483,17 +483,23 @@ test('registering a schema returns the schemas registered', function(t){
 });
 
 
+test('attempting to retrieve an unknown schema throws an error', function(t){
+    var registry = SchemaRegistry.create();
+
+    t.throws( function(){
+        registry.getIId('/component/missing')}, /could not find schema \/component\/missing/ );
+    
+    t.end();
+});
+
 test('returns an array of schema internal ids from a series of identifiers', function(t){
     var registry = SchemaRegistry.create();
     // Common.logEvents( registry );
     registry.register( componentSchemas );
 
-    // printIns( registry.getIId('elsinore:/component#position') );
-    // printIns( registry.schemasByHash );
-
     t.deepEqual(
-        registry.getIId( '/component/position', 'nuts', 'c6c1bcdf', 9, '/component/geo_location', 'bd12d7de' ),
-        [ 15, undefined, 12, 9, 8, 4 ] );
+        registry.getIId( '/component/position', 'c6c1bcdf', 9, '/component/geo_location', 'bd12d7de' ),
+        [ 15, 12, 9, 8, 4 ] );
 
     t.end();
 })
