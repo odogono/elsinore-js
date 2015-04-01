@@ -9,6 +9,8 @@ var Sinon = require('sinon');
 
 var Elsinore = require('../lib');
 
+var EventsAsync = require('../lib/util/events.async');
+
 var EntityFilter = Elsinore.EntityFilter;
 var EntitySet = Elsinore.EntitySet;
 var Entity = Elsinore.Entity;
@@ -98,6 +100,50 @@ test('the registry triggers the event on a compatible entityset', function(t){
 
 
 
+test('triggers events which are stored until release', function(t){
+    var entity, registry = initialiseRegistry();
+    var entitySet = registry.createEntitySet();
+    var received = false;
+    var listener = _.extend({
+    }, EventsAsync);
+
+    listener.listenToAsync( entitySet, 'msg', function(msgEntity){
+        received = true;
+        t.equals( msgEntity.Animal.get('name'), 'tiger' );
+    });
+
+    entity = entitySet.addEntity( 
+        registry.createEntity( { id:'/component/animal', name:'tiger' } ) );
+
+    entitySet.triggerEntityEvent( 'msg', entity );
+
+    listener.releaseAsync();
+
+    t.ok( received, 'the msg was received' );
+    t.end();
+});
+
+
+test('still triggers on normal listeners', function(t){
+    var entity, registry = initialiseRegistry();
+    var entitySet = registry.createEntitySet();
+    var received = false;
+    var listener = _.extend({
+    }, EventsAsync);
+
+    listener.listenTo( entitySet, 'msg', function(msgEntity){
+        received = true;
+        t.equals( msgEntity.Animal.get('name'), 'tiger' );
+    });
+
+    entity = entitySet.addEntity( 
+        registry.createEntity( { id:'/component/animal', name:'tiger' } ) );
+
+    entitySet.triggerEntityEvent( 'msg', entity );
+
+    t.ok( received, 'the msg was received' );
+    t.end();
+});
 
 // test('listen to events on entities that have certain components');
 
