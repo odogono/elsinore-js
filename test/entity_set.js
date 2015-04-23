@@ -464,12 +464,12 @@ test('should not emit an event when a non-existent component is removed', functi
 });
 
 
-test('should only add an entity with components', function(t){
-    var entitySet = EntitySet.create({allowEmptyEntities:false});
-        entitySet.addEntity( 345 );
-        t.equals( entitySet.size(), 0);
-        t.end();
-});
+// test('should only add an entity with components', function(t){
+//     var entitySet = EntitySet.create({allowEmptyEntities:false});
+//     entitySet.addEntity( 345 );
+//     t.equals( entitySet.size(), 0);
+//     t.end();
+// });
 
 test('should only add a component of an accepted type', function(t){
     var registry = initialiseRegistry();

@@ -208,6 +208,35 @@ test('should remove a component reference from an entity', function(t){
 });
 
 
+test('.where returns an entityset of entities', function(t){
+    var registry = initialiseRegistry();
+    return loadEntities( registry ).then( function(entitySet){
+
+        return entitySet.where('/component/realname')
+            .then( function(resultEntitySet){
+                t.ok( resultEntitySet.isEntitySet, 'the result is an entityset');
+                t.equals( resultEntitySet.length, 3, '3 entities returned');
+                t.end();
+            });
+    }); 
+});
+
+
+
+test('.where returns entities which the attributes', function(t){
+    var registry = initialiseRegistry();
+
+    return loadEntities( registry ).then( function(entitySet){
+        return entitySet.where('/component/status', {status:'active'} )
+            .then( function(resultEntitySet){
+                t.equals( resultEntitySet.length, 2, '2 entities returned');
+                t.end();
+            });
+    });
+        
+});
+
+
 function initialiseAndOpenEntitySet( logEvents ){
     var registry = initialiseRegistry( logEvents );
     var entitySet = createEntitySet( registry );
@@ -219,6 +248,7 @@ function createEntitySet( registry ){
     var path;
     path = Common.pathVar( 'test/fes', true );
     entitySet = registry.createEntitySet( FileSystemEntitySet, {path: path} );
+
     return entitySet;
 }
 
@@ -245,7 +275,9 @@ function loadEntities( registry, fixtureName, options ){
 
     options || (options={});
 
-    memoryEntitySet = _.isUndefined(options.memory) ? true : options.memory;
+    memoryEntitySet = _.isUndefined(options.memory) ? false : options.memory;
+
+    // log.debug('returning MEM ES');
 
     fixtureName = fixtureName || 'entity_set.entities.ldjson';
 
@@ -262,24 +294,20 @@ function loadEntities( registry, fixtureName, options ){
 
     // each line should be turned into a component, then added
     // to the resultant entityset
-    if( memoryEntitySet ){
-        _.map( _.compact( lines ), function(line){
-            var com;
-            line = JSON.parse( line );
-            com = registry.createComponent( line );
-            com = result.addComponent( com );
-            // printIns( com ); process.exit();
+    var parsedComponents = _.map( _.compact(lines), function(line){
+        line = JSON.parse( line );
+        return registry.createComponent( line );
+    });
 
-            return com;
-        });
+    if( memoryEntitySet ){
+        result.addComponent( parsedComponents );
         return result;
-    } 
-        
-    return _.reduce( _.compact(lines), function(current, line){
-        return current.then( function(){
-            line = JSON.parse( line );
-            var com = registry.createComponent( line );
-            return result.addComponent( com );
+    }
+
+    return result.open()
+        .then( function(){
+            return result.addComponent( parsedComponents )
+                .then( function(){ return result; })
         });
-    }, Promise.resolve() );
+
 }

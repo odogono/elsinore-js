@@ -1,6 +1,9 @@
 Changelog
 =========
 
+http://keepachangelog.com/
+
+
 * **2013-05-01**: [Foobar] Foobar
 * **2013-04-31**: [Foobar] Foobar
  * (optional, extra detail for the line above)

@@ -302,7 +302,7 @@ test.skip('deferred addition of a component', function(t){
     entitySet.addComponent( 
         registry.createComponent( {id:'/component/position', x:-2,y:5}, entity) );
 
-    printE( view );
+    // printE( view );
 
     t.equals( view.at(0).Position, undefined, 'the component is not added yet');
     // t.equals( view.size(), 0, 'no components added yet');
@@ -344,6 +344,39 @@ test('deferred removal of an entity', function(t){
     // view.applyEvents();
 
     t.equals( view.length, 1, 'now one entity' );    
+
+    t.end();
+});
+
+
+test('deferred removal of an entity triggers correct events', function(t){
+    // entity:remove
+    var registry = initialiseRegistry();
+    var entitySet = registry.createEntitySet();
+    var entityA, entityB;
+    var view = entitySet.where( null, null, {view:true});
+    var eventSpy = Sinon.spy();
+
+    Common.logEvents( view );
+
+    entityA = entitySet.addEntity(
+        registry.createEntity([
+            { id:'/component/flower', colour:'blue'},
+            { id:'/component/position', x:10, y:60 }] ));
+
+    entityB = entitySet.addEntity(
+        registry.createEntity([
+            { id:'/component/vegetable', name:'cauliflower'},
+            { id:'/component/radius', radius:0.3 }] ));
+
+    view.applyEvents();
+
+    view.on('all', eventSpy);
+    entitySet.removeEntity( entityA );
+    entitySet.removeEntity( entityB );
+
+    t.ok( eventSpy.calledTwice, 'only two event emitted from the view' );
+    t.ok( eventSpy.calledWith('entity:remove'), 'entity:remove should have been called');
 
     t.end();
 });
