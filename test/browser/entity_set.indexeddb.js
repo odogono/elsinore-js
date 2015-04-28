@@ -1,5 +1,4 @@
 var test = require('tape');
-var Promise = require('bluebird');
 
 var Elsinore = require('elsinore');
 

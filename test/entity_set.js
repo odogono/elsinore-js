@@ -8,7 +8,6 @@ var Common = require('./common');
 
 var Es = require('event-stream');
 var Sinon = require('sinon');
-var Promise = require('bluebird');
 
 var Elsinore = require('../lib');
 

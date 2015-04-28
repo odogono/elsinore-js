@@ -6,8 +6,6 @@ var Common = require('./common');
 
 var Es = require('event-stream');
 var Sinon = require('sinon');
-var Promise = require('bluebird');
-Promise.longStackTraces();
 
 var Elsinore = require('../lib');
 
@@ -36,8 +34,8 @@ test('adding a component without an id or an entity id creates a new component a
     return initialiseAndOpenEntitySet()
         .then( function(entitySet){
             var registry = entitySet.getRegistry();
-            return entitySet.addComponent( 
-                registry.createComponent( '/component/position', {x:15,y:2}) )
+            var component = registry.createComponent( '/component/position', {x:15,y:2})
+            return entitySet.addComponent( component )
                 .then( function(){
                     return entitySet;
                 });
