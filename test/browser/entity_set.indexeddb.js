@@ -2,7 +2,6 @@ var test = require('tape');
 
 var Elsinore = require('elsinore');
 
-// var Elsinore = Common.Elsinore;
 var EntityFilter = Elsinore.EntityFilter;
 var EntitySet = Elsinore.EntitySet;
 var Entity = Elsinore.Entity;

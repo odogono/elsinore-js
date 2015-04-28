@@ -7,5 +7,6 @@ require('./entity_filter');
 require('./fs_entity_set');
 require('./registry');
 require('./schema_registry');
+require('./utils');
 require('./integration/opendoor');
 require('./integration/reaper');

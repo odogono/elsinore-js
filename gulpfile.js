@@ -2,6 +2,8 @@
 var Exec = require('child_process').exec;
 var Path = require('path');
 
+var _ = require('underscore');
+var Aliasify = require('aliasify');
 var Browserify = require('browserify');
 var Buffer = require('vinyl-buffer');
 var Del = require('del');
@@ -12,19 +14,19 @@ var Uglify = require('gulp-uglify');
 var Webserver = require('gulp-webserver');
 
 var packageObj = require('./package.json');
-var vendorDependencies = Object.keys( packageObj.dependencies );
+var vendorDependencies = _.keys( packageObj.dependencies );
 
 
 var paths = {
     dist:{
-        vendor: './dist/vendor.js',
+        vendor: './dist/elsinore-vendor.js',
         lib: './dist/elsinore.js',
-        test: './dist/browser-tests.js'
+        test: './dist/elsinore-browser-tests.js'
     },
     test: './test/browser/index.js'
 };
 
-var pathExternals = './dist/vendor.js';
+var pathExternals = paths.dist.vendor;
 
 var externals = vendorDependencies;
 
@@ -97,7 +99,7 @@ Gulp.task('build.lib', function(cb){
             return cb('error in bundle: ' + err.message );
         })
         .pipe(Source( Path.basename(paths.dist.lib) ))
-        // .pipe(Buffer()).pipe(Uglify())
+        .pipe(Buffer()).pipe(Uglify())
         .pipe(Gulp.dest( Path.dirname(paths.dist.lib) ))
         .on('finish', function(){
             return cb();
@@ -112,12 +114,25 @@ Gulp.task('test.browser.build', function(cb){
         debug:true
         });
 
+    // transform certain requires present in the tests
+    // into something more browser friendly.
+    // this is critical to allowing us to run the same
+    // tests in both the browser and on the server
+    b.transform( Aliasify, {
+        aliases: {
+            '../lib': 'elsinore',
+            './common': './test/browser/common.js',
+        },
+        verbose: true
+    });
+
     // browserify external doesn't currently appear to work with an array,
     // so we must manually apply each one
     vendorDependencies.forEach( function( lib ){
         b.external( lib );
     });
 
+    // the main library has already been packaged, so it too is a dependency
     b.external( 'elsinore' );
     
     b.bundle()

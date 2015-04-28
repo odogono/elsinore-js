@@ -5,8 +5,6 @@ var test = require('tape');
 
 var Common = require('./common');
 
-
-var Es = require('event-stream');
 var Sinon = require('sinon');
 
 var Elsinore = require('../lib');
