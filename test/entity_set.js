@@ -1,21 +1,16 @@
 'use strict';
 
 var _ = require('underscore');
-var test = require('tape');
-
-var Common = require('./common');
-
 var Sinon = require('sinon');
 
-var Elsinore = require('../lib');
 
-var Component = Elsinore.Component;
-var EntityFilter = Elsinore.EntityFilter;
-var EntitySet = Elsinore.EntitySet;
-var Entity = Elsinore.Entity;
-var Registry = Elsinore.Registry;
-var Utils = Elsinore.Utils;
+module.exports = function( test, Common, Elsinore, EntitySet ){
 
+    var Component = Elsinore.Component;
+    var Entity = Elsinore.Entity;
+    var EntityFilter = Elsinore.EntityFilter;
+    var EntitySet = Elsinore.EntitySet;
+    var Registry = Elsinore.Registry;
 
 test('type of entityset', function(t){
     var registry = initialiseRegistry();
@@ -887,4 +882,12 @@ function initialiseRegistry(logEvents){
     registry.registerComponent( componentData );
 
     return registry;
+}
+
+}
+
+// serverside only execution of tests
+if( !process.browser ){
+    var Elsinore = require('../lib');
+    module.exports( require('tape'), require('./common'), Elsinore, Elsinore.EntitySet );
 }

@@ -1,4 +1,4 @@
-module.exports = function( test, Common, Elsinore ){
+module.exports = function( test, Common, Elsinore, EntitySet ){
 
     var Component = Elsinore.Component;
     var Entity = Elsinore.Entity;

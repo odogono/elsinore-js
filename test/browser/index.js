@@ -12,7 +12,7 @@ var Path = require('path');
 var Elsinore = window.Elsinore = require('elsinore');
 var Common = require('./common');
 
-console.log('Elsinore is ');
+console.log('Elsinore: ');
 console.log( Elsinore );
 
 require('../entity')( test, Common, Elsinore );

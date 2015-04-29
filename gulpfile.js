@@ -149,7 +149,7 @@ Gulp.task('test.browser.build', function(cb){
 });
 
 Gulp.task('test.browser.server', function() {
-    Gulp.src('dist')
+    Gulp.src('.')
         .pipe(Webserver({
             port:               8012,
             livereload:         {
