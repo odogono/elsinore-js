@@ -9,7 +9,6 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
     var Component = Elsinore.Component;
     var Entity = Elsinore.Entity;
     var EntityFilter = Elsinore.EntityFilter;
-    var EntitySet = Elsinore.EntitySet;
     var Registry = Elsinore.Registry;
 
 test('type of entityset', function(t){
@@ -773,6 +772,18 @@ test('map transfers an entitySet through a filter into another entityset again',
 
     t.equal( _.size(eventSpy.args[1][1]), 5, 'three components reported as being added' );
     t.equal( _.size(eventSpy.args[2][1]), 2, 'two entities reported as being added' );
+
+    t.end();
+});
+
+
+test.only('pluck extracts a list of property values from the given component', function(t){
+    var registry = initialiseRegistry();
+    var entitySet = loadEntities( registry );
+
+    t.equal(
+        entitySet.pluck( '/component/realname', 'name' ),
+        [ 'John Smith', 'susan mayall', 'Terry June' ], 'three names should be returned' );
 
     t.end();
 });

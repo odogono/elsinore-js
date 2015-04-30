@@ -1,6 +1,6 @@
 {"_e":1, "id":"/component/position", "x":10, "y":-10 }
 {"_e":1, "id":"/component/nickname", "nick":"john"}
-{"_e":1, "id":"/component/realname", "realname":"John Smith"}
+{"_e":1, "id":"/component/realname", "name":"John Smith"}
 {"_e":1, "id":"/component/status", "status":"inactive"}
 
 {"_e":2, "id":"/component/nickname", "nick":"peter"}
@@ -15,5 +15,5 @@
 
 {"_e":5, "id":"/component/position", "x":-6, "y":0}
 {"_e":5, "id":"/component/nickname", "nick":"terry"}
-{"_e":5, "id":"/component/realname", "realname":"Terry June"}
+{"_e":5, "id":"/component/realname", "name":"Terry June"}
 {"_e":5, "id":"/component/score", "score":123}
