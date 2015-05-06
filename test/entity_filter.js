@@ -1,20 +1,17 @@
+'use strict';
+
 var _ = require('underscore');
-var test = require('tape');
-
-
-var Common = require('./common');
 var Sinon = require('sinon');
 
-var Elsinore = require('../lib');
 
-var Component = Elsinore.Component;
-var Entity = Elsinore.Entity;
-var EntityFilter = Elsinore.EntityFilter;
-var EntitySet = Elsinore.EntitySet;
-var Registry = Elsinore.Registry;
+module.exports = function( test, Common, Elsinore, EntitySet ){
 
+    var Component = Elsinore.Component;
+    var Entity = Elsinore.Entity;
+    var EntityFilter = Elsinore.EntityFilter;
+    var Registry = Elsinore.Registry;
 
-test.skip('quick test', function(t){
+test.skip('quick test', t => {
 
     var mixin = {
         hello: function(){
@@ -35,22 +32,22 @@ test.skip('quick test', function(t){
 });
 
 
-test('creating a filter by passing multiple component ids', function(t){
+test('creating a filter by passing multiple component ids', t => {
     var f = EntityFilter.create( EntityFilter.INCLUDE, [Components.Animal, Components.Doctor, Components.Flower] );
-    t.equals( f.type, EntityFilter.INCLUDE );
+    t.equals( f.entityFilterType, EntityFilter.INCLUDE );
     t.deepEqual( f.toArray(), [EntityFilter.INCLUDE, [Components.Animal, Components.Doctor, Components.Flower]] );
     t.end();
 });
 
 
 
-test('creating an array filter by passing an array', function(t){
+test('creating an array filter by passing an array', t => {
     var f = EntityFilter.create(
                 [   [EntityFilter.NONE, [Components.Mineral, Components.Animal]],
                     [EntityFilter.INCLUDE, [Components.Animal, Components.Doctor, Components.Flower]]  ] );
 
     t.equals( f.size(), 2 );
-    t.equals( f.type, EntityFilter.ARRAY );
+    t.equals( f.entityFilterType, EntityFilter.ARRAY );
     
     t.deepEqual( f.toArray(),[
         [EntityFilter.NONE, [Components.Animal, Components.Mineral]],
@@ -60,7 +57,7 @@ test('creating an array filter by passing an array', function(t){
     t.end();
 });
 
-test('filters will have identical hashes', function(t){
+test('filters will have identical hashes', t => {
     var hashFn = EntityFilter.hash;
     t.equals(
         hashFn( EntityFilter.create( EntityFilter.INCLUDE, Components.Animal ) ),
@@ -77,21 +74,21 @@ test('filters will have identical hashes', function(t){
 });
 
 
-test('an default filter will accept an entity', function(t){
+test('an default filter will accept an entity', t => {
     var e = Entity.create();
     var f = EntityFilter.create();
     t.ok( f.accept(e), 'the filter accepts an entity by default' );
     t.end();
 });
 
-test('will reject entities without components', function(t){
+test('will reject entities without components', t => {
     var e = Entity.create();
     var f = EntityFilter.create(EntityFilter.SOME);
     t.notOk( f.accept(e), 'the filter rejects the entity without components');
     t.end();
 });
 
-test('will accept entities with one of the components', function(t){
+test('will accept entities with one of the components', t => {
     var f = EntityFilter.create( EntityFilter.ANY, [Components.Animal, Components.Doctor] );
 
     t.ok( f.accept( createEntity( Components.Animal ) ) );
@@ -102,7 +99,7 @@ test('will accept entities with one of the components', function(t){
     t.end();
 });
 
-test('reject an entity which does not have a specific component', function(t){
+test('reject an entity which does not have a specific component', t => {
     var e = Entity.create();
     var f = EntityFilter.create(EntityFilter.ALL, Components.Flower );
 
@@ -113,7 +110,7 @@ test('reject an entity which does not have a specific component', function(t){
     t.end();
 });
 
-test('reject an entity which does not have the specific components', function(t){
+test('reject an entity which does not have the specific components', t => {
     var e = Entity.create();
     var f = EntityFilter.create( EntityFilter.ALL, [Components.Mineral, Components.Vegetable] );
 
@@ -126,7 +123,7 @@ test('reject an entity which does not have the specific components', function(t)
     t.end();
 });
 
-test('accepts an entity which has some of the components', function(t){
+test('accepts an entity which has some of the components', t => {
     var e = Entity.create();
     var f = EntityFilter.create( EntityFilter.ANY, [Components.Animal, Components.Mineral, Components.Vegetable] );
     
@@ -139,7 +136,7 @@ test('accepts an entity which has some of the components', function(t){
     t.end();
 });
 
-test('rejects an entity which has any of the components', function(t){
+test('rejects an entity which has any of the components', t => {
     var e = Entity.create();
     var f = EntityFilter.create( EntityFilter.NONE, Components.Vegetable );
 
@@ -152,7 +149,7 @@ test('rejects an entity which has any of the components', function(t){
     t.end();
 });
 
-test('rejects an entity which has any of the components with multiple filters', function(t){
+test('rejects an entity which has any of the components with multiple filters', t => {
     var f = EntityFilter.create(
         [[EntityFilter.NONE, Components.Vegetable],
         [EntityFilter.ALL, Components.Animal]] );
@@ -171,7 +168,7 @@ test('rejects an entity which has any of the components with multiple filters', 
 
 
 
-test('transform will copy an incoming entity', function(t){
+test('transform will copy an incoming entity', t => {
     var e = createEntity( Components.Mineral, Components.Vegetable, Components.Doctor );
     e.marked = true;
     var f = EntityFilter.create();
@@ -184,7 +181,7 @@ test('transform will copy an incoming entity', function(t){
     t.end();
 });
 
-test('transform will include only specified components on an entity', function(t){
+test('transform will include only specified components on an entity', t => {
     var e = createEntity( Components.Mineral, Components.Vegetable, Components.Robot );
 
     var f = EntityFilter.create( EntityFilter.INCLUDE, [Components.Animal, Components.Robot, Components.Doctor] );
@@ -200,7 +197,7 @@ test('transform will include only specified components on an entity', function(t
     t.end();
 });
 
-test('transform will exclude specified components on an entity', function(t){
+test('transform will exclude specified components on an entity', t => {
     var e = createEntity( Components.Mineral, Components.Vegetable, Components.Robot );
     var f = EntityFilter.create( EntityFilter.EXCLUDE, Components.Vegetable );
 
@@ -213,7 +210,7 @@ test('transform will exclude specified components on an entity', function(t){
 });
 
 
-test('transform all on a single component', function(t){
+test('transform all on a single component', t => {
     var e = createEntity( Components.Mineral, Components.Vegetable, Components.Robot );
     var f = EntityFilter.create( EntityFilter.ALL, Components.Vegetable );
 
@@ -225,7 +222,7 @@ test('transform all on a single component', function(t){
     t.end();
 });
 
-test('creating a filter with a custom accept function', function(t){
+test('creating a filter with a custom accept function', t => {
 
     var f = EntityFilter.create( function accept(entity,options){
         if( entity.Robot && entity.Robot.get('age') > 40  ){
@@ -242,7 +239,7 @@ test('creating a filter with a custom accept function', function(t){
     t.end();
 });
 
-test.skip('creating a filter with a standard and a custom function', function(t){
+test.skip('creating a filter with a standard and a custom function', t => {
     
     var f = EntityFilter.create( 
         EntityFilter.ALL, Components.Robot,
@@ -262,7 +259,7 @@ test.skip('creating a filter with a standard and a custom function', function(t)
 });
 
 
-test('attribute filter filters attributes', function(t){
+test('attribute filter filters attributes', t => {
     var f = EntityFilter.create( EntityFilter.ATTRIBUTES, Components.Robot, {colour:'blue'} );
 
     t.ok(
@@ -274,7 +271,7 @@ test('attribute filter filters attributes', function(t){
     t.end();
 });
 
-test('iterator iterates allowable entities from a source', function(t){
+test('iterator iterates allowable entities from a source', t => {
     var entity;
     var it;
     var count;
@@ -370,4 +367,15 @@ function createEntitySet(){
         return _.uniqueId();
     };
     return result;
+}
+
+
+
+
+}
+
+// serverside only execution of tests
+if( !process.browser ){
+    var Elsinore = require('../lib');
+    module.exports( require('tape'), require('./common'), Elsinore, Elsinore.EntitySet );
 }
