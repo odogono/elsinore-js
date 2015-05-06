@@ -31,6 +31,47 @@ function loadComponents(){
     return componentData;
 }
 
+/**
+*   Returns an entityset with the given entities
+*/
+function loadEntities( registry, fixtureName ){
+    var data;
+    var lines;
+    var result;
+
+    fixtureName = fixtureName || 'entity_set.entities.json';
+
+    if( fixtureName.indexOf('.json') === -1 ){
+        fixtureName = fixtureName + '.json';
+    }
+
+    result = registry.createEntitySet();
+    data = loadFixture( fixtureName );
+    data = JSON.parse( data );
+    
+    _.each( data, function(line){
+        var com = registry.createComponent( line );
+        result.addComponent( com );
+        return com;
+    });
+
+    return result;
+}
+
+function initialiseRegistry(_logEvents){
+    var componentData;
+    var registry = Elsinore.Registry.create();
+    if( _logEvents ){
+        logEvents( registry );
+    }
+    
+    componentData = loadComponents();
+    registry.registerComponent( componentData );
+
+    return registry;
+}
+
+
 function createFixtureReadStream( fixturePath ){
     var path = Path.join( fixtureDir, fixturePath );
     return Fs.createReadStream( path, { encoding: 'utf-8' })
@@ -63,9 +104,9 @@ function logEvents(obj, prefix){
 
 function printIns(arg,depth,showHidden,colors){
     if( _.isUndefined(depth) ) depth = 2;
-    var stack = __stack[1];
-    var fnName = stack.getFunctionName();
-    var line = stack.getLineNumber();
+    // var stack = __stack[1];
+    // var fnName = stack.getFunctionName();
+    // var line = stack.getLineNumber();
     // Util.log( fnName + ':' + line + ' ' + Util.inspect(arg,showHidden,depth,colors) );
     Util.log( Util.inspect(arg,showHidden,depth,colors) );
 };
@@ -78,31 +119,31 @@ function printVar(){
     }
 }
 
-Object.defineProperty(global, '__stack', {
-    get: function() {
-        var orig = Error.prepareStackTrace;
-        Error.prepareStackTrace = function(_, stack) {
-            return stack;
-        };
-        var err = new Error;
-        Error.captureStackTrace(err, arguments.callee);
-        var stack = err.stack;
-        Error.prepareStackTrace = orig;
-        return stack;
-    }
-});
+// Object.defineProperty(global, '__stack', {
+//     get: function() {
+//         var orig = Error.prepareStackTrace;
+//         Error.prepareStackTrace = function(_, stack) {
+//             return stack;
+//         };
+//         var err = new Error;
+//         Error.captureStackTrace(err, arguments.callee);
+//         var stack = err.stack;
+//         Error.prepareStackTrace = orig;
+//         return stack;
+//     }
+// });
 
-Object.defineProperty(global, '__line', {
-    get: function() {
-        return __stack[1].getLineNumber();
-    }
-});
+// Object.defineProperty(global, '__line', {
+//     get: function() {
+//         return __stack[1].getLineNumber();
+//     }
+// });
 
-Object.defineProperty(global, '__function', {
-    get: function() {
-        return __stack[1].getFunctionName();
-    }
-});
+// Object.defineProperty(global, '__function', {
+//     get: function() {
+//         return __stack[1].getFunctionName();
+//     }
+// });
 
 global.printIns = printIns;
 global.printVar = printVar;
@@ -124,6 +165,8 @@ module.exports = {
     createFixtureReadStream: createFixtureReadStream,
     loadFixture: loadFixture,
     loadComponents: loadComponents,
+    loadEntities: loadEntities,
+    initialiseRegistry: initialiseRegistry,
     pathVar: pathVar,
     Elsinore: Elsinore
 }

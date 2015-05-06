@@ -33,8 +33,7 @@ test.skip('quick test', t => {
 
 
 test('creating a filter by passing multiple component ids', t => {
-    var f = EntityFilter.create( EntityFilter.INCLUDE, [Components.Animal, Components.Doctor, Components.Flower] );
-    t.equals( f.entityFilterType, EntityFilter.INCLUDE );
+    let f = EntityFilter.create( EntityFilter.INCLUDE, [Components.Animal, Components.Doctor, Components.Flower] );
     t.deepEqual( f.toArray(), [EntityFilter.INCLUDE, [Components.Animal, Components.Doctor, Components.Flower]] );
     t.end();
 });
@@ -42,12 +41,11 @@ test('creating a filter by passing multiple component ids', t => {
 
 
 test('creating an array filter by passing an array', t => {
-    var f = EntityFilter.create(
-                [   [EntityFilter.NONE, [Components.Mineral, Components.Animal]],
-                    [EntityFilter.INCLUDE, [Components.Animal, Components.Doctor, Components.Flower]]  ] );
+    let f = EntityFilter.create( EntityFilter.NONE, [Components.Mineral, Components.Animal] );
+    f.add( EntityFilter.INCLUDE, [Components.Animal, Components.Doctor, Components.Flower] );
 
     t.equals( f.size(), 2 );
-    t.equals( f.entityFilterType, EntityFilter.ARRAY );
+    // t.equals( f.entityFilterType, EntityFilter.ARRAY );
     
     t.deepEqual( f.toArray(),[
         [EntityFilter.NONE, [Components.Animal, Components.Mineral]],

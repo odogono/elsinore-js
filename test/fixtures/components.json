@@ -5,10 +5,42 @@
         "id":"/component/nickname",
         "description":"an entity identifiable by a name",
         "properties":{
-            "nick":{ 
+            "nickname":{ 
                 "type":"string",
-                "pattern":"^[a-z_\\-\\[\\]\\\\^{}|`][a-z0-9_\\-\\[\\]\\\\^{}|`]{2,15}"
+                "pattern":"^[a-z_\\-\\[\\]\\\\^{}|`][a-z0-9_\\-\\[\\]\\\\^{}|`]{3,15}"
             }
+        }
+    },
+
+    "username": {
+        "id": "/component/username",
+        "description": "an entity identifiable by a username",
+        "properties": {
+            "username": {
+                "type": "string",
+                "pattern": "^[a-z_\\-\\[\\]\\\\^{}|`][a-z0-9_\\-\\[\\]\\\\^{}|`]{3,15}"
+            }
+        }
+    },
+
+    "hostname": {
+        "id": "/component/hostname",
+        "properties": {
+            "type": "string"
+        }
+    },
+
+    "name": {
+        "id": "/component/name",
+        "properties":{
+            "name":{  "type":"string", "minLength":3, "maxLength":64 }
+        }
+    },
+
+    "topic": {
+        "id": "/component/topic",
+        "properties":{
+            "topic":{  "type":"string", "minLength":3, "maxLength":64 }
         }
     },
 
@@ -34,7 +66,7 @@
     "realname": {
         "id": "/component/realname",
         "properties":{
-            "name":{  "type":"string", "minLength":3, "maxLength":50 }
+            "name":{  "type":"string", "minLength":3, "maxLength":64 }
         }
     },
 
@@ -52,13 +84,16 @@
     "channel": {
         "id": "/component/channel",
         "properties":{
+            "name": { "type": "string" }
         }
     },
 
     "channel_member": {
         "id": "/component/channel_member",
+        "description": "describes a client who belongs to a channel",
         "properties":{
-            "channel":{ "type":"integer", "format":"entity" }
+            "channel":{ "type": "integer", "format": "entity" },
+            "client":{ "type": "integer", "format": "entity" }
         }
     },
 
@@ -67,6 +102,34 @@
         "properties":{
             "topic":{ "type":"string" }
         }
+    },
+
+    "mode_invisible": {
+        "id": "/component/mode/invisible",
+        "properties": {}
+    },
+
+    "mode_invite_only": {
+        "id": "/component/mode/invite_only",
+        "properties": {}
+    },
+
+    "mode_channel_op": {
+        "id": "/component/mode/channel_op",
+        "properties": {}
+    },
+
+    "mode_limit": {
+        "id": "/component/mode/limit",
+        "description": "limits the members to this entity",
+        "properties": {
+            "limit": {"type": "integer"}
+        }
+    },
+
+    "mode_private": {
+        "id": "/component/mode/private",
+        "properties": {}
     },
 
     "tag": {

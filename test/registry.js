@@ -12,7 +12,7 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
     var Registry = Elsinore.Registry;
 
     test('keeping a map of entitySets and views', t => {
-        var registry = initializeRegistry();
+        var registry = Common.initialiseRegistry();
         var es = registry.createEntitySet();
         var filter = registry.createEntityFilter( EntityFilter.ALL, '/component/position' );
         var eso = registry.createEntitySet();
@@ -35,11 +35,13 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
     // creating components
 
     test('create from a schema', t => {
-        var registry = Registry.create();
+        let registry = Registry.create();
+        let componentData = Common.loadComponents();
         // Common.logEvents( registry );
         // passing a schema as the first argument will cause the component to be
         // registered at the same time
-        var component = registry.createComponent( componentByUri['/component/position'], { x:200 } );
+        // printIns( componentData );
+        let component = registry.createComponent( componentData['/component/position'], { x:200 } );
 
         t.equals( component.schemaUri, '/component/position' );
         t.equals( component.schemaHash, '9db8f95b' );
@@ -50,7 +52,8 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
     test('create from a schema hash', t => {
         var registry = Registry.create();
-        var def = registry.registerComponent( componentByUri['/component/score'] );
+        let componentData = Common.loadComponents();
+        var def = registry.registerComponent( componentData['/component/score'] );
         var component = registry.createComponent( 'd3f0bf51', {score:200} );
         
         t.equals( component.get('score'), 200 );
@@ -61,8 +64,9 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
     test('create from a pre-registered schema', t => {
         var registry = Registry.create();
+        let componentData = Common.loadComponents();
 
-        registry.registerComponent( componentByUri['/component/nickname'] );
+        registry.registerComponent( componentData['/component/nickname'] );
 
         var component = registry.createComponent( '/component/nickname', {nickname:'peter'} );
 
@@ -73,8 +77,9 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
     test('create from a pre-registered schema using data object', t => {
         var registry = Registry.create();
+        let componentData = Common.loadComponents();
 
-        registry.registerComponent( componentByUri['/component/nickname'] );
+        registry.registerComponent( componentData['/component/nickname'] );
 
         var component = registry.createComponent( {id:'/component/nickname', nickname:'susan'} );
 
@@ -85,8 +90,9 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
     test('create from an array of data', t => {
         var registry = Registry.create();
+        let componentData = Common.loadComponents();
 
-        registry.registerComponent( componentByUri['/component/position'] );
+        registry.registerComponent( componentData['/component/position'] );
 
         var components = registry.createComponent( '/component/position', [ {x:0,y:-1}, {x:10,y:0}, {x:15,y:-2} ] );
 
@@ -101,24 +107,17 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
     // EntityFilter creation
 
     test('create an entity filter', t => {
-        var registry = initializeRegistry();
+        var registry = Common.initialiseRegistry();
         var filter = registry.createEntityFilter( EntityFilter.SOME, '/component/position' );
-
-        // log.debug('iid is ' + registry.getIId('/component/score') );
-
-        
 
         t.deepEqual( filter.toArray(), 
             [ EntityFilter.SOME, [registry.getIId('/component/position')]] );
-
-
-        // log.debug('iid is ' + registry.getIId('/component/score') );
 
         t.end();
     });
 
     test('create an entity filter with a simple array??', t => {
-        var registry = initializeRegistry();
+        var registry = Common.initialiseRegistry();
         var filter = registry.createEntityFilter( [EntityFilter.INCLUDE, '/component/realname'] );
 
         t.deepEqual( filter.toArray(), 
@@ -127,8 +126,8 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
         t.end();
     });
 
-    test('create an entity filter with an array', t => {
-        var registry = initializeRegistry();
+    test('create an entity filter with an array of components', t => {
+        var registry = Common.initialiseRegistry();
         var filter = registry.createEntityFilter( EntityFilter.EXCLUDE, ['/component/score', '/component/nickname'] );
 
         t.deepEqual( 
@@ -140,7 +139,7 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
     });
 
     test('create an entity filter with multiple arrays', t => {
-        var registry = initializeRegistry();
+        var registry = Common.initialiseRegistry();
 
         var filter = registry.createEntityFilter([ 
             [EntityFilter.INCLUDE, '/component/realname'], 
@@ -155,7 +154,7 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
     });
 
     test('create an entity filter with an array of arrays', t => {
-        var registry = initializeRegistry();
+        var registry = Common.initialiseRegistry();
         var filter = registry.createEntityFilter( 
             [   [EntityFilter.SOME, '/component/realname'], 
                 [EntityFilter.ANY, '/component/position']   ]);
@@ -167,23 +166,6 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
         t.end();
     });//*/
-
-
-
-    function initializeRegistry(){
-        var registry = Registry.create();
-        registry.registerComponent( componentSchemas );
-        return registry;
-    }
-
-    // compile a map of schema id(uri) to schema
-    var componentSchemas = require('./fixtures/components.json');
-    var componentByUri = _.reduce( componentSchemas, 
-                            function(memo, entry){
-                                memo[ entry.id ] = entry;
-                                return memo;
-                            }, {});
-
 
 
 }
