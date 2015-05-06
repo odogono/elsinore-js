@@ -169,10 +169,11 @@ test('rejects an entity which has any of the components with multiple filters', 
 
 
 test('transform will copy an incoming entity', t => {
-    var e = createEntity( Components.Mineral, Components.Vegetable, Components.Doctor );
+    let te, f = EntityFilter.create();
+    let e = createEntity( Components.Mineral, Components.Vegetable, Components.Doctor );
+    
     e.marked = true;
-    var f = EntityFilter.create();
-    var te = f.transform(e);
+    te = f.transform(e);
 
     t.notOk( te.marked );
     t.ok( te.Mineral );
@@ -258,6 +259,17 @@ test.skip('creating a filter with a standard and a custom function', t => {
     t.end();
 });
 
+test('adding a user function to the filter', t => {
+    let f = EntityFilter.create();
+    f.add( EntityFilter.ALL, Components.Robot );
+    f.add( entity => entity.Robot.get('age') > 500 );
+
+    t.ok( f.accept( createEntity( {_c:Components.Robot, age:600} )), 'accepting a robot aged 600');
+    t.notOk( f.accept( createEntity( {_c:Components.Robot, age:32} )), 'not accepting a robot aged 32');
+    t.notOk( f.accept( createEntity( {_c:Components.Animal, age:51} )), 'not accepting an animal age 51');
+
+    t.end();
+});
 
 test('attribute filter filters attributes', t => {
     var f = EntityFilter.create( EntityFilter.ATTRIBUTES, Components.Robot, {colour:'blue'} );
