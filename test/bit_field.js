@@ -1,3 +1,5 @@
+'use strict';
+
 var test = require('tape');
 var BitField = require('../lib/bit_field');
 
@@ -235,8 +237,9 @@ test('bitfield', function(t){
         var a = BitField.create();
         var values = [ 0, 22, 65, 129, 340, 1198 ];
         a.setValues( values, true );
-        for( var i=0;i<values.length;i++ )
+        for( var i=0;i<values.length;i++ ){
             t.ok( a.get(values[i]) );
+        }
         a.setValues( [22,129], false );
         t.notOk( a.get(22) );
         t.notOk( a.get(129) );

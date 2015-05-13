@@ -11,25 +11,6 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
     var EntityFilter = Elsinore.EntityFilter;
     var Registry = Elsinore.Registry;
 
-test.skip('quick test', t => {
-
-    var mixin = {
-        hello: function(){
-            log.debug('hello there');
-        }
-    };
-
-    var base = function(){};
-
-    var prot = _.extend( base.prototype, {soup:'tasty', colour:'beige'}, mixin );
-    var instance = Object.create( prot ); //, { colour:function(){ return 'white' } } );
-
-    instance.hello();
-
-    log.debug('good ' + instance.soup + ' ' + instance.colour );
-
-    t.end();
-});
 
 
 test('creating a filter by passing multiple component ids', t => {
