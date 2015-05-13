@@ -24,36 +24,36 @@ export default function run( test, Common, Elsinore, EntitySet ){
         t.end();
     });
 
-    test('calling query returns a Query object', t => {
-        let registry = Common.initialiseRegistry(false);
-        let entitySet = Common.loadEntities( registry );
+    // test('calling query returns a Query object', t => {
+    //     let registry = Common.initialiseRegistry(false);
+    //     let entitySet = Common.loadEntities( registry );
 
-        let query = entitySet.query("/component/status");
+    //     let query = entitySet.query("/component/status");
 
-        t.ok( Query.isQuery(query), 'the result is an instance of Query' );
+    //     t.ok( Query.isQuery(query), 'the result is an instance of Query' );
 
-        let result = query.execute();
+    //     let result = query.execute();
 
-        t.ok( EntitySet.isEntitySet(result) );
-        t.equal( result.size(), 3 );
+    //     t.ok( EntitySet.isEntitySet(result) );
+    //     t.equal( result.size(), 3 );
 
-        t.end();
-    });
+    //     t.end();
+    // });
 
-    test('query filtering by component attribute', t => {
-        let registry = Common.initialiseRegistry(false);
-        let entitySet = Common.loadEntities( registry );
+    // test('query filtering by component attribute', t => {
+    //     let registry = Common.initialiseRegistry(false);
+    //     let entitySet = Common.loadEntities( registry );
 
-        let result = entitySet
-            .query('/component/status')
-            .filter( entity => entity.Status.get('status') == 'active' )
-            //.filter( Query.component('/component/status').attr('status').equals('active') )
-            .execute();
+    //     let result = entitySet
+    //         .query('/component/status')
+    //         .filter( entity => entity.Status.get('status') == 'active' )
+    //         //.filter( Query.component('/component/status').attr('status').equals('active') )
+    //         .execute();
 
-        t.equal( result.size(), 2 );
+    //     t.equal( result.size(), 2 );
 
-        t.end();
-    });
+    //     t.end();
+    // });
 
 
     test.skip('retrieving referenced entities', t => {
@@ -91,19 +91,19 @@ export default function run( test, Common, Elsinore, EntitySet ){
         t.end();
     });
 
-    test('EQ op', t => {
-        let registry = Common.initialiseRegistry(false);
-        let entitySet = Common.loadEntities( registry, 'query.entities' );
+    // test('EQ op', t => {
+    //     let registry = Common.initialiseRegistry(false);
+    //     let entitySet = Common.loadEntities( registry, 'query.entities' );
 
-        let result = Query.execute( entitySet, [ Query.EQ, '/component/topic', 'topic' ] );
+    //     let result = Query.execute( entitySet, [ Query.EQ, '/component/topic', 'topic' ] );
 
-        t.equals( result,
-            [Query.VALUE, ['Entity Component Systems', 'Javascript', 'Welcome to Politics']] );
+    //     t.equals( result,
+    //         [Query.VALUE, ['Entity Component Systems', 'Javascript', 'Welcome to Politics']] );
 
-        t.end();
-    });
+    //     t.end();
+    // });
 
-    test.only('entityset filter ALL', t => {
+    test('entityset filter ALL', t => {
         let registry = Common.initialiseRegistry(false);
         let entitySet = Common.loadEntities( registry, 'query.entities' );
 
@@ -114,8 +114,25 @@ export default function run( test, Common, Elsinore, EntitySet ){
         t.ok( result[1].size(), 1 );
 
         t.end();
-    })
+    });
 
+    test('entityset filter by attribute', t => {
+        let registry = Common.initialiseRegistry(false);
+        let entitySet = Common.loadEntities( registry, 'query.entities' );
+
+        // select entities which have the component /channel_member and 
+        //  have the client attribute
+        let result = Query.execute( entitySet, 
+            [ Query.FILTER,
+                Query.ROOT, //[ Query.ALL, Query.ROOT, '/channel_member' ], 
+                [ Query.EQ, 
+                    [ Query.ATTR, '/component/channel_member', 'client' ],
+                    [ Query.VALUE, 5 ] ] ] );
+
+        // printE( result[1] );
+        t.ok( result[1].size(), 2 );
+        t.end();
+    });
 
     test('PLUCK op', t => {
         let registry = Common.initialiseRegistry(false);
