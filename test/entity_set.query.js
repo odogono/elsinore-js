@@ -225,24 +225,48 @@ export default function run( test, Common, Elsinore, EntitySet ){
                             [ Query.VALUE, clientId ] ] ], 
                     '/component/channel_member', // components
                     'channel' ]], // attributes
+            // Q.filter( ALL, '/component/channel_member' )
+            //   .where_attr( '/component/channel_member' )
+            //     .equals( clientId )
+            //   .pluck( '/component/channel_member', 'channel' )
+            //   .as('channelIds' )
+
+            
+            // [ Query.PRINT, 'channelIds are', [ Query.ALIAS, 'channelIds' ] ],
             // [ Query.DEBUG, true ],
-            [ Query.PRINT, 'channelIds are', [ Query.ALIAS, 'channelIds' ] ],
 
             // 2. select channel members which belong to the channel ids stored in the alias `channelIds`
-            [ Query.FILTER,
-                [ Query.ALL, Query.ROOT, '/component/channel_member' ],
-                [ Query.EQUALS, 
-                    [ Query.ATTR, '/component/channel_member', 'channel' ],
-                    [ Query.ALIAS, 'channelIds' ] ] ] 
+            [ Query.ALIAS, 
+                'clientIds',
+                [ Query.WITHOUT,
+                    [ Query.PLUCK,
+                        [ Query.FILTER,
+                            [ Query.ALL, Query.ROOT, '/component/channel_member' ],
+                            [ Query.EQUALS, 
+                                [ Query.ATTR, '/component/channel_member', 'channel' ],
+                                [ Query.ALIAS, 'channelIds' ] ] ],
+                        '/component/channel_member', 'client', {unique: true} ],
+                    [ Query.VALUE, clientId ] ], // without the client id included
+            ],
+            // Q.filter( ALL, '/component/channel_member' )
+            //   .where_attr('/component/channel_member', 'channel')
+            //     .equals( Q.alias('channelIds') )
+            //   .pluck( '/component/channel_member', 'client', {unique:true} )
+            //   .without( clientId )
+            //   .alias('clientIds')
 
             // 3. using the channel_member client ids, select an entityset of client entities
-            ], {debug:true} ); 
+            [ Query.SELECT_BY_ID,
+                Query.ROOT,
+                [ Query.ALIAS, 'clientIds' ]],
+            // Q.select( Q.alias('clientIds') )
+
+            ], {debug:false} ); 
         
         // printIns( result[1], 1 );
         // printE( result[1] );
         // the result should have 3 entities - channel_member, channel and client
-        // t.equal( result.size(), 3 );
-        t.equal( result[1].size(), 5 );
+        t.equal( result[1].size(), 3 );
 
         t.end();
     })
