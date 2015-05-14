@@ -1,3 +1,8 @@
+'use strict';
+
+var _ = require('underscore');
+
+
 export default function run( test, Common, Elsinore, EntitySet ){
 
     var Component = Elsinore.Component;
@@ -187,6 +192,22 @@ export default function run( test, Common, Elsinore, EntitySet ){
     });
 
 
+    test.only('Logic op', t => {
+
+        let commands = [
+            [ Query.AND, [ Query.VALUE, true ], [ Query.VALUE, true ] ],
+            [ Query.OR, [ Query.VALUE, false ], [ Query.VALUE, true ] ],
+        ];
+
+        _.each( commands, command => {
+            // let result = Query.execute( null, command );
+            t.deepEqual( Query.execute( null, command ), [Query.VALUE, true] );
+        });
+
+        t.end();
+    });
+
+
     test('sub-queries', t => {
         let registry = Common.initialiseRegistry(false);
         let entitySet = Common.loadEntities( registry, 'query.entities' );
@@ -231,7 +252,6 @@ export default function run( test, Common, Elsinore, EntitySet ){
             //   .pluck( '/component/channel_member', 'channel' )
             //   .as('channelIds' )
 
-            
             // [ Query.PRINT, 'channelIds are', [ Query.ALIAS, 'channelIds' ] ],
             // [ Query.DEBUG, true ],
 
@@ -255,7 +275,8 @@ export default function run( test, Common, Elsinore, EntitySet ){
             //   .without( clientId )
             //   .alias('clientIds')
 
-            // 3. using the channel_member client ids, select an entityset of client entities
+            // 3. using the channel_member client ids, select an entityset of client entities 
+            //   by the entity ids
             [ Query.SELECT_BY_ID,
                 Query.ROOT,
                 [ Query.ALIAS, 'clientIds' ]],
