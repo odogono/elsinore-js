@@ -141,10 +141,10 @@ export default function run( test, Common, Elsinore, EntitySet ){
                 [ Query.EQUALS, 
                     [ Query.ATTR, '/component/channel_member', 'client' ],
                     [ Query.VALUE, 5 ] ] ], {debug:false} );
-
+        // Query.filter().attr('/c','client').equals('val')
         // printIns( result[1], 1 );
         // printE( result[1] );
-        t.ok( result[1].size(), 2 );
+        t.equals( result[1].size(), 2 );
         t.end();
     });
 
@@ -162,16 +162,40 @@ export default function run( test, Common, Elsinore, EntitySet ){
                     [ Query.VALUE, [2, 4] ] ] ] );
 
         // printE( result[1] );
-        t.ok( result[1].size(), 3 );
+        t.equals( result[1].size(), 3 );
         t.end();
     });
+
+    test('FILTER with multiple rules', t => {
+        let registry = Common.initialiseRegistry(false);
+        let entitySet = Common.loadEntities( registry, 'query.entities' );
+
+        // select entities which have /channel_member but not /mode/invisible
+        let result = Query.execute( entitySet, 
+            [ Query.FILTER,
+                [ Query.AND,
+                    [ Query.ALL, Query.ROOT, '/component/channel_member' ],
+                    [ Query.NONE, Query.ROOT, '/component/mode/invisible' ] 
+                ],
+                // [ Query.EQUALS, 
+                //     [ Query.ATTR, '/component/channel_member', 'channel' ],
+                //     [ Query.VALUE, 1 ] ],
+            ]
+            );
+        // Q.filter( Q.all('/component/channel_member').none( '/c/m/i' ) )
+        // Query.filter().all('/component/channel_member').none('/component/mode/invisible');
+
+        // printE( result[1] );
+        t.equals( result[1].size(), 5 );
+        t.end();
+    })
 
     test('PLUCK op', t => {
         let registry = Common.initialiseRegistry(false);
         let entitySet = Common.loadEntities( registry, 'query.entities' );
 
         let result = Query.execute( entitySet, [ Query.PLUCK, Query.ROOT, '/component/topic', 'topic' ] );
-
+        // Query.pluck( '/component/topic', 'topic' )
         t.deepEqual( result,
             [Query.VALUE, ['Entity Component Systems', 'Javascript', 'Welcome to Politics']] );
 
@@ -181,7 +205,9 @@ export default function run( test, Common, Elsinore, EntitySet ){
 
     test('ALIAS op', t => {
         let result = Query.execute( null,[
+            // Query.alias('channelIds', [ 9,10,11] )
             [ Query.ALIAS, 'channelIds', [ Query.VALUE, [ 9, 10, 11 ]] ],
+            // Query.alias('channelIds').equals([9,10,11])
             [ Query.EQUALS,
                 [ Query.VALUE, [ 9, 10, 11 ] ],
                 [ Query.ALIAS, [ Query.VALUE, 'channelIds' ] ]] ] ); 
@@ -192,7 +218,7 @@ export default function run( test, Common, Elsinore, EntitySet ){
     });
 
 
-    test.only('Logic op', t => {
+    test('Logic op', t => {
 
         let commands = [
             [ Query.AND, [ Query.VALUE, true ], [ Query.VALUE, true ] ],
@@ -246,11 +272,12 @@ export default function run( test, Common, Elsinore, EntitySet ){
                             [ Query.VALUE, clientId ] ] ], 
                     '/component/channel_member', // components
                     'channel' ]], // attributes
-            // Q.filter( ALL, '/component/channel_member' )
-            //   .where_attr( '/component/channel_member' )
-            //     .equals( clientId )
-            //   .pluck( '/component/channel_member', 'channel' )
+
+            // Q.filter( '/component/channel_member',
+            //   Q.attr( '/component/channel_member', 'client' ).equals('clientId') )
+            // .pluck( '/component/channel_member', 'channel' )
             //   .as('channelIds' )
+
 
             // [ Query.PRINT, 'channelIds are', [ Query.ALIAS, 'channelIds' ] ],
             // [ Query.DEBUG, true ],
