@@ -108,11 +108,17 @@ export default function run( test, Common, Elsinore, EntitySet ){
     //     t.end();
     // });
 
-    test('entityset filter ALL', t => {
+    test.only('entityset filter ALL', t => {
         let registry = Common.initialiseRegistry(false);
         let entitySet = Common.loadEntities( registry, 'query.entities' );
 
-        let result = Query.execute( entitySet, [ Query.ALL, Query.ROOT, '/component/mode/invite_only'] );
+        // Query.filter( '/component/mode/invite_only' )
+        let result = Query.execute( entitySet, [
+            Query.LEFT_PAREN,
+            [ Query.ALL, Query.ROOT, '/component/mode/invite_only'],
+            Query.RIGHT_PAREN,
+            Query.FILTER
+            ]);
 
         t.equal( result[0], Query.VALUE );
         t.ok( EntitySet.isEntitySet(result[1]) );

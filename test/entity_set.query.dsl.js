@@ -6,102 +6,91 @@ var _ = require('underscore');
 export default function run( test, Common, Elsinore, EntitySet ){
     let Query = Elsinore.Query;
 
-    // printIns( Query,1 );
-
-    // test.only('value', t => {
-    //     t.deepEqual(
-    //         Query.value( true ).toArray(),
-    //         [ [ Query.VALUE, true ] ]
-    //         );
-    //     t.end();
-    // });
-
-    test('Logic op', t => {
-
-        t.deepEqual(
-            Query.value( 10 ).equals( 5 ).or( 6 ).toArray(),
+    let cases = [
+        [
+            'value OR equality',
+            Query.value( 10 ).equals( 5 ).or( 6 ),
             [ [ Query.VALUE, 10 ], [ Query.VALUE, 5 ], [ Query.VALUE, 6 ], Query.OR, Query.EQUALS ]
-        );
-
-        t.deepEqual(
-            Query.value( true ).and( true ).toArray(), 
+        ],
+        [
+            'value AND',
+            Query.value( true ).and( true ),
             [ [ Query.VALUE, true ], [ Query.VALUE, true ], Query.AND ]
-        );
-        
-        t.deepEqual(
-            Query.attr('/component/channel_member','channel').equals( [2,4] ).toArray(),
-            [ [Query.ATTR, '/component/channel_member', 'channel'], [Query.VALUE, [2,4] ], Query.EQUALS] );
-
-        t.end();
-    });
-
-    test('filter', t => {
-        t.deepEqual(
-            Query.filter( null, Query.attr('/component/channel_member','channel').equals( [2,4] )).toArray(),
+        ],
+        [
+            'attribute equality',
+            Query.attr('/component/channel_member','channel').equals( [2,4] ),
+            [ [Query.ATTR, '/component/channel_member', 'channel'], [Query.VALUE, [2,4] ], Query.EQUALS]
+        ],
+        [
+            'filter with single string argument',
+            Query.filter( '/component/channel_member' ),
             [
+                Query.LEFT_PAREN,
+                [ Query.ALL, Query.ROOT, '/component/channel_member' ],
+                Query.RIGHT_PAREN,
+                Query.FILTER
+            ]
+        ],
+        [
+            'filter with single ALL argument',
+            Query.filter( Query.all('/component/channel_member') ),
+            [
+                Query.LEFT_PAREN,
+                [ Query.ALL, Query.ROOT, '/component/channel_member' ],
+                Query.RIGHT_PAREN,
+                // Query.AND_FILTER,
+                Query.FILTER
+            ]
+        ],
+        [
+            'filter with component attribute equality',
+            Query.filter( null, Query.attr('/component/channel_member','channel').equals( [2,4] )),
+            [
+                Query.LEFT_PAREN,
                 [ Query.VALUE, Query.ROOT ],
                 [ Query.ATTR, '/component/channel_member', 'channel' ],
                 [ Query.VALUE, [2, 4] ],
                 Query.EQUALS,
+                Query.RIGHT_PAREN,
                 Query.FILTER
-            ] );
-
-        // V-ROOT
-        // V-ROOT Q.ATTR
-        // V-ROOT Q.ATTR V-2,4
-        // V-ROOT [ EQUALS - Q.ATTR V-2,4 ]
-        // FILTER V-ROOT [ EQUALS - Q.ATTR V-2,4 ]
-            // [ Query.FILTER,
-            //     [ Query.VALUE, Query.ROOT ], //[ Query.ALL, Query.ROOT, '/channel_member' ], 
-            //     [ Query.EQUALS, 
-            //         [ Query.ATTR, '/component/channel_member', 'channel' ],
-            //         [ Query.VALUE, [2, 4] ]] ]  );
-        t.end();
-    });
-
-    test('filter ex', t => {
-        // printIns( Query.attr('/component/channel_member','channel').equals(5).or(11).toArray() );
-
-        // [ Q.ATTR ] 
-        // [ Q.ATTR ] 5
-        // [ Q.ATTR ] 5 11
-        // [ Q.ATTR ] 5 11 OR
-        // [ Q.ATTR ] [ 5, 11, OR ]
-        // [ Q.ATTR ] [ 5, 11, OR ] ==
-        // [ [ Q.ATTR ], [ 5, 11, OR ], == ]
-
-        t.deepEqual(
-            Query.filter( null, Query.attr('/component/channel_member','channel').equals( 5 ).or( 11 ) ).toArray(),
+            ]
+        ],
+        [
+            'filter with component attribute OR equality',
+            Query.filter( null, Query.attr('/component/channel_member','channel').equals( 5 ).or( 11 ) ),
             [
+                Query.LEFT_PAREN,
                 [ Query.VALUE, Query.ROOT ],
                 [ Query.ATTR, '/component/channel_member', 'channel' ],
                 [ Query.VALUE, 5 ],
                 [ Query.VALUE, 11 ],
                 Query.OR,
                 Query.EQUALS,
+                Query.RIGHT_PAREN,
                 Query.FILTER
-            ] );
-            // [ Query.FILTER,
-            //     [ Query.VALUE, Query.ROOT ], //[ Query.ALL, Query.ROOT, '/channel_member' ], 
-            //     [ Query.EQUALS, 
-            //         [ Query.ATTR, '/component/channel_member', 'channel' ],
-            //         [ Query.OR,
-            //             [Query.VALUE, 5 ],
-            //             [Query.VALUE, 11 ] ]
-            //     ]] );
-        t.end();
-    });
-
-    test('filter with component bitmask', t => {
-        t.deepEqual(
-            Query.filter( Query.all('/component/username').all('/component/nickname').none('/component/mode/invisible') ).toArray(true),
+            ]
+        ],
+        [
+            'filter with multiple entityset selection',
+            Query.filter( Query.all('/component/username').all('/component/nickname').none('/component/mode/invisible') ),
             [
+                Query.LEFT_PAREN,
                 [ Query.ALL, Query.ROOT, '/component/username' ],
                 [ Query.ALL, Query.ROOT, '/component/nickname' ],
                 [ Query.NONE, Query.ROOT, '/component/mode/invisible' ],
-                Query.AND_FILTER,
+                Query.RIGHT_PAREN,
+                // Query.AND_FILTER,
                 Query.FILTER
-            ] );
+            ] 
+        ]
+    ];
+
+    test('query toArray', t => {
+
+        _.each( cases, function(queryCase){
+            t.deepEqual( queryCase[1].toArray(), queryCase[2], queryCase[0] );
+        });
 
         t.end();
     });
