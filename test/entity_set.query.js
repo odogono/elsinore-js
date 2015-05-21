@@ -114,7 +114,7 @@ export default function run( test, Common, Elsinore, EntitySet ){
 
         // Query.filter( '/component/mode/invite_only' )
         let result = Query.execute( entitySet,
-            [ Query.FILTER, [ Query.ALL, Query.ROOT, '/component/mode/invite_only' ] ], {debug:true} );
+            [ Query.FILTER, [ Query.ALL, Query.ROOT, '/component/mode/invite_only' ] ], {debug:false} );
 
         t.equal( result[0], Query.VALUE );
         t.ok( EntitySet.isEntitySet(result[1]) );
