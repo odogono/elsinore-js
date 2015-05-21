@@ -175,7 +175,7 @@ export default function run( test, Common, Elsinore, EntitySet ){
                 [ Query.ALL, Query.ROOT, '/component/username' ],
                 [ Query.NONE, Query.ROOT, '/component/mode/invisible' ],
                 Query.AND,
-            ]
+            ],
         ],
         [
             '4 component filter',
@@ -199,6 +199,19 @@ export default function run( test, Common, Elsinore, EntitySet ){
                         [ Query.NONE, Query.ROOT, '/component/why']
                     ]
                 ]
+            ]
+        ],
+        [
+            'filter with entitySet',
+            Query.filter( Query.all('/component/username') ),
+            [
+                Query.LEFT_PAREN,
+                [ Query.ALL, Query.ROOT, '/component/username' ],
+                Query.RIGHT_PAREN,
+                Query.FILTER,
+            ],
+            [
+                [ Query.FILTER, [ Query.ALL, Query.ROOT, '/component/username' ] ]
             ]
         ],
         [

@@ -108,17 +108,13 @@ export default function run( test, Common, Elsinore, EntitySet ){
     //     t.end();
     // });
 
-    test.only('entityset filter ALL', t => {
+    test('entityset filter ALL', t => {
         let registry = Common.initialiseRegistry(false);
         let entitySet = Common.loadEntities( registry, 'query.entities' );
 
         // Query.filter( '/component/mode/invite_only' )
-        let result = Query.execute( entitySet, [
-            Query.LEFT_PAREN,
-            [ Query.ALL, Query.ROOT, '/component/mode/invite_only'],
-            Query.RIGHT_PAREN,
-            Query.FILTER
-            ]);
+        let result = Query.execute( entitySet,
+            [ Query.FILTER, [ Query.ALL, Query.ROOT, '/component/mode/invite_only' ] ], {debug:true} );
 
         t.equal( result[0], Query.VALUE );
         t.ok( EntitySet.isEntitySet(result[1]) );
@@ -172,6 +168,22 @@ export default function run( test, Common, Elsinore, EntitySet ){
         t.end();
     });
 
+    test('FILTER with single', t => {
+        let registry = Common.initialiseRegistry(false);
+        let entitySet = Common.loadEntities( registry, 'query.entities' );
+
+        // select entities which have /channel_member but not /mode/invisible
+        let result = Query.execute( entitySet, 
+            [ Query.FILTER,
+                [ Query.ALL, Query.ROOT, '/component/channel_member' ]
+            ]
+            ,{debug:false});
+        
+        // printE( result[1] );
+        t.equals( result[1].size(), 6 );
+        t.end();
+    });
+
     test('FILTER with multiple rules', t => {
         let registry = Common.initialiseRegistry(false);
         let entitySet = Common.loadEntities( registry, 'query.entities' );
@@ -187,14 +199,14 @@ export default function run( test, Common, Elsinore, EntitySet ){
                 //     [ Query.ATTR, '/component/channel_member', 'channel' ],
                 //     [ Query.VALUE, 1 ] ],
             ]
-            );
+            ,{debug:false});
         // Q.filter( Q.all('/component/channel_member').none( '/c/m/i' ) )
         // Query.filter().all('/component/channel_member').none('/component/mode/invisible');
 
         // printE( result[1] );
         t.equals( result[1].size(), 5 );
         t.end();
-    })
+    });
 
     test('PLUCK op', t => {
         let registry = Common.initialiseRegistry(false);
