@@ -112,9 +112,9 @@ export default function run( test, Common, Elsinore, EntitySet ){
         let registry = Common.initialiseRegistry(false);
         let entitySet = Common.loadEntities( registry, 'query.entities' );
 
-        // Query.filter( '/component/mode/invite_only' )
-        let result = Query.execute( entitySet,
-            [ Query.FILTER, [ Query.ALL, Query.ROOT, '/component/mode/invite_only' ] ], {debug:false} );
+        let result = entitySet.query( 
+            [ Query.FILTER, [ Query.ALL, Query.ROOT, '/component/mode/invite_only' ] ], 
+            {debug:false} );
 
         t.equal( result[0], Query.VALUE );
         t.ok( EntitySet.isEntitySet(result[1]) );
@@ -139,13 +139,11 @@ export default function run( test, Common, Elsinore, EntitySet ){
         //  have the client attribute
         let result = Query.execute( entitySet, 
             [ Query.FILTER,
-                Query.ROOT, //[ Query.ALL, Query.ROOT, '/channel_member' ], 
+                Query.ROOT,
                 [ Query.EQUALS, 
                     [ Query.ATTR, '/component/channel_member', 'client' ],
                     [ Query.VALUE, 5 ] ] ], {debug:false} );
-        // Query.filter().attr('/c','client').equals('val')
-        // printIns( result[1], 1 );
-        // printE( result[1] );
+        
         t.equals( result[1].size(), 2 );
         t.end();
     });
@@ -327,20 +325,24 @@ export default function run( test, Common, Elsinore, EntitySet ){
                 [ Query.ALIAS, 'clientIds' ]],
             // Q.select( Q.alias('clientIds') )
 
-            ], {debug:false} ); 
+            ], {value:true, last:true, debug:false} ); 
         
-        // printIns( result[1], 1 );
+        // printIns( result, 2 );
         // printE( result[1] );
         // the result should have 3 entities - channel_member, channel and client
-        t.equal( result[1].size(), 3 );
+        t.equal( result.size(), 3 );
 
         t.end();
-    })
+    });
 }
 
 
 // serverside only execution of tests
 if( !process.browser ){
+    
     let Elsinore = require('../lib');
+    require('./common');
+    require('../lib/entity_set/query');
+    
     run( require('tape'), require('./common'), Elsinore, Elsinore.EntitySet );
 }

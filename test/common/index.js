@@ -34,7 +34,7 @@ function loadComponents(){
 /**
 *   Returns an entityset with the given entities
 */
-function loadEntities( registry, fixtureName ){
+function loadEntities( registry, fixtureName, EntitySet ){
     var data;
     var lines;
     var result;
@@ -45,7 +45,7 @@ function loadEntities( registry, fixtureName ){
         fixtureName = fixtureName + '.json';
     }
 
-    result = registry.createEntitySet();
+    result = registry.createEntitySet( EntitySet );
     data = loadFixture( fixtureName );
     data = JSON.parse( data );
     

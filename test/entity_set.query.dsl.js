@@ -240,13 +240,13 @@ export default function run( test, Common, Elsinore, EntitySet ){
                         [ Query.VALUE, 10 ] ]
                     ]
             ]
-        ]//*/
+        ]
     ];
 
     test('query toArray', t => {
 
         _.each( cases, function(queryCase){
-            t.deepEqual( queryCase[1].toArray(), queryCase[2], queryCase[0] );
+            t.deepEqual( queryCase[1].toArray( false ), queryCase[2], queryCase[0] );
             if( queryCase[3] ){
                 t.deepEqual( queryCase[1].toArray( true ), queryCase[3], 'ast ' + queryCase[0] );
             }
@@ -260,5 +260,6 @@ export default function run( test, Common, Elsinore, EntitySet ){
 // serverside only execution of tests
 if( !process.browser ){
     let Elsinore = require('../lib');
+    require('../lib/query/dsl');
     run( require('tape'), require('./common'), Elsinore );
 }

@@ -143,20 +143,17 @@ test('adding several components without an entity adds them to the same new enti
     var eventSpy = Sinon.spy();
     // Common.logEvents( entitySet );
 
-    // return registerComponents().then(function(){
-        // var eventSpy = Sinon.spy();
-        entitySet.on('all', eventSpy);
-        // logEvents( entitySet );
-        entitySet.addComponent( [
-            registry.createComponent( '/component/flower', {colour:'yellow'}),
-            registry.createComponent( '/component/radius', {radius:2.0} )
-            ]);
+    entitySet.on('all', eventSpy);
+    entitySet.addComponent( [
+        registry.createComponent( '/component/flower', {colour:'yellow'}),
+        registry.createComponent( '/component/radius', {radius:2.0} )
+        ]);
 
-        t.ok( eventSpy.calledWith('entity:add'), 'entity:add should have been called');
-        t.notStrictEqual( entitySet.at(0).Flower, undefined, 'the entity should have a Flower component' );
-        t.notStrictEqual( entitySet.at(0).Radius, undefined, 'the entity should have a Radius component' );
+    t.ok( eventSpy.calledWith('entity:add'), 'entity:add should have been called');
+    t.notStrictEqual( entitySet.at(0).Flower, undefined, 'the entity should have a Flower component' );
+    t.notStrictEqual( entitySet.at(0).Radius, undefined, 'the entity should have a Radius component' );
 
-        return t.end();
+    return t.end();
     // });
 });
 
