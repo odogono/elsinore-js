@@ -114,7 +114,7 @@ export default function run( test, Common, Elsinore, EntitySet ){
 
         let result = entitySet.query( 
             [ Query.FILTER, [ Query.ALL, Query.ROOT, '/component/mode/invite_only' ] ], 
-            {debug:false} );
+            {debug:false, result:false} );
 
         t.equal( result[0], Query.VALUE );
         t.ok( EntitySet.isEntitySet(result[1]) );
@@ -125,9 +125,9 @@ export default function run( test, Common, Elsinore, EntitySet ){
 
     test('EQUALS op', t => {
         t.deepEqual(
-            Query.execute( null, [ Query.EQUALS, 8, 8 ] ), [ Query.VALUE, true ] );
+            Query.execute( null, [ Query.EQUALS, 8, 8 ] ), true );
         t.deepEqual(
-            Query.execute( null, [ Query.EQUALS, 8, [ Query.VALUE, [1,3,5,8] ] ] ), [ Query.VALUE, true ] );
+            Query.execute( null, [ Query.EQUALS, 8, [ Query.VALUE, [1,3,5,8] ] ] ), true );
         t.end();
     })
 
@@ -144,7 +144,7 @@ export default function run( test, Common, Elsinore, EntitySet ){
                     [ Query.ATTR, '/component/channel_member', 'client' ],
                     [ Query.VALUE, 5 ] ] ], {debug:false} );
         
-        t.equals( result[1].size(), 2 );
+        t.equals( result.size(), 2 );
         t.end();
     });
 
@@ -162,7 +162,7 @@ export default function run( test, Common, Elsinore, EntitySet ){
                     [ Query.VALUE, [2, 4] ] ] ] );
 
         // printE( result[1] );
-        t.equals( result[1].size(), 3 );
+        t.equals( result.size(), 3 );
         t.end();
     });
 
@@ -178,7 +178,7 @@ export default function run( test, Common, Elsinore, EntitySet ){
             ,{debug:false});
         
         // printE( result[1] );
-        t.equals( result[1].size(), 6 );
+        t.equals( result.size(), 6 );
         t.end();
     });
 
@@ -202,7 +202,7 @@ export default function run( test, Common, Elsinore, EntitySet ){
         // Query.filter().all('/component/channel_member').none('/component/mode/invisible');
 
         // printE( result[1] );
-        t.equals( result[1].size(), 5 );
+        t.equals( result.size(), 5 );
         t.end();
     });
 
@@ -213,7 +213,7 @@ export default function run( test, Common, Elsinore, EntitySet ){
         let result = Query.execute( entitySet, [ Query.PLUCK, Query.ROOT, '/component/topic', 'topic' ] );
         // Query.pluck( '/component/topic', 'topic' )
         t.deepEqual( result,
-            [Query.VALUE, ['Entity Component Systems', 'Javascript', 'Welcome to Politics']] );
+            ['Entity Component Systems', 'Javascript', 'Welcome to Politics'] );
 
         t.end();
     });
@@ -228,7 +228,7 @@ export default function run( test, Common, Elsinore, EntitySet ){
                 [ Query.VALUE, [ 9, 10, 11 ] ],
                 [ Query.ALIAS, [ Query.VALUE, 'channelIds' ] ]] ] ); 
 
-        t.deepEqual( result,  [Query.VALUE, true] );
+        t.deepEqual( result,  true );
 
         t.end();
     });
@@ -243,7 +243,7 @@ export default function run( test, Common, Elsinore, EntitySet ){
 
         _.each( commands, command => {
             // let result = Query.execute( null, command );
-            t.deepEqual( Query.execute( null, command ), [Query.VALUE, true] );
+            t.deepEqual( Query.execute( null, command ), true );
         });
 
         t.end();
@@ -325,7 +325,7 @@ export default function run( test, Common, Elsinore, EntitySet ){
                 [ Query.ALIAS, 'clientIds' ]],
             // Q.select( Q.alias('clientIds') )
 
-            ], {value:true, last:true, debug:false} ); 
+            ], {value:true, debug:false} ); 
         
         // printIns( result, 2 );
         // printE( result[1] );

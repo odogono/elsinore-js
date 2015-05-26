@@ -7,6 +7,7 @@ require('./entity_set.query.dsl');
 require('./entity_set.view');
 require('./entity_filter');
 require('./fs_entity_set');
+require('./query');
 require('./registry');
 require('./schema_registry');
 require('./utils');
