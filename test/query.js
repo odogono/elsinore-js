@@ -42,9 +42,6 @@ export default function run( test, Common, Elsinore, EntitySet ){
             {id: "/component/topic", topic: "Javascript" }] );
 
         let filter = Query.filter( Query.all('/component/topic').all('/component/channel') );
-        // let filter = Query.filter( Query.all('/component/name').all('/component/channel') ).compile(true);
-        // printIns( filter.toArray(true), 6 );
-
         let compiled = filter.compile( registry );
 
         t.ok( Query.isQuery(compiled) );
@@ -58,7 +55,27 @@ export default function run( test, Common, Elsinore, EntitySet ){
         t.ok( Entity.isEntity(result) );
 
         t.end();
-    })
+    });
+
+
+    test('accepting an entity based on its attributes', t => {
+        let registry = Common.initialiseRegistry();
+        let query = Query.attr('/component/mode/limit', 'limit').greaterThan(9);
+
+        t.ok( query.execute(
+            registry.createEntity( { id:'/component/mode/limit', limit:10} )
+            ));
+
+        t.notOk( query.execute(
+            registry.createEntity( { id:'/component/mode/limit', limit:9} )
+            ));
+
+        t.notOk( query.execute(
+            registry.createEntity( { id:'/component/mode/limit'} )
+            ));
+
+        t.end();
+    });
 }
 
 // serverside only execution of tests
