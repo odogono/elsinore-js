@@ -81,9 +81,26 @@ export default function run( test, Common, Elsinore, EntitySet ){
                         [ Query.VALUE, [2, 4] ] ] ]
             ]
         ],
+        // [
+        //     'filter with component attribute',
+        //     Query.component('/component/channel_member').attr('channel').equals(5).or( Query.greaterThan(10) ),
+        //     [
+        //         // TODO: implement this form
+        //     ],
+        //     [
+        //         [ Query.FILTER,
+        //             [ Query.VALUE, Query.ROOT ],
+        //             [ Query.EQUALS, 
+        //                 [ Query.ATTR, '/component/channel_member', 'channel' ],
+        //                 [ Query.OR,
+        //                     [ Query.VALUE, 5 ],
+        //                     [ Query.GREATER_THAN, [ Query.VALUE, 10 ] ]
+        //                     ] ] ]
+        //     ]
+        // ],
         [
             'filter with component attribute OR equality',
-            Query.filter( null, Query.attr('/component/channel_member','channel').equals( 5 ).or( 11 ) ),
+            Query.filter( Query.ROOT, Query.attr('/component/channel_member','channel').equals( 5 ).or( 11 ) ),
             [
                 Query.LEFT_PAREN,
                 [ Query.VALUE, Query.ROOT ],
@@ -239,6 +256,42 @@ export default function run( test, Common, Elsinore, EntitySet ){
                         [ Query.ATTR, '/component/channel_member', 'channel' ],
                         [ Query.VALUE, 10 ] ]
                     ]
+            ]
+        ],//*/
+        [
+            'aliasing a value',
+            Query.filter( Query.none('/component/mode/invisible') ).as('present'),
+            [
+                Query.LEFT_PAREN,
+                [ Query.NONE, Query.ROOT, '/component/mode/invisible' ],
+                Query.RIGHT_PAREN,
+                Query.FILTER,
+                [Query.VALUE, 'present'],
+                Query.ALIAS,
+            ],
+            [ 
+                [ Query.ALIAS,
+                    [ Query.VALUE, 'present' ],
+                    [ Query.FILTER, 
+                        [ Query.NONE, Query.ROOT, '/component/mode/invisible' ] 
+                    ],
+                ]
+            ]
+        ],
+        [
+            'using a stored alias',
+            Query.filter( Query.alias('present') ),
+            [
+                Query.LEFT_PAREN,
+                [ Query.VALUE, 'present' ],
+                Query.ALIAS_GET,
+                Query.RIGHT_PAREN,
+                Query.FILTER
+            ],
+            [
+                [ Query.FILTER,
+                    [ Query.ALIAS_GET, [ Query.VALUE, 'present' ] ]
+                ]
             ]
         ]
     ];

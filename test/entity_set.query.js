@@ -161,8 +161,8 @@ export default function run( test, Common, Elsinore, EntitySet ){
                     [ Query.ATTR, '/component/channel_member', 'channel' ],
                     [ Query.VALUE, [2, 4] ] ] ] );
 
-        // printE( result[1] );
-        t.equals( result.size(), 3 );
+        // printE( result );
+        t.equals( result.size(), 4 );
         t.end();
     });
 
@@ -178,7 +178,7 @@ export default function run( test, Common, Elsinore, EntitySet ){
             ,{debug:false});
         
         // printE( result[1] );
-        t.equals( result.size(), 6 );
+        t.equals( result.size(), 7 );
         t.end();
     });
 
@@ -254,6 +254,10 @@ export default function run( test, Common, Elsinore, EntitySet ){
         let registry = Common.initialiseRegistry(false);
         let entitySet = Common.loadEntities( registry, 'query.entities' );
         let clientId = 5;
+
+        // this query selects the other entities which are members of the same channel
+        // as entity id 5
+        //
         // query consists of two parts:
         // - /channel_member components which have the client attr set to `clientId` are
         //   selected.
@@ -328,9 +332,9 @@ export default function run( test, Common, Elsinore, EntitySet ){
             ], {value:true, debug:false} ); 
         
         // printIns( result, 2 );
-        // printE( result[1] );
+        // printE( result );
         // the result should have 3 entities - channel_member, channel and client
-        t.equal( result.size(), 3 );
+        t.equal( result.size(), 4 );
 
         t.end();
     });

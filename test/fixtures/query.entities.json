@@ -55,9 +55,13 @@
 
 {"_e":15, "id": "/component/channel_member", "channel": 2, "client": 5 },
 
-{"_e":16, "id": "/component/channel_member", "channel": 2, "client": 11 },
-{"_e":16, "id": "/component/mode/channel_op" },
+{"_e":16, "id": "/component/channel_member", "channel": 2, "client": 7 },
+{"_e":16, "id": "/component/mode/invisible" },
 
-{"_e":17, "id": "/component/channel_member", "channel": 4, "client": 9 }
+{"_e":17, "id": "/component/channel_member", "channel": 2, "client": 11 },
+{"_e":17, "id": "/component/mode/channel_op" },
+
+
+{"_e":18, "id": "/component/channel_member", "channel": 4, "client": 9 }
 
 ]

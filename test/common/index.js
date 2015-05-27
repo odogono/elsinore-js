@@ -81,7 +81,8 @@ function createFixtureReadStream( fixturePath ){
 
 function loadFixture( fixturePath ){
     var path = Path.join( fixtureDir, fixturePath );
-    return Fs.readFileSync( path, 'utf8');
+    var data = Fs.readFileSync( path, 'utf8');
+    return data;
 }
 
 function loadFixtureJSON( fixturePath, data ){
@@ -164,6 +165,7 @@ module.exports = {
     logEvents: logEvents,
     createFixtureReadStream: createFixtureReadStream,
     loadFixture: loadFixture,
+    loadFixtureJSON: loadFixtureJSON,
     loadComponents: loadComponents,
     loadEntities: loadEntities,
     initialiseRegistry: initialiseRegistry,

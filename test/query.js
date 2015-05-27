@@ -48,14 +48,31 @@ export default function run( test, Common, Elsinore, EntitySet ){
         t.ok( compiled.isCompiled );
 
         // printIns( compiled, 6 );
+        // log.debug('filter hash ' + filter.hash() );
+        // log.debug('hashed ' + compiled.hash() );
 
         let result = compiled.execute( entity );
-
-        // printIns( result );
         t.ok( Entity.isEntity(result) );
+
+        t.ok( Entity.isEntity( filter.execute(entity) ));
 
         t.end();
     });
+
+    test('a single filter query on an entity', t => {
+        let registry = Common.initialiseRegistry();
+        let entity = registry.createEntity( [{ id:'/component/channel', name:'test'},
+            {id: "/component/topic", topic: "Javascript" }] );
+
+        let filter = Query.all('/component/channel');
+        let compiled = filter.compile( registry );
+        
+        let result = compiled.execute( entity );
+
+        t.ok( Entity.isEntity(result) );
+
+        t.end();
+    })
 
 
     test('accepting an entity based on its attributes', t => {
@@ -76,12 +93,52 @@ export default function run( test, Common, Elsinore, EntitySet ){
 
         t.end();
     });
+
+
+    test('a single filter query on an entityset', t => {
+        let registry = Common.initialiseRegistry();
+        let entitySet = Common.loadEntities( registry, 'query.entities' );
+
+        let filter = Query.all('/component/channel');
+        let compiled = filter.compile( registry );
+
+        // printIns( compiled, 6 );
+
+        let result = compiled.execute( entitySet );
+
+        t.ok( EntitySet.isEntitySet(result) );
+        t.equals( result.size(), 4 );
+        // printE( result );
+
+        t.end();
+    });
+
+
+    test('filter query on an entityset', t => {
+        let registry = Common.initialiseRegistry();
+        let entitySet = Common.loadEntities( registry, 'query.entities' );
+
+        let filter = Query.filter( 
+            Query.all('/component/channel_member').none('/component/mode/invisible'),
+            Query.attr('/component/channel_member', 'channel').equals(2) );
+        let compiled = filter.compile( registry );
+
+        // printIns( compiled, 6 );
+
+        let result = compiled.execute( entitySet );
+
+        t.ok( EntitySet.isEntitySet(result) );
+        t.equals( result.size(), 2 );
+        // printE( result );
+
+        t.end();
+    }); 
 }
 
 // serverside only execution of tests
 if( !process.browser ){
     let Elsinore = require('../lib');
-    require('./common');
+    // require('./common');
     require('../lib/query/dsl');
     
     run( require('tape'), require('./common'), Elsinore, Elsinore.EntitySet );
