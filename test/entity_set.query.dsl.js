@@ -257,7 +257,7 @@ export default function run( test, Common, Elsinore, EntitySet ){
                         [ Query.VALUE, 10 ] ]
                     ]
             ]
-        ],//*/
+        ],
         [
             'aliasing a value',
             Query.filter( Query.none('/component/mode/invisible') ).as('present'),
@@ -293,7 +293,38 @@ export default function run( test, Common, Elsinore, EntitySet ){
                     [ Query.ALIAS_GET, [ Query.VALUE, 'present' ] ]
                 ]
             ]
+        ],
+        [
+            'plucking values',
+            Query.filter(Query.ROOT)
+                .pluck( '/component/channel_member', 'client' ),
+            [
+                Query.LEFT_PAREN, 
+
+                Query.LEFT_PAREN, 
+                    [ Query.VALUE, Query.ROOT ], 
+                Query.RIGHT_PAREN, 
+
+                Query.FILTER, // 17
+
+                [ Query.VALUE, '/component/channel_member' ], 
+                [ Query.VALUE, 'client' ], 
+
+                Query.RIGHT_PAREN, 
+
+                Query.PLUCK, // 20
+            ],
+            [
+                [ Query.PLUCK, // 20 
+                    [ Query.FILTER, // 17                    
+                        [Query.VALUE, Query.ROOT],
+                    ],
+                    [ Query.VALUE, '/component/channel_member' ], 
+                    [ Query.VALUE, 'client' ]
+                ]
+            ]
         ]
+
     ];
 
     test('query toArray', t => {
@@ -301,10 +332,57 @@ export default function run( test, Common, Elsinore, EntitySet ){
         _.each( cases, function(queryCase){
             t.deepEqual( queryCase[1].toArray( false ), queryCase[2], queryCase[0] );
             if( queryCase[3] ){
-                t.deepEqual( queryCase[1].toArray( true ), queryCase[3], 'ast ' + queryCase[0] );
+                let tree = Query.rpnToTree( queryCase[2] ); //= queryCase[1].toArray(true);
+                // let tree = queryCase[1].toArray(true);
+                t.deepEqual( tree, queryCase[3], 'ast ' + queryCase[0] );
             }
         });
 
+        t.end();
+    });
+
+
+    test('pop last arg', t => {
+        t.deepEqual( Query.popLastArg( [ 100 ], 0 ), [ [100], [] ] );
+        t.deepEqual( Query.popLastArg( [ 100, 200 ], 1 ), [ [200], [100] ] );
+        t.deepEqual( 
+            Query.popLastArg( [ Query.LEFT_PAREN, 200, Query.RIGHT_PAREN ], 2), 
+            [ [Query.LEFT_PAREN, 200, Query.RIGHT_PAREN], [] ] );
+        t.deepEqual( 
+            Query.popLastArg( [ 100, Query.LEFT_PAREN, 200, Query.RIGHT_PAREN ], 3), 
+            [ [Query.LEFT_PAREN, 200, Query.RIGHT_PAREN], [100] ] );
+        t.deepEqual( 
+            Query.popLastArg( [ 100, Query.LEFT_PAREN, Query.LEFT_PAREN, 200, Query.RIGHT_PAREN, Query.RIGHT_PAREN ], 5), 
+            [ [Query.LEFT_PAREN, Query.LEFT_PAREN, 200, Query.RIGHT_PAREN, Query.RIGHT_PAREN], [100] ] );
+        t.end();
+    });
+
+    test('pop last command', t => {
+        let popCases = [
+            {
+                msg: 'pop a command with two args',
+                arg:[[ Query.VALUE, true ],
+                    [ Query.VALUE, false ],
+                    Query.AND ],
+                expected:[ [[Query.VALUE,true], [Query.VALUE,false], Query.AND ], [] ]
+            },
+            {
+                msg: 'pop command with one arg',
+                arg:[
+                    Query.LEFT_PAREN, [Query.VALUE,20], [Query.VALUE,21], Query.RIGHT_PAREN, Query.PLUCK
+                ],
+                expected:[
+                    [ Query.LEFT_PAREN, [Query.VALUE,20], [Query.VALUE,21], Query.RIGHT_PAREN, Query.PLUCK], []
+                ]
+            }
+        ]
+
+        _.each( popCases, kase => {
+            // log.debug('kase ' + JSON.stringify(kase) );
+            t.deepEqual( Query.popLastCommand( kase.arg ), kase.expected, kase.msg );
+        });
+
+        // log.debug( JSON.stringify( Query.popLastCommand(valStack) ) );
         t.end();
     });
 }
