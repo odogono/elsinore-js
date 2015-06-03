@@ -300,11 +300,10 @@ export default function run( test, Common, Elsinore, EntitySet ){
                 .pluck( '/component/channel_member', 'client' ),
             [
                 Query.LEFT_PAREN, 
-
+                
                 Query.LEFT_PAREN, 
                     [ Query.VALUE, Query.ROOT ], 
                 Query.RIGHT_PAREN, 
-
                 Query.FILTER, // 17
 
                 [ Query.VALUE, '/component/channel_member' ], 
@@ -312,19 +311,76 @@ export default function run( test, Common, Elsinore, EntitySet ){
 
                 Query.RIGHT_PAREN, 
 
-                Query.PLUCK, // 20
+                Query.PLUCK,
             ],
             [
-                [ Query.PLUCK, // 20 
-                    [ Query.FILTER, // 17                    
+                [ Query.PLUCK,
+                    [ Query.FILTER,
                         [Query.VALUE, Query.ROOT],
                     ],
                     [ Query.VALUE, '/component/channel_member' ], 
                     [ Query.VALUE, 'client' ]
                 ]
             ]
+        ],
+        [
+            'aliasing a pluck',
+            Query.filter(Query.ROOT).pluck('/component/channel','name').as('channel_names'),
+            [
+                Query.LEFT_PAREN, 
+                Query.LEFT_PAREN, 
+                [ Query.VALUE, Query.ROOT ], 
+                Query.RIGHT_PAREN, 
+                Query.FILTER, 
+                [ Query.VALUE, '/component/channel' ], 
+                [ Query.VALUE, 'name' ], 
+                Query.RIGHT_PAREN, 
+                Query.PLUCK, 
+                [ Query.VALUE, 'channel_names' ], 
+                Query.ALIAS
+            ],
+            [
+                [ Query.ALIAS, 
+                    [ Query.VALUE, 'channel_names' ], 
+                    [ Query.PLUCK, 
+                        [ Query.FILTER, 
+                            [ Query.VALUE, Query.ROOT ] 
+                        ], 
+                        [ Query.VALUE, '/component/channel' ], 
+                        [ Query.VALUE, 'name' ] 
+                    ] 
+                ]
+            ]
+        ],
+        [
+            'without',
+            Query.filter(Query.ROOT).pluck('/component/channel', 'id').without( [1,2] ),
+            [
+                Query.LEFT_PAREN,
+                Query.LEFT_PAREN, 
+                [ Query.VALUE, Query.ROOT ], 
+                Query.RIGHT_PAREN, 
+                Query.FILTER, 
+                [ Query.VALUE, '/component/channel' ], 
+                [ Query.VALUE, 'id' ], 
+                Query.RIGHT_PAREN, 
+                Query.PLUCK, 
+                [Query.VALUE, [1,2]],
+                Query.WITHOUT
+            ],
+            [
+                [ Query.WITHOUT, 
+                    [ Query.PLUCK, 
+                        [ Query.FILTER, 
+                            [ Query.VALUE, Query.ROOT ] 
+                        ], 
+                        [ Query.VALUE, '/component/channel' ], 
+                        [ Query.VALUE, 'id' ] 
+                    ],
+                    [Query.VALUE, [1,2]],
+                ]
+            ]
         ]
-
     ];
 
     test('query toArray', t => {
