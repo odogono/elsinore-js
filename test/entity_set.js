@@ -558,7 +558,7 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
         t.end();
     });
 
-    test.only('should remove entities that are excluded after their components change', t => {
+    test('should remove entities that are excluded after their components change', t => {
         var registry = Common.initialiseRegistry();
         var entitySet = registry.createEntitySet({allowEmptyEntities:false});
         var entities = Common.loadEntities( registry );
@@ -567,6 +567,7 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
         // EntitySet.setEntityFilter( entitySet, EntityFilter.NONE, '/component/realname' );
         entitySet.addEntity( entities );
         t.equals( entitySet.size(), 2);
+        // printE( entitySet );
         
         var entity = entities.at(1);
         var component = registry.createComponent( '/component/realname', {name:'mike smith', _e:entity.getEntityId()});
@@ -582,17 +583,16 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
         var entitySet = registry.createEntitySet();
         var entities = Common.loadEntities( registry );
 
-            EntitySet.setEntityFilter( entitySet, EntityFilter.ALL,'/component/nickname' );
-            entitySet.addEntity( entities );
-            
-            t.equals( entitySet.size(), 3, 'two entities which have Nickname');
-            var entity = entities.at(0);
+        EntitySet.setEntityFilter( entitySet, Query.all('/component/nickname') );
+        entitySet.addEntity( entities );
+        
+        t.equals( entitySet.size(), 3, 'two entities which have Nickname');
+        var entity = entities.at(0);
 
-            // removing the Nickname component should mean the entity is also removed
-            entitySet.removeComponent( entity.Nickname );
-            t.equals( entitySet.size(), 2);
-            t.end();
-        // });
+        // removing the Nickname component should mean the entity is also removed
+        entitySet.removeComponent( entity.Nickname );
+        t.equals( entitySet.size(), 2);
+        t.end();
     });
 
     test('should remove entities that are no longer allowed when the component mask changes', t => {
@@ -603,7 +603,7 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
         entitySet.addEntity( entities );
         t.equals( entitySet.size(), 5);
 
-        EntitySet.setEntityFilter( entitySet, EntityFilter.NONE,'/component/score' );
+        EntitySet.setEntityFilter( entitySet, Query.none('/component/score') );
         t.equals( entitySet.size(), 2);
         t.end();
     });
@@ -704,7 +704,7 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
     });
 
 
-    test('attached entitysets', t => {
+    test.only('attached entitysets', t => {
         var registry = Common.initialiseRegistry();
         var entitySet = registry.createEntitySet();
         var entities = Common.loadEntities( registry );
@@ -713,7 +713,7 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
         var oEntitySet = registry.createEntitySet();
         // set a filter on the other entitySet so that it will only accept components that
         // have /position and /realname
-        EntitySet.setEntityFilter( oEntitySet, EntityFilter.ALL, '/component/position','/component/realname' );
+        EntitySet.setEntityFilter( oEntitySet, Query.all('/component/position').all('/component/realname') );
 
         // make the other entitySet listen to the origin entitySet
         oEntitySet.attachTo( entitySet );

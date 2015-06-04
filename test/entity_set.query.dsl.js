@@ -33,6 +33,33 @@ export default function run( test, Common, Elsinore, EntitySet ){
             [ [ Query.VALUE, true ], [ Query.VALUE, true ], Query.AND ]
         ],
         [
+            'value AND again',
+            Query.value(10).and( Query.value(30) ),
+            [ [ Query.VALUE, 10 ], [ Query.VALUE, 30 ], Query.AND ],
+            [ 
+                [Query.AND, [ Query.VALUE, 10 ], [Query.VALUE, 30]]
+            ]
+        ],
+        [
+            'value AND AND again',
+            Query.value(10).and( Query.value(30).and( Query.value(5) ) ),
+            [ 
+                [Query.VALUE, 10], 
+                [Query.VALUE, 30], 
+                [Query.VALUE, 5], 
+                Query.AND,
+                Query.AND
+            ],
+            [ 
+                [Query.AND, 
+                    [ Query.VALUE, 10 ], 
+                    [Query.AND,
+                        [Query.VALUE, 30],
+                        [Query.VALUE, 5] ]
+                ]
+            ]
+        ],
+        [
             'attribute equality',
             Query.attr('/component/channel_member','channel').equals( [2,4] ),
             [ [Query.ATTR, '/component/channel_member', 'channel'], [Query.VALUE, [2,4] ], Query.EQUALS]
@@ -380,16 +407,17 @@ export default function run( test, Common, Elsinore, EntitySet ){
                     [Query.VALUE, [1,2]],
                 ]
             ]
-        ]
+        ]//*/
     ];
 
-    test('query toArray', t => {
+    test.only('query toArray', t => {
 
         _.each( cases, function(queryCase){
-            t.deepEqual( queryCase[1].toArray( false ), queryCase[2], queryCase[0] );
+            if( queryCase[2] ){
+                t.deepEqual( queryCase[1].toArray( false ), queryCase[2], queryCase[0] ); }
             if( queryCase[3] ){
-                let tree = Query.rpnToTree( queryCase[2] ); //= queryCase[1].toArray(true);
-                // let tree = queryCase[1].toArray(true);
+                // let tree = Query.rpnToTree( queryCase[2] ); //= queryCase[1].toArray(true);
+                let tree = queryCase[1].toArray(true);
                 t.deepEqual( tree, queryCase[3], 'ast ' + queryCase[0] );
             }
         });
