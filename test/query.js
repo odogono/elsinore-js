@@ -163,12 +163,13 @@ export default function run( test, Common, Elsinore, EntitySet ){
         let registry = Common.initialiseRegistry();
         let entitySet = Common.loadEntities( registry, 'query.entities' );
 
-        let clientId = 6;
+        let clientId = 5;
 
         // Query.pipe(
         //     // 1. select channel ids which client `clientId` belongs to and store as alias `channelIds`
-        //     Query.all('/component/channel_member'),
-        //     Query.attr('client').equals(clientId),
+        //     // Query.all('/component/channel_member'),
+        //     // Query.attr('client').equals(clientId),
+        //     Query.all('/component/channel_member', 'client').equals(clientId) // NOTE: equiv of above
         //     Query.pluck('channel'),
         //     Query.as('channelIds'),
 
@@ -187,13 +188,13 @@ export default function run( test, Common, Elsinore, EntitySet ){
             
             Query.filter( 
                     Query.all('/component/channel_member'), 
-                    Query.attr('client').equals( clientId ) )
+                    Query.attr('/component/channel_member','client').equals( clientId ) )
                 .pluck('/component/channel_member', 'channel')
                 .as('channelIds'),
             
             Query.filter( 
                     Query.all('/component/channel_member'), 
-                    Query.attr('channel').equals( Query.alias('channelIds')) )
+                    Query.attr('/component/channel_member','channel').equals( Query.alias('channelIds')) )
                 .pluck('/component/channel_member', 'client', {unique: true})
                 .without( clientId )
                 .as('clientIds'),
@@ -202,6 +203,12 @@ export default function run( test, Common, Elsinore, EntitySet ){
         );
 
         let compiled = query.compile( registry );
+
+        let result = compiled.execute( entitySet );
+
+        t.ok( EntitySet.isEntitySet(result) );
+        // printE( result );
+        t.equals( result.size(), 4 );
 
         t.end();
 

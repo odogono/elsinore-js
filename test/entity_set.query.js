@@ -264,21 +264,6 @@ export default function run( test, Common, Elsinore, EntitySet ){
         // - the channel attr from /channel_member is plucked out and placed into the alias `channelIds`
         // - /channel_member components are selected which have their channel_ref attribute match one
         //   of the values from the previously saved channelIds array
-        // let result = entitySet
-        //     .query()
-        //         .where( 
-        //             Query.component('/component/channel_member')
-        //                 .attr('client')
-        //                 .equals(clientId) )
-        //         .pluck( '/component/channel_member', 'channel' )
-        //         .as( 'channelIds' )
-        //     .query()
-        //         .filter( 
-        //             Query.component('/component/channel_member')
-        //                 .attr('channel_ref')
-        //                 .equals( 
-        //                     Query.alias('channelIds') ))
-        //         .execute();
         let result = Query.execute( entitySet,[
             
             // 1. select channel ids which client `clientId` belongs to and store as alias `channelIds`
@@ -292,16 +277,6 @@ export default function run( test, Common, Elsinore, EntitySet ){
                             [ Query.VALUE, clientId ] ] ], 
                     '/component/channel_member', // components
                     'channel' ]], // attributes
-
-            // Q.filter( '/component/channel_member',
-            //   Q.attr( '/component/channel_member', 'client' ).equals('clientId') )
-            // .pluck( '/component/channel_member', 'channel' )
-            //   .as('channelIds' )
-
-
-            // [ Query.PRINT, 'channelIds are', [ Query.ALIAS, 'channelIds' ] ],
-            // [ Query.DEBUG, true ],
-
             // 2. select channel members which belong to the channel ids stored in the alias `channelIds`
             [ Query.ALIAS, 
                 'clientIds',
@@ -315,21 +290,14 @@ export default function run( test, Common, Elsinore, EntitySet ){
                         '/component/channel_member', 'client', {unique: true} ],
                     [ Query.VALUE, clientId ] ], // without the client id included
             ],
-            // Q.filter( ALL, '/component/channel_member' )
-            //   .where_attr('/component/channel_member', 'channel')
-            //     .equals( Q.alias('channelIds') )
-            //   .pluck( '/component/channel_member', 'client', {unique:true} )
-            //   .without( clientId )
-            //   .alias('clientIds')
 
             // 3. using the channel_member client ids, select an entityset of client entities 
             //   by the entity ids
             [ Query.SELECT_BY_ID,
                 Query.ROOT,
                 [ Query.ALIAS, 'clientIds' ]],
-            // Q.select( Q.alias('clientIds') )
 
-            ], {value:true, debug:false} ); 
+            ], {value:true, debug:true} ); 
         
         // printIns( result, 2 );
         // printE( result );
