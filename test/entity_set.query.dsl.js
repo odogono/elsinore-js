@@ -8,14 +8,39 @@ export default function run( test, Common, Elsinore, EntitySet ){
 
     let cases = [
         [
-            'single value',
-            Query.value(6),
+            'piping',
+            Query.pipe(
+                // entities should have a /channel component
+                Query.all('/component/channel'),
+                // entities should have a /topic component with a channel attr equal to 16 or 32
+                Query.all('/component/topic', Query.attr('channel').equals( 16 ).or( 32 ) )
+                ),
             [
-                [Query.VALUE, 6]
+                Query.LEFT_PAREN,
+                [ Query.VALUE, '/component/channel' ],
+                Query.ALL,
+                [ Query.VALUE, '/component/topic' ],
+                [ Query.ATTR,  'channel' ],
+                [ Query.VALUE, 16 ],
+                [ Query.VALUE, 32 ],
+                Query.OR,
+                Query.EQUALS,
+                Query.ALL_FILTER,
+                Query.RIGHT_PAREN,
+                Query.PIPE
             ],
             [
-                [Query.VALUE, 6]
-            ],
+                [Query.PIPE,
+                    [ Query.ALL, [Query.VALUE,'/component/channel'] ],
+                    [ Query.ALL_FILTER,
+                        [Query.VALUE, '/component/topic'],
+                        [ Query.EQUALS,
+                            [ Query.ATTR, 'channel' ],
+                            [ Query.OR,
+                                [ Query.VALUE, 16 ],
+                                [ Query.VALUE, 32 ] ] ]
+                    ] ]
+            ]
         ],
         [
             'value OR equality',
@@ -61,132 +86,57 @@ export default function run( test, Common, Elsinore, EntitySet ){
         ],
         [
             'attribute equality',
-            Query.attr('/component/channel_member','channel').equals( [2,4] ),
-            [ [Query.ATTR, '/component/channel_member', 'channel'], [Query.VALUE, [2,4] ], Query.EQUALS]
-        ],
-        [
-            'filter with single string argument',
-            Query.filter( '/component/channel_member' ),
-            [
-                Query.LEFT_PAREN,
-                [ Query.ALL, Query.ROOT, '/component/channel_member' ],
-                Query.RIGHT_PAREN,
-                Query.FILTER
-            ]
-        ],
-        [
-            'filter with single ALL argument',
-            Query.filter( Query.all('/component/channel_member') ),
-            [
-                Query.LEFT_PAREN,
-                [ Query.ALL, Query.ROOT, '/component/channel_member' ],
-                Query.RIGHT_PAREN,
-                Query.FILTER
-            ],
-            [
-                [Query.FILTER,
-                    [ Query.ALL, Query.ROOT, '/component/channel_member' ] ]
-            ]
-        ],
-        [
-            'filter with component attribute equality',
-            Query.filter( null, Query.attr('/component/channel_member','channel').equals( [2,4] )),
-            [
-                Query.LEFT_PAREN,
-                [ Query.VALUE, Query.ROOT ],
-                [ Query.ATTR, '/component/channel_member', 'channel' ],
-                [ Query.VALUE, [2, 4] ],
-                Query.EQUALS,
-                Query.RIGHT_PAREN,
-                Query.FILTER
-            ],
-            [
-                [ Query.FILTER,
-                    [ Query.VALUE, Query.ROOT ],
-                    [ Query.EQUALS, 
-                        [ Query.ATTR, '/component/channel_member', 'channel' ],
-                        [ Query.VALUE, [2, 4] ] ] ]
-            ]
-        ],
-        // [
-        //     'filter with component attribute',
-        //     Query.component('/component/channel_member').attr('channel').equals(5).or( Query.greaterThan(10) ),
-        //     [
-        //         // TODO: implement this form
-        //     ],
-        //     [
-        //         [ Query.FILTER,
-        //             [ Query.VALUE, Query.ROOT ],
-        //             [ Query.EQUALS, 
-        //                 [ Query.ATTR, '/component/channel_member', 'channel' ],
-        //                 [ Query.OR,
-        //                     [ Query.VALUE, 5 ],
-        //                     [ Query.GREATER_THAN, [ Query.VALUE, 10 ] ]
-        //                     ] ] ]
-        //     ]
-        // ],
-        [
-            'filter with component attribute OR equality',
-            Query.filter( Query.ROOT, Query.attr('/component/channel_member','channel').equals( 5 ).or( 11 ) ),
-            [
-                Query.LEFT_PAREN,
-                [ Query.VALUE, Query.ROOT ],
-                [ Query.ATTR, '/component/channel_member', 'channel' ],
-                [ Query.VALUE, 5 ],
-                [ Query.VALUE, 11 ],
-                Query.OR,
-                Query.EQUALS,
-                Query.RIGHT_PAREN,
-                Query.FILTER
-            ],
-            [
-                [ Query.FILTER,
-                    [ Query.VALUE, Query.ROOT ],
-                    [ Query.EQUALS, 
-                        [ Query.ATTR, '/component/channel_member', 'channel' ],
-                        [ Query.OR,
-                            [ Query.VALUE, 5 ],
-                            [ Query.VALUE, 11 ] ] ] ]
-            ]
+            Query.attr('channel').equals( [2,4] ),
+            [ [Query.ATTR, 'channel'], [Query.VALUE, [2,4] ], Query.EQUALS]
         ],
         [
             'component filter tree',
-            Query.all('/component/username').all('/component/nickname').none('/component/mode/invisible'),
+            Query.pipe(
+                Query.all('/component/username'),
+                Query.all('/component/nickname'),
+                Query.none('/component/mode/invisible')
+                ),
+            // Query.all('/component/username').all('/component/nickname').none('/component/mode/invisible'),
             [
-                [Query.ALL, Query.ROOT, '/component/username'],
-                [Query.ALL,  Query.ROOT, '/component/nickname'],
-                [Query.NONE, Query.ROOT, '/component/mode/invisible'],
-                Query.AND,
-                Query.AND,
+                Query.LEFT_PAREN,
+                [Query.VALUE, '/component/username'],
+                Query.ALL,
+                [Query.VALUE, '/component/nickname'],
+                Query.ALL,
+                [Query.VALUE, '/component/mode/invisible'],
+                Query.NONE,
+                Query.RIGHT_PAREN,
+                Query.PIPE,
             ],
             [
-                [ Query.AND,
-                    [Query.ALL, Query.ROOT, '/component/username'],
-                    [ Query.AND,
-                        [Query.ALL,  Query.ROOT, '/component/nickname'],
-                        [Query.NONE, Query.ROOT, '/component/mode/invisible'] ] ]
+                [ Query.PIPE,
+                    [Query.ALL, [Query.VALUE, '/component/username'] ],
+                    [Query.ALL, [Query.VALUE, '/component/nickname'] ],
+                    [Query.NONE, [Query.VALUE, '/component/mode/invisible'] ] 
+                ]
             ]
         ],
         [
             'filter with multiple entityset selection',
-            Query.filter( Query.all('/component/username').all('/component/nickname').none('/component/mode/invisible') ),
+            Query.pipe(
+                Query.all('/component/username'),
+                Query.all('/component/nickname'),
+                Query.none('/component/mode/invisible')
+                ),
+            // Query.filter( Query.all('/component/username').all('/component/nickname').none('/component/mode/invisible') ),
             [
                 Query.LEFT_PAREN,
-                [ Query.ALL, Query.ROOT, '/component/username' ],
-                [ Query.ALL, Query.ROOT, '/component/nickname' ],
-                [ Query.NONE, Query.ROOT, '/component/mode/invisible' ],
-                Query.AND,
-                Query.AND,
+                [ Query.VALUE, '/component/username' ], Query.ALL, 
+                [ Query.VALUE, '/component/nickname' ], Query.ALL,
+                [ Query.VALUE, '/component/mode/invisible' ], Query.NONE,
                 Query.RIGHT_PAREN,
-                Query.FILTER
+                Query.PIPE,
             ],
             [ 
-                [ Query.FILTER,
-                  [ Query.AND, 
-                      [ Query.ALL, Query.ROOT, '/component/username' ],
-                      [ Query.AND,
-                          [ Query.ALL, Query.ROOT, '/component/nickname' ],
-                          [ Query.NONE, Query.ROOT, '/component/mode/invisible' ] ] ] ]
+                [ Query.PIPE,
+                    [ Query.ALL, [Query.VALUE, '/component/username' ]],
+                    [ Query.ALL, [Query.VALUE, '/component/nickname' ]],
+                    [ Query.NONE, [Query.VALUE, '/component/mode/invisible' ]] ]
             ]
         ],
         [
@@ -214,207 +164,237 @@ export default function run( test, Common, Elsinore, EntitySet ){
         ],
         [
             'component filter',
-            Query.all('/component/username').none('/component/mode/invisible'),
+            Query.pipe( Query.all('/component/username'), Query.none('/component/mode/invisible') ),
             [
-                [ Query.ALL, Query.ROOT, '/component/username' ],
-                [ Query.NONE, Query.ROOT, '/component/mode/invisible' ],
-                Query.AND,
+                Query.LEFT_PAREN,
+                [ Query.VALUE, '/component/username' ],
+                Query.ALL,
+                [ Query.VALUE, '/component/mode/invisible' ],
+                Query.NONE,
+                Query.RIGHT_PAREN,
+                Query.PIPE,
             ],
         ],
         [
             '4 component filter',
-            Query.all('/component/username').none('/component/mode/invisible').all('/component/ex').none('/component/why'),
-            [
-                [ Query.ALL, Query.ROOT, '/component/username' ],
-                [ Query.NONE, Query.ROOT, '/component/mode/invisible' ],
-                [ Query.ALL, Query.ROOT, '/component/ex' ],
-                Query.AND,
-                [ Query.NONE, Query.ROOT, '/component/why' ],
-                Query.AND,
-                Query.AND,
-            ],
-            [
-                [ Query.AND,
-                    [ Query.ALL, Query.ROOT, '/component/username' ],
-                    [ Query.AND,
-                        [Query.AND,
-                            [ Query.NONE, Query.ROOT, '/component/mode/invisible' ],
-                            [ Query.ALL, Query.ROOT, '/component/ex' ] ],
-                        [ Query.NONE, Query.ROOT, '/component/why']
-                    ]
-                ]
-            ]
-        ],
-        [
-            'filter with entitySet',
-            Query.filter( Query.all('/component/username') ),
+            Query.pipe( 
+                Query.all('/component/username'),
+                Query.none('/component/mode/invisible'),
+                Query.all('/component/ex'),
+                Query.none('/component/why') ),
             [
                 Query.LEFT_PAREN,
-                [ Query.ALL, Query.ROOT, '/component/username' ],
+                [ Query.VALUE, '/component/username' ],
+                Query.ALL,
+                [ Query.VALUE, '/component/mode/invisible' ],
+                Query.NONE,
+                [ Query.VALUE, '/component/ex' ], 
+                Query.ALL,
+                [ Query.VALUE, '/component/why' ],
+                Query.NONE,
                 Query.RIGHT_PAREN,
-                Query.FILTER,
+                Query.PIPE,
             ],
             [
-                [ Query.FILTER, [ Query.ALL, Query.ROOT, '/component/username' ] ]
+                [ Query.PIPE,
+                    [ Query.ALL, [Query.VALUE, '/component/username']  ],
+                    [ Query.NONE, [Query.VALUE, '/component/mode/invisible']  ],
+                    [ Query.ALL, [Query.VALUE, '/component/ex']  ],
+                    [ Query.NONE, [Query.VALUE, '/component/why'] ]
+                ]
             ]
         ],
         [
             'filter with two complex arguments',
-            Query.filter( 
-                Query.all('/component/username').none('/component/mode/invisible'), 
-                Query.attr('/component/channel_member', 'channel').equals(10) ),
+            Query.pipe(
+                Query.all('/component/username'),
+                Query.none('/component/mode/invisible'),
+                Query.all('/component/channel_member', Query.attr('channel').equals(10) )
+                // Query.attr('/component/channel_member', 'channel', Query.equals(10) )
+                ),
+            // Query.filter( 
+            //     Query.all('/component/username').none('/component/mode/invisible'), 
+            //     Query.attr('/component/channel_member', 'channel').equals(10) ),
             [
                 Query.LEFT_PAREN,
-                [ Query.ALL, Query.ROOT, '/component/username' ],
-                [ Query.NONE, Query.ROOT, '/component/mode/invisible' ],
-                Query.AND,
-                [ Query.ATTR, '/component/channel_member', 'channel' ],
+                [ Query.VALUE, '/component/username' ],
+                Query.ALL,
+                [ Query.VALUE, '/component/mode/invisible' ],
+                Query.NONE,
+                [ Query.VALUE, '/component/channel_member' ],
+                [ Query.ATTR, 'channel' ], 
                 [ Query.VALUE, 10 ],
                 Query.EQUALS,
+                Query.ALL_FILTER,
+
                 Query.RIGHT_PAREN,
-                Query.FILTER
+                Query.PIPE
             ],
             [
-                [ Query.FILTER,
-                    [ Query.AND, 
-                        [ Query.ALL, Query.ROOT, '/component/username' ],
-                        [ Query.NONE, Query.ROOT, '/component/mode/invisible' ] ],
-                    [ Query.EQUALS, 
-                        [ Query.ATTR, '/component/channel_member', 'channel' ],
-                        [ Query.VALUE, 10 ] ]
+                [ Query.PIPE,
+                    [ Query.ALL, [ Query.VALUE, '/component/username' ] ],
+                    [ Query.NONE, [ Query.VALUE, '/component/mode/invisible' ] ],
+                    [ Query.ALL_FILTER,
+                        [ Query.VALUE, '/component/channel_member' ],
+                        [ Query.EQUALS, 
+                            [ Query.ATTR, 'channel' ],
+                            [ Query.VALUE, 10 ] ]
                     ]
-            ]
-        ],
-        [
-            'aliasing a value',
-            Query.filter( Query.none('/component/mode/invisible') ).as('present'),
-            [
-                Query.LEFT_PAREN,
-                [ Query.NONE, Query.ROOT, '/component/mode/invisible' ],
-                Query.RIGHT_PAREN,
-                Query.FILTER,
-                [Query.VALUE, 'present'],
-                Query.ALIAS,
-            ],
-            [ 
-                [ Query.ALIAS,
-                    [ Query.VALUE, 'present' ],
-                    [ Query.FILTER, 
-                        [ Query.NONE, Query.ROOT, '/component/mode/invisible' ] 
-                    ],
                 ]
             ]
         ],
         [
+            'aliasing a value',
+            Query.pipe( 
+                Query.none('/component/mode/invisible'),
+                Query.aliasAs('present')
+                ),
+            // Query.filter( Query.none('/component/mode/invisible') ).as('present'),
+            [
+                Query.LEFT_PAREN,
+                [ Query.VALUE, '/component/mode/invisible' ],
+                Query.NONE,
+                [ Query.VALUE, 'present' ],
+                Query.ALIAS,
+                Query.RIGHT_PAREN,
+                Query.PIPE
+            ],
+            [ 
+                [ Query.PIPE,
+                    [ Query.NONE, [ Query.VALUE, '/component/mode/invisible' ] ] ,
+                    [ Query.ALIAS, [ Query.VALUE, 'present' ] ],
+                ]
+            ],
+                // [ 32, 
+                //     [ 21, 
+                //         [ 16, 'present' ], 
+                //         [ 3, 6, '/component/mode/invisible' ] 
+                //     ]
+                // ]
+        ],
+        [
             'using a stored alias',
-            Query.filter( Query.alias('present') ),
+            Query.pipe(
+                Query.alias('present')
+                ),
+            // Query.filter( Query.alias('present') ),
             [
                 Query.LEFT_PAREN,
                 [ Query.VALUE, 'present' ],
                 Query.ALIAS_GET,
                 Query.RIGHT_PAREN,
-                Query.FILTER
+                Query.PIPE
             ],
             [
-                [ Query.FILTER,
+                [ Query.PIPE,
                     [ Query.ALIAS_GET, [ Query.VALUE, 'present' ] ]
                 ]
             ]
         ],
         [
             'plucking values',
-            Query.filter(Query.ROOT)
-                .pluck( '/component/channel_member', 'client' ),
+            Query.pipe(
+                Query.pluck( '/component/channel_member', 'client' )
+                ),
+            // Query.filter(Query.ROOT)
+            //     .pluck( '/component/channel_member', 'client' ),
             [
                 Query.LEFT_PAREN, 
-                
-                Query.LEFT_PAREN, 
-                    [ Query.VALUE, Query.ROOT ], 
-                Query.RIGHT_PAREN, 
-                Query.FILTER, // 17
 
+                Query.LEFT_PAREN, 
                 [ Query.VALUE, '/component/channel_member' ], 
                 [ Query.VALUE, 'client' ], 
+                Query.RIGHT_PAREN, 
+                Query.PLUCK,
 
                 Query.RIGHT_PAREN, 
 
-                Query.PLUCK,
+                Query.PIPE
             ],
             [
-                [ Query.PLUCK,
-                    [ Query.FILTER,
-                        [Query.VALUE, Query.ROOT],
-                    ],
-                    [ Query.VALUE, '/component/channel_member' ], 
-                    [ Query.VALUE, 'client' ]
+                [ Query.PIPE,
+                    [ Query.PLUCK,
+                        [ Query.VALUE, '/component/channel_member' ], 
+                        [ Query.VALUE, 'client' ]
+                    ]
                 ]
             ]
         ],
         [
             'aliasing a pluck',
-            Query.filter(Query.ROOT).pluck('/component/channel','name').as('channel_names'),
+            Query.pipe(
+                Query.pluck('/component/channel','name'),
+                Query.aliasAs('channel_names')
+                ),
+            // Query.filter(Query.ROOT).pluck('/component/channel','name').as('channel_names'),
             [
                 Query.LEFT_PAREN, 
+                
                 Query.LEFT_PAREN, 
-                [ Query.VALUE, Query.ROOT ], 
-                Query.RIGHT_PAREN, 
-                Query.FILTER, 
                 [ Query.VALUE, '/component/channel' ], 
                 [ Query.VALUE, 'name' ], 
                 Query.RIGHT_PAREN, 
                 Query.PLUCK, 
+
                 [ Query.VALUE, 'channel_names' ], 
-                Query.ALIAS
+                Query.ALIAS,
+                
+                Query.RIGHT_PAREN,
+                Query.PIPE
             ],
             [
-                [ Query.ALIAS, 
-                    [ Query.VALUE, 'channel_names' ], 
+                [ Query.PIPE,
                     [ Query.PLUCK, 
-                        [ Query.FILTER, 
-                            [ Query.VALUE, Query.ROOT ] 
-                        ], 
                         [ Query.VALUE, '/component/channel' ], 
                         [ Query.VALUE, 'name' ] 
-                    ] 
+                    ],
+                    [ Query.ALIAS, [ Query.VALUE, 'channel_names' ] ]
                 ]
             ]
         ],
         [
             'without',
-            Query.filter(Query.ROOT).pluck('/component/channel', 'id').without( [1,2] ),
+            Query.pipe(
+                Query.pluck('/component/channel','id'),
+                Query.without( [1,2] )
+                ),
+            // Query.filter(Query.ROOT).pluck('/component/channel', 'id').without( [1,2] ),
             [
                 Query.LEFT_PAREN,
-                Query.LEFT_PAREN, 
-                [ Query.VALUE, Query.ROOT ], 
-                Query.RIGHT_PAREN, 
-                Query.FILTER, 
+                
+                Query.LEFT_PAREN,
                 [ Query.VALUE, '/component/channel' ], 
                 [ Query.VALUE, 'id' ], 
                 Query.RIGHT_PAREN, 
                 Query.PLUCK, 
+
                 [Query.VALUE, [1,2]],
-                Query.WITHOUT
+                Query.WITHOUT,
+
+                Query.RIGHT_PAREN, 
+                Query.PIPE
             ],
             [
-                [ Query.WITHOUT, 
+                [ Query.PIPE, 
                     [ Query.PLUCK, 
-                        [ Query.FILTER, 
-                            [ Query.VALUE, Query.ROOT ] 
-                        ], 
                         [ Query.VALUE, '/component/channel' ], 
                         [ Query.VALUE, 'id' ] 
                     ],
-                    [Query.VALUE, [1,2]],
+                    [ Query.WITHOUT, [Query.VALUE, [1,2]] ]
                 ]
             ]
         ]//*/
     ];
 
-    test.only('query toArray', t => {
+    test('query toArray', t => {
 
         _.each( cases, function(queryCase){
             if( queryCase[2] ){
-                t.deepEqual( queryCase[1].toArray( false ), queryCase[2], queryCase[0] ); }
+                if( !queryCase[1] ){
+                    printIns( queryCase, 6 );
+                }
+                t.deepEqual( queryCase[1].toArray( false ), queryCase[2], queryCase[0] ); 
+            }
             if( queryCase[3] ){
                 // let tree = Query.rpnToTree( queryCase[2] ); //= queryCase[1].toArray(true);
                 let tree = queryCase[1].toArray(true);

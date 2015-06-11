@@ -62,8 +62,7 @@ export default function run( test, Common, Elsinore, EntitySet ){
 
 
     test.skip('retrieving referenced entities', t => {
-        let registry = Common.initialiseRegistry(false);
-        let entitySet = Common.loadEntities( registry, 'query.entities' );
+        let [registry,entitySet] = initialiseEntitySet();
 
         let result = entitySet
             // select all entities which have the ChannelMember component
@@ -109,11 +108,10 @@ export default function run( test, Common, Elsinore, EntitySet ){
     // });
 
     test('entityset filter ALL', t => {
-        let registry = Common.initialiseRegistry(false);
-        let entitySet = Common.loadEntities( registry, 'query.entities' );
+        let [registry,entitySet] = initialiseEntitySet();
 
         let result = entitySet.query( 
-            [ Query.FILTER, [ Query.ALL, Query.ROOT, '/component/mode/invite_only' ] ], 
+            [ Query.ALL, '/component/mode/invite_only' ],
             {debug:false, result:false} );
 
         t.equal( result[0], Query.VALUE );
@@ -132,101 +130,110 @@ export default function run( test, Common, Elsinore, EntitySet ){
     })
 
     test('entityset filter by attribute', t => {
-        let registry = Common.initialiseRegistry(false);
-        let entitySet = Common.loadEntities( registry, 'query.entities' );
+        let [registry,entitySet] = initialiseEntitySet();
 
         // select entities which have the component /channel_member and 
         //  have the client attribute
+        // aka Query.all( '/component/channel_member', Query.attr('client').equals(5) );
         let result = Query.execute( entitySet, 
-            [ Query.FILTER,
-                Query.ROOT,
-                [ Query.EQUALS, 
-                    [ Query.ATTR, '/component/channel_member', 'client' ],
-                    [ Query.VALUE, 5 ] ] ], {debug:false} );
+            [ Query.ALL_FILTER, 
+                [Query.VALUE, '/component/channel_member'],
+                [ Query.EQUALS,
+                    [ Query.ATTR, 'client' ],
+                    [ Query.VALUE, 5 ]
+                ]
+            ], {debug:false} );
         
         t.equals( result.size(), 2 );
         t.end();
     });
 
     test('entityset filter by attribute being within a value array', t => {
-        let registry = Common.initialiseRegistry(false);
-        let entitySet = Common.loadEntities( registry, 'query.entities' );
+        let [registry,entitySet] = initialiseEntitySet();
 
         // select entities which have the component /channel_member and 
         //  have the client attribute
         let result = Query.execute( entitySet, 
-            [ Query.FILTER,
-                Query.ROOT, //[ Query.ALL, Query.ROOT, '/channel_member' ], 
+            [ Query.ALL_FILTER, 
+                [Query.VALUE, '/component/channel_member'],
                 [ Query.EQUALS, 
-                    [ Query.ATTR, '/component/channel_member', 'channel' ],
+                    [ Query.ATTR, 'channel' ],
                     [ Query.VALUE, [2, 4] ] ] ] );
 
-        // printE( result );
         t.equals( result.size(), 4 );
         t.end();
     });
 
-    test('FILTER with single', t => {
-        let registry = Common.initialiseRegistry(false);
-        let entitySet = Common.loadEntities( registry, 'query.entities' );
+    test('multiple component filters', t => {
+        let [registry,entitySet] = initialiseEntitySet();
 
         // select entities which have /channel_member but not /mode/invisible
         let result = Query.execute( entitySet, 
-            [ Query.FILTER,
-                [ Query.ALL, Query.ROOT, '/component/channel_member' ]
+            [ 
+                [Query.ALL, [Query.VALUE, '/component/channel_member'] ],
+                [Query.NONE, [Query.VALUE, '/component/mode/invisible'] ] 
             ]
             ,{debug:false});
         
-        // printE( result[1] );
-        t.equals( result.size(), 7 );
-        t.end();
-    });
-
-    test('FILTER with multiple rules', t => {
-        let registry = Common.initialiseRegistry(false);
-        let entitySet = Common.loadEntities( registry, 'query.entities' );
-
-        // select entities which have /channel_member but not /mode/invisible
-        let result = Query.execute( entitySet, 
-            [ Query.FILTER,
-                [ Query.AND,
-                    [ Query.ALL, Query.ROOT, '/component/channel_member' ],
-                    [ Query.NONE, Query.ROOT, '/component/mode/invisible' ] 
-                ],
-                // [ Query.EQUALS, 
-                //     [ Query.ATTR, '/component/channel_member', 'channel' ],
-                //     [ Query.VALUE, 1 ] ],
-            ]
-            ,{debug:false});
-        // Q.filter( Q.all('/component/channel_member').none( '/c/m/i' ) )
-        // Query.filter().all('/component/channel_member').none('/component/mode/invisible');
-
-        // printE( result[1] );
+        // printE( result );
         t.equals( result.size(), 5 );
         t.end();
     });
 
     test('PLUCK op', t => {
-        let registry = Common.initialiseRegistry(false);
-        let entitySet = Common.loadEntities( registry, 'query.entities' );
+        let [registry,entitySet] = initialiseEntitySet();
 
-        let result = Query.execute( entitySet, [ Query.PLUCK, Query.ROOT, '/component/topic', 'topic' ] );
-        // Query.pluck( '/component/topic', 'topic' )
+        let result = Query.execute( entitySet,
+            [ Query.PLUCK,
+                [ Query.VALUE, '/component/topic' ], 
+                [ Query.VALUE, 'topic' ]
+            ]
+        ,{debug:false});
+        
         t.deepEqual( result,
             ['Entity Component Systems', 'Javascript', 'Welcome to Politics'] );
 
         t.end();
     });
 
+    test('plucking entity ids from the given entityset', t => {
+        let [registry,entitySet] = initialiseEntitySet();
+
+        let result = Query.execute( entitySet, [
+            [ Query.PLUCK, null, 'eid', {unique:true} ]
+            ], {debug:false});
+
+        t.deepEqual(
+            result,
+            [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18 ]
+            );
+
+        t.end();
+    });
+
+    test('resetting the context entitySet', t => {
+        let [registry,entitySet] = initialiseEntitySet();
+
+        let result = Query.execute( entitySet, [
+            [ Query.ANY, [ Query.VALUE, ['/component/username','/component/channel'] ]],
+            // at this point, the context entityset is a subset of the root
+            [ Query.VALUE, Query.ROOT ],
+            // the context entityset is now === the root
+            [ Query.PLUCK, null, 'eid', {unique:true} ]
+            ]);
+
+        t.equal( result.length, 18 );
+        t.end();
+    });
 
     test('ALIAS op', t => {
-        let result = Query.execute( null,[
-            // Query.alias('channelIds', [ 9,10,11] )
-            [ Query.ALIAS, 'channelIds', [ Query.VALUE, [ 9, 10, 11 ]] ],
-            // Query.alias('channelIds').equals([9,10,11])
+        let result = Query.execute( null,[ 
+            [ Query.VALUE, [9, 10, 11]] ,
+            [ Query.ALIAS, 'channelIds' ],
             [ Query.EQUALS,
                 [ Query.VALUE, [ 9, 10, 11 ] ],
-                [ Query.ALIAS, [ Query.VALUE, 'channelIds' ] ]] ] ); 
+                [ Query.ALIAS_GET, [ Query.VALUE, 'channelIds' ] ]] ]
+        ,{debug:false}); 
 
         t.deepEqual( result,  true );
 
@@ -249,10 +256,27 @@ export default function run( test, Common, Elsinore, EntitySet ){
         t.end();
     });
 
+    test.skip('stuff', t => {
+        let [registry,entitySet] = initialiseEntitySet();
+
+        let result = Query.execute( entitySet, [
+            // [ Query.ANY, [ Query.VALUE, ['/component/username','/component/channel'] ]],
+            // [ Query.VALUE, Query.ROOT ],
+            // [ Query.PLUCK, null, 'eid', {unique:true} ]
+            [Query.VALUE, [ 1,2,5 ] ],
+            [Query.ALIAS, [Query.VALUE, 'entityIds'] ],
+
+            [Query.VALUE, Query.ROOT],
+            [ Query.SELECT_BY_ID, [Query.ALIAS_GET, [Query.VALUE,'entityIds']] ]
+
+            ], {debug:false});
+
+        t.equal( result.length, 18 );
+        t.end();
+    });
 
     test('sub-queries', t => {
-        let registry = Common.initialiseRegistry(false);
-        let entitySet = Common.loadEntities( registry, 'query.entities' );
+        let [registry,entitySet] = initialiseEntitySet();
         let clientId = 5;
 
         // this query selects the other entities which are members of the same channel
@@ -265,39 +289,79 @@ export default function run( test, Common, Elsinore, EntitySet ){
         // - /channel_member components are selected which have their channel_ref attribute match one
         //   of the values from the previously saved channelIds array
         let result = Query.execute( entitySet,[
-            
+
             // 1. select channel ids which client `clientId` belongs to and store as alias `channelIds`
-            [ Query.ALIAS, // alias op1 to op2
-                'channelIds', // name of the alias to set
-                [ Query.PLUCK, // select the attributes from op2
-                    [ Query.FILTER, // select a subset of entities in op1 by using op2
-                        [ Query.ALL, Query.ROOT, '/component/channel_member' ], 
-                        [ Query.EQUALS, 
-                            [ Query.ATTR, '/component/channel_member', 'client' ],
-                            [ Query.VALUE, clientId ] ] ], 
-                    '/component/channel_member', // components
-                    'channel' ]], // attributes
-            // 2. select channel members which belong to the channel ids stored in the alias `channelIds`
-            [ Query.ALIAS, 
-                'clientIds',
-                [ Query.WITHOUT,
-                    [ Query.PLUCK,
-                        [ Query.FILTER,
-                            [ Query.ALL, Query.ROOT, '/component/channel_member' ],
-                            [ Query.EQUALS, 
-                                [ Query.ATTR, '/component/channel_member', 'channel' ],
-                                [ Query.ALIAS, 'channelIds' ] ] ],
-                        '/component/channel_member', 'client', {unique: true} ],
-                    [ Query.VALUE, clientId ] ], // without the client id included
+            [ Query.ALL_FILTER, 
+                [ Query.VALUE, '/component/channel_member' ],
+                [ Query.EQUALS,
+                    [ Query.ATTR, 'client' ], 
+                    [ Query.VALUE, clientId ]
+                ]
             ],
 
-            // 3. using the channel_member client ids, select an entityset of client entities 
-            //   by the entity ids
-            [ Query.SELECT_BY_ID,
-                Query.ROOT,
-                [ Query.ALIAS, 'clientIds' ]],
+            [ Query.PLUCK,
+                [ Query.VALUE, '/component/channel_member' ], 
+                [ Query.VALUE, 'channel' ]
+            ],
 
-            ], {value:true, debug:true} ); 
+            [ Query.ALIAS, 'channelIds' ],
+
+            // 2. select channel members which belong to the channel ids stored in the alias `channelIds`
+            // clear the value
+            [ Query.VALUE, Query.ROOT ],
+
+            [ Query.ALL_FILTER, 
+                [ Query.VALUE, '/component/channel_member' ],
+                [ Query.EQUALS,
+                    [ Query.ATTR, 'channel' ], 
+                    [ Query.ALIAS_GET, [Query.VALUE, 'channelIds'] ]
+                ]
+            ],
+
+            [ Query.PLUCK,
+                [ Query.VALUE, '/component/channel_member' ], 
+                [ Query.VALUE, 'client' ], {unique:true}
+            ],
+
+            [ Query.WITHOUT, [Query.VALUE, clientId] ],
+
+            [Query.ALIAS, [Query.VALUE,'clientIds']],
+            // // 3. using the channel_member client ids, select an entityset of client entities 
+            [Query.VALUE, Query.ROOT],
+            [ Query.SELECT_BY_ID, [Query.ALIAS_GET, [Query.VALUE,'clientIds']] ],
+
+            // // 1. select channel ids which client `clientId` belongs to and store as alias `channelIds`
+            // [ Query.ALIAS, // alias op1 to op2
+            //     'channelIds', // name of the alias to set
+            //     [ Query.PLUCK, // select the attributes from op2
+            //         [ Query.FILTER, // select a subset of entities in op1 by using op2
+            //             [ Query.ALL, Query.ROOT, '/component/channel_member' ], 
+            //             [ Query.EQUALS, 
+            //                 [ Query.ATTR, '/component/channel_member', 'client' ],
+            //                 [ Query.VALUE, clientId ] ] ], 
+            //         '/component/channel_member', // components
+            //         'channel' ]], // attributes
+            // // 2. select channel members which belong to the channel ids stored in the alias `channelIds`
+            // [ Query.ALIAS, 
+            //     'clientIds',
+            //     [ Query.WITHOUT,
+            //         [ Query.PLUCK,
+            //             [ Query.FILTER,
+            //                 [ Query.ALL, Query.ROOT, '/component/channel_member' ],
+            //                 [ Query.EQUALS, 
+            //                     [ Query.ATTR, '/component/channel_member', 'channel' ],
+            //                     [ Query.ALIAS, 'channelIds' ] ] ],
+            //             '/component/channel_member', 'client', {unique: true} ],
+            //         [ Query.VALUE, clientId ] ], // without the client id included
+            // ],
+
+            // // 3. using the channel_member client ids, select an entityset of client entities 
+            // //   by the entity ids
+            // [ Query.SELECT_BY_ID,
+            //     Query.ROOT,
+            //     [ Query.ALIAS, 'clientIds' ]],
+
+            ], {value:true, debug:false} ); 
         
         // printIns( result, 2 );
         // printE( result );
@@ -306,6 +370,12 @@ export default function run( test, Common, Elsinore, EntitySet ){
 
         t.end();
     });
+
+    function initialiseEntitySet(){
+        let registry = Common.initialiseRegistry(false);
+        let entitySet = Common.loadEntities( registry, 'query.entities' );
+        return [registry,entitySet];
+    }
 }
 
 
