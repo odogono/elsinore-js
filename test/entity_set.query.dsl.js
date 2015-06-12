@@ -424,49 +424,49 @@ export default function run( test, Common, Elsinore, EntitySet ){
     });
 
 
-    test('pop last arg', t => {
-        t.deepEqual( Query.popLastArg( [ 100 ], 0 ), [ [100], [] ] );
-        t.deepEqual( Query.popLastArg( [ 100, 200 ], 1 ), [ [200], [100] ] );
-        t.deepEqual( 
-            Query.popLastArg( [ Query.LEFT_PAREN, 200, Query.RIGHT_PAREN ], 2), 
-            [ [Query.LEFT_PAREN, 200, Query.RIGHT_PAREN], [] ] );
-        t.deepEqual( 
-            Query.popLastArg( [ 100, Query.LEFT_PAREN, 200, Query.RIGHT_PAREN ], 3), 
-            [ [Query.LEFT_PAREN, 200, Query.RIGHT_PAREN], [100] ] );
-        t.deepEqual( 
-            Query.popLastArg( [ 100, Query.LEFT_PAREN, Query.LEFT_PAREN, 200, Query.RIGHT_PAREN, Query.RIGHT_PAREN ], 5), 
-            [ [Query.LEFT_PAREN, Query.LEFT_PAREN, 200, Query.RIGHT_PAREN, Query.RIGHT_PAREN], [100] ] );
-        t.end();
-    });
+    // test('pop last arg', t => {
+    //     t.deepEqual( Query.popLastArg( [ 100 ], 0 ), [ [100], [] ] );
+    //     t.deepEqual( Query.popLastArg( [ 100, 200 ], 1 ), [ [200], [100] ] );
+    //     t.deepEqual( 
+    //         Query.popLastArg( [ Query.LEFT_PAREN, 200, Query.RIGHT_PAREN ], 2), 
+    //         [ [Query.LEFT_PAREN, 200, Query.RIGHT_PAREN], [] ] );
+    //     t.deepEqual( 
+    //         Query.popLastArg( [ 100, Query.LEFT_PAREN, 200, Query.RIGHT_PAREN ], 3), 
+    //         [ [Query.LEFT_PAREN, 200, Query.RIGHT_PAREN], [100] ] );
+    //     t.deepEqual( 
+    //         Query.popLastArg( [ 100, Query.LEFT_PAREN, Query.LEFT_PAREN, 200, Query.RIGHT_PAREN, Query.RIGHT_PAREN ], 5), 
+    //         [ [Query.LEFT_PAREN, Query.LEFT_PAREN, 200, Query.RIGHT_PAREN, Query.RIGHT_PAREN], [100] ] );
+    //     t.end();
+    // });
 
-    test('pop last command', t => {
-        let popCases = [
-            {
-                msg: 'pop a command with two args',
-                arg:[[ Query.VALUE, true ],
-                    [ Query.VALUE, false ],
-                    Query.AND ],
-                expected:[ [[Query.VALUE,true], [Query.VALUE,false], Query.AND ], [] ]
-            },
-            {
-                msg: 'pop command with one arg',
-                arg:[
-                    Query.LEFT_PAREN, [Query.VALUE,20], [Query.VALUE,21], Query.RIGHT_PAREN, Query.PLUCK
-                ],
-                expected:[
-                    [ Query.LEFT_PAREN, [Query.VALUE,20], [Query.VALUE,21], Query.RIGHT_PAREN, Query.PLUCK], []
-                ]
-            }
-        ]
+    // test('pop last command', t => {
+    //     let popCases = [
+    //         {
+    //             msg: 'pop a command with two args',
+    //             arg:[[ Query.VALUE, true ],
+    //                 [ Query.VALUE, false ],
+    //                 Query.AND ],
+    //             expected:[ [[Query.VALUE,true], [Query.VALUE,false], Query.AND ], [] ]
+    //         },
+    //         {
+    //             msg: 'pop command with one arg',
+    //             arg:[
+    //                 Query.LEFT_PAREN, [Query.VALUE,20], [Query.VALUE,21], Query.RIGHT_PAREN, Query.PLUCK
+    //             ],
+    //             expected:[
+    //                 [ Query.LEFT_PAREN, [Query.VALUE,20], [Query.VALUE,21], Query.RIGHT_PAREN, Query.PLUCK], []
+    //             ]
+    //         }
+    //     ]
 
-        _.each( popCases, kase => {
-            // log.debug('kase ' + JSON.stringify(kase) );
-            t.deepEqual( Query.popLastCommand( kase.arg ), kase.expected, kase.msg );
-        });
+    //     _.each( popCases, kase => {
+    //         // log.debug('kase ' + JSON.stringify(kase) );
+    //         t.deepEqual( Query.popLastCommand( kase.arg ), kase.expected, kase.msg );
+    //     });
 
-        // log.debug( JSON.stringify( Query.popLastCommand(valStack) ) );
-        t.end();
-    });
+    //     // log.debug( JSON.stringify( Query.popLastCommand(valStack) ) );
+    //     t.end();
+    // });
 }
 
 
