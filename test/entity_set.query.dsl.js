@@ -8,6 +8,24 @@ export default function run( test, Common, Elsinore, EntitySet ){
 
     let cases = [
         [
+            'root',
+            Query.pipe(
+                Query.all('/component/channel'),
+                Query.root(),
+                Query.all('/component/topic')
+                ),
+            [
+                Query.LEFT_PAREN,
+                [ Query.VALUE, '/component/channel' ],
+                Query.ALL,
+                Query.ROOT,
+                [ Query.VALUE, '/component/topic' ],
+                Query.ALL,
+                Query.RIGHT_PAREN,
+                Query.PIPE
+            ]
+        ],
+        [
             'piping',
             Query.pipe(
                 // entities should have a /channel component
