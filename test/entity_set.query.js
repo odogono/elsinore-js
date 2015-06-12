@@ -227,41 +227,8 @@ export default function run( test, Common, Elsinore, EntitySet ){
 
             [ Query.SELECT_BY_ID, [ Query.ALIAS_GET, 'clientIds' ] ],
 
-            // // 1. select channel ids which client `clientId` belongs to and store as alias `channelIds`
-            // [ Query.ALIAS, // alias op1 to op2
-            //     'channelIds', // name of the alias to set
-            //     [ Query.PLUCK, // select the attributes from op2
-            //         [ Query.FILTER, // select a subset of entities in op1 by using op2
-            //             [ Query.ALL, Query.ROOT, '/component/channel_member' ], 
-            //             [ Query.EQUALS, 
-            //                 [ Query.ATTR, '/component/channel_member', 'client' ],
-            //                 [ Query.VALUE, clientId ] ] ], 
-            //         '/component/channel_member', // components
-            //         'channel' ]], // attributes
-            // // 2. select channel members which belong to the channel ids stored in the alias `channelIds`
-            // [ Query.ALIAS, 
-            //     'clientIds',
-            //     [ Query.WITHOUT,
-            //         [ Query.PLUCK,
-            //             [ Query.FILTER,
-            //                 [ Query.ALL, Query.ROOT, '/component/channel_member' ],
-            //                 [ Query.EQUALS, 
-            //                     [ Query.ATTR, '/component/channel_member', 'channel' ],
-            //                     [ Query.ALIAS, 'channelIds' ] ] ],
-            //             '/component/channel_member', 'client', {unique: true} ],
-            //         [ Query.VALUE, clientId ] ], // without the client id included
-            // ],
-
-            // // 3. using the channel_member client ids, select an entityset of client entities 
-            // //   by the entity ids
-            // [ Query.SELECT_BY_ID,
-            //     Query.ROOT,
-            //     [ Query.ALIAS, 'clientIds' ]],
-
             ], {value:true, debug:false} ); 
-        
-        // printIns( result, 2 );
-        // printE( result );
+
         // the result should have 3 entities - channel_member, channel and client
         t.equal( result.size(), 4 );
 
