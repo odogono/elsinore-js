@@ -249,6 +249,10 @@ if( !process.browser ){
     let Elsinore = require('../lib');
     require('./common');
     require('../lib/entity_set/query');
+    require('../lib/query/select_by_id');
+    require('../lib/query/alias');
+    require('../lib/query/pluck');
+    require('../lib/query/without');
     
     run( require('tape'), require('./common'), Elsinore, Elsinore.EntitySet );
 }

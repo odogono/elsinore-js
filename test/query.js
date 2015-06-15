@@ -170,20 +170,20 @@ export default function run( test, Common, Elsinore, EntitySet ){
             // 1. select channel ids which client `clientId` belongs to and store as alias `channelIds`
             Query.all('/component/channel_member', 
                 Query.attr('client').equals(clientId) ),
-            Query.pluck('/component/channel_member', 'channel'),
-            Query.aliasAs( 'channelIds' ),
+            Query.pluck('/component/channel_member', 'channel'), // get all the values for 'channel'
+            Query.aliasAs( 'channelIds' ), // save the pluck result (array) in the context for later
 
             // 2. select channel members which belong to the channel ids stored in the alias `channelIds`
-            Query.root(),
+            Query.root(), // this resets the context back to the original entitySet
             Query.all('/component/channel_member', 
                 Query.attr('channel').equals( Query.alias('channelIds'))),
             Query.pluck('/component/channel_member', 'client', {unique:true}),
-            Query.without( clientId ),
+            Query.without( clientId ), // remove the clientId from the result of the pluck
             Query.aliasAs('clientIds'),
 
             // 3. using the channel_member client ids, select an entityset of client entities by entity ids
             Query.root(),
-            Query.selectById( Query.alias('clientIds') )
+            Query.selectById( Query.alias('clientIds') ) // creates a new ES from selected ids
             ]);
 
 
@@ -203,6 +203,10 @@ if( !process.browser ){
     let Elsinore = require('../lib');
     // require('./common');
     require('../lib/query/dsl');
+    require('../lib/query/select_by_id');
+    require('../lib/query/alias');
+    require('../lib/query/pluck');
+    require('../lib/query/without');
     
     run( require('tape'), require('./common'), Elsinore, Elsinore.EntitySet );
 }

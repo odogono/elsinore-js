@@ -430,5 +430,9 @@ export default function run( test, Common, Elsinore, EntitySet ){
 if( !process.browser ){
     let Elsinore = require('../lib');
     require('../lib/query/dsl');
+    require('../lib/query/select_by_id');
+    require('../lib/query/alias');
+    require('../lib/query/pluck');
+    require('../lib/query/without');
     run( require('tape'), require('./common'), Elsinore );
 }
