@@ -113,7 +113,7 @@ export default function run( test, Common, Elsinore, EntitySet ){
         let query = Query.all('/component/channel');
         t.ok( !query.isCompiled );
 
-        query = query.compile( registry );
+        query = Query.create( registry, query );
         t.ok( query.isCompiled );
         
         let result = query.execute( entity );
@@ -124,8 +124,7 @@ export default function run( test, Common, Elsinore, EntitySet ){
 
 
     test('accepting an entity based on its attributes', t => {
-        let registry = Common.initialiseRegistry();
-        // let query = Query.attr('/component/mode/limit', 'limit').greaterThan(9);
+        let [registry,entitySet] = initialiseEntitySet();
         let query = Query.create( registry,
             Query.all('/component/mode/limit', Query.attr('limit').greaterThan( 9 )),
             {debug:false} );
@@ -149,8 +148,7 @@ export default function run( test, Common, Elsinore, EntitySet ){
 
 
     test('a single filter query on an entityset', t => {
-        let registry = Common.initialiseRegistry();
-        let entitySet = Common.loadEntities( registry, 'query.entities' );
+        let [registry,entitySet] = initialiseEntitySet();
 
         let query = Query.create( registry, Query.all('/component/channel') );
         
@@ -166,8 +164,7 @@ export default function run( test, Common, Elsinore, EntitySet ){
 
 
     test('filter query on an entityset', t => {
-        let registry = Common.initialiseRegistry();
-        let entitySet = Common.loadEntities( registry, 'query.entities' );
+        let [registry,entitySet] = initialiseEntitySet();
 
         let query = Query.create( registry,
             [
@@ -205,8 +202,7 @@ export default function run( test, Common, Elsinore, EntitySet ){
     });
 
     test('multiple commands with a single result', t => {
-        let registry = Common.initialiseRegistry();
-        let entitySet = Common.loadEntities( registry, 'query.entities' );
+        let [registry,entitySet] = initialiseEntitySet();
 
         let clientId = 5;
 
@@ -240,6 +236,52 @@ export default function run( test, Common, Elsinore, EntitySet ){
         t.end();
 
     });
+
+    test('hashing queries', t => {
+        let [registry,entitySet] = initialiseEntitySet();
+
+        let queryA = Query.create( registry, Query.all('/component/username') );
+        let queryB = Query.create( registry, Query.all('/component/username') );
+        let queryC = Query.create( registry, Query.any('/component/username') );
+
+        t.equals( queryA.hash(), queryB.hash() );
+        t.notEqual( queryA.hash(), queryC.hash() );
+
+        t.end();
+    });
+
+    test('query serialisation', t => {
+        let [registry,entitySet] = initialiseEntitySet();
+
+        let query = Query.create( registry, [
+                Query.all('/component/channel_member'),
+                Query.none('/component/mode/invisible'),
+                Query.all('/component/channel_member', Query.attr('channel').equals(2) )
+            ] );
+
+        let json = query.toJSON();
+
+        t.deepEqual( json, [
+            [ 0, [ 16, '/component/channel_member' ] ], 
+            [ 3, [ 16, '/component/mode/invisible' ] ], 
+            [ 34, 
+                [ 16, '/component/channel_member' ], 
+                [ 7, [ 19, 'channel' ], [ 16, 2 ] ] 
+            ] ] );
+
+        let reQuery = Query.create( registry, json );
+
+        t.equals( query.execute(entitySet).size(), 
+            reQuery.execute(entitySet).size() );
+
+        t.end();
+    })
+
+    function initialiseEntitySet(){
+        let registry = Common.initialiseRegistry(false);
+        let entitySet = Common.loadEntities( registry, 'query.entities' );
+        return [registry,entitySet];
+    }
 }
 
 // serverside only execution of tests
