@@ -36,6 +36,8 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
         entity = registry.createEntity( { id:'/component/position', x:2, y:-2 } );
         entity = entitySet.addEntity( entity );
 
+        // printE( entity );
+
         t.ok( entity.getEntityId() > 0, 'the entity should have an id' );
         t.ok( entitySet.hasEntity(entity.getEntityId()), 'the entity should exist');
         
@@ -179,7 +181,7 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
         var registry = Common.initialiseRegistry();
         var entitySet = registry.createEntitySet();
         var eventSpy = Sinon.spy();
-        // Common.logEvents( entitySet );
+        Common.logEvents( entitySet );
         entitySet.on('all', eventSpy);
 
         entitySet.addComponent( [
@@ -187,7 +189,8 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
             registry.createComponent( '/component/nickname', {id:2,_e:2, nick:'isaac'})
         ]);
 
-        t.equals( eventSpy.callCount, 2, 'two events should have been emitted' );
+        t.equals( eventSpy.callCount, 3, 'two events should have been emitted' );
+        t.ok( eventSpy.calledWith('update'), 'update called' );
         t.ok( eventSpy.calledWith('component:add'), 'component:add should have been called' );
         t.ok( eventSpy.calledWith('entity:add'), 'entity:add should have been called' );
         t.end();
@@ -201,18 +204,17 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
         var eventSpy = Sinon.spy();
         // Common.logEvents( entitySet );
 
-            entitySet.on('all', eventSpy);
+        entitySet.on('all', eventSpy);
 
-            var entity = Entity.create(16);
-            entity.addComponent( (com=registry.createComponent( '/component/position', {id:5, x:2,y:-2})) );
-            entity.addComponent( registry.createComponent( '/component/score', {id:6, score:100}) );
-            entitySet.addEntity( entity );
+        var entity = Entity.create(16);
+        entity.addComponent( (com=registry.createComponent( '/component/position', {id:5, x:2,y:-2})) );
+        entity.addComponent( registry.createComponent( '/component/score', {id:6, score:100}) );
+        entitySet.addEntity( entity );
 
-            t.equals( eventSpy.callCount, 2, 'four events should have been emitted' );
-            // printE( entitySet );
-            t.equals( entitySet.at(0).Position.get('x'), 2 );
+        t.equals( eventSpy.callCount, 3, 'three events should have been emitted' );
+        t.equals( entitySet.at(0).Position.get('x'), 2 );
 
-            t.end();
+        t.end();
         // });
     });
 
@@ -458,16 +460,14 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
     // });
 
     test('should only add a component of an accepted type', t => {
-        var registry = Common.initialiseRegistry();
-        var entitySet = registry.createEntitySet();
+        let [registry,entitySet,entities] = initialise();
         var eventSpy = Sinon.spy();
         // Common.logEvents( entitySet );
-        var entities = Common.loadEntities( registry );
 
         // printE( entities );
         // setting an entity filter means that the entitySet will
         // only add components that pass through the filter
-        EntitySet.setEntityFilter( entitySet, EntityFilter.ALL, '/component/position' );
+        EntitySet.setEntityFilter( entitySet, Query.all('/component/position') );
 
         // entitySet.addEntity( entities.at(1) );
         // t.equals( entitySet.size(), 0);
@@ -477,25 +477,28 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
         t.end();
     });
 
+    
 
     test('should only retain the included component on entity', t => {
-        var registry = Common.initialiseRegistry();
-        var entitySet = registry.createEntitySet();
-        var entities = Common.loadEntities( registry );
+        let [registry,entitySet,entities] = initialise();
+        
+        EntitySet.setEntityFilter( entitySet, Query.include('/component/nickname') );
 
-        EntitySet.setEntityFilter( entitySet, EntityFilter.INCLUDE, '/component/nickname' );
+        // printIns( entities.at(0).getRegistry(), 1 );
+        // printE( entities.at(0) );
+
         entitySet.addEntity( entities.at(0) );
+
+        // printE( entitySet.at(0) );
         // the entity won't have any of the other components
         t.equals( entitySet.at(0).getComponentCount(), 1);
         t.end();
     });
 
     test('should not add entities that have excluded components', t => {
-        var registry = Common.initialiseRegistry();
-        var entitySet = registry.createEntitySet();
-        var entities = Common.loadEntities( registry );
+        let [registry,entitySet,entities] = initialise();
 
-        EntitySet.setEntityFilter( entitySet, EntityFilter.NONE, '/component/score' );
+        EntitySet.setEntityFilter( entitySet, Query.none('/component/score') );
 
         entitySet.addEntity( entities.at(1) );
         t.equals( entitySet.size(), 0);
@@ -506,23 +509,19 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
     });
 
     test('should not add entities that have multiple excluded components', t => {
-        var registry = Common.initialiseRegistry();
-        var entitySet = registry.createEntitySet();
-        var entities = Common.loadEntities( registry );
+        let [registry,entitySet,entities] = initialise();
 
-        EntitySet.setEntityFilter( entitySet, EntityFilter.NONE, '/component/score','/component/nickname' );
+        EntitySet.setEntityFilter( entitySet, Query.none(['/component/score','/component/nickname']) );
         entitySet.addEntity( entities );
         t.equals( entitySet.size(), 1);
         t.end();
     });
 
     test('should only add entities that are included', t => {
-        var registry = Common.initialiseRegistry();
-        var entitySet = registry.createEntitySet();
-        var entities = Common.loadEntities( registry );
+        let [registry,entitySet,entities] = initialise();
 
             // this means that any entity MUST have a Position and Nickname
-            EntitySet.setEntityFilter( entitySet, EntityFilter.ALL, ['/component/position','/component/nickname'] );
+            EntitySet.setEntityFilter( entitySet, Query.all(['/component/position','/component/nickname']) );
             entitySet.addEntity( entities );
             t.equals( entitySet.size(), 2);
             t.end();
@@ -530,12 +529,10 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
     });
 
     test('should only add entities that are optional', t => {
-        var registry = Common.initialiseRegistry();
-        var entitySet = registry.createEntitySet();
-        var entities = Common.loadEntities( registry );
+        let [registry,entitySet,entities] = initialise();
 
         // this means that the entity MAY have Position and/or Nickname
-        EntitySet.setEntityFilter( entitySet, EntityFilter.ANY, ['/component/position','/component/nickname'] );
+        EntitySet.setEntityFilter( entitySet, Query.any(['/component/position','/component/nickname']) );
         entitySet.addEntity( entities );
         t.equals( entitySet.size(), 4);
 
@@ -544,9 +541,7 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
 
     test('should only add entities that pass include/exclude', t => {
-        var registry = Common.initialiseRegistry();
-        var entitySet = registry.createEntitySet();
-        var entities = Common.loadEntities( registry );
+        let [registry,entitySet,entities] = initialise();
 
         EntitySet.setEntityFilter( entitySet, 
             [   [EntityFilter.ALL, '/component/position'],
@@ -579,9 +574,7 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
     });
 
     test('should remove entities that no longer included after their components change', t => {
-        var registry = Common.initialiseRegistry();
-        var entitySet = registry.createEntitySet();
-        var entities = Common.loadEntities( registry );
+        let [registry,entitySet,entities] = initialise();
 
         EntitySet.setEntityFilter( entitySet, Query.all('/component/nickname') );
         entitySet.addEntity( entities );
@@ -596,9 +589,7 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
     });
 
     test('should remove entities that are no longer allowed when the component mask changes', t => {
-        var registry = Common.initialiseRegistry();
-        var entitySet = registry.createEntitySet();
-        var entities = Common.loadEntities( registry );
+        let [registry,entitySet,entities] = initialise();
             
         entitySet.addEntity( entities );
         t.equals( entitySet.size(), 5);
@@ -609,9 +600,7 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
     });
 
     test.skip('should filter', t => {
-        var registry = Common.initialiseRegistry();
-        var entitySet = registry.createEntitySet();
-        var entities = Common.loadEntities( registry );
+        let [registry,entitySet,entities] = initialise();
 
         var positionIId = registry.getIId( '/component/position' );
             
@@ -636,9 +625,7 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
     // });
 
     test('should emit an event when a component is changed', t => {
-        var registry = Common.initialiseRegistry();
-        var entitySet = registry.createEntitySet();
-        var entities = Common.loadEntities( registry );
+        let [registry,entitySet,entities] = initialise();
 
         var entity = entities.at(0);
         var cloned, component = entity.Position;
@@ -661,8 +648,7 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
     });
 
     test('emit event when an entity component is changed', t => {
-        var registry = Common.initialiseRegistry();
-        var entitySet = registry.createEntitySet();
+        let [registry,entitySet,entities] = initialise();
         var spy = Sinon.spy();
         // Common.logEvents( entitySet );
         
@@ -687,9 +673,7 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
 
     test('should clear all contained entities by calling reset', t => {
-        var registry = Common.initialiseRegistry();
-        var entitySet = registry.createEntitySet();
-        var entities = Common.loadEntities( registry );
+        let [registry,entitySet,entities] = initialise();
 
         var spy = Sinon.spy();
 
@@ -704,10 +688,8 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
     });
 
 
-    test.only('attached entitysets', t => {
-        var registry = Common.initialiseRegistry();
-        var entitySet = registry.createEntitySet();
-        var entities = Common.loadEntities( registry );
+    test('attached entitysets', t => {
+        let [registry,entitySet,entities] = initialise();
         
         // other ES will accept only entities with Position and Realname
         var oEntitySet = registry.createEntitySet();
@@ -732,10 +714,11 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
     test('map transfers an entitySet through a filter into another entityset', t => {
         var eventSpy = Sinon.spy();
-        var registry = Common.initialiseRegistry();
-        var loadedEntitySet = Common.loadEntities( registry );
+        let [registry,entitySet,loadedEntitySet] = initialise();
         var oEntitySet = registry.createEntitySet();
-        var entityFilter = registry.createEntityFilter( EntityFilter.INCLUDE, '/component/score' );
+        var entityFilter = Query.include('/component/score');
+
+        // printE( loadedEntitySet );
 
         oEntitySet.on('all', eventSpy);
 
@@ -754,10 +737,9 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
     test('map transfers an entitySet through a filter into another entityset again', t => {
         var eventSpy = Sinon.spy();
-        var registry = Common.initialiseRegistry();
-        var loadedEntitySet = Common.loadEntities( registry );
+        let [registry,entitySet,loadedEntitySet] = initialise();
         var oEntitySet = registry.createEntitySet();
-        var entityFilter = registry.createEntityFilter( EntityFilter.NONE, '/component/position' );
+        var entityFilter = Query.none('/component/position');
 
         oEntitySet.on('all', eventSpy);
 
@@ -766,7 +748,10 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
         EntitySet.map( loadedEntitySet, entityFilter, oEntitySet );
         // loadedEntitySet.map( entityFilter, oEntitySet );
 
-        t.equal( _.size(eventSpy.args[1][1]), 5, 'three components reported as being added' );
+        // printE( loadedEntitySet );
+        // printE( oEntitySet );
+
+        t.equal( _.size(eventSpy.args[1][1]), 2, 'three components reported as being added' );
         t.equal( _.size(eventSpy.args[2][1]), 2, 'two entities reported as being added' );
 
         t.end();
@@ -850,7 +835,12 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
     //     });
     // });
 
-
+    function initialise(){
+        var registry = Common.initialiseRegistry();
+        var entitySet = registry.createEntitySet();
+        var entities = Common.loadEntities( registry );
+        return [registry,entitySet,entities];
+    }
 
 
 
@@ -859,8 +849,6 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 // serverside only execution of tests
 if( !process.browser ){
     let Elsinore = require('../lib');
-    require('../lib/query/dsl');
-    require('../lib/entity_set/query');
     
     module.exports( require('tape'), require('./common'), Elsinore, Elsinore.EntitySet );
 }
