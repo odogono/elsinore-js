@@ -8,6 +8,32 @@ export default function run( test, Common, Elsinore, EntitySet ){
     let Entity = Elsinore.Entity;
     let Query = Elsinore.Query;
 
+    test('EQUALS op', t => {
+        t.deepEqual(
+            Query.execute( null, [ Query.EQUALS, 8, 8 ] ), true );
+        t.deepEqual(
+            Query.execute( null, [ Query.EQUALS, 8, [ Query.VALUE, [1,3,5,8] ] ] ), true );
+        t.end();
+    });
+
+    test('Logic op', t => {
+
+        let commands = [
+            Query.value(true).and( Query.value(true) ),
+            Query.value(false).or( Query.value(true) )
+        ];
+        // let commands = [
+        //     [ Query.AND, [ Query.VALUE, true ], [ Query.VALUE, true ] ],
+        //     [ Query.OR, [ Query.VALUE, false ], [ Query.VALUE, true ] ],
+        // ];
+
+        _.each( commands, command => {
+            // let result = Query.execute( null, command );
+            t.deepEqual( Query.execute( null, command ), true );
+        });
+
+        t.end();
+    });
 
     test('Accepting an entity', t => {
         let result;
@@ -159,6 +185,24 @@ export default function run( test, Common, Elsinore, EntitySet ){
         t.end();
     });
 
+    test('ALIAS op', t => {
+        let result = Query.execute( null,[
+            Query.value( [9,10,11] ),
+            Query.aliasAs('channelIds'),
+            Query.value( [9,10,11] ).equals( Query.alias('channelIds') )
+            ]);
+        // let result = Query.execute( null,[ 
+        //     [ Query.VALUE, [9, 10, 11]] ,
+        //     [ Query.ALIAS, 'channelIds' ],
+        //     [ Query.EQUALS,
+        //         [ Query.VALUE, [ 9, 10, 11 ] ],
+        //         [ Query.ALIAS_GET, [ Query.VALUE, 'channelIds' ] ]] ]
+        // ,{debug:false}); 
+
+        t.deepEqual( result,  true );
+
+        t.end();
+    });
 
     test('multiple commands with a single result', t => {
         let registry = Common.initialiseRegistry();
@@ -201,12 +245,6 @@ export default function run( test, Common, Elsinore, EntitySet ){
 // serverside only execution of tests
 if( !process.browser ){
     let Elsinore = require('../lib');
-    // require('./common');
-    require('../lib/query/dsl');
-    require('../lib/query/select_by_id');
-    require('../lib/query/alias');
-    require('../lib/query/pluck');
-    require('../lib/query/without');
     
     run( require('tape'), require('./common'), Elsinore, Elsinore.EntitySet );
 }

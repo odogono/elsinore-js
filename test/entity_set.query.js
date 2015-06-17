@@ -12,24 +12,17 @@ export default function run( test, Common, Elsinore, EntitySet ){
     test('entityset filter ALL', t => {
         let [registry,entitySet] = initialiseEntitySet();
 
-        let result = entitySet.query( 
-            [ [ Query.ALL, '/component/mode/invite_only' ] ],
-            {debug:false, result:false} );
+        let result = entitySet.query(
+            Query.all('/component/mode/invite_only') );
+        // let result = entitySet.query( 
+        //     [ [ Query.ALL, '/component/mode/invite_only' ] ],
+        //     {debug:false, result:false} );
 
-        t.equal( result[0], Query.VALUE );
-        t.ok( EntitySet.isEntitySet(result[1]) );
-        t.ok( result[1].size(), 1 );
+        t.ok( EntitySet.isEntitySet(result) );
+        t.ok( result.size(), 1 );
 
         t.end();
     });
-
-    test('EQUALS op', t => {
-        t.deepEqual(
-            Query.execute( null, [ Query.EQUALS, 8, 8 ] ), true );
-        t.deepEqual(
-            Query.execute( null, [ Query.EQUALS, 8, [ Query.VALUE, [1,3,5,8] ] ] ), true );
-        t.end();
-    })
 
     test('entityset filter by attribute', t => {
         let [registry,entitySet] = initialiseEntitySet();
@@ -37,14 +30,17 @@ export default function run( test, Common, Elsinore, EntitySet ){
         // select entities which have the component /channel_member and 
         //  have the client attribute
         // aka Query.all( '/component/channel_member', Query.attr('client').equals(5) );
-        let result = Query.execute( entitySet, 
-            [ Query.ALL_FILTER, 
-                [Query.VALUE, '/component/channel_member'],
-                [ Query.EQUALS,
-                    [ Query.ATTR, 'client' ],
-                    [ Query.VALUE, 5 ]
-                ]
-            ], {debug:false} );
+        let result = entitySet.query(
+            Query.all( '/component/channel_member', 
+                Query.attr('client').equals(5)) );
+        // let result = Query.execute( entitySet, 
+        //     [ Query.ALL_FILTER, 
+        //         [Query.VALUE, '/component/channel_member'],
+        //         [ Query.EQUALS,
+        //             [ Query.ATTR, 'client' ],
+        //             [ Query.VALUE, 5 ]
+        //         ]
+        //     ], {debug:false} );
         
         t.equals( result.size(), 2 );
         t.end();
@@ -56,11 +52,13 @@ export default function run( test, Common, Elsinore, EntitySet ){
         // select entities which have the component /channel_member and 
         //  have the client attribute
         let result = Query.execute( entitySet, 
-            [ Query.ALL_FILTER, 
-                [Query.VALUE, '/component/channel_member'],
-                [ Query.EQUALS, 
-                    [ Query.ATTR, 'channel' ],
-                    [ Query.VALUE, [2, 4] ] ] ] );
+            Query.all('/component/channel_member', Query.attr('channel').equals([2,4])) );
+        // let result = Query.execute( entitySet, 
+        //     [ Query.ALL_FILTER, 
+        //         [Query.VALUE, '/component/channel_member'],
+        //         [ Query.EQUALS, 
+        //             [ Query.ATTR, 'channel' ],
+        //             [ Query.VALUE, [2, 4] ] ] ] );
 
         t.equals( result.size(), 4 );
         t.end();
@@ -70,12 +68,15 @@ export default function run( test, Common, Elsinore, EntitySet ){
         let [registry,entitySet] = initialiseEntitySet();
 
         // select entities which have /channel_member but not /mode/invisible
-        let result = Query.execute( entitySet, 
-            [ 
-                [Query.ALL, [Query.VALUE, '/component/channel_member'] ],
-                [Query.NONE, [Query.VALUE, '/component/mode/invisible'] ] 
-            ]
-            ,{debug:false});
+        let result = entitySet.query([
+            Query.all('/component/channel_member'),
+            Query.none('/component/mode/invisible')] );
+        // let result = Query.execute( entitySet, 
+        //     [ 
+        //         [Query.ALL, [Query.VALUE, '/component/channel_member'] ],
+        //         [Query.NONE, [Query.VALUE, '/component/mode/invisible'] ] 
+        //     ]
+        //     ,{debug:false});
         
         // printE( result );
         t.equals( result.size(), 5 );
@@ -85,12 +86,15 @@ export default function run( test, Common, Elsinore, EntitySet ){
     test('PLUCK op', t => {
         let [registry,entitySet] = initialiseEntitySet();
 
-        let result = Query.execute( entitySet,
-            [ Query.PLUCK,
-                [ Query.VALUE, '/component/topic' ], 
-                [ Query.VALUE, 'topic' ]
-            ]
-        ,{debug:false});
+        let result = entitySet.query(
+            Query.pluck( '/component/topic', 'topic' )
+            );
+        // let result = Query.execute( entitySet,
+        //     [ Query.PLUCK,
+        //         [ Query.VALUE, '/component/topic' ], 
+        //         [ Query.VALUE, 'topic' ]
+        //     ]
+        // ,{debug:false});
         
         t.deepEqual( result,
             ['Entity Component Systems', 'Javascript', 'Welcome to Politics'] );
@@ -101,9 +105,12 @@ export default function run( test, Common, Elsinore, EntitySet ){
     test('plucking entity ids from the given entityset', t => {
         let [registry,entitySet] = initialiseEntitySet();
 
-        let result = Query.execute( entitySet, [
-            [ Query.PLUCK, null, 'eid', {unique:true} ]
-            ], {debug:false});
+        let result = entitySet.query(
+            Query.pluck( null, 'eid', {unique:true})
+            );
+        // let result = Query.execute( entitySet, [
+        //     [ Query.PLUCK, null, 'eid', {unique:true} ]
+        //     ], {debug:false});
 
         t.deepEqual(
             result,
@@ -116,47 +123,24 @@ export default function run( test, Common, Elsinore, EntitySet ){
     test('resetting the context entitySet', t => {
         let [registry,entitySet] = initialiseEntitySet();
 
-        let result = Query.execute( entitySet, [
-            [ Query.ANY, [ Query.VALUE, ['/component/username','/component/channel'] ]],
-            // at this point, the context entityset is a subset of the root
-            [ Query.VALUE, Query.ROOT ],
-            // the context entityset is now === the root
-            [ Query.PLUCK, null, 'eid', {unique:true} ]
+        let result = entitySet.query([
+            Query.any( ['/component/username','/component/channel'] ),
+            Query.root(),
+            Query.pluck( null, 'eid', {unique:true} )
             ]);
+        // let result = Query.execute( entitySet, [
+        //     [ Query.ANY, [ Query.VALUE, ['/component/username','/component/channel'] ]],
+        //     // at this point, the context entityset is a subset of the root
+        //     [ Query.VALUE, Query.ROOT ],
+        //     // the context entityset is now === the root
+        //     [ Query.PLUCK, null, 'eid', {unique:true} ]
+        //     ]);
 
         t.equal( result.length, 18 );
         t.end();
     });
 
-    test('ALIAS op', t => {
-        let result = Query.execute( null,[ 
-            [ Query.VALUE, [9, 10, 11]] ,
-            [ Query.ALIAS, 'channelIds' ],
-            [ Query.EQUALS,
-                [ Query.VALUE, [ 9, 10, 11 ] ],
-                [ Query.ALIAS_GET, [ Query.VALUE, 'channelIds' ] ]] ]
-        ,{debug:false}); 
-
-        t.deepEqual( result,  true );
-
-        t.end();
-    });
-
-
-    test('Logic op', t => {
-
-        let commands = [
-            [ Query.AND, [ Query.VALUE, true ], [ Query.VALUE, true ] ],
-            [ Query.OR, [ Query.VALUE, false ], [ Query.VALUE, true ] ],
-        ];
-
-        _.each( commands, command => {
-            // let result = Query.execute( null, command );
-            t.deepEqual( Query.execute( null, command ), true );
-        });
-
-        t.end();
-    });
+    
 
     test.skip('stuff', t => {
         let [registry,entitySet] = initialiseEntitySet();
@@ -248,11 +232,6 @@ if( !process.browser ){
     
     let Elsinore = require('../lib');
     require('./common');
-    require('../lib/entity_set/query');
-    require('../lib/query/select_by_id');
-    require('../lib/query/alias');
-    require('../lib/query/pluck');
-    require('../lib/query/without');
     
     run( require('tape'), require('./common'), Elsinore, Elsinore.EntitySet );
 }
