@@ -450,7 +450,7 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
         // printE( entities );
         // setting an entity filter means that the entitySet will
         // only add components that pass through the filter
-        EntitySet.setEntityFilter( entitySet, Query.all('/component/position') );
+        EntitySet.setQuery( entitySet, Query.all('/component/position') );
 
         // entitySet.addEntity( entities.at(1) );
         // t.equals( entitySet.size(), 0);
@@ -465,14 +465,14 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
     test('should only retain the included component on entity', t => {
         let [registry,entitySet,entities] = initialise();
         
-        EntitySet.setEntityFilter( entitySet, Query.include('/component/nickname') );
+        EntitySet.setQuery( entitySet, Query.include('/component/nickname') );
 
         // printIns( entities.at(0).getRegistry(), 1 );
         // printE( entities.at(0) );
 
         entitySet.addEntity( entities.at(0) );
 
-        // printE( entitySet.at(0) );
+        // printE( entitySet );
         // the entity won't have any of the other components
         t.equals( entitySet.at(0).getComponentCount(), 1);
         t.end();
@@ -481,7 +481,7 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
     test('should not add entities that have excluded components', t => {
         let [registry,entitySet,entities] = initialise();
 
-        EntitySet.setEntityFilter( entitySet, Query.none('/component/score') );
+        EntitySet.setQuery( entitySet, Query.none('/component/score') );
 
         entitySet.addEntity( entities.at(1) );
         t.equals( entitySet.size(), 0);
@@ -494,7 +494,7 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
     test('should not add entities that have multiple excluded components', t => {
         let [registry,entitySet,entities] = initialise();
 
-        EntitySet.setEntityFilter( entitySet, Query.none(['/component/score','/component/nickname']) );
+        EntitySet.setQuery( entitySet, Query.none(['/component/score','/component/nickname']) );
         entitySet.addEntity( entities );
         t.equals( entitySet.size(), 1);
         t.end();
@@ -504,7 +504,7 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
         let [registry,entitySet,entities] = initialise();
 
             // this means that any entity MUST have a Position and Nickname
-            EntitySet.setEntityFilter( entitySet, Query.all(['/component/position','/component/nickname']) );
+            EntitySet.setQuery( entitySet, Query.all(['/component/position','/component/nickname']) );
             entitySet.addEntity( entities );
             t.equals( entitySet.size(), 2);
             t.end();
@@ -515,7 +515,7 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
         let [registry,entitySet,entities] = initialise();
 
         // this means that the entity MAY have Position and/or Nickname
-        EntitySet.setEntityFilter( entitySet, Query.any(['/component/position','/component/nickname']) );
+        EntitySet.setQuery( entitySet, Query.any(['/component/position','/component/nickname']) );
         entitySet.addEntity( entities );
         t.equals( entitySet.size(), 4);
 
@@ -526,9 +526,8 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
     test('should only add entities that pass include/exclude', t => {
         let [registry,entitySet,entities] = initialise();
 
-        EntitySet.setEntityFilter( entitySet, 
-            [   [EntityFilter.ALL, '/component/position'],
-                [EntityFilter.NONE, '/component/realname']  ]);
+        EntitySet.setQuery( entitySet,
+            Query.all('/component/position').none('/component/realname') ); 
 
         entitySet.addEntity( entities );
 
@@ -541,11 +540,10 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
         var entitySet = registry.createEntitySet({allowEmptyEntities:false});
         var entities = Common.loadEntities( registry );
 
-        EntitySet.setEntityFilter( entitySet, Query.none('/component/realname') );
-        // EntitySet.setEntityFilter( entitySet, EntityFilter.NONE, '/component/realname' );
+        EntitySet.setQuery( entitySet, Query.none('/component/realname') );
+        
         entitySet.addEntity( entities );
         t.equals( entitySet.size(), 2);
-        // printE( entitySet );
         
         var entity = entities.at(1);
         var component = registry.createComponent( '/component/realname', {name:'mike smith', _e:entity.getEntityId()});
@@ -559,7 +557,7 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
     test('should remove entities that no longer included after their components change', t => {
         let [registry,entitySet,entities] = initialise();
 
-        EntitySet.setEntityFilter( entitySet, Query.all('/component/nickname') );
+        EntitySet.setQuery( entitySet, Query.all('/component/nickname') );
         entitySet.addEntity( entities );
         
         t.equals( entitySet.size(), 3, 'two entities which have Nickname');
@@ -577,7 +575,7 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
         entitySet.addEntity( entities );
         t.equals( entitySet.size(), 5);
 
-        EntitySet.setEntityFilter( entitySet, Query.none('/component/score') );
+        EntitySet.setQuery( entitySet, Query.none('/component/score') );
         t.equals( entitySet.size(), 2);
         t.end();
     });
@@ -678,7 +676,7 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
         var oEntitySet = registry.createEntitySet();
         // set a filter on the other entitySet so that it will only accept components that
         // have /position and /realname
-        EntitySet.setEntityFilter( oEntitySet, Query.all('/component/position').all('/component/realname') );
+        EntitySet.setQuery( oEntitySet, Query.all('/component/position').all('/component/realname') );
 
         // make the other entitySet listen to the origin entitySet
         oEntitySet.attachTo( entitySet );

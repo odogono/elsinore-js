@@ -22,7 +22,7 @@ export default function run( test, Common, Elsinore, EntitySet ){
         t.end();
     });
 
-    test('.where returns entities which the attributes', t => {
+    test('.query returns entities which the attributes', t => {
         let [registry,entitySet] = initialise();
         
         // var result = entitySet.where('/component/status', {status:'active'} );
@@ -31,7 +31,7 @@ export default function run( test, Common, Elsinore, EntitySet ){
                 Query.attr('status').equals('active')) );
 
         t.ok( result.isEntitySet, 'the result is an entityset');
-        t.equals( result.length, 6, '3 entities returned');
+        t.equals( result.length, 6, '6 entities returned');
 
         t.end();
     });
@@ -217,12 +217,14 @@ export default function run( test, Common, Elsinore, EntitySet ){
         t.end();
     });
 
-
+    
     test('applying a filter', t => {
         let [registry,entitySet] = initialise('entity_set.entities');
         let query = Query.all(['/component/position', '/component/realname']);
         let view = entitySet.view( query );
         
+        // printE( entitySet );
+        // printE( view );
         t.ok( view.at(0).Position, 'the entity should have /position' );
         t.ok( view.at(0).Realname, 'the entity should have /realname' );
 

@@ -84,7 +84,7 @@ test('reaper', function(t){
 
     entitySet = createTestEntitySet( registry, entitySet );
 
-    reaperProcessor = registry.addProcessor( ReaperProcessor, entitySet, {debug:true} );
+    reaperProcessor = registry.addProcessor( ReaperProcessor, entitySet, {debug:false} );
     connectionProcessor = registry.addProcessor( ConnectionProcessor, entitySet, {priority:200} );
 
     // Common.logEvents( entitySet );
@@ -92,17 +92,17 @@ test('reaper', function(t){
 
     // printE( entitySet );
 
-    Common.logEvents( entitySet );
+    // Common.logEvents( entitySet );
 
     registry.updateSync( Date.now() + 500, {debug:false} );
 
     // log.debug('called ' + eventSpy.callCount );
     t.ok( eventSpy.calledWith('entity:remove'), 'two entities will have been removed' );
+    // process.exit();
     t.equals( entitySet.length, 4, 'four connection entities remain' );
 
 
-
-    // process.exit();
+    
     // t.equals(
     //      entitySet.where( '/dead ).length    FilterEntitySet( entitySet, [EntityFilter.ALL, '/dead'] ).length,
     //     2, 'there should be two components with /dead' );

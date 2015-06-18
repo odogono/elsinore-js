@@ -14,20 +14,20 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
     test('keeping a map of entitySets and views', t => {
         let registry = Common.initialiseRegistry();
-        let es = registry.createEntitySet();
+        
         let query = Query.all('/component/position');
-        let eso = registry.createEntitySet();
+        
+        // let eso = registry.createEntitySet();
 
         // printE( es );
-
-        let view = es.view( query);
+        let es = registry.createEntitySet();
+        let view = es.view( query );
         let oview = es.view( query);
         let tview = es.view();
 
-        printIns( view, 1 );
         log.debug( 'es hash ' + es.hash() );
         // log.debug( 'eso hash ' + eso.hash() );
-        log.debug( 'view hash ' + view.hash() );
+        log.debug( 'view hash ' + view.hash());
         log.debug( 'oview hash ' + oview.hash() );
         log.debug( 'tview hash ' + tview.hash() );
 
@@ -103,71 +103,6 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
         t.end();
     });
-
-
-
-    // EntityFilter creation
-
-    test('create an entity filter', t => {
-        var registry = Common.initialiseRegistry();
-        var filter = registry.createEntityFilter( EntityFilter.SOME, '/component/position' );
-
-        t.deepEqual( filter.toArray(), 
-            [ EntityFilter.SOME, [registry.getIId('/component/position')]] );
-
-        t.end();
-    });
-
-    test('create an entity filter with a simple array??', t => {
-        var registry = Common.initialiseRegistry();
-        var filter = registry.createEntityFilter( [EntityFilter.INCLUDE, '/component/realname'] );
-
-        t.deepEqual( filter.toArray(), 
-            [ EntityFilter.INCLUDE, [registry.getIId('/component/realname')]] );
-        
-        t.end();
-    });
-
-    test('create an entity filter with an array of components', t => {
-        var registry = Common.initialiseRegistry();
-        var filter = registry.createEntityFilter( EntityFilter.EXCLUDE, ['/component/score', '/component/nickname'] );
-
-        t.deepEqual( 
-            filter.toArray(), 
-            [ EntityFilter.EXCLUDE, [registry.getIId('/component/score'), registry.getIId('/component/nickname')]] );
-
-
-        t.end();
-    });
-
-    test('create an entity filter with multiple arrays', t => {
-        var registry = Common.initialiseRegistry();
-
-        var filter = registry.createEntityFilter([ 
-            [EntityFilter.INCLUDE, '/component/realname'], 
-            [EntityFilter.SOME, '/component/position'] ]);
-
-        t.deepEqual( 
-            filter.toArray(), 
-            [  [EntityFilter.INCLUDE, [registry.getIId('/component/realname')]], 
-               [EntityFilter.SOME, [registry.getIId('/component/position')]] ] );
-
-        t.end();
-    });
-
-    test('create an entity filter with an array of arrays', t => {
-        var registry = Common.initialiseRegistry();
-        var filter = registry.createEntityFilter( 
-            [   [EntityFilter.SOME, '/component/realname'], 
-                [EntityFilter.ANY, '/component/position']   ]);
-
-        t.deepEqual( 
-            filter.toArray(), 
-            [  [EntityFilter.SOME, [registry.getIId('/component/realname')]], 
-               [EntityFilter.ANY, [registry.getIId('/component/position')]] ] );
-
-        t.end();
-    });//*/
 
 
 }
