@@ -1,28 +1,30 @@
 'use strict';
 
-var _ = require('underscore');
-var Sinon = require('sinon');
+let _ = require('underscore');
+let Sinon = require('sinon');
 
 
 module.exports = function( test, Common, Elsinore, EntitySet ){
 
-    var Component = Elsinore.Component;
-    var Entity = Elsinore.Entity;
-    var EntityFilter = Elsinore.EntityFilter;
-    var Registry = Elsinore.Registry;
+    let Component = Elsinore.Component;
+    let Entity = Elsinore.Entity;
+    let EntityFilter = Elsinore.EntityFilter;
+    let Registry = Elsinore.Registry;
+    let Query = Elsinore.Query;
 
     test('keeping a map of entitySets and views', t => {
-        var registry = Common.initialiseRegistry();
-        var es = registry.createEntitySet();
-        var filter = registry.createEntityFilter( EntityFilter.ALL, '/component/position' );
-        var eso = registry.createEntitySet();
+        let registry = Common.initialiseRegistry();
+        let es = registry.createEntitySet();
+        let query = Query.all('/component/position');
+        let eso = registry.createEntitySet();
 
         // printE( es );
 
-        var view = es.where( filter, null, {view:true} );
-        var oview = es.where( filter, null, {view:true} );
-        var tview = es.where( null, null, {view:true} );
+        let view = es.view( query);
+        let oview = es.view( query);
+        let tview = es.view();
 
+        printIns( view, 1 );
         log.debug( 'es hash ' + es.hash() );
         // log.debug( 'eso hash ' + eso.hash() );
         log.debug( 'view hash ' + view.hash() );

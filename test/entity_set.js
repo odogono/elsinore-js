@@ -294,23 +294,6 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
         t.end();
     });
 
-    // test.skip('sanity check', t => {
-    //     return beforeEach().then( function(){
-
-    //         registry.on('all', function(evt){
-    //             log.debug('evt ' + JSON.stringify( _.toArray(arguments) ) );
-    //         });
-
-    //         return registry.createComponent([
-    //             {_e:10, _s:'position', x:1.2, y:2},
-    //             {_e:10, _s:'score', score:22 }
-    //         ]).then(function(coms){
-    //             print_ins( coms );
-    //             t.end();
-    //         });
-    //     });
-    // });
-
     test('should remove a component reference from an entity', t => {
         var registry = Common.initialiseRegistry();
         var entitySet = registry.createEntitySet();
@@ -758,16 +741,7 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
     });
 
 
-    test('pluck extracts a list of property values from the given component', t => {
-        var registry = Common.initialiseRegistry();
-        var entitySet = Common.loadEntities( registry );
-
-        t.deepEqual(
-            entitySet.pluck( '/component/realname', 'name' ),
-            [ 'John Smith', 'susan mayall', 'Terry June' ], 'three names should be returned' );
-
-        t.end();
-    });
+    
 
     test.skip('iterator', t => {
         var it, entity, count;

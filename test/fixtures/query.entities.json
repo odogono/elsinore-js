@@ -1,26 +1,31 @@
 [
 {"_e":1, "id": "/component/channel", "name":"ecs" },
 {"_e":1, "id": "/component/topic", "topic": "Entity Component Systems" },
+{"_e":1, "id": "/component/status", "status": "active"},
 
 {"_e":2, "id": "/component/channel", "name": "chat"},
 {"_e":2, "id": "/component/mode/limit", "limit": 10 },
+{"_e":2, "id": "/component/status", "status": "active"},
 
 {"_e":3, "id": "/component/channel", "name": "js"},
 {"_e":3, "id": "/component/mode/invite_only" },
 {"_e":3, "id": "/component/topic", "topic": "Javascript" },
+{"_e":3, "id": "/component/status", "status": "inactive"},
 
 {"_e":4, "id": "/component/channel", "name": "politics"},
 {"_e":4, "id": "/component/mode/invisible" },
 {"_e":4, "id": "/component/topic", "topic": "Welcome to Politics" },
-
+{"_e":4, "id": "/component/status", "status": "active"},
 
 {"_e":5, "id": "/component/username", "username":"aveenendaal"},
 {"_e":5, "id": "/component/nickname", "nickname":"alex"},
 {"_e":5, "id": "/component/name", "name": "Alexander Veenendaal" },
+{"_e":5, "id": "/component/status", "status": "active"},
 
 {"_e":6, "id": "/component/username", "username":"brussell"},
 {"_e":6, "id": "/component/nickname", "nickname":"bertie"},
 {"_e":6, "id": "/component/name", "name": "Bertrand Russell"},
+{"_e":6, "id": "/component/status", "status": "active"},
 
 {"_e":7, "id": "/component/username", "username":"cdarwin"},
 {"_e":7, "id": "/component/nickname", "nickname":"charles"},
@@ -43,6 +48,7 @@
 {"_e":11, "id": "/component/username", "username":"dderbyshire"},
 {"_e":11, "id": "/component/nickname", "nickname":"delia"},
 {"_e":11, "id": "/component/name", "name": "Delia Derbyshire" },
+{"_e":11, "id": "/component/status", "status": "active"},
 
 
 {"_e":12, "id": "/component/channel_member", "channel": 1, "client": 5 },

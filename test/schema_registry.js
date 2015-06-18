@@ -500,7 +500,7 @@ test('returns an array of schema internal ids from a series of identifiers', fun
 
     t.deepEqual(
         registry.getIId( '/component/position', 'c6c1bcdf', 9, '/component/geo_location', 'bd12d7de' ),
-        [ 15, 12, 9, 8, 4 ] );
+        [ 20, 17, 9, 8, 4 ] );
 
     t.end();
 })

@@ -267,24 +267,6 @@ export default function run( test, Common, Elsinore, EntitySet ){
             ]
         ],
         [
-            'plucking values',
-            
-            Query.pluck( '/component/channel_member', 'client' ),
-            [
-                Query.LEFT_PAREN, 
-                [ Query.VALUE, '/component/channel_member' ], 
-                [ Query.VALUE, 'client' ], 
-                Query.RIGHT_PAREN, 
-                Query.PLUCK
-            ],
-            [
-                [ Query.PLUCK,
-                    [ Query.VALUE, '/component/channel_member' ], 
-                    [ Query.VALUE, 'client' ]
-                ]
-            ]
-        ],
-        [
             'aliasing a pluck',
             [
                 Query.pluck('/component/channel','name'),

@@ -10,6 +10,7 @@ var Elsinore = Common.Elsinore;
 var EntityProcessor = Elsinore.EntityProcessor;
 var EntityFilter = Elsinore.EntityFilter;
 var EntitySet = Elsinore.EntitySet;
+let Query = Elsinore.Query;
 
 /**
     This test demonstrates processors that use filters to determine which
@@ -38,7 +39,7 @@ test('reaper', function(t){
     ReaperProcessor = EntityProcessor.extend({
         type:'ReaperProcessor',
         // the processor will receive entities which have the /dead component
-        entityFilter: [ EntityFilter.ALL, '/dead' ],
+        entityFilter: Query.all('/dead'),
         
         onUpdate: function( entityArray, timeMs ){
             var entity, i, len;
@@ -57,7 +58,7 @@ test('reaper', function(t){
         type:'ConnectionProcessor',
         
         // the processor will not receive any entities which have the /dead component
-        entityFilter: [EntityFilter.ALL, '/ttl'],
+        entityFilter: Query.all('/ttl'),
 
         onUpdate: function( entityArray, timeMs ){
             var entity, i, len;
@@ -83,7 +84,7 @@ test('reaper', function(t){
 
     entitySet = createTestEntitySet( registry, entitySet );
 
-    reaperProcessor = registry.addProcessor( ReaperProcessor, entitySet );
+    reaperProcessor = registry.addProcessor( ReaperProcessor, entitySet, {debug:true} );
     connectionProcessor = registry.addProcessor( ConnectionProcessor, entitySet, {priority:200} );
 
     // Common.logEvents( entitySet );
@@ -91,7 +92,7 @@ test('reaper', function(t){
 
     // printE( entitySet );
 
-    // Common.logEvents( entitySet );
+    Common.logEvents( entitySet );
 
     registry.updateSync( Date.now() + 500, {debug:false} );
 

@@ -201,6 +201,25 @@ export default function run( test, Common, Elsinore, EntitySet ){
         t.end();
     });
 
+    test('passing an alias into a query', t => {
+        let [registry,entitySet] = initialiseEntitySet();
+
+        let query = Query.create(registry, [
+            Query.all('/component/channel_member', 
+                Query.attr('channel').equals( Query.alias('channelIds')))
+            ]);
+
+        let result = query.execute( entitySet, {
+            alias:{ channelIds:2 }
+        });
+
+        t.deepEqual(
+            result.pluck('/component/channel_member', 'eid'),
+            [ 15,16,17 ] );
+
+        t.end();
+    });
+
     test('multiple commands with a single result', t => {
         let [registry,entitySet] = initialiseEntitySet();
 
