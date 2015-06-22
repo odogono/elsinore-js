@@ -5,7 +5,6 @@ var test = require('tape');
 
 var Common = require('./common');
 
-
 var Es = require('event-stream');
 var Sinon = require('sinon');
 
@@ -14,6 +13,7 @@ var Elsinore = require('../lib');
 var EntityFilter = Elsinore.EntityFilter;
 var EntitySet = Elsinore.EntitySet;
 var Entity = Elsinore.Entity;
+let Query = Elsinore.Query;
 var Registry = Elsinore.Registry;
 var Utils = Elsinore.Utils;
 
@@ -184,41 +184,43 @@ test('should remove the entities component', function(t){
 });
 
 
-test('should remove a component reference from an entity', function(t){
+test('should remove a component reference from an entity', t => {
     return initialiseAndOpenEntitySet(false)
-        .then( function(entitySet){
-            var registry = entitySet.getRegistry();
-            var loadedEntitySet = loadEntities( registry, null, {memory:true} );
-            var entityId;
+        .then( entitySet => {
+            let registry = entitySet.getRegistry();
+            let loadedEntitySet = loadEntities( registry, null, {memory:true} );
+            let entityId;
 
+            
             entitySet.addEntity( loadedEntitySet.at(0) )
-                .then( function(entity){
+                .then( entity => {
                     entityId = entity.getEntityId();
-                    t.ok( entity.Realname !== undefined, 'the entity should have the Realname component' );
-                    return entitySet.removeComponent( entity.Realname );
+                    t.ok( entity.Status !== undefined, 'the entity should have the Status component' );
+                    return entity;
                 })
-                .then( function(removedComponent){
-                    return entitySet.getEntity( entityId );
-                })
-                .then( function(entity){
-                    t.ok( entity.Realname === undefined, 'the entity should not have the Realname component' );
-                    t.end();
+                .then( entity => entitySet.removeComponent(entity.Status) )
+                .then( removedComponent => entitySet.getEntity(entityId) )
+                .then( entity => {
+                    t.ok( entity.Status === undefined, 'the entity should not have the Status component' );
+                    return t.end();
                 });
-        });
+        })
+        .catch( err => log.debug('error ' + err ) );
 });
 
 
-test('.where returns an entityset of entities', function(t){
-    var registry = initialiseRegistry();
-    return loadEntities( registry ).then( function(entitySet){
+test.only('.query returns an entityset of entities', function(t){
+    // let query = Query.all('/component/username');
 
-        return entitySet.where('/component/realname')
-            .then( function(resultEntitySet){
-                t.ok( resultEntitySet.isEntitySet, 'the result is an entityset');
-                t.equals( resultEntitySet.length, 3, '3 entities returned');
-                t.end();
-            });
-    }); 
+    return loadEntities()
+        .then( entitySet => entitySet.query( Query.all('/component/username')) )
+        .then( resultEntitySet => {
+            t.ok( resultEntitySet.isEntitySet, 'the result is an entityset');
+            t.equals( resultEntitySet.length, 3, '3 entities returned');
+            t.end();
+        }, (err) => log.debug('query err ' + err) )
+        .catch(err => log.error('error' + err ))
+        
 });
 
 
@@ -226,14 +228,12 @@ test('.where returns an entityset of entities', function(t){
 test('.where returns entities which the attributes', function(t){
     var registry = initialiseRegistry();
 
-    return loadEntities( registry ).then( function(entitySet){
-        return entitySet.where('/component/status', {status:'active'} )
-            .then( function(resultEntitySet){
-                t.equals( resultEntitySet.length, 2, '2 entities returned');
-                t.end();
-            });
-    });
-        
+    return loadEntities( registry )
+        .then( entitySet => entitySet.query( Query.all('/component/status', Query.attr('status').equals('active'))) )
+        .then( resultEntitySet => {
+            t.equals( resultEntitySet.length, 2, '2 entities returned');
+            t.end();
+        });
 });
 
 
@@ -267,47 +267,34 @@ function initialiseRegistry(logEvents){
     return registry;
 }
 
+
+
 function loadEntities( registry, fixtureName, options ){
     var data;
     var lines;
     var result;
     var memoryEntitySet;
 
+    if( !registry ){
+        registry = initialiseRegistry();
+    }
+
     options || (options={});
 
     memoryEntitySet = _.isUndefined(options.memory) ? false : options.memory;
 
-    // log.debug('returning MEM ES');
-
-    fixtureName = fixtureName || 'entity_set.entities.ldjson';
-
     registry = registry || initialiseRegistry();
+    let loadedEntitySet = Common.loadEntities( registry, (fixtureName||'query.entities') );
 
     if( memoryEntitySet ){
-        result = registry.createEntitySet();
-    } else {
-        result = createEntitySet( registry );
+        return loadedEntitySet;
     }
 
-    data = Common.loadFixture( fixtureName );
-    lines = data.split(/\r\n|\r|\n/g);
-
-    // each line should be turned into a component, then added
-    // to the resultant entityset
-    var parsedComponents = _.map( _.compact(lines), function(line){
-        line = JSON.parse( line );
-        return registry.createComponent( line );
-    });
-
-    if( memoryEntitySet ){
-        result.addComponent( parsedComponents );
-        return result;
-    }
+    result = createEntitySet( registry );
 
     return result.open()
-        .then( function(){
-            return result.addComponent( parsedComponents )
-                .then( function(){ return result; })
-        });
+        .then( () => result.addEntity(loadedEntitySet) )
+        .then( () => result )
+        .catch( err => log.error('error adding ' + err ))
 
 }

@@ -54,7 +54,7 @@ export default function run( test, Common, Elsinore, EntitySet ){
         let entity = registry.createEntity( [{ id:'/component/channel', name:'test'},
             {id: "/component/topic", topic: "Javascript" }] );
 
-        result = Query.all( '/component/name' ).execute( entity );
+        result = Query.all( '/component/name' ).execute( entity, {debug:false} );
 
         t.equal( result, null, 'entity doesnt pass the filter');
         
@@ -156,6 +156,7 @@ export default function run( test, Common, Elsinore, EntitySet ){
 
         t.ok( EntitySet.isEntitySet(result), 
             'the returned value is an entityset' );
+        // printE( result );
         t.equals( result.size(), 4, 
             'the entityset contains 4 entities each with a /component/channel' );
         
