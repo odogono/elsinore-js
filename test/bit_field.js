@@ -255,6 +255,22 @@ test('bitfield', function(t){
         t.end();
     });
 
+
+    test('setting with another instance', t => {
+        let a = BitField.create();
+        a.setValues( [2, 6, 10], true );
+        let b = BitField.create();
+        b.setValues( [3,7,9], true );
+
+        let c = BitField.create();
+        c.set( a );
+        c.set( b );
+
+        t.deepEqual( c.toValues(), [2,3,6,7,9,10], 'equal');
+
+        t.end();
+    })
+
     t.end();
 });//*/
 
