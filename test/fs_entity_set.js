@@ -32,25 +32,78 @@ test('creating a filesystem entityset', function(t){
 });
 
 
+
+test('reading from an existing entityset', t => {
+    return loadEntities()
+        .then( (loadedEntitySet) => {
+            var registry = loadedEntitySet.getRegistry();
+            t.equals( loadedEntitySet.size(true), 18 );
+            registry = initialiseRegistry( {loadComponents:false, logEvents:false} );
+            return createEntitySet( registry, 
+                {open:true, debug:true, clear:false, path:'test/fes'} );
+        })
+        // .catch(err => log.error('error' + err ))
+        .then( (entitySet) => {
+            // printIns( entitySet.getRegistry().schemaRegistry, 2 );
+            t.equals( entitySet.size(true), 18 );
+            t.end();
+        })
+        // .catch(err => log.error('error' + err ))
+    t.end();
+});
+
+test.only('returns the newest version of the schema', t => {
+    let registry = Common.initialiseRegistry( {loadComponents:false, logEvents:false} );
+    var schemaA = { id:'/schema/alpha', properties:{ name:{type:'string'} }};
+    var schemaB = { id:'/schema/alpha', properties:{ fullname:{type:'string'} }};
+
+    return createEntitySet( registry, {path:'test/fesM', clear:true, open:true})
+        .then( entitySet => entitySet.registerComponentDef(schemaA) )
+        .then( entitySet => { log.debug('here'); return entitySet; })
+        .then( entitySet => entitySet.registerComponentDef(schemaB) )
+        .then( entitySet => {
+            let schema = entitySet.getComponentDef('/schema/alpha');
+            t.ok( schema.obj.properties.fullname, 'the 2nd version is the one returned' );
+            t.end();
+        })
+        .catch( e => { log.error('entitySet.at error: ' + e); log.error( e.stack ); } )
+});
+
+test('the entityset registers schemas when it is opened', t => {
+    let registry = Common.initialiseRegistry( {loadComponents:false, logEvents:false} );
+    var schemaA = { id:'/schema/alpha', properties:{ name:{type:'string'} }};
+
+    // create a new entityset and register the component def
+    return createEntitySet( registry, {path:'test/fesM', clear:true, open:true})
+        .then( entitySet => entitySet.registerComponentDef(schemaA) )
+        .then( () => {
+            registry = Common.initialiseRegistry( {loadComponents:false, logEvents:false} );
+            return createEntitySet( registry, {path:'test/fesM', clear:false, open:true})
+            })
+        
+        .then( entitySet => {
+            let c = entitySet.getRegistry().createComponent( '/schema/alpha', {name:'tali'});
+            t.equal( c.get('name'), 'tali' );
+            t.end();
+        })
+});
+
+
 test('adding a component without an id or an entity id creates a new component and a new entity', function(t){
     return initialiseAndOpenEntitySet()
         .then( function(entitySet){
-            var registry = entitySet.getRegistry();
-            var component = registry.createComponent( '/component/position', {x:15,y:2})
+            var component = entitySet.getRegistry().createComponent( '/component/position', {x:15,y:2})
             return entitySet.addComponent( component )
-                .then( function(){
-                    return entitySet;
-                });
+                .then( () => entitySet )
         })
-        .then( function(entitySet){
-            // log.debug('retrieve back');
+        .then( entitySet => entitySet.at(0) )
+        .then( entity => {
             // retrieve the first entity in the set
-            return entitySet.at(0).then( function(entity){
-                t.ok( entity.Position, 'entity should have position' );
-                t.equals( entity.Position.get('x'), 15 );
-                t.end();
-            });
-        });
+            t.ok( entity.Position, 'entity should have position' );
+            t.equals( entity.Position.get('x'), 15 );
+            t.end();  
+        })
+        .catch( e => { log.error('entitySet.at error: ' + e); log.error( e.stack ); } )
 });
 
 test('retrieving a non-existant entity', function(t){
@@ -208,17 +261,15 @@ test('should remove a component reference from an entity', t => {
         .catch( err => log.debug('error ' + err ) );
 });
 
-
-test.only('.query returns an entityset of entities', function(t){
-    // let query = Query.all('/component/username');
-
+test('.query returns an entityset of entities', function(t){
+    
     return loadEntities()
-        .then( entitySet => entitySet.query( Query.all('/component/username')) )
+        .then( entitySet => entitySet.query( Query.all('/component/username').all('/component/nickname')) )
         .then( resultEntitySet => {
             t.ok( resultEntitySet.isEntitySet, 'the result is an entityset');
             t.equals( resultEntitySet.length, 3, '3 entities returned');
             t.end();
-        }, (err) => log.debug('query err ' + err) )
+        }, (err) => {log.debug('query err ' + err); log.debug( err.stack); } )
         .catch(err => log.error('error' + err ))
         
 });
@@ -237,36 +288,22 @@ test('.where returns entities which the attributes', function(t){
 });
 
 
-function initialiseAndOpenEntitySet( logEvents ){
-    var registry = initialiseRegistry( logEvents );
-    var entitySet = createEntitySet( registry );
-    return entitySet.open();
-}
-
-function createEntitySet( registry ){
+function createEntitySet( registry, options ){
     var entitySet;
     var path;
-    path = Common.pathVar( 'test/fes', true );
-    entitySet = registry.createEntitySet( FileSystemEntitySet, {path: path} );
+    options = options || {};
+    var clearExisting = options.clear === undefined ? true : options.clear;
+    options.path = Common.pathVar( (options.path || 'test/fes'), clearExisting );
 
-    return entitySet;
-}
+    registry = registry || initialiseRegistry( options );
+    entitySet = registry.createEntitySet( FileSystemEntitySet, options );
 
-function initialiseRegistry(logEvents){
-    var componentData;
-    var registry = Registry.create();
-    // ComponentDefs = registry.ComponentDef;
-    if( logEvents ){
-        Common.logEvents( registry );
+    if( options.open ){
+        return entitySet.open( options );
     }
     
-    componentData = Common.loadComponents();
-
-    registry.registerComponent( componentData );
-
-    return registry;
+    return entitySet;
 }
-
 
 
 function loadEntities( registry, fixtureName, options ){
@@ -275,16 +312,14 @@ function loadEntities( registry, fixtureName, options ){
     var result;
     var memoryEntitySet;
 
-    if( !registry ){
-        registry = initialiseRegistry();
-    }
-
     options || (options={});
+    let clearExisting = options.clear === undefined ? true : options.clear;
+    options.path = Common.pathVar( (options.path || 'test/fes'), clearExisting );
 
     memoryEntitySet = _.isUndefined(options.memory) ? false : options.memory;
+    fixtureName = (fixtureName || 'query.entities');
 
-    registry = registry || initialiseRegistry();
-    let loadedEntitySet = Common.loadEntities( registry, (fixtureName||'query.entities') );
+    let loadedEntitySet = Common.loadEntities( registry, fixtureName, null, options );
 
     if( memoryEntitySet ){
         return loadedEntitySet;
@@ -292,9 +327,12 @@ function loadEntities( registry, fixtureName, options ){
 
     result = createEntitySet( registry );
 
+    if( !options.open ){
+        return result;
+    }
+
     return result.open()
         .then( () => result.addEntity(loadedEntitySet) )
         .then( () => result )
-        .catch( err => log.error('error adding ' + err ))
 
 }

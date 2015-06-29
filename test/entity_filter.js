@@ -99,6 +99,27 @@ test('rejects an entity which has any of the components', t => {
 });
 
 
+test('adding the same type combines', t => {
+    let f = EntityFilter.create();
+    f.add( EntityFilter.ALL, toBitField(Components.Animal,Components.Mineral) );
+    f.add( EntityFilter.ALL, toBitField(Components.Vegetable) );
+
+    t.deepEquals( f.getValues(), [Components.Animal,Components.Mineral,Components.Vegetable] );
+
+    t.end();
+});
+
+test('combine filters into a single', t => {
+    let a = EntityFilter.create( EntityFilter.ALL, toBitField(Components.Animal,Components.Mineral) );
+    let b = EntityFilter.create( EntityFilter.ALL, toBitField(Components.Vegetable) );
+
+    let c = EntityFilter.create( a );
+    c.add( b );
+
+    t.deepEquals( c.getValues(), [Components.Animal,Components.Mineral,Components.Vegetable] );
+    t.end();
+});
+
 // test('transform will copy an incoming entity', t => {
 //     let te, f = EntityFilter.create();
 //     let e = createEntity( Components.Mineral, Components.Vegetable, Components.Doctor );

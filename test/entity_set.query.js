@@ -108,10 +108,7 @@ export default function run( test, Common, Elsinore, EntitySet ){
         let result = entitySet.query(
             Query.pluck( null, 'eid', {unique:true})
             );
-        // let result = Query.execute( entitySet, [
-        //     [ Query.PLUCK, null, 'eid', {unique:true} ]
-        //     ], {debug:false});
-
+        
         t.deepEqual(
             result,
             [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18 ]
@@ -128,13 +125,6 @@ export default function run( test, Common, Elsinore, EntitySet ){
             Query.root(),
             Query.pluck( null, 'eid', {unique:true} )
             ]);
-        // let result = Query.execute( entitySet, [
-        //     [ Query.ANY, [ Query.VALUE, ['/component/username','/component/channel'] ]],
-        //     // at this point, the context entityset is a subset of the root
-        //     [ Query.VALUE, Query.ROOT ],
-        //     // the context entityset is now === the root
-        //     [ Query.PLUCK, null, 'eid', {unique:true} ]
-        //     ]);
 
         t.equal( result.length, 18 );
         t.end();

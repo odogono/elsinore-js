@@ -51,8 +51,10 @@ export default function run( test, Common, Elsinore, EntitySet ){
     test('Rejecting an entity', t => {
         let result;
         let registry = Common.initialiseRegistry();
-        let entity = registry.createEntity( [{ id:'/component/channel', name:'test'},
-            {id: "/component/topic", topic: "Javascript" }] );
+        let entity = registry.createEntity( [
+            { id:'/component/channel', name:'test'},
+            { id:'/component/topic', topic: 'Javascript'}
+        ]);
 
         result = Query.all( '/component/name' ).execute( entity, {debug:false} );
 

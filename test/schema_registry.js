@@ -20,12 +20,12 @@ var componentByUri = _.reduce( componentSchemas,
 
 
 
-test.skip('uri normalization', function(t){
+test.skip('uri normalization', t => {
     t.equal( Elsinore.Utils.normalizeUri( "HTTP://ABC.com/%7Esmith/home.html" ), "http://abc.com/~smith/home.html" );
     t.end();
 })
 
-test('registering a schema', function(t){
+test('registering a schema', t => {
     var registry = SchemaRegistry.create();
     var schema = { id:'/schema/basic' };
 
@@ -38,7 +38,7 @@ test('registering a schema', function(t){
 
 
 
-test('retrieving schema fragments', function(t){
+test('retrieving schema fragments', t => {
     var schema = {
         id: 'elsinore:/schema',
         definitions:{
@@ -64,7 +64,7 @@ test('retrieving schema fragments', function(t){
     t.end();
 });
 
-test('retrieving an array of properties', function(t){
+test('retrieving an array of properties', t => {
     var schema = {
         id: 'elsinore:/schema/props',
         properties:{
@@ -85,7 +85,7 @@ test('retrieving an array of properties', function(t){
     t.end();
 });
 
-test('returning an array of sorted properties', function(t){
+test('returning an array of sorted properties', t => {
     var schema = {
         id:'elsinore:/schema/sorted',
         properties:{
@@ -115,7 +115,7 @@ test('returning an array of sorted properties', function(t){
     t.end();
 });
 
-test('returning properties from multiple schemas', function(t){
+test('returning properties from multiple schemas', t => {
     var schemaA = {
         id:'/multiple/alpha',
         properties:{
@@ -144,7 +144,7 @@ test('returning properties from multiple schemas', function(t){
 });
 
 
-test('merging two schemas', function(t){
+test('merging two schemas', t => {
     var schemaA = {
         id:'/schema/merge_a',
         properties:{
@@ -184,7 +184,7 @@ test('merging two schemas', function(t){
 });
 
 
-test('returning default properties', function(t){
+test('returning default properties', t => {
     var schema = {
         id:'/schema/default',
         properties:{
@@ -213,7 +213,7 @@ test('returning default properties', function(t){
 });
 
 
-test('registration of an identical schema throws an error', function(t){
+test('registration of an identical schema throws an error', t => {
     var schema = { id:'/schema/original', properties:{ name:{ type:'string' }} };
     var schemaCopy = { id:'/schema/original', properties:{ age:{ type:'integer' }} };
     var registry = SchemaRegistry.create();
@@ -238,7 +238,7 @@ test('registration of an identical schema throws an error', function(t){
 
 
 
-test('register a modified schema', function(t){
+test('register a modified schema', t => {
     var schemaA = {
         properties:{
             x: { type:'number' },
@@ -277,7 +277,7 @@ test('register a modified schema', function(t){
     t.end();
 });
 
-test('retrieving schema with definitions', function(t){
+test('retrieving schema with definitions', t => {
     var sch = {
         id: 'http://foo.bar/baz',
         properties: {
@@ -299,7 +299,7 @@ test('retrieving schema with definitions', function(t){
 });
 
 
-test('retrieving different versions of a schema by id', function(t){
+test('retrieving different versions of a schema by id', t => {
     var schemaA = { id:'/schema/alpha', properties:{ name:{type:'string'} }};
     var schemaB = { id:'/schema/alpha', properties:{ fullname:{type:'string'} }};
 
@@ -325,7 +325,7 @@ test('retrieving different versions of a schema by id', function(t){
     t.end();
 });
 
-test('something or other', function(t){
+test('something or other', t => {
     var schema = {
         id: 'elsinore:/schema',
 
@@ -354,7 +354,7 @@ test('something or other', function(t){
 
 });
 
-test('obtain full details of a schema', function(t){
+test('obtain full details of a schema', t => {
     var schema = {
         id:'/schema/details',
         properties:{
@@ -373,7 +373,7 @@ test('obtain full details of a schema', function(t){
     t.end();
 });
 
-test('retrieving parts', function(t){
+test('retrieving parts', t => {
     var schema = {
         id: '/component/nix',
         properties: {
@@ -394,7 +394,7 @@ test('retrieving parts', function(t){
     t.end();
 });
 
-test('retrieve schema by hash', function(t){
+test('retrieve schema by hash', t => {
     var schema = {
         id:'/schema/switch',
         properties:{
@@ -416,7 +416,7 @@ test('retrieve schema by hash', function(t){
 });
 
 
-test('new version of sub schema', function(t){
+test('new version of sub schema', t => {
     var schema = {
         id:'/schema/parent',
 
@@ -460,7 +460,7 @@ test('new version of sub schema', function(t){
 })
 
 
-test('registering a schema returns the schemas registered', function(t){
+test('registering a schema returns the schemas registered', t => {
     var registry = SchemaRegistry.create();
 
     var registered = registry.register({
@@ -484,7 +484,7 @@ test('registering a schema returns the schemas registered', function(t){
 });
 
 
-test('attempting to retrieve an unknown schema throws an error', function(t){
+test('attempting to retrieve an unknown schema throws an error', t => {
     var registry = SchemaRegistry.create();
 
     t.throws( function(){
@@ -493,9 +493,8 @@ test('attempting to retrieve an unknown schema throws an error', function(t){
     t.end();
 });
 
-test('returns an array of schema internal ids from a series of identifiers', function(t){
+test('returns an array of schema internal ids from a series of identifiers', t => {
     var registry = SchemaRegistry.create();
-    // Common.logEvents( registry );
     registry.register( componentSchemas );
 
     t.deepEqual(
@@ -503,26 +502,50 @@ test('returns an array of schema internal ids from a series of identifiers', fun
         [ 20, 17, 9, 8, 4 ] );
 
     t.end();
-})
+});
 
-test.skip('registering a schema doesnt return non-registered schemas', function(t){
+test('returns schema uris from internal ids', t => {
+    let registry = SchemaRegistry.create();
+    registry.register( componentSchemas );
+
+    var cases = {
+        '/component/position': '/component/position', 
+        'c6c1bcdf': '/component/command', 
+        16: '/component/channel',
+        '4f9f94d8': '/component/geo_location'
+    };
+
+    _.each( cases, (expected,val) => {
+        // log.debug('grabbing ' + val);
+        var r = registry.get(val);
+        // log.debug('got back ' + JSON.stringify(r) );
+        t.equals( registry.get( val ).id, expected ); 
+    });
+
+    // t.equals(
+    //     registry.getIId('/component/geo_location')
+
+    t.end();
+});
+
+test.skip('registering a schema doesnt return non-registered schemas', t => {
     t.ok( false );
     t.end();
 });
 
 
 
-test.skip('emits an event when adding a schema', function(t){
+test.skip('emits an event when adding a schema', t => {
     t.ok(false);
     t.end();
 });
 
-test.skip('deleting a schema', function(t){
+test.skip('deleting a schema', t => {
     t.ok(false);
     t.end();
 });
 
-test.skip('deleting the latest version of a schema', function(t){
+test.skip('deleting the latest version of a schema', t => {
     t.ok(false);
     t.end();
 });

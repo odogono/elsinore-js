@@ -15,8 +15,15 @@ var Elsinore = require( Path.join( rootDir ) );
 
 function pathVar( path, clear ){
     path = Path.join( varDir, path );
-    Sh.rm('-rf', path );
+    if( clear ){ Sh.rm('-rf', path ); }
     Sh.mkdir('-p', path );
+    return path;
+}
+
+function pathVarFile( path, clear ){
+    path = Path.join( varDir, path );
+    if( clear ){ Sh.rm('-rf', path ); }
+    Sh.mkdir('-p', Path.dirname(path) );
     return path;
 }
 
@@ -34,7 +41,7 @@ function loadComponents(){
 /**
 *   Returns an entityset with the given entities
 */
-function loadEntities( registry, fixtureName, EntitySet ){
+function loadEntities( registry, fixtureName, EntitySet, options ){
     var data;
     var lines;
     var result;
@@ -45,7 +52,9 @@ function loadEntities( registry, fixtureName, EntitySet ){
         fixtureName = fixtureName + '.json';
     }
 
-    result = registry.createEntitySet( EntitySet );
+    registry = registry || initialiseRegistry( options );
+
+    result = registry.createEntitySet( EntitySet, options );
     data = loadFixture( fixtureName );
     data = JSON.parse( data );
     
@@ -58,15 +67,40 @@ function loadEntities( registry, fixtureName, EntitySet ){
     return result;
 }
 
-function initialiseRegistry(_logEvents){
+// function initialiseRegistry(_logEvents){
+//     var componentData;
+//     var registry = Elsinore.Registry.create();
+//     if( _logEvents ){
+//         logEvents( registry );
+//     }
+    
+//     componentData = loadComponents();
+//     registry.registerComponent( componentData );
+
+//     return registry;
+// }
+
+function initialiseRegistry(logEvents){
     var componentData;
     var registry = Elsinore.Registry.create();
-    if( _logEvents ){
+    var options, load;
+
+    if( _.isObject(logEvents) ){
+        options = logEvents;
+        logEvents = options.logEvents;
+    }
+    if( logEvents ){
+        // log.debug('logging events');
         logEvents( registry );
     }
-    
-    componentData = loadComponents();
-    registry.registerComponent( componentData );
+
+    options = (options || {});
+    load = options.loadComponents === undefined ? true : options.loadComponents;
+
+    if( load ){
+        componentData = loadComponents();
+        registry.registerComponent( componentData );
+    }
 
     return registry;
 }
@@ -156,7 +190,8 @@ global.printE = function(e){
 }
 
 global.log = {
-    debug: console.log
+    debug: console.log,
+    error: console.log
 };
 
 module.exports = {
@@ -170,5 +205,6 @@ module.exports = {
     loadEntities: loadEntities,
     initialiseRegistry: initialiseRegistry,
     pathVar: pathVar,
+    pathVarFile: pathVarFile,
     Elsinore: Elsinore
 }
