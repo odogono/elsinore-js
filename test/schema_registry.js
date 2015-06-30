@@ -226,7 +226,7 @@ test('registration of an identical schema throws an error', t => {
     try{
         registry.register( schema );
     } catch(e){
-        t.equal( e.message, 'schema /schema/original already exists' );
+        t.equal( e.message, 'schema /schema/original (d3335c43) already exists' );
     }
 
     t.deepEqual( 
@@ -306,8 +306,10 @@ test('retrieving different versions of a schema by id', t => {
     var registry = SchemaRegistry.create();
     // Common.logEvents(registry);
 
-    var registeredA = registry.register( [schemaA], {returnSchemas:true} )[0];
-    var registeredB = registry.register( [schemaB], {returnSchemas:true} )[0];
+    var registeredA = registry.register( [schemaA] )[0];
+    var registeredB = registry.register( [schemaB] )[0];
+
+    // printIns( registeredA );
 
     t.deepEqual(
         registry.get( '/schema/alpha', registeredA.hash ),
