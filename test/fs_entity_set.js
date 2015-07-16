@@ -52,7 +52,7 @@ test('reading from an existing entityset', t => {
     t.end();
 });
 
-test.only('returns the newest version of the schema', t => {
+test('returns the newest version of the schema', t => {
     let registry = Common.initialiseRegistry( {loadComponents:false, logEvents:false} );
     var schemaA = { id:'/schema/alpha', properties:{ name:{type:'string'} }};
     var schemaB = { id:'/schema/alpha', properties:{ fullname:{type:'string'} }};

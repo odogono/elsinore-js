@@ -1,11 +1,11 @@
 module.exports = function( test, Common, Elsinore, EntitySet ){
 
-    var Component = Elsinore.Component;
-    var Entity = Elsinore.Entity;
-
+    let Component = Elsinore.Component;
+    let Entity = Elsinore.Entity;
+    let Utils = Elsinore.Utils;
 
     test('is an entity', function(t){
-        var e = Entity.create();
+        let e = Entity.create();
         t.equals( e.type, 'Entity' );
         t.equals( Entity.prototype.type, 'Entity' );
         t.ok( Entity.isEntity(e) );
@@ -14,20 +14,43 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
 
     test('setting the id', function(t){
-        var e = Entity.create();
-        // e.setEntitySetId( 2000 );
-        e.setEntityId( 456 );
+        let e = Entity.create( 456 );
+        
         t.equals( e.getEntityId(), 456 );
         e.setEntityId( 22 );
         t.equals( e.getEntityId(), 22 );
         t.equals( e.id, 22 );
 
+        e.set({id: 54});
+        t.equals( e.getEntityId(), 54 );
+        t.equals( e.getEntitySetId(), 0 );
+
+        e.set({id: 0});
         e.setEntitySetId( 2000 );
         t.equals( e.getEntitySetId(), 2000 );
-        t.equals( e.getEntityId(), 22 );
-        
+        t.equals( e.getEntityId(), 0 );
+
+        e.setEntityId( 2147483647 );
+        t.equals( e.getEntityId(), 2147483647 );
+
+        e.setEntitySetId( 2097151 );
+        t.equals( e.getEntitySetId(), 2097151 );
+        t.equals( e.getEntityId(), 2147483647 );
+
         t.end();
     });
+
+    test('setting ids', t => {
+        let id = 0;
+        t.equals( Utils.getEntityIdFromId( id ), 0 );
+        t.equals( Utils.getEntitySetIdFromId( id ), 0 );
+
+        id = Utils.setEntityIdFromId( 872510, 3467 );
+        t.equals( Utils.getEntityIdFromId( id ), 872510 );
+        t.equals( Utils.getEntitySetIdFromId( id ), 3467 );        
+
+        t.end();
+    })
 
     test('hashing', function(t){
         var e = Entity.create();

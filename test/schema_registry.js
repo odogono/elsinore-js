@@ -39,7 +39,7 @@ test('registering a schema', t => {
 
 
 test('retrieving schema fragments', t => {
-    var schema = {
+    let schema = {
         id: 'elsinore:/schema',
         definitions:{
             foo: { type: 'integer' },
@@ -53,7 +53,7 @@ test('retrieving schema fragments', t => {
         }
     };
 
-    var registry = SchemaRegistry.create();
+    let registry = SchemaRegistry.create();
     // Common.logEvents( registry );
     registry.register( schema );
 
@@ -63,6 +63,36 @@ test('retrieving schema fragments', t => {
 
     t.end();
 });
+
+test('returns an array of all registered schemas', t => {
+    let schema = {
+        id: 'elsinore:/schema',
+        definitions:{
+            foo: { type: 'integer' },
+            bar: { id:'#baz', type: 'string' }
+        },
+        misc:{
+            id: '/schema/other',
+            sub:{
+                prop: { id:'#fix/this' }
+            }
+        }
+    };
+
+    let registry = SchemaRegistry.create();
+    registry.register( schema );
+
+    t.deepEquals( 
+        _.map(registry.getAll(), s => _.pick( s, 'iid', 'uri', 'hash' ) ),
+        [
+            { iid: 3, uri: 'elsinore:/schema/other#fix/this', hash: 'b457288d' },
+            { iid: 4, uri: 'elsinore:/schema#baz', hash: '0c8a41d6' },
+            { iid: 5, uri: 'elsinore:/schema', hash: '9016491f' },
+            { iid: 6, uri: 'elsinore:/schema/other', hash: '123cf727' }
+        ] );
+
+    t.end();
+})
 
 test('retrieving an array of properties', t => {
     var schema = {
@@ -195,6 +225,14 @@ test('returning default properties', t => {
     };
     var registry = SchemaRegistry.create();
     registry.register( schema );
+
+    t.deepEqual(
+        registry.getProperties( schema.id ),
+        [
+        { default: 'unknown', name: 'name', type: 'string' }, 
+        { default: 22, name: 'age', type: 'integer' }, 
+        { name: 'address', type: 'string' }
+        ] );
     
     t.deepEqual( 
         registry.getPropertiesObject( schema.id ),

@@ -13,98 +13,105 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
     let Query = Elsinore.Query;
 
     test('keeping a map of entitySets and views', t => {
-        let registry = Common.initialiseRegistry();
-        
-        let query = Query.all('/component/position');
-        
-        // let eso = registry.createEntitySet();
+        return Common.initialiseRegistry().then( registry => {
 
-        // printE( es );
-        let es = registry.createEntitySet();
-        let view = es.view( query );
-        let oview = es.view( query);
-        let tview = es.view();
+            let query = Query.all('/component/position');
+            
+            // let eso = registry.createEntitySet();
 
-        log.debug( 'es hash ' + es.hash() );
-        // log.debug( 'eso hash ' + eso.hash() );
-        log.debug( 'view hash ' + view.hash());
-        log.debug( 'oview hash ' + oview.hash() );
-        log.debug( 'tview hash ' + tview.hash() );
+            // printE( es );
+            let es = registry.createEntitySet();
+            let view = es.view( query );
+            let oview = es.view( query);
+            let tview = es.view();
 
-        t.end();
+            log.debug( 'es hash ' + es.hash() );
+            // log.debug( 'eso hash ' + eso.hash() );
+            log.debug( 'view hash ' + view.hash());
+            log.debug( 'oview hash ' + oview.hash() );
+            log.debug( 'tview hash ' + tview.hash() );
+
+            t.end();
+
+        });
     });
 
     // creating components
 
     test('create from a schema', t => {
-        let registry = Registry.create();
-        let componentData = Common.loadComponents();
-        // Common.logEvents( registry );
-        // passing a schema as the first argument will cause the component to be
-        // registered at the same time
-        // printIns( componentData );
-        let component = registry.createComponent( componentData['/component/position'], { x:200 } );
+        return Common.initialiseRegistry({loadComponents:false}).then( registry => {
+            let componentData = Common.loadComponents();
+            // Common.logEvents( registry );
+            // passing a schema as the first argument will cause the component to be
+            // registered at the same time
+            return registry.registerComponent( componentData['/component/position'] )
+                .then( () => {
+                    let component = registry.createComponent( '/component/position', { x:200 } );
+                    t.equals( component.schemaUri, '/component/position' );
+                    t.equals( component.schemaHash, '9db8f95b' );
+                    t.equals( component.get('x'), 200 );
 
-        t.equals( component.schemaUri, '/component/position' );
-        t.equals( component.schemaHash, '9db8f95b' );
-        t.equals( component.get('x'), 200 );
-
-        t.end();
+                    t.end();
+                })
+        })
+        .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
     });
 
     test('create from a schema hash', t => {
-        var registry = Registry.create();
-        let componentData = Common.loadComponents();
-        var def = registry.registerComponent( componentData['/component/score'] );
-        var component = registry.createComponent( 'd3f0bf51', {score:200} );
-        
-        t.equals( component.get('score'), 200 );
-        t.equals( component.get('lives'), 3 );
+        return Common.initialiseRegistry({loadComponents:true}).then( registry => {
+        // let componentData = Common.loadComponents();
+        // var def = registry.registerComponent( componentData['/component/score'] );
+            let component = registry.createComponent( 'd3f0bf51', {score:200} );
+            
+            t.equals( component.get('score'), 200 );
+            t.equals( component.get('lives'), 3 );
 
-        t.end();
+            t.end();
+        });
     });
 
     test('create from a pre-registered schema', t => {
-        var registry = Registry.create();
-        let componentData = Common.loadComponents();
+        return Common.initialiseRegistry({loadComponents:true}).then( registry => {
+            let component = registry.createComponent( '/component/nickname', {nickname:'peter'} );
 
-        registry.registerComponent( componentData['/component/nickname'] );
+            t.equals( component.get('nickname'), 'peter' );
 
-        var component = registry.createComponent( '/component/nickname', {nickname:'peter'} );
-
-        t.equals( component.get('nickname'), 'peter' );
-
-        t.end();
+            t.end();
+        });
     });
 
     test('create from a pre-registered schema using data object', t => {
-        var registry = Registry.create();
-        let componentData = Common.loadComponents();
-
-        registry.registerComponent( componentData['/component/nickname'] );
-
-        var component = registry.createComponent( {id:'/component/nickname', nickname:'susan'} );
-
-        t.equals( component.get('nickname'), 'susan' );
-
-        t.end();
+        return Common.initialiseRegistry({loadComponents:true}).then( registry => {
+            let component = registry.createComponent( {id:'/component/nickname', nickname:'susan'} );
+            t.equals( component.get('nickname'), 'susan', 'the component is created with attributes' );
+            t.end();
+        });
     });
 
     test('create from an array of data', t => {
-        var registry = Registry.create();
-        let componentData = Common.loadComponents();
+        return Common.initialiseRegistry({loadComponents:true}).then( registry => {
+            let components = registry.createComponent( '/component/position', [ {x:0,y:-1}, {x:10,y:0}, {x:15,y:-2} ] );
 
-        registry.registerComponent( componentData['/component/position'] );
+            t.equals( components.length, 3, 'three components should have been created' );
+            t.equals( components[1].get('x'), 10, 'the component attributes should be applied' );
 
-        var components = registry.createComponent( '/component/position', [ {x:0,y:-1}, {x:10,y:0}, {x:15,y:-2} ] );
-
-        t.equals( components.length, 3 );
-        t.equals( components[1].get('x'), 10 );
-
-        t.end();
+            t.end();
+        });
     });
 
+    test('create with an entity id', t => {
+        return Common.initialiseRegistry().then( registry => {
 
+            let component = registry.createComponent( {id:'/component/nickname', _e:15} );
+            t.equals( component.getEntityId(), 15, 'the entity id is retrieved' );
+
+            component = registry.createComponent( {id:'/component/nickname', _e:15, _es:10} );
+            t.equals( component.getEntityId(), 42949672975, 'the entity id is retrieved' );
+
+            t.end();
+
+        });
+    });
 }
 
 // serverside only execution of tests

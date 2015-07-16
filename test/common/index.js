@@ -22,7 +22,10 @@ function pathVar( path, clear ){
 
 function pathVarFile( path, clear ){
     path = Path.join( varDir, path );
-    if( clear ){ Sh.rm('-rf', path ); }
+    if( clear ){ 
+        // log.debug('clearing ' + path );
+        Sh.rm('-rf', path ); 
+    }
     Sh.mkdir('-p', Path.dirname(path) );
     return path;
 }
@@ -59,6 +62,7 @@ function loadEntities( registry, fixtureName, EntitySet, options ){
     data = JSON.parse( data );
     
     _.each( data, function(line){
+        // var comDef = line.id;
         var com = registry.createComponent( line );
         result.addComponent( com );
         return com;
@@ -80,29 +84,36 @@ function loadEntities( registry, fixtureName, EntitySet, options ){
 //     return registry;
 // }
 
-function initialiseRegistry(logEvents){
+
+/**
+*
+*/
+function initialiseRegistry( doLogEvents ){
     var componentData;
     var registry = Elsinore.Registry.create();
     var options, load;
 
-    if( _.isObject(logEvents) ){
-        options = logEvents;
-        logEvents = options.logEvents;
+    if( _.isObject(doLogEvents) ){
+        options = doLogEvents;
+        doLogEvents = options.doLogEvents;
     }
-    if( logEvents ){
+    if( doLogEvents ){
         // log.debug('logging events');
         logEvents( registry );
     }
 
     options = (options || {});
-    load = options.loadComponents === undefined ? true : options.loadComponents;
+    load = _.isUndefined(options.loadComponents) ? true : options.loadComponents;
 
     if( load ){
         componentData = loadComponents();
-        registry.registerComponent( componentData );
+        // log.debug('loading components ' + JSON.stringify(options) );
+        // printIns( componentData );
+        return registry.registerComponent( componentData, options )
+            .then( () => registry )
     }
 
-    return registry;
+    return Promise.resolve(registry);
 }
 
 

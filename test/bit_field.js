@@ -237,8 +237,8 @@ test('bitfield', function(t){
         var a = BitField.create();
         var values = [ 0, 22, 65, 129, 340, 1198 ];
         a.setValues( values, true );
-        for( var i=0;i<values.length;i++ ){
-            t.ok( a.get(values[i]) );
+        for( var ii=0;ii<values.length;ii++ ){
+            t.ok( a.get(values[ii]) );
         }
         a.setValues( [22,129], false );
         t.notOk( a.get(22) );
@@ -249,8 +249,9 @@ test('bitfield', function(t){
     test('toValues', function(t){
         var a = BitField.create();
         var values = [ 1, 29, 96, 311, 432 ];
-        for( var i=0;i<values.length;i++ )
-            a.set( values[i], true );
+        for( var ii=0;ii<values.length;ii++ ){
+            a.set( values[ii], true );
+        }
         t.deepEqual( a.toValues(), values, 'should produce the same values' );
         t.end();
     });
@@ -268,8 +269,12 @@ test('bitfield', function(t){
 
         t.deepEqual( c.toValues(), [2,3,6,7,9,10], 'equal');
 
+        let d = BitField.create(c);
+        t.deepEqual( d.toValues(), [2,3,6,7,9,10], 'equal');        
+
         t.end();
-    })
+    });
+
 
     t.end();
 });//*/

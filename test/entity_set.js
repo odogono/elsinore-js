@@ -50,8 +50,6 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
         var entitySet = registry.createEntitySet();
         
         // let loadedEntitySet = Common.loadEntities( registry, 'entity_set.entities' );
-
-
         var data = Common.loadFixtureJSON( 'entity_set.entities.json' );
         var components = _.map( data, line => registry.createComponent( line ) );
 
@@ -313,7 +311,7 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
         t.end();
     });
 
-    test('should add an entity', t => {
+    test('should add an entity only once', t => {
         var registry = Common.initialiseRegistry();
         var entitySet = registry.createEntitySet();
         var eventSpy = Sinon.spy();
