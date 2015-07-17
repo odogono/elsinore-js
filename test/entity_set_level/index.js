@@ -159,7 +159,7 @@ test('adding a component without an id or an entity id creates a new component a
 });
 
 
-test.only('adding several components without an entity adds them to the same new entity', function(t){
+test('adding several components without an entity adds them to the same new entity', function(t){
     var eventSpy = Sinon.spy();
     let registry;
 
@@ -196,7 +196,10 @@ test('removing a component from an entity with only one component', t => {
             // Common.logEvents( entitySet );
             return entitySet.addComponent(
                 registry.createComponent( '/component/position', {x:15,y:2}))
-            
+            .then( component => {
+                // log.debug('removed! ' + component.getEntityId() );
+                return component;
+            })
             .then( component => entitySet.removeComponent(component) )
             // .then( () => printKeys(entitySet, '_ent_bf', {values:false} ) )
             // .then( component => entitySet.getEntity(component.getEntityId()) )
@@ -207,8 +210,8 @@ test('removing a component from an entity with only one component', t => {
             })
             .then( () => destroyEntitySet(entitySet, true) )
             .then( () => t.end() )
-            .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
         })
+    .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
 });
 
 test('should add an entity only once', t => {
@@ -229,15 +232,10 @@ test('should add an entity only once', t => {
             return entitySet.addEntity( entity )
                 .then( () => entitySet.size() )
                 .then( size => t.equals(size, 1) )
-
-                // .then( () => entitySet.addEntity( entity ) )
-                // .then( () => entitySet.size() )
-                // .then( size => t.equals(size, 1) )
-
                 .then( () => destroyEntitySet(entitySet, true) )
                 .then( () => t.end() )
-                .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
-        });
+        })
+        .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
 });
 
 
@@ -257,11 +255,11 @@ test('should remove an entity', t => {
 
             return entitySet.addEntity( entity )
                 .then( (e) => { entity = e; return entitySet.size()})
-                .then( size => t.equals(size, 1) )
+                .then( size => t.equals(size, 1, 'the es should have one entity') )
 
-                .then( () => entitySet.removeEntity( entity ) )
-                .then( () => entitySet.size() )
-                .then( size => t.equals(size, 0) )
+                .then( () => entitySet.removeEntity(entity) )
+                .then( () => entitySet.size(true) )
+                .then( size => t.equals(size, 0, 'the es should be empty') )
 
                 .then( () => destroyEntitySet(entitySet, true) )
                 .then( () => t.end() )
@@ -279,17 +277,18 @@ test('should emit an event when an entity is added and removed', t => {
         .then( () => createEntitySet( registry, {esId:10, entityIdSeed:1, clear:true, debug:false}) )
         .then( entitySet => {
             let addCalled = false, removeCalled = false;
-            Common.logEvents( entitySet );
+            // Common.logEvents( entitySet );
             // entitySet.on('entity:add', addSpy );
             entitySet.on('entity:add', () => addCalled = true )
             entitySet.on('entity:remove', () => removeCalled = true );
             return entitySet.addEntity( entities.at(0) )
-                .then( () => t.ok( addSpyCalled, 'entity:add should have been called' ) )
+                .then( () => t.ok( addCalled, 'entity:add should have been called' ) )
                 .then( () => entitySet.removeEntity( entities.at(0)) )
                 .then( () => t.ok( removeCalled, 'entity:remove should have been called' ) )
                 .then( () => destroyEntitySet(entitySet, true) )
                 .then( () => t.end() )
-        });
+        })
+        .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
 });
 
 test('adding an existing entity changes its id if it didnt originate from the entityset', t => {
@@ -320,14 +319,14 @@ test('adding an existing entity doesnt changes its id if it originated from the 
             // Common.logEvents( entitySet );
             // printE( entity );
             return entitySet.addEntity( entity )
-            .then( (entity) => {
-                // printIns( entity,1 );
-                // printE( entity );
-                t.equal( entity.getEntitySetId(), 205, 'the entityset id will have been set' );
-                t.equal( entity.getEntityId(), 12, 'the entity id will have been changed' );
-            })
-            .then( () => destroyEntitySet(entitySet, true) )
-            .then( () => t.end() )
+                .then( (entity) => {
+                    // printIns( entity,1 );
+                    // printE( entity );
+                    t.equal( entity.getEntitySetId(), 205, 'the entityset id will have been set' );
+                    t.equal( entity.getEntityId(), 12, 'the entity id will have been changed' );
+                })
+                .then( () => destroyEntitySet(entitySet, true) )
+                .then( () => t.end() )
         })
         .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
 });
