@@ -47,7 +47,7 @@ test('basic', function(t){
     var core = _.extend({}, EventsAsync);
     var bus = _.extend({}, EventsAsync);
 
-    core.listenToAsync( bus, 'all', function(name){
+    core.listenToAsync( bus, 'all', name => {
         console.log('nailed it ' + name + ' ' + JSON.stringify(_.toArray(arguments).slice(0)) );
     });
 

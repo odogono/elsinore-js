@@ -17,8 +17,7 @@ module.exports = function( test, Common, Elsinore, CmdBuffer ){
 
         return cb.addComponent( es, com )
             .then(added => {
-                t.equal( es.entitiesAdded.length, 1, 'one entity should be added' );
-                t.equal( es.componentsAdded.length, 1, 'one component should be added' );
+                reportUpdates( t, es, 1, 0, 0, 1, 0, 0 );
             })
             .then( () => t.end() )
             .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
@@ -31,8 +30,7 @@ module.exports = function( test, Common, Elsinore, CmdBuffer ){
 
         return cb.addComponent( es, com )
             .then(added => {
-                t.equal( es.entitiesAdded.length, 1, 'one entity should be added' );
-                t.equal( es.componentsAdded.length, 1, 'one component should be added' );
+                reportUpdates( t, es, 1, 0, 0, 1, 0, 0 );
             })
             .then( () => t.end() )
             .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
@@ -45,8 +43,9 @@ module.exports = function( test, Common, Elsinore, CmdBuffer ){
 
         return cb.addComponent( es, com )
             .then( added => {
-                t.equal( es.entitiesAdded.length, 1, 'one entity should be added' );
-                t.equal( es.componentsAdded.length, 1, 'one component should be added' );
+                reportUpdates( t, es, 1, 0, 0, 1, 0, 0 );
+                // t.equal( es.entitiesAdded.length, 1, 'one entity should be added' );
+                // t.equal( es.componentsAdded.length, 1, 'one component should be added' );
                 t.ok( Component.isComponent(added) );
 
             })
@@ -62,8 +61,7 @@ module.exports = function( test, Common, Elsinore, CmdBuffer ){
 
         return cb.addComponent( es, com )
             .then( added => {
-                t.equal( es.entitiesUpdated.length, 1, 'one entity should be updated' );
-                t.equal( es.componentsAdded.length, 1, 'one component should be added' );
+                reportUpdates( t, es, 0, 1, 0, 1, 0, 0 );
                 t.ok( Component.isComponent(added) );
             })
             .then( () => t.end() )
@@ -83,8 +81,10 @@ module.exports = function( test, Common, Elsinore, CmdBuffer ){
         }
         return cb.addComponent( es, com )
             .then( added => {
-                t.equal( es.entitiesUpdated.length, 1, 'one entity should be updated' );
-                t.equal( es.componentsUpdated.length, 1, 'one component should be updated' );
+                reportUpdates( t, es, 0, 1, 0, 0, 1, 0 );
+
+                // t.equal( es.entitiesUpdated.length, 1, 'one entity should be updated' );
+                // t.equal( es.componentsUpdated.length, 1, 'one component should be updated' );
                 t.ok( Component.isComponent(added) );
             })
             .then( () => t.end() )
@@ -101,8 +101,9 @@ module.exports = function( test, Common, Elsinore, CmdBuffer ){
 
         return cb.addEntity( es, e )
             .then( added => {
-                t.equal( es.entitiesAdded.length, 1, 'one entity should be added');
-                t.equal( es.componentsAdded.length, 2, 'two components should be added');
+                reportUpdates( t, es, 1, 0, 0, 2, 0, 0 );
+                // t.equal( es.entitiesAdded.length, 1, 'one entity should be added');
+                // t.equal( es.componentsAdded.length, 2, 'two components should be added');
             })
             .then( () => t.end() )
             .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} ) 
@@ -127,10 +128,11 @@ module.exports = function( test, Common, Elsinore, CmdBuffer ){
 
         return cb.addEntity( es, e )
             .then( added => {
-                t.equal( es.entitiesAdded.length, 0, 'no entities should be added');
-                t.equal( es.entitiesUpdated.length, 1, 'one entity should be updated');
-                t.equal( es.componentsAdded.length, 1, 'one component should be added');
-                t.equal( es.componentsUpdated.length, 1, 'one component should be updated' );
+                reportUpdates( t, es, 0, 1, 0, 1, 1, 0 );
+                // t.equal( es.entitiesAdded.length, 0, 'no entities should be added');
+                // t.equal( es.entitiesUpdated.length, 1, 'one entity should be updated');
+                // t.equal( es.componentsAdded.length, 1, 'one component should be added');
+                // t.equal( es.componentsUpdated.length, 1, 'one component should be updated' );
             })
             .then( () => t.end() )
             .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
@@ -153,12 +155,34 @@ module.exports = function( test, Common, Elsinore, CmdBuffer ){
 
         return cb.removeComponent( es, coms[1] )
             .then( added => {
-                t.equal( es.entitiesUpdated.length, 1, 'one entities should be updated');
-                t.equal( es.componentsRemoved.length, 1, 'one component should be removed');
+                reportUpdates( t, es, 0, 1, 0, 0, 0, 1 );
             })
             .then( () => t.end() )
             .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
     });
+
+    test('removing the last component from an entity', t => {
+        let cb = CmdBuffer.create();
+        let es = createEntitySet(63, [12]);
+        let e = Entity.create(12,63);
+        let com = createComponent({tag:'soft',_s:4});
+        
+        e.addComponent(com);
+
+        es.getEntity = function(entityId){
+            e.hasComponent = (cIId) => true;
+            return Promise.resolve(e);
+        }
+
+        return cb.removeComponent( es, com )
+            .then( added => {
+                reportUpdates( t, es, 0, 0, 1, 0, 0, 1 );
+            })
+            .then( () => t.end() )
+            .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
+    });
+
+    
 
     test('removing all components from an entity', t => {
         let cb = CmdBuffer.create();
@@ -175,10 +199,11 @@ module.exports = function( test, Common, Elsinore, CmdBuffer ){
 
         return cb.removeComponent( es, coms )
             .then( added => {
-                t.equal( es.entitiesUpdated.length, 0, 'no entities should be updated');
-                t.equal( es.entitiesRemoved.length, 1, 'one entitiy should be removed');
-                t.equal( es.componentsUpdated.length, 0, 'no components should be updated');
-                t.equal( es.componentsRemoved.length, 3, 'three components should be removed');
+                reportUpdates( t, es, 0, 0, 1, 0, 0, 3 );
+                // t.equal( es.entitiesUpdated.length, 0, 'no entities should be updated');
+                // t.equal( es.entitiesRemoved.length, 1, 'one entitiy should be removed');
+                // t.equal( es.componentsUpdated.length, 0, 'no components should be updated');
+                // t.equal( es.componentsRemoved.length, 3, 'three components should be removed');
             })
             .then( () => t.end() )
             .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
@@ -204,23 +229,59 @@ module.exports = function( test, Common, Elsinore, CmdBuffer ){
 
         return cb.removeEntity( es, e )
             .then( added => {
-                t.equal( es.entitiesRemoved.length, 1, 'no entities should be added');
-                t.equal( es.componentsRemoved.length, 3, 'three component should be added');
+                reportUpdates( t, es, 0, 0, 1, 0, 0, 3 );
             })
             .then( () => t.end() )
             .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
     });
 
+    test('adding multiple', t => {
+        return Common.initialiseRegistry().then( registry => {
+            let cb = CmdBuffer.create();
+            let es = createEntitySet(66);
+            let data = [
+                {"_e":1, "id": "/component/channel", _s:1, "name":"ecs" },
+                {"_e":1, "id": "/component/topic", _s:2, "topic": "Entity Component Systems" },
+                {"_e":5, "id": "/component/username", _s:3, "username":"aveenendaal"},
+                {"_e":5, "id": "/component/nickname", _s:4, "nickname":"alex"},
+                {"_e":12, "id": "/component/channel_member", _s:5, "channel": 1, "client": 5 },
+            ];
 
+            let entities = Common.loadEntities( registry, data );
+            // printE( entities );
+
+            return cb.addEntity( es, entities.models )
+                .then( added => {
+                    reportUpdates( t, es, 3, 0, 0, 5, 0, 0 );
+                    // t.equal( es.entitiesAdded.length, 3, 'three entities should be added');
+                    // t.equal( es.entitiesUpdated.length, 0, 'no entities should be updated');
+                    // t.equal( es.componentsAdded.length, 5, 'five components should be added');
+                    // t.equal( es.componentsUpdated.length, 0, 'no components should be updated' );
+                })
+                .then( () => t.end() )
+        })
+        .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
+    });
     
 
-    
+    function reportUpdates( t, es, eAdded, eUpdated, eRemoved, cAdded, cUpdated, cRemoved ){
+        t.equal( es.entitiesAdded.length, eAdded, eAdded + ' entities should be added');
+        t.equal( es.entitiesUpdated.length, eUpdated, eUpdated + ' entities should be updated');
+        t.equal( es.entitiesRemoved.length, eRemoved, eRemoved + ' entity should be removed');
+        t.equal( es.componentsAdded.length, cAdded, cAdded + ' components should be added');
+        t.equal( es.componentsUpdated.length, cUpdated, cUpdated + ' components should be updated');
+        t.equal( es.componentsRemoved.length, cRemoved, cRemoved + ' components should be removed');
+    }
 
+    /**
+    *   Creates a Mock ES that we can assert against
+    */
     function createEntitySet( entitySetId, entityIds ){
         entityIds = _.map( entityIds, id => Utils.setEntityIdFromId(id,entitySetId) );
         return _.extend({
             id: entitySetId,
             update: function( eAdd, eUp, eRem, cAdd, cUp, cRem ){
+                // printIns( arguments, 1 );
                 [this.entitiesAdded,
                 this.entitiesUpdated,
                 this.entitiesRemoved,

@@ -1,25 +1,25 @@
 'use strict';
 
-// var Promise = require('bluebird');
-var _ = require('underscore');
-var test = require('tape');
+// let Promise = require('bluebird');
+let _ = require('underscore');
+let test = require('tape');
 
-var Common = require('../common');
-var PromiseQ = require('promise-queue');
+let Common = require('../common');
+let PromiseQ = require('promise-queue');
 
-var Es = require('event-stream');
-var Sinon = require('sinon');
+let Es = require('event-stream');
+let Sinon = require('sinon');
 
-var Elsinore = require('../../lib');
+let Elsinore = require('../../lib');
 
-var EntityFilter = Elsinore.EntityFilter;
-var EntitySet = Elsinore.EntitySet;
-var Entity = Elsinore.Entity;
+let EntityFilter = Elsinore.EntityFilter;
+let EntitySet = Elsinore.EntitySet;
+let Entity = Elsinore.Entity;
 let Query = Elsinore.Query;
-var Registry = Elsinore.Registry;
-var Utils = Elsinore.Utils;
+let Registry = Elsinore.Registry;
+let Utils = Elsinore.Utils;
 
-var LevelEntitySet = require('../../lib/entity_set_level');
+let LevelEntitySet = require('../../lib/entity_set_level');
 let LU = require('../../lib/entity_set_level/utils');
 
 test('get all the component defs', t => {
@@ -91,7 +91,7 @@ test('registering a schema and then retrieving it', t => {
         .then( entitySet => entitySet.registerComponentDef(schemaB) )
         .then( entitySet => entitySet.registerComponentDef(schemaC) )
         .then( entitySet => {
-            var registryId = entitySet.getRegistry().getIId( schemaA.id );
+            let registryId = entitySet.getRegistry().getIId( schemaA.id );
             // log.debug('registry id is ' + registryId );
             // t.equal(err.message,'schema /component/channel (ec3bd75b) already exists'); 
             // printIns( entitySet, 1 );
@@ -160,7 +160,7 @@ test('adding a component without an id or an entity id creates a new component a
 
 
 test('adding several components without an entity adds them to the same new entity', function(t){
-    var eventSpy = Sinon.spy();
+    let eventSpy = Sinon.spy();
     let registry;
 
     return createEntitySet( null, {loadComponents:true, clear:true, debug:false})
@@ -186,7 +186,7 @@ test('adding several components without an entity adds them to the same new enti
 
 
 test('removing a component from an entity with only one component', t => {
-    var eventSpy = Sinon.spy();
+    let eventSpy = Sinon.spy();
     let registry;
 
     return createEntitySet( null, {loadComponents:true, clear:true, debug:false})
@@ -215,7 +215,7 @@ test('removing a component from an entity with only one component', t => {
 });
 
 test('should add an entity only once', t => {
-    var eventSpy = Sinon.spy();
+    let eventSpy = Sinon.spy();
     let registry;
     let entities;
 
@@ -227,7 +227,6 @@ test('should add an entity only once', t => {
             let entity = entities.at(0);
             // Common.logEvents(entitySet);
             entity.set({id:0});
-            log.debug('adding entity ' + entity.getEntityId() );
 
             return entitySet.addEntity( entity )
                 .then( () => entitySet.size() )
@@ -251,7 +250,6 @@ test('should remove an entity', t => {
         .then( entitySet => {
             let entity = entities.at(0);
             // Common.logEvents(entitySet);
-            // log.debug('adding entity ' + entity.getEntityId() );
 
             return entitySet.addEntity( entity )
                 .then( (e) => { entity = e; return entitySet.size()})
@@ -330,6 +328,46 @@ test('adding an existing entity doesnt changes its id if it originated from the 
         })
         .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
 });
+
+test('updating entity references when adding', t => {
+    let registry;
+    let eventSpy = Sinon.spy();
+
+    let data = [
+        {"_e":1, "id": "/component/channel", "name":"ecs" },
+        {"_e":1, "id": "/component/topic", "topic": "Entity Component Systems" },
+        {"_e":5, "id": "/component/username", "username":"aveenendaal"},
+        {"_e":5, "id": "/component/nickname", "nickname":"alex"},
+        {"_e":12, "id": "/component/channel_member", "channel": 1, "client": 5 },
+    ];
+
+    // when entities are added, their previous ids are recorded
+    // when a component is committed, any fields containing entity-refs are reconciled
+    return createEntitySet( null, {esId:205, loadComponents:true, clear:true, debug:false})
+        .then( entitySet => {registry = entitySet.getRegistry(); return entitySet} )
+        .then( entitySet => {
+            let entities = Common.loadEntities( registry, data );
+            // Common.logEvents( entitySet );
+            entitySet.on('all', eventSpy);
+            // printE( entities );
+            return entitySet.addEntity( entities, {batch:true, execute: false} )
+                .then( added => {
+                    // printIns( entitySet._cmdBuffer.cmds, 3 );
+                    return entitySet.flush();
+                })
+                .then( () => {
+                    t.ok( eventSpy.calledWith('component:add'), 'component:add should have been called');
+                    t.ok( eventSpy.calledWith('entity:add'), 'entity:add should have been called');
+                    let componentEvt = eventSpy.args[0][1];
+                    let entityEvt = eventSpy.args[1][1];
+                    
+                    t.equal( componentEvt[4].get('channel'), entityEvt[0].id, 
+                        'the channel attr should have been updated to the new entity id' );
+                });
+        })
+        .then( () => t.end() )
+        .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
+})
 
 
 // test('registering and removing component defs reuses ids', t => {

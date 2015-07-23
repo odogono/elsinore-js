@@ -50,6 +50,7 @@ test('reject an entity which does not have a specific component', t => {
         'filter rejects because the component is missing');
     e.addComponent( createComponent( Components.Flower ) );
     e.addComponent( createComponent( Components.Robot ) );
+
     t.ok( EntityFilter.accept(type, toBitField(e), bitField ), 
         'filter accepts because the component is present');
 
@@ -202,6 +203,7 @@ var Components = _.reduce( ComponentDefs, function(memo,val,key){
 
 var ComponentIIdToObject = _.reduce( ComponentDefs, function(memo,val,key){
     memo[ parseInt(val.schemaIId,10) ] = val;
+    val._s = val.schemaIId;
     return memo;
 },[]);
 
@@ -247,6 +249,7 @@ function createComponent( componentIId ){
     _.each( data, function(val,key){
         result[ key ] = val;
     });
+    result.set( {_s:data._s} );
     return result;
 }
 

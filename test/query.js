@@ -36,97 +36,104 @@ export default function run( test, Common, Elsinore, EntitySet ){
     });
 
     test('Accepting an entity', t => {
-        let result;
-        let registry = Common.initialiseRegistry();
-        let entity = registry.createEntity( [{ id:'/component/channel', name:'test'},
-            {id: "/component/topic", topic: "Javascript" }] );
-        
-        result = Query.all( '/component/channel' ).execute( entity );
+        return Common.initialiseRegistry().then( registry => {
+            let result;
+            let entity = registry.createEntity( [{ id:'/component/channel', name:'test'},
+                {id: "/component/topic", topic: "Javascript" }] );
+            
+            result = Query.all( '/component/channel' ).execute( entity );
 
-        t.ok( Entity.isEntity(result) );
-        
-        t.end();
+            t.ok( Entity.isEntity(result) );
+            
+            t.end();
+        });
     });
 
     test('Rejecting an entity', t => {
-        let result;
-        let registry = Common.initialiseRegistry();
-        let entity = registry.createEntity( [
-            { id:'/component/channel', name:'test'},
-            { id:'/component/topic', topic: 'Javascript'}
-        ]);
+        return Common.initialiseRegistry().then( registry => {
+            let result;
+            
+            let entity = registry.createEntity( [
+                { id:'/component/channel', name:'test'},
+                { id:'/component/topic', topic: 'Javascript'}
+            ]);
 
-        result = Query.all( '/component/name' ).execute( entity, {debug:false} );
+            result = Query.all( '/component/name' ).execute( entity, {debug:false} );
 
-        t.equal( result, null, 'entity doesnt pass the filter');
-        
-        t.end();
+            t.equal( result, null, 'entity doesnt pass the filter');
+            
+            t.end();
+        });
     });
 
     test('compiling a basic two stage entity filter', t => {
-        let registry = Common.initialiseRegistry();
-        let query;// = Query.all('/component/channel').all('/component/topic');
-        let compiled;
+        return Common.initialiseRegistry().then( registry => {
+            let query;// = Query.all('/component/channel').all('/component/topic');
+            let compiled;
 
-        query = Query.create( registry,[
-            Query.all('/component/channel'),
-            Query.all('/component/topic') 
-        ]);
+            query = Query.create( registry,[
+                Query.all('/component/channel'),
+                Query.all('/component/topic') 
+            ]);
 
-        // printIns( query, 6 );
+            // printIns( query, 6 );
 
-        t.equals( query.commands.length, 1 );
-        t.end();
+            t.equals( query.commands.length, 1 );
+            t.end();
+        });
     });
 
     test('compiling an entity filter', t => {
-        let registry = Common.initialiseRegistry();
+        return Common.initialiseRegistry().then( registry => {
 
-        let entity = registry.createEntity( [{ id:'/component/channel', name:'test'},
-            {id: "/component/topic", topic: "Javascript" }] );
+            let entity = registry.createEntity( [{ id:'/component/channel', name:'test'},
+                {id: "/component/topic", topic: "Javascript" }] );
 
-        let query = Query.all('/component/topic','/component/channel');
-        // let compiled = filter.compile( registry );
+            let query = Query.all('/component/topic','/component/channel');
+            // let compiled = filter.compile( registry );
 
-        // printIns( query );
+            // printIns( query );
 
-        t.ok( Query.isQuery(query) );
-        t.ok( !query.isCompiled );
+            t.ok( Query.isQuery(query) );
+            t.ok( !query.isCompiled );
 
-        // printIns( compiled, 6 );
-        // log.debug('filter hash ' + filter.hash() );
-        // log.debug('hashed ' + compiled.hash() );
+            // printIns( compiled, 6 );
+            // log.debug('filter hash ' + filter.hash() );
+            // log.debug('hashed ' + compiled.hash() );
 
-        let result = query.execute( entity );
+            let result = query.execute( entity );
 
-        // printIns( query );
+            // printIns( query );
 
-        t.ok( Entity.isEntity(result) );
-        // t.ok( Entity.isEntity( filter.execute(entity) ));
+            t.ok( Entity.isEntity(result) );
+            // t.ok( Entity.isEntity( filter.execute(entity) ));
 
-        t.end();
+            t.end();
+        })
+        .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
     });
 
     test('a single filter query on an entity', t => {
-        let registry = Common.initialiseRegistry();
-        let entity = registry.createEntity( [{ id:'/component/channel', name:'test'},
-            {id: "/component/topic", topic: "Javascript" }] );
+        return Common.initialiseRegistry().then( registry => {
+            let entity = registry.createEntity( [{ id:'/component/channel', name:'test'},
+                {id: "/component/topic", topic: "Javascript" }] );
 
-        let query = Query.all('/component/channel');
-        t.ok( !query.isCompiled );
+            let query = Query.all('/component/channel');
+            t.ok( !query.isCompiled );
 
-        query = Query.create( registry, query );
-        t.ok( query.isCompiled );
-        
-        let result = query.execute( entity );
-        t.ok( Entity.isEntity(result) );
+            query = Query.create( registry, query );
+            t.ok( query.isCompiled );
+            
+            let result = query.execute( entity );
+            t.ok( Entity.isEntity(result) );
 
-        t.end();
+            t.end();
+        });
     })
 
 
     test('accepting an entity based on its attributes', t => {
-        let [registry,entitySet] = initialiseEntitySet();
+        initialiseEntitySet().then( ([registry,entitySet]) => {
         let query = Query.create( registry,
             Query.all('/component/mode/limit', Query.attr('limit').greaterThan( 9 )),
             {debug:false} );
@@ -146,11 +153,12 @@ export default function run( test, Common, Elsinore, EntitySet ){
             ), 'query rejects entity with no limit');
 
         t.end();
+        });
     });
 
 
     test('a single filter query on an entityset', t => {
-        let [registry,entitySet] = initialiseEntitySet();
+        initialiseEntitySet().then( ([registry,entitySet]) => {
 
         let query = Query.create( registry, Query.all('/component/channel') );
         
@@ -163,11 +171,12 @@ export default function run( test, Common, Elsinore, EntitySet ){
             'the entityset contains 4 entities each with a /component/channel' );
         
         t.end();
+        });
     });
 
 
     test('filter query on an entityset', t => {
-        let [registry,entitySet] = initialiseEntitySet();
+        initialiseEntitySet().then( ([registry,entitySet]) => {
 
         let query = Query.create( registry,
             [
@@ -183,6 +192,7 @@ export default function run( test, Common, Elsinore, EntitySet ){
         // printE( result );
 
         t.end();
+        });
     });
 
     test('ALIAS op', t => {
@@ -205,7 +215,7 @@ export default function run( test, Common, Elsinore, EntitySet ){
     });
 
     test('passing an alias into a query', t => {
-        let [registry,entitySet] = initialiseEntitySet();
+        initialiseEntitySet().then( ([registry,entitySet]) => {
 
         let query = Query.create(registry, [
             Query.all('/component/channel_member', 
@@ -221,88 +231,91 @@ export default function run( test, Common, Elsinore, EntitySet ){
             [ 15,16,17 ] );
 
         t.end();
+        });
     });
 
     test('multiple commands with a single result', t => {
-        let [registry,entitySet] = initialiseEntitySet();
+        initialiseEntitySet().then( ([registry,entitySet]) => {
 
-        let clientId = 5;
+            let clientId = 5;
 
-        let query = Query.create( registry,[
-            // 1. select channel ids which client `clientId` belongs to and store as alias `channelIds`
-            Query.all('/component/channel_member', 
-                Query.attr('client').equals(clientId) ),
-            Query.pluck('/component/channel_member', 'channel'), // get all the values for 'channel'
-            Query.aliasAs( 'channelIds' ), // save the pluck result (array) in the context for later
+            let query = Query.create( registry,[
+                // 1. select channel ids which client `clientId` belongs to and store as alias `channelIds`
+                Query.all('/component/channel_member', 
+                    Query.attr('client').equals(clientId) ),
+                Query.pluck('/component/channel_member', 'channel'), // get all the values for 'channel'
+                Query.aliasAs( 'channelIds' ), // save the pluck result (array) in the context for later
 
-            // 2. select channel members which belong to the channel ids stored in the alias `channelIds`
-            Query.root(), // this resets the context back to the original entitySet
-            Query.all('/component/channel_member', 
-                Query.attr('channel').equals( Query.alias('channelIds'))),
-            Query.pluck('/component/channel_member', 'client', {unique:true}),
-            Query.without( clientId ), // remove the clientId from the result of the pluck
-            Query.aliasAs('clientIds'),
+                // 2. select channel members which belong to the channel ids stored in the alias `channelIds`
+                Query.root(), // this resets the context back to the original entitySet
+                Query.all('/component/channel_member', 
+                    Query.attr('channel').equals( Query.alias('channelIds'))),
+                Query.pluck('/component/channel_member', 'client', {unique:true}),
+                Query.without( clientId ), // remove the clientId from the result of the pluck
+                Query.aliasAs('clientIds'),
 
-            // 3. using the channel_member client ids, select an entityset of client entities by entity ids
-            Query.root(),
-            Query.selectById( Query.alias('clientIds') ) // creates a new ES from selected ids
-            ]);
+                // 3. using the channel_member client ids, select an entityset of client entities by entity ids
+                Query.root(),
+                Query.selectById( Query.alias('clientIds') ) // creates a new ES from selected ids
+                ]);
 
 
-        let result = query.execute( entitySet );
+            let result = query.execute( entitySet );
 
-        t.ok( EntitySet.isEntitySet(result) );
-        // printE( result );
-        t.equals( result.size(), 4 );
+            t.ok( EntitySet.isEntitySet(result) );
+            // printE( result );
+            t.equals( result.size(), 4 );
 
-        t.end();
-
+            t.end();
+        });
     });
 
     test('hashing queries', t => {
-        let [registry,entitySet] = initialiseEntitySet();
+        initialiseEntitySet().then( ([registry,entitySet]) => {
 
-        let queryA = Query.create( registry, Query.all('/component/username') );
-        let queryB = Query.create( registry, Query.all('/component/username') );
-        let queryC = Query.create( registry, Query.any('/component/username') );
+            let queryA = Query.create( registry, Query.all('/component/username') );
+            let queryB = Query.create( registry, Query.all('/component/username') );
+            let queryC = Query.create( registry, Query.any('/component/username') );
 
-        t.equals( queryA.hash(), queryB.hash() );
-        t.notEqual( queryA.hash(), queryC.hash() );
+            t.equals( queryA.hash(), queryB.hash() );
+            t.notEqual( queryA.hash(), queryC.hash() );
 
-        t.end();
+            t.end();
+        });
     });
 
     test('query serialisation', t => {
-        let [registry,entitySet] = initialiseEntitySet();
+        initialiseEntitySet().then( ([registry,entitySet]) => {
+            let query = Query.create( registry, [
+                    Query.all('/component/channel_member'),
+                    Query.none('/component/mode/invisible'),
+                    Query.all('/component/channel_member', Query.attr('channel').equals(2) )
+                ] );
 
-        let query = Query.create( registry, [
-                Query.all('/component/channel_member'),
-                Query.none('/component/mode/invisible'),
-                Query.all('/component/channel_member', Query.attr('channel').equals(2) )
-            ] );
+            let json = query.toJSON();
 
-        let json = query.toJSON();
+            t.deepEqual( json, [
+                [ 0, [ 16, '/component/channel_member' ] ], 
+                [ 3, [ 16, '/component/mode/invisible' ] ], 
+                [ 34, 
+                    [ 16, '/component/channel_member' ], 
+                    [ 7, [ 19, 'channel' ], [ 16, 2 ] ] 
+                ] ] );
 
-        t.deepEqual( json, [
-            [ 0, [ 16, '/component/channel_member' ] ], 
-            [ 3, [ 16, '/component/mode/invisible' ] ], 
-            [ 34, 
-                [ 16, '/component/channel_member' ], 
-                [ 7, [ 19, 'channel' ], [ 16, 2 ] ] 
-            ] ] );
+            let reQuery = Query.create( registry, json );
 
-        let reQuery = Query.create( registry, json );
+            t.equals( query.execute(entitySet).size(), 
+                reQuery.execute(entitySet).size() );
 
-        t.equals( query.execute(entitySet).size(), 
-            reQuery.execute(entitySet).size() );
-
-        t.end();
+            t.end();
+        });
     })
 
     function initialiseEntitySet(){
-        let registry = Common.initialiseRegistry(false);
-        let entitySet = Common.loadEntities( registry, 'query.entities' );
-        return [registry,entitySet];
+        return Common.initialiseRegistry(false).then( registry => {
+            let entitySet = Common.loadEntities( registry, 'query.entities' );
+            return [registry,entitySet];
+        });
     }
 }
 

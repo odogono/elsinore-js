@@ -320,7 +320,7 @@ export default function run( test, Common, Elsinore, EntitySet ){
 
     test('query toArray', t => {
 
-        _.each( cases, function(queryCase){
+        _.each( cases, queryCase => {
             let queryArray = Query.toArray( queryCase[1], false );
             if( queryCase[2] ){
                 

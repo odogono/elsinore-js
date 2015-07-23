@@ -50,17 +50,22 @@ function loadEntities( registry, fixtureName, EntitySet, options ){
     var result;
 
     fixtureName = fixtureName || 'entity_set.entities.json';
+    registry = registry || initialiseRegistry( options );
+    result = registry.createEntitySet( EntitySet, options );
 
-    if( fixtureName.indexOf('.json') === -1 ){
-        fixtureName = fixtureName + '.json';
+    if( _.isString(fixtureName) ){
+        if( fixtureName.indexOf('.json') === -1 ){
+            fixtureName = fixtureName + '.json';
+        }
+        data = loadFixture( fixtureName );
+        data = JSON.parse( data );
+    }
+    else if( _.isObject(fixtureName) ){
+        data = fixtureName;
+    } else {
+        throw new Error('invalid fixture name specified');
     }
 
-    registry = registry || initialiseRegistry( options );
-
-    result = registry.createEntitySet( EntitySet, options );
-    data = loadFixture( fixtureName );
-    data = JSON.parse( data );
-    
     _.each( data, function(line){
         // var comDef = line.id;
         var com = registry.createComponent( line );
