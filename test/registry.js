@@ -112,6 +112,22 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
         });
     });
+
+
+    test('updating a components entity refs', t => {
+        return Common.initialiseRegistry().then( registry => {
+            let component = registry.createComponent( 
+                {"_e":12, "id": "/component/channel_member", "channel": 1, "client": 5} );
+            
+            let aComponent = registry.mapComponentEntityRefs( component, { 5: 290, 1: 340} );
+
+            t.equals( aComponent.get('channel'), 340 );
+            t.equals( aComponent.get('client'), 290 );
+
+            t.end();
+        })
+        .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
+    });
 }
 
 // serverside only execution of tests
