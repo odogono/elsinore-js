@@ -248,15 +248,10 @@ module.exports = function( test, Common, Elsinore, CmdBuffer ){
             ];
 
             let entities = Common.loadEntities( registry, data );
-            // printE( entities );
-
+            
             return cb.addEntity( es, entities.models )
                 .then( added => {
                     reportUpdates( t, es, 3, 0, 0, 5, 0, 0 );
-                    // t.equal( es.entitiesAdded.length, 3, 'three entities should be added');
-                    // t.equal( es.entitiesUpdated.length, 0, 'no entities should be updated');
-                    // t.equal( es.componentsAdded.length, 5, 'five components should be added');
-                    // t.equal( es.componentsUpdated.length, 0, 'no components should be updated' );
                 })
                 .then( () => t.end() )
         })

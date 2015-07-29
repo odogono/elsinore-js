@@ -20,26 +20,46 @@ let Query = Elsinore.Query;
 let Registry = Elsinore.Registry;
 let Utils = Elsinore.Utils;
 
-// let LevelEntitySet = require('../../lib/entity_set_level');
-export const LU = require('../../lib/entity_set_level/utils');
 
 export const LevelEntitySet = require('../../lib/entity_set_level');
+export const LU = require('../../lib/entity_set_level/utils');
+
+
 
 
 export function createEntitySet( registry, options ){
     let entitySet;
     let path;
+    // let registry;
     options = options || {};
     // let open = (options.open === undefined) ? true : options.open;
     let clearExisting = options.clear === undefined ? true : options.clear;
+    let loadEntities = options.loadEntities === undefined ? false : options.loadEntities;
+    let logEvents = options.logEvents === undefined ? false : options.logEvents;
     options.leveldb = { path: Common.pathVarFile( (options.path || 'test/lvl/entity.ldb'), clearExisting ) };
     
     options.leveldb.db = require('memdown');
     // printIns( options.leveldb.db, 1);
     // options.leveldb = {db: require('memdown'), active:true};
+
+    // 
     
     return (registry ? Promise.resolve(registry) : Common.initialiseRegistry( options ))
-        .then( registry => registry.createEntitySet( LevelEntitySet, options ) )
+        .then( reg => { registry = reg; return registry.createEntitySet(LevelEntitySet, options) })
+        .then( es => {
+            if( logEvents ){
+                Common.logEvents( es );
+            }
+
+            if( loadEntities ){
+                let entitySet = Common.loadEntities( registry, (loadEntities||'query.entities') );
+                // printE( entitySet );
+                return es.addEntity( entitySet )
+                    .then( () => es )
+            }
+            return es;
+        });
+
         // .then( entitySet => {
         //     // if( open ){ return entitySet.open(options); }
         //     return entitySet;

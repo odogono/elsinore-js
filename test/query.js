@@ -80,7 +80,8 @@ export default function run( test, Common, Elsinore, EntitySet ){
 
             t.equals( query.commands.length, 1 );
             t.end();
-        });
+        })
+        .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
     });
 
     test('compiling an entity filter', t => {

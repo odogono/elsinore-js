@@ -327,6 +327,10 @@ test('adding an existing entity doesnt changes its id if it originated from the 
         .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
 });
 
+
+
+// when entities are added, their previous ids are recorded
+// when a component is committed, any fields containing entity-refs are reconciled
 test('updating entity references when adding', t => {
     let registry;
     let eventSpy = Sinon.spy();
@@ -339,8 +343,7 @@ test('updating entity references when adding', t => {
         {"_e":12, "id": "/component/channel_member", "channel": 1, "client": 5 },
     ];
 
-    // when entities are added, their previous ids are recorded
-    // when a component is committed, any fields containing entity-refs are reconciled
+    
     return createEntitySet( null, {esId:205, loadComponents:true, clear:true, debug:false})
         .then( entitySet => {registry = entitySet.getRegistry(); return entitySet} )
         .then( entitySet => {
