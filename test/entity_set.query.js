@@ -18,8 +18,8 @@ export default function run( test, Common, Elsinore, EntitySet ){
             //     [ [ Query.ALL, '/component/mode/invite_only' ] ],
             //     {debug:false, result:false} );
 
-            t.ok( EntitySet.isEntitySet(result) );
-            t.ok( result.size(), 1 );
+            t.ok( EntitySet.isEntitySet(result), 'the result should be an entityset' );
+            t.equals( result.size(), 1, 'there should be a single entity' );
 
             t.end();
         });
@@ -52,7 +52,7 @@ export default function run( test, Common, Elsinore, EntitySet ){
             let query = Query.include('/component/nickname');
             let entity = entitySet.getEntity( 5 );
             
-            let result = query.execute( entity );
+            let result = query.execute( entity, {debug:false} );
             t.equals( result.getComponentCount(), 1, 'all but one component passes');
 
             t.end();
@@ -142,11 +142,12 @@ export default function run( test, Common, Elsinore, EntitySet ){
                 Query.any( ['/component/username','/component/channel'] ),
                 Query.root(),
                 Query.pluck( null, 'eid', {unique:true} )
-                ]);
+                ], {debug: false});
 
             t.equal( result.length, 18 );
             t.end();
-        });
+        })
+        .catch( err => { log.debug('t.error: ' + err ); log.debug( err.stack );} )
     });
 
     

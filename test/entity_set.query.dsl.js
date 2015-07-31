@@ -16,15 +16,15 @@ export default function run( test, Common, Elsinore, EntitySet ){
             ],
             [
                 [ Query.VALUE, '/component/channel' ],
-                Query.ALL,
+                Query.ALL_FILTER,
                 Query.ROOT,
                 [ Query.VALUE, '/component/topic' ],
-                Query.ALL
+                Query.ALL_FILTER
             ],
             [
-                [ Query.ALL, [ Query.VALUE, '/component/channel' ] ], 
+                [ Query.ALL_FILTER, [ Query.VALUE, '/component/channel' ] ], 
                 [ Query.ROOT ], 
-                [ Query.ALL, [ Query.VALUE, '/component/topic' ] ]
+                [ Query.ALL_FILTER, [ Query.VALUE, '/component/topic' ] ]
             ]
         ],
         [
@@ -37,7 +37,7 @@ export default function run( test, Common, Elsinore, EntitySet ){
             ],
             [
                 [ Query.VALUE, '/component/channel' ],
-                Query.ALL,
+                Query.ALL_FILTER,
                 [ Query.VALUE, '/component/topic' ],
                 [ Query.ATTR,  'channel' ],
                 [ Query.VALUE, 16 ],
@@ -47,7 +47,7 @@ export default function run( test, Common, Elsinore, EntitySet ){
                 Query.ALL_FILTER
             ],
             [
-                [ Query.ALL, [Query.VALUE,'/component/channel'] ],
+                [ Query.ALL_FILTER, [Query.VALUE,'/component/channel'] ],
                 [ Query.ALL_FILTER,
                     [Query.VALUE, '/component/topic'],
                     [ Query.EQUALS,
@@ -115,16 +115,16 @@ export default function run( test, Common, Elsinore, EntitySet ){
             // Query.all('/component/username').all('/component/nickname').none('/component/mode/invisible'),
             [
                 [Query.VALUE, '/component/username'],
-                Query.ALL,
+                Query.ALL_FILTER,
                 [Query.VALUE, '/component/nickname'],
-                Query.ALL,
+                Query.ALL_FILTER,
                 [Query.VALUE, '/component/mode/invisible'],
-                Query.NONE
+                Query.NONE_FILTER
             ],
             [
-                [Query.ALL, [Query.VALUE, '/component/username'] ],
-                [Query.ALL, [Query.VALUE, '/component/nickname'] ],
-                [Query.NONE, [Query.VALUE, '/component/mode/invisible'] ] 
+                [Query.ALL_FILTER, [Query.VALUE, '/component/username'] ],
+                [Query.ALL_FILTER, [Query.VALUE, '/component/nickname'] ],
+                [Query.NONE_FILTER, [Query.VALUE, '/component/mode/invisible'] ] 
             ]
         ],
         [
@@ -136,14 +136,14 @@ export default function run( test, Common, Elsinore, EntitySet ){
             ],
             // Query.filter( Query.all('/component/username').all('/component/nickname').none('/component/mode/invisible') ),
             [
-                [ Query.VALUE, '/component/username' ], Query.ALL, 
-                [ Query.VALUE, '/component/nickname' ], Query.ALL,
-                [ Query.VALUE, '/component/mode/invisible' ], Query.NONE
+                [ Query.VALUE, '/component/username' ], Query.ALL_FILTER, 
+                [ Query.VALUE, '/component/nickname' ], Query.ALL_FILTER,
+                [ Query.VALUE, '/component/mode/invisible' ], Query.NONE_FILTER
             ],
             [ 
-                [ Query.ALL, [Query.VALUE, '/component/username' ]],
-                [ Query.ALL, [Query.VALUE, '/component/nickname' ]],
-                [ Query.NONE, [Query.VALUE, '/component/mode/invisible' ]]
+                [ Query.ALL_FILTER, [Query.VALUE, '/component/username' ]],
+                [ Query.ALL_FILTER, [Query.VALUE, '/component/nickname' ]],
+                [ Query.NONE_FILTER, [Query.VALUE, '/component/mode/invisible' ]]
             ]
         ],
         [
@@ -177,9 +177,9 @@ export default function run( test, Common, Elsinore, EntitySet ){
             ],
             [
                 [ Query.VALUE, '/component/username' ],
-                Query.ALL,
+                Query.ALL_FILTER,
                 [ Query.VALUE, '/component/mode/invisible' ],
-                Query.NONE,
+                Query.NONE_FILTER,
             ],
         ],
         [
@@ -192,19 +192,19 @@ export default function run( test, Common, Elsinore, EntitySet ){
             ],
             [
                 [ Query.VALUE, '/component/username' ],
-                Query.ALL,
+                Query.ALL_FILTER,
                 [ Query.VALUE, '/component/mode/invisible' ],
-                Query.NONE,
+                Query.NONE_FILTER,
                 [ Query.VALUE, '/component/ex' ], 
-                Query.ALL,
+                Query.ALL_FILTER,
                 [ Query.VALUE, '/component/why' ],
-                Query.NONE,
+                Query.NONE_FILTER,
             ],
             [
-                [ Query.ALL, [Query.VALUE, '/component/username']  ],
-                [ Query.NONE, [Query.VALUE, '/component/mode/invisible']  ],
-                [ Query.ALL, [Query.VALUE, '/component/ex']  ],
-                [ Query.NONE, [Query.VALUE, '/component/why'] ]
+                [ Query.ALL_FILTER, [Query.VALUE, '/component/username']  ],
+                [ Query.NONE_FILTER, [Query.VALUE, '/component/mode/invisible']  ],
+                [ Query.ALL_FILTER, [Query.VALUE, '/component/ex']  ],
+                [ Query.NONE_FILTER, [Query.VALUE, '/component/why'] ]
             ]
         ],
         [
@@ -216,9 +216,9 @@ export default function run( test, Common, Elsinore, EntitySet ){
             ],
             [
                 [ Query.VALUE, '/component/username' ],
-                Query.ALL,
+                Query.ALL_FILTER,
                 [ Query.VALUE, '/component/mode/invisible' ],
-                Query.NONE,
+                Query.NONE_FILTER,
                 [ Query.VALUE, '/component/channel_member' ],
                 [ Query.ATTR, 'channel' ], 
                 [ Query.VALUE, 10 ],
@@ -226,8 +226,8 @@ export default function run( test, Common, Elsinore, EntitySet ){
                 Query.ALL_FILTER,
             ],
             [
-                [ Query.ALL, [ Query.VALUE, '/component/username' ] ],
-                [ Query.NONE, [ Query.VALUE, '/component/mode/invisible' ] ],
+                [ Query.ALL_FILTER, [ Query.VALUE, '/component/username' ] ],
+                [ Query.NONE_FILTER, [ Query.VALUE, '/component/mode/invisible' ] ],
                 [ Query.ALL_FILTER,
                     [ Query.VALUE, '/component/channel_member' ],
                     [ Query.EQUALS, 
@@ -246,12 +246,12 @@ export default function run( test, Common, Elsinore, EntitySet ){
             // Query.filter( Query.none('/component/mode/invisible') ).as('present'),
             [
                 [ Query.VALUE, '/component/mode/invisible' ],
-                Query.NONE,
+                Query.NONE_FILTER,
                 [ Query.VALUE, 'present' ],
                 Query.ALIAS,
             ],
             [
-                [ Query.NONE, [ Query.VALUE, '/component/mode/invisible' ] ] ,
+                [ Query.NONE_FILTER, [ Query.VALUE, '/component/mode/invisible' ] ] ,
                 [ Query.ALIAS, [ Query.VALUE, 'present' ] ],
             ],
         ],

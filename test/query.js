@@ -41,7 +41,7 @@ export default function run( test, Common, Elsinore, EntitySet ){
             let entity = registry.createEntity( [{ id:'/component/channel', name:'test'},
                 {id: "/component/topic", topic: "Javascript" }] );
             
-            result = Query.all( '/component/channel' ).execute( entity );
+            result = Query.all( '/component/channel' ).execute( entity, {debug:false} );
 
             t.ok( Entity.isEntity(result) );
             
@@ -73,7 +73,7 @@ export default function run( test, Common, Elsinore, EntitySet ){
 
             query = Query.create( registry,[
                 Query.all('/component/channel'),
-                Query.all('/component/topic') 
+                Query.none('/component/topic') 
             ]);
 
             // printIns( query, 6 );
@@ -296,8 +296,8 @@ export default function run( test, Common, Elsinore, EntitySet ){
             let json = query.toJSON();
 
             t.deepEqual( json, [
-                [ 0, [ 16, '/component/channel_member' ] ], 
-                [ 3, [ 16, '/component/mode/invisible' ] ], 
+                [ 34, [ 16, '/component/channel_member' ] ], 
+                [ 35, [ 16, '/component/mode/invisible' ] ], 
                 [ 34, 
                     [ 16, '/component/channel_member' ], 
                     [ 7, [ 19, 'channel' ], [ 16, 2 ] ] 
