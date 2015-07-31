@@ -51,23 +51,23 @@
 {"_e":11, "id": "/component/status", "status": "active"},
 
 
-{"_e":12, "id": "/component/channel_member", "channel": 1, "client": 5 },
+{"_e":12, "id": "/component/channel_member", "channel": 1, "client": 5, "username":"aveenendaal", "cname":"ecs" },
 {"_e":12, "id": "/component/mode/channel_op" },
 
-{"_e":13, "id": "/component/channel_member", "channel": 1, "client": 6 },
+{"_e":13, "id": "/component/channel_member", "channel": 1, "client": 6, "username":"brussell", "cname":"ecs" },
 
-{"_e":14, "id": "/component/channel_member", "channel": 1, "client": 8 },
+{"_e":14, "id": "/component/channel_member", "channel": 1, "client": 8, "username":"amoyet", "cname":"ecs" },
 {"_e":14, "id": "/component/mode/invisible" },
 
-{"_e":15, "id": "/component/channel_member", "channel": 2, "client": 5 },
+{"_e":15, "id": "/component/channel_member", "channel": 2, "client": 5, "username":"aveenendaal", "cname":"chat" },
 
-{"_e":16, "id": "/component/channel_member", "channel": 2, "client": 7 },
+{"_e":16, "id": "/component/channel_member", "channel": 2, "client": 7, "username":"cdarwin", "cname":"chat" },
 {"_e":16, "id": "/component/mode/invisible" },
 
-{"_e":17, "id": "/component/channel_member", "channel": 2, "client": 11 },
+{"_e":17, "id": "/component/channel_member", "channel": 2, "client": 11, "username":"dderbyshire", "cname":"chat" },
 {"_e":17, "id": "/component/mode/channel_op" },
 
 
-{"_e":18, "id": "/component/channel_member", "channel": 4, "client": 9 }
+{"_e":18, "id": "/component/channel_member", "channel": 4, "client": 9, "username":"bgalindo", "cname":"politics" }
 
 ]

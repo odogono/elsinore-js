@@ -18,14 +18,14 @@ let Query = Elsinore.Query;
 let Registry = Elsinore.Registry;
 let Utils = Elsinore.Utils;
 
-test('adding an existing entity doesnt changes its id if it originated from the entityset', t => {
+test('entityset filter ALL', t => {
     let registry;
     return createEntitySet( null, {loadComponents:true, loadEntities:'query.entities', debug:false})
         .then( entitySet => {registry = entitySet.getRegistry(); return entitySet} )
         .then( entitySet => {
             let query = Query.all('/component/mode/invite_only');
             // LevelEntitySet.Query.poop();
-            let entities = Common.loadEntities(registry, 'query.entities');
+            // let entities = Common.loadEntities(registry, 'query.entities');
             // printE( entities.query( query ) );
 
             // log.debug('->ldb query');
@@ -39,6 +39,26 @@ test('adding an existing entity doesnt changes its id if it originated from the 
         .then( () => t.end() )
         .catch( err => { log.debug('t.error: ' + err ); log.debug( err.stack );} )
 });
+
+
+test('entityset filter by attribute', t => {
+    let registry;
+    return createEntitySet( null, {loadComponents:true, loadEntities:'query.entities', debug:false})
+        .then( entitySet => {registry = entitySet.getRegistry(); return entitySet} )
+        .then( entitySet => {
+            let query = Query.all( '/component/channel_member', Query.attr('username').equals('aveenendaal') );
+
+            return entitySet.query( query, {debug:false} )
+                .then( result => {
+                    t.equals( result.size(), 2 );
+                })
+                .then( () => destroyEntitySet(entitySet, true) )
+        })
+        .then( () => t.end() )
+        .catch( err => { log.debug('t.error: ' + err ); log.debug( err.stack );} )
+});
+
+
 
 // test('entityset filter ALL', t => {
 //     initialiseEntitySet().then( ([registry,entitySet]) => {
