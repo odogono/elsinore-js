@@ -78,7 +78,6 @@ test('multiple component filters', t => {
                 Query.all('/component/channel_member'),
                 Query.none('/component/mode/invisible')] )
                 .then( result => {
-                    printE( result );
                     t.equals( result.size(), 5 );
                 })
                 .then( finalise(t, entitySet) )

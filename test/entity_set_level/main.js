@@ -95,9 +95,8 @@ test('registering a schema and then retrieving it', t => {
             // printIns( entitySet, 1 );
             return entitySet;
         })
-        .then( entitySet => destroyEntitySet(entitySet, true) )
-        .then( () => t.end() )
-        .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
+        .then( entitySet => finalise(t,entitySet) )
+        
 });
 
 
@@ -130,9 +129,7 @@ test('registers existing component defs with the registry when opened', t => {
             // printIns( entitySet._db, 1 );
             return entitySet;
         })
-        .then( entitySet => destroyEntitySet(entitySet, true) )
-        .then( () => t.end() )
-        .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
+        .then( entitySet => finalise(t,entitySet) )
 });
 
 
@@ -149,11 +146,8 @@ test('adding a component without an id or an entity id creates a new component a
                     t.ok( entity.Position, 'entity should have position' );
                     t.equals( entity.Position.get('x'), 15, 'component attr saved' );
                 })
-                .then( () => entitySet );
+                .then( finalise(t,entitySet) )
         })
-        .then( entitySet => destroyEntitySet(entitySet, true) )
-        .then( () => t.end() )
-        .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
 });
 
 
@@ -175,10 +169,7 @@ test('adding several components without an entity adds them to the same new enti
                 t.assert( entity.Flower, 'the entity should have a Flower component' );
                 t.assert( entity.Radius, 'the entity should have a Radius component' );
             })
-            .then( () => destroyEntitySet(entitySet, true) )
-            .then( () => t.end() )
-            .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
-
+            .then( finalise(t,entitySet) )
         })
 });
 
@@ -206,10 +197,8 @@ test('removing a component from an entity with only one component', t => {
                 t.ok( eventSpy.calledWith('entity:remove'), 'entity:remove should have been called');
                 // printE( entity );
             })
-            .then( () => destroyEntitySet(entitySet, true) )
-            .then( () => t.end() )
+            .then( finalise(t,entitySet) )
         })
-    .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
 });
 
 test('should add an entity only once', t => {
@@ -229,10 +218,8 @@ test('should add an entity only once', t => {
             return entitySet.addEntity( entity )
                 .then( () => entitySet.size() )
                 .then( size => t.equals(size, 1) )
-                .then( () => destroyEntitySet(entitySet, true) )
-                .then( () => t.end() )
+                .then( finalise(t,entitySet) )
         })
-        .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
 });
 
 
@@ -257,9 +244,7 @@ test('should remove an entity', t => {
                 .then( () => entitySet.size(true) )
                 .then( size => t.equals(size, 0, 'the es should be empty') )
 
-                .then( () => destroyEntitySet(entitySet, true) )
-                .then( () => t.end() )
-                .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
+                .then( finalise(t,entitySet) )
         });
 });
 
@@ -281,10 +266,8 @@ test('should emit an event when an entity is added and removed', t => {
                 .then( () => t.ok( addCalled, 'entity:add should have been called' ) )
                 .then( () => entitySet.removeEntity( entities.at(0)) )
                 .then( () => t.ok( removeCalled, 'entity:remove should have been called' ) )
-                .then( () => destroyEntitySet(entitySet, true) )
-                .then( () => t.end() )
+                .then( finalise(t,entitySet) )
         })
-        .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
 });
 
 test('adding an existing entity changes its id if it didnt originate from the entityset', t => {
@@ -300,10 +283,8 @@ test('adding an existing entity changes its id if it didnt originate from the en
                 t.notEqual( entity.getEntityId(), 12, 'the entity id will have been changed' );
                 t.equal( entity.getEntitySetId(), 205, 'the entityset id will have been set' );
             })
-            .then( () => destroyEntitySet(entitySet, true) )
-            .then( () => t.end() )
+            .then( finalise(t,entitySet) )
         })
-        .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
 });
 
 test('adding an existing entity doesnt changes its id if it originated from the entityset', t => {
@@ -321,10 +302,8 @@ test('adding an existing entity doesnt changes its id if it originated from the 
                     t.equal( entity.getEntitySetId(), 205, 'the entityset id will have been set' );
                     t.equal( entity.getEntityId(), 12, 'the entity id will have been changed' );
                 })
-                .then( () => destroyEntitySet(entitySet, true) )
-                .then( () => t.end() )
+                .then( finalise(t,entitySet) )
         })
-        .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
 });
 
 
@@ -364,13 +343,18 @@ test('updating entity references when adding', t => {
                     
                     t.equal( componentEvt[4].get('channel'), entityEvt[0].id, 
                         'the channel attr should have been updated to the new entity id' );
-                });
+                })
+                .then( finalise(t,entitySet) )
         })
-        .then( () => t.end() )
-        .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
 })
 
 
+
+function finalise( t, entitySet ){
+    return destroyEntitySet(entitySet, true)
+        .then( () => { t.end() })
+        .catch( err => { log.debug('t.error: ' + err ); log.debug( err.stack );} )     
+}
 
 
 // test('registering and removing component defs reuses ids', t => {

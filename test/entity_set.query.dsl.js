@@ -207,6 +207,7 @@ export default function run( test, Common, Elsinore, EntitySet ){
                 [ Query.NONE_FILTER, [Query.VALUE, '/component/why'] ]
             ]
         ],
+
         [
             'filter with two complex arguments',
             [
@@ -315,6 +316,66 @@ export default function run( test, Common, Elsinore, EntitySet ){
                 ],
                 [ Query.WITHOUT, [Query.VALUE, [1,2]] ]
             ]
+        ],//*/
+        [
+            'filter with single where clause',
+            [
+                Query.all('/component/channel')//, Query.attr('size').lessThan(10))
+                    .where( Query.attr('size').lessThan(10) )
+            ],
+            [
+                [ Query.VALUE, '/component/channel' ],
+                [ Query.ATTR, 'size' ], 
+                [ Query.VALUE, 10 ],
+                Query.LESS_THAN,
+                Query.ALL_FILTER,
+            ],
+            [
+                [Query.ALL_FILTER,
+                    [Query.VALUE, '/component/channel'],
+                    [Query.LESS_THAN, [Query.ATTR,'size'], [Query.VALUE,10]]
+                    ]
+            ]
+        ],
+        [
+            'filter with multiple where clauses',
+            [
+                Query.all('/component/user')
+                    .where( 
+                        Query.attr('username').equals('alex'), 
+                        Query.attr('username').equals('mike'),
+                        Query.attr('age').greaterThanOrEqual(40)
+                     )
+            ],
+            [
+                [ Query.VALUE, '/component/user' ],
+
+                [ Query.ATTR, 'username' ], 
+                [ Query.VALUE, 'alex' ],
+                Query.EQUALS,
+
+                [ Query.ATTR, 'username' ], 
+                [ Query.VALUE, 'mike' ],
+                Query.EQUALS,
+                Query.AND,
+
+                [ Query.ATTR, 'age' ], 
+                [ Query.VALUE, 40 ],
+                Query.GREATER_THAN_OR_EQUAL,
+                Query.AND,
+
+                Query.ALL_FILTER,
+            ],
+            [
+                [Query.ALL_FILTER, 
+                    [ Query.VALUE, '/component/user' ],
+                    [ Query.AND,
+                        [ Query.AND,
+                            [Query.EQUALS, [Query.ATTR,'username'], [Query.VALUE, 'alex']],
+                            [Query.EQUALS, [Query.ATTR,'username'], [Query.VALUE, 'mike']] ],
+                        [Query.GREATER_THAN_OR_EQUAL, [Query.ATTR,'age'], [Query.VALUE, 40]]  ],
+                ],
+            ]
         ]//*/
     ];
 
@@ -330,6 +391,9 @@ export default function run( test, Common, Elsinore, EntitySet ){
             if( queryCase[3] ){
                 // let tree = Query.rpnToTree( queryCase[2] ); //= queryCase[1].toArray(true);
                 // let tree = query.toArray(true);
+                // printIns( queryArray, 6 );
+                // printIns( queryCase[3], 6 );
+                
                 t.deepEqual( queryArray, queryCase[3], 'ast ' + queryCase[0] );
             }
         });
