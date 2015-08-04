@@ -546,13 +546,19 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
     test('should only add entities that pass include/exclude', t => {
         return initialise().then( ([registry,entitySet,entities]) => {
             EntitySet.setQuery( entitySet,
-                Query.all('/component/position').none('/component/realname') ); 
+                Query.commands(
+                    Query.all('/component/position'), 
+                    Query.none('/component/realname')
+                ) );
+            // EntitySet.setQuery( entitySet,
+                // Query.all('/component/position').none('/component/realname') ); 
 
             entitySet.addEntity( entities );
 
             t.equals( entitySet.size(), 1);
             t.end();
-        });
+        })
+        .catch( err => { log.debug('t.error: ' + err ); log.debug( err.stack );} )     
     });
 
     test('should remove entities that are excluded after their components change', t => {
@@ -701,7 +707,8 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
             var oEntitySet = registry.createEntitySet();
             // set a filter on the other entitySet so that it will only accept components that
             // have /position and /realname
-            EntitySet.setQuery( oEntitySet, Query.all('/component/position').all('/component/realname') );
+            EntitySet.setQuery( oEntitySet, 
+                Query.all(['/component/position','/component/realname']) );
 
             // make the other entitySet listen to the origin entitySet
             oEntitySet.attachTo( entitySet );

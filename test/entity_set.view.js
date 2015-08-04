@@ -12,248 +12,260 @@ export default function run( test, Common, Elsinore, EntitySet ){
     let Registry = Elsinore.Registry;
 
     test('.where returns an entityset of entities', t => {
-        let [registry,entitySet] = initialise();
+        initialiseEntitySet().then( ([registry,entitySet]) => {
 
-        // var result = entitySet.where('/component/name');
-        let result = entitySet.query( Query.all('/component/name') );
-        t.ok( result.isEntitySet, 'the result is an entityset');
-        t.equals( result.length, 7, '7 entities returned');
+            let result = entitySet.query( Query.all('/component/name') );
+            t.ok( result.isEntitySet, 'the result is an entityset');
+            t.equals( result.length, 7, '7 entities returned');
 
-        t.end();
+            t.end();
+        });
     });
 
     test('.query returns entities which the attributes', t => {
-        let [registry,entitySet] = initialise();
+        initialiseEntitySet().then( ([registry,entitySet]) => {
         
-        // var result = entitySet.where('/component/status', {status:'active'} );
-        let result = entitySet.query( 
-            Query.all('/component/status', 
-                Query.attr('status').equals('active')) );
+            // var result = entitySet.where('/component/status', {status:'active'} );
+            let result = entitySet.query( 
+                Query.all('/component/status', 
+                    Query.attr('status').equals('active')) );
 
-        t.ok( result.isEntitySet, 'the result is an entityset');
-        t.equals( result.length, 6, '6 entities returned');
+            t.ok( result.isEntitySet, 'the result is an entityset');
+            t.equals( result.length, 6, '6 entities returned');
 
-        t.end();
+            t.end();
+        });
     });
 
 
 
     test('the view should be identified as a view', t => {
-        let [registry,entitySet] = initialise();
+        initialiseEntitySet().then( ([registry,entitySet]) => {
         
-        let view = entitySet.view();
+            let view = entitySet.view();
 
-        t.ok( view.isEntitySetView, 'its an entityset view');
-        t.ok( view.isEntitySet, 'its an entityset');
-        t.equals( view.type, 'EntitySetView', 'its type is EntitySetView');
+            t.ok( view.isEntitySetView, 'its an entityset view');
+            t.ok( view.isEntitySet, 'its an entityset');
+            t.equals( view.type, 'EntitySetView', 'its type is EntitySetView');
 
-        t.end();
+            t.end();
+        });
     });
 
 
     test('the view should have the same entities', t => {
-        let [registry,entitySet] = initialise();
-        let eventSpy = Sinon.spy();
+        initialiseEntitySet().then( ([registry,entitySet]) => {
+            let eventSpy = Sinon.spy();
 
-        let view = entitySet.view();
-        
-        t.equals( entitySet.length, view.length, 'same number of entities');
+            let view = entitySet.view();
+            
+            t.equals( entitySet.length, view.length, 'same number of entities');
 
-        t.end();
+            t.end();
+        });
     });
 
 
 
     test('removing an entity from the entitySet should also remove it from the view', t => {
-        let [registry,entitySet] = initialise();
-        var eventSpy = Sinon.spy();
+        initialiseEntitySet().then( ([registry,entitySet]) => {
+            var eventSpy = Sinon.spy();
 
-        let view = entitySet.view(null,{updateOnEvent: true});
+            let view = entitySet.view(null,{updateOnEvent: true});
 
-        // Common.logEvents( entitySet, 'entitySet' );
-        // Common.logEvents( view, 'view' );
+            // Common.logEvents( entitySet, 'entitySet' );
+            // Common.logEvents( view, 'view' );
 
-        entitySet.removeEntity( entitySet.at(0) );
-        // view.update();
-        
-        t.equals( entitySet.size(), view.length, 'same number of entities');
+            entitySet.removeEntity( entitySet.at(0) );
+            // view.update();
+            
+            t.equals( entitySet.size(), view.length, 'same number of entities');
 
-        t.end();    
+            t.end(); 
+        });   
     });
 
     test('adding an entity should also see it appear in the view', t => {
-        let [registry,entitySet] = initialise();
-        let view = entitySet.view(null,{updateOnEvent:true});
+        initialiseEntitySet().then( ([registry,entitySet]) => {
+            let view = entitySet.view(null,{updateOnEvent:true});
 
-        var component = registry.createComponent( '/component/position', {x:-2,y:5} );
-        entitySet.addComponent( component );
+            var component = registry.createComponent( '/component/position', {x:-2,y:5} );
+            entitySet.addComponent( component );
 
-        t.equals( entitySet.size(), view.size(), 'same number of entities');
-        t.end();
+            t.equals( entitySet.size(), view.size(), 'same number of entities');
+            t.end();
+        });
     });
 
 
     test('removing a component from an entity', t => {
-        var entity;
-        let [registry] = initialise();
-        let entitySet = registry.createEntitySet();
-        let view = entitySet.view(null, {updateOnEvent: true} );
+        initialiseEntitySet().then( ([registry,entitySet]) => {
+            let entity;
+            entitySet = registry.createEntitySet();
+            let view = entitySet.view(null, {updateOnEvent: true} );
 
-        // Common.logEvents( view );
-        // Common.logEvents( entitySet );
+            // Common.logEvents( view );
+            // Common.logEvents( entitySet );
 
-        entitySet.addEntity(
-            registry.createEntity([
-                { id:'/component/flower', colour:'red'},
-                { id:'/component/position', x:-2, y:5 }] ));
-            
-        // view.update();
-        // printE( view );
+            entitySet.addEntity(
+                registry.createEntity([
+                    { id:'/component/flower', colour:'red'},
+                    { id:'/component/position', x:-2, y:5 }] ));
+                
+            // view.update();
+            // printE( view );
 
-        t.ok( view.at(0).Position, 'the entity should have position' );
+            t.ok( view.at(0).Position, 'the entity should have position' );
 
-        entity = entitySet.at(0);
-        entitySet.removeComponent( entity.Position );
+            entity = entitySet.at(0);
+            entitySet.removeComponent( entity.Position );
 
-        // printE( entitySet );
-        // printE( view );
+            // printE( entitySet );
+            // printE( view );
 
-        t.ok( _.isUndefined( view.at(0).Position ), 'the entity should have no position' );
-        t.end();
+            t.ok( _.isUndefined( view.at(0).Position ), 'the entity should have no position' );
+            t.end();
+        });
     });
 
     test('adding a component to an entity', t => {
-        var component;
-        var eventSpy = Sinon.spy();
-        let [registry] = initialise();
-        let entitySet = registry.createEntitySet();
-        var view = entitySet.view(null, {updateOnEvent:true});
+        initialiseEntitySet().then( ([registry,entitySet]) => {
+            var component;
+            var eventSpy = Sinon.spy();
+            entitySet = registry.createEntitySet();
+            var view = entitySet.view(null, {updateOnEvent:true});
 
-        entitySet.addEntity(
-            registry.createEntity( { id:'/component/flower', colour:'white'} ));
+            entitySet.addEntity(
+                registry.createEntity( { id:'/component/flower', colour:'white'} ));
 
-        t.ok( view.at(0).Flower, 'the entity should have flower' );
+            t.ok( view.at(0).Flower, 'the entity should have flower' );
 
-        component = registry.createComponent( {id:'/component/position', x:-2, y:5}, entitySet.at(0) );
+            component = registry.createComponent( {id:'/component/position', x:-2, y:5}, entitySet.at(0) );
 
-        t.equals( component.getEntityId(), entitySet.at(0).getEntityId(), 'the entity ids are identical' );
+            t.equals( component.getEntityId(), entitySet.at(0).getEntityId(), 'the entity ids are identical' );
 
-        entitySet.addComponent( component );
+            entitySet.addComponent( component );
 
-        t.ok( view.at(0).Position, 'the views entity should have position' );
+            t.ok( view.at(0).Position, 'the views entity should have position' );
 
-        t.end();
+            t.end();
+        });
     });
 
     test('adding a component to an entity triggers an entity:add event', t => {
-        var eventSpy = Sinon.spy();
-        let [registry] = initialise();
-        let entitySet = registry.createEntitySet();
-        var view = entitySet.view(null, {updateOnEvent:true});
+        initialiseEntitySet().then( ([registry,entitySet]) => {
+            var eventSpy = Sinon.spy();
+            entitySet = registry.createEntitySet();
+            var view = entitySet.view(null, {updateOnEvent:true});
 
-        // Common.logEvents( entitySet, 'es ' );
-        // Common.logEvents( view, 'vi ' );
-        view.on('all', eventSpy);
+            // Common.logEvents( entitySet, 'es ' );
+            // Common.logEvents( view, 'vi ' );
+            view.on('all', eventSpy);
 
-        entitySet.addEntity(
-            registry.createEntity( { id:'/component/flower', colour:'magenta'} ));
+            entitySet.addEntity(
+                registry.createEntity( { id:'/component/flower', colour:'magenta'} ));
 
-        t.ok( eventSpy.calledWith('entity:add'), 'entity:add should have been called');
-        t.end();
+            t.ok( eventSpy.calledWith('entity:add'), 'entity:add should have been called');
+            t.end();
+        });
     });
 
 
     test('removing a relevant component from an entity should trigger a entity:remove event', t => {
         var entity;
         var eventSpy = Sinon.spy();
-        let [registry,entitySet] = initialise();
-        let query = Query.all('/component/channel');
-        // var entityFilter = registry.createEntityFilter( EntityFilter.ALL, '/component/score' );
-        let view = entitySet.view( query, {updateOnEvent:true} );
+        initialiseEntitySet().then( ([registry,entitySet]) => {
+            let query = Query.all('/component/channel');
+            // var entityFilter = registry.createEntityFilter( EntityFilter.ALL, '/component/score' );
+            let view = entitySet.view( query, {updateOnEvent:true} );
 
-        // printIns( entitySet, 1 );
-        view.on('all', eventSpy);
+            // printIns( entitySet, 1 );
+            view.on('all', eventSpy);
 
-        // Common.logEvents( entitySet, 'e es' );
-        // Common.logEvents( view, 'e view' );
+            // Common.logEvents( entitySet, 'e es' );
+            // Common.logEvents( view, 'e view' );
 
-        // remove an unrelated component to the view
-        entitySet.removeComponent( entitySet.at( 0 ).Status );
-        // printE( entitySet.at(0) );
-        
-        // remove the score component from the first entity in the view
-        entitySet.removeComponent( view.at( 0 ).Channel );
+            // remove an unrelated component to the view
+            entitySet.removeComponent( entitySet.at( 0 ).Status );
+            // printE( entitySet.at(0) );
+            
+            // remove the score component from the first entity in the view
+            entitySet.removeComponent( view.at( 0 ).Channel );
 
-        // t.ok( eventSpy.calledOnce, 'only one event emitted from the view' );
-        t.ok( eventSpy.calledWith('entity:remove'), 'entity:remove should have been called');
+            // t.ok( eventSpy.calledOnce, 'only one event emitted from the view' );
+            t.ok( eventSpy.calledWith('entity:remove'), 'entity:remove should have been called');
 
-        t.end();
+            t.end();
+        });
     });
 
     test('deferred addition of components with a filter', t => {
-        var eventSpy = Sinon.spy();
-        let [registry] = initialise();
-        let entitySet = registry.createEntitySet();
-        let query = Query.all('/component/position');
-        let view = entitySet.view( query );
+        initialiseEntitySet().then( ([registry,entitySet]) => {
+            var eventSpy = Sinon.spy();
+            entitySet = registry.createEntitySet();
+            let query = Query.all('/component/position');
+            let view = entitySet.view( query );
 
-        view.on('all', eventSpy);
+            view.on('all', eventSpy);
 
-        var entity = entitySet.addEntity(
-            registry.createEntity([
-                { id:'/component/flower', colour:'blue'}] ));
+            var entity = entitySet.addEntity(
+                registry.createEntity([
+                    { id:'/component/flower', colour:'blue'}] ));
 
-        view.applyEvents();
+            view.applyEvents();
 
-        t.equals( view.length, 0, 'no entities yet' );
+            t.equals( view.length, 0, 'no entities yet' );
 
-        entitySet.addComponent(
-            registry.createComponent({id:'/component/position', x:10, y:100}, entity ) );
+            entitySet.addComponent(
+                registry.createComponent({id:'/component/position', x:10, y:100}, entity ) );
 
-        view.applyEvents();
+            view.applyEvents();
 
-        t.equals( view.length, 1, 'only one entity added' );
+            t.equals( view.length, 1, 'only one entity added' );
 
-        t.end();
+            t.end();
+        });
     });
 
     
     test('applying a filter', t => {
-        let [registry,entitySet] = initialise('entity_set.entities');
-        let query = Query.all(['/component/position', '/component/realname']);
-        let view = entitySet.view( query );
-        
-        // printE( entitySet );
-        // printE( view );
-        t.ok( view.at(0).Position, 'the entity should have /position' );
-        t.ok( view.at(0).Realname, 'the entity should have /realname' );
+        initialiseEntitySet('entity_set.entities').then( ([registry,entitySet]) => {
+            let query = Query.all(['/component/position', '/component/realname']);
+            let view = entitySet.view( query );
+            
+            // printE( entitySet );
+            // printE( view );
+            t.ok( view.at(0).Position, 'the entity should have /position' );
+            t.ok( view.at(0).Realname, 'the entity should have /realname' );
 
-        t.ok( view.at(1).Position, 'the entity should have /position' );
-        t.ok( view.at(1).Realname, 'the entity should have /realname' );
+            t.ok( view.at(1).Position, 'the entity should have /position' );
+            t.ok( view.at(1).Realname, 'the entity should have /realname' );
 
-        t.end();
+            t.end();
+        });
     });
 
 
     test('views created with a filter', t => {
-        var entity;
-        let [registry,entitySet] = initialise('entity_set.entities');
-        let query = Query.none('/component/position');
 
-        var view = entitySet.query( query );
+        initialiseEntitySet('entity_set.entities').then( ([registry,entitySet]) => {
+            let query = Query.none('/component/position');
 
-        entitySet.addComponent([
-            registry.createComponent( '/component/flower', {colour:'red'}),
-            registry.createComponent( '/component/position', {x:-2,y:5})] );
+            var view = entitySet.query( query );
 
-        t.equals( view.length, 2, 'two entities');
+            entitySet.addComponent([
+                registry.createComponent( '/component/flower', {colour:'red'}),
+                registry.createComponent( '/component/position', {x:-2,y:5})] );
 
-        t.end();
+            t.equals( view.length, 2, 'two entities');
+
+            t.end();
+        });
     });
 
 
     // test.skip('deferred addition of a component', t => {
-    //     let [registry,entitySet] = initialise();
+    //     initialiseEntitySet().then( ([registry,entitySet]) => {
     //     var view = entitySet.where( null, null, {view:true});
     //     var entity;
 
@@ -283,91 +295,94 @@ export default function run( test, Common, Elsinore, EntitySet ){
     // });
 
     test('deferred removal of an entity', t => {
-        let [registry] = initialise();
-        let entitySet = registry.createEntitySet();
-        var view = entitySet.view();
+        initialiseEntitySet().then( ([registry,entitySet]) => {
+            entitySet = registry.createEntitySet();
+            var view = entitySet.view();
 
-        // Common.logEvents( entitySet );
+            // Common.logEvents( entitySet );
 
-        entitySet.addEntity(
-            registry.createEntity([
-                { id:'/component/flower', colour:'blue'},
-                { id:'/component/position', x:10, y:60 }] ));
+            entitySet.addEntity(
+                registry.createEntity([
+                    { id:'/component/flower', colour:'blue'},
+                    { id:'/component/position', x:10, y:60 }] ));
 
-        entitySet.addEntity(
-            registry.createEntity([
-                { id:'/component/vegetable', name:'cauliflower'},
-                { id:'/component/radius', radius:0.3 }] ));
+            entitySet.addEntity(
+                registry.createEntity([
+                    { id:'/component/vegetable', name:'cauliflower'},
+                    { id:'/component/radius', radius:0.3 }] ));
 
-        view.applyEvents();
+            view.applyEvents();
 
-        t.equals( view.length, 2, 'two entities added' );
+            t.equals( view.length, 2, 'two entities added' );
 
-        entitySet.removeEntity( entitySet.at(1) );
+            entitySet.removeEntity( entitySet.at(1) );
 
-        // t.equals( view.length, 2, 'still two entities' );    
+            // t.equals( view.length, 2, 'still two entities' );    
 
-        // view.applyEvents();
+            // view.applyEvents();
 
-        t.equals( view.length, 1, 'now one entity' );    
+            t.equals( view.length, 1, 'now one entity' );    
 
-        t.end();
+            t.end();
+        });
     });
 
 
     test('deferred removal of an entity triggers correct events', t => {
-        // entity:remove
-        let [registry] = initialise();
-        let entitySet = registry.createEntitySet();
-        var view = entitySet.view();
-
-        var entityA, entityB;
+        initialiseEntitySet().then( ([registry,entitySet]) => {
         
-        var eventSpy = Sinon.spy();
+            entitySet = registry.createEntitySet();
+            var view = entitySet.view();
 
-        // Common.logEvents( view );
+            var entityA, entityB;
+            
+            var eventSpy = Sinon.spy();
 
-        entityA = entitySet.addEntity(
-            registry.createEntity([
-                { id:'/component/flower', colour:'blue'},
-                { id:'/component/position', x:10, y:60 }] ));
+            // Common.logEvents( view );
 
-        entityB = entitySet.addEntity(
-            registry.createEntity([
-                { id:'/component/vegetable', name:'cauliflower'},
-                { id:'/component/radius', radius:0.3 }] ));
+            entityA = entitySet.addEntity(
+                registry.createEntity([
+                    { id:'/component/flower', colour:'blue'},
+                    { id:'/component/position', x:10, y:60 }] ));
 
-        view.applyEvents();
+            entityB = entitySet.addEntity(
+                registry.createEntity([
+                    { id:'/component/vegetable', name:'cauliflower'},
+                    { id:'/component/radius', radius:0.3 }] ));
 
-        view.on('all', eventSpy);
-        entitySet.removeEntity( entityA );
-        entitySet.removeEntity( entityB );
+            view.applyEvents();
 
-        t.ok( eventSpy.calledTwice, 'only two event emitted from the view' );
-        t.ok( eventSpy.calledWith('entity:remove'), 'entity:remove should have been called');
+            view.on('all', eventSpy);
+            entitySet.removeEntity( entityA );
+            entitySet.removeEntity( entityB );
 
-        t.end();
+            t.ok( eventSpy.calledTwice, 'only two event emitted from the view' );
+            t.ok( eventSpy.calledWith('entity:remove'), 'entity:remove should have been called');
+
+            t.end();
+        });
     });
 
     test('altering a component in the view also changes the component in the entityset', t => {
-        let [registry] = initialise();
-        let entitySet = registry.createEntitySet();
-        var view = entitySet.view();
+        initialiseEntitySet().then( ([registry,entitySet]) => {
+            entitySet = registry.createEntitySet();
+            let view = entitySet.view();
 
-        // Common.logEvents( entitySet );
+            // Common.logEvents( entitySet );
 
-        entitySet.addEntity(
-            registry.createEntity([
-                { id:'/component/flower', colour:'blue'},
-                { id:'/component/radius', radius:0.1 }] ));
+            entitySet.addEntity(
+                registry.createEntity([
+                    { id:'/component/flower', colour:'blue'},
+                    { id:'/component/radius', radius:0.1 }] ));
 
-        view.applyEvents();
+            view.applyEvents();
 
-        view.at(0).Flower.set('colour', 'cyan');
+            view.at(0).Flower.set('colour', 'cyan');
 
-        t.equals( entitySet.at(0).Flower.get('colour'), 'cyan', 'colours should match');
+            t.equals( entitySet.at(0).Flower.get('colour'), 'cyan', 'colours should match');
 
-        t.end();
+            t.end();
+        });
     });
 
 
@@ -377,6 +392,13 @@ export default function run( test, Common, Elsinore, EntitySet ){
         let registry = Common.initialiseRegistry(false);
         let entitySet = Common.loadEntities( registry, (entities||'query.entities') );
         return [registry,entitySet];
+    }
+
+    function initialiseEntitySet(entities){
+        return Common.initialiseRegistry(false).then( registry => {
+            let entitySet = Common.loadEntities( registry, (entities||'query.entities') );
+            return [registry,entitySet];
+        });
     }
 }
 
