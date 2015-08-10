@@ -1,18 +1,17 @@
 'use strict';
 
-var _ = require('underscore');
-var test = require('tape');
+let _ = require('underscore');
+let test = require('tape');
 
+let Common = require('./common');
 
-var Elsinore = require('../lib');
-var SchemaRegistry = Elsinore.SchemaRegistry;
-
-var Common = require('./common');
-
+let Elsinore = Common.Elsinore;
+let SchemaRegistry = Elsinore.SchemaRegistry;
+let SchemaProperties = Common.requireLib('schema/properties');
 
 // compile a map of schema id(uri) to schema
-var componentSchemas = require('./fixtures/components.json');
-var componentByUri = _.reduce( componentSchemas, 
+let componentSchemas = require('./fixtures/components.json');
+let componentByUri = _.reduce( componentSchemas, 
                         function(memo, entry){
                             memo[ entry.id ] = entry;
                             return memo;
@@ -108,7 +107,7 @@ test('retrieving an array of properties', t => {
     var schema = registry.register( schema );
 
     t.deepEqual(
-        registry.getProperties('elsinore:/schema/props'),
+        SchemaProperties.getProperties(registry, 'elsinore:/schema/props'),
         [{ name:'name', type:'string' }, { name:'age', type:'integer' }, { name:'address', type:'string' }]
         )
     
@@ -134,7 +133,7 @@ test('returning an array of sorted properties', t => {
     var schema = registry.register( schema );
 
     t.deepEqual(
-        registry.getProperties('elsinore:/schema/sorted'),
+        SchemaProperties.getProperties(registry,'elsinore:/schema/sorted'),
         [
             { name:'id', priority:3, type:'integer' }, 
             { name:'name', priority:2, type:'string' }, 
@@ -166,7 +165,7 @@ test('returning properties from multiple schemas', t => {
     registry.register( {a:schemaA, b:schemaB} );
 
     t.deepEqual( 
-        _.pluck( registry.getProperties( [ schemaA.id, schemaB.id ] ), 'name' ),
+        _.pluck( SchemaProperties.getProperties( registry, [ schemaA.id, schemaB.id ] ), 'name' ),
         [ 'id', 'name', 'status', 'count' ]
         );
 
@@ -198,7 +197,7 @@ test('merging two schemas', t => {
 
     // the order is important
     t.deepEqual(
-        _.pluck( registry.getProperties(schemaA.id), 'name' ),
+        _.pluck( SchemaProperties.getProperties(registry, schemaA.id), 'name' ),
         ['name', 'count']
         );
 
@@ -206,7 +205,7 @@ test('merging two schemas', t => {
 
     // should inherit name and count from other schema
     t.deepEqual(
-        _.pluck( registry.getProperties(schemaB.id), 'name' ),
+        _.pluck( SchemaProperties.getProperties(registry, schemaB.id), 'name' ),
         ['name', 'status', 'count']
         );
 
@@ -227,7 +226,7 @@ test('returning default properties', t => {
     registry.register( schema );
 
     t.deepEqual(
-        registry.getProperties( schema.id ),
+        SchemaProperties.getProperties( registry, schema.id ),
         [
         { default: 'unknown', name: 'name', type: 'string' }, 
         { default: 22, name: 'age', type: 'integer' }, 
@@ -235,12 +234,12 @@ test('returning default properties', t => {
         ] );
     
     t.deepEqual( 
-        registry.getPropertiesObject( schema.id ),
+        SchemaProperties.getPropertiesObject( registry, schema.id ),
         { age: 22, name: 'unknown' }
         );
 
     t.deepEqual( 
-        registry.getPropertiesObject( schema.id, {includeNull:true}),
+        SchemaProperties.getPropertiesObject( registry, schema.id, {includeNull:true}),
         {
             address: null,
             age: 22,
@@ -308,7 +307,7 @@ test('register a modified schema', t => {
     t.ok( registry.register( schemaB ), 'the new version is different and so is accepted' );
 
     t.deepEqual(
-        registry.getProperties('/schema/dupe'),
+        SchemaProperties.getProperties(registry, '/schema/dupe'),
         [{ name:'radius', type:'number' }, { name:'x', type:'number' }, { name:'y', type:'number' }],
         'the second version is returned' );
     
@@ -428,7 +427,7 @@ test('retrieving parts', t => {
     registry.register(schema);
 
     t.deepEqual(
-        registry.getProperties('/component/nix'),
+        SchemaProperties.getProperties( registry, '/component/nix'),
         [ {name:'firstName', type:'string' }] );
 
     t.end();

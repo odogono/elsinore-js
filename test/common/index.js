@@ -211,6 +211,9 @@ global.log = {
 };
 
 module.exports = {
+    requireLib: function(path){
+        return require( Path.join(rootDir, 'lib', path) );
+    },
     printVar: printVar,
     printIns: printIns,
     logEvents: logEvents,
