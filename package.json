@@ -14,8 +14,8 @@
     "lib/entity_set.js",
     "lib/component.js",
     "lib/entity_processor.js",
-    "lib/memory_storage.js",
-    "lib/schema_registry.js",
+    "lib/schema/index.js",
+    "lib/schema/properties.js",
     "lib/registry.js",
     "lib/utils.js"
   ],
