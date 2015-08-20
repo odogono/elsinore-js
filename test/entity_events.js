@@ -7,9 +7,9 @@ var Common = require('./common');
 var Es = require('event-stream');
 var Sinon = require('sinon');
 
-var Elsinore = require('../lib');
+var Elsinore = Common.Elsinore;
 
-var EventsAsync = require('../lib/util/events.async');
+var EventsAsync = Common.requireLib('util/events.async');
 
 var EntityFilter = Elsinore.EntityFilter;
 var EntitySet = Elsinore.EntitySet;

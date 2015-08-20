@@ -856,7 +856,8 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
 // serverside only execution of tests
 if( !process.browser ){
-    let Elsinore = require('../lib');
+    let Common = require('./common');
+    var Elsinore = Common.Elsinore;
     
-    module.exports( require('tape'), require('./common'), Elsinore, Elsinore.EntitySet );
+    module.exports( require('tape'), Common, Elsinore, Elsinore.EntitySet );
 }

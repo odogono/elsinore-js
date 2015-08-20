@@ -4,7 +4,7 @@ var _ = require('underscore');
 var test = require('tape');
 
 var Common = require('./common');
-var Elsinore = require('../lib');
+var Elsinore = Common.Elsinore;
 var Utils = Elsinore.Utils;
 
 

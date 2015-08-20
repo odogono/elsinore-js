@@ -8,7 +8,7 @@ var Common = require('./common');
 var Es = require('event-stream');
 var Sinon = require('sinon');
 
-var Elsinore = require('../lib');
+var Elsinore = Common.Elsinore;
 
 var EntityFilter = Elsinore.EntityFilter;
 var EntitySet = Elsinore.EntitySet;
@@ -17,7 +17,7 @@ let Query = Elsinore.Query;
 var Registry = Elsinore.Registry;
 var Utils = Elsinore.Utils;
 
-var FileSystemEntitySet = require('../lib/fs_entity_set');
+var FileSystemEntitySet = require('../src/fs_entity_set');
 
 
 test('creating a filesystem entityset', function(t){

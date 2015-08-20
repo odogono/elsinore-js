@@ -74,5 +74,5 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
 // serverside only execution of tests
 if( !process.browser ){
-    module.exports( require('tape'), require('./common'), require('../lib') );
+    module.exports( require('tape'), require('./common'), require('./common').Elsinore );
 }

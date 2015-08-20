@@ -1,7 +1,7 @@
 'use strict';
 
 var test = require('tape');
-var BitField = require('../lib/bit_field');
+var BitField = require('./common').requireLib('bit_field');
 
 
 test('bitfield', function(t){

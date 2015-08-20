@@ -268,6 +268,7 @@ function createEntitySet(){
 
 // serverside only execution of tests
 if( !process.browser ){
-    var Elsinore = require('../lib');
-    module.exports( require('tape'), require('./common'), Elsinore, Elsinore.EntitySet );
+    let Common = require('./common');
+    var Elsinore = Common.Elsinore;
+    module.exports( require('tape'), Common, Elsinore, Elsinore.EntitySet );
 }

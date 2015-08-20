@@ -405,9 +405,6 @@ export default function run( test, Common, Elsinore, EntitySet ){
 
 // serverside only execution of tests
 if( !process.browser ){
-    
-    let Elsinore = require('../lib');
-    require('./common');
-    
-    run( require('tape'), require('./common'), Elsinore, Elsinore.EntitySet );
+    let Common = require('./common');
+    run( require('tape'), Common, Common.Elsinore, Common.Elsinore.EntitySet );
 }

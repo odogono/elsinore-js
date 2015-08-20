@@ -3,7 +3,7 @@ var test = require('tape');
 var Sinon = require('sinon');
 
 var Common = require('./common');
-var Elsinore = require('../lib');
+var Elsinore = Common.Elsinore;
 
 var EntityFilter = Elsinore.EntityFilter;
 var EntitySet = Elsinore.EntitySet;

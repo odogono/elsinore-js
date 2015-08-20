@@ -327,7 +327,7 @@ module.exports = function( test, Common, Elsinore, CmdBuffer ){
 
 // serverside only execution of tests
 if( !process.browser ){
-    let Elsinore = require('../lib');
-    let CB = require('../lib/cmd_buffer/async');
-    module.exports( require('tape'), require('./common'), Elsinore, CB );
+    let Common = require('./common');
+    let CB = Common.requireLib('cmd_buffer/async');
+    module.exports( require('tape'), Common, Common.Elsinore, CB );
 }

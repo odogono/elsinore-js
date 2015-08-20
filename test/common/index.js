@@ -10,7 +10,9 @@ var Sh = require('shelljs');
 var rootDir = Path.join( Path.dirname(__filename), '../../' );
 var fixtureDir = Path.join( rootDir, 'test', 'fixtures' );
 var varDir = Path.join( rootDir, 'var' );
-var Elsinore = require( Path.join( rootDir ) );
+
+var ElsinoreDir = Path.join(rootDir, 'src')
+var Elsinore = require( ElsinoreDir );
 
 
 function pathVar( path, clear ){
@@ -212,7 +214,7 @@ global.log = {
 
 module.exports = {
     requireLib: function(path){
-        return require( Path.join(rootDir, 'lib', path) );
+        return require( Path.join(ElsinoreDir, path) );
     },
     printVar: printVar,
     printIns: printIns,
