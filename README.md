@@ -1,8 +1,72 @@
+Elsinore.js
+=====
 
-A Javascript Entity Component system.
+A Javascript Entity Component System.
 
 
 
+- An Entity is essentially an ID. 
+
+- A Component is a structured collection of data. It is defined by a Schema.
+
+- A Component belongs to a single Entity.
+
+- In effect, an Entity is a container for Components.
+
+- A Query is used to select a subset of Entities from an EntitySet.
+
+- When an Entity is added to an EntitySet, if it did not originate from that EntitySet, a new ID will be given to it.Some types of EntitySet do not exhibit this behaviour.
+
+
+
+
+
+### Entity
+
+Entities are containers for Components. By themselves, they are little more than an ID, but they manifest in Elsinore as objects with a number of utility functions for managing their components.
+
+### Component
+
+A container for data. Components are defined by a Schema.
+
+
+### EntitySet
+
+A container for Entities.
+
+
+### EntityFilter
+
+A means of creating a subset of Entities by specifying what Components a given Entity should or shouldn't have.
+
+
+### Registry
+
+The registry manages EntitySets, Components and Entities.
+
+
+
+
+
+
+Components are a structure for data. They are identified by a uri, and are defined using a schema. 
+
+Entities live inside EntitySets. 
+
+An EntitySet is usually an in-memory structure, but can also be backed by different storage engines such as the file system or redis or IndexedDB on the browser.
+
+An EntityFilter is used to determine whether an Entity is acceptable based on the Components it has or hasn't.
+
+EntityFilters can be used in combination with EntitySets to create a subset.
+
+Processors execute code against EntitySets.
+
+
+
+
+## EntitySets
+
+    var entity = Entity.create();
 
 
 ```javascript

@@ -5,6 +5,7 @@ var Path = require('path');
 var _ = require('underscore');
 var Aliasify = require('aliasify');
 var Babelify = require("babelify");
+var Babel = require('gulp-babel');
 var Browserify = require('browserify');
 var Buffer = require('vinyl-buffer');
 var Del = require('del');
@@ -72,7 +73,7 @@ Gulp.task('lint', function(){
     );
 });
 
-Gulp.task('build.vendor', function(){
+Gulp.task('build.bundle.vendor', function(){
     // console.log( vendorDependencies );
     var b = Browserify({
             noparse: vendorDependencies,
@@ -107,7 +108,14 @@ Gulp.task('build.vendor', function(){
 
 
 
-Gulp.task('build.lib', function(cb){
+Gulp.task('transpile.lib', function () {
+    return Gulp.src('src/**/*.js')
+        .pipe(Babel())
+        .pipe(Gulp.dest('lib'));
+});
+
+
+Gulp.task('build.bundle.lib', function(cb){
     var b = Browserify({
             // entries:[ './lib/index.js' ],
             debug: false
@@ -214,7 +222,7 @@ Gulp.task('test.browser.watch', function() {
 
 Gulp.task('test.browser', [ 'test.browser.build', 'test.browser.server', 'test.browser.watch']);
 
-Gulp.task('build', ['build.vendor', 'build.lib', 'test.browser.build']);
+Gulp.task('build.bundle', ['build.bundle.vendor', 'build.bundle.lib', 'test.browser.build']);
 
 Gulp.task('default', function(){
     // place code for your default task here

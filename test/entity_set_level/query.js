@@ -17,9 +17,11 @@ let Query = Elsinore.Query;
 let Registry = Elsinore.Registry;
 let Utils = Elsinore.Utils;
 
+let createOptions = {loadComponents:true, loadEntities:'query.entities', debug:false};
+
 test('entityset filter ALL', t => {
     // t.plan(2);
-    return createEntitySet( null, {loadComponents:true, loadEntities:'query.entities', debug:false})
+    return createEntitySet( null, createOptions)
         .then( entitySet => {
             let query = Query.all('/component/mode/invite_only');
             // LevelEntitySet.Query.poop();
@@ -39,7 +41,7 @@ test('entityset filter ALL', t => {
 
 test('entityset filter by attribute', t => {
     // t.plan( 1 );
-    return createEntitySet( null, {loadComponents:true, loadEntities:'query.entities', debug:false})
+    return createEntitySet( null, createOptions)
         .then( entitySet => {
             
             let query = Query.all( '/component/channel_member', 
@@ -57,7 +59,7 @@ test('entityset filter by attribute', t => {
 
 
 test('entityset filter by attribute being within a value array', t => {
-    return createEntitySet( null, {loadComponents:true, loadEntities:'query.entities', debug:false})
+    return createEntitySet( null, createOptions)
         .then( entitySet => {
     // select entities which have the component /channel_member and 
     //  have the client attribute
@@ -71,9 +73,8 @@ test('entityset filter by attribute being within a value array', t => {
 });
 
 test('multiple component filters', t => {
-    return createEntitySet( null, {loadComponents:true, loadEntities:'query.entities', debug:false})
+    return createEntitySet( null, createOptions)
         .then( entitySet => {
-
             return entitySet.query([
                 Query.all('/component/channel_member'),
                 Query.none('/component/mode/invisible')] )
@@ -86,7 +87,17 @@ test('multiple component filters', t => {
 
 
 
-// test('query limit will constrain the number of entities that are returned');
+test.only('query limit will constrain the number of entities that are returned', t => {
+    return createEntitySet( null, createOptions)
+        .then( entitySet => {
+            return entitySet.query( Query.limit(3), {debug:true} )
+                .then( result => {
+                    t.equals( result.size(), 3 );
+                })
+                .then( finalise(t, entitySet) )
+        })
+        .catch( err => { log.debug('t.error: ' + err ); log.debug( err.stack );} )
+});
 
 // test('query offset will return entities from the given offset');
 
