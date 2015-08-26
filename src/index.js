@@ -1,7 +1,5 @@
 'use strict';
 
-var _ = require('underscore');
-
 module.exports = {
     BitField: require('./bit_field'),
     Entity: require('./entity'),

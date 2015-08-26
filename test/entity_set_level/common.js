@@ -11,7 +11,7 @@ let PromiseQ = require('promise-queue');
 let Es = require('event-stream');
 let Sinon = require('sinon');
 
-export const Elsinore = require('../../lib');
+export const Elsinore = Common.Elsinore;
 
 let EntityFilter = Elsinore.EntityFilter;
 let EntitySet = Elsinore.EntitySet;
@@ -21,8 +21,8 @@ let Registry = Elsinore.Registry;
 let Utils = Elsinore.Utils;
 
 
-export const LevelEntitySet = require('../../lib/entity_set_level');
-export const LU = require('../../lib/entity_set_level/utils');
+export const LevelEntitySet = Common.requireLib('entity_set_level');//require('../../lib/entity_set_level');
+export const LU = Common.requireLib('entity_set_level/utils'); //require('../../lib/entity_set_level/utils');
 
 
 

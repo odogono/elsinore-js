@@ -201,7 +201,8 @@ function printVar(){
 global.printIns = printIns;
 global.printVar = printVar;
 
-var toStringPath = Path.join( rootDir, 'lib/util/to_string' )
+
+var toStringPath = Path.join(ElsinoreDir, 'util/to_string');
 
 global.printE = function(e){
     Util.log( require(toStringPath).toString(e) );

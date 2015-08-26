@@ -931,8 +931,4 @@ Query.create = function( registry, commands, options ){
     return result;
 }
 
-Query.poop = function(){
-    console.log('parp Query');
-}
-
 module.exports = Query;

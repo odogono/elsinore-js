@@ -32,9 +32,7 @@ var Entity = Model.extend({
         }
         this.set({id: entityId});
         var components = this.getComponents();
-        _.each( components, function(component){
-            component.setEntityId( entityId );
-        });
+        _.each( components, component => component.setEntityId( entityId ) );
     },
 
     setEntityId: function( id ){

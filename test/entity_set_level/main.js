@@ -199,6 +199,7 @@ test('removing a component from an entity with only one component', t => {
             })
             .then( finalise(t,entitySet) )
         })
+        .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
 });
 
 test('should add an entity only once', t => {

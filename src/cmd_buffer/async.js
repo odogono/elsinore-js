@@ -76,7 +76,7 @@ _.extend( CmdBuffer.prototype, SyncCmdBuffer.prototype, {
 
         // first create or retrieve an entity container for the component
         return self._packageEntityId( entitySet, entityId )
-            .then( function(entity){
+            .then( entity => {
                 // log.debug('pac e ' + entity.cid );
                 var commandOptions = _.extend( {}, options, {entity:entity, id:entity.id, mode:entity._mode} );
                 if( entity._mode === SyncCmdBuffer.OP_CREATE_NEW ||
@@ -95,10 +95,8 @@ _.extend( CmdBuffer.prototype, SyncCmdBuffer.prototype, {
                 // execute any outstanding commands
                 if( execute ){
                     return self.execute( entitySet, options )
-                        .then( function(){
-                            return Utils.valueArray( 
-                                self.componentsAdded.models.concat(self.componentsUpdated.models) );
-                        })
+                        .then( () => Utils.valueArray( 
+                                self.componentsAdded.models.concat(self.componentsUpdated.models) ) )
                 }
                 return [];
             })
@@ -200,12 +198,10 @@ _.extend( CmdBuffer.prototype, SyncCmdBuffer.prototype, {
 
             this.reset();
 
-            return _.reduce( component, function(current, com){
-                return current.then(function(){
-                    return self.removeComponent( entitySet, com, options );
-                });
-            }, Promise.resolve() )
-                .then( function(){
+            return _.reduce( component,
+                (current,com) => current.then(() => self.removeComponent(entitySet, com, options))
+            , Promise.resolve() )
+                .then( () => {
                     if( execute ){
                         return self.execute( entitySet, options );
                     }
@@ -224,11 +220,8 @@ _.extend( CmdBuffer.prototype, SyncCmdBuffer.prototype, {
             return Promise.resolve([]);
         }
 
-        // log.debug('removing ' + JSON.stringify(component) + ' ' + component.getEntityId() );
-
         return entitySet.getEntity( entityId, getEntityOptions )
-            .then( function(entity){
-                // log.debug('ok got entity ' + entityId + ' ' + entity.id );
+            .then( entity => {
                 var commandOptions = _.extend( {}, options, {entity:entity, id:entity.id, mode:0} );
                 self.addCommand( SyncCmdBuffer.CMD_COMPONENT_REMOVE, component, commandOptions );
                 if( !execute ){
@@ -236,12 +229,11 @@ _.extend( CmdBuffer.prototype, SyncCmdBuffer.prototype, {
                 }
                 
                 return self.execute( entitySet, options )
-                    .then( function(){
-                        return Utils.valueArray( self.componentsRemoved.models );
-                    });
+                    .then( () => Utils.valueArray(self.componentsRemoved.models) );
             })
-            .catch( function(err){
-                log.debug('removing notfound ' + Utils.getEntitySetIdFromId(entityId) + ' ' + entityId + ' ' + err );
+            .catch( err => {
+                log.error('err removing notfound ' + Utils.getEntitySetIdFromId(entityId) + ' ' + entityId + ' ' + err );
+                log.error( err.stack );
                 // entity doesn't exist
                 return execute ? [] : self;
             })
@@ -287,17 +279,13 @@ _.extend( CmdBuffer.prototype, SyncCmdBuffer.prototype, {
 
             this.reset();
 
-            return _.reduce( entity, function(current, ine){
-                return current.then(function(){
-                    return self.addEntity( entitySet, ine, options );
-                });
-            }, Promise.resolve() )
+            return _.reduce( entity,
+                (current,ine) => current.then( () => self.addEntity(entitySet, ine, options) )
+            , Promise.resolve() )
                 .then( function(){
                     if( execute ){
                         return self.execute( entitySet, options )
-                            .then( function(){
-                                return Utils.valueArray( self.entitiesAdded.models );
-                            })
+                            .then(() => Utils.valueArray(self.entitiesAdded.models))
                     }
                     return self;
                 });
