@@ -651,8 +651,6 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
             t.ok( spy.called, 'component:change should have been called' );
 
-            // printE( entitySet );
-
             t.end();
         });
     });

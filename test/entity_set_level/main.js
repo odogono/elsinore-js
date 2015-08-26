@@ -271,6 +271,37 @@ test('should emit an event when an entity is added and removed', t => {
         })
 });
 
+
+test('should emit an event when a component is changed', t => {
+    let registry;
+    let entities;
+
+    return Common.initialiseRegistry( {loadComponents: true} )
+        .then( _r => {registry = _r; entities = Common.loadEntities(_r);} )
+        .then( () => createEntitySet( registry, {esId:11, entityIdSeed:1, clear:true, debug:false}) )
+        .then( entitySet => {
+            let entity = entities.at(0);
+            let cloned, component = entity.Position;
+            let spy = Sinon.spy();
+            Common.logEvents( entitySet );
+
+            entitySet.on('component:change', spy);
+
+            return entitySet.addEntity(entities.at(0))
+                .then( () => {
+                    cloned = registry.cloneComponent(component);
+                    cloned.set({x:0,y:-2});
+                    return entitySet.addComponent(cloned);
+                })
+                .then( () => {
+                    t.ok( spy.called, 'component:change should have been called' );            
+                })
+                .then( finalise(t,entitySet) )
+        });
+});
+
+
+
 test('adding an existing entity changes its id if it didnt originate from the entityset', t => {
     let registry;
     return createEntitySet( null, {esId:205, loadComponents:true, clear:true, debug:false})
@@ -354,7 +385,7 @@ test('updating entity references when adding', t => {
 function finalise( t, entitySet ){
     return destroyEntitySet(entitySet, true)
         .then( () => { t.end() })
-        .catch( err => { log.debug('t.error: ' + err ); log.debug( err.stack );} )     
+        .catch( err => { log.error('t.error: ' + err ); log.error( err.stack );} )     
 }
 
 

@@ -66,36 +66,21 @@ var LevelEntitySet = EntitySet.extend({
         defaultComponentId = _.isUndefined(options.componentId) ? 200 : options.componentId;
 
         return LU.openDb( levelOptions )
-            .then( function(db){
+            .then( db => {
                 self._db = db;
                 // sets the UUID of this db
                 return LU.getSet( self._db, null, Constants.UUID, Utils.uuid() )
             })
-            .then( function(){
-                return LU.getSet( self._db, null, Constants.ENTITY_SET_ID, self.id )
-                    .then( function(id){
-                        self.id = id;
-                    });
-            })
-            .then( function(){
+            .then( () => LU.getSet( self._db, null, Constants.ENTITY_SET_ID, self.id )
+                    .then( id => self.id = id ) )
+            .then( () => 
                 // set up an id for component defs
-                return LU.createReuseableId(self._db, self._pQ, Constants.COMPONENT_DEF_ID, defaultComponentDefId)
-                    .then( function(ruid) {
-                        self._cdefId = ruid;
-                    });
-            })
-            .then( function(){
-                return LU.createReuseableId(self._db, self._pQ, Constants.ENTITY_ID, defaultEntityId )
-                    .then( function(ruid){
-                        self._entityId = ruid;
-                    });
-            })
-            .then( function(){
-                return LU.createReuseableId(self._db, self._pQ, Constants.COMPONENT_ID, defaultComponentId )
-                    .then( function(ruid){
-                        self._componentId = ruid;
-                    });
-            })
+                LU.createReuseableId(self._db, self._pQ, Constants.COMPONENT_DEF_ID, defaultComponentDefId)
+                    .then( ruid => self._cdefId = ruid ) )
+            .then( () => LU.createReuseableId(self._db, self._pQ, Constants.ENTITY_ID, defaultEntityId )
+                    .then( ruid => self._entityId = ruid ))
+            .then( () => LU.createReuseableId(self._db, self._pQ, Constants.COMPONENT_ID, defaultComponentId )
+                    .then( ruid => self._componentId = ruid ))
             .then( function(){
                 // load existing component defs into memory and then notify the registry about them
                 return self.getComponentDefs( {notifyRegistry:true} )
@@ -120,8 +105,8 @@ var LevelEntitySet = EntitySet.extend({
 
     _readValue: function( key ){
         var self = this;
-        return new Promise( function(resolve, reject){
-            self._db.get(key, function(err,val){
+        return new Promise( (resolve, reject) => {
+            self._db.get(key, (err,val) => {
                 if( err ){ return reject(err); }
                 return resolve( val );
             });
@@ -141,21 +126,15 @@ var LevelEntitySet = EntitySet.extend({
     */
     clear: function( options ){
         var self = this;
-        // printIns( this,1 );
         return LU.readStream( this._db, {
             values: false,
             gte: Constants.KEY_START,
             lte: Constants.KEY_LAST
-        }).then( function(keys){
-            var ops = _.map( keys, function(key){
-                // log.debug('clearing ' + key);
-                return { type:'del', key:key }
-            });
+        }).then( keys => {
+            let ops = _.map( keys, key => {return {type:'del', key:key}} );
             return LU.batch( self._db, self._pQ, ops );
         })
-        .then( function(){
-            return self;
-        });
+        .then( () => self );
     },
 
     /**
@@ -166,10 +145,7 @@ var LevelEntitySet = EntitySet.extend({
             values: false,
             gte: Constants.ENTITY_BITFIELD + Constants.KEY_START,
             lte: Constants.ENTITY_BITFIELD + Constants.KEY_LAST
-        }).then( function(keys){
-            // if( debug ) { printIns( keys ); }
-            return keys.length;
-        });
+        }).then( keys => keys.length );
     },
 
     /**
@@ -198,13 +174,11 @@ var LevelEntitySet = EntitySet.extend({
         // and then notifying each of the entitySets about the new component defs
         if( !options.fromRegistry ){
             return this.getRegistry().registerComponent( data, {fromES:self} )
-                .then( function(){
-                    return self;
-                })
+                .then( () => self );
         }
 
         return this.getComponentDefByHash( data.hash )
-            .then( function(existing){
+            .then( existing => {
                 if( existing ){
                     return existing;
                 }
@@ -218,12 +192,12 @@ var LevelEntitySet = EntitySet.extend({
         // var registry = self.getRegistry();
 
         return Promise.resolve(cdef)
-            .then( function(schema ){
+            .then( schema => {
                 schema = Utils.deepClone( _.pick(schema, 'uri', 'hash', 'obj', 'iid') );
                 schema.registered_at = Date.now();
                 // get an internal id for this new component def
                 return self._cdefId.get()
-                    .then( function(id){
+                    .then( id => {
                         if( id === undefined ){ throw new Error('no cdef esid generated'); }
                         // self.log('generated new cdef id ' + id);
                         schema.esid = id;
@@ -242,14 +216,14 @@ var LevelEntitySet = EntitySet.extend({
                         return schema;        
                     });
             })
-            .then( function(schema){
+            .then( schema => {
                 return LU.batch( self._db, self._pQ, [
                     { type:'put', key:[Constants.COMPONENT_DEF_ID,schema.esid].join(Constants.DELIMITER), value: schema},
                     { type:'put', key:[Constants.COMPONENT_DEF_HASH,schema.hash].join(Constants.DELIMITER), value:schema},
                     { type:'put', key:[Constants.COMPONENT_DEF_URI,schema.uri].join(Constants.DELIMITER), value:schema}
-                ]).then( function(){ return schema; });
+                ]).then( () => schema );
             })
-            .then( function(schema){
+            .then( schema => {
                 // self.log('registering cdef ' + schema.uri + ' ' + schema.hash + ' iid ' + schema.iid + ' esid ' + schema.esid );
                 self.trigger('cdef:register', schema);
                 return self;
@@ -301,7 +275,7 @@ var LevelEntitySet = EntitySet.extend({
             gte: Constants.COMPONENT_DEF_URI + Constants.KEY_START,
             lte: Constants.COMPONENT_DEF_URI + Constants.KEY_LAST
         })
-        .then( function(schemas){
+        .then( schemas => {
             // _.each( schemas, function(s){
             //     self.log('read schema ' + s.uri + ' ' + s.hash );
             // })
@@ -309,12 +283,8 @@ var LevelEntitySet = EntitySet.extend({
             if( options.notifyRegistry ){
                 var registry = self.getRegistry();
                 return Promise.all(
-                    _.map( schemas, function(schema){
-                        return registry.registerComponent( schema );
-                    }))
-                    .then( function(){
-                        return schemas;
-                    }); 
+                    _.map( schemas, schema => registry.registerComponent(schema) ))
+                    .then( () => schemas );
             }
             return schemas;
         })
