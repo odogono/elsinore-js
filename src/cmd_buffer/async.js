@@ -112,12 +112,13 @@ _.extend( CmdBuffer.prototype, SyncCmdBuffer.prototype, {
         var entity;
         var self = this;
         var getEntityOptions = { componentBitFieldOnly: true };
+        let registry = entitySet.getRegistry();
 
         // no entity id was provided
         if( !entityId ){
             entity = this._entityCache.get(0);
             if( !entity ){
-                entity = self._createHolderEntity( 0, SyncCmdBuffer.OP_CREATE_NEW );
+                entity = self._createHolderEntity( registry, 0, SyncCmdBuffer.OP_CREATE_NEW );
             }
             return Promise.resolve( entity );
         }
@@ -141,7 +142,7 @@ _.extend( CmdBuffer.prototype, SyncCmdBuffer.prototype, {
                 .catch( function(err){
                     // entity does not exist, create holder entity
                     // with id
-                    entity = self._createHolderEntity( entityId, SyncCmdBuffer.OP_CREATE_FROM_EXISTING_ID, entityId );
+                    entity = self._createHolderEntity( registry, entityId, SyncCmdBuffer.OP_CREATE_FROM_EXISTING_ID, entityId );
                     return entity;
                 });
         } else {
@@ -150,7 +151,7 @@ _.extend( CmdBuffer.prototype, SyncCmdBuffer.prototype, {
                 return Promise.resolve(entity);
             }
             // entity does not belong to this ES - create new entity with a new id
-            entity = self._createHolderEntity( entityId, SyncCmdBuffer.OP_CREATE_NEW );
+            entity = self._createHolderEntity( registry, entityId, SyncCmdBuffer.OP_CREATE_NEW );
             self._entityCache.add(entity);
             return Promise.resolve( entity );
         }
@@ -162,9 +163,10 @@ _.extend( CmdBuffer.prototype, SyncCmdBuffer.prototype, {
     /**
     *   addEntityId - the id that should be used to add to this entityset
     */
-    _createHolderEntity: function( existingId, mode, addEntityId ){
+    _createHolderEntity: function( registry, existingId, mode, addEntityId ){
         var entityId = _.isUndefined(existingId) ? 0 : existingId;
         var entity = Entity.create( entityId );
+        entity.setRegistry( registry );
         entity._addId = _.isUndefined(addEntityId) ? 0 : addEntityId;
         entity._mode = mode;
         // entity.set({mode:mode,addId:addEntityId});

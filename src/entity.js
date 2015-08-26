@@ -113,7 +113,7 @@ var Entity = Model.extend({
     getComponents: function( componentIds ){
         var components = this.components;
         componentIds = componentIds || this.getComponentBitfield().toValues();
-        return _.reduce( componentIds, function(result,id){
+        return _.reduce( componentIds, (result,id) => {
             var com = components[id];
             if( com ){ result.push( com ); }
             return result;
@@ -133,9 +133,7 @@ var Entity = Model.extend({
     getComponentByIId: function( iid ){
         var self = this;
         if( _.isArray(iid) ) {
-            return _.map( iid, function( id ){
-                return self.components[id];
-            });
+            return _.map( iid, id => self.components[id] )
         }
         return this.components[ iid ];
     },
@@ -143,6 +141,8 @@ var Entity = Model.extend({
     hasComponent: function( componentIId ){
         if( Component.isComponent(componentIId) ){
             componentIId = componentIId.getSchemaId();
+        } else if( _.isString(componentIId) ){
+            componentIId = this.getRegistry().getIId( componentIId );
         }
         return this.getComponentBitfield().get( componentIId );
     },

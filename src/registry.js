@@ -264,7 +264,6 @@ _.extend(Registry.prototype, Backbone.Events, {
         return this.schemaRegistry.getIId.apply( this.schemaRegistry, arguments );
     },
 
-
     /**
      * Creates a new component instance
      * 

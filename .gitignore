@@ -9,6 +9,8 @@ lib-cov
 .DS_Store
 *~
 
+# we generate lib dir from transpiled src/
+lib 
 dist
 pids
 logs
