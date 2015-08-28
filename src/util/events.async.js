@@ -1,9 +1,10 @@
 'use strict';
 
-var _ = require('underscore');
-var Backbone = require('backbone');
+let _ = require('underscore');
+let Backbone = require('backbone');
+let Utils = require('../utils');
 
-var EventsAsync = _.extend({}, Backbone.Events, {
+let EventsAsync = _.extend({}, Backbone.Events, {
 
     /**
     *
@@ -19,25 +20,33 @@ var EventsAsync = _.extend({}, Backbone.Events, {
     *   
     */
     listenToAsync: function(obj, name, callback){
-        var self = this;
-        var asyncListenQueue = this._asyncListenQueue || (this._asyncListenQueue = []);
+        let asyncListenQueue = this._asyncListenQueue || (this._asyncListenQueue = []);
         this.isListeningAsync = true;
-        return this.listenTo( obj, name, function(){
-            // log.debug('listenToAsync recv ' + JSON.stringify(arguments) );
-            asyncListenQueue.push( {c:callback, a:_.toArray(arguments)} );
-        });
+        // log.debug('registered listenToAsync ' + name + ' to ' + Utils.stringify(obj)  );
+
+        // NOTE: because we use the arguments object, we can't use es6 fat arrows here
+        let listenFn = function(){
+            // log.debug('listenToAsync recv ' + Utils.stringify(arguments) + ' for name '+ name);
+            asyncListenQueue.push( {c:callback, a:_.toArray(arguments),name} );
+        };
+
+        // this._asyncListeneners = this._asyncListeneners || (this._asyncListeneners={});
+        // this._asyncListeneners[name] = listenFn;
+
+        return this.listenTo( obj, name, listenFn);
     },
 
     /**
     *   Releases all previously received events
     */
     releaseAsync: function(){
-        var item, i,l;
+        let item, ii, len, args;
         if(!this._asyncListenQueue) { return this; }
-        for( i = 0, l = this._asyncListenQueue.length; i < l; i++ ){
-            item = this._asyncListenQueue[i];
-            // log.debug('releasing ' + JSON.stringify(item.a) );
-            item.c.apply( item.c, item.a );
+        for( ii = 0, len = this._asyncListenQueue.length; ii < len; ii++ ){
+            item = this._asyncListenQueue[ii];
+            args = [ item.name ].concat(item.a);
+            // log.debug('releasing ' + item.name, Utils.stringify(args) );
+            item.c.apply( item.c, args );
         }
         this._asyncListenQueue.length = 0;
         return this;

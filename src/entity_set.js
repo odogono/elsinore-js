@@ -285,18 +285,13 @@ let EntitySet = Backbone.Collection.extend({
         if( this.views ){
             _.each( this.views, view => {
                 if( (q = view.getQuery()) && q.execute(entity) ){
-                    // if(view.query){ log.debug('filter set on ' + view.cid + '/' + view.id + ' - ' + JSON.stringify(view.query.toJSON()) ); }
-                    // log.debug('triggering entity event on ' + view.cid + '/' + view.id );
-                    // printE( entity );
                     // NOTE: wierd, but it seems that arguments gets clobbered by the time it gets here - don't yet know why
                     view.triggerEntityEvent.apply( view, args );
                 }
             });
         }
-        
-            return this.trigger.apply( this, args );
-        
-        return false;
+
+        return this.trigger.apply( this, args );
     },
 
     listenToEntityEvent: function( entityOrFilter, name, callback, context ){

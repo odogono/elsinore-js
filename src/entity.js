@@ -172,11 +172,9 @@ var Entity = Model.extend({
 
 
     triggerEntityEvent: function(){
-        var es = this.getRegistry();// this.getEntitySet();
-        var args = _.toArray( arguments );
+        let es = this.getRegistry();
+        let args = _.toArray( arguments );
         args.splice(1, 0, this);
-        // args.unshift( this );
-        // printIns( args,1 );
         if( es ){
             // so we end up passing evtName, recipientEntity, ... 
             es.triggerEntityEvent.apply( es, args );

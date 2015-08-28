@@ -1,10 +1,10 @@
 'use strict';
 
-var _ = require('underscore');
-var test = require('tape');
+let _ = require('underscore');
+let test = require('tape');
 
-var Common = require('../common');
-var Elsinore = Common.Elsinore;
+let Common = require('../common');
+let Elsinore = Common.Elsinore;
 
 
 //
@@ -12,42 +12,29 @@ var Elsinore = Common.Elsinore;
 //
 test('main', function(t){
     let cDoor;
-    return initialise().then( ([registry,entitySet]) => {
-        return registry.registerComponent({
+    return initialise().then( ([registry,entitySet]) =>
+        registry.registerComponent({
             id:'/door', 
             properties:{
-                open:{type:'boolean'}, 
+                open:{type:'boolean', 'default': false}, 
                 material:{type:'string'} 
             } 
-        })
-        .then( cDef => {
-            return [cDef,registry, entitySet];
-        })
-    })
+        }).then(cDef => [cDef,registry, entitySet]) )
     .then( ([cDoor, registry, entitySet]) => {
-        var entitySet;
-        var eDoor;
-        var door;
-        var processor;
-        var registry;
-        var DoorProcessor;
-
-        // registry = Elsinore.Registry.create();
-        // entitySet = registry.createEntitySet();
-        // cDoor = registry.registerComponent({
-        //     id:'/door', 
-        //     properties:{
-        //         open:{type:'boolean'}, 
-        //         material:{type:'string'} 
-        //     } 
-        // });
+        let eDoor;
+        let door;
+        let processor;
+        let DoorProcessor;
         
         DoorProcessor = Elsinore.EntityProcessor.extend({
             // handle entity events
             events:{
-                'doorOpen': function( entity, entitySet ){
-                    entity.Door.set('open', Date.now());
-                }
+
+                'doorOpen': (entity, entitySet, msg) => entity.Door.set({'open': true, msg: msg}),
+                'doorClose': (entity, entitySet) => entity.Door.set('open', false)
+                // 'all': function(entity, es){
+                //     log.debug('!all ' + JSON.stringify(arguments));
+                // }
             },
 
             closingTime: {
@@ -57,16 +44,16 @@ test('main', function(t){
             },
 
             onUpdate: function( entityArray, timeMs ){
-                var entity, i, len;
-                var closeTime;
+                let entity, ii, len;
+                let closeTime;
                 
-                for( i=0,len=entityArray.length;i<len;i++ ){
-                    entity = entityArray[i];
+                _.each( entityArray, entity => {
                     closeTime = this.closingTime[ entity.Door.get('material') ];
                     if (timeMs >= entity.Door.get('open') + closeTime ) {
                         entity.Door.set({open:false});
+                        // eDoor.triggerEntityEvent( 'doorClose' );
                     }
-                }
+                });
             }
         });
 
@@ -86,20 +73,25 @@ test('main', function(t){
 
         // trigger an event on the entity set - this will open all door
         // components
-        eDoor.triggerEntityEvent( 'doorOpen' );
+        eDoor.triggerEntityEvent( 'doorOpen', 'now please' );
+
+        // the event isn't triggered until an update
+        t.equals( eDoor.Door.get('open'), false, 'the door is not yet open' );
 
         // an update has to occur for events to be processed
         registry.updateSync();
 
         // as a result of the event, the door should now be open
-        t.assert( eDoor.Door.get('open'), 'the door should be open' );
+        t.equals( eDoor.Door.get('open'), true, 'the door should be open' );
+
+        t.equals( eDoor.Door.get('msg'), 'now please', 'a message was also set');
 
         // run an update over all the entitysets in the registry - passing a
         // specific update time
         registry.updateSync( Date.now() + 300 );
 
         // as a result of the processor update, the door should now be closed
-        t.assert( eDoor.Door.get('open') === false, 'the door should be closed' );
+        t.equals( eDoor.Door.get('open'), false, 'the door should be closed' );
 
         t.end();
     })
@@ -109,8 +101,8 @@ test('main', function(t){
 
 function initialise(){
     return Common.initialiseRegistry().then( registry => {
-        var entitySet = registry.createEntitySet();
-        var entities = Common.loadEntities( registry );
+        let entitySet = registry.createEntitySet();
+        let entities = Common.loadEntities( registry );
         return [registry,entitySet,entities];    
     });
 }

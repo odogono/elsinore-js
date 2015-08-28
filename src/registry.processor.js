@@ -147,26 +147,23 @@ _.extend( Registry.prototype, {
 
     _attachEntitySetEventsToProcessor: function( entitySet, processor ){
         let name;
-        let event;
-        if( !processor.events ){
-            return;
-        }
+        if( !processor.events ){ return; }
         
         for( name in processor.events ){
-            event = processor.events[name];
-            // curry the event function so that it receives the entity and the entityset as arguments
-            processor.listenToAsync( entitySet, name, (entity) => {
-                let args = Array.prototype.slice.call( arguments, 1 );
-                return event.apply( processor, [entity, entitySet ].concat( args ) );
-            });
-
-            // entitySet.listenToEntityEvent( null, name, function( entity ){
-            //     let args = Array.prototype.slice.call( arguments, 1 );
-            //     return event.apply( processor, [entity, entitySet ].concat( args ) );
-            // });
+            this._createProcessorEvent( entitySet, processor, name, processor.events[name] );
         }
     },
 
+    _createProcessorEvent: function( entitySet, processor, name, event ){
+        // // curry the event function so that it receives the entity and the entityset as arguments
+        // // NOTE: because we use the arguments object, we can't use es6 fat arrows here
+        return processor.listenToAsync( entitySet, name, function( pName, pEntity, pEntitySet ){
+            let args = Array.prototype.slice.call( arguments, 2 );
+            args = [pEntity, entitySet].concat(args);
+            // log.debug('apply evt ' + pName + ' ' + JSON.stringify(args) );
+            return event.apply( processor, args);
+        });
+    },
     
 
     // update: function( callback ){
