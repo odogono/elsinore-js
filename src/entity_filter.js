@@ -1,10 +1,10 @@
 'use strict';
 
-var _ = require('underscore');
-var Backbone = require('backbone');
-var BitField = require('./bit_field');
-var Utils = require('./utils');
-var Entity = require('./entity');
+let _ = require('underscore');
+let Backbone = require('backbone');
+let BitField = require('./bit_field');
+let Utils = require('./utils');
+let Entity = require('./entity');
 
 EntityFilter.ALL = 0; // entities must have all the specified components
 EntityFilter.ANY = 1; // entities must have one or any of the specified components
@@ -22,9 +22,9 @@ function EntityFilter(){
 
 _.extend( EntityFilter.prototype, {
     add: function( type, bitField ){
-        var existing;
+        let existing;
         if( EntityFilter.isEntityFilter(type) ){
-            for (var t in type.filters) {
+            for (let t in type.filters) {
                 this.add( t, type.filters[t] );
             }
             return;
@@ -38,14 +38,14 @@ _.extend( EntityFilter.prototype, {
     },
 
     getValues: function(index){
-        var filter = this.filters[index || EntityFilter.ALL ];
+        let filter = this.filters[index || EntityFilter.ALL ];
         return filter.toValues();
     },
 
     accept: function( entity, options ){
-        var filter, bitField;
-        var ebf;// = BitField.isBitField(entity) ? entity : entity.getComponentBitfield();
-        var registry = options ? options.registry : null;
+        let filter, bitField;
+        let ebf;// = BitField.isBitField(entity) ? entity : entity.getComponentBitfield();
+        let registry = options ? options.registry : null;
 
         if( BitField.isBitField(entity) ){
             ebf = entity;
@@ -55,7 +55,7 @@ _.extend( EntityFilter.prototype, {
         }
 
 
-        for (var type in this.filters) {
+        for (let type in this.filters) {
             bitField = this.filters[type];
             // log.debug('EF.accept ' + type + ' ' + bitField.toString() );
 
@@ -77,8 +77,8 @@ _.extend( EntityFilter.prototype, {
     },
 
     toJSON: function(){
-        var bitField, result = {};
-        for (var type in this.filters) {
+        let bitField, result = {};
+        for (let type in this.filters) {
             result[type] = this.filters[type].toValues();
         }
         return result;
@@ -88,7 +88,7 @@ _.extend( EntityFilter.prototype, {
 
 
 function EntityFilterTransform( type, registry, entity, entityBitField, filterBitField ){
-    var ii, len, defId, bf, ebf, vals, isInclude, isExclude, result;
+    let ii, len, defId, bf, ebf, vals, isInclude, isExclude, result;
     isInclude = (type == EntityFilter.INCLUDE);
     isExclude = (type == EntityFilter.EXCLUDE);
 
@@ -123,12 +123,12 @@ function EntityFilterTransform( type, registry, entity, entityBitField, filterBi
 
 
 // EntityFilter.combine = function( filters ){
-//     var ii,len,filters, result;
+//     let ii,len,filters, result;
 //     if( filters.length === 0 ){ return filters };
 //     if( filters.length === 1 ){
 //         return filters[0];
 //     }
-//     var result = EntityFilter.create();
+//     let result = EntityFilter.create();
 
 //     result.filters = _.reduce( filters, function(result,filter){
 //         if( !result ){ return filter.filters; }
@@ -148,7 +148,7 @@ function EntityFilterTransform( type, registry, entity, entityBitField, filterBi
 //     *
 //     */
 //     add: function( type, bitField ){
-//         var componentIId;
+//         let componentIId;
 //         if( _.isFunction(type) ){
 //             this._filters.push( {type: EntityFilter.USER, accept: type} );
 //         } else if( EntityFilter.isEntityFilter(type) ){
@@ -179,13 +179,13 @@ function EntityFilterTransform( type, registry, entity, entityBitField, filterBi
 //     *   
 //     */
 //     iterator: function( source, options ){
-//         var self = this;
-//         var sourceIterator = source.iterator();
+//         let self = this;
+//         let sourceIterator = source.iterator();
 
 //         return {
 //             next: function(){
-//                 var entity;
-//                 var next;
+//                 let entity;
+//                 let next;
 //                 while( (entity = sourceIterator.next().value) ){
 //                     if( self.accept( entity ) ){
 //                         return { value:entity, done: false };
@@ -197,7 +197,7 @@ function EntityFilterTransform( type, registry, entity, entityBitField, filterBi
 //     },
 
 //     // iterator: function( source ){
-//     //     var sourceIterator = source.iterator();
+//     //     let sourceIterator = source.iterator();
 //     //     throw new Error('not yet implemented');
 //     // },
 
@@ -206,8 +206,8 @@ function EntityFilterTransform( type, registry, entity, entityBitField, filterBi
 //     * Returns true if the passed entity is accepted
 //     */
 //     accept: function(entity, options){
-//         var i,len,result, filter;
-//         var filterOptions = {};
+//         let i,len,result, filter;
+//         let filterOptions = {};
 //         if( !entity ){
 //             return false;
 //         }
@@ -227,8 +227,8 @@ function EntityFilterTransform( type, registry, entity, entityBitField, filterBi
 //     },
 
 //     _acceptEntity: function( entity, type, bitField, attrs, comIId, extra, debug ){
-//         var ebf, key, com;
-//         var bfCount, ebfCount;
+//         let ebf, key, com;
+//         let bfCount, ebfCount;
         
 //         if( !Entity.isEntity(entity) ){
 //             throw new Error('invalid entity passed ' + JSON.stringify(entity) );
@@ -292,8 +292,8 @@ function EntityFilterTransform( type, registry, entity, entityBitField, filterBi
 //     * may not have the same components on
 //     */
 //     transform: function( entity, options ){
-//         var i,len,result, filter;
-//         var produceCopy = true; // a new entity with the same components is produced
+//         let i,len,result, filter;
+//         let produceCopy = true; // a new entity with the same components is produced
 
 //         if( !this.accept(entity, options) ){
 //             return null;
@@ -320,8 +320,8 @@ function EntityFilterTransform( type, registry, entity, entityBitField, filterBi
 //     },
 
 //     _transformEntity: function( srcEntity, dstEntity, type, bitField, extra, debug ){
-//         var bf, ebf, vals, isInclude, isExclude;
-//         var result, i, len, defId;
+//         let bf, ebf, vals, isInclude, isExclude;
+//         let result, i, len, defId;
 
 //         isInclude = (type === EntityFilter.INCLUDE);
 //         isExclude = (type === EntityFilter.EXCLUDE);
@@ -354,9 +354,9 @@ function EntityFilterTransform( type, registry, entity, entityBitField, filterBi
 
 
 //     toArray: function( asString ){
-//         var result = _.map( this._filters, function(filter){
-//             var type = asString ? EntityFilter.TypeString[ filter.type ] : filter.type;
-//             var result = [ type, filter.bf.toValues() ];
+//         let result = _.map( this._filters, function(filter){
+//             let type = asString ? EntityFilter.TypeString[ filter.type ] : filter.type;
+//             let result = [ type, filter.bf.toValues() ];
 //             if( filter.type === EntityFilter.ATTRIBUTES ){
 //                 result = result.concat( filter.attrs );
 //             }
@@ -376,7 +376,7 @@ function EntityFilterTransform( type, registry, entity, entityBitField, filterBi
 //     // },
 
 //     toJSON: function(){
-//         var result = _.map( this._filters, function(filter){
+//         let result = _.map( this._filters, function(filter){
 //             if( filter.type === EntityFilter.USER ){
 //                 return {type:EntityFilter.TypeString[ filter.type ], accept:' `' + this.accept.toString() + '`'};
 //             }
@@ -391,8 +391,8 @@ function EntityFilterTransform( type, registry, entity, entityBitField, filterBi
 //     },
 
 //     // toString: function(){
-//     //     var typeString;
-//     //     var result = _.map( this._filters, function(filter){
+//     //     let typeString;
+//     //     let result = _.map( this._filters, function(filter){
 //     //         if( filter.type === EntityFilter.USER ){
 //     //             return EntityFilter.TypeString[ filter.type ] + ' `' + filter.accept.toString() + '`';
 //     //         }
@@ -435,7 +435,7 @@ EntityFilter.isEntityFilter = function( ef ){
 *   Returns true if the srcBitField is acceptable against the bitfield and type
 */
 EntityFilter.accept = function( type, srcBitField, bitField, debug ){
-    var bfCount, srcBitFieldCount;
+    let bfCount, srcBitFieldCount;
     
     if( bitField ){
         bfCount = bitField.count();
@@ -485,10 +485,10 @@ EntityFilter.accept = function( type, srcBitField, bitField, debug ){
 // */
 
 // EntityFilter.create = function( type, ids, attrs, options ){
-//     var i,len,cDefId;
-//     var args, result, userAcceptFn;
+//     let i,len,cDefId;
+//     let args, result, userAcceptFn;
 
-//     var filters = [];
+//     let filters = [];
 
 //     result = new EntityFilter();
 
@@ -517,7 +517,7 @@ EntityFilter.accept = function( type, srcBitField, bitField, debug ){
 //     }
 
 //     result._filters = _.map( filters, function(args){
-//         var attrs, type, bitField, result;
+//         let attrs, type, bitField, result;
 
 
 //         if( _.isFunction(args) ){
@@ -544,7 +544,7 @@ EntityFilter.accept = function( type, srcBitField, bitField, debug ){
 // }
 
 EntityFilter.create = function( type, bitField ){
-    var result = new EntityFilter();
+    let result = new EntityFilter();
     result.filters = {};
     if( type !== undefined ){ result.add(type,bitField); }
     return result;

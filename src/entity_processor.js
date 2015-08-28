@@ -5,7 +5,8 @@ var Backbone = require('backbone');
 
 var EntitySet = require('./entity_set');
 var Utils = require('./utils');
-var CmdBuffer = require('./cmd_buffer/sync');
+
+import * as CmdBuffer from './cmd_buffer/sync';
 
 var EventsAsync = require('./util/events.async');
 
@@ -37,15 +38,15 @@ var EntityProcessor = Backbone.Model.extend({
 
 
     applyChanges: function(){
-        var i,len,cmd;
-        var entity, component;
-        var entitySet = this.get('entitySet');
-        var componentsToAdd, componentsToRemove, entitiesToAdd, entitiesToRemove;
-        var result;
+        let ii,len,cmd;
+        let entity, component;
+        let entitySet = this.get('entitySet');
+        let componentsToAdd, componentsToRemove, entitiesToAdd, entitiesToRemove;
+        let result;
 
         // log.debug( this.name + ' applying ' + this._cmds.length + ' CMDS' );
-        for( i=0,len=this._cmds.length;i<len;i++ ){
-            cmd = this._cmds[i];
+        for( ii=0,len=this._cmds.length;ii<len;ii++ ){
+            cmd = this._cmds[ii];
             entity = cmd[1];
             // log.debug( this.name + ' CMD ' + JSON.stringify(cmd) );
 
@@ -104,10 +105,12 @@ var EntityProcessor = Backbone.Model.extend({
     },
 
     addComponentToEntity: function( entity, component ){
+        // log.debug('adding CMD ' + CmdBuffer.CMD_COMPONENT_ADD );
         this._cmds.push( [CmdBuffer.CMD_COMPONENT_ADD, entity, component] );
     },
 
     removeComponentFromEntity: function( entity, component ){
+        // log.debug('adding CMD ' + CmdBuffer.CMD_COMPONENT_REMOVE );
         this._cmds.push( [CmdBuffer.CMD_COMPONENT_REMOVE, entity, component] );
     },
 

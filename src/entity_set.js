@@ -1,25 +1,25 @@
 'use strict';
 
-var _ = require('underscore');
-var Backbone = require('backbone');
+let _ = require('underscore');
+let Backbone = require('backbone');
 
-var BitField = require('./bit_field');
-var Component = require('./component');
-var Entity = require('./entity');
-var EntityFilter = require('./entity_filter');
-// var Query = require('./entity_set/query')
-var Utils = require('./utils');
+let BitField = require('./bit_field');
+let Component = require('./component');
+let Entity = require('./entity');
+let EntityFilter = require('./entity_filter');
+// let Query = require('./entity_set/query')
+let Utils = require('./utils');
 
-var CmdBuffer = require('./cmd_buffer/sync');
+import * as CmdBuffer from './cmd_buffer/sync';
 
-var CollectionPrototype = Backbone.Collection.prototype;
+let CollectionPrototype = Backbone.Collection.prototype;
 
 
 
 /**
  * An EntitySet is a container for entities
  */
-var EntitySet = Backbone.Collection.extend({
+let EntitySet = Backbone.Collection.extend({
     type: 'EntitySet',
     isMemoryEntitySet: true,
     isEntitySet: true,
@@ -50,7 +50,7 @@ var EntitySet = Backbone.Collection.extend({
     },
 
     toJSON: function(){
-        var q,result = { cid:this.cid };
+        let q,result = { cid:this.cid };
         if( (q = this.getQuery()) ){
             result.query = q.toJSON();
         }
@@ -59,8 +59,8 @@ var EntitySet = Backbone.Collection.extend({
 
 
     // iterator: function(options){
-    //     var self = this;
-    //     var nextIndex = 0;
+    //     let self = this;
+    //     let nextIndex = 0;
     //     return {
     //         next: function(){
     //             return new Promise( function(resolve, reject){
@@ -74,11 +74,11 @@ var EntitySet = Backbone.Collection.extend({
     // },
 
     iterator: function(options){
-        var self = this, nextIndex = 0;
+        let nextIndex = 0;
         return {
-            next: function(){
-                return nextIndex < self.length ?
-                    { value: self.at(nextIndex++), done:false }:
+            next: () => {
+                return nextIndex < this.length ?
+                    { value: this.at(nextIndex++), done:false }:
                     { done:true };
             }
         }
@@ -111,8 +111,8 @@ var EntitySet = Backbone.Collection.extend({
     *   TODO: move out of here
     */
     onEntitySetEvent: function( evt ){
-        var options;
-        var args = Array.prototype.slice.call(arguments, 1);
+        let options;
+        let args = Array.prototype.slice.call(arguments, 1);
         switch( evt ){
             // case 'entity:add':
                 // return this.add.apply( this, args );
@@ -179,9 +179,8 @@ var EntitySet = Backbone.Collection.extend({
     },
 
     _createEntity: function( entityId, returnId ){
-        var result;
-        var entityId;
-        var options = {};
+        let result;
+        let options = {};
 
         if( returnId ){
             options.createId = true;
@@ -212,7 +211,7 @@ var EntitySet = Backbone.Collection.extend({
     },
 
     _removeEntity: function(entity){
-        var entityId = Entity.toEntityId(entity);
+        let entityId = Entity.toEntityId(entity);
         this.remove( entity );
         return entity;
     },
@@ -229,7 +228,7 @@ var EntitySet = Backbone.Collection.extend({
 
 
     reset: function( entities, options ){
-        var i,l,entity;
+        let i,l,entity;
         if( entities && entities.isEntitySet ){
             entities = entities.models;
         }
@@ -257,7 +256,7 @@ var EntitySet = Backbone.Collection.extend({
     */
     /*reset: function(entities, options){
         options || (options = {});
-        var opOptions = _.extend({silent: false, removeEmptyEntity:false},options);
+        let opOptions = _.extend({silent: false, removeEmptyEntity:false},options);
 
         this.removeEntity( this.models, opOptions );
         this._reset();
@@ -275,8 +274,8 @@ var EntitySet = Backbone.Collection.extend({
     *   
     */
     triggerEntityEvent: function( name, entity ){
-        var args = _.toArray(arguments);
-        var q;
+        let args = _.toArray(arguments);
+        let q;
         
         if( (q=this.getQuery()) && !q.execute(entity) ){
             return false;
@@ -284,7 +283,7 @@ var EntitySet = Backbone.Collection.extend({
 
         // log.debug('accepting EE on ' + this.cid+'/'+this.id );
         if( this.views ){
-            _.each( this.views, function(view){
+            _.each( this.views, view => {
                 if( (q = view.getQuery()) && q.execute(entity) ){
                     // if(view.query){ log.debug('filter set on ' + view.cid + '/' + view.id + ' - ' + JSON.stringify(view.query.toJSON()) ); }
                     // log.debug('triggering entity event on ' + view.cid + '/' + view.id );
@@ -316,7 +315,7 @@ var EntitySet = Backbone.Collection.extend({
 
     // TODO: remove
     doesEntityHaveComponent: function( entityId, componentId, options ){
-        var entity;
+        let entity;
         if( Utils.isInteger(entityId) ){
             entity = this.at(entityId);
         }
@@ -325,11 +324,11 @@ var EntitySet = Backbone.Collection.extend({
             throw new Error('entity not found: ' + entityId);
         }
 
-        var bf = entity.getComponentBitfield();
+        let bf = entity.getComponentBitfield();
         if( BitField.isBitField(componentId) ){
             return BitField.and( componentDef, bf );
         }
-        // var componentDefId = ComponentDef.getId( componentDef );
+        // let componentDefId = ComponentDef.getId( componentDef );
         return bf.get( componentId );
 
         // return entity.hasComponent( componentId );
@@ -337,7 +336,7 @@ var EntitySet = Backbone.Collection.extend({
 
     // TODO: remove
     removeComponentFromEntity: function( component, entity, options ){
-        var bf = entity.getComponentBitfield();
+        let bf = entity.getComponentBitfield();
 
         if( !bf.get(component.getSchemaId()) ){
             // log.debug('no component found for ' + component.name + ' ' + bf.toString() );
@@ -361,30 +360,26 @@ var EntitySet = Backbone.Collection.extend({
 
     // TODO: remove
     doesEntityHaveComponents: function( entity, options ){
-        var bf = entity.getComponentBitfield();
+        let bf = entity.getComponentBitfield();
         if( bf.count() > 0 ){
             return true;
         }
-        var size = _.keys(entity.components).length;
+        let size = _.keys(entity.components).length;
         return size > 0;
     },
 
 
     applyEvents: function(){
-        if( !this.listeners ){
-            return;
-        }
-        _.each( this.listeners, function(listener){
-            listener.applyEvents();
-        });
+        if( !this.listeners ){ return; }
+        _.each( this.listeners, listener => listener.applyEvents() );
     },
 
 
     // _runQuery: function( query, selectEntities ){
-    //     var self = this;
-    //     var registry = this.getRegistry();
+    //     let self = this;
+    //     let registry = this.getRegistry();
     //     // console.log('_runQuery with ' + this.type + ' ' + query.type );
-    //     var result = registry.createEntitySet(null, {register:false});
+    //     let result = registry.createEntitySet(null, {register:false});
 
     //     result = EntitySet.map( this, query, result );
 
@@ -393,9 +388,9 @@ var EntitySet = Backbone.Collection.extend({
 
     //         _.each( selectEntities, function( componentQuery ){
     //             log.debug('looking up ' + JSON.stringify(componentQuery.componentUri));
-    //             var componentIIds = registry.getIId( componentQuery.componentUri, true );
-    //             var attrs = componentQuery.attrs;
-    //             var components, entityIds;
+    //             let componentIIds = registry.getIId( componentQuery.componentUri, true );
+    //             let attrs = componentQuery.attrs;
+    //             let components, entityIds;
 
     //             // select all the components
     //             components = result.models.reduce( function(result,e){
@@ -405,8 +400,8 @@ var EntitySet = Backbone.Collection.extend({
 
     //             // select entity id attributes
     //             entityIds = components.reduce( function(result,com){
-    //                 var val;
-    //                 for( var i=0;i<attrs.length;i++ ){
+    //                 let val;
+    //                 for( let i=0;i<attrs.length;i++ ){
     //                     val = com.get( attrs[i] );
     //                     if( Entity.isEntityId(val) ){
     //                         result.push( val );
@@ -420,7 +415,7 @@ var EntitySet = Backbone.Collection.extend({
 
     //             // componentQuery.attrs;
 
-    //             // var entityIds = Query.resolveComponentQuery( order, result, registry );
+    //             // let entityIds = Query.resolveComponentQuery( order, result, registry );
     //         });
     //     }
 
@@ -431,10 +426,10 @@ var EntitySet = Backbone.Collection.extend({
     // *   Selects a number of entities from the entityset
     // */
     // whereDeprecated: function( query, attrs, options ){
-    //     var result;// = EntitySet.create();
-    //     var registry = this.getRegistry();
-    //     var filters;
-    //     var componentUri;
+    //     let result;// = EntitySet.create();
+    //     let registry = this.getRegistry();
+    //     let filters;
+    //     let componentUri;
 
     //     options || (options={});
 
@@ -492,7 +487,7 @@ var EntitySet = Backbone.Collection.extend({
 // // NOTE - should really use iterator rather than these
 // _.each( ['forEach', 'each', /*'map',*/ 'where', 'filter'], function(method){
 //     EntitySet.prototype[method] = function(){
-//         var args = Array.prototype.slice.call(arguments);
+//         let args = Array.prototype.slice.call(arguments);
 //         args.unshift( this.entities.models );
 //         return _[method].apply( _, args );
 //     };
@@ -500,7 +495,7 @@ var EntitySet = Backbone.Collection.extend({
 
 
 EntitySet.hash = function( entitySet ){
-    var hash = entitySet.type;
+    let hash = entitySet.type;
     return Utils.hash( hash, true );
 }
 
@@ -526,7 +521,7 @@ EntitySet.isMemoryEntitySet = function(es){
 
 
 EntitySet.create = function(options){
-    var result;
+    let result;
     options || (options = {});
     result = new EntitySet();
 
@@ -551,4 +546,4 @@ EntitySet.create = function(options){
 };
 
 
-module.exports = EntitySet;
+export default EntitySet;

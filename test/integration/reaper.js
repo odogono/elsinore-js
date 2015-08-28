@@ -1,15 +1,15 @@
 'use strict';
 
-var _ = require('underscore');
-var test = require('tape');
-var Sinon = require('sinon');
+let _ = require('underscore');
+let test = require('tape');
+let Sinon = require('sinon');
 
-var Common = require('../common');
-var Elsinore = Common.Elsinore;
+let Common = require('../common');
+let Elsinore = Common.Elsinore;
 
-var EntityProcessor = Elsinore.EntityProcessor;
-var EntityFilter = Elsinore.EntityFilter;
-var EntitySet = Elsinore.EntitySet;
+let EntityProcessor = Elsinore.EntityProcessor;
+let EntityFilter = Elsinore.EntityFilter;
+let EntitySet = Elsinore.EntitySet;
 let Query = Elsinore.Query;
 
 /**
@@ -18,26 +18,24 @@ let Query = Elsinore.Query;
 */
 test('reaper', function(t){
     return Common.initialiseRegistry().then( registry => {
-        var entitySet = registry.createEntitySet();
+        let entitySet = registry.createEntitySet();
 
         return registry.registerComponent({
             connection: {id:'/connection', addr:{ type:'string' }},
             ttl: {id:'/ttl', expires_at:{ type:'number' }},
             dead: {id:'/dead'}
         })
-        .then( () => {
-            return [registry,entitySet];
-        })
+        .then( () => [registry,entitySet] )
     })
     .then( ([registry,entitySet]) => {
 
         // printIns( registry.schemaRegistry );
         // printIns( registry.schemaRegistry.get('/connection') );
-        // var cConnection, cTimeToLive, cDead;
-        var ConnectionProcessor, ReaperProcessor;
-        var reaperProcessor, connectionProcessor;
+        // let cConnection, cTimeToLive, cDead;
+        let ConnectionProcessor, ReaperProcessor;
+        let reaperProcessor, connectionProcessor;
 
-        var eventSpy = Sinon.spy();
+        let eventSpy = Sinon.spy();
 
         entitySet.on('all', eventSpy);
 
@@ -51,11 +49,11 @@ test('reaper', function(t){
             entityFilter: Query.all('/dead'),
             
             onUpdate: function( entityArray, timeMs ){
-                var entity, i, len;
+                let entity, ii, len;
                 // log.debug('/p/reaper ' + entityArray.length + ' models' );
                 // any entities marked as dead should be removed
-                for( i=0,len=entityArray.length;i<len;i++ ){
-                    entity = entityArray[i];
+                for( ii=0,len=entityArray.length;ii<len;ii++ ){
+                    entity = entityArray[ii];
                     // log.debug('destroying entity ' + entity.id );
                     // printE( entity );
                     this.destroyEntity( entity );
@@ -70,11 +68,11 @@ test('reaper', function(t){
             entityFilter: Query.all('/ttl'),
 
             onUpdate: function( entityArray, timeMs ){
-                var entity, i, len;
+                let entity, ii, len;
                 // log.debug('updating /p/connection with ' + entityArray.length + ' entities');
                 // any entities which have an expired ttl should be marked as dead
-                for( i=0,len=entityArray.length;i<len;i++ ){
-                    entity = entityArray[i];
+                for( ii=0,len=entityArray.length;ii<len;ii++ ){
+                    entity = entityArray[ii];
                     // printE( entity );
 
                     if( entity.Ttl.get('expires_at') <= timeMs ){
@@ -148,9 +146,9 @@ test('reaper', function(t){
 
 
 function FilterEntitySet( entitySet, entityFilter ){
-    var registry = entitySet.getRegistry();
+    let registry = entitySet.getRegistry();
     entityFilter = registry.createEntityFilter( entityFilter );
-    var collection = entitySet.where( entityFilter );
+    let collection = entitySet.where( entityFilter );
     return collection.models;
 }
 
@@ -180,10 +178,10 @@ function createTestEntitySet( registry, entitySet ){
 }
 
 function populateEntitySet( registry, entitySet, data ){
-    return _.reduce( data, function( entitySet, entityData ){
-        entitySet.addComponent( entityData.map( function(comData){
-            return registry.createComponent.apply( registry, comData );
-        }), {debug:false} );
+    return _.reduce( data, (entitySet, entityData) => {
+        entitySet.addComponent( 
+            entityData.map( comData => registry.createComponent.apply(registry, comData) )
+        , {debug:false} );
         return entitySet;
     }, entitySet );
 }

@@ -1,22 +1,22 @@
 'use strict';
 
-var _ = require('underscore');
-var Backbone = require('backbone');
+let _ = require('underscore');
+let Backbone = require('backbone');
 
-var BitField = require('../bit_field');
-var Component = require('../component');
-var Entity = require('../entity');
-var EntityFilter = require('../entity_filter');
-var Errors = require('../error');
-var Utils = require('../utils');
+let BitField = require('../bit_field');
+let Component = require('../component');
+let Entity = require('../entity');
+let EntityFilter = require('../entity_filter');
+let Errors = require('../error');
+let Utils = require('../utils');
 
-var SyncCmdBuffer = require('./sync');
+import * as SyncCmdBuffer from './sync';
 
 
 function CmdBuffer(){
 }
 
-var superReset = SyncCmdBuffer.prototype.reset;
+let superReset = SyncCmdBuffer.prototype.reset;
 
 _.extend( CmdBuffer.prototype, SyncCmdBuffer.prototype, {
 
@@ -30,7 +30,7 @@ _.extend( CmdBuffer.prototype, SyncCmdBuffer.prototype, {
     * Adds a component to this set
     */
     addComponent: function( entitySet, component, options = {}){
-        var self = this, debug, batch, execute, silent, listenTo, entityId, entity, existingCom;
+        let debug, batch, execute, silent, listenTo, entityId, entity, existingCom;
         
         debug = options.debug;
         silent = options.silent;
@@ -50,17 +50,13 @@ _.extend( CmdBuffer.prototype, SyncCmdBuffer.prototype, {
                 execute = true;
             }
 
-            return _.reduce( component, function(current, com){
-                return current.then(function(){
-                    return self.addComponent( entitySet, com, options );
-                });
+            return _.reduce( component, (current, com) => {
+                return current.then( () => this.addComponent(entitySet, com, options) );
             }, Promise.resolve() )
-                .then( function(){
-                    if( !execute ){ return self; }
-                    return self.execute( entitySet, options )
-                        .then( function(){
-                            return Utils.valueArray( self.componentsAdded.models );
-                        });
+                .then( () => {
+                    if( !execute ){ return this; }
+                    return this.execute( entitySet, options )
+                        .then( () => Utils.valueArray(this.componentsAdded.models) );
                 });
         } else {
             if( execute ){ this.reset(); }
@@ -71,31 +67,31 @@ _.extend( CmdBuffer.prototype, SyncCmdBuffer.prototype, {
         // determine whether we have this component registered already
         entityId = component.getEntityId();
 
-        var initial;
+        let initial;
 
         // first create or retrieve an entity container for the component
-        return self._packageEntityId( entitySet, entityId )
+        return this._packageEntityId( entitySet, entityId )
             .then( entity => {
                 // log.debug('pac e ' + entity.cid );
-                var commandOptions = _.extend( {}, options, {entity:entity, id:entity.id, mode:entity._mode} );
+                let commandOptions = _.extend( {}, options, {entity:entity, id:entity.id, mode:entity._mode} );
                 if( entity._mode === SyncCmdBuffer.OP_CREATE_NEW ||
                     entity._mode === SyncCmdBuffer.OP_CREATE_FROM_EXISTING_ID ){
-                    self.addCommand( SyncCmdBuffer.CMD_ENTITY_ADD, entity.id, commandOptions );
+                    this.addCommand( SyncCmdBuffer.CMD_ENTITY_ADD, entity.id, commandOptions );
                 }
 
                 if( entity.hasComponent(component) ){
-                    self.addCommand( SyncCmdBuffer.CMD_COMPONENT_UPDATE, component, commandOptions );
+                    this.addCommand( SyncCmdBuffer.CMD_COMPONENT_UPDATE, component, commandOptions );
                 } else {
-                    self.addCommand( SyncCmdBuffer.CMD_COMPONENT_ADD, component, commandOptions );
+                    this.addCommand( SyncCmdBuffer.CMD_COMPONENT_ADD, component, commandOptions );
                 }
                 entity.addComponent( component );
             })
-            .then(function(){
+            .then( () => {
                 // execute any outstanding commands
                 if( execute ){
-                    return self.execute( entitySet, options )
+                    return this.execute( entitySet, options )
                         .then( () => Utils.valueArray( 
-                                self.componentsAdded.models.concat(self.componentsUpdated.models) ) )
+                                this.componentsAdded.models.concat(this.componentsUpdated.models) ) )
                 }
                 return [];
             })
@@ -108,16 +104,15 @@ _.extend( CmdBuffer.prototype, SyncCmdBuffer.prototype, {
     * passed
     */
     _packageEntityId: function( entitySet, entityId ){
-        var entity;
-        var self = this;
-        var getEntityOptions = { componentBitFieldOnly: true };
+        let entity;
+        let getEntityOptions = { componentBitFieldOnly: true };
         let registry = entitySet.getRegistry();
 
         // no entity id was provided
         if( !entityId ){
             entity = this._entityCache.get(0);
             if( !entity ){
-                entity = self._createHolderEntity( registry, 0, SyncCmdBuffer.OP_CREATE_NEW );
+                entity = this._createHolderEntity( registry, 0, SyncCmdBuffer.OP_CREATE_NEW );
             }
             return Promise.resolve( entity );
         }
@@ -129,19 +124,19 @@ _.extend( CmdBuffer.prototype, SyncCmdBuffer.prototype, {
             }
             
             return entitySet.getEntity( entityId, getEntityOptions )
-                .then( function(entity){
-                    var bf = entity.getComponentBitfield();
+                .then( (entity) => {
+                    let bf = entity.getComponentBitfield();
                     // dupe the entity bitfield, so we have an idea of it's original state
                     entity._mode = SyncCmdBuffer.OP_UPDATE_EXISTING;
                     entity._ocomBf = BitField.create(bf);
                     // entity found, store in cache for successive queries
-                    self._entityCache.add(entity);
+                    this._entityCache.add(entity);
                     return entity;
                 })
-                .catch( function(err){
+                .catch( (err) => {
                     // entity does not exist, create holder entity
                     // with id
-                    entity = self._createHolderEntity( registry, entityId, SyncCmdBuffer.OP_CREATE_FROM_EXISTING_ID, entityId );
+                    entity = this._createHolderEntity( registry, entityId, SyncCmdBuffer.OP_CREATE_FROM_EXISTING_ID, entityId );
                     return entity;
                 });
         } else {
@@ -150,8 +145,8 @@ _.extend( CmdBuffer.prototype, SyncCmdBuffer.prototype, {
                 return Promise.resolve(entity);
             }
             // entity does not belong to this ES - create new entity with a new id
-            entity = self._createHolderEntity( registry, entityId, SyncCmdBuffer.OP_CREATE_NEW );
-            self._entityCache.add(entity);
+            entity = this._createHolderEntity( registry, entityId, SyncCmdBuffer.OP_CREATE_NEW );
+            this._entityCache.add(entity);
             return Promise.resolve( entity );
         }
     },
@@ -163,8 +158,8 @@ _.extend( CmdBuffer.prototype, SyncCmdBuffer.prototype, {
     *   addEntityId - the id that should be used to add to this entityset
     */
     _createHolderEntity: function( registry, existingId, mode, addEntityId ){
-        var entityId = _.isUndefined(existingId) ? 0 : existingId;
-        var entity = Entity.create( entityId );
+        let entityId = _.isUndefined(existingId) ? 0 : existingId;
+        let entity = Entity.create( entityId );
         entity.setRegistry( registry );
         entity._addId = _.isUndefined(addEntityId) ? 0 : addEntityId;
         entity._mode = mode;
@@ -178,9 +173,8 @@ _.extend( CmdBuffer.prototype, SyncCmdBuffer.prototype, {
     *
     */
     removeComponent: function( entitySet, component, options ){
-        var batch,execute, debug, entityId;
-        var self = this;
-        var getEntityOptions = { componentBitFieldOnly: true };
+        let batch,execute, debug, entityId;
+        let getEntityOptions = { componentBitFieldOnly: true };
         options || (options = {});
 
         debug = options.debug;
@@ -200,13 +194,13 @@ _.extend( CmdBuffer.prototype, SyncCmdBuffer.prototype, {
             this.reset();
 
             return _.reduce( component,
-                (current,com) => current.then(() => self.removeComponent(entitySet, com, options))
+                (current,com) => current.then(() => this.removeComponent(entitySet, com, options))
             , Promise.resolve() )
                 .then( () => {
                     if( execute ){
-                        return self.execute( entitySet, options );
+                        return this.execute( entitySet, options );
                     }
-                    return self;
+                    return this;
                 });
         } else {
             if( execute ){
@@ -223,20 +217,20 @@ _.extend( CmdBuffer.prototype, SyncCmdBuffer.prototype, {
 
         return entitySet.getEntity( entityId, getEntityOptions )
             .then( entity => {
-                var commandOptions = _.extend( {}, options, {entity:entity, id:entity.id, mode:0} );
-                self.addCommand( SyncCmdBuffer.CMD_COMPONENT_REMOVE, component, commandOptions );
+                let commandOptions = _.extend( {}, options, {entity:entity, id:entity.id, mode:0} );
+                this.addCommand( SyncCmdBuffer.CMD_COMPONENT_REMOVE, component, commandOptions );
                 if( !execute ){
-                    return self;
+                    return this;
                 }
                 
-                return self.execute( entitySet, options )
-                    .then( () => Utils.valueArray(self.componentsRemoved.models) );
+                return this.execute( entitySet, options )
+                    .then( () => Utils.valueArray(this.componentsRemoved.models) );
             })
             .catch( err => {
                 log.error('err removing notfound ' + Utils.getEntitySetIdFromId(entityId) + ' ' + entityId + ' ' + err );
                 log.error( err.stack );
                 // entity doesn't exist
-                return execute ? [] : self;
+                return execute ? [] : this;
             })
 
         // if( debug ){ log.debug('removing component from entity ' + component.getEntityId() ); }
@@ -244,13 +238,13 @@ _.extend( CmdBuffer.prototype, SyncCmdBuffer.prototype, {
 
         // // execute any outstanding commands
         // if( execute ){
-        //     return self.execute( entitySet, options )
+        //     return this.execute( entitySet, options )
         //         .then( function(){
-        //             return Utils.valueArray( self.componentsRemoved.models );
+        //             return Utils.valueArray( this.componentsRemoved.models );
         //         });
         // }
 
-        // return self;
+        // return this;
     },
 
 
@@ -260,11 +254,10 @@ _.extend( CmdBuffer.prototype, SyncCmdBuffer.prototype, {
     - 
     */
     addEntity: function( entitySet, entity, options){
-        var self = this;
-        var entityId, entitySetId;
-        var batch;
-        var execute;
-        var addOptions = {batch: true, execute: false};
+        let entityId, entitySetId;
+        let batch;
+        let execute;
+        let addOptions = {batch: true, execute: false};
 
         options || (options={});
         batch = options.batch; // cmds get batched together and then executed
@@ -281,14 +274,14 @@ _.extend( CmdBuffer.prototype, SyncCmdBuffer.prototype, {
             this.reset();
 
             return _.reduce( entity,
-                (current,ine) => current.then( () => self.addEntity(entitySet, ine, options) )
+                (current,ine) => current.then( () => this.addEntity(entitySet, ine, options) )
             , Promise.resolve() )
-                .then( function(){
+                .then( () => {
                     if( execute ){
-                        return self.execute( entitySet, options )
-                            .then(() => Utils.valueArray(self.entitiesAdded.models))
+                        return this.execute( entitySet, options )
+                            .then(() => Utils.valueArray(this.entitiesAdded.models))
                     }
-                    return self;
+                    return this;
                 });
         } else {
             if( execute ){
@@ -300,45 +293,40 @@ _.extend( CmdBuffer.prototype, SyncCmdBuffer.prototype, {
             throw new Errors.InvalidEntityError('entity instance not passed');
         }
 
-        return self.addComponent( entitySet, entity.getComponents(), _.extend({},options,addOptions) )
-            .then( function(){
+        return this.addComponent( entitySet, entity.getComponents(), _.extend({},options,addOptions) )
+            .then( () => {
                 if( !execute ){
                     // log.debug('completed e addC');
                     // printE( entity );
-                    return self;
+                    return this;
                 }
 
                 // execute any outstanding commands
-                return self.execute( entitySet, options )
-                    .then( function(){
-                        // printIns( self.entitiesUpdated );
+                return this.execute( entitySet, options )
+                    .then( () => {
+                        // printIns( this.entitiesUpdated );
                         return Utils.valueArray( 
-                            self.entitiesAdded.models.concat( self.entitiesUpdated.models ) );
+                            this.entitiesAdded.models.concat( this.entitiesUpdated.models ) );
                     });
             });
     },
 
-    flush: function( entitySet, options ){
-        var self = this;
-        options = options || {};
+    flush: function( entitySet, options={} ){
         return this.execute( entitySet, options )
-            .then( function(){  return self; });
+            .then( () => this );
     },
 
     /**
     *
     */
-    removeEntity: function( entitySet, entity, options){
-        var i, batch, execute, existingEntity, entityId;
-        var executeOptions;
-        var self = this;
-        var removeOptions = {batch: true, execute: false};
+    removeEntity: function( entitySet, entity, options={}){
+        let ii, batch, execute, existingEntity, entityId;
+        let executeOptions;
+        let removeOptions = {batch: true, execute: false};
 
         if( !entity ){
             return this;
         }
-
-        options = (options || {});
 
         batch = options.batch; // cmds get batched together and then executed
         execute = _.isUndefined(options.execute) ? true : options.execute;
@@ -355,16 +343,14 @@ _.extend( CmdBuffer.prototype, SyncCmdBuffer.prototype, {
 
             this.reset();
 
-            return _.reduce( entity, function(current, ine){
-                return current.then(function(){
-                    return self.removeEntity( entitySet, ine );
-                });
+            return _.reduce( entity, (current, ine) => {
+                return current.then( () => self.removeEntity(entitySet, ine) )
             }, Promise.resolve() )
-                .then( function(){
+                .then( () => {
                     if( execute ){
-                        return self.execute( entitySet, options );
+                        return this.execute( entitySet, options );
                     }
-                    return self;
+                    return this;
                 });
         } else {
             if( execute ){
@@ -377,16 +363,14 @@ _.extend( CmdBuffer.prototype, SyncCmdBuffer.prototype, {
         }
 
 
-        return self.removeComponent( entitySet, entity.getComponents(), _.extend({},options,removeOptions) )
-            .then( function(){
+        return this.removeComponent( entitySet, entity.getComponents(), _.extend({},options,removeOptions) )
+            .then( () => {
                 // execute any outstanding commands
                 if( execute ){
-                    return self.execute( entitySet, options )
-                        .then( function(){
-                            return Utils.valueArray( self.entitiesRemoved.models );
-                        });
+                    return this.execute( entitySet, options )
+                        .then( () => Utils.valueArray(this.entitiesRemoved.models) );
                 }
-                return self;        
+                return this;        
             });
 
 
@@ -397,7 +381,7 @@ _.extend( CmdBuffer.prototype, SyncCmdBuffer.prototype, {
         // // retrieve the existing entity
         // return entitySet.getEntity( entityId )
         //     .then( function existingEntityFound(entity){
-        //         var comDefId;
+        //         let comDefId;
 
         //         for( comDefId in entity.components ){
         //             self.addCommand( SyncCmdBuffer.CMD_COMPONENT_REMOVE, entity.components[comDefId] );
@@ -415,10 +399,9 @@ _.extend( CmdBuffer.prototype, SyncCmdBuffer.prototype, {
     },
 
     execute: function( entitySet, options ){
-        var cmds, entityId;
-        var self = this;
-        var silent;
-        var debug;
+        let cmds, entityId;
+        let silent;
+        let debug;
 
         debug = this.debug || options.debug;
         silent = options.silent === undefined ? false : options.silent;
@@ -426,20 +409,20 @@ _.extend( CmdBuffer.prototype, SyncCmdBuffer.prototype, {
         // log.debug('>>EXECUTING CMDS');// throw new Error('STOP');
         // printIns( this.cmds );
         // log.debug('go keys ' + _.keys(this.cmds) );
-        return _.keys(this.cmds).reduce( function(sequence, entityId){
-            var cmds = self.cmds[ entityId ];
+        return _.keys(this.cmds).reduce( (sequence, entityId) => {
+            let cmds = this.cmds[ entityId ];
             
-            return sequence.then( function(){
-                // var addedEntities = new Backbone.Collection();
+            return sequence.then( () => {
+                // let addedEntities = new Backbone.Collection();
                 
                 // iterate through each cmd for the entity
-                cmds.forEach( function(cmd){
+                cmds.forEach( (cmd) => {
 
-                    var component = cmd[1];
-                    var cmdOptions = cmd[2];
-                    var entity = cmdOptions.entity;
-                    var mode = cmdOptions.mode;
-                    var entityChanged = false;
+                    let component = cmd[1];
+                    let cmdOptions = cmd[2];
+                    let entity = cmdOptions.entity;
+                    let mode = cmdOptions.mode;
+                    let entityChanged = false;
                     
                     // log.debug('here? ' + JSON.stringify(cmdOptions) );
 
@@ -448,7 +431,7 @@ _.extend( CmdBuffer.prototype, SyncCmdBuffer.prototype, {
 
                     switch( cmd[0] ){
                         case SyncCmdBuffer.CMD_ENTITY_ADD:
-                            self.entitiesAdded.add( entity );
+                            this.entitiesAdded.add( entity );
                             
                             if( debug ){ 
                                 log.debug('cmd: adding entity ' + 
@@ -459,22 +442,22 @@ _.extend( CmdBuffer.prototype, SyncCmdBuffer.prototype, {
                         case SyncCmdBuffer.CMD_COMPONENT_ADD:
                             entity.addComponent( component );
                             // log.debug('ADD com ' + JSON.stringify(component) + ' to ' + entity.cid );
-                            if( !self.entitiesAdded.get(entity) ){
+                            if( !this.entitiesAdded.get(entity) ){
                                 // log.debug('c ' + JSON.stringify(component) );
-                                // printIns( self.entitiesAdded );
+                                // printIns( this.entitiesAdded );
                                 // throw new Error('c add, but not e ' + entity.id + '/' + entity.cid + ' add, so e up');
-                                self.entitiesUpdated.add(entity);
+                                this.entitiesUpdated.add(entity);
                             }
                             
-                            self.componentsAdded.add( component );
+                            this.componentsAdded.add( component );
                             break;
 
                         case SyncCmdBuffer.CMD_COMPONENT_UPDATE:
                             entity.addComponent( component );
-                            if( !self.entitiesAdded.get(entity) ){
-                                self.entitiesUpdated.add(entity);
+                            if( !this.entitiesAdded.get(entity) ){
+                                this.entitiesUpdated.add(entity);
                             }
-                            self.componentsUpdated.add(component);
+                            this.componentsUpdated.add(component);
                             break;
 
                         case SyncCmdBuffer.CMD_COMPONENT_REMOVE:
@@ -485,15 +468,15 @@ _.extend( CmdBuffer.prototype, SyncCmdBuffer.prototype, {
                             }
                             // printE( entity );
 
-                            self.componentsRemoved.add( component );
+                            this.componentsRemoved.add( component );
                             // log.debug('remove com ' + entity.hasComponents() + ' ' + entity.getComponentBitfield().toString() );
                             entity.removeComponent( component );
                             // if( (!entitySet.allowEmptyEntities || removeEmptyEntity) && !entity.hasComponents() ){
                             if( !entity.hasComponents() ){
-                                self.entitiesRemoved.add(entity);
-                                self.entitiesUpdated.remove( entity );
+                                this.entitiesRemoved.add(entity);
+                                this.entitiesUpdated.remove( entity );
                             } else {
-                                self.entitiesUpdated.add(entity);
+                                this.entitiesUpdated.add(entity);
                             }
                             break;
                     }
@@ -501,43 +484,42 @@ _.extend( CmdBuffer.prototype, SyncCmdBuffer.prototype, {
             });
 
         }, Promise.resolve() )
-        .then( function(){
-            var i,len;
-            var entity;
+        .then( () => {
+            let entity;
 
             if( debug ){
-                self.debugLog();
+                this.debugLog();
             }
 
             // save the new entities
             return entitySet.update( 
-                self.entitiesAdded.models, 
-                self.entitiesUpdated.models, 
-                self.entitiesRemoved.models, 
-                self.componentsAdded.models,
-                self.componentsUpdated.models,
-                self.componentsRemoved.models )
+                this.entitiesAdded.models, 
+                this.entitiesUpdated.models, 
+                this.entitiesRemoved.models, 
+                this.componentsAdded.models,
+                this.componentsUpdated.models,
+                this.componentsRemoved.models )
                 .then( function( updateResult ){
                     if( updateResult.entitiesAdded ){
-                        self.entitiesAdded.set( updateResult.entitiesAdded ); }
+                        this.entitiesAdded.set( updateResult.entitiesAdded ); }
                     if( updateResult.entitiesUpdated ){
-                        self.entitiesUpdated.set( updateResult.entitiesUpdated ); }
+                        this.entitiesUpdated.set( updateResult.entitiesUpdated ); }
                     if( updateResult.entitiesRemoved ){
-                        self.entitiesRemoved.set( updateResult.entitiesRemoved ); }
+                        this.entitiesRemoved.set( updateResult.entitiesRemoved ); }
                     if( updateResult.componentsAdded ){ 
-                        self.componentsAdded.set( updateResult.componentsAdded ); }
+                        this.componentsAdded.set( updateResult.componentsAdded ); }
                     if( updateResult.componentsUpdated ){ 
-                        self.componentsUpdated.set( updateResult.componentsUpdated ); }
+                        this.componentsUpdated.set( updateResult.componentsUpdated ); }
                     if( updateResult.componentsRemoved ){ 
-                        self.componentsRemoved.set( updateResult.componentsRemoved ); }
+                        this.componentsRemoved.set( updateResult.componentsRemoved ); }
                     if( updateResult && !_.isUndefined(updateResult.silent) ){
                         silent = updateResult.silent;
                     }
 
                     if( !silent ){
-                        self.triggerEvents( entitySet );
+                        this.triggerEvents( entitySet );
                     }
-                    return self;
+                    return this;
                 });
         });
     },
@@ -553,7 +535,7 @@ _.extend( CmdBuffer.prototype, SyncCmdBuffer.prototype, {
 });
 
 CmdBuffer.create = function(){
-    var result = new CmdBuffer();
+    let result = new CmdBuffer();
     result.reset();
     return result;
 }

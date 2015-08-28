@@ -17,7 +17,8 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
             var entitySet = registry.createEntitySet();
             t.ok( entitySet.isEntitySet, 'it is an entitySet' );
             t.end();
-        });
+        })
+        .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
     });
 
     test('non existence of an entity', t => {
@@ -57,7 +58,8 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
             t.ok( Component.isComponent(components[0]), 'returns an array of components' );
             t.end();
-        });
+        })
+        .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
     });
 
 

@@ -1,44 +1,43 @@
 'use strict';
 
-var _ = require('underscore');
-var Backbone = require('backbone');
+let _ = require('underscore');
+let Backbone = require('backbone');
 
-var BitField = require('../bit_field');
-var Component = require('../component');
-var Entity = require('../entity');
-var EntityFilter = require('../entity_filter');
-var Utils = require('../utils');
+let BitField = require('../bit_field');
+let Component = require('../component');
+let Entity = require('../entity');
+let EntityFilter = require('../entity_filter');
+let Utils = require('../utils');
 
-var CMD_ENTITY_ADD = CmdBuffer.CMD_ENTITY_ADD = 0;
-var CMD_ENTITY_REMOVE = CmdBuffer.CMD_ENTITY_REMOVE = 1;
-var CMD_ENTITY_UPDATE = CmdBuffer.CMD_ENTITY_UPDATE = 2;
-var CMD_COMPONENT_ADD = CmdBuffer.CMD_COMPONENT_ADD = 3;
-var CMD_COMPONENT_REMOVE = CmdBuffer.CMD_COMPONENT_REMOVE = 4;
-var CMD_COMPONENT_UPDATE = CmdBuffer.CMD_COMPONENT_UPDATE = 5;
+export const CMD_ENTITY_ADD = 0;
+export const CMD_ENTITY_REMOVE = 1;
+export const CMD_ENTITY_UPDATE = 2;
+export const CMD_COMPONENT_ADD = 3;
+export const CMD_COMPONENT_REMOVE = 4;
+export const CMD_COMPONENT_UPDATE = 5;
 
 
 // the entity id is valid, but the entity does not yet exist
-var OP_CREATE_FROM_EXISTING_ID = CmdBuffer.OP_CREATE_FROM_EXISTING_ID = 1;
+export const OP_CREATE_FROM_EXISTING_ID = 1;
 // a new entity is being created
-var OP_CREATE_NEW = CmdBuffer.OP_CREATE_NEW = 2;
+export const OP_CREATE_NEW = 2;
 // an existing entity is being updated
-var OP_UPDATE_EXISTING = CmdBuffer.OP_UPDATE_EXISTING = 3;
+export const OP_UPDATE_EXISTING = 3;
 
 
 
-function CmdBuffer(){
-}
+function CmdBuffer(){}
 
 
-var functions = {
+let functions = {
 
     /**
     * Adds a component to this set
     */
     addComponent: function( entitySet, component, options={}){
-        var self = this, debug, batch, execute, silent, listenTo, entityId, entity, componentDef, componentArray, existingCom;
-        var i, len;
-        var result;
+        let debug, batch, execute, silent, listenTo, entityId, entity, componentDef, componentArray, existingCom;
+        let ii, len;
+        let result;
 
         debug = options.debug;
         silent = options.silent;
@@ -62,8 +61,8 @@ var functions = {
 
             this.reset();
 
-            for( i in component ){
-                this.addComponent( entitySet, component[i], options );
+            for( ii in component ){
+                this.addComponent( entitySet, component[ii], options );
             }
             
             if( execute ){
@@ -136,13 +135,11 @@ var functions = {
     /**
     *
     */
-    removeComponent: function( entitySet, component, options ){
-        var i, batch,execute, debug;
-        var executeOptions;
-        var result;
+    removeComponent: function( entitySet, component, options={} ){
+        let batch,execute, debug;
+        let executeOptions;
+        let ii, result;
         
-        options || (options = {});
-
         debug = options.debug;
         batch = options.batch; // cmds get batched together and then executed
         execute = _.isUndefined(options.execute) ? true : options.execute;
@@ -163,8 +160,8 @@ var functions = {
 
             this.reset();
 
-            for( i in component ){
-                this.removeComponent( entitySet, component[i], options );
+            for( ii in component ){
+                this.removeComponent( entitySet, component[ii], options );
             }
             
             if( execute ){
@@ -197,11 +194,11 @@ var functions = {
     - 
     */
     addEntity: function( entitySet, entity, options={}){
-        var self = this, isNew, entity, entityId, existingEntity, debug, silent, ignoreComponents;
-        var eBf, exBf, i, len, comDefId, com;
-        var addComponentOptions;
-        var batch, execute;
-        var result;
+        let isNew, entityId, existingEntity, debug, silent, ignoreComponents;
+        let eBf, exBf, ii, len, comDefId, com;
+        let addComponentOptions;
+        let batch, execute;
+        let result;
         
         if( !entity ){
             return null;
@@ -221,8 +218,8 @@ var functions = {
 
             this.reset();
 
-            for( i in entity ){
-                this.addEntity( entitySet, entity[i], options );
+            for( ii in entity ){
+                this.addEntity( entitySet, entity[ii], options );
             }
             
             if( execute ){
@@ -286,9 +283,9 @@ var functions = {
     *
     */
     removeEntity: function( entitySet, entity, options={}){
-        var i, batch, comDefId, execute, existingEntity, entityId;
-        var executeOptions;
-        var result;
+        let ii, batch, comDefId, execute, existingEntity, entityId;
+        let executeOptions;
+        let result;
 
         if( !entity ){
             return null;
@@ -309,8 +306,8 @@ var functions = {
             
             this.reset();
 
-            for( i in entity ){
-                this.removeEntity( entitySet, entity[i], options );
+            for( ii in entity ){
+                this.removeEntity( entitySet, entity[ii], options );
             }
             
             if( execute ){
@@ -347,12 +344,12 @@ var functions = {
     },
 
     execute: function( entitySet, options ){
-        var ii, len,entityId,cmds,cmd;
-        var com, ocom, defId, isNew, cmdOptions, query;
-        var entity, tEntity, component, registry;
-        var removeEmptyEntity;
-        var debug;
-        var silent;
+        let ii, len,entityId,cmds,cmd;
+        let com, ocom, defId, isNew, cmdOptions, query;
+        let entity, tEntity, component, registry;
+        let removeEmptyEntity;
+        let debug;
+        let silent;
 
         if( options ){
             removeEmptyEntity = options.removeEmptyEntity;   
@@ -534,8 +531,8 @@ var functions = {
     *   Adds a add/remove/update command to a buffer of commands
     */
     addCommand: function addCommand( type, arg/*entityId|component*/, options ){
-        var entityId;
-        var entityBuffer;
+        let entityId;
+        let entityBuffer;
 
         options || (options={});
 
@@ -574,8 +571,8 @@ var functions = {
     },
 
     findEntityAddId: function(){
-        var cmds;
-        var entityId;
+        let cmds;
+        let entityId;
 
         for( entityId in this.cmds ){
             cmds = this.cmds[entityId];
@@ -620,10 +617,10 @@ function triggerEvent(source,name,col){
 
 _.extend( CmdBuffer.prototype, functions );
 
-CmdBuffer.create = function(){
-    var result = new CmdBuffer();
+export function create (){
+    let result = new CmdBuffer();
     result.reset();
     return result;
 }
 
-module.exports = CmdBuffer;
+export default CmdBuffer;

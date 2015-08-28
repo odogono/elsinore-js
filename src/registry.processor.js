@@ -1,28 +1,26 @@
 'use strict';
 
-var _ = require('underscore');
-var Backbone = require('backbone');
+let _ = require('underscore');
+let Backbone = require('backbone');
 
-var EntitySet = require('./entity_set');
-var Registry = require('./registry');
-var Query = require('./query/full');
+let EntitySet = require('./entity_set');
+let Registry = require('./registry');
+let Query = require('./query/full');
 
 _.extend( Registry.prototype, {
     /**
     *   Adds a new processor instance
     */
-    addProcessor: function( processorModel, entitySet, options ){
-        var self = this;
-        var processor;
-        var processorId;
-        var processorAttrs;
-        var processorOptions;
+    addProcessor: function( processorModel, entitySet, options={} ){
         
-        var priority;
-        var updateable;
+        let processor;
+        let processorId;
+        let processorAttrs;
+        let processorOptions;
+        
+        let priority;
+        let updateable;
 
-        // var entitySet;
-        options = (options || {});
         processorId = this.createId(); //processorModel.id || options.id;
         priority = _.isUndefined(options.priority) ? 0 : options.priority;
         updateable = _.isUndefined(options.update) ? true : options.update;
@@ -58,9 +56,9 @@ _.extend( Registry.prototype, {
         // if the processor has event listeners defined, connect those to the entityset
         this._attachEntitySetEventsToProcessor( entitySet, processor );
 
-        self.processors.add( processor );
+        this.processors.add( processor );
 
-        self.trigger('processor:add', processor );
+        this.trigger('processor:add', processor );
         
         return processor;
     },
@@ -81,9 +79,9 @@ _.extend( Registry.prototype, {
         - if the hash doesn't exist, create the view from the src entityset
     */
     _mapEntitySetToProcessor: function( entitySet, processor, options ){
-        var filter, hash, view, entitySetProcessors, debug;
+        let filter, hash, view, entitySetProcessors, debug;
 
-        var record = new Backbone.Model({
+        let record = new Backbone.Model({
             id: processor.id,
             entitySet: entitySet,
             processor: processor
@@ -148,8 +146,8 @@ _.extend( Registry.prototype, {
     },
 
     _attachEntitySetEventsToProcessor: function( entitySet, processor ){
-        var name;
-        var event;
+        let name;
+        let event;
         if( !processor.events ){
             return;
         }
@@ -157,13 +155,13 @@ _.extend( Registry.prototype, {
         for( name in processor.events ){
             event = processor.events[name];
             // curry the event function so that it receives the entity and the entityset as arguments
-            processor.listenToAsync( entitySet, name, function(entity){
-                var args = Array.prototype.slice.call( arguments, 1 );
+            processor.listenToAsync( entitySet, name, (entity) => {
+                let args = Array.prototype.slice.call( arguments, 1 );
                 return event.apply( processor, [entity, entitySet ].concat( args ) );
             });
 
             // entitySet.listenToEntityEvent( null, name, function( entity ){
-            //     var args = Array.prototype.slice.call( arguments, 1 );
+            //     let args = Array.prototype.slice.call( arguments, 1 );
             //     return event.apply( processor, [entity, entitySet ].concat( args ) );
             // });
         }
@@ -172,16 +170,16 @@ _.extend( Registry.prototype, {
     
 
     // update: function( callback ){
-    //     var self = this;
-    //     var now = Date.now();
-    //     var dt = now - this.updateLastTime;
+    //     let self = this;
+    //     let now = Date.now();
+    //     let dt = now - this.updateLastTime;
     //     this.updateLastTime = now;
     //     this.updateStartTime += dt;
-    //     var updateOptions = {};
+    //     let updateOptions = {};
 
     //     this.trigger('processor:update:start', this);
 
-    //     var current = Promise.fulfilled();
+    //     let current = Promise.fulfilled();
 
     //     return Promise.all( 
     //         this.processors.models.map( function(processor){
@@ -194,24 +192,21 @@ _.extend( Registry.prototype, {
     //         });
     // },
 
-    update: function( timeMs, options ){
-        var debug;
-        options || (options={});
+    update: function( timeMs, options={} ){
+        let debug;
         debug = options.debug;
 
-        return _.reduce( this.entitySetProcessors, function(current, record){
-            return current.then(function(){
-                var processor = record.get('processor');
-                var view = processorRecord.get('view');
-                var entityArray = view.models;
+        return _.reduce( this.entitySetProcessors, (current, record) => {
+            return current.then(() => {
+                let processor = record.get('processor');
+                let view = processorRecord.get('view');
+                let entityArray = view.models;
 
                 if( !entityArray || entityArray.length === 0 ){ return processor; }
 
                 return processor.onUpdate( entityArray, timeMs )
-                    .then( function(){
-                        return processor.applyChanges();
-                    })
-                    .then( function(){
+                    .then(() => processor.applyChanges())
+                    .then(() => {
                         if( view.isModified ){
                             return view.applyEvents();
                         }
@@ -224,23 +219,22 @@ _.extend( Registry.prototype, {
     /**
     *   Updates the processors attached to each entityset
     */
-    updateSync: function( timeMs, options ){
-        var entitySet;
-        var entitySetId;
-        var entitySetProcessors;
-        var debug;
-        var i,l;
+    updateSync: function( timeMs, options={} ){
+        let entitySet;
+        let entitySetId;
+        let entitySetProcessors;
+        let debug;
+        let ii,len;
 
-        options || (options={});
         debug = options.debug;
         
         if(debug){ log.debug('> registry.updateSync'); }
 
         // iterate through each of the entitysets which have processors
-        this.entitySetProcessors.each( function(processorRecord){
-            var processor = processorRecord.get('processor');
-            var view = processorRecord.get('view');
-            var entityArray = view.models;
+        this.entitySetProcessors.each( (processorRecord) => {
+            let processor = processorRecord.get('processor');
+            let view = processorRecord.get('view');
+            let entityArray = view.models;
 
             // dispatch any events that the processor has collected
             // from the last update loop

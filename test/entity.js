@@ -4,7 +4,7 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
     let Entity = Elsinore.Entity;
     let Utils = Elsinore.Utils;
 
-    test('is an entity', function(t){
+    test('is an entity', t => {
         let e = Entity.create();
         t.equals( e.type, 'Entity' );
         t.equals( Entity.prototype.type, 'Entity' );
@@ -13,7 +13,7 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
     });
 
 
-    test('setting the id', function(t){
+    test('setting the id', t => {
         let e = Entity.create( 456 );
         
         t.equals( e.getEntityId(), 456 );
@@ -52,18 +52,18 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
         t.end();
     })
 
-    test('hashing', function(t){
-        var e = Entity.create();
+    test('hashing', t => {
+        let e = Entity.create();
         // because an entity is the sum of its components, without components it is nothing
         t.equals( e.hash(), 0 );
 
-        var c = Component.create({name:'douglas'});
+        let c = Component.create({name:'douglas'});
         e.addComponent( c );
 
         t.equals( e.hash(true), '7c7ecfd3' );
 
-        var oe = Entity.create();
-        var oc = Component.create({name:'douglas'});
+        let oe = Entity.create();
+        let oc = Component.create({name:'douglas'});
         oe.addComponent( oc );
 
         t.equals( e.hash(), oe.hash() );

@@ -1,14 +1,12 @@
 'use strict';
 
-var _ = require('underscore');
-var Backbone = require('backbone');
-var Utils = require('./utils');
+let _ = require('underscore');
+let Backbone = require('backbone');
+let Utils = require('./utils');
 
 
 
-
-
-var Model = Backbone.Model.extend({
+let Model = Backbone.Model.extend({
     type: 'Model',
     isModel: true,
 
@@ -19,7 +17,7 @@ var Model = Backbone.Model.extend({
      */
     trigger: function(name){
         if( !this.registry ){ return; }
-        var args = Array.prototype.slice.call(arguments);
+        let args = Array.prototype.slice.call(arguments);
         args.splice( 1,0, this );
         this.registry.trigger.apply( this.registry, args );
     },
@@ -37,15 +35,15 @@ var Model = Backbone.Model.extend({
     },
 
     hash: function( asString ){
-        var result = JSON.stringify( this.cid );//_.omit(this.attributes,'hash'));
+        let result = JSON.stringify( this.cid );//_.omit(this.attributes,'hash'));
         return Utils.hash( result, asString );
     },
 
     toJSON: function( options ){
-        var result = _.clone(this.attributes);
+        let result = _.clone(this.attributes);
         // remove attributes beginning with '_'
-        var copy = {};
-        for (var key in result) {
+        let copy = {};
+        for (let key in result) {
             if(key[0] != '_' ){
                 copy[key] = result[key];
             }
@@ -57,4 +55,4 @@ var Model = Backbone.Model.extend({
     },
 });
 
-module.exports = Model;
+export default Model;
