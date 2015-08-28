@@ -16,7 +16,7 @@ var EventsAsync = _.extend({}, Backbone.Events, {
     listenToAsync: function(obj, name, callback){
         var self = this;
         var asyncListenQueue = this._asyncListenQueue || (this._asyncListenQueue = []);
-        return this.listenTo( obj, name, function(){
+        return this.listenTo( obj, name, () => {
             asyncListenQueue.push( {c:callback, a:_.toArray(arguments)} );
         });
     },
@@ -31,10 +31,10 @@ var EventsAsync = _.extend({}, Backbone.Events, {
     *   Releases all previously received events
     */
     releaseAsync: function(){
-        var item, i,l;
-        if(!this._asyncListenQueue) return this;
-        for( i = 0, l = this._asyncListenQueue.length; i < l; i++ ){
-            item = this._asyncListenQueue[i];
+        var item, ii, len;
+        if(!this._asyncListenQueue){ return this; }
+        for( ii = 0, len = this._asyncListenQueue.length; ii < len; ii++ ){
+            item = this._asyncListenQueue[ii];
             item.c.apply( item.c, item.a );
         }
         this._asyncListenQueue.length = 0;

@@ -207,7 +207,6 @@ Entity.createId = function(){
 //     return (esid & 0x1fffff) * 0x100000000 + (eid & 0xffffffff);
 // }
 
-
 Entity.create = function(entityId, entitySetId){
     var result = new Entity();
     result.cid = Entity.createId();
@@ -248,19 +247,14 @@ Entity.getEntityId = function( entity ){
 
 Entity.toEntityId = function( entityId ){
     if( Entity.isEntity(entityId) ){
-        return entityId.id;//getEntityId();
+        return entityId.id;
     }
     return entityId;
 };
 
-Entity.toEntity = function( entity, options ){
-    var entityId;//, entitySetId; 
-    
-    entityId = (entity === undefined) ? 0 : entity;
-    // entitySetId = 0;
-
-    if( Utils.isInteger(entityId) ){
-        return Entity.create( entityId, options );
+Entity.toEntity = function( entity = 0, options ){
+    if( Utils.isInteger(entity) ){
+        return Entity.create( entity, options );
     }
     
     if( Entity.isEntity(entity) ){ return entity; }

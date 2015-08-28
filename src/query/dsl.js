@@ -1,12 +1,12 @@
 'use strict';
 
-var _ = require('underscore');
-var Q = require('./index');
-var Utils = require('../utils');
+let _ = require('underscore');
+let Q = require('./index');
+let Utils = require('../utils');
 
 
 function precendence( operator ){
-    var result;
+    let result;
 
     result = Q.precendenceValues[ operator ];
     if( result !== undefined ){
@@ -32,7 +32,7 @@ function precendence( operator ){
 
 
 function argCount( operator ){
-    var result;
+    let result;
 
     result = Q.argCounts[ operator ];
     if( result !== undefined ){
@@ -52,12 +52,12 @@ function argCount( operator ){
     }
 }
 
-var FilterFunctions = {
+let FilterFunctions = {
     /**
     *   The entities must have ALL of the specified components
     */
     all: function (componentIds, filterFn){
-        var context = readContext( this );
+        let context = readContext( this );
         // context.pushOp( filterFn ? Q.ALL_FILTER : Q.ALL );
         context.pushOp( Q.ALL_FILTER );
         context.pushVal( componentIds, true );
@@ -69,7 +69,7 @@ var FilterFunctions = {
     },
 
     include: function(componentIds, filterFn){
-        var context = readContext( this );
+        let context = readContext( this );
         // context.pushOp( filterFn ? Q.INCLUDE_FILTER : Q.INCLUDE );
         context.pushOp( Q.INCLUDE_FILTER );
         context.pushVal( componentIds, true );
@@ -83,7 +83,7 @@ var FilterFunctions = {
     *   Entities should have at least one of the specified components
     */
     any: function( componentIds, filterFn ){
-        var context = readContext( this );
+        let context = readContext( this );
         // context.pushOp( filterFn ? Q.ANY_FILTER : Q.ANY );
         context.pushOp( Q.ANY_FILTER );
         context.pushVal( componentIds, true );
@@ -97,7 +97,7 @@ var FilterFunctions = {
     *   entities will be excluded if the have any of the componentIds
     */
     none: function (componentIds, filterFn ){
-        var context = readContext( this );
+        let context = readContext( this );
         context.pushOp( Q.NONE_FILTER );
         context.pushVal( componentIds, true );
         if( filterFn ){
@@ -113,10 +113,10 @@ function isFilterOp( op ){
     return (op[0] === Q.ALL || op[0] === Q.NONE);
 }
 
-var QueryFunctions = {
+let QueryFunctions = {
 
     and: function( val ){
-        var context = readContext( this );
+        let context = readContext( this );
         context.pushVal( val, true );
         context.pushOp( Q.AND );
         return context;
@@ -129,7 +129,7 @@ var QueryFunctions = {
     },
 
     where: function( clauses ){
-        var context = readContext(this);
+        let context = readContext(this);
         clauses = _.toArray(arguments);
 
         if( clauses.length <= 0 ){
@@ -184,8 +184,8 @@ var QueryFunctions = {
     *   Selects a component attribute
     */
     attr: function( attr ){
-        var lastCommand, op, val;
-        var context = readContext( this, false, true, true );
+        let lastCommand, op, val;
+        let context = readContext( this, false, true, true );
 
         context.pushVal( [Q.ATTR, attr] );
 
@@ -193,21 +193,21 @@ var QueryFunctions = {
     },
 
     value: function( val ){
-        var context = readContext( this );
+        let context = readContext( this );
         context.pushVal( val, true );
         return context;
     },
 
     root: function(){
-        var context = readContext(this);
+        let context = readContext(this);
         context.pushOp( Q.ROOT );
         return context;
     },
 
     toArray: function( toTree ){
-        var count = 0;
-        var op,val,result,vals;
-        var ii,len;
+        let count = 0;
+        let op,val,result,vals;
+        let ii,len;
 
         // move reminaing ops
         while( this.opStack.length > 0 ){
@@ -224,14 +224,14 @@ var QueryFunctions = {
 };
 
 Q.toArray = function( query, toTree ){
-    var commands = query;
+    let commands = query;
 
     if( Q.isQuery(query) ){
         return query.toArray( toTree );
     }
 
     if( _.isArray(query) ){
-        return _.reduce( query, function(result, command){
+        return _.reduce( query, (result, command) => {
             if( Q.isQuery(command) ){
                 command = command.toArray( toTree );
             }
@@ -248,7 +248,7 @@ Q.toArray = function( query, toTree ){
 */
 Q.rpnToTree = rpnToTree;
 function rpnToTree( values ){
-    var ii, len, op, stack, rightIndex, slice, result, count;
+    let ii, len, op, stack, rightIndex, slice, result, count;
 
     stack = [];
     result = [];
@@ -302,8 +302,8 @@ function rpnToTree( values ){
 
 
 function findMatchingRightParam( values, startIndex ){
-    var ii,len, parenCount = 0;
-    var result = [];
+    let ii,len, parenCount = 0;
+    let result = [];
 
     for( ii=0,len=values.length;ii<len;ii++ ){
         if( values[ii] === Q.LEFT_PAREN ){
@@ -322,9 +322,9 @@ function findMatchingRightParam( values, startIndex ){
 }
 
 
-var StackFunctions = {
+let StackFunctions = {
     popVal: function(){
-        var val = this.valStack.shift();
+        let val = this.valStack.shift();
         if( val && val.isQuery ){
             return val.toArray();
         }
@@ -340,16 +340,16 @@ var StackFunctions = {
         return this.opStack.pop();
     },
     pushOp: function( op  ){
-        var lastOp = this.lastOp();
+        let lastOp = this.lastOp();
         while( this.opStack.length > 0 && (precendence( op ) <= precendence( lastOp )) ){
             this.pushVal( this.popOp() );
         }
         this.opStack.push( op );
     },
     pushVal: function(val, wrapInValueTuple){
-        var out;
-        var concat;
-        var isQuery, isArray;
+        let out;
+        let concat;
+        let isQuery, isArray;
         // log.debug('pushing val ' + JSON.stringify(val) + ' ' + isQuery + ' ' + isArray );
         
         isQuery = Q.isQuery(val);
@@ -376,7 +376,7 @@ var StackFunctions = {
 
 
 function readContext( context, addFilterFunctions, addStackFunctions, addQueryFunctions ){
-    var result, functions;
+    let result, functions;
 
     if( _.isUndefined(addStackFunctions) ){ addStackFunctions = true; }
     if( _.isUndefined(addFilterFunctions) ){ addFilterFunctions = true; }
@@ -409,7 +409,7 @@ function readContext( context, addFilterFunctions, addStackFunctions, addQueryFu
 }
 
 function contextData( context ){
-    var result = {
+    let result = {
         isQuery: true,
         valStack: context.valStack,
         opStack: context.opStack

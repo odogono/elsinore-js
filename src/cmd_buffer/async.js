@@ -29,10 +29,9 @@ _.extend( CmdBuffer.prototype, SyncCmdBuffer.prototype, {
     /**
     * Adds a component to this set
     */
-    addComponent: function( entitySet, component, options){
+    addComponent: function( entitySet, component, options = {}){
         var self = this, debug, batch, execute, silent, listenTo, entityId, entity, existingCom;
         
-        options = (options || {});
         debug = options.debug;
         silent = options.silent;
         entity = options.entity;

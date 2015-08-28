@@ -35,12 +35,11 @@ var functions = {
     /**
     * Adds a component to this set
     */
-    addComponent: function( entitySet, component, options){
+    addComponent: function( entitySet, component, options={}){
         var self = this, debug, batch, execute, silent, listenTo, entityId, entity, componentDef, componentArray, existingCom;
         var i, len;
         var result;
 
-        options || (options = {});
         debug = options.debug;
         silent = options.silent;
         entity = options.entity;
@@ -197,7 +196,7 @@ var functions = {
     - reject if filters do not pass
     - 
     */
-    addEntity: function( entitySet, entity, options){
+    addEntity: function( entitySet, entity, options={}){
         var self = this, isNew, entity, entityId, existingEntity, debug, silent, ignoreComponents;
         var eBf, exBf, i, len, comDefId, com;
         var addComponentOptions;
@@ -207,8 +206,6 @@ var functions = {
         if( !entity ){
             return null;
         }
-
-        options || (options = {});
 
         batch = options.batch; // cmds get batched together and then executed
         execute = _.isUndefined(options.execute) ? true : options.execute;
@@ -288,7 +285,7 @@ var functions = {
     /**
     *
     */
-    removeEntity: function( entitySet, entity, options){
+    removeEntity: function( entitySet, entity, options={}){
         var i, batch, comDefId, execute, existingEntity, entityId;
         var executeOptions;
         var result;
@@ -296,8 +293,6 @@ var functions = {
         if( !entity ){
             return null;
         }
-
-        options || (options = {});
 
         batch = options.batch; // cmds get batched together and then executed
         execute = _.isUndefined(options.execute) ? true : options.execute;
@@ -352,7 +347,7 @@ var functions = {
     },
 
     execute: function( entitySet, options ){
-        var i, len,entityId,cmds,cmd;
+        var ii, len,entityId,cmds,cmd;
         var com, ocom, defId, isNew, cmdOptions, query;
         var entity, tEntity, component, registry;
         var removeEmptyEntity;
@@ -382,8 +377,8 @@ var functions = {
             }
 
             // go through the incoming commands
-            for( i=0,len=cmds.length;i<len;i++ ){
-                cmd = cmds[i];
+            for( ii=0,len=cmds.length;ii<len;ii++ ){
+                cmd = cmds[ii];
                 com = cmd[1];
                 cmdOptions = cmd[2];
 

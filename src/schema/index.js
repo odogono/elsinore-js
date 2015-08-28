@@ -66,7 +66,7 @@ _.extend(SchemaRegistry.prototype, Backbone.Events, {
     /**
     * Registers schemas from the presented data
     */
-    register: function( schema, options ){
+    register: function( schema, options={} ){
         var ii,len;
         var entry;
         var versioned;
@@ -78,8 +78,6 @@ _.extend(SchemaRegistry.prototype, Backbone.Events, {
         var result;
         var throwOnExists;
         
-        options || (options={});
-
         throwOnExists = _.isUndefined(options.throwOnExists) ? true : options.throwOnExists;
 
         // extracts an array with every object with an id from the passed argument 

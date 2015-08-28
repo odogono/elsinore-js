@@ -1,7 +1,7 @@
 'use strict';
 
-var _ = require('underscore');
-var Sinon = require('sinon');
+let _ = require('underscore');
+let Sinon = require('sinon');
 
 
 export default function run( test, Common, Elsinore, EntitySet ){
@@ -25,7 +25,7 @@ export default function run( test, Common, Elsinore, EntitySet ){
     test('.query returns entities which the attributes', t => {
         initialiseEntitySet().then( ([registry,entitySet]) => {
         
-            // var result = entitySet.where('/component/status', {status:'active'} );
+            // let result = entitySet.where('/component/status', {status:'active'} );
             let result = entitySet.query( 
                 Query.all('/component/status', 
                     Query.attr('status').equals('active')) );

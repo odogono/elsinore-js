@@ -32,8 +32,8 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
             log.debug( 'tview hash ' + tview.hash() );
 
             t.end();
-
-        });
+        })
+        .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
     });
 
     // creating components

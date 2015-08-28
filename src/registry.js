@@ -1,29 +1,26 @@
 'use strict';
 
-var _ = require('underscore');
-var Backbone = require('backbone');
+let _ = require('underscore');
+let Backbone = require('backbone');
 
-var BitField = require('./bit_field');
-var Entity = require('./entity');
-var EntitySet = require('./entity_set');
-var Component = require('./component');
-// var ComponentDef = require('./component_def');
-var SchemaRegistry = require('./schema');
-var SchemaProperties = require('./schema/properties');
-var EntityProcessor = require('./entity_processor');
-var EntityFilter = require('./entity_filter');
-var Utils = require('./utils');
+let BitField = require('./bit_field');
+let Entity = require('./entity');
+let EntitySet = require('./entity_set');
+let Component = require('./component');
+let SchemaRegistry = require('./schema');
+let SchemaProperties = require('./schema/properties');
+let EntityProcessor = require('./entity_processor');
+let EntityFilter = require('./entity_filter');
+let Utils = require('./utils');
 
 
-var counter = Date.now() % 1e9;
+let counter = Date.now() % 1e9;
 
 /**
  * Registry
  * @return {[type]} [description]
  */
-var Registry = function(){
-};
-
+let Registry = function(){};
 
 
 _.extend(Registry.prototype, Backbone.Events, {
@@ -36,10 +33,7 @@ _.extend(Registry.prototype, Backbone.Events, {
      * @param  {Function} callback [description]
      * @return {[type]}            [description]
      */
-    initialize: function(options){
-        var self = this;
-        options || (options = {});
-
+    initialize: function(options={}){
         this._initialized = true;
 
         this.schemaRegistry = options.schemaRegistry || SchemaRegistry.create();
@@ -48,9 +42,8 @@ _.extend(Registry.prototype, Backbone.Events, {
         // this.listenTo( this.schemaRegistry, 'schema:add', this.schemaAdded );
         // this.listenTo( this.schemaRegistry, 'schema:remove', this.schemaRemoved );
 
-        this.schemaRegistry.on('all', function(){
-            self.trigger.apply( self, Array.prototype.slice.call(arguments,0) );
-        });
+        this.schemaRegistry.on('all', () =>
+            this.trigger.apply(this, Array.prototype.slice.call(arguments,0)) );
 
         // a number used to assign id numbers to things - entities, components, entitysets
         this.sequenceCount = options.sequenceCount || 0;
@@ -100,7 +93,7 @@ _.extend(Registry.prototype, Backbone.Events, {
     */
     createId: function(){
         // https://github.com/dfcreative/get-uid
-        // var counter = Date.now() % 1e9;
+        // let counter = Date.now() % 1e9;
         // return (Math.random() * 1e9 >>> 0) + (counter++ + '__')
         return ++this.sequenceCount;
     },
@@ -109,14 +102,14 @@ _.extend(Registry.prototype, Backbone.Events, {
     schemaAdded: function( schemaUri, schemaHash, schema ){
         // log.debug('schema ' + schemaUri + ' added to registry');
         // derive an id for this schema
-        // var componentDefId = this._componentDefId++;
+        // let componentDefId = this._componentDefId++;
         // this._componentDefsBySchemaHash[ componentDefId ] = schemaHash;
         // this._schemaHashComponentDefIds[ schemaHash ] = componentDefId;
     },
 
     schemaRemoved: function( schemaUri, schemaHash, schema ){
         // log.debug('schema ' + schemaUri + ' removed from registry');
-        // var componentDefId = this._schemaHashComponentDefIds[ schemaHash ];
+        // let componentDefId = this._schemaHashComponentDefIds[ schemaHash ];
         // if( componentDefId ){
             // delete this._schemaHashComponentDefIds[ schemaHash ];
             // this._componentDefsBySchemaHash[ componentDefId ] = undefined;
@@ -124,13 +117,10 @@ _.extend(Registry.prototype, Backbone.Events, {
     },
 
 
-    createEntity: function( components, options ){
-        var entityId;
-        var entity;
-        var i;
-
-        options = (options || {});
-        // log.debug('createEntity> ' + JSON.stringify(options) );
+    createEntity: function( components, options={} ){
+        let entityId;
+        let entity;
+        let ii;
 
         if( options.createId ){
             return this.createId();
@@ -165,23 +155,21 @@ _.extend(Registry.prototype, Backbone.Events, {
         components = this.createComponent( components );
         
         if( _.isArray(components) ){
-            for( i in components ) {
-                entity.addComponent( components[i] );
+            for( ii in components ) {
+                entity.addComponent( components[ii] );
             }
         } else {
             entity.addComponent( components ); 
         }
 
-        // log.debug(' createEntity> ' + entity.cid + ' ' + entity.getEntityId() );
-
         return entity;
     },
 
     cloneEntity: function( entity, options ){
-        var comClone;
-        var result = this.createEntity( null, {entity:entity});//Entity.create( entity.getEntityId() );
+        let comClone;
+        let result = this.createEntity( null, {entity:entity});//Entity.create( entity.getEntityId() );
         // clone each of the attached components
-        for( var comId in entity.components ){
+        for( let comId in entity.components ){
             comClone = this.cloneComponent( entity.components[comId] );
             result.addComponent( comClone );
             // this.addComponentToEntity( comClone, result );
@@ -198,29 +186,23 @@ _.extend(Registry.prototype, Backbone.Events, {
      * @return {[type]}        [description]
      */
     registerComponent: function( data, options ){
-        var self = this;
-        var schemaRegistry = this.schemaRegistry;
-        return new Promise( function(resolve){
-            return resolve( schemaRegistry.register(data) );
-        })
-        .then( function(schemas){
-            return _.reduce( self._entitySets, function(current, es){
-                return current.then( function(){
-                    // log.debug('registering schemas with es ' + es.cid);
-                    return self._registerComponentDefsWithEntitySet( es, schemas, options );
-                })
-            }, Promise.resolve() )
-            .then( function(){
-                return schemas;    
-            })
-        });
+        let schemaRegistry = this.schemaRegistry;
+        return new Promise( resolve => resolve(schemaRegistry.register(data)) )
+            .then( schemas => {
+                return _.reduce( this._entitySets, (current, es) => {
+                    return current.then( () => {
+                        // log.debug('registering schemas with es ' + es.cid);
+                        return this._registerComponentDefsWithEntitySet( es, schemas, options );
+                    })
+                }, Promise.resolve() )
+                .then( () => schemas )
+            });
     },
 
     /**
     *   Registers the array of component def schemas with the given entitySet
     */
     _registerComponentDefsWithEntitySet: function( entitySet, schemas, options ){
-        var self = this;
         options = _.extend( {}, options, {fromRegistry:true, fromES:false} );
         
         // memory based entitysets do not need to register component defs,
@@ -228,8 +210,8 @@ _.extend(Registry.prototype, Backbone.Events, {
         if( entitySet.isMemoryEntitySet ){
             return Promise.resolve();
         }
-        return _.reduce( schemas, function(current, schema){
-            return current.then( function(){
+        return _.reduce( schemas, (current, schema) => {
+            return current.then( () => {
                 // log.debug('registering cdef schema ' + JSON.stringify(schema) );
                 return entitySet.registerComponentDef( schema, options );
             })
@@ -237,8 +219,8 @@ _.extend(Registry.prototype, Backbone.Events, {
     },
 
     componentNameFromSchema: function( schemaUri, suffix ){
-        var name;
-        var schema = this.schemaRegistry.get( schemaUri, null, {full:true} );
+        let name;
+        let schema = this.schemaRegistry.get( schemaUri, null, {full:true} );
 
         if( !schema ){
             throw new Error('unknown schema ' + schemaUri );
@@ -275,13 +257,9 @@ _.extend(Registry.prototype, Backbone.Events, {
      * @param  {[type]} schemaUri [description]
      * @return {[type]}          [description]
      */
-    createComponent: function( componentDef, attrs, options ){
-        var self = this;
-        var i, len, name, schema, defaults, entityId, schemaIId, result, schemaKey;
-        // var doRegister = false;
+    createComponent: function( componentDef, attrs, options = {} ){
+        let ii, len, name, schema, defaults, entityId, schemaIId, result, schemaKey;
         
-        options || (options = {});
-
         schemaKey = options.schemaKey || 'id';
 
         entityId = options.entity || options.entityId || options.eid;
@@ -295,9 +273,8 @@ _.extend(Registry.prototype, Backbone.Events, {
         // Obtain a component schema
         if( _.isArray(componentDef) ){
             // recurse each entry
-            return Array.prototype.concat.apply( [], componentDef.map( function(s){
-                return self.createComponent( s, attrs, options );
-            }) );
+            return Array.prototype.concat.apply( [], 
+                componentDef.map( (s) => this.createComponent(s, attrs, options) ));
         }
         else if( Component.isComponent(componentDef) ){
             return componentDef;
@@ -344,8 +321,8 @@ _.extend(Registry.prototype, Backbone.Events, {
         if( _.isArray(attrs) ){
             result = [];
 
-            for( i=0,len=attrs.length;i<len;i++ ){
-                result.push( this._createComponent( schemaIId, name, schema, defaults, attrs[i], entityId, options ) );
+            for( ii=0,len=attrs.length;ii<len;ii++ ){
+                result.push( this._createComponent( schemaIId, name, schema, defaults, attrs[ii], entityId, options ) );
             }
 
             return result;
@@ -358,8 +335,8 @@ _.extend(Registry.prototype, Backbone.Events, {
     *   Create a component instance from the supplied 
     */
     _createComponent: function( schemaIId, name, schema, defaults, data, entityId, options ){
-        var component;
-        var datum;
+        let component;
+        let datum;
 
         datum = _.extend({}, defaults, data );
 
@@ -383,7 +360,7 @@ _.extend(Registry.prototype, Backbone.Events, {
 
 
     cloneComponent: function( component, options ){
-        var result = new component.constructor(component.attributes);
+        let result = new component.constructor(component.attributes);
         result.id = component.id;
         result.name = component.name;
         result.setSchemaId( component.getSchemaId() );
@@ -410,9 +387,9 @@ _.extend(Registry.prototype, Backbone.Events, {
     *   to a module by itself, or perhaps become a processor
     */
     mapComponentEntityRefs: function( component, entityIdMap, options ){
-        var ii,len, property, val, updates;
-        var result;
-        var properties;
+        let ii,len, property, val, updates;
+        let result;
+        let properties;
 
         if( !entityIdMap || _.size(entityIdMap) === 0 ){
             return component;
@@ -451,7 +428,7 @@ _.extend(Registry.prototype, Backbone.Events, {
      * @return {[type]}          [description]
      */
     toEntity: function(entityId){
-        var result = Entity.toEntity(entityId);
+        let result = Entity.toEntity(entityId);
         if( result )
             result.registry = this;
         return result;
@@ -466,10 +443,9 @@ _.extend(Registry.prototype, Backbone.Events, {
      * @return {[type]}              [description]
      */
     createEntitySet: function( instanceClass, options ){
-        var self = this;
-        var id;
-        var result;
-        // var isAnonymous;
+        let id;
+        let result;
+        
         
         if( !instanceClass ){
             instanceClass = EntitySet;
@@ -512,10 +488,10 @@ _.extend(Registry.prototype, Backbone.Events, {
         // opening the ES will cause it to register its existing componentDefs
         // with the registry
         return result.open( options )
-            .then( function(){
-                var schemas = self.schemaRegistry.getAll();
-                return self._registerComponentDefsWithEntitySet( result, schemas, options )
-                    .then( function(){ return result; })
+            .then( () => {
+                let schemas = this.schemaRegistry.getAll();
+                return this._registerComponentDefsWithEntitySet( result, schemas, options )
+                    .then( () => result )
             });
 
         // return result;
@@ -523,26 +499,20 @@ _.extend(Registry.prototype, Backbone.Events, {
 
 
     removeAllEntitySets: function( options ){
-        var self = this;
-        return Promise.all( this._entitySets.map(function(es){
-            return self.removeEntitySet( es, options );
-        }));
+        return Promise.all( 
+            this._entitySets.map(es => this.removeEntitySet(es, options)) );
     },
 
     /**
     *   Returns a Promise to removes an entitySet from the registry
     *   
     */
-    removeEntitySet: function( entitySet, options ){
-        var self = this;
-        options = (options || {});
-
+    removeEntitySet: function( entitySet, options={} ){
         if( !entitySet ){ return null; }
-
         return entitySet.close()
-            .then( function(){
+            .then( () => {
                 entitySet.setRegistry( null );
-                self._entitySets = _.without( self.entitySets, entitySet );
+                this._entitySets = _.without( this.entitySets, entitySet );
                 return entitySet;
             });
     },
@@ -572,7 +542,7 @@ _.extend(Registry.prototype, Backbone.Events, {
     *
     */
     destroyEntitySet: function( entitySet ){
-        var processors, removeList;
+        let processors, removeList;
         if( !entitySet ){ return null; }
 
         entitySet.setRegistry( null );
@@ -580,9 +550,7 @@ _.extend(Registry.prototype, Backbone.Events, {
         // this._entitySetIds.remove( entitySet );
 
         // remove  the records
-        removeList = this.entitySetProcessors.filter( function(record){
-            return record.get('entitySet') == entitySet;
-        });
+        removeList = this.entitySetProcessors.filter( record => (record.get('entitySet') == entitySet) );
 
         // TODO: destroy any views attached to the entitySets
         _.each( removeList, function(es){
@@ -604,9 +572,9 @@ _.extend(Registry.prototype, Backbone.Events, {
 
 
     triggerEntityEvent: function( name, entity ){
-        var entitySet, bf, i, l, trigger;
+        let entitySet, bf, ii, len, trigger;
 
-        // var args = _.toArray( arguments ).slice(2);
+        // let args = _.toArray( arguments ).slice(2);
 
         // bf = entity.getComponentBitfield();
 
@@ -618,19 +586,17 @@ _.extend(Registry.prototype, Backbone.Events, {
 
         // the trick is to only trigger on entitySets that have the entity
 
-        for( i=0,l=this._entitySets.length; i < l; i++ ){
-            entitySet = this._entitySets[i];
-            // if( !entitySet.entityFilter || entitySet.entityFilter.accept( entity ) ){
+        for( ii=0,len=this._entitySets.length; ii < len; ii++ ){
+            entitySet = this._entitySets[ii];
             entitySet.triggerEntityEvent.apply( entitySet, arguments );
-            // }
         }
     },
 });
 
 
 function createProcessorCollection(){
-    var result = new Backbone.Collection();
-    result.comparator = function(procA, procB){
+    let result = new Backbone.Collection();
+    result.comparator = (procA, procB) => {
         // the entriy in the collection might be a record referencing a processor
         procA = procA.get('processor') || procA;
         procB = procB.get('processor') || procB;
@@ -647,12 +613,11 @@ function createProcessorCollection(){
  * @param  {Function} callback [description]
  * @return {[type]}            [description]
  */
-Registry.create = function(options){
-    options || (options = {});
-    var result = new Registry();
+Registry.create = function(options={}){
+    let result = new Registry();
     result.initialize();
     return result;
 };
 
 
-module.exports = Registry;
+export default Registry;

@@ -1,12 +1,12 @@
 'use strict';
 
-var _ = require('underscore');
+let _ = require('underscore');
 
-var BitField = require('../bit_field');
-var Entity = require('../entity');
-var EntitySet = require('../entity_set');
-var EntityFilter = require('../entity_filter');
-var Utils = require('../utils');
+let BitField = require('../bit_field');
+let Entity = require('../entity');
+let EntitySet = require('../entity_set');
+let EntityFilter = require('../entity_filter');
+let Utils = require('../utils');
 
 function Query(){}
 function QueryContext(){}
@@ -74,9 +74,9 @@ _.extend( Query, {
 */
 
 function gatherEntityFilters( context, expression ){
-    var ii,len,bf,result, obj,filter;
+    let ii,len,bf,result, obj,filter;
     
-    var result = EntityFilter.create();
+    result = EntityFilter.create();
     
     switch( expression[0] ){
         case Query.ANY:
@@ -137,7 +137,7 @@ function gatherEntityFilters( context, expression ){
 *   (via valueOf) and returned.
 */
 Query.resolveEntitySet = function resolveEntitySet( context, entitySet, compileOnly ){
-    var op, result;
+    let op, result;
     if( !entitySet ){
         entitySet = context.last;
     }
@@ -162,7 +162,7 @@ Query.resolveEntitySet = function resolveEntitySet( context, entitySet, compileO
 
 
 QueryContext.prototype.componentsToBitfield = function( context, components ){
-    var componentIds, result;
+    let componentIds, result;
     // log.debug('lookup ' + Utils.stringify(components) );
     componentIds = context.registry.getIId( components, true );
     result = BitField.create();
@@ -187,7 +187,7 @@ Query.resolveComponentIIds = resolveComponentIIds;
 *   Returns the referenced value of the passed value providing it is a Query.VALUE
 */
 Query.valueOf = function valueOf( context, value, shouldReturnValue ){
-    var command;
+    let command;
     if( !value ){ return value; }
     // if( context.debug ){ log.debug('valueOf: ' + Utils.stringify(value) ); }
     if( _.isArray(value) ){
@@ -221,10 +221,10 @@ Query.valueOf = function valueOf( context, value, shouldReturnValue ){
 *   a VALUE with the boolean result of that comparison
 */
 function commandEquals( context, op1, op2, op ){
-    var result;
-    var value1;
-    var value2;
-    var isValue1Array, isValue2Array;
+    let result;
+    let value1;
+    let value2;
+    let isValue1Array, isValue2Array;
     result = false;
 
     if( context.debug ){ log.debug('EQUALS op1: ' + Utils.stringify(op1) ); }
@@ -277,9 +277,8 @@ function commandEquals( context, op1, op2, op ){
 }
 
 function commandAnd( context, ops ){
-    var ii,len,value;
-    var ops;
-
+    let ii,len,value;
+    
     ops = _.rest( arguments );
 
     for( ii=0,len=ops.length;ii<len;ii++ ){
@@ -293,9 +292,8 @@ function commandAnd( context, ops ){
 }
 
 function commandOr( context, ops ){
-    var ii,len,value;
-    var ops;
-
+    let ii,len,value;
+    
     ops = _.rest( arguments );
 
     for( ii=0,len=ops.length;ii<len;ii++ ){
@@ -314,14 +312,13 @@ function commandOr( context, ops ){
 *   Takes an entityset and applies the filter to it resulting
 *   in a new entityset which is returned as a value.
 */
-QueryContext.prototype.commandFilter = function( context, entityFilter, filterFunction, options ){
-    var entities, entityContext, value;
-    var entity, entitySet;
-    var debug = context.debug;
-    var limit, offset;
-    var esCount;
+QueryContext.prototype.commandFilter = function( context, entityFilter, filterFunction, options={} ){
+    let entities, entityContext, value;
+    let entity, entitySet;
+    let debug = context.debug;
+    let limit, offset;
+    let esCount;
 
-    options = options || {};
     limit = _.isUndefined(options.limit) ? 0 : options.limit;
     offset = _.isUndefined(options.offset) ? 0 : options.offset;
 
@@ -375,8 +372,8 @@ QueryContext.prototype.commandFilter = function( context, entityFilter, filterFu
             entities = entitySet.models;
         } else {
             // select the subset of the entities which pass through the filter
-            entities = _.reduce( entitySet.models, function(result, entity){
-                var cmdResult;
+            entities = _.reduce( entitySet.models, (result, entity) => {
+                let cmdResult;
 
                 // TODO: still not great that we are iterating over models
                 // is there a way of exiting once limit has been reached?
@@ -434,9 +431,9 @@ QueryContext.prototype.commandFilter = function( context, entityFilter, filterFu
 *   This command operates on the single entity within context.
 */
 function commandComponentAttribute( context, attributes ){
-    var componentIds, components, result;
-    var entity = context.entity;
-    var debug = context.debug;
+    let componentIds, components, result;
+    let entity = context.entity;
+    let debug = context.debug;
     componentIds = context.componentIds;
 
     // printIns( context,1 );
@@ -461,13 +458,10 @@ function commandComponentAttribute( context, attributes ){
     //     printE( entity );
     // }
         
-    _.each( componentIds, function(id){
-        var component = components[ id ];
+    _.each( componentIds, id => {
+        let component = components[ id ];
         if( !component ){ return; }
-        
-        _.each( attributes, function(attr){
-            result.push( component.get.call( component, attr ) );    
-        });
+        _.each( attributes, attr => result.push(component.get.call(component, attr)) );    
     });
 
     if( result.length === 0 ){
@@ -481,7 +475,7 @@ function commandComponentAttribute( context, attributes ){
 
 
 // function EntityFilterTransform( type, registry, entity, entityBitField, filterBitField ){
-//     var ii, len, defId, bf, ebf, vals, isInclude, isExclude, result;
+//     let ii, len, defId, bf, ebf, vals, isInclude, isExclude, result;
 //     isInclude = (type == EntityFilter.INCLUDE);
 //     isExclude = (type == EntityFilter.EXCLUDE);
 
@@ -521,7 +515,7 @@ function commandComponentAttribute( context, attributes ){
 // *   a new entityset
 // */
 // QueryContext.prototype.filterEntitySet = function( context, entitySet, entityFilter, options ){
-//     var entities,result;
+//     let entities,result;
 
 //     // filtersLength = entityFilter.filters.length;
 //     // filter the entitySet using the component filters
@@ -529,8 +523,8 @@ function commandComponentAttribute( context, attributes ){
 //         if( !entityFilter.accept( entity, context ) ){
 //             return result;
 //         }
-//         // var ii,len,filter;
-//         // var ebf = entity.getComponentBitfield();
+//         // let ii,len,filter;
+//         // let ebf = entity.getComponentBitfield();
 //         // for( ii=0;ii<filtersLength;ii++ ){
 //         //     filter = filters.filters[ii];
 //         //     if( !EntityFilter.accept( filter.type, ebf, filter.bitField, false ) ){
@@ -552,7 +546,7 @@ function commandComponentAttribute( context, attributes ){
 
 
 // Query.commandEntityFilter = function( context, entityFilter, options ){
-//     var entitySet, entity, entities, registry,result,ebf,filterType,filterBitField;
+//     let entitySet, entity, entities, registry,result,ebf,filterType,filterBitField;
 //     // if( context.debug ){ log.debug('commandEntityFilter'); }
 
     
@@ -599,7 +593,7 @@ function commandComponentAttribute( context, attributes ){
 
 
 Query.commandFunction = function commandFunction( op ){
-    var result;
+    let result;
 
     result = Query.commandFunctions[ op ];
     if( result !== undefined ){
@@ -627,7 +621,7 @@ Query.commandFunction = function commandFunction( op ){
 
 
 Query.executeCommand = function( context, op, args ){
-    var result, op, cmdFunction, cmdArgs, value;
+    let result, cmdFunction, cmdArgs, value;
 
     if( context.debug ){ log.debug('executing ' + Utils.stringify( _.rest(arguments)) ); }
 
@@ -687,7 +681,7 @@ Query.executeCommand = function( context, op, args ){
 
 
 Query.compile = function compileQuery( context, commands, options ){
-    var result, ii, len, entityFilter;
+    let result, ii, len, entityFilter;
 
     if( Query.isQuery( commands ) ){
         if( commands.isCompiled ){
@@ -700,7 +694,7 @@ Query.compile = function compileQuery( context, commands, options ){
         if( !_.isArray(commands[0]) && !Query.isQuery(commands[0])){
             commands = [commands];
         }  
-        commands = _.map( commands, function(command){
+        commands = _.map( commands, command => {
             if( Query.isQuery(command) ){
                 if( !command.isCompiled ){
                     command = command.toArray(true)[0];
@@ -720,8 +714,8 @@ Query.compile = function compileQuery( context, commands, options ){
     // printIns( result.src, 6 );
     // commands = _.reduce( commands, function(result,command){
 
-    commands = _.reduce( commands, function(result,command){
-        var op, entityFilter, compileResult, hash;
+    commands = _.reduce( commands, (result,command) => {
+        let op, entityFilter, compileResult, hash;
         op = command[0];
 
         // check for registered command compile function
@@ -780,9 +774,7 @@ Query.compile = function compileQuery( context, commands, options ){
     }
 
     // allow hooks to further process commands
-    _.each( Query.compileHooks, function(hook){
-        result.commands = hook( context, result.commands, result );
-    });
+    _.each( Query.compileHooks, hook => result.commands = hook(context, result.commands, result) );
 
     // result.commands = commands;
     if( context.debug ) { printIns( result, 6 ); }
@@ -793,7 +785,7 @@ Query.compile = function compileQuery( context, commands, options ){
 *
 */
 Query.commands = function( commands ){
-    var result;
+    let result;
     commands = _.toArray(arguments);
 
     result = new Query();
@@ -802,11 +794,9 @@ Query.commands = function( commands ){
     return result;
 }
 
-Query.createContext = function( props, options ){
-    var context;
-    var type;
-    options = options || {};
-    props = props || {};
+Query.createContext = function( props={}, options={} ){
+    let context;
+    let type;
     type = options.context || props.type || QueryContext;
     context = new (type)();
     context.type = type;
@@ -814,10 +804,9 @@ Query.createContext = function( props, options ){
     return context;
 }
 
-Query.buildContext = function( entity, query, options ){
-    var context, rootObject;
+Query.buildContext = function( entity, query, options={} ){
+    let context, rootObject;
 
-    options = options || {};
     context = Query.createContext( {}, options );
 
     if( EntitySet.isEntitySet( entity ) ){
@@ -844,11 +833,9 @@ Query.buildContext = function( entity, query, options ){
 }
 
 
-Query.execute = function executeQuery( entity, query, options ){
-    var ii, len, command, context, result;
+Query.execute = function executeQuery( entity, query, options={} ){
+    let ii, len, command, context, result;
     
-    options = options || {};
-
     // build the initial context object from the incoming arguments
     context = Query.buildContext( entity,query,options);
 
@@ -874,16 +861,13 @@ Query.prototype.toArray = function(){
 
 Query.registerCommand = function( options ){
     if( options.commands ){
-        return _.each( options.commands, function(c){ return Query.registerCommand(c); } );
+        return _.each( options.commands, c => Query.registerCommand(c) );
     }
 
     Query[ options.name ] = options.id;
-    // console.log( options );
+    
     if( options.dsl ){
-        _.each( options.dsl, function(func,name){
-            // console.log('adding dsl ' + name + ' as ' + func);
-            Query[name] = func;
-        })
+        _.each( options.dsl, (func,name) => Query[name] = func )
     }
     if( options.argCount ){
         Query.argCounts[ options.id ] = options.argCount;
@@ -901,12 +885,12 @@ Query.registerCommand = function( options ){
 }
 
 Query.prototype.toJSON = function(){
-    var rep = (( this.isCompiled ) ? this.src : this.toArray(true));
+    let rep = (( this.isCompiled ) ? this.src : this.toArray(true));
     return rep;
 }
 
 Query.prototype.hash = function(){
-    var rep = (( this.isCompiled ) ? this.src : this.toArray(true));
+    let rep = (( this.isCompiled ) ? this.src : this.toArray(true));
     return Utils.hash( JSON.stringify(rep), true );
 }
 
@@ -919,7 +903,7 @@ Query.isQuery = function( query ){
 }
 
 Query.create = function( registry, commands, options ){
-    var context;
+    let context;
 
     if( Query.isQuery(commands) && commands.isCompiled ){
         return commands;
@@ -927,7 +911,7 @@ Query.create = function( registry, commands, options ){
 
     context = Query.buildContext( null,null,_.extend({registry:registry},options));
 
-    var result = Query.compile( context, commands, options );
+    let result = Query.compile( context, commands, options );
     return result;
 }
 

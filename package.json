@@ -5,7 +5,7 @@
     "name": "Alexander Veenendaal",
     "email": "alex@opendoorgonorth.com"
   },
-  "main": "src/index.js",
+  "main": "lib/index.js",
   "files": [
     "lib/index.js",
     "lib/bit_field.js",
@@ -45,7 +45,7 @@
     "gulp-util": "~3.0.2",
     "gulp-webserver": "^0.9.1",
     "shelljs": "^0.5.1",
-    "sinon": "~1.15.4",
+    "sinon": "~1.16.1",
     "tap-dot": "^1.0.0",
     "tap-spec": "^4.0.0",
     "tape": "^4.0.3",
@@ -61,6 +61,8 @@
     "url": "https://github.com/odogono/odgn-entity.git"
   },
   "scripts": {
+    "compile": "Gulp transpile",
+    "prepublish": "npm run compile",
     "test": "NODE_ENV=test babel-tape-runner ./test | tap-dot",
     "spec": "NODE_ENV=test babel-tape-runner ./test | tap-spec"
   },

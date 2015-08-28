@@ -108,7 +108,7 @@ Gulp.task('build.bundle.vendor', function(){
 
 
 
-Gulp.task('transpile.lib', function () {
+Gulp.task('transpile', function () {
     return Gulp.src('src/**/*.js')
         .pipe(Babel())
         .pipe(Gulp.dest('lib'));

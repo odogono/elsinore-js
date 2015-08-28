@@ -1,20 +1,18 @@
 'use strict';
 
-var _ = require('underscore');
+let _ = require('underscore');
 
-var Entity = require('../entity');
-var EntitySet = require('../entity_set');
-var Query = require('./query');
-var Utils = require('../utils');
+let Entity = require('../entity');
+let EntitySet = require('../entity_set');
+let Query = require('./query');
+let Utils = require('../utils');
 
 _.extend( EntitySet.prototype, {
 
-    view: function( query, options ){
-        var result;
-        var registry = this.getRegistry();
+    view: function( query, options={} ){
+        let result;
+        let registry = this.getRegistry();
         
-        options = options || {};
-
         result = registry.createEntitySet( null, {register:false} );
         result.type = 'EntitySetView';
         result.isEntitySetView = true;
@@ -33,7 +31,7 @@ _.extend( EntitySet.prototype, {
 });
 
 EntitySet.listenToEntitySet = function( srcEntitySet, targetEntitySet, query, options ){
-    var listener, updateOnEvent;
+    let listener, updateOnEvent;
 
     listener = EntitySetListener.create();
 
@@ -94,13 +92,12 @@ _.extend( EntitySetListener.prototype, {
     },
 
     onEntityAdd: function( entities ){
-        var self = this;
         this.entitySet.isModified = true;
         
-        _.each( entities, function(e){
-            var eid = Entity.toEntityId( e );
-            self.addedEntities[ eid ] = e;
-            self.isModified = true;
+        _.each( entities, e => {
+            let eid = Entity.toEntityId( e );
+            this.addedEntities[ eid ] = e;
+            this.isModified = true;
         });
 
         // instantanous updating of a view is probably the best policy
@@ -111,15 +108,14 @@ _.extend( EntitySetListener.prototype, {
     },
 
     onEntityRemove: function(entities){
-        var self = this;
-        _.each( entities, function(e){
-            var eid = Entity.toEntityId( e );
-            if( !self.entitySet.get(eid) ){
+        _.each( entities, e => {
+            let eid = Entity.toEntityId( e );
+            if( !this.entitySet.get(eid) ){
                 return;
             }
-            delete self.addedEntities[ eid ];
-            self.removedEntities[ eid ]  = e;
-            self.isModified = true;
+            delete this.addedEntities[ eid ];
+            this.removedEntities[ eid ]  = e;
+            this.isModified = true;
         });
         
         // instantanous updating of a view is probably the best policy
@@ -130,25 +126,24 @@ _.extend( EntitySetListener.prototype, {
     },
 
     onComponentAdd: function(components){
-        var self = this;
-        var entitySet = this.entitySet;
-        var entity;
+        let entitySet = this.entitySet;
+        let entity;
 
         // log.debug( entitySet.cid + '_oCA ' + JSON.stringify(components) );
-        _.each( components, function(component){
-            var eid = Entity.getEntityId( component );
-            if( entitySet.hasEntity( eid ) ){
-                self.changedEntityList[ eid ] = eid;
-                self.isModified = true;
+        _.each( components, component => {
+            let eid = Entity.getEntityId( component );
+            if( entitySet.hasEntity(eid) ){
+                this.changedEntityList[ eid ] = eid;
+                this.isModified = true;
             } else {
                 // this is the situation where a component is being added
                 // but the containing entity doesn't already exist in the
                 // listening entitySet - in this case the entity has to be
                 // added before the component can
-                entity = self.targetEntitySet.get( eid );
+                entity = this.targetEntitySet.get( eid );
                 if( entity && EntitySet.isEntityOfInterest(entitySet,entity) ){
-                    self.isModified = true;
-                    self.addedEntities[ eid ] = entity;
+                    this.isModified = true;
+                    this.addedEntities[ eid ] = entity;
                 }
             }
         });
@@ -160,12 +155,12 @@ _.extend( EntitySetListener.prototype, {
     },
 
     onComponentRemove: function(components){
-        var i,len,com,eid;
-        var entitySet = this.entitySet;
+        let ii,len,com,eid;
+        let entitySet = this.entitySet;
 
         // reduce down to components we are interested in
-        for(i=0,len=components.length;i<len;i++ ){
-            eid = Entity.getEntityId( components[i] );
+        for(ii=0,len=components.length;ii<len;ii++ ){
+            eid = Entity.getEntityId( components[ii] );
             if( entitySet.hasEntity( eid ) ){
                 this.changedEntityList[ eid ] = eid;
                 this.isModified = true;
@@ -177,38 +172,18 @@ _.extend( EntitySetListener.prototype, {
         }
     },
 
-    // _applyComponentChanges: function( components ){
-    //     var self = this;
-    //     var entitySet = this.entitySet;
-
-    //     // log.debug( entitySet.cid + '_aCC ' + JSON.stringify(components) );
-    //     _.each( components, function(component){
-    //         var eid = Entity.getEntityId( component );
-    //         if( entitySet.hasEntity( eid ) ){
-    //             self.changedEntityList[ eid ] = eid;
-    //             self.entitySet.isModified = true;
-    //         }
-    //     });
-
-    //     // if none of these components are of interest, then no need to update
-    //     if( this.updateOnEvent ){
-    //         this.applyEvents();
-    //     }
-    // },
-
     /**
     *   
     */
     applyEvents: function(){
-        var i,len,com,entity;
-        var entitySet;
-        var query;
-        var changedEntityIdList;
-        var entitiesAdded;
-        var entitiesRemoved;
-        var changeOptions;
-        var self = this;
-
+        let ii,len,com,entity;
+        let entitySet;
+        let query;
+        let changedEntityIdList;
+        let entitiesAdded;
+        let entitiesRemoved;
+        let changeOptions;
+        
         if( !this.isModified ){
             return;
         }
@@ -220,7 +195,7 @@ _.extend( EntitySetListener.prototype, {
         changeOptions = {silent:true};
 
         // add entities
-        _.each( this.addedEntities, function(entity, eid){
+        _.each( this.addedEntities, (entity, eid) => {
             if( query && !EntitySet.isEntityOfInterest( entitySet, entity, query ) ){
                 return;
             }
@@ -230,7 +205,7 @@ _.extend( EntitySetListener.prototype, {
         });
 
         // remove entities
-        _.each( this.removedEntities, function(entity){
+        _.each( this.removedEntities, entity => {
             entitySet.remove( entity, changeOptions );
             // log.debug( entitySet.cid + ' removed entity ' + entity.id );
             entitiesRemoved.push( entity );
@@ -273,9 +248,9 @@ _.extend( EntitySetListener.prototype, {
 
 
     hash: function(){
-        var q;
+        let q;
         // start with the entitysets hash
-        var hash = _.result( this.targetEntitySet, 'hash' );
+        let hash = _.result( this.targetEntitySet, 'hash' );
         if( (q = this.getQuery()) ){
             hash += q.hash();
         }
