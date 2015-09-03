@@ -66,7 +66,7 @@ export default function run( test, Common, Elsinore, EntitySet ){
             // select entities which have the component /channel_member and 
             //  have the client attribute
             let result = Query.execute( entitySet, 
-                Query.all('/component/channel_member', Query.attr('channel').equals([2,4])) );
+                Query.all('/component/channel_member').where( Query.attr('channel').equals([2,4])) );
             // let result = Query.execute( entitySet, 
             //     [ Query.ALL_FILTER, 
             //         [Query.VALUE, '/component/channel_member'],
