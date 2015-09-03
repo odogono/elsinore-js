@@ -1,7 +1,7 @@
 'use strict';
 
 var _ = require('underscore');
-var BitField = require('../bit_field');
+let BitField = require('odgn-bitfield');
 var Utils = require('../utils');
 var Query = require('../query');
 var EntitySet = require('../entity_set');

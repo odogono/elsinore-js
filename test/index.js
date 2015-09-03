@@ -1,4 +1,3 @@
-require('./bit_field');
 require('./component');
 require('./entity');
 require('./entity_set');

@@ -1,7 +1,7 @@
 'use strict';
 /*jslint todo: true */
 
-var BitField = require('./bit_field');
+var BitField = require('odgn-bitfield');
 var _ = require('underscore');
 var Backbone = require('backbone');
 var Utils = require('./utils');

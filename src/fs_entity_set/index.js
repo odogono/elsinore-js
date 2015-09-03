@@ -7,7 +7,7 @@ var Path = require('path');
 
 var Sh = require('shelljs');
 
-var BitField = require('../bit_field');
+let BitField = require('odgn-bitfield');
 var Component = require('../component');
 var Entity = require('../entity');
 var EntityFilter = require('../entity_filter');

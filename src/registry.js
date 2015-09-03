@@ -3,7 +3,7 @@
 let _ = require('underscore');
 let Backbone = require('backbone');
 
-let BitField = require('./bit_field');
+let BitField = require('odgn-bitfield');
 let Entity = require('./entity');
 let EntitySet = require('./entity_set');
 let Component = require('./component');

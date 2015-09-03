@@ -2,7 +2,7 @@
 
 let _ = require('underscore');
 
-let BitField = require('../bit_field');
+let BitField = require('odgn-bitfield');
 let Entity = require('../entity');
 let EntitySet = require('../entity_set');
 let EntityFilter = require('../entity_filter');

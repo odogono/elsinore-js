@@ -1,7 +1,6 @@
 'use strict';
 
 module.exports = {
-    BitField: require('./bit_field'),
     Entity: require('./entity'),
     EntityFilter: require('./entity_filter'),
     EntitySet: require('./entity_set'),
