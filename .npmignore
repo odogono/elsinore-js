@@ -16,5 +16,11 @@ results
 
 node_modules
 npm-debug.log
+doc/
 test/
 src/
+lib/entity_set_level
+lib/entity_set_redis
+lib/entity_set_sqlite
+lib/fs_entity_set
+lib/purgatory
