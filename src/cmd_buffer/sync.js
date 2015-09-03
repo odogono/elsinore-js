@@ -92,16 +92,11 @@ let functions = {
             if( entityId === -1 ){
                 entityId = entitySet._createEntity(null, true);
                 // log.debug( 'adding component with entity ' + entityId );
-            } else {
-                // log.debug('existing add entity ' + entityId );
             }
         } else {
             // does this entity exist in our es?
             entity = entitySet.getEntity( entityId );
         }
-
-        // log.debug( 'adding component with entity ' + JSON.stringify(entity) );
-        // printIns( entity );
 
         if( !entity ){
             this.addCommand( CMD_ENTITY_ADD, entityId, options );

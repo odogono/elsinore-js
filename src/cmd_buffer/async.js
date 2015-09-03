@@ -16,12 +16,10 @@ import * as SyncCmdBuffer from './sync';
 function CmdBuffer(){
 }
 
-let superReset = SyncCmdBuffer.prototype.reset;
-
-_.extend( CmdBuffer.prototype, SyncCmdBuffer.prototype, {
+_.extend( CmdBuffer.prototype, SyncCmdBuffer.default.prototype, {
 
     reset: function(){
-        superReset.apply(this,arguments);
+        SyncCmdBuffer.default.prototype.reset.apply(this,arguments);
         // store references to entities that exist during operations
         this._entityCache = new Backbone.Collection(); //Utils.clearMap( this._entityCache );
     },
@@ -72,7 +70,6 @@ _.extend( CmdBuffer.prototype, SyncCmdBuffer.prototype, {
         // first create or retrieve an entity container for the component
         return this._packageEntityId( entitySet, entityId )
             .then( entity => {
-                // log.debug('pac e ' + entity.cid );
                 let commandOptions = _.extend( {}, options, {entity:entity, id:entity.id, mode:entity._mode} );
                 if( entity._mode === SyncCmdBuffer.OP_CREATE_NEW ||
                     entity._mode === SyncCmdBuffer.OP_CREATE_FROM_EXISTING_ID ){
@@ -499,7 +496,7 @@ _.extend( CmdBuffer.prototype, SyncCmdBuffer.prototype, {
                 this.componentsAdded.models,
                 this.componentsUpdated.models,
                 this.componentsRemoved.models )
-                .then( function( updateResult ){
+                .then( updateResult => {
                     if( updateResult.entitiesAdded ){
                         this.entitiesAdded.set( updateResult.entitiesAdded ); }
                     if( updateResult.entitiesUpdated ){

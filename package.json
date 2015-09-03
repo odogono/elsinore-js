@@ -1,8 +1,8 @@
 {
-  "name": "elsinore",
-  "version": "0.6.0",
+  "name": "elsinore-js",
+  "version": "0.6.5",
   "description": "a javascript Entity Component System",
-  "keywords":[ "entity", "entity-component", "ecs", "data-driven" ],
+  "keywords":[ "elsinore", "entity", "entity-component", "ecs", "data-driven" ],
   "author": {
     "name": "Alexander Veenendaal",
     "email": "alex@opendoorgonorth.com"
