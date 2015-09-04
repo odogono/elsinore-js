@@ -104,13 +104,11 @@ var EntityProcessor = Backbone.Model.extend({
         return result;
     },
 
-    addComponentToEntity: function( entity, component ){
-        // log.debug('adding CMD ' + CmdBuffer.CMD_COMPONENT_ADD );
+    addComponentToEntity: function( component, entity ){
         this._cmds.push( [CmdBuffer.CMD_COMPONENT_ADD, entity, component] );
     },
 
-    removeComponentFromEntity: function( entity, component ){
-        // log.debug('adding CMD ' + CmdBuffer.CMD_COMPONENT_REMOVE );
+    removeComponentFromEntity: function( component, entity ){
         this._cmds.push( [CmdBuffer.CMD_COMPONENT_REMOVE, entity, component] );
     },
 

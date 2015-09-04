@@ -78,12 +78,12 @@ test('reaper', function(t){
                     if( entity.Ttl.get('expires_at') <= timeMs ){
                         // removing /ttl means that this will no longer be processed
                         // by this processor
-                        this.removeComponentFromEntity( entity, entity.Ttl );
+                        this.removeComponentFromEntity( entity.Ttl, entity );
 
                         // adding the /dead component means that the entity will 
                         // eventually be destroyed by the reaper processor
                         // log.debug('adding dead to ' + entity.id );
-                        this.addComponentToEntity( entity, '/dead' );
+                        this.addComponentToEntity( '/dead', entity );
                     }
                 }
             }
