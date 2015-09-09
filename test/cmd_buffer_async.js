@@ -20,7 +20,7 @@ module.exports = function( test, Common, Elsinore, CmdBuffer ){
                 reportUpdates( t, es, 1, 0, 0, 1, 0, 0 );
             })
             .then( () => t.end() )
-            .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
+            .catch( err => log.error('test error: ' + err.stack) )
     });
 
     test('adding a component with an eid, but not a member of the es', t => {
@@ -33,7 +33,7 @@ module.exports = function( test, Common, Elsinore, CmdBuffer ){
                 reportUpdates( t, es, 1, 0, 0, 1, 0, 0 );
             })
             .then( () => t.end() )
-            .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
+            .catch( err => log.error('test error: ' + err.stack) )
     });
 
     test('adding a component with an eid, a non-member of the es', t => {
@@ -50,7 +50,7 @@ module.exports = function( test, Common, Elsinore, CmdBuffer ){
 
             })
             .then( () => t.end() )
-            .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
+            .catch( err => log.error('test error: ' + err.stack) )
     });
 
 
@@ -65,7 +65,7 @@ module.exports = function( test, Common, Elsinore, CmdBuffer ){
                 t.ok( Component.isComponent(added) );
             })
             .then( () => t.end() )
-            .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
+            .catch( err => log.error('test error: ' + err.stack) )
     });
 
 
@@ -88,7 +88,7 @@ module.exports = function( test, Common, Elsinore, CmdBuffer ){
                 t.ok( Component.isComponent(added) );
             })
             .then( () => t.end() )
-            .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
+            .catch( err => log.error('test error: ' + err.stack) )
     });
 
     test('adding an entity with multiple components', t => {
@@ -106,7 +106,7 @@ module.exports = function( test, Common, Elsinore, CmdBuffer ){
                 // t.equal( es.componentsAdded.length, 2, 'two components should be added');
             })
             .then( () => t.end() )
-            .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} ) 
+            .catch( err => log.error('test error: ' + err.stack) ) 
     });
 
     test('updating an entity with a new component', t => {
@@ -135,7 +135,7 @@ module.exports = function( test, Common, Elsinore, CmdBuffer ){
                 // t.equal( es.componentsUpdated.length, 1, 'one component should be updated' );
             })
             .then( () => t.end() )
-            .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
+            .catch( err => log.error('test error: ' + err.stack) )
     });
 
 
@@ -158,7 +158,7 @@ module.exports = function( test, Common, Elsinore, CmdBuffer ){
                 reportUpdates( t, es, 0, 1, 0, 0, 0, 1 );
             })
             .then( () => t.end() )
-            .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
+            .catch( err => log.error('test error: ' + err.stack) )
     });
 
     test('removing the last component from an entity', t => {
@@ -179,7 +179,7 @@ module.exports = function( test, Common, Elsinore, CmdBuffer ){
                 reportUpdates( t, es, 0, 0, 1, 0, 0, 1 );
             })
             .then( () => t.end() )
-            .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
+            .catch( err => log.error('test error: ' + err.stack) )
     });
 
     
@@ -206,7 +206,7 @@ module.exports = function( test, Common, Elsinore, CmdBuffer ){
                 // t.equal( es.componentsRemoved.length, 3, 'three components should be removed');
             })
             .then( () => t.end() )
-            .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
+            .catch( err => log.error('test error: ' + err.stack) )
     });
 
     
@@ -232,7 +232,7 @@ module.exports = function( test, Common, Elsinore, CmdBuffer ){
                 reportUpdates( t, es, 0, 0, 1, 0, 0, 3 );
             })
             .then( () => t.end() )
-            .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
+            .catch( err => log.error('test error: ' + err.stack) )
     });
 
     test('adding multiple', t => {
@@ -255,7 +255,7 @@ module.exports = function( test, Common, Elsinore, CmdBuffer ){
                 })
                 .then( () => t.end() )
         })
-        .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
+        .catch( err => log.error('test error: ' + err.stack) )
     });
     
 

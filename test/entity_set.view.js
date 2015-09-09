@@ -413,7 +413,7 @@ export default function run( test, Common, Elsinore, EntitySet ){
 
             t.end();
         })
-        .catch( err => { log.error( 'test error: ' + err.stack );} )
+        .catch( err => log.error('test error: ' + err.stack) )
     });
 
 

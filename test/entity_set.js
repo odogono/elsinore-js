@@ -20,7 +20,7 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
             t.ok( entitySet.isEntitySet, 'it is an entitySet' );
             t.end();
         })
-        .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
+        .catch( err => log.error('test error: ' + err.stack) )
     });
 
     test('non existence of an entity', t => {
@@ -61,7 +61,7 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
             t.ok( Component.isComponent(components[0]), 'returns an array of components' );
             t.end();
         })
-        .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
+        .catch( err => log.error('test error: ' + err.stack) )
     });
 
 
@@ -104,7 +104,7 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
             t.end();
         })
-        .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
+        .catch( err => log.error('test error: ' + err.stack) )
     });
 
     test('removing a component from an entity with multiple components', t => {
@@ -269,7 +269,7 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
             t.ok( entity.Nickname, 'entity should have nickname' );
             t.end();
         })
-        .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
+        .catch( err => log.error('test error: ' + err.stack) )
     });
 
 
@@ -489,7 +489,7 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
             t.end();
         })
-        .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
+        .catch( err => log.error('test error: ' + err.stack) )
 
     });
 
@@ -510,7 +510,7 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
             t.equals( entitySet.at(0).getComponentCount(), 1);
             t.end();
         })
-        .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
+        .catch( err => log.error('test error: ' + err.stack) )
     });
 
     test('should not add entities that have excluded components', t => {
@@ -785,7 +785,7 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
             t.end();
         })
-        .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
+        .catch( err => log.error('test error: ' + err.stack) )
     });
 
 
@@ -811,7 +811,7 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
             t.end();
         })
-        .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
+        .catch( err => log.error('test error: ' + err.stack) )
     });
 
 

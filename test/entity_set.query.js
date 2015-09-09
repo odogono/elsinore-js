@@ -57,7 +57,7 @@ export default function run( test, Common, Elsinore, EntitySet ){
 
             t.end();
         })
-        .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
+        .catch( err => log.error('test error: ' + err.stack) )
     });
 
     test('entityset filter by attribute being within a value array', t => {
