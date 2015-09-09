@@ -186,11 +186,11 @@ export default function run( test, Common, Elsinore, EntitySet ){
             // Common.logEvents( view, 'e view' );
 
             // remove an unrelated component to the view
-            entitySet.removeComponent( entitySet.at( 0 ).Status );
+            entitySet.removeComponent( entitySet.at(0).Status );
             // printE( entitySet.at(0) );
             
             // remove the score component from the first entity in the view
-            entitySet.removeComponent( view.at( 0 ).Channel );
+            entitySet.removeComponent( view.at(0).Channel );
 
             // t.ok( eventSpy.calledOnce, 'only one event emitted from the view' );
             t.ok( eventSpy.calledWith('entity:remove'), 'entity:remove should have been called');
@@ -250,9 +250,9 @@ export default function run( test, Common, Elsinore, EntitySet ){
 
         initialiseEntitySet('entity_set.entities').then( ([registry,entitySet]) => {
             let query = Query.none('/component/position');
+            let view = entitySet.query( query );
 
-            var view = entitySet.query( query );
-
+            // add another entity to the ES which the view should ignore
             entitySet.addComponent([
                 registry.createComponent( '/component/flower', {colour:'red'}),
                 registry.createComponent( '/component/position', {x:-2,y:5})] );
@@ -260,7 +260,8 @@ export default function run( test, Common, Elsinore, EntitySet ){
             t.equals( view.length, 2, 'two entities');
 
             t.end();
-        });
+        })
+        .catch( err => { log.debug('t.error: ' + err ); log.debug( err.stack );} )
     });
 
 
@@ -386,6 +387,34 @@ export default function run( test, Common, Elsinore, EntitySet ){
     });
 
 
+    test('changing a component in the view triggers a change event', t => {
+        initialiseEntitySet().then( ([registry,entitySet]) => {
+            entitySet = registry.createEntitySet();
+            let view = entitySet.view();
+
+            let viewSpy = Sinon.spy(), esSpy = Sinon.spy();
+            entitySet.on('all', esSpy);
+            view.on('all', viewSpy);
+
+            // Common.logEvents( entitySet, 'es:evt' );
+            // Common.logEvents( view, 'view:evt' );
+
+            entitySet.addEntity(
+                registry.createEntity([
+                    { id:'/component/flower', colour:'yellow'},
+                    { id:'/component/radius', radius:0.4 }] ));
+
+            view.applyEvents();
+
+            view.at(0).Flower.set('colour', 'magenta');
+
+            t.ok( viewSpy.calledWith('component:change'), 'change event emitted from view');
+            t.ok( esSpy.calledWith('component:change'), 'change event emitted from entitySet');
+
+            t.end();
+        })
+        .catch( err => { log.error( 'test error: ' + err.stack );} )
+    });
 
 
     function initialise( entities ){

@@ -106,7 +106,9 @@ let functions = {
             existingCom = entitySet.getComponentFromEntity( component, entity );
 
             if( debug ){
-                log.debug('existing ' + component.hash() );
+                log.debug('existing ' + existingCom.hash() + ' vs new ' + component.hash() );
+                log.debug('existing: ' + Utils.stringify(existingCom));
+                log.debug('new: ' + Utils.stringify(component));
             }
 
             // does the existing entity have this component?

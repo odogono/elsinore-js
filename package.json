@@ -1,6 +1,6 @@
 {
-  "name": "elsinore-js",
-  "version": "0.6.8",
+  "name": "elsinore",
+  "version": "0.6.10",
   "description": "a javascript Entity Component System",
   "keywords": [
     "elsinore",
@@ -40,7 +40,7 @@
     "babelify": "^6.1.3",
     "browserify": "^11.0.1",
     "browserify-tape-spec": "^1.1.2",
-    "del": "^2.0.1",
+    "del": "^2.0.2",
     "envify": "^3.4.0",
     "event-stream": "^3.3.1",
     "gulp": "~3.9.0",

@@ -100,21 +100,22 @@ var Entity = Model.extend({
         var existing;
         existing = this.components[ component.getSchemaId() ];
         if( existing ){
-            existing.setEntityId( null );
+            this.removeComponent( existing );
         }
         component.setEntityId( this.id );
         component._entity = this;
         this[ component.name ] = component;
         this.components[ component.getSchemaId() ] = component;
         this.getComponentBitfield().set( component.getSchemaId(), true );
+        component.on('all', this._onComponentEvent, this);
         return this;
     },
 
     getComponents: function( componentIds ){
-        var components = this.components;
+        let components = this.components;
         componentIds = componentIds || this.getComponentBitfield().toValues();
         return _.reduce( componentIds, (result,id) => {
-            var com = components[id];
+            let com = components[id];
             if( com ){ result.push( com ); }
             return result;
         }, []);
@@ -127,15 +128,28 @@ var Entity = Model.extend({
         delete this[ component.name ];
         delete this.components[ component.getSchemaId() ];
         this.getComponentBitfield().set( component.getSchemaId(), false );
+        component.off('all', this._onComponentEvent, this);
         return this;
     },
 
-    getComponentByIId: function( iid ){
+    removeComponents: function( componentIds ){
+        let components = this.components;
+        componentIds = componentIds || this.getComponentBitfield().toValues();
+        _.each( componentIds, id => {
+            let com = components[id];
+            if( com ){
+                this.removeComponent( com );
+            }
+        })
+    },
+
+    getComponentByIId: function( componentIId ){
         var self = this;
-        if( _.isArray(iid) ) {
-            return _.map( iid, id => self.components[id] )
+        componentIId = this.getRegistry().getIId( componentIId );
+        if( _.isArray(componentIId) ) {
+            return _.map( componentIId, id => self.components[id] )
         }
-        return this.components[ iid ];
+        return this.components[ componentIId ];
     },
 
     hasComponent: function( componentIId ){
@@ -181,11 +195,20 @@ var Entity = Model.extend({
         }
     },
 
+    /**
+    *   Reacts to events triggered by contained components
+    */
+    _onComponentEvent: function(event, component, options) {
+        if (event === 'destroy'){
+            this.removeComponent(component, options);
+        }
+        if( event === 'change' ){
+            event = 'component:change';
+            // log.debug('_onComponentEvent ' + event + ' ' + JSON.stringify(component) + ' ' + JSON.stringify(options) );
+            this.trigger(event, component, options);
+        }
+    }
 
-}, {
-    STATUS_ACTIVE: 0,
-    STATUS_INACTIVE: 1,
-    STATUS_LOGICALLY_DELETED: 2
 });
 
 Entity.createId = function(){

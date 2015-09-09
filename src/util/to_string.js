@@ -44,7 +44,7 @@ function componentToString(component, indent){
 
     return indent 
         + '' + component.cid 
-        + ' (' + component.id +') '
+        + ' (' + (component.id || '0') +') '
         + component.name 
         + '(' + component.getSchemaId() + ')'
         + ' e:' + Utils.getEntityIdFromId(component.getEntityId()) + '' 

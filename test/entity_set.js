@@ -1,20 +1,22 @@
 'use strict';
 
-var _ = require('underscore');
-var Sinon = require('sinon');
+let _ = require('underscore');
+let Sinon = require('sinon');
+
 
 
 module.exports = function( test, Common, Elsinore, EntitySet ){
 
-    var Component = Elsinore.Component;
-    var Entity = Elsinore.Entity;
-    var EntityFilter = Elsinore.EntityFilter;
+    let Component = Elsinore.Component;
+    let Entity = Elsinore.Entity;
+    let EntityFilter = Elsinore.EntityFilter;
     let Query = Elsinore.Query;
-    var Registry = Elsinore.Registry;
+    let Registry = Elsinore.Registry;
+    let Utils = Elsinore.Utils;
 
     test('type of entityset', t => {
         return Common.initialiseRegistry().then( registry => {
-            var entitySet = registry.createEntitySet();
+            let entitySet = registry.createEntitySet();
             t.ok( entitySet.isEntitySet, 'it is an entitySet' );
             t.end();
         })
@@ -23,7 +25,7 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
     test('non existence of an entity', t => {
         return Common.initialiseRegistry().then( registry => {
-            var entitySet = registry.createEntitySet();
+            let entitySet = registry.createEntitySet();
             t.ok( !entitySet.hasEntity(1001), 'entity not exist');
             t.end();
         });
@@ -31,7 +33,7 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
     test('adding an entity with a component returns the added entity', t => {
         return Common.initialiseRegistry().then( registry => {
-            var entitySet = registry.createEntitySet();
+            let entitySet = registry.createEntitySet();
 
             let entity = registry.createEntity( { id:'/component/position', x:2, y:-2 } );
             entity = entitySet.addEntity( entity );
@@ -46,13 +48,13 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
     });
 
     test('adding several components returns an array of added components', t => {
-        var entities;
+        let entities;
         return Common.initialiseRegistry().then( registry => {
-            var entitySet = registry.createEntitySet();
+            let entitySet = registry.createEntitySet();
             
             // let loadedEntitySet = Common.loadEntities( registry, 'entity_set.entities' );
-            var data = Common.loadFixtureJSON( 'entity_set.entities.json' );
-            var components = _.map( data, line => registry.createComponent( line ) );
+            let data = Common.loadFixtureJSON( 'entity_set.entities.json' );
+            let components = _.map( data, line => registry.createComponent( line ) );
 
             components = entitySet.addComponent( components );
 
@@ -65,9 +67,9 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
     test('adding a component without an id or an entity id creates a new component and a new entity', t => {
         return Common.initialiseRegistry().then( registry => {
-            var entitySet = registry.createEntitySet();
-            var eventSpy = Sinon.spy();
-            var component;
+            let entitySet = registry.createEntitySet();
+            let eventSpy = Sinon.spy();
+            let component;
             // Common.logEvents( entitySet );
 
             entitySet.on('all', eventSpy);
@@ -83,9 +85,9 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
     test('removing a component from an entity with only one component', t => {
         return Common.initialiseRegistry().then( registry => {
-            var entitySet = registry.createEntitySet();
-            var eventSpy = Sinon.spy();
-            var component;
+            let entitySet = registry.createEntitySet();
+            let eventSpy = Sinon.spy();
+            let component;
 
             entitySet.on('all', eventSpy);
 
@@ -107,11 +109,11 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
     test('removing a component from an entity with multiple components', t => {
         return Common.initialiseRegistry().then( registry => {
-            var entitySet = registry.createEntitySet();
-            var eventSpy = Sinon.spy();
-            var entity;
-            var component;
-            var components;
+            let entitySet = registry.createEntitySet();
+            let eventSpy = Sinon.spy();
+            let entity;
+            let component;
+            let components;
             // Common.logEvents( entitySet );
 
             entitySet.on('all', eventSpy);
@@ -137,9 +139,9 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
     test('you cant add an empty entity to an entityset', t => {
         return Common.initialiseRegistry().then( registry => {
-            var entitySet = registry.createEntitySet();
+            let entitySet = registry.createEntitySet();
 
-            var e = Entity.create( 43 );
+            let e = Entity.create( 43 );
 
             entitySet.addEntity( e );
 
@@ -151,8 +153,8 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
     test('adding several components without an entity adds them to the same new entity', t => {
         return Common.initialiseRegistry().then( registry => {
-            var entitySet = registry.createEntitySet();
-            var eventSpy = Sinon.spy();
+            let entitySet = registry.createEntitySet();
+            let eventSpy = Sinon.spy();
             // Common.logEvents( entitySet );
 
             entitySet.on('all', eventSpy);
@@ -172,8 +174,8 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
     test('adding a component generates events', t => {
         return Common.initialiseRegistry().then( registry => {
-            var entitySet = registry.createEntitySet();
-            var eventSpy = Sinon.spy();
+            let entitySet = registry.createEntitySet();
+            let eventSpy = Sinon.spy();
             // Common.logEvents( entitySet );
             
             entitySet.on('all', eventSpy);
@@ -190,40 +192,47 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
     test('adding several components at once generates a single add event', t => {
         return Common.initialiseRegistry().then( registry => {
-            var entitySet = registry.createEntitySet();
-            var eventSpy = Sinon.spy();
+            let entitySet = registry.createEntitySet();
+            let eventSpy = Sinon.spy();
             // Common.logEvents( entitySet );
             entitySet.on('all', eventSpy);
+
+            entitySet.on('add', function(){
+                throw new Error('stop!');
+            })
 
             entitySet.addComponent( [
                 registry.createComponent( '/component/position', {id:1,_e:2, x:19, y:-2}),
                 registry.createComponent( '/component/nickname', {id:2,_e:2, nick:'isaac'})
             ]);
 
-            t.equals( eventSpy.callCount, 3, 'two events should have been emitted' );
-            t.ok( eventSpy.calledWith('update'), 'update called' );
+            t.equals( eventSpy.callCount, 2, 'two events should have been emitted' );
+            // t.ok( eventSpy.calledWith('update'), 'update called' );
             t.ok( eventSpy.calledWith('component:add'), 'component:add should have been called' );
             t.ok( eventSpy.calledWith('entity:add'), 'entity:add should have been called' );
             t.end();
-        });
+        })
+        .catch( err => { log.debug('t.error: ' + err ); log.debug( err.stack );} )
     });
 
 
     test('adding an entity with components', t => {
-        var com;
+        let com;
         return Common.initialiseRegistry().then( registry => {
-            var entitySet = registry.createEntitySet();
-            var eventSpy = Sinon.spy();
+            let entitySet = registry.createEntitySet();
+            let eventSpy = Sinon.spy();
             // Common.logEvents( entitySet );
 
             entitySet.on('all', eventSpy);
 
-            var entity = Entity.create(16);
+            let entity = Entity.create(16);
             entity.addComponent( (com=registry.createComponent( '/component/position', {id:5, x:2,y:-2})) );
             entity.addComponent( registry.createComponent( '/component/score', {id:6, score:100}) );
             entitySet.addEntity( entity );
 
-            t.equals( eventSpy.callCount, 3, 'three events should have been emitted' );
+            t.equals( eventSpy.callCount, 2, 'two events should have been emitted' );
+            t.ok( eventSpy.calledWith('component:add'), 'component:add should have been called' );
+            t.ok( eventSpy.calledWith('entity:add'), 'entity:add should have been called' );
             t.equals( entitySet.at(0).Position.get('x'), 2 );
 
             t.end();
@@ -234,12 +243,12 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
     test('should return the number of entities contained', t => {
         return Common.initialiseRegistry().then( registry => {
-            var entitySet = registry.createEntitySet();
-            var eventSpy = Sinon.spy();
+            let entitySet = registry.createEntitySet();
+            let eventSpy = Sinon.spy();
             // Common.logEvents( entitySet );
 
-            var pos = registry.createComponent( '/component/position', {id:1,_e:3});
-            var nick = registry.createComponent( '/component/nickname', {id:2,_e:3});
+            let pos = registry.createComponent( '/component/position', {id:1,_e:3});
+            let nick = registry.createComponent( '/component/nickname', {id:2,_e:3});
 
             t.ok( pos.getEntityId(), 3 );
             t.ok( nick.getEntityId(), 3 );
@@ -252,7 +261,7 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
             t.equals( entitySet.size(), 1, 'should only be one entity' );
 
             // retrieve an entity by id 3
-            var entity = entitySet.getEntity(3);
+            let entity = entitySet.getEntity(3);
             // printE( entitySet );
             // log.debug( entitySet.at(0).id + ' is e id ' + entitySet.id );
 
@@ -266,14 +275,14 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
     test('should return an added entity', t => {
         return Common.initialiseRegistry().then( registry => {
-            var entitySet = registry.createEntitySet();
-            var eventSpy = Sinon.spy();
+            let entitySet = registry.createEntitySet();
+            let eventSpy = Sinon.spy();
 
-            var entities = Common.loadEntities( registry );
+            let entities = Common.loadEntities( registry );
 
-            var entity = entities.at(0);
+            let entity = entities.at(0);
             entitySet.addComponent( entity.Position );
-            var addedEntity = entitySet.at(0);
+            let addedEntity = entitySet.at(0);
             t.equals( addedEntity.getEntityId(),  entity.getEntityId() );
             t.equals( addedEntity.Position.id,  entity.Position.id );
             t.end();
@@ -282,8 +291,8 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
     test('should remove the entities component', t => {
         return Common.initialiseRegistry().then( registry => {
-            var entitySet = registry.createEntitySet();
-            var entity;
+            let entitySet = registry.createEntitySet();
+            let entity;
 
             entity = entitySet.addEntity( registry.createEntity( {id:'/component/realname', name:'tom smith'} ) );
             
@@ -298,10 +307,10 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
     test('should remove the entity belonging to a component', t => {
         return Common.initialiseRegistry().then( registry => {
-            var entitySet = registry.createEntitySet({allowEmptyEntities:false});
-            var eventSpy = Sinon.spy();
+            let entitySet = registry.createEntitySet({allowEmptyEntities:false});
+            let eventSpy = Sinon.spy();
 
-            var entity = Entity.create(9);
+            let entity = Entity.create(9);
             entity.addComponent( registry.createComponent( '/component/realname', {id:3, name:'tom smith'}) );
 
             entitySet.addComponent( entity.Realname );
@@ -314,11 +323,11 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
     test('should remove a component reference from an entity', t => {
         return Common.initialiseRegistry().then( registry => {
-            var entitySet = registry.createEntitySet();
-            var eventSpy = Sinon.spy();
+            let entitySet = registry.createEntitySet();
+            let eventSpy = Sinon.spy();
 
-            var entities = Common.loadEntities( registry );
-            var addedEntity = entitySet.addEntity( entities.at(0) );
+            let entities = Common.loadEntities( registry );
+            let addedEntity = entitySet.addEntity( entities.at(0) );
 
             t.ok( addedEntity.Realname !== undefined, 'the entity should have the Realname component' );
             
@@ -334,29 +343,33 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
     test('should add an entity only once', t => {
         return Common.initialiseRegistry().then( registry => {
-            var entitySet = registry.createEntitySet();
-            var eventSpy = Sinon.spy();
+            let entitySet = registry.createEntitySet();
+            let eventSpy = Sinon.spy();
 
-            var entities = Common.loadEntities( registry );  
-            var entity = entities.at(0);
+
+            let entities = Common.loadEntities( registry );  
+            let entity = entities.at(0);
+
+            // Common.logEvents( entitySet );
 
             entitySet.addEntity( entity );
             t.equals( entitySet.size(), 1);
             entitySet.addEntity( entity );
             t.equals( entitySet.size(), 1);
             t.end();
-        });
+        })
+        .catch( err => { log.debug('t.error: ' + err ); log.debug( err.stack );} )
     });
 
 
     test('should remove an entity', t => {
         return Common.initialiseRegistry().then( registry => {
-            var entitySet = registry.createEntitySet();
-            var eventSpy = Sinon.spy();
+            let entitySet = registry.createEntitySet();
+            let eventSpy = Sinon.spy();
 
-            var entities = Common.loadEntities( registry );  
+            let entities = Common.loadEntities( registry );  
 
-            var entity = entities.at(0);
+            let entity = entities.at(0);
             entitySet.addEntity( entity );
             t.equals( entitySet.size(), 1);
 
@@ -378,16 +391,16 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
     test('should really remove an entity', t => {
         return Common.initialiseRegistry().then( registry => {
-            var entitySet = registry.createEntitySet();
+            let entitySet = registry.createEntitySet();
 
             // Common.logEvents( entitySet );
 
-            var entityA = entitySet.addEntity(
+            let entityA = entitySet.addEntity(
                 registry.createEntity([
                     { id:'/component/flower', colour:'blue'},
                     { id:'/component/position', x:10, y:60 }] ));
 
-            var entityB = entitySet.addEntity(
+            let entityB = entitySet.addEntity(
                 registry.createEntity([
                     { id:'/component/vegetable', name:'cauliflower'},
                     { id:'/component/radius', radius:0.3 }] ));
@@ -401,14 +414,14 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
     test('should add the components of an entity', t => {
         return Common.initialiseRegistry().then( registry => {
-            var entitySet = registry.createEntitySet();
-            var eventSpy = Sinon.spy();
+            let entitySet = registry.createEntitySet();
+            let eventSpy = Sinon.spy();
 
-            var entities = Common.loadEntities( registry );
+            let entities = Common.loadEntities( registry );
 
             entitySet.addEntity( entities.at(0) );
             
-            var addedEntity = entitySet.at(0);
+            let addedEntity = entitySet.at(0);
             t.notEqual( addedEntity.Realname, undefined );
             t.end();
         });
@@ -416,10 +429,10 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
     test('should emit an event when an entity is added', t => {
         return Common.initialiseRegistry().then( registry => {
-            var entitySet = registry.createEntitySet();
-            var eventSpy = Sinon.spy();
+            let entitySet = registry.createEntitySet();
+            let eventSpy = Sinon.spy();
 
-            var entities = Common.loadEntities( registry );
+            let entities = Common.loadEntities( registry );
                 
             entitySet.on('entity:add', eventSpy );
             entitySet.addEntity( entities.at(0) );
@@ -431,11 +444,11 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
     test('should emit an event when an entity is removed', t => {
         return Common.initialiseRegistry().then( registry => {
-            var entitySet = registry.createEntitySet();
-            var eventSpy = Sinon.spy();
+            let entitySet = registry.createEntitySet();
+            let eventSpy = Sinon.spy();
 
-            var entities = Common.loadEntities( registry );
-            var entity = entities.at(0);
+            let entities = Common.loadEntities( registry );
+            let entity = entities.at(0);
                 
             entitySet.on('entity:remove', eventSpy );
             entitySet.addEntity( entity );
@@ -448,9 +461,9 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
     test('should not emit an event when a non-existent component is removed', t => {
         return Common.initialiseRegistry().then( registry => {
-            var eventSpy = Sinon.spy();
-            var entitySet = Common.loadEntities( registry );
-            var component = registry.createComponent( '/component/position', {x:-1,y:-1}, {eid:26} );
+            let eventSpy = Sinon.spy();
+            let entitySet = Common.loadEntities( registry );
+            let component = registry.createComponent( '/component/position', {x:-1,y:-1}, {eid:26} );
 
             component = entitySet.removeComponent( component );
 
@@ -463,7 +476,7 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
     test('should only add a component of an accepted type', t => {
         return initialise().then( ([registry,entitySet,entities]) => {
-            var eventSpy = Sinon.spy();
+            let eventSpy = Sinon.spy();
             // Common.logEvents( entitySet );
             // printE( entities );
             // setting an entity filter means that the entitySet will
@@ -565,17 +578,17 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
     test('should remove entities that are excluded after their components change', t => {
         return initialise({allowEmptyEntities:false}).then( ([registry,entitySet,entities]) => {
-        // var registry = Common.initialiseRegistry();
-        // var entitySet = registry.createEntitySet({allowEmptyEntities:false});
-        // var entities = Common.loadEntities( registry );
+        // let registry = Common.initialiseRegistry();
+        // let entitySet = registry.createEntitySet({allowEmptyEntities:false});
+        // let entities = Common.loadEntities( registry );
 
             EntitySet.setQuery( entitySet, Query.none('/component/realname') );
             
             entitySet.addEntity( entities );
             t.equals( entitySet.size(), 2);
             
-            var entity = entities.at(1);
-            var component = registry.createComponent( '/component/realname', {name:'mike smith', _e:entity.getEntityId()});
+            let entity = entities.at(1);
+            let component = registry.createComponent( '/component/realname', {name:'mike smith', _e:entity.getEntityId()});
             // this action should cause the entity to be removed
             entitySet.addComponent( component );
             t.equals( entitySet.size(), 1);
@@ -590,7 +603,7 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
             entitySet.addEntity( entities );
             
             t.equals( entitySet.size(), 3, 'two entities which have Nickname');
-            var entity = entities.at(0);
+            let entity = entities.at(0);
 
             // removing the Nickname component should mean the entity is also removed
             entitySet.removeComponent( entity.Nickname );
@@ -612,11 +625,11 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
     test.skip('should filter', t => {
         return initialise().then( ([registry,entitySet,entities]) => {
-            var positionIId = registry.getIId( '/component/position' );
+            let positionIId = registry.getIId( '/component/position' );
                 
             entitySet.addEntity( entities );
 
-            var selected = entitySet.filter( function(e){
+            let selected = entitySet.filter( function(e){
                 return e.getComponentBitfield().get( positionIId );
             });
 
@@ -627,7 +640,7 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
     // test('should remove components for an entity', t => {
     //     return beforeEach(true).then( function(){
-    //         var entity = entities.at(0);
+    //         let entity = entities.at(0);
 
     //         entitySet.addEntity( entity );
     //         entitySet.removeEntity( entity );
@@ -638,9 +651,9 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
     test('should emit an event when a component is changed', t => {
         return initialise().then( ([registry,entitySet,entities]) => {
 
-            var entity = entities.at(0);
-            var cloned, component = entity.Position;
-            var spy = Sinon.spy();
+            let entity = entities.at(0);
+            let cloned, component = entity.Position;
+            let spy = Sinon.spy();
 
             entitySet.on('component:change', spy);
 
@@ -659,19 +672,19 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
     test('emit event when an entity component is changed', t => {
         return initialise().then( ([registry,entitySet,entities]) => {
-            var spy = Sinon.spy();
+            let spy = Sinon.spy();
             // Common.logEvents( entitySet );
             
             entitySet.on('component:change', spy);
 
-            var entityA = registry.createEntity( { id:'/component/flower', colour:'white'} );
-            entityA = entitySet.addEntity( entityA );
+            let entityA = entitySet.addEntity( 
+                registry.createEntity( { id:'/component/flower', colour:'white'} ) );
 
             // printE( entitySet );
 
-            var entityB = registry.createEntity( { id:'/component/flower', colour:'blue'}, {id:entityA.getEntityId()} );
+            let entityB = registry.createEntity( { id:'/component/flower', colour:'blue'}, {id:entityA.getEntityId()} );
             t.equal( entityA.getEntityId(), entityB.getEntityId(), 'the entity ids should be equal' );
-            entityB = entitySet.addEntity( entityB );    
+            entityB = entitySet.addEntity( entityB );
 
             t.ok( spy.called, 'component:change should have been called' );
 
@@ -681,12 +694,32 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
         });
     });
 
+    test('emit event when a component instance is changed', t => {
+        return initialise().then( ([registry,entitySet,entities]) => {
+            let spy = Sinon.spy();
+            // Common.logEvents( entitySet );            
+            entitySet.on('component:change', spy);
+
+            let entityA = entitySet.addEntity( 
+                registry.createEntity( { id:'/component/flower', colour:'white'} ) );
+
+            let component = entitySet.at(0).getComponentByIId('/component/flower');
+
+            // calling set triggers an event which is forwarded by the enclosing
+            // entity onto the surrounding entityset
+            component.set({colour:'red'}, {debug:true});
+
+            t.ok( spy.called, 'component:change should have been called' );
+            t.end();
+        })
+        .catch( err => { log.debug('t.error: ' + err ); log.debug( err.stack );} )
+    });
 
 
     test('should clear all contained entities by calling reset', t => {
         return initialise().then( ([registry,entitySet,entities]) => {
 
-            var spy = Sinon.spy();
+            let spy = Sinon.spy();
 
             entitySet.on('reset', spy);
             entitySet.addEntity( entities );
@@ -704,7 +737,7 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
         return initialise().then( ([registry,entitySet,entities]) => {
         
             // other ES will accept only entities with Position and Realname
-            var oEntitySet = registry.createEntitySet();
+            let oEntitySet = registry.createEntitySet();
             // set a filter on the other entitySet so that it will only accept components that
             // have /position and /realname
             EntitySet.setQuery( oEntitySet, 
@@ -726,13 +759,14 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
 
     test('map transfers an entitySet through a filter into another entityset', t => {
-        var eventSpy = Sinon.spy();
+        let eventSpy = Sinon.spy();
         return initialise().then( ([registry,entitySet,entities]) => {
-            var oEntitySet = registry.createEntitySet();
-            var entityFilter = Query.include('/component/score');
+            let oEntitySet = registry.createEntitySet();
+            let entityFilter = Query.include('/component/score');
 
             // printE( loadedEntitySet );
 
+            // Common.logEvents( oEntitySet );
             oEntitySet.on('all', eventSpy);
 
             // Common.logEvents( oEntitySet );
@@ -741,6 +775,11 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
             // loadedEntitySet.map( entityFilter, oEntitySet );
 
             // printIns( eventSpy.args[1] );
+
+            t.ok( eventSpy.calledWith('reset'), 'entitySet should trigger a reset event');
+            t.ok( eventSpy.calledWith('component:add'), 'entitySet should trigger a component:add event');
+            t.ok( eventSpy.calledWith('entity:add'), 'entitySet should trigger a entity:add event');
+
             t.equal( _.size(eventSpy.args[1][1]), 3, 'three components reported as being added' );
             t.equal( _.size(eventSpy.args[2][1]), 3, 'three entities reported as being added' );
 
@@ -751,12 +790,13 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
 
     test('map transfers an entitySet through a filter into another entityset again', t => {
-        var eventSpy = Sinon.spy();
+        let eventSpy = Sinon.spy();
         return initialise().then( ([registry,entitySet,entities]) => {
-            var oEntitySet = registry.createEntitySet();
-            var entityFilter = Query.none('/component/position');
+            let oEntitySet = registry.createEntitySet();
+            let entityFilter = Query.none('/component/position');
 
             oEntitySet.on('all', eventSpy);
+            // Common.logEvents( oEntitySet );
 
             // Common.logEvents( oEntitySet );
             // map the entities from the loaded set into the other set, using the entityfilter
@@ -766,7 +806,7 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
             // printE( loadedEntitySet );
             // printE( oEntitySet );
 
-            t.equal( _.size(eventSpy.args[1][1]), 2, 'three components reported as being added' );
+            t.equal( _.size(eventSpy.args[1][1]), 5, 'three components reported as being added' );
             t.equal( _.size(eventSpy.args[2][1]), 2, 'two entities reported as being added' );
 
             t.end();
@@ -778,7 +818,7 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
     
 
     test.skip('iterator', t => {
-        var it, entity, count;
+        let it, entity, count;
         return initialise().then( ([registry,entitySet,entities]) => {
 
 
@@ -797,10 +837,10 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
     });
 
     // test('async iterator completest with a rejection', t => {
-    //     var it, entity, count;
-    //     var registry = Common.initialiseRegistry();
-    //     var entitySet = registry.createEntitySet();
-    //     var entities = Common.loadEntities( registry );
+    //     let it, entity, count;
+    //     let registry = Common.initialiseRegistry();
+    //     let entitySet = registry.createEntitySet();
+    //     let entities = Common.loadEntities( registry );
 
     //     // add a single entity
     //     entitySet.addEntity( entities.at(0) );
@@ -818,10 +858,10 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
     // });
 
     // test('async iterator', t => {
-    //     var it, entity, count;
-    //     var registry = Common.initialiseRegistry();
-    //     var entitySet = registry.createEntitySet();
-    //     var entities = Common.loadEntities( registry );
+    //     let it, entity, count;
+    //     let registry = Common.initialiseRegistry();
+    //     let entitySet = registry.createEntitySet();
+    //     let entities = Common.loadEntities( registry );
 
     //     entitySet.addEntity( entities );
 
@@ -844,8 +884,8 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
     function initialise(){
         return Common.initialiseRegistry().then( registry => {
-            var entitySet = registry.createEntitySet();
-            var entities = Common.loadEntities( registry );
+            let entitySet = registry.createEntitySet();
+            let entities = Common.loadEntities( registry );
             return [registry,entitySet,entities];    
         });
     }
@@ -857,7 +897,7 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 // serverside only execution of tests
 if( !process.browser ){
     let Common = require('./common');
-    var Elsinore = Common.Elsinore;
+    let Elsinore = Common.Elsinore;
     
     module.exports( require('tape'), Common, Elsinore, Elsinore.EntitySet );
 }

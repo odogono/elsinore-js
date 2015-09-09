@@ -15,12 +15,12 @@ let Model = Backbone.Model.extend({
      * @param  {[type]} name [description]
      * @return {[type]}      [description]
      */
-    trigger: function(name){
-        if( !this.registry ){ return; }
-        let args = Array.prototype.slice.call(arguments);
-        args.splice( 1,0, this );
-        this.registry.trigger.apply( this.registry, args );
-    },
+    // trigger: function(name){
+    //     if( !this.registry ){ return; }
+    //     let args = Array.prototype.slice.call(arguments);
+    //     args.splice( 1,0, this );
+    //     this.registry.trigger.apply( this.registry, args );
+    // },
 
     getRegistry: function(){
         return this.registry;

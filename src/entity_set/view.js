@@ -211,8 +211,6 @@ _.extend( EntitySetListener.prototype, {
             entitiesRemoved.push( entity );
         });
 
-        
-
         // entities that have changed due to component movement - remove if no longer valid
         changedEntityIdList = _.values( this.changedEntityList );
         if( changedEntityIdList.length > 0 ){

@@ -27,8 +27,7 @@ let EntitySet = Backbone.Collection.extend({
 
     views: null,
 
-    initialize: function( entities, options ){
-    },
+    initialize: function( entities, options ){},
 
     getEntitySetId: function(){
         return this.id;
@@ -206,13 +205,15 @@ let EntitySet = Backbone.Collection.extend({
 
     _addEntity: function(entity){
         entity.setRegistry( this.getRegistry() );
-        this.add( entity );
+        // no need for us to issue add events as well as entity:add
+        this.add( entity, {silent:true} );
         return entity;
     },
 
     _removeEntity: function(entity){
         let entityId = Entity.toEntityId(entity);
-        this.remove( entity );
+        // no need for us to issue remove events as well as entity:remove
+        this.remove( entity, {silent:true} );
         return entity;
     },
 

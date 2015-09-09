@@ -177,6 +177,12 @@ _.extend(Registry.prototype, Backbone.Events, {
         return result;
     },
 
+    destroyEntity: function( entity, options ){
+        entity.removeComponents();
+
+        return entity;
+    },
+
     /**
      * Registers a new Component Def from data
      *
