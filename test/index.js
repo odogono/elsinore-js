@@ -1,5 +1,6 @@
 require('./component');
 require('./entity');
+require('./entity_filter');
 require('./entity_set');
 require('./entity_set.query');
 require('./entity_set.query.dsl');

@@ -3,9 +3,9 @@
 let _ = require('underscore');
 let Backbone = require('backbone');
 
-let EntitySet = require('./entity_set');
-let Registry = require('./registry');
-let Query = require('./query/full');
+let EntitySet = require('../entity_set');
+let Registry = require('./index');
+let Query = require('../query/full');
 
 _.extend( Registry.prototype, {
     /**

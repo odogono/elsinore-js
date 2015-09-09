@@ -1,12 +1,13 @@
 'use strict';
 
 let _ = require('underscore');
+let BitField = require('odgn-bitfield');
 let Sinon = require('sinon');
 
 
 module.exports = function( test, Common, Elsinore, EntitySet ){
 
-    let BitField = Elsinore.BitField;
+    
     let Component = Elsinore.Component;
     let Entity = Elsinore.Entity;
     let EntityFilter = Elsinore.EntityFilter;

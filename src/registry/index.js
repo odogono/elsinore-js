@@ -4,14 +4,14 @@ let _ = require('underscore');
 let Backbone = require('backbone');
 
 let BitField = require('odgn-bitfield');
-let Entity = require('./entity');
-let EntitySet = require('./entity_set');
-let Component = require('./component');
-let SchemaRegistry = require('./schema');
-let SchemaProperties = require('./schema/properties');
-let EntityProcessor = require('./entity_processor');
-let EntityFilter = require('./entity_filter');
-let Utils = require('./utils');
+let Entity = require('../entity');
+let EntitySet = require('../entity_set');
+let Component = require('../component');
+let SchemaRegistry = require('../schema');
+let SchemaProperties = require('../schema/properties');
+let EntityProcessor = require('../entity_processor');
+let EntityFilter = require('../entity_filter');
+let Utils = require('../utils');
 
 
 let counter = Date.now() % 1e9;
