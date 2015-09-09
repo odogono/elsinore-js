@@ -14,4 +14,4 @@ module.exports = {
 };
 
 require('./entity_set/view');
-require('./registry.processor');
+require('./registry/processor');

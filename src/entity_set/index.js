@@ -2,15 +2,15 @@
 
 let _ = require('underscore');
 let Backbone = require('backbone');
-
 let BitField = require('odgn-bitfield');
-let Component = require('./component');
-let Entity = require('./entity');
-let EntityFilter = require('./entity_filter');
-// let Query = require('./entity_set/query')
-let Utils = require('./utils');
 
-import * as CmdBuffer from './cmd_buffer/sync';
+let Component = require('../component');
+let Entity = require('../entity');
+let EntityFilter = require('../entity_filter');
+// let Query = require('./entity_set/query')
+let Utils = require('../utils');
+
+import * as CmdBuffer from '../cmd_buffer/sync';
 
 let CollectionPrototype = Backbone.Collection.prototype;
 
