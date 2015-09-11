@@ -1,9 +1,9 @@
 'use strict';
 
-var _ = require('underscore');
+import _ from 'underscore';
 var Q = require('./index');
 var EntitySet = require('../entity_set');
-var Utils = require('../utils');
+import * as Utils from '../util'
 
 var SELECT_BY_ID = 100;
 

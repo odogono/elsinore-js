@@ -1,8 +1,7 @@
 'use strict';
 
-var _ = require('underscore');
-
-var Q = require('../../query');
+import _ from 'underscore';
+import Q from '../../query';
 
 /**
 

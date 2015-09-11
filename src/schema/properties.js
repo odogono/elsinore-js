@@ -1,6 +1,4 @@
-'use strict';
-
-var _ = require('underscore');
+import _ from 'underscore';
 
 /**
 *   Returns an array of properties for the given schema

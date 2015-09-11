@@ -1,15 +1,12 @@
-'use strict';
+import _ from 'underscore';
+import Backbone from 'backbone';
 
-var _ = require('underscore');
-var Backbone = require('backbone');
+import Component from '../component';
+import Entity from '../entity';
+import EntitySet from '../entity_set';
+import EntityProcessor from '../entity_processor';
 
-var Elsinore = require('../index');
-
-var Component = Elsinore.Component;
-var Entity = Elsinore.Entity;
-var EntitySet = Elsinore.EntitySet;
-var EntityProcessor = Elsinore.EntityProcessor;
-var Utils = require('../utils');
+import * as Utils from '../util'
 
 function entityToString(entity, indent){
     var res = [];

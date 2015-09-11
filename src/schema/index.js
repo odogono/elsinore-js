@@ -1,12 +1,9 @@
-'use strict';
+import _ from 'underscore';
+import Backbone from 'backbone';
+import Jsonpointer from 'jsonpointer';
 
-var _ = require('underscore');
-var Backbone = require('backbone');
-var Jsonpointer = require('jsonpointer');
-
-var Utils = require('../utils');
-
-var SchemaProperties = require('./properties');
+import * as Utils from '../util'
+import SchemaProperties from './properties';
 
 // 
 // With some inspiration from https://github.com/natesilva/jayschema/blob/master/lib/schemaRegistry.js

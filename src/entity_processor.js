@@ -1,14 +1,12 @@
-'use strict';
+import _ from 'underscore';
+import Backbone from 'backbone';
 
-var _ = require('underscore');
-var Backbone = require('backbone');
-
-var EntitySet = require('./entity_set');
-var Utils = require('./utils');
+import EntitySet from './entity_set';
+import * as Utils from './util'
 
 import * as CmdBuffer from './cmd_buffer/sync';
 
-var EventsAsync = require('./util/events.async');
+import EventsAsync from './util/events.async';
 
 
 /**

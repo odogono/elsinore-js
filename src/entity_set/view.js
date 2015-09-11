@@ -5,7 +5,7 @@ import _ from 'underscore';
 import Entity from '../entity';
 let EntitySet = require('../entity_set');
 let Query = require('./query');
-import * as Utils from '../utils';
+import * as Utils from '../util';
 
 _.extend( EntitySet.prototype, {
 

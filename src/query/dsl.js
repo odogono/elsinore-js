@@ -2,7 +2,7 @@
 
 import _ from 'underscore';
 let Q = require('./index');
-import * as Utils from '../utils';
+import * as Utils from '../util';
 
 
 function precendence( operator ){

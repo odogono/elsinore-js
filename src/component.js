@@ -1,7 +1,7 @@
 import _ from 'underscore';
 import Backbone from 'backbone';
 import Model from './model';
-import * as Utils from './utils';
+import * as Utils from './util';
 
 /**
  * Components contain data

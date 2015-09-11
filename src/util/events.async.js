@@ -2,7 +2,7 @@
 
 import _ from 'underscore';
 import Backbone from 'backbone';
-import * as Utils from '../utils';
+import * as Utils from '../util';
 
 /**
 *   An event listener which captures incoming events and

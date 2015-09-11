@@ -3,7 +3,7 @@ import BitField  from 'odgn-bitfield';
 import Entity from '../entity';
 import EntitySet from '../entity_set';
 import * as EntityFilter from '../entity_filter';
-import * as Utils from '../utils';
+import * as Utils from '../util';
 
 function Query(){}
 function QueryContext(){}

@@ -9,7 +9,7 @@ module.exports = {
     EntityProcessor: require('./entity_processor'),
     SchemaRegistry: require('./schema'),
     Registry: require('./registry'),
-    Utils: require('./utils'),
+    Utils: require('./util'),
     Query: require('./query/full'),
 };
 

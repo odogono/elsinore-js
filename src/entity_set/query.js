@@ -1,8 +1,8 @@
 'use strict';
 
-var _ = require('underscore');
+import _ from 'underscore';
 import BitField  from 'odgn-bitfield';
-var Utils = require('../utils');
+import * as Utils from '../util'
 var Query = require('../query');
 var EntitySet = require('../entity_set');
 

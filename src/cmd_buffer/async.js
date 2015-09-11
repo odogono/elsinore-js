@@ -9,7 +9,7 @@ import Entity from '../entity';
 let EntityFilter = require('../entity_filter');
 let Errors = require('../error');
 
-import * as Utils from '../utils';
+import * as Utils from '../util';
 import * as SyncCmdBuffer from './sync';
 
 

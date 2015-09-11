@@ -2,10 +2,10 @@
 import BitField  from 'odgn-bitfield';
 import _ from 'underscore';
 import Backbone from 'backbone';
-// var Utils = require('./utils');
-// import * as Utils from './utils';
-import * as Utils from './utils';
-import {printIns} from './utils';
+// import * as Utils from './util'
+// import * as Utils from './util';
+import * as Utils from './util';
+import {printIns} from './util';
 
 import Component from './component';
 import Model from './model';

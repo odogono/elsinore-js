@@ -2,7 +2,7 @@
 
 import _ from 'underscore';
 import Backbone from 'backbone';
-let Utils = require('./utils');
+import * as Utils from './util'
 
 
 

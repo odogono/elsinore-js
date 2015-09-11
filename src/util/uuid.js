@@ -40,10 +40,12 @@ var chars = (
   '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ' +
   'abcdefghijklmnopqrstuvwxyz'
 ).split('');
+
 function getValue(radix) {
   return 0 | Math.random() * radix;
 }
-function uuid(len, radix) {
+
+export function uuid(len, radix) {
   radix = radix || chars.length;
   var out = '';
   var i = -1;
@@ -76,8 +78,4 @@ function uuid(len, radix) {
 
   return out;
 }
-
-
-
-module.exports = uuid;
 

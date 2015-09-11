@@ -8,7 +8,7 @@ let Component = require('../component');
 import Entity from '../entity';
 let EntityFilter = require('../entity_filter');
 // let Query = require('./entity_set/query')
-import * as Utils from '../utils';
+import * as Utils from '../util';
 
 import * as CmdBuffer from '../cmd_buffer/sync';
 

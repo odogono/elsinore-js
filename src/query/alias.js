@@ -1,6 +1,6 @@
 import Q from './index';
 import EntitySet from '../entity_set';
-import * as Utils from '../utils';
+import * as Utils from '../util';
 
 const ALIAS = 101;
 const ALIAS_GET = 102;

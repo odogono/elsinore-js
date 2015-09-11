@@ -3,7 +3,7 @@
 import _ from 'underscore';
 import Backbone from 'backbone';
 import BitField  from 'odgn-bitfield';
-import * as Utils from './utils';
+import * as Utils from './util';
 import Entity from './entity';
 
 export const ALL = 0; // entities must have all the specified components

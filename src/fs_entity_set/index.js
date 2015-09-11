@@ -1,25 +1,24 @@
 'use strict';
 
-var _ = require('underscore');
-var Backbone = require('backbone');
-var Fs = require('fs');
-var Path = require('path');
-
-var Sh = require('shelljs');
+import _ from 'underscore';
+import Backbone from 'backbone';
+import Fs from 'fs';
+import Path from 'path';
+import Sh from 'shelljs';
 
 import BitField  from 'odgn-bitfield';
-var Component = require('../component');
-var Entity = require('../entity');
-var EntityFilter = require('../entity_filter');
-var EntitySet = require('../entity_set');
-var Query = require('./query');
-var Utils = require('../utils');
+import Component from '../component';
+import Entity from '../entity';
+import EntityFilter from '../entity_filter';
+import EntitySet from '../entity_set';
+import Query from './query';
+import * as Utils from '../util'
 
-var CmdBuffer = require('../cmd_buffer/async');
+import CmdBuffer from '../cmd_buffer/async';
 
-var TEMP_ENTITY_PREFIX = 'te';
+const TEMP_ENTITY_PREFIX = 'te';
 
-var FileSystemEntitySet = EntitySet.extend({
+let FileSystemEntitySet = EntitySet.extend({
     type: 'FileSystemEntitySet',
     isFileSystemEntitySet: true,
     isAsync: true,

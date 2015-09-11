@@ -11,7 +11,7 @@ let SchemaRegistry = require('../schema');
 let SchemaProperties = require('../schema/properties');
 let EntityProcessor = require('../entity_processor');
 let EntityFilter = require('../entity_filter');
-import * as Utils from '../utils';
+import * as Utils from '../util';
 
 
 let counter = Date.now() % 1e9;

@@ -1,7 +1,7 @@
-var _ = require('underscore');
+import _ from 'underscore';
 var Q = require('./index');
 var EntitySet = require('../entity_set');
-var Utils = require('../utils');
+import * as Utils from '../util'
 
 var PLUCK = 103;
 
