@@ -1,8 +1,8 @@
 'use strict';
 
-let _ = require('underscore');
+import _ from 'underscore';
 let Q = require('./index');
-let Utils = require('../utils');
+import * as Utils from '../utils';
 
 
 function precendence( operator ){

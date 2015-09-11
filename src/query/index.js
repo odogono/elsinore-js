@@ -1,12 +1,9 @@
-'use strict';
-
-let _ = require('underscore');
-
-let BitField = require('odgn-bitfield');
-let Entity = require('../entity');
-let EntitySet = require('../entity_set');
-let EntityFilter = require('../entity_filter');
-let Utils = require('../utils');
+import _ from 'underscore';
+import BitField  from 'odgn-bitfield';
+import Entity from '../entity';
+import EntitySet from '../entity_set';
+import * as EntityFilter from '../entity_filter';
+import * as Utils from '../utils';
 
 function Query(){}
 function QueryContext(){}

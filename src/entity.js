@@ -1,19 +1,21 @@
-'use strict';
-/*jslint todo: true */
 
-var BitField = require('odgn-bitfield');
-var _ = require('underscore');
-var Backbone = require('backbone');
-var Utils = require('./utils');
+import BitField  from 'odgn-bitfield';
+import _ from 'underscore';
+import Backbone from 'backbone';
+// var Utils = require('./utils');
+// import * as Utils from './utils';
+import * as Utils from './utils';
+import {printIns} from './utils';
 
-var Component = require('./component');
-var ElsinoreError = Utils.ElsinoreError;
-var Model = require('./model');
+import Component from './component';
+import Model from './model';
+// var Component = require('./component');
+// var Model = require('./model');
 
+// const ENTITY_ID_MAX = Math.pow(2,31)-1;
+// const ENTITY_SET_ID_MAX = Math.pow(2,21)-1;
 
-var ENTITY_ID_MAX = Math.pow(2,31)-1;
-var ENTITY_SET_ID_MAX = Math.pow(2,21)-1;
-
+// printIns( Utils );
 
 /**
  * An entity is a container for components
@@ -204,7 +206,7 @@ var Entity = Model.extend({
         }
         if( event === 'change' ){
             event = 'component:change';
-            // log.debug('_onComponentEvent ' + event + ' ' + JSON.stringify(component) + ' ' + JSON.stringify(options) );
+            // log.debug('_onComponentEvent ' + ' '  + ' ' + JSON.stringify(arguments));
             this.trigger(event, component, options);
         }
     }

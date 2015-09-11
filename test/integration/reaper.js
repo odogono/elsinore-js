@@ -140,7 +140,7 @@ test('reaper', function(t){
 
         t.end();
     })
-    .catch( err => log.error('test error: ' + err.stack) )
+    .catch( err => log.error('test error: %s', err.stack) )
 });
 
 

@@ -1,10 +1,10 @@
 'use strict';
 
-let _ = require('underscore');
-let Backbone = require('backbone');
-let BitField = require('odgn-bitfield');
-let Utils = require('./utils');
-let Entity = require('./entity');
+import _ from 'underscore';
+import Backbone from 'backbone';
+import BitField  from 'odgn-bitfield';
+import * as Utils from './utils';
+import Entity from './entity';
 
 export const ALL = 0; // entities must have all the specified components
 export const ANY = 1; // entities must have one or any of the specified components
@@ -181,4 +181,4 @@ export function create( type, bitField ){
     return result;
 }
 
-export default EntityFilter;
+// export default EntityFilter;

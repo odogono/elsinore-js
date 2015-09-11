@@ -1,8 +1,6 @@
-'use strict';
-
-let _ = require('underscore');
-let BitField = require('odgn-bitfield');
-let Sinon = require('sinon');
+import _ from 'underscore';
+import BitField  from 'odgn-bitfield';
+import Sinon from 'sinon';
 
 
 module.exports = function( test, Common, Elsinore, EntitySet ){

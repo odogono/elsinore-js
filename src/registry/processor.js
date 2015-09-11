@@ -1,7 +1,7 @@
 'use strict';
 
-let _ = require('underscore');
-let Backbone = require('backbone');
+import _ from 'underscore';
+import Backbone from 'backbone';
 
 let EntitySet = require('../entity_set');
 let Registry = require('./index');
@@ -49,7 +49,6 @@ _.extend( Registry.prototype, {
             processorModel.onLoad( this );
         }
 
-        
         // create the entity filter(s) specified by the processor
         this._mapEntitySetToProcessor( entitySet, processor, options );
         
@@ -242,7 +241,12 @@ _.extend( Registry.prototype, {
             }
 
             // execute any queued events that the processor has received
-            if( debug ){ log.debug('executing processor ' + processor.type + ' ' + processor.get('priority') + ' with ' + view.cid +'/'+ view.hash() + ' ' + entityArray.length + ' entities'); }
+            if( debug ){ 
+                log.debug('executing processor ' + processor.type + ' ' + 
+                    processor.get('priority') + 
+                    ' with ' + view.cid +'/'+ view.hash() + ' ' + 
+                    entityArray.length + ' entities'); 
+            }
             
 
             // if the view needs updating due to entities or components being 

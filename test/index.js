@@ -1,3 +1,4 @@
+require('./cmd_buffer_async');
 require('./component');
 require('./entity');
 require('./entity_filter');
@@ -5,7 +6,6 @@ require('./entity_set');
 require('./entity_set.query');
 require('./entity_set.query.dsl');
 require('./entity_set.view');
-// require('./fs_entity_set');
 require('./query');
 require('./query.limit');
 require('./query.pluck');

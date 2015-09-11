@@ -204,7 +204,7 @@ export default function run( test, Common, Elsinore, EntitySet ){
             var eventSpy = Sinon.spy();
             entitySet = registry.createEntitySet();
             let query = Query.all('/component/position');
-            let view = entitySet.view( query );
+            let view = entitySet.view(query);
 
             view.on('all', eventSpy);
 
@@ -212,13 +212,14 @@ export default function run( test, Common, Elsinore, EntitySet ){
                 registry.createEntity([
                     { id:'/component/flower', colour:'blue'}] ));
 
-            view.applyEvents();
+            // view.applyEvents();
 
             t.equals( view.length, 0, 'no entities yet' );
 
             entitySet.addComponent(
                 registry.createComponent({id:'/component/position', x:10, y:100}, entity ) );
 
+            // a new component added to a view needs an event being applied
             view.applyEvents();
 
             t.equals( view.length, 1, 'only one entity added' );
@@ -312,7 +313,7 @@ export default function run( test, Common, Elsinore, EntitySet ){
                     { id:'/component/vegetable', name:'cauliflower'},
                     { id:'/component/radius', radius:0.3 }] ));
 
-            view.applyEvents();
+            // view.applyEvents();
 
             t.equals( view.length, 2, 'two entities added' );
 
@@ -351,7 +352,7 @@ export default function run( test, Common, Elsinore, EntitySet ){
                     { id:'/component/vegetable', name:'cauliflower'},
                     { id:'/component/radius', radius:0.3 }] ));
 
-            view.applyEvents();
+            // view.applyEvents();
 
             view.on('all', eventSpy);
             entitySet.removeEntity( entityA );
@@ -376,7 +377,7 @@ export default function run( test, Common, Elsinore, EntitySet ){
                     { id:'/component/flower', colour:'blue'},
                     { id:'/component/radius', radius:0.1 }] ));
 
-            view.applyEvents();
+            // view.applyEvents();
 
             view.at(0).Flower.set('colour', 'cyan');
 
@@ -390,7 +391,7 @@ export default function run( test, Common, Elsinore, EntitySet ){
     test('changing a component in the view triggers a change event', t => {
         initialiseEntitySet().then( ([registry,entitySet]) => {
             entitySet = registry.createEntitySet();
-            let view = entitySet.view();
+            let view = entitySet.view(null,{updateOnEvent:false});
 
             let viewSpy = Sinon.spy(), esSpy = Sinon.spy();
             entitySet.on('all', esSpy);
@@ -401,19 +402,24 @@ export default function run( test, Common, Elsinore, EntitySet ){
 
             entitySet.addEntity(
                 registry.createEntity([
-                    { id:'/component/flower', colour:'yellow'},
+                    { id:'/component/flower', colour:'yellow', type:'daisy'},
                     { id:'/component/radius', radius:0.4 }] ));
 
-            view.applyEvents();
+            
+            // log.debug('from here');
+            // view.on('component:change', component => {
+            // });
 
             view.at(0).Flower.set('colour', 'magenta');
 
             t.ok( viewSpy.calledWith('component:change'), 'change event emitted from view');
             t.ok( esSpy.calledWith('component:change'), 'change event emitted from entitySet');
 
+            // view.applyEvents({debug:true});
+
             t.end();
         })
-        .catch( err => log.error('test error: ' + err.stack) )
+        .catch( err => log.error('test error: %s', err.stack) )
     });
 
 

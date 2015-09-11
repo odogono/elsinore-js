@@ -1,9 +1,8 @@
-'use strict';
+import _ from 'underscore';
+import test from 'tape';
+import Backbone from 'backbone';
+import Sinon from 'sinon';
 
-let _ = require('underscore');
-let test = require('tape');
-let Backbone = require('backbone');
-let Sinon = require('sinon');
 
 module.exports = function( test, Common, Elsinore, CmdBuffer ){
     let Utils = Elsinore.Utils;
@@ -11,46 +10,53 @@ module.exports = function( test, Common, Elsinore, CmdBuffer ){
     let Component = Elsinore.Component;
 
     test('adding a component with no entity id', t => {
-        let cb = CmdBuffer.create();
-        let es = createEntitySet();
-        let com = createComponent();
+        return Common.initialiseRegistry().then( registry => {
+            let cb = CmdBuffer.create();
+            let es = createEntitySet();
+            let com = createComponent();
 
-        return cb.addComponent( es, com )
-            .then(added => {
-                reportUpdates( t, es, 1, 0, 0, 1, 0, 0 );
+            return cb.addComponent( es, com )
+                .then(added => {
+                    reportUpdates( t, es, 1, 0, 0, 1, 0, 0 );
+                })
+                .then( () => t.end() )
+                
             })
-            .then( () => t.end() )
-            .catch( err => log.error('test error: ' + err.stack) )
+            .catch( err => log.error('test error: %s', err.stack) )
     });
 
     test('adding a component with an eid, but not a member of the es', t => {
-        let cb = CmdBuffer.create();
-        let es = createEntitySet( 50 );
-        let com = createComponent( {_e:10} );
+        return Common.initialiseRegistry().then( registry => {
+            let cb = CmdBuffer.create();
+            let es = createEntitySet( 50 );
+            let com = createComponent( {_e:10} );
 
-        return cb.addComponent( es, com )
-            .then(added => {
-                reportUpdates( t, es, 1, 0, 0, 1, 0, 0 );
+            return cb.addComponent( es, com )
+                .then(added => {
+                    reportUpdates( t, es, 1, 0, 0, 1, 0, 0 );
+                })
             })
             .then( () => t.end() )
-            .catch( err => log.error('test error: ' + err.stack) )
+            .catch( err => log.error('test error: %s', err.stack) )
     });
 
     test('adding a component with an eid, a non-member of the es', t => {
-        let cb = CmdBuffer.create();
-        let es = createEntitySet( 50 );
-        let com = createComponent( {_e:11, _es:50} );
+        return Common.initialiseRegistry().then( registry => {
+            let cb = CmdBuffer.create();
+            let es = createEntitySet( 50 );
+            let com = createComponent( {_e:11, _es:50} );
 
-        return cb.addComponent( es, com )
-            .then( added => {
-                reportUpdates( t, es, 1, 0, 0, 1, 0, 0 );
-                // t.equal( es.entitiesAdded.length, 1, 'one entity should be added' );
-                // t.equal( es.componentsAdded.length, 1, 'one component should be added' );
-                t.ok( Component.isComponent(added) );
+            return cb.addComponent( es, com )
+                .then( added => {
+                    reportUpdates( t, es, 1, 0, 0, 1, 0, 0 );
+                    // t.equal( es.entitiesAdded.length, 1, 'one entity should be added' );
+                    // t.equal( es.componentsAdded.length, 1, 'one component should be added' );
+                    t.ok( Component.isComponent(added) );
 
+                })
             })
             .then( () => t.end() )
-            .catch( err => log.error('test error: ' + err.stack) )
+            .catch( err => log.error('test error: %s', err.stack) )
     });
 
 
@@ -65,7 +71,7 @@ module.exports = function( test, Common, Elsinore, CmdBuffer ){
                 t.ok( Component.isComponent(added) );
             })
             .then( () => t.end() )
-            .catch( err => log.error('test error: ' + err.stack) )
+            .catch( err => log.error('test error: %s', err.stack) )
     });
 
 
@@ -88,7 +94,7 @@ module.exports = function( test, Common, Elsinore, CmdBuffer ){
                 t.ok( Component.isComponent(added) );
             })
             .then( () => t.end() )
-            .catch( err => log.error('test error: ' + err.stack) )
+            .catch( err => log.error('test error: %s', err.stack) )
     });
 
     test('adding an entity with multiple components', t => {
@@ -106,7 +112,7 @@ module.exports = function( test, Common, Elsinore, CmdBuffer ){
                 // t.equal( es.componentsAdded.length, 2, 'two components should be added');
             })
             .then( () => t.end() )
-            .catch( err => log.error('test error: ' + err.stack) ) 
+            .catch( err => log.error('test error: %s', err.stack) ) 
     });
 
     test('updating an entity with a new component', t => {
@@ -135,7 +141,7 @@ module.exports = function( test, Common, Elsinore, CmdBuffer ){
                 // t.equal( es.componentsUpdated.length, 1, 'one component should be updated' );
             })
             .then( () => t.end() )
-            .catch( err => log.error('test error: ' + err.stack) )
+            .catch( err => log.error('test error: %s', err.stack) )
     });
 
 
@@ -158,7 +164,7 @@ module.exports = function( test, Common, Elsinore, CmdBuffer ){
                 reportUpdates( t, es, 0, 1, 0, 0, 0, 1 );
             })
             .then( () => t.end() )
-            .catch( err => log.error('test error: ' + err.stack) )
+            .catch( err => log.error('test error: %s', err.stack) )
     });
 
     test('removing the last component from an entity', t => {
@@ -179,7 +185,7 @@ module.exports = function( test, Common, Elsinore, CmdBuffer ){
                 reportUpdates( t, es, 0, 0, 1, 0, 0, 1 );
             })
             .then( () => t.end() )
-            .catch( err => log.error('test error: ' + err.stack) )
+            .catch( err => log.error('test error: %s', err.stack) )
     });
 
     
@@ -206,7 +212,7 @@ module.exports = function( test, Common, Elsinore, CmdBuffer ){
                 // t.equal( es.componentsRemoved.length, 3, 'three components should be removed');
             })
             .then( () => t.end() )
-            .catch( err => log.error('test error: ' + err.stack) )
+            .catch( err => log.error('test error: %s', err.stack) )
     });
 
     
@@ -232,7 +238,7 @@ module.exports = function( test, Common, Elsinore, CmdBuffer ){
                 reportUpdates( t, es, 0, 0, 1, 0, 0, 3 );
             })
             .then( () => t.end() )
-            .catch( err => log.error('test error: ' + err.stack) )
+            .catch( err => log.error('test error: %s', err.stack) )
     });
 
     test('adding multiple', t => {
@@ -255,7 +261,7 @@ module.exports = function( test, Common, Elsinore, CmdBuffer ){
                 })
                 .then( () => t.end() )
         })
-        .catch( err => log.error('test error: ' + err.stack) )
+        .catch( err => log.error('test error: %s', err.stack) )
     });
     
 
@@ -271,7 +277,7 @@ module.exports = function( test, Common, Elsinore, CmdBuffer ){
     /**
     *   Creates a Mock ES that we can assert against
     */
-    function createEntitySet( entitySetId, entityIds ){
+    function createEntitySet( entitySetId, entityIds, registry ){
         entityIds = _.map( entityIds, id => Utils.setEntityIdFromId(id,entitySetId) );
         return _.extend({
             id: entitySetId,
@@ -290,6 +296,9 @@ module.exports = function( test, Common, Elsinore, CmdBuffer ){
                     return Promise.resolve( createEntity(entityId) );
                 }
                 return Promise.resolve({});
+            },
+            getRegistry: function(){
+                return registry;
             }
         }, Backbone.Events );
     }

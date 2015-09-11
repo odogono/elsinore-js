@@ -1,17 +1,17 @@
 'use strict';
 
-let _ = require('underscore');
-let Backbone = require('backbone');
+import _ from 'underscore';
+import Backbone from 'backbone';
 
-let BitField = require('odgn-bitfield');
-let Entity = require('../entity');
+import BitField  from 'odgn-bitfield';
+import Entity from '../entity';
 let EntitySet = require('../entity_set');
 let Component = require('../component');
 let SchemaRegistry = require('../schema');
 let SchemaProperties = require('../schema/properties');
 let EntityProcessor = require('../entity_processor');
 let EntityFilter = require('../entity_filter');
-let Utils = require('../utils');
+import * as Utils from '../utils';
 
 
 let counter = Date.now() % 1e9;
@@ -270,7 +270,7 @@ _.extend(Registry.prototype, Backbone.Events, {
 
         if( Entity.isEntity(attrs) ){
             entityId = Entity.toEntityId( attrs );
-            log.debug('create with entity id ' + entityId );
+            // log.debug('create with entity id ' + entityId );
             attrs = null;
         }
 

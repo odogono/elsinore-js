@@ -1,11 +1,11 @@
 'use strict';
 
-let _ = require('underscore');
+import _ from 'underscore';
 
-let Entity = require('../entity');
+import Entity from '../entity';
 let EntitySet = require('../entity_set');
 let Query = require('./query');
-let Utils = require('../utils');
+import * as Utils from '../utils';
 
 _.extend( EntitySet.prototype, {
 
@@ -74,7 +74,7 @@ _.extend( EntitySetListener.prototype, {
     /**
     *   srcEntitySet listens to targetEntitySet using the specified query
     */
-    listenToEntitySet: function(srcEntitySet, targetEntitySet, query, options){
+    listenToEntitySet: function(srcEntitySet, targetEntitySet, query){
         this.entitySet = srcEntitySet;
         this.targetEntitySet = targetEntitySet;
         this.setQuery( query );
@@ -89,9 +89,12 @@ _.extend( EntitySetListener.prototype, {
         srcEntitySet.listenTo( targetEntitySet, 'entity:remove', this.onEntityRemove );
         srcEntitySet.listenTo( targetEntitySet, 'component:add', this.onComponentAdd );
         srcEntitySet.listenTo( targetEntitySet, 'component:remove', this.onComponentRemove );
+        // srcEntitySet.listenTo( targetEntitySet, 'component:change', (...args) => {
+        //     log.debug('listen to es change ' + JSON.stringify(args) );
+        // })
     },
 
-    onEntityAdd: function( entities ){
+    onEntityAdd: function( entities, apply=true ){
         this.entitySet.isModified = true;
         
         _.each( entities, e => {
@@ -102,12 +105,12 @@ _.extend( EntitySetListener.prototype, {
 
         // instantanous updating of a view is probably the best policy
         // when it comes to adding/removing entities
-        // if( this.updateOnEvent ){
+        if( apply /*this.updateOnEvent*/ ){
             this.applyEvents();
-        // }
+        }
     },
 
-    onEntityRemove: function(entities){
+    onEntityRemove: function(entities, apply=true){
         _.each( entities, e => {
             let eid = Entity.toEntityId( e );
             if( !this.entitySet.get(eid) ){
@@ -120,9 +123,9 @@ _.extend( EntitySetListener.prototype, {
         
         // instantanous updating of a view is probably the best policy
         // when it comes to adding/removing entities
-        // if( this.updateOnEvent ){
+        if( apply /*this.updateOnEvent*/ ){
             this.applyEvents();
-        // }
+        }
     },
 
     onComponentAdd: function(components){
@@ -175,7 +178,7 @@ _.extend( EntitySetListener.prototype, {
     /**
     *   
     */
-    applyEvents: function(){
+    applyEvents: function(options={}){
         let ii,len,com,entity;
         let entitySet;
         let query;
@@ -183,8 +186,10 @@ _.extend( EntitySetListener.prototype, {
         let entitiesAdded;
         let entitiesRemoved;
         let changeOptions;
-        
+        let debug = options.debug;
+
         if( !this.isModified ){
+            // if( debug ){ log.debug('not modified');}
             return;
         }
 
@@ -194,20 +199,24 @@ _.extend( EntitySetListener.prototype, {
         entitiesRemoved = [];
         changeOptions = {silent:true};
 
+
+        // if( debug ){
+        //     printE( _.values(this.addedEntities) );
+        // }
         // add entities
         _.each( this.addedEntities, (entity, eid) => {
             if( query && !EntitySet.isEntityOfInterest( entitySet, entity, query ) ){
                 return;
             }
             entitySet.add( entity, changeOptions );
-            // log.debug('addedEntities includes ' + Utils.stringify(entity) + ' ' + eid);
+            if( debug ){ log.debug('addedEntities includes ' + Utils.stringify(entity) + ' ' + eid); }
             entitiesAdded.push( entity );
         });
 
         // remove entities
         _.each( this.removedEntities, entity => {
             entitySet.remove( entity, changeOptions );
-            // log.debug( entitySet.cid + ' removed entity ' + entity.id );
+            if( debug ){ log.debug( entitySet.cid + ' removed entity ' + entity.id ); }
             entitiesRemoved.push( entity );
         });
 

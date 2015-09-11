@@ -44,9 +44,9 @@ export default function run( test, Common, Elsinore, EntitySet ){
             result = Query.all( '/component/channel' ).execute( entity, {debug:false} );
 
             t.ok( Entity.isEntity(result) );
-            
-            t.end();
-        });
+        })
+        .then( () => t.end() )
+        .catch( err => log.error('test error: %s', err.stack) )
     });
 
     test('Rejecting an entity', t => {
@@ -81,7 +81,7 @@ export default function run( test, Common, Elsinore, EntitySet ){
             t.equals( query.commands.length, 1 );
             t.end();
         })
-        .catch( err => log.error('test error: ' + err.stack) )
+        .catch( err => log.error('test error: %s', err.stack) )
     });
 
     test('compiling an entity filter', t => {
@@ -111,7 +111,7 @@ export default function run( test, Common, Elsinore, EntitySet ){
 
             t.end();
         })
-        .catch( err => log.error('test error: ' + err.stack) )
+        .catch( err => log.error('test error: %s', err.stack) )
     });
 
     test('a single filter query on an entity', t => {

@@ -33,7 +33,7 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
             t.end();
         })
-        .catch( err => log.error('test error: ' + err.stack) )
+        .catch( err => log.error('test error: %s', err.stack) )
     });
 
     // creating components
@@ -54,7 +54,7 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
                     t.end();
                 })
         })
-        .catch( err => log.error('test error: ' + err.stack) )
+        .catch( err => log.error('test error: %s', err.stack) )
     });
 
     test('create from a schema hash', t => {
@@ -126,7 +126,7 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
 
             t.end();
         })
-        .catch( err => log.error('test error: ' + err.stack) )
+        .catch( err => log.error('test error: %s', err.stack) )
     });
 }
 

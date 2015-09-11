@@ -1,7 +1,7 @@
 'use strict';
 
-let _ = require('underscore');
-let Backbone = require('backbone');
+import _ from 'underscore';
+import Backbone from 'backbone';
 let Utils = require('./utils');
 
 

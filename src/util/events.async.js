@@ -1,9 +1,13 @@
 'use strict';
 
-let _ = require('underscore');
-let Backbone = require('backbone');
-let Utils = require('../utils');
+import _ from 'underscore';
+import Backbone from 'backbone';
+import * as Utils from '../utils';
 
+/**
+*   An event listener which captures incoming events and
+*   only releases them when instructed to.
+*/
 let EventsAsync = _.extend({}, Backbone.Events, {
 
     /**

@@ -1,9 +1,7 @@
-'use strict';
-
-var _ = require('underscore');
-var Backbone = require('backbone');
-var Model = require('./model');
-var Utils = require('./utils');
+import _ from 'underscore';
+import Backbone from 'backbone';
+import Model from './model';
+import * as Utils from './utils';
 
 /**
  * Components contain data
@@ -57,7 +55,7 @@ var Component = Model.extend({
     },
 
     hash: function(asString){
-        var result = Utils.stringify(  _.omit(this.attributes, '_e','_es','_s') );
+        let result = Utils.Stringify(  _.omit(this.attributes, '_e','_es','_s') );
         return Utils.hash( result, asString );
     },
 });

@@ -69,7 +69,7 @@ test('main', function(t){
         entitySet.addComponent( door );
 
         // retrieve the first (and only entity) from the set
-        eDoor = entitySet.at( 0 );
+        eDoor = entitySet.at(0);
 
         // trigger an event on the entity set - this will open all door
         // components
@@ -88,14 +88,14 @@ test('main', function(t){
 
         // run an update over all the entitysets in the registry - passing a
         // specific update time
-        registry.updateSync( Date.now() + 300 );
+        registry.updateSync(Date.now() + 300);
 
         // as a result of the processor update, the door should now be closed
         t.equals( eDoor.Door.get('open'), false, 'the door should be closed' );
 
         t.end();
     })
-    .catch( err => log.error('test error: ' + err.stack) )
+    .catch( err => log.error('test error: %s', err.stack) )
 });
 
 

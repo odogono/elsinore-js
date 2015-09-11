@@ -1,9 +1,9 @@
-var Q = require('./index');
-var EntitySet = require('../entity_set');
-var Utils = require('../utils');
+import Q from './index';
+import EntitySet from '../entity_set';
+import * as Utils from '../utils';
 
-var ALIAS = 101;
-var ALIAS_GET = 102;
+const ALIAS = 101;
+const ALIAS_GET = 102;
 
 function alias( name ){
     var context = Q.readContext( this );

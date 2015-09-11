@@ -1,33 +1,12 @@
-'use strict';
+import _ from 'underscore';
+import Backbone from 'backbone';
+import DeepEqual from 'deep-equal';
+import Url from 'fast-url-parser';
+import Util from 'util';
 
-var _ = require('underscore');
-var Backbone = require('backbone');
-var DeepEqual = require('deep-equal');
-// var Inherits = require('util').inherits;
-var Url = require("fast-url-parser");
 
-// var Classify = require('underscore.string/classify');
-
-// function ElsinoreError(msg){
-//     this.name = 'ElsinoreError';
-//     this.message = msg;
-//     this.cause = msg;
-
-//     if (message instanceof Error) {
-//         this.message = message.message;
-//         this.stack = message.stack;
-//     }
-//     else if (Error.captureStackTrace) {
-//         Error.captureStackTrace(this, this.constructor);
-//     }
-
-//     return error;
-// }
-
-// Inherits(ElsinoreError, Error);
-
-function mergeRecursive(obj1, obj2) {
-    for (var p in obj2) {
+export function mergeRecursive(obj1, obj2) {
+    for (let p in obj2) {
         if( obj2.hasOwnProperty(p) ){
             if( obj1 === undefined )
                 obj1 = {};
@@ -41,9 +20,9 @@ function mergeRecursive(obj1, obj2) {
 // 
 // Returns an array broken into set lengths
 // 
-function chunk( array, chunkLength ){
-    var i,j,temparray;
-    var result = [];
+export function chunk( array, chunkLength ){
+    let i,j,temparray;
+    let result = [];
     for (i=0,j=array.length; i<j; i+=chunkLength) {
         result.push( array.slice(i,i+chunkLength) );
     }
@@ -54,10 +33,10 @@ function chunk( array, chunkLength ){
 // taken from underscore-contrib/underscore.function.predicates
 // cannot include directly in node
 
-// A numeric is a variable that contains a numeric value, regardless its type
+// A numeric is a letiable that contains a numeric value, regardless its type
 // It can be a String containing a numeric value, exponential notation, or a Number object
 // See here for more discussion: http://stackoverflow.com/questions/18082/validate-numbers-in-javascript-isnumeric/1830844#1830844
-function isNumeric(n) {
+export function isNumeric(n) {
     return !isNaN(parseFloat(n)) && isFinite(n);
 };
 
@@ -65,7 +44,7 @@ function isNumeric(n) {
 // Objects that can be parsed that way are also considered ints, e.g. "123"
 // Floats that are mathematically equal to integers are considered integers, e.g. 1.0
 // See here for more discussion: http://stackoverflow.com/questions/1019515/javascript-test-for-an-integer
-function isInteger(i) {
+export function isInteger(i) {
     return !isNaN(parseFloat(i)) && isFinite(i) && i % 1 === 0;
 };
 
@@ -81,9 +60,9 @@ function isInteger(i) {
  * @param {integer} [seed] optionally pass the hash of the previous chunk
  * @returns {integer | string}
  */
-function hashFnv32a(str, asString, seed) {
+ export function hash/*Fnv32a*/(str, asString, seed) {
     /*jshint bitwise:false */
-    var i, l,
+    let i, l,
         hval = (seed === undefined) ? 0x811c9dc5 : seed;
 
     for (i = 0, l = str.length; i < l; i++) {
@@ -101,16 +80,16 @@ function hashFnv32a(str, asString, seed) {
 }
 
 
-function normalizeUri(uri){
-    var result;
+export function normalizeUri(uri){
+    let result;
     if( !uri )
         return null;
     result = Url.parse( uri );
     return result.href;
 }
 
-function parseUri( uri ){
-    var result;
+export function parseUri( uri ){
+    let result;
     // result = require('uri-js').parse( uri );
     result = Url.parse( uri );
     if( result.hash ){
@@ -121,26 +100,26 @@ function parseUri( uri ){
     return result;
 }
 
-function parseIntWithDefault( value, defaultValue ){
-    var result = parseInt( value, 10 );
+export function parseIntWithDefault( value, defaultValue ){
+    let result = parseInt( value, 10 );
     return isNaN(value) ? defaultValue : value;
 }
 
-function resolveUri( from, to ){
+export function resolveUri( from, to ){
     // log.debug( JSON.stringify( from ) + ', ' + JSON.stringify( to ) );
     return Url.resolve( from, to );
 }
 
 
-function deepClone( obj ){
+export function deepClone( obj ){
     return JSON.parse(JSON.stringify(obj));
 }
 
 // from: http://www.tuanhuynh.com/blog/2014/unpacking-underscore-clone-and-extend/
-function deepExtend( out ){
-    var i, len;
-    var obj;
-    var key;
+export function deepExtend( out ){
+    let i, len;
+    let obj;
+    let key;
 
     out || (out={});
 
@@ -170,13 +149,13 @@ function deepExtend( out ){
     return out;
 }
 
-function clearCollection( col ){
+export function clearCollection( col ){
     if( !col ){ return new Backbone.Collection(); }
     col.reset();
     return col;
 }
 
-function clearArray( arr ){
+export function clearArray( arr ){
     if( !arr ){
         return [];
     }
@@ -186,7 +165,7 @@ function clearArray( arr ){
     return arr;
 }
 
-function clearMap( map ){
+export function clearMap( map ){
     return {};
 }
 
@@ -194,7 +173,7 @@ function clearMap( map ){
 *   If the passed array has only a single value, return
 *   that value, otherwise return the array
 */
-function valueArray( array ){
+export function valueArray( array ){
     if (array == null) { return void 0; }
     if( array.length === 1 ){
         return array[0];
@@ -210,7 +189,7 @@ function valueArray( array ){
 *   which returns an object containing the value, or if
 *   no more values are available, it should return a Promise.reject
 */
-function reduceIterator( iterator, eachFn, memo ){
+export function reduceIterator( iterator, eachFn, memo ){
     return new Promise( function( resolve, reject){
         function iterateOk(item){
             return Promise.resolve()
@@ -234,8 +213,8 @@ function reduceIterator( iterator, eachFn, memo ){
 }
 
 
-function stringify( obj, space ){
-    var cache = [];
+export function Stringify( obj, space ){
+    let cache = [];
     return JSON.stringify(obj, function(key, value) {
         if (typeof value === 'object' && value !== null) {
             if (cache.indexOf(value) !== -1) {
@@ -249,11 +228,26 @@ function stringify( obj, space ){
     }, space);
 }
 
+export function printIns(arg,depth,showHidden,colors){
+    if( _.isUndefined(depth) ) depth = 2;
+    // let stack = __stack[1];
+    // let fnName = stack.getFunctionName();
+    // let line = stack.getLineNumber();
+    // Util.log( fnName + ':' + line + ' ' + Util.inspect(arg,showHidden,depth,colors) );
+    Util.log( Util.inspect(arg,showHidden,depth,colors) );
+};
+
+export function printVar(...args){
+    let ii, len;
+    for (ii = 0, len = args.length; ii < len; ii++) {
+        Util.log( Stringify(args[ii], null, '\t') );
+    }
+}
 
 /**
 *   Converts a string so that the words are capitalised and concatenated
 */
-function toPascalCase( str ){
+export function toPascalCase( str ){
     return str.match(/[A-Z]?[a-z]+/g).map(function(word){
         return word.charAt(0).toUpperCase() + word.substring(1);
     }).join('');
@@ -264,42 +258,17 @@ function toPascalCase( str ){
     // return Classify( str );
 }
 
-function getEntityIdFromId( id ){
+export function getEntityIdFromId( id ){
     return (id & 0xffffffff);
 }
 
-function getEntitySetIdFromId( id ){
+export function getEntitySetIdFromId( id ){
     return (id - (id & 0xffffffff)) /  0x100000000;
 }
 
-function setEntityIdFromId( eid, esid ){
+export function setEntityIdFromId( eid, esid ){
     return (esid & 0x1fffff) * 0x100000000 + (eid & 0xffffffff);
 }
 
-
-module.exports = {
-    // ElsinoreError: ElsinoreError,
-    mergeRecursive: mergeRecursive,
-    chunk: chunk,
-    isNumeric: isNumeric,
-    isInteger: isInteger,
-    hash: hashFnv32a,
-    normalizeUri: normalizeUri,
-    parseUri: parseUri,
-    parseInt: parseIntWithDefault,
-    resolveUri: resolveUri,
-    deepClone: deepClone,
-    deepExtend: deepExtend,
-    reduceIterator: reduceIterator,
-    clearCollection: clearCollection,
-    clearArray: clearArray,
-    clearMap: clearMap,
-    valueArray: valueArray,
-    stringify: stringify,
-    toPascalCase: toPascalCase,
-    deepEqual: DeepEqual,
-    getEntityIdFromId: getEntityIdFromId,
-    getEntitySetIdFromId: getEntitySetIdFromId,
-    setEntityIdFromId: setEntityIdFromId,
-    uuid: require('./util/uuid'),
-};
+export const deepEqual = DeepEqual;
+export const uuid = require('./util/uuid');

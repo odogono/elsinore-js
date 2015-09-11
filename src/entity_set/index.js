@@ -1,14 +1,14 @@
 'use strict';
 
-let _ = require('underscore');
-let Backbone = require('backbone');
-let BitField = require('odgn-bitfield');
+import _ from 'underscore';
+import Backbone from 'backbone';
+import BitField  from 'odgn-bitfield';
 
 let Component = require('../component');
-let Entity = require('../entity');
+import Entity from '../entity';
 let EntityFilter = require('../entity_filter');
 // let Query = require('./entity_set/query')
-let Utils = require('../utils');
+import * as Utils from '../utils';
 
 import * as CmdBuffer from '../cmd_buffer/sync';
 
