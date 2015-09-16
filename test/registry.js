@@ -12,6 +12,9 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
     let Registry = Elsinore.Registry;
     let Query = Elsinore.Query;
 
+
+    
+
     test('keeping a map of entitySets and views', t => {
         return Common.initialiseRegistry().then( registry => {
 

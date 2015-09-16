@@ -9,6 +9,7 @@ import Entity from '../entity';
 let EntityFilter = require('../entity_filter');
 // let Query = require('./entity_set/query')
 import * as Utils from '../util';
+import {uuid as createUuid} from '../util/uuid';
 
 import * as CmdBuffer from '../cmd_buffer/sync';
 
@@ -31,6 +32,14 @@ let EntitySet = Backbone.Collection.extend({
 
     getEntitySetId: function(){
         return this.id;
+    },
+
+    setUuid: function( uuid=createUuid() ){
+        this.uuid = uuid;
+    },
+
+    getUuid: function(){
+        return this.uuid;
     },
 
     hash: function(){

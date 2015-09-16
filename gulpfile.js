@@ -150,7 +150,7 @@ Gulp.task('build.bundle.lib', function(cb){
         .on('finish', function(){
             return cb();
         });
-});
+// });
 
 
 Gulp.task('test.browser.build', function(cb){

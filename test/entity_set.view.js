@@ -13,7 +13,6 @@ export default function run( test, Common, Elsinore, EntitySet ){
 
     test('.where returns an entityset of entities', t => {
         initialiseEntitySet().then( ([registry,entitySet]) => {
-
             let result = entitySet.query( Query.all('/component/name') );
             t.ok( result.isEntitySet, 'the result is an entityset');
             t.equals( result.length, 7, '7 entities returned');
@@ -47,6 +46,9 @@ export default function run( test, Common, Elsinore, EntitySet ){
             t.ok( view.isEntitySetView, 'its an entityset view');
             t.ok( view.isEntitySet, 'its an entityset');
             t.equals( view.type, 'EntitySetView', 'its type is EntitySetView');
+            
+            t.notEqual( view.getUuid(), entitySet.getUuid() );
+            t.equals( view.getUuid().length, 36 );
 
             t.end();
         });

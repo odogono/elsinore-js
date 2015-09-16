@@ -450,7 +450,6 @@ _.extend(Registry.prototype, Backbone.Events, {
         let id;
         let result;
         
-        
         if( !instanceClass ){
             instanceClass = EntitySet;
         }
@@ -473,8 +472,8 @@ _.extend(Registry.prototype, Backbone.Events, {
         result = instanceClass.create(_.extend( {}, options, {id:id} ));
         result.cid = _.uniqueId('es');
         result.setRegistry( this );
-        // log.debug('created ' + result.cid );
-
+        result.setUuid();
+        
         if( options.register !== false ){
             // log.debug('options.register was ' + options.register );
             this.addEntitySet( result );

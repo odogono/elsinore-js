@@ -18,10 +18,19 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
         return Common.initialiseRegistry().then( registry => {
             let entitySet = registry.createEntitySet();
             t.ok( entitySet.isEntitySet, 'it is an entitySet' );
-            t.end();
         })
+        .then( () => t.end() )
         .catch( err => log.error('test error: %s', err.stack) )
     });
+
+    test('entityset has a uuid assigned', t => {
+        return Common.initialiseRegistry().then( registry => {
+            let es = registry.createEntitySet();
+            t.equals( es.getUuid().length, 36 );
+        })
+        .then( () => t.end() )
+        .catch( err => log.error('test error: %s', err.stack) )
+    })
 
     test('non existence of an entity', t => {
         return Common.initialiseRegistry().then( registry => {

@@ -4,6 +4,7 @@ import DeepEqual from 'deep-equal';
 import Url from 'fast-url-parser';
 import Util from 'util';
 
+export const deepEqual = DeepEqual;
 
 export function mergeRecursive(obj1, obj2) {
     for (let p in obj2) {
@@ -270,5 +271,3 @@ export function setEntityIdFromId( eid, esid ){
     return (esid & 0x1fffff) * 0x100000000 + (eid & 0xffffffff);
 }
 
-export const deepEqual = DeepEqual;
-export const uuid = require('./util/uuid');
