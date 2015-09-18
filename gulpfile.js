@@ -1,7 +1,3 @@
-// taken from : https://github.com/greypants/gulp-starter/
-var Exec = require('child_process').exec;
-var Path = require('path');
-
 var _ = require('underscore');
 var Aliasify = require('aliasify');
 var Babelify = require("babelify");
@@ -12,6 +8,7 @@ var Del = require('del');
 var Envify = require('envify');
 var Gulp = require('gulp');
 var Jslint = require('gulp-jslint');
+var Path = require('path');
 var Source = require('vinyl-source-stream');
 var Uglify = require('gulp-uglify');
 var UnreachableBranchTransform = require('unreachable-branch-transform');
@@ -150,7 +147,7 @@ Gulp.task('build.bundle.lib', function(cb){
         .on('finish', function(){
             return cb();
         });
-// });
+});
 
 
 Gulp.task('test.browser.build', function(cb){

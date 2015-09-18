@@ -68,7 +68,6 @@ export default function run( test, Common, Elsinore, EntitySet ){
     });
 
 
-
     test('removing an entity from the entitySet should also remove it from the view', t => {
         initialiseEntitySet().then( ([registry,entitySet]) => {
             var eventSpy = Sinon.spy();
