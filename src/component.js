@@ -55,7 +55,7 @@ var Component = Model.extend({
     },
 
     hash: function(asString){
-        let result = Utils.Stringify(  _.omit(this.attributes, '_e','_es','_s') );
+        let result = Utils.stringify(  _.omit(this.attributes, '_e','_es','_s') );
         return Utils.hash( result, asString );
     },
 });

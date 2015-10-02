@@ -214,7 +214,7 @@ export function reduceIterator( iterator, eachFn, memo ){
 }
 
 
-export function Stringify( obj, space ){
+export function stringify( obj, space ){
     let cache = [];
     return JSON.stringify(obj, function(key, value) {
         if (typeof value === 'object' && value !== null) {

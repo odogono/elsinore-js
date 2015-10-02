@@ -346,24 +346,27 @@ let StackFunctions = {
         }
         this.opStack.push( op );
     },
+
     pushVal: function(val, wrapInValueTuple){
         let out;
         let concat;
         let isQuery, isArray;
-        // log.debug('pushing val ' + JSON.stringify(val) + ' ' + isQuery + ' ' + isArray );
         
         isQuery = Q.isQuery(val);
         isArray = _.isArray(val);
 
+        // log.debug('pushing val ' + JSON.stringify(val) + ' ' + isQuery + ' ' + isArray );
+
         if( wrapInValueTuple ){
-            if( !isQuery && (!isArray || val[0] !== Q.VALUE) ){
+            if( !isQuery ){//&& (!isArray)){// || val[0] !== Q.VALUE) ){
                 // log.debug('wrapping! ' + JSON.stringify(val) );
                 val = [Q.VALUE,val];
-            }  else {
-                // log.debug('not wrapping! ' + JSON.stringify(val) );
-            }
+            }  
+            // else {
+            //     log.debug('not wrapping! ' + JSON.stringify(val) );
+            // }
         }
-
+        // log.debug('>pushVal ' + JSON.stringify(val) );
         if( val && isQuery ){//Q.isQuery(val) ){
             out = val.toArray();
             this.valStack = this.valStack.concat( out );

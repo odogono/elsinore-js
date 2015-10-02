@@ -1,16 +1,16 @@
 'use strict';
 
 import _ from 'underscore';
-var Q = require('./index');
-var EntitySet = require('../entity_set');
+const Q = require('./index');
+const EntitySet = require('../entity_set');
 import * as Utils from '../util'
 
-var SELECT_BY_ID = 100;
+const SELECT_BY_ID = 100;
 
 
 _.extend( EntitySet.prototype, {
     selectById: function( entityIds, returnAsEntitySet ){
-        var result;
+        let result;
         returnAsEntitySet = (returnAsEntitySet === undefined) ? true : returnAsEntitySet;
         result = selectById( this.getRegistry(), this, entityIds, returnAsEntitySet );
         return result;
@@ -18,12 +18,14 @@ _.extend( EntitySet.prototype, {
 });
 
 
-function dslSelectById( entityIds ){
-    var context = Q.readContext( this, false );
+function dslSelectById( entityIds, selectFromRoot=false ){
+    const context = Q.readContext( this, false );
 
     context.pushVal( Q.LEFT_PAREN );
     
     context.pushVal( entityIds, true );
+    context.pushVal( selectFromRoot, true );
+
     context.pushVal( Q.RIGHT_PAREN );
 
     context.pushOp( Q.SELECT_BY_ID );
@@ -32,31 +34,61 @@ function dslSelectById( entityIds ){
 }
 
 
-function commandSelectById( context, entityIds ) {
-    var ii, len, value, entity, entities;
-    var entitySet = context.last;
+function commandSelectById( context, entityIds, selectFromRoot ) {
+    let ii, len, value, entity, entities;
+    let entitySet;
 
-    entitySet = Q.resolveEntitySet( context, entitySet );
-    // if( !EntitySet.isEntitySet(entitySet) ){
-    //     throw new Error('invalid es passed to commandSelectById ' + entitySet );
-    // }
+    // console.log('>entityIds: ' + Utils.stringify(entityIds) );
+    // console.log('>selectFromRoot: ' + Utils.stringify(selectFromRoot) );
+    selectFromRoot = Q.valueOf(context,selectFromRoot);
+    // console.log('<<<');
+    // printIns( context );
+    // entitySet = selectFromRoot ? context.root : Q.resolveEntitySet( context, entitySet );
+    entitySet = selectFromRoot ? context.root : Q.resolveEntitySet( context, context.last );
 
+    if( !entitySet ){
+        entitySet = context.root;
+    }
+
+    // console.log('entityIds: ' + JSON.stringify(entityIds) );
     entityIds = Q.valueOf( context, entityIds );
 
-    value = selectById( context.registry, entitySet, entityIds, true );
+    // console.log('using es ' + Utils.stringify(selectFromRoot) + ' ' + entitySet.length );
+    // console.log('entityIds: ' + JSON.stringify(entityIds) );
+    // printIns( entitySet );
 
+    // 
+    if( !entityIds ){
+        entityIds = Q.valueOf( context, context.last );
+        // console.log('entityIds: ' + JSON.stringify(entityIds) );
+    }
+
+    if( !entityIds ){
+        throw new Error('no entity ids supplied');
+    }
+
+    // printE( context.last );
+    // console.log('selectFromRoot ' + selectFromRoot + ' ' + entitySet.cid + ' ' + context.last.cid );
+    // process.exit();
+
+    value = selectById( context.registry, entitySet, entityIds, true );
 
     return (context.last = [ Q.VALUE, value ]);
 }
 
 function selectById( registry, entitySet, entityIds, returnAsEntitySet ){
-    var ii,len,entity,result, entities = [];
+    let ii,len,entity,result, entities = [];
 
     entityIds = _.isArray(entityIds) ? entityIds : [entityIds];
 
+    // remove duplicates
+    entityIds = _.uniq( entityIds );
+
     for( ii=0,len=entityIds.length;ii<len;ii++ ){
-        entity = entitySet.getEntity( entityIds[ii] );
-        if( entity ){ entities.push( entity ); }
+        if( (entity = entitySet.getEntity(entityIds[ii])) ){ 
+            // console.log('select entity ' + entityIds[ii] );
+            entities.push( entity ); 
+        }
     }
 
     if( returnAsEntitySet ){
@@ -68,7 +100,7 @@ function selectById( registry, entitySet, entityIds, returnAsEntitySet ){
     return entities;
 }
 
-var command = {
+const command = {
     commands:[
         {
             name: 'SELECT_BY_ID',

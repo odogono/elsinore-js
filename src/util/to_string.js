@@ -6,7 +6,7 @@ import Entity from '../entity';
 import EntitySet from '../entity_set';
 import EntityProcessor from '../entity_processor';
 
-import * as Utils from '../util'
+import { stringify, getEntityIdFromId } from './index'
 
 function entityToString(entity, indent){
     var res = [];
@@ -36,7 +36,7 @@ function componentToString(component, indent){
     }
 
     
-    componentJSON = Utils.stringify(component);
+    componentJSON = stringify(component);
     
 
     return indent 
@@ -44,7 +44,7 @@ function componentToString(component, indent){
         + ' (' + (component.id || '0') +') '
         + component.name 
         + '(' + component.getSchemaId() + ')'
-        + ' e:' + Utils.getEntityIdFromId(component.getEntityId()) + '' 
+        + ' e:' + getEntityIdFromId(component.getEntityId()) + '' 
         + ' ' + component.hash(true)
         + ' ' + componentJSON;
 }

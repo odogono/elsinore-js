@@ -4,16 +4,9 @@ Changelog
 http://keepachangelog.com/
 
 
-* **2013-05-01**: [Foobar] Foobar
-* **2013-04-31**: [Foobar] Foobar
- * (optional, extra detail for the line above)
+## 2015-10-01 [0.7.0]
 
-Some tag
---------
+Changed
+- Query.selectById now accepts a second argument indicating whether it should select entities from the root entityset. it defaults to false to follow current behaviour
+- Query.selectById can omit the first argument, in which case it will use the value from the last query operation
 
-* **2013-02-01**: [Barfoo] Boofar
-
-Some other tag
---------------
-
-* **2013-02-01**: [Barfoo] Boofar

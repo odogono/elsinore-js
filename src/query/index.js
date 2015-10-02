@@ -147,7 +147,7 @@ Query.resolveEntitySet = function resolveEntitySet( context, entitySet, compileO
         if( compileOnly ){
             return entitySet;
         }
-        return Query.valueOf( context, entitySet );
+        entitySet = Query.valueOf( context, entitySet );
     }
 
     if( EntitySet.isEntitySet(entitySet) ){
@@ -187,12 +187,20 @@ Query.valueOf = function valueOf( context, value, shouldReturnValue ){
     let command;
     if( !value ){ return value; }
     // if( context.debug ){ log.debug('valueOf: ' + Utils.stringify(value) ); }
+    // log.debug('valueOf: ' + Utils.stringify(value) );
     if( _.isArray(value) ){
         command = value[0];
+        // if( !_.isArray(value[1]) ){
+            // console.log('argle ' + JSON.stringify(value))
+            // just a plain array
+            // return value;
+        // }
+
         if( command === Query.VALUE ){
             if( value[1] === Query.ROOT ){
                 return context.root;
             }
+            // console.log('return val[1] ' + value[1] );
             return value[1];
         } else if( command === Query.ROOT ){
             return context.root;

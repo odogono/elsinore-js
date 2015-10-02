@@ -47,6 +47,47 @@ export default function run( test, Common, Elsinore, EntitySet ){
         });
     });
 
+    test('returns entities from the root entitySet', t => {
+        initialiseEntitySet().then( ([registry,entitySet]) => {
+            let subset;
+            subset = entitySet.query( [
+                Query.all('/component/channel'),
+                // set the 2nd arg to true means that the root entityset will be selected
+                Query.selectById([ 16,17,18 ], true)
+                ]);
+            t.equals( subset.length, 3, 'three entities selected' );
+            
+
+            subset = entitySet.query( [
+                Query.all('/component/channel'),
+                // this time, select works from the current selected context, which means
+                // the supplied argument will be invalid
+                Query.selectById([ 15,16,17 ])
+                ]);
+            // printE( subset );
+            t.equals( subset.length, 0, 'no entities selected' );
+            
+        })
+        .then( () => t.end() )
+        .catch( err => log.error('test error: %s', err.stack) )
+    });
+
+
+    test('will use the previous result if an argument isnt supplied', t => {
+        initialiseEntitySet().then( ([registry,entitySet]) => {
+            let result = entitySet.query([
+                Query.all('/component/channel_member'),
+                Query.pluck('/component/channel_member', 'channel'),
+                Query.selectById()
+            ]);
+            // printE( result );
+            t.equals( result.length, 3 );
+        })
+        .then( () => t.end() )
+        .catch( err => log.error('test error: %s', err.stack) )
+    });
+
+
     function initialiseEntitySet(entities){
         return Common.initialiseRegistry(false).then( registry => {
             let entitySet = Common.loadEntities( registry, (entities||'query.entities') );
