@@ -42,8 +42,7 @@ _.extend(Registry.prototype, Backbone.Events, {
         // this.listenTo( this.schemaRegistry, 'schema:add', this.schemaAdded );
         // this.listenTo( this.schemaRegistry, 'schema:remove', this.schemaRemoved );
 
-        this.schemaRegistry.on('all', () =>
-            this.trigger.apply(this, Array.prototype.slice.call(arguments,0)) );
+        this.schemaRegistry.on('all', (...args) => this.trigger.apply(this, args));
 
         // a number used to assign id numbers to things - entities, components, entitysets
         this.sequenceCount = options.sequenceCount || 0;
