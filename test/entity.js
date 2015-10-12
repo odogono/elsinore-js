@@ -1,3 +1,5 @@
+import test from 'tape';
+
 module.exports = function( test, Common, Elsinore, EntitySet ){
 
     let Component = Elsinore.Component;

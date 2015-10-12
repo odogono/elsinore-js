@@ -1,5 +1,5 @@
-var _ = require('underscore');
-var test = require('tape');
+import _  from 'underscore';
+import test from 'tape';
 
 var Common = require('./common');
 
@@ -7,142 +7,171 @@ var Common = require('./common');
 var Es = require('event-stream');
 var Sinon = require('sinon');
 
-var Elsinore = Common.Elsinore;
 
-var EventsAsync = Common.requireLib('util/events.async');
+import {
+    Elsinore, 
+    initialiseRegistry, 
+    loadEntities, 
+    loadFixtureJSON,
+    requireLib,
+    printE
+} from './common';
 
-var EntityFilter = Elsinore.EntityFilter;
-var EntitySet = Elsinore.EntitySet;
-var Entity = Elsinore.Entity;
-var Registry = Elsinore.Registry;
-var Utils = Elsinore.Utils;
+// var Elsinore = Common.Elsinore;
+
+const EventsAsync = Common.requireLib('util/events.async');
+
+const EntityFilter = Elsinore.EntityFilter;
+const EntitySet = Elsinore.EntitySet;
+const Entity = Elsinore.Entity;
+const Query = Elsinore.Query;
+const Registry = Elsinore.Registry;
+const Utils = Elsinore.Utils;
 
 
 test('triggering an event on an entity', function(t){
-    var entity, registry = initialiseRegistry();
-    var entitySet = registry.createEntitySet();
-    var eventSpy = Sinon.spy();
+    return initialiseRegistry().then( registry => {
+        const entitySet = registry.createEntitySet();
+        const eventSpy = Sinon.spy();
+        let entity;
 
-    // listen to all msg events from all entities
-    entitySet.on( 'msg', eventSpy );
-    // entitySet.listenToEntityEvent( 'all', function(){
-    //     log.debug('!eevt ' + JSON.stringify(arguments));
-    // } );
+        // listen to all msg events from all entities
+        entitySet.on( 'msg', eventSpy );
+        // entitySet.listenToEntityEvent( 'all', function(){
+        //     log.debug('!eevt ' + JSON.stringify(arguments));
+        // } );
 
-    // entitySet.listenToEntityEvent( 'msg', function( name ){
-    //     log.debug('2!eevt '  + JSON.stringify(arguments));
-    // } );
-    
-    entity = registry.createEntity( { id:'/component/animal', name:'tiger' } );
-    entity = entitySet.addEntity( entity );
+        // entitySet.listenToEntityEvent( 'msg', function( name ){
+        //     log.debug('2!eevt '  + JSON.stringify(arguments));
+        // } );
+        
+        entity = registry.createEntity( { id:'/component/animal', name:'tiger' } );
+        entity = entitySet.addEntity( entity );
 
-    // entitySet.addComponent( registry.createComponent( '/component/animal', {id:5,_e:1, name:'tiger'}) );
+        // entitySet.addComponent( registry.createComponent( '/component/animal', {id:5,_e:1, name:'tiger'}) );
 
-    entitySet.triggerEntityEvent( 'msg', entitySet.at(0), 'hello there' );
+        entitySet.triggerEntityEvent( 'msg', entitySet.at(0), 'hello there' );
 
-    t.ok( eventSpy.called, 'msg event should have been called' );
-
-    t.end();
+        t.ok( eventSpy.called, 'msg event should have been called' );
+    })
+    .then( () => t.end() )
+    .catch( err => log.error('test error: %s', err.stack) )
 });
 
 
 test('the registry triggers the event on entitysets', function(t){
-    var entity, registry = initialiseRegistry();
-    var entitySet = registry.createEntitySet();
-    var eventSpy = Sinon.spy();
+    return initialiseRegistry().then( registry => {
+        const entitySet = registry.createEntitySet();
+        const eventSpy = Sinon.spy();
+        let entity;
 
-    // Common.logEvents( entitySet, 'ese!' );
-    entitySet.on('all', eventSpy );
-    entitySet.on('all', function( entity ){
-        // printIns( arguments );
-        // log.debug('called msg with ' + entity.id );
-    });
+        // Common.logEvents( entitySet, 'ese!' );
+        entitySet.on('all', eventSpy );
+        entitySet.on('all', entity => {
+            // printIns( arguments );
+            // log.debug('called msg with ' + entity.id );
+        });
 
-    entity = entitySet.addEntity( 
-        registry.createEntity( { id:'/component/animal', name:'tiger' } ) );
+        entity = entitySet.addEntity( 
+            registry.createEntity( { id:'/component/animal', name:'tiger' } ) );
 
-    // registry.triggerEntityEvent( 'msg', entity, 'close the door' );
-    entity.triggerEntityEvent( 'msg', 'close the door');
+        // registry.triggerEntityEvent( 'msg', entity, 'close the door' );
+        entity.triggerEntityEvent( 'msg', 'close the door');
 
-    t.ok( eventSpy.calledWith('msg', entity, 'close the door'), 'entity was called with event' );
+        t.ok( eventSpy.calledWith('msg', entity, 'close the door'), 'entity was called with event' );
 
-    t.end();
+    })
+    .then( () => t.end() )
+    .catch( err => log.error('test error: %s', err.stack) )
 });
 
 
 test('the registry triggers the event on a compatible entityset', function(t){
-    var entity, registry = initialiseRegistry();
-    var entitySet = registry.createEntitySet();
+    return initialiseRegistry().then( registry => {
+        const entitySet = registry.createEntitySet();
+        const eventSpy = Sinon.spy();
+        let entity;
     
-    var mineralCalled = false, animalCalled = false, mainCalled = false;
+        let mineralCalled = false, animalCalled = false, mainCalled = false;
 
-    var mineralEntitySet = entitySet.where('/component/mineral');
-    var animalEntitySet = entitySet.where('/component/animal');
+        let mineralEntitySet = entitySet.view( Query.all('/component/mineral'));
+        let animalEntitySet = entitySet.view( Query.all('/component/animal'));
 
-    registry.addEntitySet( mineralEntitySet );
-    registry.addEntitySet( animalEntitySet );
 
-    entitySet.on('msg', function(){ mainCalled = true; });    
-    mineralEntitySet.on('msg', function(){ mineralCalled = true; });
-    animalEntitySet.on('msg', function(){ animalCalled = true; });
+        registry.addEntitySet( mineralEntitySet );
+        registry.addEntitySet( animalEntitySet );
 
-    entity = entitySet.addEntity( 
-        registry.createEntity( { id:'/component/animal', name:'tiger' } ) );
+        entitySet.on('msg', () => mainCalled = true );    
+        mineralEntitySet.on('msg', () => mineralCalled = true );
+        animalEntitySet.on('msg', () => animalCalled = true );
 
-    entity.triggerEntityEvent( 'msg', 'welcome' );
-    // registry.triggerEntityEvent( 'msg', entity, 'welcome' );
+        entity = entitySet.addEntity( 
+            registry.createEntity( { id:'/component/animal', name:'tiger' } ) );
 
-    t.notOk( mineralCalled, 'events triggered only on base entitySet and animal entitySet');
-    t.ok( animalCalled, 'events triggered only on base entitySet and animal entitySet');
-    
-    t.end();
+        entity.triggerEntityEvent( 'msg', 'welcome' );
+
+        t.notOk( mineralCalled, 'events not triggered on mineral entitySet');
+        t.ok( animalCalled, 'events triggered on animal entitySet');
+        t.ok( mainCalled, 'events triggered on base entitySet');
+    })
+    .then( () => t.end() )
+    .catch( err => log.error('test error: %s', err.stack) )
 });
 
 
 
-test('triggers events which are stored until release', function(t){
-    var entity, registry = initialiseRegistry();
-    var entitySet = registry.createEntitySet();
-    var received = false;
-    var listener = _.extend({
-    }, EventsAsync);
+test('triggers events which are stored until release', t => {
+    return initialiseRegistry().then( registry => {
+        const entitySet = registry.createEntitySet();
+        const eventSpy = Sinon.spy();
+        let entity;
 
-    listener.listenToAsync( entitySet, 'msg', function(msgEntity){
-        received = true;
-        t.equals( msgEntity.Animal.get('name'), 'tiger' );
-    });
+        var received = false;
+        var listener = _.extend({
+        }, EventsAsync);
 
-    entity = entitySet.addEntity( 
-        registry.createEntity( { id:'/component/animal', name:'tiger' } ) );
+        listener.listenToAsync( entitySet, 'msg', (evt,msgEntity) => {
+            received = true;
+            t.equals( msgEntity.Animal.get('name'), 'tiger' );
+        });
 
-    entitySet.triggerEntityEvent( 'msg', entity );
+        entity = entitySet.addEntity( 
+            registry.createEntity( { id:'/component/animal', name:'tiger' } ) );
 
-    listener.releaseAsync();
+        entitySet.triggerEntityEvent( 'msg', entity );
 
-    t.ok( received, 'the msg was received' );
-    t.end();
+        listener.releaseAsync();
+
+        t.ok( received, 'the msg was received' );
+    })
+    .then( () => t.end() )
+    .catch( err => log.error('test error: %s', err.stack) )
 });
 
 
 test('still triggers on normal listeners', function(t){
-    var entity, registry = initialiseRegistry();
-    var entitySet = registry.createEntitySet();
-    var received = false;
-    var listener = _.extend({
-    }, EventsAsync);
+    return initialiseRegistry().then( registry => {
+            const entitySet = registry.createEntitySet();
+            const eventSpy = Sinon.spy();
+            let entity;
 
-    listener.listenTo( entitySet, 'msg', function(msgEntity){
-        received = true;
-        t.equals( msgEntity.Animal.get('name'), 'tiger' );
-    });
+        let received = false;
+        let listener = _.extend({}, EventsAsync);
 
-    entity = entitySet.addEntity( 
-        registry.createEntity( { id:'/component/animal', name:'tiger' } ) );
+        listener.listenTo( entitySet, 'msg', function(msgEntity){
+            received = true;
+            t.equals( msgEntity.Animal.get('name'), 'tiger' );
+        });
 
-    entitySet.triggerEntityEvent( 'msg', entity );
+        entity = entitySet.addEntity( 
+            registry.createEntity( { id:'/component/animal', name:'tiger' } ) );
 
-    t.ok( received, 'the msg was received' );
-    t.end();
+        entitySet.triggerEntityEvent( 'msg', entity );
+
+        t.ok( received, 'the msg was received' );
+    })
+    .then( () => t.end() )
+    .catch( err => log.error('test error: %s', err.stack) )
 });
 
 // test('listen to events on entities that have certain components');
@@ -203,21 +232,21 @@ this.registry.triggerEntityEvent( null, 'msg', 'welcome to the room' );
 
 
 // compile a map of schema id(uri) to schema
-var componentData = _.reduce( require('./fixtures/components.json'), 
-                        function(memo, entry){
-                            memo[ entry.id ] = entry;
-                            return memo;
-                        }, {});
+// var componentData = _.reduce( require('./fixtures/components.json'), 
+//                         function(memo, entry){
+//                             memo[ entry.id ] = entry;
+//                             return memo;
+//                         }, {});
 
 
-function initialiseRegistry(logEvents){
-    var registry = Registry.create();
-    // ComponentDefs = registry.ComponentDef;
-    if( logEvents ){
-        Common.logEvents( registry );
-    }
+// function initialiseRegistry(logEvents){
+//     var registry = Registry.create();
+//     // ComponentDefs = registry.ComponentDef;
+//     if( logEvents ){
+//         Common.logEvents( registry );
+//     }
 
-    registry.registerComponent( componentData );
+//     registry.registerComponent( componentData );
 
-    return registry;
-}
+//     return registry;
+// }

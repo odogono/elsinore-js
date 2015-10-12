@@ -1,7 +1,5 @@
-'use strict';
-
-let _ = require('underscore');
-let test = require('tape');
+import _ from 'underscore';
+import test from 'tape';
 
 let Common = require('./common');
 

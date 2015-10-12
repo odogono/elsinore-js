@@ -1,7 +1,5 @@
-'use strict';
-
-var _ = require('underscore');
-var test = require('tape');
+import _ from 'underscore';
+import test from 'tape';
 
 var Common = require('./common');
 var Elsinore = Common.Elsinore;

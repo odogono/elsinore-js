@@ -1,7 +1,7 @@
 'use strict'
 
-let test = require('tape');
-let _ = require('underscore');
+import test from 'tape';
+import _ from 'underscore';
 let Backbone = require('backbone');
 let Common = require('./common');
 let EventsAsync = Common.requireLib('util/events.async');

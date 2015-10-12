@@ -8,7 +8,7 @@ import EntityProcessor from '../entity_processor';
 
 import { stringify, getEntityIdFromId } from './index'
 
-function entityToString(entity, indent){
+export function entityToString(entity, indent){
     var res = [];
     var comDefId;
     
@@ -27,7 +27,7 @@ function entityToString(entity, indent){
     return res;
 }
 
-function componentToString(component, indent){
+export function componentToString(component, indent){
     var componentJSON;
     indent || (indent='');
 
@@ -49,7 +49,7 @@ function componentToString(component, indent){
         + ' ' + componentJSON;
 }
 
-function entitySetToString(es, indent){
+export function entitySetToString(es, indent){
     var entity;
     var res = [];
     var it;
@@ -72,7 +72,7 @@ function entitySetToString(es, indent){
     return res;
 }
 
-function toString(entity, indent, join){
+export function toString(entity, indent, join){
     var res = [''];
     var e;
     indent || (indent='');
@@ -97,10 +97,3 @@ function toString(entity, indent, join){
     }
     return res.join(join);
 }
-
-module.exports = {
-    toString: toString,
-    entitySetToString: entitySetToString,
-    componentToString: componentToString,
-    entityToString: entityToString
-};

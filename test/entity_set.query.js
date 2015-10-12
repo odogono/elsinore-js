@@ -1,6 +1,4 @@
-'use strict';
-
-var _ = require('underscore');
+import _ from 'underscore';
 
 
 export default function run( test, Common, Elsinore, EntitySet ){

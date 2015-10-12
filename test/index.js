@@ -1,6 +1,7 @@
 import './cmd_buffer_async';
 import './component';
 import './entity';
+import './entity_events';
 import './entity_filter';
 import './entity_set';
 import './entity_set.query';

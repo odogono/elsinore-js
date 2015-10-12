@@ -1,6 +1,5 @@
-'use strict';
-
-let _ = require('underscore');
+import _ from 'underscore';
+import test from 'tape';
 let Sinon = require('sinon');
 
 

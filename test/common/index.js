@@ -12,17 +12,17 @@ var fixtureDir = Path.join( rootDir, 'test', 'fixtures' );
 var varDir = Path.join( rootDir, 'var' );
 
 var ElsinoreDir = Path.join(rootDir, 'src')
-var Elsinore = require( ElsinoreDir );
 
+export const Elsinore = require(ElsinoreDir);
 
-function pathVar( path, clear ){
+export function pathVar( path, clear ){
     path = Path.join( varDir, path );
     if( clear ){ Sh.rm('-rf', path ); }
     Sh.mkdir('-p', path );
     return path;
 }
 
-function pathVarFile( path, clear ){
+export function pathVarFile( path, clear ){
     path = Path.join( varDir, path );
     if( clear ){ 
         // log.debug('clearing ' + path );
@@ -33,7 +33,7 @@ function pathVarFile( path, clear ){
 }
 
 // compile a map of schema id(uri) to schema
-function loadComponents(){
+export function loadComponents(){
     var data = loadFixtureJSON( 'components.json' );
     var componentData = _.reduce( data, 
                         function(memo, entry){
@@ -46,7 +46,7 @@ function loadComponents(){
 /**
 *   Returns an entityset with the given entities
 */
-function loadEntities( registry, fixtureName, EntitySet, options ){
+export function loadEntities( registry, fixtureName, EntitySet, options ){
     var data;
     var lines;
     var result;
@@ -95,7 +95,7 @@ function loadEntities( registry, fixtureName, EntitySet, options ){
 /**
 *
 */
-function initialiseRegistry( doLogEvents ){
+export function initialiseRegistry( doLogEvents ){
     var componentData;
     var registry = Elsinore.Registry.create();
     var options, load;
@@ -124,20 +124,20 @@ function initialiseRegistry( doLogEvents ){
 }
 
 
-function createFixtureReadStream( fixturePath ){
+export function createFixtureReadStream( fixturePath ){
     var path = Path.join( fixtureDir, fixturePath );
     return Fs.createReadStream( path, { encoding: 'utf-8' })
         .pipe(Es.split())
         .pipe(Es.parse());
 }
 
-function loadFixture( fixturePath ){
+export function loadFixture( fixturePath ){
     var path = Path.join( fixtureDir, fixturePath );
     var data = Fs.readFileSync( path, 'utf8');
     return data;
 }
 
-function loadFixtureJSON( fixturePath, data ){
+export function loadFixtureJSON( fixturePath, data ){
     try {
         var data = loadFixture( fixturePath );
         data = JSON.parse( data );
@@ -155,7 +155,7 @@ function logEvents(obj, prefix){
     });
 }
 
-function printIns(arg,depth,showHidden,colors){
+export function printIns(arg,depth,showHidden,colors){
     if( _.isUndefined(depth) ) depth = 2;
     // var stack = __stack[1];
     // var fnName = stack.getFunctionName();
@@ -164,7 +164,7 @@ function printIns(arg,depth,showHidden,colors){
     Util.log( Util.inspect(arg,showHidden,depth,colors) );
 };
 
-function printVar(){
+export function printVar(){
     var i, len;
     for (i = 0, len = arguments.length; i < len; i++) {
         Util.log( JSON.stringify(arguments[i], null, '\t') );
@@ -172,61 +172,41 @@ function printVar(){
     }
 }
 
-// Object.defineProperty(global, '__stack', {
-//     get: function() {
-//         var orig = Error.prepareStackTrace;
-//         Error.prepareStackTrace = function(_, stack) {
-//             return stack;
-//         };
-//         var err = new Error;
-//         Error.captureStackTrace(err, arguments.callee);
-//         var stack = err.stack;
-//         Error.prepareStackTrace = orig;
-//         return stack;
-//     }
-// });
 
-// Object.defineProperty(global, '__line', {
-//     get: function() {
-//         return __stack[1].getLineNumber();
-//     }
-// });
-
-// Object.defineProperty(global, '__function', {
-//     get: function() {
-//         return __stack[1].getFunctionName();
-//     }
-// });
-
-global.printIns = printIns;
-global.printVar = printVar;
-
-
+import {toString as entityToString} from '../../src/util/to_string';
 var toStringPath = Path.join(ElsinoreDir, 'util/to_string');
 
-global.printE = function(e){
-    Util.log( require(toStringPath).toString(e) );
+export function printE(e){
+    Util.log( entityToString(e) );
 }
+
+export {default as CopyEntity} from '../../src/util/copy_entity';
 
 global.log = {
     debug: console.log,
     error: console.log
 };
 
-module.exports = {
-    requireLib: function(path){
-        return require( Path.join(ElsinoreDir, path) );
-    },
-    printVar: printVar,
-    printIns: printIns,
-    logEvents: logEvents,
-    createFixtureReadStream: createFixtureReadStream,
-    loadFixture: loadFixture,
-    loadFixtureJSON: loadFixtureJSON,
-    loadComponents: loadComponents,
-    loadEntities: loadEntities,
-    initialiseRegistry: initialiseRegistry,
-    pathVar: pathVar,
-    pathVarFile: pathVarFile,
-    Elsinore: Elsinore
+global.printIns = printIns;
+
+export function requireLib( path ){
+    return require( Path.join(ElsinoreDir,path) );
 }
+
+// module.exports = {
+//     requireLib: function(path){
+//         return require( Path.join(ElsinoreDir, path) );
+//     },
+//     printVar: printVar,
+//     printIns: printIns,
+//     logEvents: logEvents,
+//     createFixtureReadStream: createFixtureReadStream,
+//     loadFixture: loadFixture,
+//     loadFixtureJSON: loadFixtureJSON,
+//     loadComponents: loadComponents,
+//     loadEntities: loadEntities,
+//     initialiseRegistry: initialiseRegistry,
+//     pathVar: pathVar,
+//     pathVarFile: pathVarFile,
+//     Elsinore: Elsinore
+// }

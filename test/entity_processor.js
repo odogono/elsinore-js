@@ -1,5 +1,5 @@
-var _ = require('underscore');
-var test = require('tape');
+import _ from 'underscore';
+import test from 'tape';
 var Sinon = require('sinon');
 
 var Common = require('./common');

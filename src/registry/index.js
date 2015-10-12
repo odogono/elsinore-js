@@ -351,7 +351,6 @@ _.extend(Registry.prototype, Backbone.Events, {
         component.setSchemaId( schemaIId );
         component.schemaHash = schema.hash;
 
-        
         if( entityId ){
             component.setEntityId( entityId );
         }
@@ -361,7 +360,7 @@ _.extend(Registry.prototype, Backbone.Events, {
         return component;
     },
 
-
+    // TODO: remove - replaced by util/copy_entity.copyComponent
     cloneComponent: function( component, options ){
         let result = new component.constructor(component.attributes);
         result.id = component.id;
