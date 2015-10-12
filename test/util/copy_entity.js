@@ -1,6 +1,6 @@
 import _ from 'underscore';
 import test from 'tape';
-import {printE, printIns, initialiseRegistry, CopyEntity} from './common';
+import {printE, printIns, initialiseRegistry, CopyEntity} from '../common';
 
 // import {copy as CopyEntity} from '../../src/util/uuid';
 
