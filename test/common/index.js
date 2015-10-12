@@ -180,7 +180,7 @@ export function printE(e){
     Util.log( entityToString(e) );
 }
 
-export {default as CopyEntity} from '../../src/util/copy_entity';
+export {default as CopyEntity} from '../../src/util/copy';
 
 global.log = {
     debug: console.log,
