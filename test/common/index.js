@@ -148,7 +148,7 @@ export function loadFixtureJSON( fixturePath, data ){
     }
 }
 
-function logEvents(obj, prefix){
+export function logEvents(obj, prefix){
     prefix = prefix || 'evt';
     obj.on('all', function(evt){
         log.debug(prefix + ' ' + JSON.stringify( _.toArray(arguments) ) );

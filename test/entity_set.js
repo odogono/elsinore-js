@@ -6,7 +6,9 @@ import {
     Elsinore, 
     initialiseRegistry, 
     loadEntities, 
-    loadFixtureJSON
+    loadFixtureJSON,
+    printE,
+    logEvents
 } from './common';
 
 
@@ -480,6 +482,7 @@ test('should not emit an event when a non-existent component is removed', t => {
     return initialiseRegistry().then( registry => {
         let eventSpy = Sinon.spy();
         let entitySet = loadEntities( registry );
+        entitySet.on('all', eventSpy );
         let component = registry.createComponent( '/component/position', {x:-1,y:-1}, {eid:26} );
 
         component = entitySet.removeComponent( component );
@@ -489,6 +492,42 @@ test('should not emit an event when a non-existent component is removed', t => {
         t.end();
     });
 });
+
+
+
+test('adding an entity with an identical id will replace the existing one', t => {
+   return initialiseRegistry().then( registry => {
+       let entitySet = registry.createEntitySet();
+       let eventSpy = Sinon.spy();
+       entitySet.on('component:change', eventSpy );
+
+       // logEvents(entitySet);
+
+       // let entities = loadEntities( registry );  
+       // let entity = entities.at(0);
+       let entityA = registry.createEntity([
+            {id:'/component/position', x:0,y:0}
+        ]);
+       let entityB = registry.createEntity([
+            {id:'/component/position', x:15,y:-90},
+            {id:'/component/status', 'status':'active'}
+        ]);
+
+       entityB.setId( entityA.id );
+
+       entitySet.addEntity( entityA );
+       // log.debug('>--');
+       entitySet.addEntity( entityB );
+       
+       t.equals( entitySet.size(), 1);
+       t.ok( eventSpy.calledOnce, `component:change was called ${eventSpy.callCount} times`);
+       t.equals( entitySet.at(0).Status.get('status'), 'active' );
+       t.equals( entitySet.at(0).Position.get('x'), 15 );
+
+       t.end();
+   })
+   .catch( err => { log.debug('t.error: ' + err ); log.debug( err.stack );} ) 
+})
 
 
 test('should only add a component of an accepted type', t => {

@@ -484,15 +484,9 @@ let functions = {
                 else if( entity ){
                     ocom = entity.components[defId];
                     // the entity already has this entity - update it
-                    // TODO: we just replace the reference, but it should probably be checking for whether anything
-                    // actually changed
-                    // if( debug ){ log.debug('checking updated component ' + com.hash() + ' ' + JSON.stringify(com) + ' ' + ocom.hash() + ' ' + JSON.stringify(ocom)); }
-
                     if( !com.isEqual(ocom) ){
-                        // if( debug ){ log.debug('updating component '+ com.id + ' on ' + entity.cid + ' ' + JSON.stringify(com) + ' vs ' + JSON.stringify(ocom) ); }
                         entity.addComponent( com );
-                        
-                        this.componentsUpdated.add( com );// [ com.cid ] = com;
+                        this.componentsUpdated.add( com );
                     }
                     
                 }

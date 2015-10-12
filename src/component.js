@@ -44,7 +44,7 @@ var Component = Model.extend({
     },
 
     setEntityId: function(id, internalId){
-        this.set({'_e':id});
+        this.set({'_e':id}, {silent:true});
     },
 
     getSchemaId: function(){
