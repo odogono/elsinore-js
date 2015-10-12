@@ -3,6 +3,12 @@ Written with guidance from [Keep a CHANGELOG](http://keepachangelog.com/).
 This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased][unreleased]
+
+## [0.8.0] - 2015-10-12
+### Added
+- copyEntity and copyComponent util functions added
+
+## [0.7.1] - 2015-10-08
 ### Fixed
 - schema registry events were not being forwarded correctly
 
