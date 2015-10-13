@@ -1,27 +1,36 @@
 import _ from 'underscore';
 
+import {parseUri} from '../util';
+
+
 /**
 *   Returns an array of properties for the given schema
 *   each item will have a name, type, and optionally a default
 *   { name:'name', type:'string', default:'empty' }
 */
-function getProperties( schemaRegistry, schemaUri, options ){
-    var i;
-    var len;
-    var priorities;
-    var allOf;
-    var self = this;
-    var result;
-    var prop;
-    var properties;
-    var schema;
-    var name;
-    options || (options = {});
-    
+export function getProperties( schemaRegistry, schemaUri, options={} ){
+    let ii,len;
+    let priorities;
+    let allOf;
+    let self = this;
+    let result;
+    let prop;
+    let properties;
+    let schema;
+    let name;
+    let pickedProperty;
+
     if( _.isArray(schemaUri) ){
-        return Array.prototype.concat.apply( [], schemaUri.map( function(s){
-            return getProperties(schemaRegistry, s);
-        }));
+        return Array.prototype.concat.apply( [], 
+            schemaUri.map( s => getProperties(schemaRegistry, s)) );
+    }
+
+    const parsed = parseUri( schemaUri );
+    if( parsed ){
+        console.log('parsed', schemaUri, parsed.baseUri );
+
+        schemaUri = parsed.baseUri;
+        pickedProperty = parsed.fragment;
     }
 
     schema = schemaRegistry.get( schemaUri, null, {resolve:false} );
@@ -36,14 +45,13 @@ function getProperties( schemaRegistry, schemaUri, options ){
         return result;
     }
 
-
     priorities = schema.propertyPriorities;
 
     // convert from property object into an array
-    var keys = _.keys(properties);
+    let keys = _.keys(properties);
 
-    for (i = 0, len = keys.length; i !== len; ++i) {
-        name = keys[i];
+    for (ii = 0, len = keys.length; ii !== len; ++ii) {
+        name = keys[ii];
         
         prop = resolveProperty( schemaRegistry, schema, properties[ name ] );
         
@@ -52,7 +60,7 @@ function getProperties( schemaRegistry, schemaUri, options ){
         if( priorities && priorities[name] ){
             prop.priority = priorities[name];
         }
-        result[i] = prop;
+        result[ii] = prop;
     }
     
     // process the allOf property if it exists - combine
@@ -72,27 +80,29 @@ function getProperties( schemaRegistry, schemaUri, options ){
         result = result.sort( propertySort );
     }
 
+    if( pickedProperty ){
+        return _.find( result, (prop) => prop.name == pickedProperty );
+    }
+
     return result;
 }
 
 /**
 *   Returns an object from the specified schema
 */
-function getPropertiesObject( schemaRegistry, schemaUri, options ){
-    var i;
-    var property;
-    var def
-    var properties;
-    var includeNullProperties;
-    var result = {};
-
-    options || (options={});
+export function getPropertiesObject( schemaRegistry, schemaUri, options={} ){
+    let ii;
+    let property;
+    let def
+    let properties;
+    let includeNullProperties;
+    let result = {};
 
     includeNullProperties = options.includeNull;
     properties = getProperties( schemaRegistry, schemaUri, options );
 
-    for( i in properties ){
-        property = properties[i];
+    for( ii in properties ){
+        property = properties[ii];
         def = property['default'];
         if( !_.isUndefined( def ) ){
             result[ property.name ] = def;
@@ -141,8 +151,3 @@ function propertySort(a,b){
     if( ap > bp ){ return -1; }
     return 0;
 }
-
-module.exports = {
-    getProperties: getProperties,
-    getPropertiesObject: getPropertiesObject
-};

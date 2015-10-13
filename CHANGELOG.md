@@ -3,6 +3,13 @@ Written with guidance from [Keep a CHANGELOG](http://keepachangelog.com/).
 This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased][unreleased]
+### Changed
+- Utils.parseUri now also parses any querystring into an object on .query
+- can now obtain a specific property from the schema registry by using a fragment
+
+## [0.9.0] - 2015-10-12
+### Changed
+- components no longer emit change events when their entity id is altered
 
 ## [0.8.0] - 2015-10-12
 ### Added

@@ -244,6 +244,11 @@ test('returning default properties', t => {
             name: 'unknown'
         });
 
+    // fragment value picks out the specific property
+    t.deepEqual(
+        SchemaProperties.getProperties( registry, '/schema/default#age' ),
+        { default: 22, name: 'age', type: 'integer' } );
+
     t.end();
 });
 

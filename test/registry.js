@@ -1,6 +1,6 @@
 import _ from 'underscore';
 import test from 'tape';
-let Sinon = require('sinon');
+import Sinon from 'sinon';
 
 
 module.exports = function( test, Common, Elsinore, EntitySet ){

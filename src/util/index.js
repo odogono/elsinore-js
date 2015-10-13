@@ -89,13 +89,13 @@ export function normalizeUri(uri){
     return result.href;
 }
 
-export function parseUri( uri ){
-    let result;
-    // result = require('uri-js').parse( uri );
-    result = Url.parse( uri );
+export function parseUri( uri, parseQueryString ){
+    let result = Url.parse( uri, true );
     if( result.hash ){
         result.fragment = result.hash.substring(1);
         result.baseUri = result.href.slice(0, result.href.length - result.hash.length);
+    } else {
+        result.baseUri = result.href;
     }
 
     return result;

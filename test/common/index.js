@@ -174,11 +174,16 @@ export function printVar(){
 
 
 import {toString as entityToString} from '../../src/util/to_string';
-var toStringPath = Path.join(ElsinoreDir, 'util/to_string');
+const toStringPath = Path.join(ElsinoreDir, 'util/to_string');
 
 export function printE(e){
     Util.log( entityToString(e) );
 }
+
+// TODO: must be someway to achieve this with import/export
+const _Utils = require('../../src/util');
+export const Utils = _Utils;
+
 
 export {default as CopyEntity} from '../../src/util/copy';
 

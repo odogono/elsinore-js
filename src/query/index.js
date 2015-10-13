@@ -673,9 +673,9 @@ Query.executeCommand = function( context, op, args ){
         default:
             cmdFunction = Query.commandFunction( op );
             if( !cmdFunction ){
-                log.debug('unknown cmd ' + op);
-                printIns( _.rest(arguments), 1 );
-                throw new Error('unknown cmd (' + op + ') ' + Utils.stringify(_.rest(arguments)) );
+                // log.debug('unknown cmd ' + op);
+                // printIns( _.rest(arguments), 1 );
+                throw new Error('unknown cmd (' + Utils.stringify(op) + ') ' + Utils.stringify(_.rest(arguments)) );
             }
             result = cmdFunction.apply( context, cmdArgs );  
             break;
