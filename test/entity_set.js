@@ -8,10 +8,11 @@ import {
     loadEntities, 
     loadFixtureJSON,
     printE,
-    logEvents
+    logEvents,
+    requireLib
 } from './common';
 
-
+const copyComponent = requireLib('util/copy').copyComponent;
 
 const Component = Elsinore.Component;
 const Entity = Elsinore.Entity;
@@ -715,15 +716,15 @@ test('should emit an event when a component is changed', t => {
 
         entitySet.addEntity( entity );
 
-        cloned = registry.cloneComponent( component );
+        cloned = copyComponent( registry, component );
         cloned.set({x:0,y:-2});
 
         entitySet.addComponent( cloned );
 
         t.ok( spy.called, 'component:change should have been called' );
-
-        t.end();
-    });
+    })
+    .then( () => t.end() )
+    .catch( err => log.error('test error: %s', err.stack) )
 });
 
 test('emit event when an entity component is changed', t => {

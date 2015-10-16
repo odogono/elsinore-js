@@ -1,6 +1,6 @@
 {
   "name": "elsinore",
-  "version": "0.9.1",
+  "version": "0.10.0",
   "description": "a javascript Entity Component System",
   "keywords": [
     "elsinore",
@@ -34,7 +34,7 @@
   },
   "non-dependencies": {},
   "devDependencies": {
-    "aliasify": "^1.7.2",
+    "aliasify": "^1.8.0",
     "babel": "^5.8.21",
     "babel-tape-runner": "^1.2.0",
     "babelify": "^6.1.3",

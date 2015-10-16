@@ -5,14 +5,16 @@ import Backbone from 'backbone';
 
 import BitField  from 'odgn-bitfield';
 import Entity from '../entity';
-let EntitySet = require('../entity_set');
-let Component = require('../component');
-let SchemaRegistry = require('../schema');
-let SchemaProperties = require('../schema/properties');
-let EntityProcessor = require('../entity_processor');
-let EntityFilter = require('../entity_filter');
+import EntitySet from '../entity_set';
+import Component from '../component';
+import SchemaRegistry from '../schema';
+import SchemaProperties from '../schema/properties';
+import EntityProcessor from '../entity_processor';
+import EntityFilter from '../entity_filter';
 import * as Utils from '../util';
-
+import {copyComponent} from '../util/copy';
+import {uuid as createUuid} from '../util/uuid';
+import {getPropertiesObject, getProperties} from '../schema/properties';
 
 let counter = Date.now() % 1e9;
 
@@ -171,7 +173,7 @@ _.extend(Registry.prototype, Backbone.Events, {
         let result = this.createEntity( null, {entity:entity});
         // clone each of the attached components
         for( comId in entity.components ){
-            comClone = this.cloneComponent( entity.components[comId] );
+            comClone = copyComponent( this, entity.components[comId] );
             result.addComponent( comClone );
         }
         result.registry = this;
@@ -321,7 +323,7 @@ _.extend(Registry.prototype, Backbone.Events, {
         name = this.componentNameFromSchema( schema.hash );
         
         // obtain default properties from the schema
-        defaults = SchemaProperties.getPropertiesObject( this.schemaRegistry, schema.uri );
+        defaults = getPropertiesObject( this.schemaRegistry, schema.uri );
 
         if( _.isArray(attrs) ){
             result = [];
@@ -362,68 +364,11 @@ _.extend(Registry.prototype, Backbone.Events, {
         return component;
     },
 
-    // TODO: remove - replaced by util/copy_entity.copyComponent
-    cloneComponent: function( component, options ){
-        let result = new component.constructor(component.attributes);
-        result.id = component.id;
-        result.name = component.name;
-        result.setSchemaId( component.getSchemaId() );
-        result.schemaUri = component.schemaUri;
-        result.schemaHash = component.schemaHash;
-        result.registry = this;
-        return result;
-    },
 
     destroyComponent: function( component, options ){
 
     },
 
-
-    /**
-    *   Updates any entity references on a component instance
-    *
-    *   Takes the supplied entityIdMap and converts any component
-    *   properties that have been marked as entity refs.
-    *
-    *   The returned component is a clone of the original
-    *
-    *   TODO: determine whether this belongs here. this could be moved out
-    *   to a module by itself, or perhaps become a processor
-    */
-    mapComponentEntityRefs: function( component, entityIdMap, options ){
-        let ii,len, property, val, updates;
-        let result;
-        let properties;
-
-        if( !entityIdMap || _.size(entityIdMap) === 0 ){
-            return component;
-        }
-
-        properties = SchemaProperties.getProperties( this.schemaRegistry, component.schemaUri );
-
-        if( !properties ){
-            return component;
-        }
-
-        result = this.cloneComponent( component );
-        
-        updates = {};
-
-        for( ii=0,len=properties.length;ii<len;ii++ ){
-            property = properties[ii];
-            if( property.type == 'eref' || (property.type == 'integer' && property.format == 'entity') ){
-                if( (val = component.get(property.name)) !== undefined ){
-                    if( entityIdMap.hasOwnProperty(val.toString()) ){
-                        updates[ property.name ] = entityIdMap[ val ];
-                    }
-                }
-            }
-        }
-
-        result.set( updates );
-
-        return result;
-    },
 
     /**
      * Converts an entity id to an entity instance
@@ -546,6 +491,17 @@ _.extend(Registry.prototype, Backbone.Events, {
         this.trigger('entityset:add', entitySet );
 
         return entitySet;
+    },
+
+    /**
+    *
+    */
+    getEntitySet: function( uuid ){
+        let es;
+        if( (es = this._entitySetUUIDs[uuid]) ){
+            return es;
+        }
+        return null;
     },
 
     /**

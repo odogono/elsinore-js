@@ -6,6 +6,7 @@ import Component from '../component';
 import Entity from '../entity';
 import EntityFilter from '../entity_filter';
 import * as Utils from '../util';
+import {copyComponent} from '../util/copy';
 
 export const CMD_ENTITY_ADD = 0;
 export const CMD_ENTITY_REMOVE = 1;
@@ -384,7 +385,7 @@ let functions = {
                         break;
                     case CMD_COMPONENT_ADD:
                         if( cmdOptions && cmdOptions.clone ){
-                            com = registry.cloneComponent( com );
+                            com = copyComponent( registry, com );
                         }
                         if( !com.id ){
                             com.id = entitySet._createComponentId();
