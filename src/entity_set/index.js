@@ -525,9 +525,8 @@ EntitySet.isMemoryEntitySet = function(es){
 }
 
 
-EntitySet.create = function(options){
+EntitySet.create = function(options={}){
     let result;
-    options || (options = {});
     result = new EntitySet();
 
     result._cmdBuffer = CmdBuffer.create();
@@ -541,6 +540,8 @@ EntitySet.create = function(options){
     if( options.id ){
         result.id = options.id;
     }
+
+    result.setUuid( options.uuid );
 
     // result._reset();
     

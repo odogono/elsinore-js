@@ -25,10 +25,9 @@ export function getProperties( schemaRegistry, schemaUri, options={} ){
             schemaUri.map( s => getProperties(schemaRegistry, s)) );
     }
 
+    
     const parsed = parseUri( schemaUri );
     if( parsed ){
-        console.log('parsed', schemaUri, parsed.baseUri );
-
         schemaUri = parsed.baseUri;
         pickedProperty = parsed.fragment;
     }

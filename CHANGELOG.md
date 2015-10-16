@@ -6,6 +6,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - Utils.parseUri now also parses any querystring into an object on .query
 - can now obtain a specific property from the schema registry by using a fragment
+- entitysets can be created with uuids as an option argument
+- adding an entityset to the registry with a pre-existing uuid throws an error
 
 ## [0.9.0] - 2015-10-12
 ### Changed

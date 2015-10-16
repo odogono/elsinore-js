@@ -3,137 +3,156 @@ import test from 'tape';
 import Sinon from 'sinon';
 
 
-module.exports = function( test, Common, Elsinore, EntitySet ){
+import {
+    Elsinore, 
+    initialiseRegistry, 
+    loadEntities, 
+    loadComponents,
+    loadFixtureJSON,
+    printE,
+    logEvents
+} from './common';
 
-    let Component = Elsinore.Component;
-    let Entity = Elsinore.Entity;
-    let EntityFilter = Elsinore.EntityFilter;
-    let Registry = Elsinore.Registry;
-    let Query = Elsinore.Query;
+
+const Component = Elsinore.Component;
+const Entity = Elsinore.Entity;
+const EntityFilter = Elsinore.EntityFilter;
+const Registry = Elsinore.Registry;
+const Query = Elsinore.Query;
 
 
-    
 
-    test('keeping a map of entitySets and views', t => {
-        return Common.initialiseRegistry().then( registry => {
 
-            let query = Query.all('/component/position');
-            
-            // let eso = registry.createEntitySet();
+test.skip('keeping a map of entitySets and views', t => {
+    return initialiseRegistry().then( registry => {
 
-            // printE( es );
-            let es = registry.createEntitySet();
-            let view = es.view( query );
-            let oview = es.view( query);
-            let tview = es.view();
+        let query = Query.all('/component/position');
+        
+        // let eso = registry.createEntitySet();
 
-            log.debug( 'es hash ' + es.hash() );
-            // log.debug( 'eso hash ' + eso.hash() );
-            log.debug( 'view hash ' + view.hash());
-            log.debug( 'oview hash ' + oview.hash() );
-            log.debug( 'tview hash ' + tview.hash() );
+        // printE( es );
+        let es = registry.createEntitySet();
+        let view = es.view( query );
+        let oview = es.view( query);
+        let tview = es.view();
 
-            t.end();
-        })
-        .catch( err => log.error('test error: %s', err.stack) )
+        log.debug( 'es hash ' + es.hash() );
+        // log.debug( 'eso hash ' + eso.hash() );
+        log.debug( 'view hash ' + view.hash());
+        log.debug( 'oview hash ' + oview.hash() );
+        log.debug( 'tview hash ' + tview.hash() );
+
+        t.end();
+    })
+    .catch( err => log.error('test error: %s', err.stack) )
+});
+
+
+
+test('creating an entityset with an identical uuid throws an error', t => {
+    return initialiseRegistry().then( registry => {
+        const es = registry.createEntitySet({uuid:'50FC7026-C6DB-4FEB-991D-061A07CBD210'});
+        t.equals( es.uuid, '50FC7026-C6DB-4FEB-991D-061A07CBD210' );
+
+        t.throws( () => registry.createEntitySet({uuid:'50FC7026-C6DB-4FEB-991D-061A07CBD210'}), 
+            new Error('entityset with uuid 50FC7026-C6DB-4FEB-991D-061A07CBD210 already exists') );
+    })
+    .then( () => t.end() )
+    .catch( err => log.error('test error: %s', err.stack) )
+});
+
+
+
+
+// creating components
+
+test('create from a schema', t => {
+    return initialiseRegistry({loadComponents:false}).then( registry => {
+        let componentData = loadComponents();
+        // Common.logEvents( registry );
+        // passing a schema as the first argument will cause the component to be
+        // registered at the same time
+        return registry.registerComponent( componentData['/component/position'] )
+            .then( () => {
+                let component = registry.createComponent( '/component/position', { x:200 } );
+                t.equals( component.schemaUri, '/component/position' );
+                t.equals( component.schemaHash, '9db8f95b' );
+                t.equals( component.get('x'), 200 );
+
+                t.end();
+            })
+    })
+    .catch( err => log.error('test error: %s', err.stack) )
+});
+
+test('create from a schema hash', t => {
+    return initialiseRegistry({loadComponents:true}).then( registry => {
+    // let componentData = loadComponents();
+    // var def = registry.registerComponent( componentData['/component/score'] );
+        let component = registry.createComponent( 'd3f0bf51', {score:200} );
+        
+        t.equals( component.get('score'), 200 );
+        t.equals( component.get('lives'), 3 );
+
+        t.end();
     });
+});
 
-    // creating components
+test('create from a pre-registered schema', t => {
+    return initialiseRegistry({loadComponents:true}).then( registry => {
+        let component = registry.createComponent( '/component/nickname', {nickname:'peter'} );
 
-    test('create from a schema', t => {
-        return Common.initialiseRegistry({loadComponents:false}).then( registry => {
-            let componentData = Common.loadComponents();
-            // Common.logEvents( registry );
-            // passing a schema as the first argument will cause the component to be
-            // registered at the same time
-            return registry.registerComponent( componentData['/component/position'] )
-                .then( () => {
-                    let component = registry.createComponent( '/component/position', { x:200 } );
-                    t.equals( component.schemaUri, '/component/position' );
-                    t.equals( component.schemaHash, '9db8f95b' );
-                    t.equals( component.get('x'), 200 );
+        t.equals( component.get('nickname'), 'peter' );
 
-                    t.end();
-                })
-        })
-        .catch( err => log.error('test error: %s', err.stack) )
+        t.end();
     });
+});
 
-    test('create from a schema hash', t => {
-        return Common.initialiseRegistry({loadComponents:true}).then( registry => {
-        // let componentData = Common.loadComponents();
-        // var def = registry.registerComponent( componentData['/component/score'] );
-            let component = registry.createComponent( 'd3f0bf51', {score:200} );
-            
-            t.equals( component.get('score'), 200 );
-            t.equals( component.get('lives'), 3 );
-
-            t.end();
-        });
+test('create from a pre-registered schema using data object', t => {
+    return initialiseRegistry({loadComponents:true}).then( registry => {
+        let component = registry.createComponent( {id:'/component/nickname', nickname:'susan'} );
+        t.equals( component.get('nickname'), 'susan', 'the component is created with attributes' );
+        t.end();
     });
+});
 
-    test('create from a pre-registered schema', t => {
-        return Common.initialiseRegistry({loadComponents:true}).then( registry => {
-            let component = registry.createComponent( '/component/nickname', {nickname:'peter'} );
+test('create from an array of data', t => {
+    return initialiseRegistry({loadComponents:true}).then( registry => {
+        let components = registry.createComponent( '/component/position', [ {x:0,y:-1}, {x:10,y:0}, {x:15,y:-2} ] );
 
-            t.equals( component.get('nickname'), 'peter' );
+        t.equals( components.length, 3, 'three components should have been created' );
+        t.equals( components[1].get('x'), 10, 'the component attributes should be applied' );
 
-            t.end();
-        });
+        t.end();
     });
+});
 
-    test('create from a pre-registered schema using data object', t => {
-        return Common.initialiseRegistry({loadComponents:true}).then( registry => {
-            let component = registry.createComponent( {id:'/component/nickname', nickname:'susan'} );
-            t.equals( component.get('nickname'), 'susan', 'the component is created with attributes' );
-            t.end();
-        });
+test('create with an entity id', t => {
+    return initialiseRegistry().then( registry => {
+
+        let component = registry.createComponent( {id:'/component/nickname', _e:15} );
+        t.equals( component.getEntityId(), 15, 'the entity id is retrieved' );
+
+        component = registry.createComponent( {id:'/component/nickname', _e:15, _es:10} );
+        t.equals( component.getEntityId(), 42949672975, 'the entity id is retrieved' );
+
+        t.end();
+
     });
-
-    test('create from an array of data', t => {
-        return Common.initialiseRegistry({loadComponents:true}).then( registry => {
-            let components = registry.createComponent( '/component/position', [ {x:0,y:-1}, {x:10,y:0}, {x:15,y:-2} ] );
-
-            t.equals( components.length, 3, 'three components should have been created' );
-            t.equals( components[1].get('x'), 10, 'the component attributes should be applied' );
-
-            t.end();
-        });
-    });
-
-    test('create with an entity id', t => {
-        return Common.initialiseRegistry().then( registry => {
-
-            let component = registry.createComponent( {id:'/component/nickname', _e:15} );
-            t.equals( component.getEntityId(), 15, 'the entity id is retrieved' );
-
-            component = registry.createComponent( {id:'/component/nickname', _e:15, _es:10} );
-            t.equals( component.getEntityId(), 42949672975, 'the entity id is retrieved' );
-
-            t.end();
-
-        });
-    });
+});
 
 
-    test('updating a components entity refs', t => {
-        return Common.initialiseRegistry().then( registry => {
-            let component = registry.createComponent( 
-                {"_e":12, "id": "/component/channel_member", "channel": 1, "client": 5} );
-            
-            let aComponent = registry.mapComponentEntityRefs( component, { 5: 290, 1: 340} );
+test('updating a components entity refs', t => {
+    return initialiseRegistry().then( registry => {
+        let component = registry.createComponent( 
+            {"_e":12, "id": "/component/channel_member", "channel": 1, "client": 5} );
+        
+        let aComponent = registry.mapComponentEntityRefs( component, { 5: 290, 1: 340} );
 
-            t.equals( aComponent.get('channel'), 340 );
-            t.equals( aComponent.get('client'), 290 );
+        t.equals( aComponent.get('channel'), 340 );
+        t.equals( aComponent.get('client'), 290 );
 
-            t.end();
-        })
-        .catch( err => log.error('test error: %s', err.stack) )
-    });
-}
-
-// serverside only execution of tests
-if( !process.browser ){
-    let Common = require('./common');
-    module.exports( require('tape'), Common, Common.Elsinore, Common.Elsinore.EntitySet );
-}
+        t.end();
+    })
+    .catch( err => log.error('test error: %s', err.stack) )
+});

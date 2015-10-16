@@ -55,6 +55,8 @@ _.extend(Registry.prototype, Backbone.Events, {
 
         // an array of entitysets created and active
         this._entitySets = []; //new Backbone.Collection();
+        // a map of entityset uuids to entityset instances
+        this._entitySetUUIDs = {};
 
         // a map of entitySet ids mapped to a backbone collection of processors
         // for the particular entitySet
@@ -397,7 +399,7 @@ _.extend(Registry.prototype, Backbone.Events, {
             return component;
         }
 
-        properties = SchemaProperties.getProperties( this.schemaRegistry, component.getSchemaId() );
+        properties = SchemaProperties.getProperties( this.schemaRegistry, component.schemaUri );
 
         if( !properties ){
             return component;
@@ -445,7 +447,7 @@ _.extend(Registry.prototype, Backbone.Events, {
      * @return {[type]}              [description]
      */
     createEntitySet: function( instanceClass, options ){
-        let id;
+        let id, uuid;
         let result;
         
         if( !instanceClass ){
@@ -465,12 +467,13 @@ _.extend(Registry.prototype, Backbone.Events, {
             options.EntitySet = null;
         }
 
+        uuid = options.uuid || createUuid();
+
         // create a 20 bit 
         id = this.createId();
         result = instanceClass.create(_.extend( {}, options, {id:id} ));
         result.cid = _.uniqueId('es');
         result.setRegistry( this );
-        result.setUuid();
         
         if( options.register !== false ){
             // log.debug('options.register was ' + options.register );
@@ -514,6 +517,7 @@ _.extend(Registry.prototype, Backbone.Events, {
             .then( () => {
                 entitySet.setRegistry( null );
                 this._entitySets = _.without( this.entitySets, entitySet );
+                delete this._entitySetUUIDs[ entitySet.uuid ];
                 return entitySet;
             });
     },
@@ -529,8 +533,13 @@ _.extend(Registry.prototype, Backbone.Events, {
             return null;
         }
 
+        if( this._entitySetUUIDs[ entitySet.uuid ] ){
+            throw new Error(`entityset with uuid ${entitySet.uuid} already exists`);
+        }
+
         // store the entityset against its id
         this._entitySets.push( entitySet );
+        this._entitySetUUIDs[ entitySet.uuid ]  = entitySet;
         
         entitySet.setRegistry( this );
 

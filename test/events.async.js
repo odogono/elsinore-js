@@ -2,8 +2,8 @@
 
 import test from 'tape';
 import _ from 'underscore';
-let Backbone = require('backbone');
-let Common = require('./common');
+import Backbone from 'backbone';
+import Common  from './common';
 let EventsAsync = Common.requireLib('util/events.async');
 let Utils = Common.requireLib('utils');
 
