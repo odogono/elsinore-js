@@ -462,7 +462,7 @@ _.extend(Registry.prototype, Backbone.Events, {
             .then( () => {
                 entitySet.setRegistry( null );
                 this._entitySets = _.without( this.entitySets, entitySet );
-                delete this._entitySetUUIDs[ entitySet.uuid ];
+                delete this._entitySetUUIDs[ entitySet.getUuid() ];
                 return entitySet;
             });
     },
@@ -478,13 +478,13 @@ _.extend(Registry.prototype, Backbone.Events, {
             return null;
         }
 
-        if( this._entitySetUUIDs[ entitySet.uuid ] ){
-            throw new Error(`entityset with uuid ${entitySet.uuid} already exists`);
+        if( this._entitySetUUIDs[ entitySet.getUuid() ] ){
+            throw new Error(`entityset with uuid ${entitySet.getUuid()} already exists`);
         }
 
         // store the entityset against its id
         this._entitySets.push( entitySet );
-        this._entitySetUUIDs[ entitySet.uuid ]  = entitySet;
+        this._entitySetUUIDs[ entitySet.getUuid() ]  = entitySet;
         
         entitySet.setRegistry( this );
 

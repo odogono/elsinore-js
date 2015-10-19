@@ -34,12 +34,8 @@ let EntitySet = Backbone.Collection.extend({
         return this.id;
     },
 
-    setUuid: function( uuid=createUuid() ){
-        this.uuid = uuid;
-    },
-
     getUuid: function(){
-        return this.uuid;
+        return this._uuid;
     },
 
     hash: function(){
@@ -541,12 +537,7 @@ EntitySet.create = function(options={}){
         result.id = options.id;
     }
 
-    result.setUuid( options.uuid );
-
-    // result._reset();
-    
-    // log.debug('options ' + JSON.stringify(options) );
-    // result.set( options );
+    result._uuid = options.uuid || createUuid();
 
     return result;
 };
