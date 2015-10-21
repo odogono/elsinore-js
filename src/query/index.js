@@ -5,6 +5,8 @@ import EntitySet from '../entity_set';
 import * as EntityFilter from '../entity_filter';
 import * as Utils from '../util';
 
+import {printIns} from '../util';
+
 function Query(){}
 function QueryContext(){}
 
@@ -160,7 +162,7 @@ Query.resolveEntitySet = function resolveEntitySet( context, entitySet, compileO
 
 QueryContext.prototype.componentsToBitfield = function( context, components ){
     let componentIds, result;
-    // log.debug('lookup ' + Utils.stringify(components) );
+    // console.log('lookup ' + Utils.stringify(components) );
     componentIds = context.registry.getIId( components, true );
     result = BitField.create();
     result.setValues( componentIds, true );
@@ -186,8 +188,8 @@ Query.resolveComponentIIds = resolveComponentIIds;
 Query.valueOf = function valueOf( context, value, shouldReturnValue ){
     let command;
     if( !value ){ return value; }
-    // if( context.debug ){ log.debug('valueOf: ' + Utils.stringify(value) ); }
-    // log.debug('valueOf: ' + Utils.stringify(value) );
+    // if( context.debug ){ console.log('valueOf: ' + Utils.stringify(value) ); }
+    // console.log('valueOf: ' + Utils.stringify(value) );
     if( _.isArray(value) ){
         command = value[0];
         // if( !_.isArray(value[1]) ){
@@ -206,10 +208,10 @@ Query.valueOf = function valueOf( context, value, shouldReturnValue ){
             return context.root;
         }
         
-        // if( context.debug ){ log.debug('valueOf: cmd ' + command + ' ' + Utils.stringify(value) )}
+        // if( context.debug ){ console.log('valueOf: cmd ' + command + ' ' + Utils.stringify(value) )}
         value = Query.executeCommand( context, value );
 
-        // if( context.debug ){ log.debug('valueOf exec: ' + Utils.stringify(value) )}
+        // if( context.debug ){ console.log('valueOf exec: ' + Utils.stringify(value) )}
 
         if( value[0] === Query.VALUE ){
             return value[1];
@@ -232,15 +234,15 @@ function commandEquals( context, op1, op2, op ){
     let isValue1Array, isValue2Array;
     result = false;
 
-    if( context.debug ){ log.debug('EQUALS op1: ' + Utils.stringify(op1) ); }
-    if( context.debug ){ log.debug('EQUALS op2: ' + Utils.stringify(op2) ); }
+    if( context.debug ){ console.log('EQUALS op1: ' + Utils.stringify(op1) ); }
+    if( context.debug ){ console.log('EQUALS op2: ' + Utils.stringify(op2) ); }
 
     value1 = Query.valueOf( context, op1, true );
     value2 = Query.valueOf( context, op2, true );
     isValue1Array = _.isArray(value1);
     isValue2Array = _.isArray(value2);
 
-    if( context.debug ){ log.debug('EQUALS cmd equals ' + JSON.stringify(value1) + ' === ' + JSON.stringify(value2) ); }
+    if( context.debug ){ console.log('EQUALS cmd equals ' + JSON.stringify(value1) + ' === ' + JSON.stringify(value2) ); }
 
     if( !isValue1Array && !isValue2Array ){
         switch( op ){
@@ -270,7 +272,7 @@ function commandEquals( context, op1, op2, op ){
                 break;
             default:
                 if( isValue2Array && !isValue1Array ){
-                    // log.debug('index of ' + value1 + _.indexOf(value2,value1) );
+                    // console.log('index of ' + value1 + _.indexOf(value2,value1) );
                     result = (_.indexOf(value2,value1) !== -1);
                 } else {
                     result = Utils.deepEqual( value1, value2 );
@@ -327,9 +329,9 @@ QueryContext.prototype.commandFilter = function( context, entityFilter, filterFu
     limit = _.isUndefined(options.limit) ? 0 : options.limit;
     offset = _.isUndefined(options.offset) ? 0 : options.offset;
 
-    if( debug ){ log.debug('commandFilter >'); printIns( _.rest(arguments), 2); log.debug('<'); } 
+    if( debug ){ console.log('commandFilter >'); printIns( _.rest(arguments), 2); console.log('<'); } 
 
-    // log.debug('commandFilter> ' + offset + ' ' + limit );
+    // console.log('commandFilter> ' + offset + ' ' + limit );
     // resolve the entitySet argument into an entitySet or an entity
     // the argument will either be ROOT - in which case the context entityset or entity is returned,
     // otherwise it will be some kind of entity filter
@@ -338,7 +340,7 @@ QueryContext.prototype.commandFilter = function( context, entityFilter, filterFu
 
     if( Entity.isEntity(entitySet) ){
         entity = entitySet;
-        // log.debug('commandFilter> ' + entitySet.cid );
+        // console.log('commandFilter> ' + entitySet.cid );
     }
 
 
@@ -358,7 +360,7 @@ QueryContext.prototype.commandFilter = function( context, entityFilter, filterFu
         value = entity;
         if( entityFilter ){
             value = entityFilter.accept(value, context);
-            // log.debug('yep? ' + JSON.stringify(entity) );
+            // console.log('yep? ' + JSON.stringify(entity) );
         } 
 
         if( value && filterFunction ){
@@ -400,7 +402,7 @@ QueryContext.prototype.commandFilter = function( context, entityFilter, filterFu
                 
                     cmdResult = Query.executeCommand( entityContext, filterFunction );
 
-                    // if( true ){ log.debug('eval function ' + Utils.stringify(filterFunction) + ' ' + Utils.stringify(cmdResult) ); }
+                    // if( true ){ console.log('eval function ' + Utils.stringify(filterFunction) + ' ' + Utils.stringify(cmdResult) ); }
 
                     if( Query.valueOf( context, cmdResult ) !== true ){
                         entity = null; //result.push( entity );
@@ -419,11 +421,11 @@ QueryContext.prototype.commandFilter = function( context, entityFilter, filterFu
         }
 
         
-        if( debug ){ log.debug('cmd filter result length ' + entities.length ); }   
+        if( debug ){ console.log('cmd filter result length ' + entities.length ); }   
         value.addEntity( entities );
     }
 
-    // log.debug('well final value was ' + JSON.stringify(value) );
+    // console.log('well final value was ' + JSON.stringify(value) );
     // printE( value );
 
     return (context.last = [ Query.VALUE, value ]);
@@ -442,14 +444,14 @@ function commandComponentAttribute( context, attributes ){
     componentIds = context.componentIds;
 
     // printIns( context,1 );
-    if( debug ){ log.debug('ATTR> ' + Utils.stringify(componentIds) + ' ' + Utils.stringify( _.rest(arguments))  ); } 
+    if( debug ){ console.log('ATTR> ' + Utils.stringify(componentIds) + ' ' + Utils.stringify( _.rest(arguments))  ); } 
 
     if( !componentIds ){
         throw new Error('no componentIds in context');
     }
     
     if( !entity ){
-        log.debug('ATTR> no entity');
+        console.log('ATTR> no entity');
         return (context.last = [ Query.VALUE, null ] );
     }
 
@@ -459,7 +461,7 @@ function commandComponentAttribute( context, attributes ){
     result = [];
 
     // if( debug ){
-    //     log.debug('ATTR> e');
+    //     console.log('ATTR> e');
     //     printE( entity );
     // }
         
@@ -486,11 +488,11 @@ function commandComponentAttribute( context, attributes ){
 
 //     result = registry.cloneEntity( entity );
 
-//     // log.debug('EFT ' + type + ' ' + isInclude + ' ' + entityBitField.toJSON() + ' ' + filterBitField.toJSON() );
+//     // console.log('EFT ' + type + ' ' + isInclude + ' ' + entityBitField.toJSON() + ' ' + filterBitField.toJSON() );
 //     if( isInclude ){
 //         // iterate through each of the entities components (as c IIDs)
 //         vals = entityBitField.toValues();
-//         // log.debug('EFT include ' + vals );
+//         // console.log('EFT include ' + vals );
 //         for( ii=0,len=vals.length;ii<len;ii++ ){
 //             defId = vals[ii];
 
@@ -533,11 +535,11 @@ function commandComponentAttribute( context, attributes ){
 //         // for( ii=0;ii<filtersLength;ii++ ){
 //         //     filter = filters.filters[ii];
 //         //     if( !EntityFilter.accept( filter.type, ebf, filter.bitField, false ) ){
-//         //         // log.debug(entity.getEntityId() + ' accept with ' + Utils.stringify(filter) + ' FALSE');
+//         //         // console.log(entity.getEntityId() + ' accept with ' + Utils.stringify(filter) + ' FALSE');
 //         //         return result;
 //         //     }
 //         // }
-//         // log.debug( entity.getEntityId() + ' accept with ' + Utils.stringify(filter) + ' TRUE');
+//         // console.log( entity.getEntityId() + ' accept with ' + Utils.stringify(filter) + ' TRUE');
 //         result.push( entity );
 //         return result;
 //     }, []);
@@ -552,7 +554,7 @@ function commandComponentAttribute( context, attributes ){
 
 // Query.commandEntityFilter = function( context, entityFilter, options ){
 //     let entitySet, entity, entities, registry,result,ebf,filterType,filterBitField;
-//     // if( context.debug ){ log.debug('commandEntityFilter'); }
+//     // if( context.debug ){ console.log('commandEntityFilter'); }
 
     
 //     // filtersLength = entityFilter.filters.length;
@@ -561,12 +563,12 @@ function commandComponentAttribute( context, attributes ){
 
 //     if( entity ){
 //         // printIns( context.entity );
-//         // if( true || context.debug ){ log.debug('commandEntityFilter> entity ' + context.entity.cid ); }
+//         // if( true || context.debug ){ console.log('commandEntityFilter> entity ' + context.entity.cid ); }
 //         // filter the entity using the component filters - returns a boolean
         
 
 //         if( !entityFilter.accept(entity, context) ){
-//             // if( true || context.debug ){ log.debug('commandEntityFilter> entity ' + context.entity.cid + ' rejected' ); }
+//             // if( true || context.debug ){ console.log('commandEntityFilter> entity ' + context.entity.cid + ' rejected' ); }
 //             return (context.last = [ Query.VALUE, null ]);
 //         }
 
@@ -575,7 +577,7 @@ function commandComponentAttribute( context, attributes ){
 //         for( filterType in entityFilter.filters ){
 //             filterBitField = entityFilter.filters[filterType];
 //             // printIns( filter );
-//             // log.debug('commandEntityFilter> filter ' + filterType + ' ' + JSON.stringify(filterBitField.toValues()) );
+//             // console.log('commandEntityFilter> filter ' + filterType + ' ' + JSON.stringify(filterBitField.toValues()) );
 //             if( filterType == EntityFilter.INCLUDE ){
 //                 entity = EntityFilterTransform( filterType, registry, entity, ebf, filterBitField );
 //             }
@@ -583,7 +585,7 @@ function commandComponentAttribute( context, attributes ){
 //                 return (context.last = [ Query.VALUE, null ]);
 //             }
 //         }
-//         if( context.debug ){ log.debug('commandEntityFilter> entity ' + context.entity.cid + ' passed' ); }
+//         if( context.debug ){ console.log('commandEntityFilter> entity ' + context.entity.cid + ' passed' ); }
 
 //         return (context.last = [ Query.VALUE, entity ]);
 //     } else {
@@ -628,7 +630,7 @@ Query.commandFunction = function commandFunction( op ){
 Query.executeCommand = function( context, op, args ){
     let result, cmdFunction, cmdArgs, value;
 
-    if( context.debug ){ log.debug('executing ' + Utils.stringify( _.rest(arguments)) ); }
+    if( context.debug ){ console.log('executing ' + Utils.stringify( _.rest(arguments)) ); }
 
     if( !args ){
         // assume the op and args are in the same array
@@ -651,7 +653,7 @@ Query.executeCommand = function( context, op, args ){
                 value = context.root;
             }
             result = (context.last = [ Query.VALUE, value ]);
-            if(context.debug){ log.debug('value> ' + Utils.stringify(context.last)) }
+            if(context.debug){ console.log('value> ' + Utils.stringify(context.last)) }
             break;
         case Query.EQUALS:
         case Query.LESS_THAN:
@@ -673,14 +675,14 @@ Query.executeCommand = function( context, op, args ){
         default:
             cmdFunction = Query.commandFunction( op );
             if( !cmdFunction ){
-                // log.debug('unknown cmd ' + op);
+                // console.log('unknown cmd ' + op);
                 // printIns( _.rest(arguments), 1 );
                 throw new Error('unknown cmd (' + Utils.stringify(op) + ') ' + Utils.stringify(_.rest(arguments)) );
             }
             result = cmdFunction.apply( context, cmdArgs );  
             break;
     }
-    // log.debug('done result ' + Utils.stringify( _.rest(arguments)) + ' ' + result );
+    // console.log('done result ' + Utils.stringify( _.rest(arguments)) + ' ' + result );
     return result;
 }
 
@@ -694,7 +696,7 @@ Query.compile = function compileQuery( context, commands, options ){
         }
         commands = (commands.src || commands.toArray( true ));
     } else if( _.isArray(commands) ){
-        // log.debug('compile> ' + Utils.stringify(commands));
+        // console.log('compile> ' + Utils.stringify(commands));
         // we may have been passed a single command
         if( !_.isArray(commands[0]) && !Query.isQuery(commands[0])){
             commands = [commands];
@@ -706,10 +708,10 @@ Query.compile = function compileQuery( context, commands, options ){
                 }
                 // command = command.isCompiled ? command || command.toArray(true)[0];
             }
-            // log.debug('compile> ' + Utils.stringify(command));
+            // console.log('compile> ' + Utils.stringify(command));
             return command;
         });
-        // log.debug('compile> ' + Utils.stringify(commands));
+        // console.log('compile> ' + Utils.stringify(commands));
     }
 
     result = new Query();
@@ -741,7 +743,7 @@ Query.compile = function compileQuery( context, commands, options ){
                 // result.push( [ Query.ENTITY_FILTER, entityFilter ] ); // NOTE: why was this here??
                 // result.push( [ command[0], entityFilter, command[2] ] );
                 result.push( [ Query.ENTITY_FILTER, entityFilter, command[2] ] );
-                // log.debug('gathering ' + JSON.stringify(entityFilter) );
+                // console.log('gathering ' + JSON.stringify(entityFilter) );
                 break;
             case Query.AND:
                 result.push( (Query.resolveEntitySet( context, command, true ) || command) );
@@ -761,7 +763,7 @@ Query.compile = function compileQuery( context, commands, options ){
 
     // combine contiguous entity filters
     for( ii=0,len=commands.length;ii<len;ii++ ){
-        while( ii<len && commands[ii][0] === Query.ENTITY_FILTER && !commands[ii][2] ){
+        while( ii < len && commands[ii][0] === Query.ENTITY_FILTER && !commands[ii][2] ){
             if( !entityFilter ){
                 entityFilter = EntityFilter.create( commands[ii][1] );
             } else {
@@ -846,11 +848,11 @@ Query.execute = function executeQuery( entity, query, options={} ){
 
     query = Query.compile( context, query, options );
 
-    // if( context.debug ){log.debug('commands:'); printIns( query,1 ); }
+    // if( context.debug ){console.log('commands:'); printIns( query,1 ); }
 
     for( ii=0,len=query.commands.length;ii<len;ii++ ){
         command = query.commands[ii];
-        // log.debug('go ' + Utils.stringify(command) );
+        // console.log('go ' + Utils.stringify(command) );
 
         // the actual result will usually be [VALUE,...]
         result = Query.executeCommand( context, command )[1];

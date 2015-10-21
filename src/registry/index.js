@@ -193,8 +193,8 @@ _.extend(Registry.prototype, Backbone.Events, {
      * @return {[type]}        [description]
      */
     registerComponent: function( data, options ){
-        let schemaRegistry = this.schemaRegistry;
-        return new Promise( resolve => resolve(schemaRegistry.register(data)) )
+        const schemaRegistry = this.schemaRegistry;
+        return new Promise( resolve => resolve(schemaRegistry.register(data,options)) )
             .then( schemas => {
                 return _.reduce( this._entitySets, (current, es) => {
                     return current.then( () => {
@@ -412,7 +412,7 @@ _.extend(Registry.prototype, Backbone.Events, {
             options.EntitySet = null;
         }
 
-        uuid = options.uuid || createUuid();
+        options.uuid = options.uuid || createUuid();
 
         // create a 20 bit 
         id = this.createId();
@@ -458,13 +458,13 @@ _.extend(Registry.prototype, Backbone.Events, {
     */
     removeEntitySet: function( entitySet, options={} ){
         if( !entitySet ){ return null; }
-        return entitySet.close()
-            .then( () => {
-                entitySet.setRegistry( null );
-                this._entitySets = _.without( this.entitySets, entitySet );
-                delete this._entitySetUUIDs[ entitySet.getUuid() ];
-                return entitySet;
-            });
+        let closeFn = entitySet.isMemoryEntitySet ? Promise.resolve(true) : entitySet.close();
+        return closeFn.then( () => {
+            entitySet.setRegistry( null );
+            this._entitySets = _.without( this.entitySets, entitySet );
+            delete this._entitySetUUIDs[ entitySet.getUuid() ];
+            return entitySet;
+        });
     },
 
     /**

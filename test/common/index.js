@@ -14,6 +14,7 @@ var varDir = Path.join( rootDir, 'var' );
 var ElsinoreDir = Path.join(rootDir, 'src')
 
 export const Elsinore = require(ElsinoreDir);
+export const SchemaRegistry = Elsinore.SchemaRegistry;
 
 export function pathVar( path, clear ){
     path = Path.join( varDir, path );
@@ -192,7 +193,7 @@ global.log = {
     error: console.log
 };
 
-global.printIns = printIns;
+// global.printIns = printIns;
 
 export function requireLib( path ){
     return require( Path.join(ElsinoreDir,path) );

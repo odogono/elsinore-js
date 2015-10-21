@@ -234,7 +234,7 @@ let EntitySet = Backbone.Collection.extend({
 
 
     reset: function( entities, options ){
-        let i,l,entity;
+        let ii,len,entity;
         if( entities && entities.isEntitySet ){
             entities = entities.models;
         }
@@ -245,8 +245,8 @@ let EntitySet = Backbone.Collection.extend({
 
         Backbone.Collection.prototype.reset.call( this, null, {silent:true} );
 
-        for( i=0,l=entities.length;i<l;i++ ){
-            entity = entities[i];
+        for( ii=0,len=entities.length;ii<len;ii++ ){
+            entity = entities[ii];
             if( EntitySet.isEntityOfInterest(this, entity, this.getQuery()) ){
                 this.add( entity );
             }

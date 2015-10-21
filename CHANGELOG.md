@@ -3,6 +3,8 @@ Written with guidance from [Keep a CHANGELOG](http://keepachangelog.com/).
 This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased][unreleased]
+### Fixed
+- registry now passing options in registerComponent
 
 ## [0.10.0] - 2015-10-12
 ### Added

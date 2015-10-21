@@ -128,7 +128,8 @@ export default function run( test, Common, Elsinore, EntitySet ){
             t.ok( Entity.isEntity(result) );
 
             t.end();
-        });
+        })
+        .catch( err => log.error('test error: %s', err.stack) )
     })
 
 
@@ -153,7 +154,8 @@ export default function run( test, Common, Elsinore, EntitySet ){
             ), 'query rejects entity with no limit');
 
         t.end();
-        });
+        })
+        .catch( err => log.error('test error: %s', err.stack) )
     });
 
 

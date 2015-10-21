@@ -1,11 +1,24 @@
 import _ from 'underscore';
 import test from 'tape';
 
-let Common = require('./common');
+// let Common = require('./common');
 
-let Elsinore = Common.Elsinore;
-let SchemaRegistry = Elsinore.SchemaRegistry;
-let SchemaProperties = Common.requireLib('schema/properties');
+import {
+    Elsinore, 
+    SchemaRegistry,
+    initialiseRegistry, 
+    loadEntities, 
+    loadComponents,
+    loadFixtureJSON,
+    printE,
+    printIns,
+    logEvents,
+    requireLib
+} from './common';
+
+// let Elsinore = Common.Elsinore;
+// let SchemaRegistry = Elsinore.SchemaRegistry;
+let SchemaProperties = requireLib('schema/properties');
 
 // compile a map of schema id(uri) to schema
 let componentSchemas = require('./fixtures/components.json');
@@ -276,7 +289,24 @@ test('registration of an identical schema throws an error', t => {
     t.end();
 });
 
+test('registration of an identical schema doesnt throw an error if required', t => {
+    let schema = { id:'/schema/original', properties:{ name:{ type:'string' }} };
+    let registry = SchemaRegistry.create();
 
+    // Common.logEvents( registry );
+
+    registry.register( schema );
+    // printIns( registry, 6 );
+
+    let outcome = registry.register( schema, {throwOnExists:false} );
+    // printIns( outcome );
+    
+    t.deepEqual( 
+        registry.get( schema.id ).properties.name.type, 
+        schema.properties.name.type );
+
+    t.end();
+});
 
 test('register a modified schema', t => {
     var schemaA = {
