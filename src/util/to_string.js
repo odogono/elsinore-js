@@ -41,7 +41,7 @@ export function componentToString(component, indent){
 
     return indent 
         + '' + component.cid 
-        + ' (' + (component.id || '0') +') '
+        + ' (' + (component.getId() || '0') +') '
         + component.name 
         + '(' + component.getSchemaId() + ')'
         + ' e:' + getEntityIdFromId(component.getEntityId()) + '' 

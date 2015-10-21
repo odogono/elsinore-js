@@ -54,8 +54,16 @@ var Component = Model.extend({
         this.set({'_s':id});
     },
 
+    setId: function(id){
+        this.set({'_c':id}, {silent:true});  
+    },
+
+    getId: function(id){
+        return this.get('_c');
+    },
+
     hash: function(asString){
-        let result = Utils.stringify(  _.omit(this.attributes, '_e','_es','_s') );
+        let result = Utils.stringify(  _.omit(this.attributes, '_e','_es','_s', '_c') );
         return Utils.hash( result, asString );
     },
 });

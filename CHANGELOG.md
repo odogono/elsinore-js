@@ -3,6 +3,9 @@ Written with guidance from [Keep a CHANGELOG](http://keepachangelog.com/).
 This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased][unreleased]
+### Changed
+- component ids are accessed/mutated via getId/setId
+
 ### Fixed
 - registry now passing options in registerComponent
 
