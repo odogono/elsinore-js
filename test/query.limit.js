@@ -2,6 +2,20 @@ import _ from 'underscore';
 import test from 'tape';
 
 
+import {
+    Elsinore, 
+    Component,
+    Entity,
+    initialiseRegistry, 
+    loadEntities, 
+    loadComponents,
+    loadFixtureJSON,
+    printE,
+    logEvents,
+    requireLib
+} from './common';
+
+
 export default function run( test, Common, Elsinore, EntitySet ){
     let Component = Elsinore.Component;
     let Entity = Elsinore.Entity;
@@ -13,6 +27,20 @@ export default function run( test, Common, Elsinore, EntitySet ){
             t.equals( result.size(), 7 );
             t.end();
         });
+    });
+
+    test('return the first result', t => {
+        initialiseEntitySet().then( ([registry,entitySet]) => {
+            let result = entitySet.query( [
+                Query.all( '/component/channel' )
+                    .where(Query.attr( 'name' ).equals('ecs'))
+                ,Query.limit(1) 
+            ]);
+            // printE( result );
+            t.equals( result.size(), 1 );
+            t.end();
+        })
+        .catch( err => { log.debug('t.error: ' + err ); log.debug( err.stack );} )
     });
       
     test('limit the number of entities in the result from an offset', t => {
@@ -45,6 +73,8 @@ export default function run( test, Common, Elsinore, EntitySet ){
         })
         .catch( err => { log.debug('t.error: ' + err ); log.debug( err.stack );} )
     });
+
+
     
     function initialiseEntitySet(){
         return Common.initialiseRegistry(false).then( registry => {

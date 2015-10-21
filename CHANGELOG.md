@@ -5,6 +5,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased][unreleased]
 ### Changed
 - component ids are accessed/mutated via getId/setId
+- Query.all() without arguments functions the same as Query.Root()
 
 ### Fixed
 - registry now passing options in registerComponent

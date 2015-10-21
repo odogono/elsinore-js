@@ -58,7 +58,6 @@ let FilterFunctions = {
     */
     all: function (componentIds, filterFn){
         let context = readContext( this );
-        // context.pushOp( filterFn ? Q.ALL_FILTER : Q.ALL );
         context.pushOp( Q.ALL_FILTER );
         context.pushVal( componentIds, true );
         if( filterFn ){

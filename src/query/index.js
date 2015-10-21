@@ -73,11 +73,12 @@ _.extend( Query, {
 */
 
 function gatherEntityFilters( context, expression ){
-    let ii,len,bf,result, obj,filter;
+    let ii,len,bf,result, obj;
     
+    let filter = expression[0];
     result = EntityFilter.create();
     
-    switch( expression[0] ){
+    switch( filter ){
         case Query.ANY:
         case Query.ANY_FILTER:
         case Query.ALL:
@@ -87,22 +88,26 @@ function gatherEntityFilters( context, expression ){
         case Query.INCLUDE:
         case Query.INCLUDE_FILTER:
             if( expression[1] === Query.ROOT ){
-                // obj = { type:Query.ROOT };
                 result.add( Query.ROOT );
-                // return [Query.VALUE, context.entitySet];
             } else {
                 obj = Query.valueOf( context, expression[1], true );
+                
+                if( !obj ){
+                    if( filter == Query.ALL_FILTER ){
+                        result.add( Query.ROOT );
+                        return;
+                    }
+                    return null;
+                }
                 bf = context.componentsToBitfield( context, obj );
                 
-                filter = expression[0];
+                // filter = expression[0];
                 switch( filter ){
                     case Query.ALL_FILTER: filter = Query.ALL; break;
                     case Query.ANY_FILTER: filter = Query.ANY; break;
                     case Query.NONE_FILTER: filter = Query.NONE; break;
                     case Query.INCLUDE_FILTER: filter = Query.INCLUDE; break;
                 }
-                // obj = createComponentFilter( filter, bf );
-                // obj = { type:filter, bitField:bf };
                 result.add( filter, bf );
             }
             break;
@@ -645,6 +650,7 @@ Query.executeCommand = function( context, op, args ){
 
     switch( op ){
         case Query.ROOT:
+            // console.log('query root', cmdArgs);
             result = (context.last = [ Query.VALUE, context.root ]);
             break;
         case Query.VALUE:

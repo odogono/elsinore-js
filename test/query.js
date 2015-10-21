@@ -1,6 +1,19 @@
 import _ from 'underscore';
 import test from 'tape';
 
+import {
+    Elsinore, 
+    Component,
+    Entity,
+    initialiseRegistry, 
+    loadEntities, 
+    loadComponents,
+    loadFixtureJSON,
+    printE,
+    logEvents,
+    requireLib
+} from './common';
+
 
 export default function run( test, Common, Elsinore, EntitySet ){
     let Component = Elsinore.Component;
@@ -158,6 +171,16 @@ export default function run( test, Common, Elsinore, EntitySet ){
         .catch( err => log.error('test error: %s', err.stack) )
     });
 
+    test('query eveything', t => {
+        initialiseEntitySet().then( ([registry,entitySet]) => {
+            // Query.all with no arguments returns everything
+            // - same as calling Query.root()
+            const result = entitySet.query( Query.all() );
+            t.equals( entitySet.size(), 18 );
+        })
+        .then( () => t.end() )
+        .catch( err => log.error('test error: %s', err.stack) )
+    });
 
     test('a single filter query on an entityset', t => {
         initialiseEntitySet().then( ([registry,entitySet]) => {
