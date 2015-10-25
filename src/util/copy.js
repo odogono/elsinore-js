@@ -23,6 +23,9 @@ export default function copyEntity( registry, srcEntity, dstEntity, options={} )
         for(ii=0,len=dstComponents.length;ii<len;ii++){
             component = dstComponents[ii];
             srcComponent = srcEntity[component.name];
+            
+            // the dst component should have an id
+            srcComponent.setId( component.getId() );
 
             if( deleteMissing ){
                 if( !srcComponent ){
@@ -39,14 +42,14 @@ export default function copyEntity( registry, srcEntity, dstEntity, options={} )
                 }
             }
             else {
-                result.addComponent( copyComponent(registry,component) );
+                result.addComponent(copyComponent(registry,component));
             }
         }    
     }
 
     // iterate over src components, copying them to the result
     for(ii=0,len=srcComponents.length;ii<len;ii++){
-        result.addComponent( copyComponent(registry, srcComponents[ii]) );
+        result.addComponent(copyComponent(registry, srcComponents[ii]));
     }
 
     return returnChanged ? [result,dstHasChanged] : result;
@@ -55,6 +58,7 @@ export default function copyEntity( registry, srcEntity, dstEntity, options={} )
 
 export function copyComponent( registry, srcComponent, options ){
     let result = new srcComponent.constructor(srcComponent.attributes);
+    result.setId( srcComponent.getId() );
     result.id = srcComponent.id;
     result.name = srcComponent.name;
     result.setSchemaId( srcComponent.getSchemaId() );

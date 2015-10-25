@@ -72,13 +72,12 @@ export function entitySetToString(es, indent){
     return res;
 }
 
-export function toString(entity, indent, join){
-    var res = [''];
-    var e;
-    indent || (indent='');
-    join || (join="\n");
+export function toString(entity, indent='', join="\n"){
+    let res = [''];
+    let e;
+    
     if( _.isArray(entity) ){
-        _.each( entity, function(e){
+        _.each( entity, e => {
             res = res.concat( toString(e,'  ', ' ' ) );
         });
     }
@@ -91,7 +90,7 @@ export function toString(entity, indent, join){
     } else if( EntitySet.isEntitySet(entity) ){
         res = res.concat( entitySetToString( entity, indent ) );
     } else if( entity instanceof Backbone.Collection ){
-        entity.each( function(item){
+        entity.each( item => {
             res = res.concat( toString(item,'  ') );
         });
     }
