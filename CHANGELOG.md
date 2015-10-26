@@ -3,12 +3,18 @@ Written with guidance from [Keep a CHANGELOG](http://keepachangelog.com/).
 This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased][unreleased]
+
+## [0.11.0] - 2015-10-26
+### Added
+- entitySet.removeByQuery removes entities identified by a query
+
 ### Changed
 - component ids are accessed/mutated via getId/setId
 - Query.all() without arguments functions the same as Query.Root()
 
 ### Fixed
 - registry now passing options in registerComponent
+
 
 ## [0.10.0] - 2015-10-12
 ### Added

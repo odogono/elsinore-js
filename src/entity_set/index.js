@@ -179,6 +179,9 @@ let EntitySet = Backbone.Collection.extend({
     *
     */
     removeEntity: function(entity, options){
+        if( EntitySet.isMemoryEntitySet( entity ) ){
+            entity = entity.models;
+        }
         return this._cmdBuffer.removeEntity( this, entity, options );
     },
 

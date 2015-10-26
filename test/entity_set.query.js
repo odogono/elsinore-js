@@ -1,4 +1,16 @@
 import _ from 'underscore';
+import Sinon from 'sinon';
+import test from 'tape';
+
+import {
+    Elsinore, 
+    initialiseRegistry, 
+    loadEntities, 
+    loadFixtureJSON,
+    printE,
+    logEvents,
+    requireLib
+} from './common';
 
 
 export default function run( test, Common, Elsinore, EntitySet ){
@@ -263,6 +275,20 @@ export default function run( test, Common, Elsinore, EntitySet ){
         .then( () => t.end() )
         .catch( err => log.error('test error: %s', err.stack) )
     });
+
+
+    test('removing entities from an entityset', t => {
+        initialiseEntitySet().then( ([registry,entitySet]) => {
+            const initialSize = entitySet.size();
+
+            entitySet.removeByQuery( Query.all('/component/channel_member') );
+
+            t.ok( entitySet.query(Query.all('/component/channel_member')).size() === 0, 'no channel members remaining');
+            t.ok( initialSize !== entitySet.size(), 'entities should have been removed');
+        })
+        .then( () => t.end() )
+        .catch( err => log.error('test error: %s', err.stack) )
+    })
 
     function initialiseEntitySet(entities){
         return Common.initialiseRegistry(false).then( registry => {

@@ -13,14 +13,28 @@ _.extend( EntitySet.prototype, {
         }
         this._query = query;
     },
+
     getQuery: function(){
         return this._query;
     },
+
+    /**
+    *   Executes a query against the entityset and returns
+    *   a new entityset with the results
+    */
     query: function( query, options ){
         if( !query ){
             query = Query.root();
         }
         return Query.execute( this, query, options );
+    },
+
+    /**
+    *   Removes the entities identified by the query
+    */
+    removeByQuery: function( query, options ){
+        let result = Query.execute( this, query, options );
+        return this.removeEntity( result );
     },
 });
 
