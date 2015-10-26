@@ -5,6 +5,7 @@ import Backbone from 'backbone';
 import BitField  from 'odgn-bitfield';
 import * as Utils from './util';
 import Entity from './entity';
+import {copyEntity} from './util/copy';
 
 export const ALL = 0; // entities must have all the specified components
 export const ANY = 1; // entities must have one or any of the specified components
@@ -89,7 +90,7 @@ function EntityFilterTransform( type, registry, entity, entityBitField, filterBi
     isInclude = (type == INCLUDE);
     isExclude = (type == EXCLUDE);
 
-    result = registry.cloneEntity( entity );
+    result = copyEntity( registry, entity );
 
     // log.debug('EFT ' + type + ' ' + isInclude + ' ' + entityBitField.toJSON() + ' ' + filterBitField.toJSON() );
     if( isInclude ){

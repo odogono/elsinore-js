@@ -4,6 +4,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased][unreleased]
 
+
 ## [0.11.0] - 2015-10-26
 ### Added
 - entitySet.removeByQuery removes entities identified by a query

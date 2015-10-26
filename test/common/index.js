@@ -186,7 +186,7 @@ const _Utils = require('../../src/util');
 export const Utils = _Utils;
 
 
-export {default as CopyEntity} from '../../src/util/copy';
+export {copyEntity} from '../../src/util/copy';
 
 global.log = {
     debug: console.log,

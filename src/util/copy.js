@@ -1,7 +1,7 @@
 import _ from 'underscore';
+import {toString as entityToString} from './to_string';
 
-
-export default function copyEntity( registry, srcEntity, dstEntity, options={} ){
+export function copyEntity( registry, srcEntity, dstEntity, options={} ){
     let ii,len,component,srcComponent;
     let result = registry.createEntity();
     const returnChanges = options.returnChanges;
@@ -24,9 +24,6 @@ export default function copyEntity( registry, srcEntity, dstEntity, options={} )
             component = dstComponents[ii];
             srcComponent = srcEntity[component.name];
             
-            // the dst component should have an id
-            srcComponent.setId( component.getId() );
-
             if( deleteMissing ){
                 if( !srcComponent ){
                     dstHasChanged = true;
@@ -35,6 +32,9 @@ export default function copyEntity( registry, srcEntity, dstEntity, options={} )
             }
             // if the src already has the same component, then don't copy
             if( srcComponent ){
+                // the dst component should have an id
+                srcComponent.setId( component.getId() );
+                
                 if( srcComponent.hash() == component.hash() ){
                     continue;
                 } else {

@@ -1,6 +1,6 @@
 {
   "name": "elsinore",
-  "version": "0.11.0",
+  "version": "0.11.3",
   "description": "a javascript Entity Component System",
   "keywords": [
     "elsinore",

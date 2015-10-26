@@ -6,7 +6,7 @@ import Component from '../component';
 import Entity from '../entity';
 import EntityFilter from '../entity_filter';
 import * as Utils from '../util';
-import {copyComponent} from '../util/copy';
+import {copyEntity, copyComponent} from '../util/copy';
 
 export const CMD_ENTITY_ADD = 0;
 export const CMD_ENTITY_REMOVE = 1;
@@ -83,14 +83,14 @@ let functions = {
         // determine whether we have this component registered already
         entityId = Entity.getEntityId( component );
 
-        // log.debug( 'adding component with entity ' + Entity.toEntityId(entityId) );
+        // console.log( 'adding component with entity ' + Entity.toEntityId(entityId) );
 
         if( !entityId ){
             // do we have a entity add in the queue already?
             entityId = this.findEntityAddId();
             if( entityId === -1 ){
                 entityId = entitySet._createEntity(null, true);
-                // log.debug( 'adding component with entity ' + entityId );
+                // console.log( 'adding component with entity ' + entityId );
             }
         } else {
             // does this entity exist in our es?
@@ -105,9 +105,9 @@ let functions = {
             existingCom = entitySet.getComponentFromEntity( component, entity );
 
             if( debug ){
-                log.debug('existing ' + existingCom.hash() + ' vs new ' + component.hash() );
-                log.debug('existing: ' + Utils.stringify(existingCom));
-                log.debug('new: ' + Utils.stringify(component));
+                console.log('existing ' + existingCom.hash() + ' vs new ' + component.hash() );
+                console.log('existing: ' + Utils.stringify(existingCom));
+                console.log('new: ' + Utils.stringify(component));
             }
 
             // does the existing entity have this component?
@@ -235,28 +235,26 @@ let functions = {
         }
 
         // does this entity exist in our es?
-        // entity = Entity.toEntity( entity );
-        // entityId = Entity.toEntityId( entity );
-        entityId = entity.getEntityId();
+        entityId = Entity.toEntityId( entity );
         existingEntity = entitySet.getEntity( entityId );
 
-        
         if( !existingEntity ){
-            // if( options.debug ) { log.debug('no existing entity add ' + entityId ); }
+            // if( options.debug ) { console.log('no existing entity add ' + entityId ); }
             // TODO : determine whether we should allow empty entities within the entity set
             if( !entitySet.allowEmptyEntities && !entitySet.doesEntityHaveComponents( entity ) ){
                 return this;
             }
 
-            this.addCommand( CMD_ENTITY_ADD, entityId, options );
+            let cmdOptions = _.extend({},options,{eid:entityId});
+
+            this.addCommand( CMD_ENTITY_ADD, entityId, cmdOptions );
 
             // no existing entity - just add all the components
             for( comDefId in entity.components ){
-                this.addCommand( CMD_COMPONENT_ADD, entity.components[comDefId], options );
+                this.addCommand( CMD_COMPONENT_ADD, entity.components[comDefId], cmdOptions );
             }
         }
         else {
-            if( options.debug ) { log.debug('existing entity adding'); }
             // entity already exists, determine whether components should be updated
             for( comDefId in entity.components ){
                 if( existingEntity.components[comDefId] )
@@ -359,13 +357,13 @@ let functions = {
         for( entityId in this.cmds ){
             cmds = this.cmds[entityId];
 
-            // if( debug ){ log.debug('executing for entity ' + entityId + ' ' + JSON.stringify(cmds)); }
+            // if( debug ){ console.log('executing for entity ' + entityId + ' ' + JSON.stringify(cmds)); }
 
             // if the entity already exists, then clone it in order
             // to apply temporary operations to it
             entity = entitySet.getEntity( entityId );
             if( entity ){
-                tEntity = registry.cloneEntity( entity );
+                tEntity = copyEntity( registry, entity );
                 tEntity.setEntitySetId( entitySet.getEntitySetId() );
             }
 
@@ -379,7 +377,7 @@ let functions = {
                     // add an entity
                     case CMD_ENTITY_ADD:
                         if( !entity ){
-                            // log.debug('create entity with ' + JSON.stringify(entityId) );
+                            // console.log('create entity with ' + JSON.stringify(entityId) );
                             tEntity = entitySet._createEntity( entityId );
                         }
                         break;
@@ -389,10 +387,10 @@ let functions = {
                         }
                         if( !com.id ){
                             com.id = entitySet._createComponentId();
-                            // log.debug('creating id for ' + com.id + ' ' + com.name );
+                            // console.log('creating id for ' + com.id + ' ' + com.name );
                         }
                         tEntity.addComponent( com );
-                        // log.debug('cmd: add com ' + com.id + ' ' + com.name + ' ' + JSON.stringify(cmd[2]) + ' to e:' + tEntity.id );
+                        // console.log('cmd: add com ' + com.id + ' ' + com.name + ' ' + JSON.stringify(cmd[2]) + ' to e:' + tEntity.id );
                         break;
                     case CMD_COMPONENT_REMOVE:
                         // no entity to remove from?
@@ -400,13 +398,13 @@ let functions = {
                             continue;
                         }
                         // if( true || debug ){ 
-                            // log.debug('cmd: rem com ' + com.id + ' ' + JSON.stringify(com) ); 
+                            // console.log('cmd: rem com ' + com.id + ' ' + JSON.stringify(com) ); 
                             // if( true ){ printE(tEntity); }
                         // }
                         entitySet.removeComponentFromEntity( com, tEntity );
                         break;
                     case CMD_COMPONENT_UPDATE:
-                        // if( debug ){ log.debug('cmd: update com ' + JSON.stringify( com )); }
+                        // if( debug ){ console.log('cmd: update com ' + JSON.stringify( com )); }
                         tEntity.addComponent( com );
                         break;
                 }
@@ -417,7 +415,7 @@ let functions = {
             // it through any filters. If there is still a valid result, commit
             // it to the entitySet
             if( (query = entitySet.getQuery()) ){
-                if( debug ) { log.debug('executing against filter ' + JSON.stringify(query) ); }
+                if( debug ) { console.log('executing against filter ' + JSON.stringify(query) ); }
                 tEntity = query.execute( tEntity );
                 // printE( tEntity );
             }
@@ -443,17 +441,17 @@ let functions = {
             if( !entity ){
                 if( entitySet.doesEntityHaveComponents(tEntity) ){
                     entitySet._addEntity( tEntity );
-                    // log.debug('add new entity ' + tEntity.id );
+                    // console.log('add new entity ' + tEntity.id );
                     this.entitiesAdded.add( tEntity );
                 } 
             }
             else {
                 // determine which components need to be removed 
                 for( defId in entity.components ){
-                    // if( debug ) log.debug('b ' + defId );
+                    // if( debug ) console.log('b ' + defId );
                     if( !tEntity.components[defId] ){
                         com = entity.components[defId];
-                        if( debug ){ log.debug('removing ' + defId + ' ' + JSON.stringify(com) ); }
+                        if( debug ){ console.log('removing ' + defId + ' ' + JSON.stringify(com) ); }
                         entitySet.removeComponentFromEntity( com, entity );
                         this.componentsRemoved.add( com );
                         // printE( entity );
@@ -461,9 +459,9 @@ let functions = {
                 }
 
                 // if the entity has no more components, then remove it
-                // if( debug ){ log.debug('so removeEmptyEntity is ' + (removeEmptyEntity?'true':'false')); }
+                // if( debug ){ console.log('so removeEmptyEntity is ' + (removeEmptyEntity?'true':'false')); }
                 if( (!this.allowEmptyEntities || removeEmptyEntity) && !entitySet.doesEntityHaveComponents( entity ) ){
-                    if( debug ){ log.debug('removing entity ' + entity.getEntityId() + '/' + entity.cid ); }
+                    if( debug ){ console.log('removing entity ' + entity.getEntityId() + '/' + entity.cid ); }
                     this.entitiesRemoved.add( entitySet._removeEntity(entity) );
                 }
             }
@@ -478,7 +476,7 @@ let functions = {
                 }
                 else if( !entity.components[defId] ){
                     // the existing entity does not have this component - add it
-                    // log.debug('adding component '+ com.id + ' to ' + entity.cid + ' ' + JSON.stringify(com));
+                    // console.log('adding component '+ com.id + ' to ' + entity.cid + ' ' + JSON.stringify(com));
                     entity.addComponent( com );
                     this.componentsAdded.add( com );
                 }
@@ -520,22 +518,20 @@ let functions = {
     /**
     *   Adds a add/remove/update command to a buffer of commands
     */
-    addCommand: function addCommand( type, arg/*entityId|component*/, options ){
+    addCommand: function addCommand( type, arg/*entityId|component*/, options={} ){
         let entityId;
         let entityBuffer;
-
-        options || (options={});
 
         switch( type ){
             case CMD_ENTITY_ADD:
                 entityId = arg;
-                // log.debug('addCommand.ENTITY ' + entityId + ' ' + JSON.stringify(options));
+                // console.log('addCommand.ENTITY ' + entityId + ' ' + JSON.stringify(options));
                 break;
             case CMD_COMPONENT_ADD:
             case CMD_COMPONENT_REMOVE:
             case CMD_COMPONENT_UPDATE:
-                entityId = options.id || arg.getEntityId();
-                // log.debug('addCommand.COMPONENT (' + type + ') ' + entityId + ' ' + JSON.stringify(options) );
+                entityId = options.eid || arg.getEntityId();
+                // console.log('addCommand.COMPONENT (' + type + ') ' + entityId + ' ' + JSON.stringify(options) );
                 break;
             default:
                 // NO-OP
@@ -575,15 +571,15 @@ let functions = {
 
     debugLog: function( logFn ){
         if( !logFn ){
-            logFn = log.debug;
+            logFn = console.log;
         }
-        log.debug('entities added: ' + JSON.stringify( this.entitiesAdded.pluck('id') )); 
-        log.debug('entities updated: ' + JSON.stringify( this.entitiesUpdated.pluck('id') )); 
-        log.debug('entities removed: ' + JSON.stringify( this.entitiesRemoved.pluck('id') )); 
+        logFn('entities added: ' + JSON.stringify( this.entitiesAdded.pluck('id') )); 
+        logFn('entities updated: ' + JSON.stringify( this.entitiesUpdated.pluck('id') )); 
+        logFn('entities removed: ' + JSON.stringify( this.entitiesRemoved.pluck('id') )); 
 
-        log.debug('components added: ' + JSON.stringify( this.componentsAdded.pluck('id') )); 
-        log.debug('components updated: ' + JSON.stringify( this.componentsUpdated.pluck('id') )); 
-        log.debug('components removed: ' + JSON.stringify( this.componentsRemoved.pluck('id') ));
+        logFn('components added: ' + JSON.stringify( this.componentsAdded.pluck('id') )); 
+        logFn('components updated: ' + JSON.stringify( this.componentsUpdated.pluck('id') )); 
+        logFn('components removed: ' + JSON.stringify( this.componentsRemoved.pluck('id') ));
     },
 
     triggerEvents: function( source, options ){

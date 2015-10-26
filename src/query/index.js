@@ -26,7 +26,7 @@ _.extend(Query.prototype, {
 _.extend( Query, {
     ALL: 0, // entities must have all the specified components
     ANY: 1, // entities must have one or any of the specified components
-    SOME: 2, // entities must have at least one component
+    SOME: 2, // entities must have at least one of the specified component
     NONE: 3, // entities should not have any of the specified components
     INCLUDE: 4, // the filter will only include specified components
     EXCLUDE: 5, // the filter will exclude specified components

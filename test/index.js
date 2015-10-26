@@ -14,6 +14,7 @@ import './query.select_by_id';
 import './registry';
 import './schema_registry';
 import './utils';
+import './util/copy_entity';
 import './integration/opendoor';
 import './integration/reaper';
 

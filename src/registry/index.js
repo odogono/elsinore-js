@@ -168,17 +168,17 @@ _.extend(Registry.prototype, Backbone.Events, {
         return entity;
     },
 
-    cloneEntity: function( entity, options ){
-        let comId, comClone;
-        let result = this.createEntity( null, {entity:entity});
-        // clone each of the attached components
-        for( comId in entity.components ){
-            comClone = copyComponent( this, entity.components[comId] );
-            result.addComponent( comClone );
-        }
-        result.registry = this;
-        return result;
-    },
+    // cloneEntity: function( entity, options ){
+    //     let comId, comClone;
+    //     let result = this.createEntity( null, {entity:entity});
+    //     // clone each of the attached components
+    //     for( comId in entity.components ){
+    //         comClone = copyComponent( this, entity.components[comId] );
+    //         result.addComponent( comClone );
+    //     }
+    //     result.registry = this;
+    //     return result;
+    // },
 
     destroyEntity: function( entity, options ){
         entity.removeComponents();
