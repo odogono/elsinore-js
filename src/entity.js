@@ -65,9 +65,11 @@ var Entity = Model.extend({
         return    (id - (id & 0xffffffff)) /  0x100000000;
     },
 
-    setEntitySet: function( es ){
+    setEntitySet: function( es, setId=true ){
         this._entitySet = es;
-        this.setEntitySetId( es.id );
+        if( setId ){
+            this.setEntitySetId(es.id);
+        }
     },
 
     getEntitySet: function(){

@@ -357,6 +357,8 @@ let functions = {
         for( entityId in this.cmds ){
             cmds = this.cmds[entityId];
 
+            entityId = parseInt( entityId, 10 ); // no integer keys in js :(
+
             // if( debug ){ console.log('executing for entity ' + entityId + ' ' + JSON.stringify(cmds)); }
 
             // if the entity already exists, then clone it in order
@@ -377,8 +379,9 @@ let functions = {
                     // add an entity
                     case CMD_ENTITY_ADD:
                         if( !entity ){
-                            // console.log('create entity with ' + JSON.stringify(entityId) );
-                            tEntity = entitySet._createEntity( entityId );
+                            // if( debug )console.log('create entity with ' + JSON.stringify(entityId) );
+                            tEntity = entitySet._createEntity( entityId, false, options );
+                            if( debug ){ console.log('adding entity', tEntity.id, entityId); }
                         }
                         break;
                     case CMD_COMPONENT_ADD:
@@ -420,6 +423,7 @@ let functions = {
                 // printE( tEntity );
             }
 
+
             if( !tEntity ){
                 // if the incoming entity did not clear the filter, and there is no existing
                 // entity, then just continue to next cmd
@@ -437,13 +441,14 @@ let functions = {
                 continue;
             }
 
+
             isNew = entity != null;
             if( !entity ){
                 if( entitySet.doesEntityHaveComponents(tEntity) ){
                     entitySet._addEntity( tEntity );
                     // console.log('add new entity ' + tEntity.id );
                     this.entitiesAdded.add( tEntity );
-                } 
+                }
             }
             else {
                 // determine which components need to be removed 

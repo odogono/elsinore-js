@@ -872,6 +872,27 @@ test('map transfers an entitySet through a filter into another entityset again',
 });
 
 
+test('possible to add 2 entities with same entityIds but different entityset ids', t => {
+    return initialise().then( ([registry,entitySet,entities]) => {
+        // logEvents( entitySet );
+        
+        let entityA = entities.at(0);
+        let entityB = entities.at(1);
+
+        entityA.setEntityId( 22 );
+        entityA.setEntitySetId( 100 );
+        entityB.setEntityId( 22 );
+        entityB.setEntitySetId( 101 );
+
+        entitySet.addEntity(entityA);
+        entitySet.addEntity(entityB);
+        // printE( entitySet );
+        // console.log('added entity ' + entityA.id + ' and ' + entityB.id );
+        t.equals( entitySet.size(), 2, 'two entities should have been added' );
+    })
+    .then( () => t.end() )
+    .catch( err => log.error('test error: %s', err.stack) )
+})
 
 
 test.skip('iterator', t => {

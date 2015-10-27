@@ -185,9 +185,8 @@ let EntitySet = Backbone.Collection.extend({
         return this._cmdBuffer.removeEntity( this, entity, options );
     },
 
-    _createEntity: function( entityId, returnId ){
+    _createEntity: function( entityId, returnId, options={} ){
         let result;
-        let options = {};
 
         if( returnId ){
             options.createId = true;
@@ -201,8 +200,12 @@ let EntitySet = Backbone.Collection.extend({
         result = this.getRegistry().createEntity( null, options );
 
         if( Entity.isEntity(result) ){
-            result.setEntitySet( this );
+            // make sure we don't the entityset id - memory entitysets do not mess
+            // with this
+            result.setEntitySet( this, false );
         }
+
+
 
         return result;
     },

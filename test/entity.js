@@ -52,6 +52,20 @@ module.exports = function( test, Common, Elsinore, EntitySet ){
         t.equals( Utils.getEntitySetIdFromId( id ), 3467 );        
 
         t.end();
+    });
+
+    test('setting entity set', t => {
+        let e = Entity.create();
+        e.setEntityId( 22 );
+        e.setEntitySetId( 103 );
+
+        let es = { id:0 };
+        e.setEntitySet( es );
+
+        t.equals( e.getEntityId(), 22 );
+        t.equals( e.getEntitySetId(), 0 );
+
+        t.end();
     })
 
     test('hashing', t => {

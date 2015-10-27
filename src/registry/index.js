@@ -144,13 +144,18 @@ _.extend(Registry.prototype, Backbone.Events, {
             return components;
         }
 
+        // if( options.debug ){ console.log('creating entity with', options); }
         entity = Entity.toEntity(entityId) || Entity.create();
         entity.setRegistry( this );
+
+
         
         if( options.esid ){
             entity.setEntitySetId( options.esid );
         }
+
         // log.debug('createEntity '+ entity.id + ' ' + entity.getEntityId() );
+        // if( options.debug ){ console.log('created entity', entity.id); }
         if( !components ){
             return entity;
         }
@@ -164,7 +169,7 @@ _.extend(Registry.prototype, Backbone.Events, {
         } else {
             entity.addComponent( components ); 
         }
-
+        
         return entity;
     },
 

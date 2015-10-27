@@ -3,7 +3,8 @@ Written with guidance from [Keep a CHANGELOG](http://keepachangelog.com/).
 This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased][unreleased]
-
+### Fixed
+- memory entity sets were assigning their ids to incoming entities, which is not allowed.
 
 ## [0.11.0] - 2015-10-26
 ### Added
