@@ -20,6 +20,9 @@ var vendorDependencies = _.keys( packageObj.dependencies );
 var UGLIFY_VENDOR_LIBS = false;
 var UGLIFY_LIB = true;
 
+var BabelOptions = {
+    presets: ['es2015']
+};
 
 var paths = {
     dist:{
@@ -78,7 +81,7 @@ Gulp.task('build.bundle.vendor', function(){
         })
     .on('error', handleErrors);
 
-    b.transform( Babelify );
+    b.transform( Babelify, BabelOptions );
 
     b.transform( Envify, {
         NODE_ENV: 'development'
@@ -107,7 +110,7 @@ Gulp.task('build.bundle.vendor', function(){
 
 Gulp.task('transpile', function () {
     return Gulp.src('src/**/*.js')
-        .pipe(Babel())
+        .pipe(Babel(BabelOptions))
         .pipe(Gulp.dest('lib'));
 });
 
@@ -125,7 +128,7 @@ Gulp.task('build.bundle.lib', function(cb){
         b.external( lib );
     });
 
-    b.transform( Babelify );
+    b.transform( Babelify, BabelOptions);
 
     b.transform( Envify, {
         NODE_ENV: 'development'
@@ -157,7 +160,7 @@ Gulp.task('test.browser.build', function(cb){
         debug:true
         });
 
-    b.transform( Babelify );
+    b.transform( Babelify, BabelOptions);
 
     // transform certain requires present in the tests
     // into something more browser friendly.
