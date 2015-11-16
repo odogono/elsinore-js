@@ -271,3 +271,6 @@ export function setEntityIdFromId( eid, esid ){
     return (esid & 0x1fffff) * 0x100000000 + (eid & 0xffffffff);
 }
 
+export function numpty(){
+    console.log('you are a numpty');
+}

@@ -1,32 +1,26 @@
 import _  from 'underscore';
 import test from 'tape';
 
-var Common = require('./common');
 
-
-var Es = require('event-stream');
-var Sinon = require('sinon');
+import Es from 'event-stream';
+import Sinon from 'sinon';
 
 
 import {
-    Elsinore, 
+    Component, Entity, EntityFilter, EntitySet,
+    Registry, Query, SchemaRegistry,
     initialiseRegistry, 
     loadEntities, 
+    loadComponents,
     loadFixtureJSON,
+    printE,
+    printIns,
+    logEvents,
     requireLib,
-    printE
 } from './common';
 
-// var Elsinore = Common.Elsinore;
-
-const EventsAsync = Common.requireLib('util/events.async');
-
-const EntityFilter = Elsinore.EntityFilter;
-const EntitySet = Elsinore.EntitySet;
-const Entity = Elsinore.Entity;
-const Query = Elsinore.Query;
-const Registry = Elsinore.Registry;
-const Utils = Elsinore.Utils;
+import * as EventsAsync from '../src/util/events.async';
+import '../src/entity_set/view';
 
 
 test('triggering an event on an entity', function(t){

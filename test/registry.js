@@ -2,27 +2,21 @@ import _ from 'underscore';
 import test from 'tape';
 import Sinon from 'sinon';
 
-
 import {
-    Elsinore, 
+    Component, Entity, EntityFilter, EntitySet,
+    Registry, Query,
     initialiseRegistry, 
     loadEntities, 
     loadComponents,
     loadFixtureJSON,
     printE,
+    printIns,
     logEvents,
-    requireLib
+    requireLib,
 } from './common';
 
 
-const Component = Elsinore.Component;
-const Entity = Elsinore.Entity;
-const EntityFilter = Elsinore.EntityFilter;
-const Registry = Elsinore.Registry;
-const Query = Elsinore.Query;
-
-
-const mapComponentEntityRefs = requireLib('util/map_entity_refs');
+import mapComponentEntityRefs from '../src/util/map_entity_refs';
 
 
 test.skip('keeping a map of entitySets and views', t => {

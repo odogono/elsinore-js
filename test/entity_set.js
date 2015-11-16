@@ -3,24 +3,19 @@ import Sinon from 'sinon';
 import test from 'tape';
 
 import {
-    Elsinore, 
+    Component, Entity, EntityFilter, EntitySet,
+    Registry, Query, SchemaRegistry,
     initialiseRegistry, 
     loadEntities, 
+    loadComponents,
     loadFixtureJSON,
     printE,
+    printIns,
     logEvents,
-    requireLib
+    requireLib,
 } from './common';
 
-const copyComponent = requireLib('util/copy').copyComponent;
-
-const Component = Elsinore.Component;
-const Entity = Elsinore.Entity;
-const EntityFilter = Elsinore.EntityFilter;
-const EntitySet = Elsinore.EntitySet;
-const Query = Elsinore.Query;
-const Registry = Elsinore.Registry;
-const Utils = Elsinore.Utils;
+import {copyComponent} from '../src/util/copy';
 
 
 

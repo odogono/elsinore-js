@@ -1,10 +1,13 @@
-var Q = require('./index');
-require('./dsl');
-require('../entity_set/query');
-require('./select_by_id');
-require('./alias');
-require('./pluck');
-require('./without');
-require('./limit');
+import Q from './index';
 
-module.exports = Q;
+
+// let Q = require('./index');
+import './dsl';
+import '../entity_set/query';
+import './select_by_id';
+import './alias';
+import './pluck';
+import './without';
+import './limit';
+
+export default Q; //module.exports = Q;

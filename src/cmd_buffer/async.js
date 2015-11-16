@@ -369,30 +369,6 @@ _.extend( CmdBuffer.prototype, SyncCmdBuffer.default.prototype, {
                 }
                 return this;        
             });
-
-
-        // // does this entity exist in our es?
-        // entity = Entity.toEntity( entity );
-        // entityId = entity.id;
-
-        // // retrieve the existing entity
-        // return entitySet.getEntity( entityId )
-        //     .then( function existingEntityFound(entity){
-        //         let comDefId;
-
-        //         for( comDefId in entity.components ){
-        //             self.addCommand( SyncCmdBuffer.CMD_COMPONENT_REMOVE, entity.components[comDefId] );
-        //         }
-        //         return entity;
-        //     }, function existingEntityNotfound(){
-        //         throw new Error('entity ' + entityId + ' not found' );
-        //     })
-        //     .then( function(){
-        //         if( execute ){
-        //             return self.execute( entitySet, options );
-        //         } 
-        //         return self;        
-        //     });
     },
 
     execute: function( entitySet, options ){
@@ -403,14 +379,10 @@ _.extend( CmdBuffer.prototype, SyncCmdBuffer.default.prototype, {
         debug = this.debug || options.debug;
         silent = options.silent === undefined ? false : options.silent;
         
-        // log.debug('>>EXECUTING CMDS');// throw new Error('STOP');
-        // printIns( this.cmds );
-        // log.debug('go keys ' + _.keys(this.cmds) );
         return _.keys(this.cmds).reduce( (sequence, entityId) => {
             let cmds = this.cmds[ entityId ];
             
             return sequence.then( () => {
-                // let addedEntities = new Backbone.Collection();
                 
                 // iterate through each cmd for the entity
                 cmds.forEach( (cmd) => {
@@ -420,11 +392,6 @@ _.extend( CmdBuffer.prototype, SyncCmdBuffer.default.prototype, {
                     let entity = cmdOptions.entity;
                     let mode = cmdOptions.mode;
                     let entityChanged = false;
-                    
-                    // log.debug('here? ' + JSON.stringify(cmdOptions) );
-
-                    // if( true || debug ){ log.debug('executing cmd for entity ' + entity.getEntityId() + '/' + entity.cid + '/' + entity.id ); }
-                    // log.debug('exec cmd ' + entity.id + ' ' + entity.getComponentBitfield().toString());
 
                     switch( cmd[0] ){
                         case SyncCmdBuffer.CMD_ENTITY_ADD:
@@ -438,11 +405,7 @@ _.extend( CmdBuffer.prototype, SyncCmdBuffer.default.prototype, {
 
                         case SyncCmdBuffer.CMD_COMPONENT_ADD:
                             entity.addComponent( component );
-                            // log.debug('ADD com ' + JSON.stringify(component) + ' to ' + entity.cid );
                             if( !this.entitiesAdded.get(entity) ){
-                                // log.debug('c ' + JSON.stringify(component) );
-                                // printIns( this.entitiesAdded );
-                                // throw new Error('c add, but not e ' + entity.id + '/' + entity.cid + ' add, so e up');
                                 this.entitiesUpdated.add(entity);
                             }
                             
@@ -459,11 +422,10 @@ _.extend( CmdBuffer.prototype, SyncCmdBuffer.default.prototype, {
 
                         case SyncCmdBuffer.CMD_COMPONENT_REMOVE:
                             // no entity to remove from?
-                            if(debug ){ log.debug('removing component ' + JSON.stringify(component) ); }
+                            // if(debug ){ log.debug('removing component ' + JSON.stringify(component) ); }
                             if( !entity ){
                                 return;
                             }
-                            // printE( entity );
 
                             this.componentsRemoved.add( component );
                             // log.debug('remove com ' + entity.hasComponents() + ' ' + entity.getComponentBitfield().toString() );

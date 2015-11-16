@@ -5,19 +5,22 @@ import Sinon from 'sinon';
 
 
 import {
-    Elsinore, 
+    Component, Entity, EntityFilter, EntitySet,
+    Registry, Query, SchemaRegistry,
     initialiseRegistry, 
     loadEntities, 
+    loadComponents,
     loadFixtureJSON,
-    requireLib
+    printE,
+    printIns,
+    logEvents,
+    requireLib,
+    getEntityIdFromId,
+    getEntitySetIdFromId,
+    setEntityIdFromId,
 } from './common';
 
-
-let CmdBuffer = requireLib('cmd_buffer/async');
-
-let Utils = Elsinore.Utils;
-let Entity = Elsinore.Entity;
-let Component = Elsinore.Component;
+import CmdBuffer from '../src/cmd_buffer/async';
 
 test('adding a component with no entity id', t => {
     return initialiseRegistry().then( registry => {
@@ -288,7 +291,7 @@ function reportUpdates( t, es, eAdded, eUpdated, eRemoved, cAdded, cUpdated, cRe
 *   Creates a Mock ES that we can assert against
 */
 function createEntitySet( entitySetId, entityIds, registry ){
-    entityIds = _.map( entityIds, id => Utils.setEntityIdFromId(id,entitySetId) );
+    entityIds = _.map( entityIds, id => setEntityIdFromId(id,entitySetId) );
     return _.extend({
         id: entitySetId,
         update: function( eAdd, eUp, eRem, cAdd, cUp, cRem ){
@@ -336,5 +339,5 @@ function createComponent( attrs ){
 
 
 function createEntity( entityId ){
-    return Elsinore.Entity.create( entityId );
+    return Entity.create( entityId );
 }

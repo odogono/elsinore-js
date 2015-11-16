@@ -1,7 +1,5 @@
-'use strict';
-
 import _ from 'underscore';
-let Q = require('./index');
+import Q from './index';
 import * as Utils from '../util';
 
 

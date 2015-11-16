@@ -1,8 +1,6 @@
-'use strict';
-
 import _ from 'underscore';
-const Q = require('./index');
-const EntitySet = require('../entity_set');
+import Q from './index';
+import EntitySet from '../entity_set';
 import * as Utils from '../util'
 
 const SELECT_BY_ID = 100;

@@ -499,4 +499,4 @@ SchemaRegistry.hashSchema = function( schema ){
     return result;
 }
 
-module.exports = SchemaRegistry;
+export default SchemaRegistry;

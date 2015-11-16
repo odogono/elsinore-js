@@ -1,9 +1,9 @@
 import _ from 'underscore';
-var Q = require('./index');
-var EntitySet = require('../entity_set');
+import Q from './index';
+import EntitySet from '../entity_set';
 import * as Utils from '../util'
 
-var WITHOUT = 104;
+const WITHOUT = 104;
 
 /**
 *   Returns a value with componentsIds with all of values excluded

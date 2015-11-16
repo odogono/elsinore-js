@@ -25,12 +25,8 @@ _.extend( Registry.prototype, {
         priority = _.isUndefined(options.priority) ? 0 : options.priority;
         updateable = _.isUndefined(options.update) ? true : options.update;
 
-        
-
         processorAttrs = {id:processorId, priority:priority, updateable:updateable};
         processorOptions = {Model:processorModel,registry:this};
-
-        
 
         if( entitySet ){
             processorAttrs.entitySet = entitySet;

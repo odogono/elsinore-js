@@ -2,12 +2,9 @@ import _ from 'underscore';
 import test from 'tape';
 
 import {
-    Elsinore,
-    Utils,
+    toPascalCase,
+    parseUri,
 } from './common';
-// var Common = require('./common');
-// var Elsinore = Common.Elsinore;
-// var Utils = Elsinore.Utils;
 
 
 
@@ -21,13 +18,13 @@ test('toPascalCase', function(t){
         'goodJobEveryone': 'GoodJobEveryone'
     };
 
-    _.each( cases, (expected,input) => t.equals( Utils.toPascalCase(input), expected ));
+    _.each( cases, (expected,input) => t.equals( toPascalCase(input), expected ));
     t.end();
 });
 
 
 test('parse uri', t => {
-    const record = Utils.parseUri('/foo/bar?baz=quux#frag');
+    const record = parseUri('/foo/bar?baz=quux#frag');
 
     t.deepEqual( record.query, { 'baz': 'quux'} );
     t.equals( record.baseUri, '/foo/bar?baz=quux' );

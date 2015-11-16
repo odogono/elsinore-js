@@ -1,11 +1,9 @@
 import _ from 'underscore';
 import test from 'tape';
 
-// let Common = require('./common');
-
 import {
-    Elsinore, 
-    SchemaRegistry,
+    Component, Entity, EntityFilter, EntitySet,
+    Registry, Query, SchemaRegistry,
     initialiseRegistry, 
     loadEntities, 
     loadComponents,
@@ -13,12 +11,10 @@ import {
     printE,
     printIns,
     logEvents,
-    requireLib
+    requireLib,
 } from './common';
 
-// let Elsinore = Common.Elsinore;
-// let SchemaRegistry = Elsinore.SchemaRegistry;
-let SchemaProperties = requireLib('schema/properties');
+import * as SchemaProperties from '../src/schema/properties';
 
 // compile a map of schema id(uri) to schema
 let componentSchemas = require('./fixtures/components.json');
@@ -36,8 +32,8 @@ test.skip('uri normalization', t => {
 })
 
 test('registering a schema', t => {
-    var registry = SchemaRegistry.create();
-    var schema = { id:'/schema/basic' };
+    const registry = SchemaRegistry.create();
+    const schema = { id:'/schema/basic' };
 
     registry.register( schema );
 
@@ -49,7 +45,7 @@ test('registering a schema', t => {
 
 
 test('retrieving schema fragments', t => {
-    let schema = {
+    const schema = {
         id: 'elsinore:/schema',
         definitions:{
             foo: { type: 'integer' },
@@ -63,7 +59,7 @@ test('retrieving schema fragments', t => {
         }
     };
 
-    let registry = SchemaRegistry.create();
+    const registry = SchemaRegistry.create();
     // Common.logEvents( registry );
     registry.register( schema );
 
@@ -75,7 +71,7 @@ test('retrieving schema fragments', t => {
 });
 
 test('returns an array of all registered schemas', t => {
-    let schema = {
+    const schema = {
         id: 'elsinore:/schema',
         definitions:{
             foo: { type: 'integer' },
@@ -89,7 +85,7 @@ test('returns an array of all registered schemas', t => {
         }
     };
 
-    let registry = SchemaRegistry.create();
+    const registry = SchemaRegistry.create();
     registry.register( schema );
 
     t.deepEquals( 
@@ -105,17 +101,16 @@ test('returns an array of all registered schemas', t => {
 })
 
 test('retrieving an array of properties', t => {
-    var schema = {
+    
+    const registry = SchemaRegistry.create();
+    const schema = registry.register( {
         id: 'elsinore:/schema/props',
         properties:{
             name:{ type:'string' },
             age: { type:'integer' },
             address: { type:'string' }
         }
-    };
-
-    var registry = SchemaRegistry.create();
-    var schema = registry.register( schema );
+    } );
 
     t.deepEqual(
         SchemaProperties.getProperties(registry, 'elsinore:/schema/props'),
@@ -126,7 +121,7 @@ test('retrieving an array of properties', t => {
 });
 
 test('returning an array of sorted properties', t => {
-    var schema = {
+    const schemaData = {
         id:'elsinore:/schema/sorted',
         properties:{
             status:{ type:"integer" },
@@ -140,8 +135,8 @@ test('returning an array of sorted properties', t => {
             id:3
         }
     };
-    var registry = SchemaRegistry.create();
-    var schema = registry.register( schema );
+    const registry = SchemaRegistry.create();
+    const schema = registry.register( schemaData );
 
     t.deepEqual(
         SchemaProperties.getProperties(registry,'elsinore:/schema/sorted'),
@@ -156,21 +151,21 @@ test('returning an array of sorted properties', t => {
 });
 
 test('returning properties from multiple schemas', t => {
-    var schemaA = {
+    const schemaA = {
         id:'/multiple/alpha',
         properties:{
             id: { type:'integer' },
             name: { type:'string' }
         }
     };
-    var schemaB = {
+    const schemaB = {
         id:'/multiple/beta',
         properties:{
             status: { type:'integer' },
             count: { type:'integer' }
         }
     };
-    var registry = SchemaRegistry.create();
+    const registry = SchemaRegistry.create();
     
 
     registry.register( {a:schemaA, b:schemaB} );
@@ -185,7 +180,7 @@ test('returning properties from multiple schemas', t => {
 
 
 test('merging two schemas', t => {
-    var schemaA = {
+    const schemaA = {
         id:'/schema/merge_a',
         properties:{
             count:{ type:'integer' },
@@ -196,14 +191,14 @@ test('merging two schemas', t => {
             name:4
         }
     };
-    var schemaB = {
+    const schemaB = {
         id:'/schema/merge_b',
         allOf:[ {'$ref':'/schema/merge_a'} ],
         properties:{
             status:{ type:'integer' }
         }
     };
-    var registry = SchemaRegistry.create();
+    const registry = SchemaRegistry.create();
     registry.register( [schemaA, schemaB] );
 
     // the order is important
@@ -225,7 +220,7 @@ test('merging two schemas', t => {
 
 
 test('returning default properties', t => {
-    var schema = {
+    const schema = {
         id:'/schema/default',
         properties:{
             name:{ type:'string', 'default': 'unknown' },
@@ -233,7 +228,7 @@ test('returning default properties', t => {
             address: { type:'string' }
         }
     };
-    var registry = SchemaRegistry.create();
+    const registry = SchemaRegistry.create();
     registry.register( schema );
 
     t.deepEqual(
@@ -267,9 +262,9 @@ test('returning default properties', t => {
 
 
 test('registration of an identical schema throws an error', t => {
-    var schema = { id:'/schema/original', properties:{ name:{ type:'string' }} };
-    var schemaCopy = { id:'/schema/original', properties:{ age:{ type:'integer' }} };
-    var registry = SchemaRegistry.create();
+    const schema = { id:'/schema/original', properties:{ name:{ type:'string' }} };
+    const schemaCopy = { id:'/schema/original', properties:{ age:{ type:'integer' }} };
+    const registry = SchemaRegistry.create();
 
     // Common.logEvents( registry );
 
@@ -290,16 +285,12 @@ test('registration of an identical schema throws an error', t => {
 });
 
 test('registration of an identical schema doesnt throw an error if required', t => {
-    let schema = { id:'/schema/original', properties:{ name:{ type:'string' }} };
-    let registry = SchemaRegistry.create();
-
-    // Common.logEvents( registry );
+    const schema = { id:'/schema/original', properties:{ name:{ type:'string' }} };
+    const registry = SchemaRegistry.create();
 
     registry.register( schema );
-    // printIns( registry, 6 );
-
-    let outcome = registry.register( schema, {throwOnExists:false} );
-    // printIns( outcome );
+    
+    const outcome = registry.register( schema, {throwOnExists:false} );
     
     t.deepEqual( 
         registry.get( schema.id ).properties.name.type, 
@@ -309,7 +300,7 @@ test('registration of an identical schema doesnt throw an error if required', t 
 });
 
 test('register a modified schema', t => {
-    var schemaA = {
+    const schemaA = {
         properties:{
             x: { type:'number' },
             y: { type:'number' }
@@ -317,7 +308,7 @@ test('register a modified schema', t => {
         id:'/schema/dupe'
     };
 
-    var schemaB = {
+    const schemaB = {
         id:'/schema/dupe',
         properties:{
             radius: { type:'number' },
@@ -326,7 +317,7 @@ test('register a modified schema', t => {
         }
     };
 
-    var registry = SchemaRegistry.create();
+    const registry = SchemaRegistry.create();
 
     registry.register( {
         id: '/schema/other',
@@ -348,7 +339,7 @@ test('register a modified schema', t => {
 });
 
 test('retrieving schema with definitions', t => {
-    var sch = {
+    const sch = {
         id: 'http://foo.bar/baz',
         properties: {
             foo: { $ref: '#/definitions/foo' }
@@ -359,7 +350,7 @@ test('retrieving schema with definitions', t => {
         }
     };
 
-    var registry = SchemaRegistry.create();
+    const registry = SchemaRegistry.create();
     registry.register( sch );
 
     // printIns( registry, 5 );
@@ -370,14 +361,14 @@ test('retrieving schema with definitions', t => {
 
 
 test('retrieving different versions of a schema by id', t => {
-    var schemaA = { id:'/schema/alpha', properties:{ name:{type:'string'} }};
-    var schemaB = { id:'/schema/alpha', properties:{ fullname:{type:'string'} }};
+    const schemaA = { id:'/schema/alpha', properties:{ name:{type:'string'} }};
+    const schemaB = { id:'/schema/alpha', properties:{ fullname:{type:'string'} }};
 
-    var registry = SchemaRegistry.create();
+    const registry = SchemaRegistry.create();
     // Common.logEvents(registry);
 
-    var registeredA = registry.register( [schemaA] )[0];
-    var registeredB = registry.register( [schemaB] )[0];
+    const registeredA = registry.register( [schemaA] )[0];
+    const registeredB = registry.register( [schemaB] )[0];
 
     // printIns( registeredA );
 
@@ -398,7 +389,7 @@ test('retrieving different versions of a schema by id', t => {
 });
 
 test('something or other', t => {
-    var schema = {
+    const schema = {
         id: 'elsinore:/schema',
 
         boat:{
@@ -414,7 +405,7 @@ test('something or other', t => {
         },
     };
 
-    var registry = SchemaRegistry.create();
+    const registry = SchemaRegistry.create();
     // Common.logEvents( registry );
     registry.register( schema );
 
@@ -427,14 +418,14 @@ test('something or other', t => {
 });
 
 test('obtain full details of a schema', t => {
-    var schema = {
+    const schema = {
         id:'/schema/details',
         properties:{
             createDate:{ type:'string', format:'datetime' }
         }
     };
 
-    var registry = SchemaRegistry.create();
+    const registry = SchemaRegistry.create();
 
     registry.register(schema);
 
@@ -446,7 +437,7 @@ test('obtain full details of a schema', t => {
 });
 
 test('retrieving parts', t => {
-    var schema = {
+    const schema = {
         id: '/component/nix',
         properties: {
             firstName: { $ref: '#/definitions/firstName' }
@@ -456,7 +447,7 @@ test('retrieving parts', t => {
         }
     };
 
-    var registry = SchemaRegistry.create();
+    const registry = SchemaRegistry.create();
     registry.register(schema);
 
     t.deepEqual(
@@ -467,18 +458,18 @@ test('retrieving parts', t => {
 });
 
 test('retrieve schema by hash', t => {
-    var schema = {
+    const schema = {
         id:'/schema/switch',
         properties:{
             active:{ type:'boolean', 'default':true }
         }
     };
 
-    var registry = SchemaRegistry.create()
+    const registry = SchemaRegistry.create()
     registry.register(schema);
 
     // get the latest hash for this component
-    var hash = registry.getHash('/schema/switch');
+    const hash = registry.getHash('/schema/switch');
 
     t.deepEqual(
         registry.get( hash ),
@@ -489,7 +480,7 @@ test('retrieve schema by hash', t => {
 
 
 test('new version of sub schema', t => {
-    var schema = {
+    const schema = {
         id:'/schema/parent',
 
         components:{
@@ -515,7 +506,7 @@ test('new version of sub schema', t => {
         }
     };
 
-    var registry = SchemaRegistry.create()
+    const registry = SchemaRegistry.create()
     registry.register(schema);
 
     registry.register({
@@ -533,9 +524,9 @@ test('new version of sub schema', t => {
 
 
 test('registering a schema returns the schemas registered', t => {
-    var registry = SchemaRegistry.create();
+    const registry = SchemaRegistry.create();
 
-    var registered = registry.register({
+    const registered = registry.register({
         id: '/schema/parent/address',
         properties:{
             streetName:{ type:'string' }
@@ -557,7 +548,7 @@ test('registering a schema returns the schemas registered', t => {
 
 
 test('attempting to retrieve an unknown schema throws an error', t => {
-    var registry = SchemaRegistry.create();
+    const registry = SchemaRegistry.create();
 
     t.throws( function(){
         registry.getIId('/component/missing')}, /could not find schema \/component\/missing/ );
@@ -566,7 +557,7 @@ test('attempting to retrieve an unknown schema throws an error', t => {
 });
 
 test('returns an array of schema internal ids from a series of identifiers', t => {
-    var registry = SchemaRegistry.create();
+    const registry = SchemaRegistry.create();
     registry.register( componentSchemas );
 
     t.deepEqual(
@@ -580,7 +571,7 @@ test('returns schema uris from internal ids', t => {
     let registry = SchemaRegistry.create();
     registry.register( componentSchemas );
 
-    var cases = {
+    const cases = {
         '/component/position': '/component/position', 
         'c6c1bcdf': '/component/command', 
         16: '/component/channel',

@@ -1,10 +1,12 @@
-'use strict';
-
 import _ from 'underscore';
 import BitField  from 'odgn-bitfield';
 import * as Utils from '../util'
-var Query = require('../query');
-var EntitySet = require('../entity_set');
+
+import Query from '../query';
+import EntitySet from '../entity_set';
+
+// export default {Query as Query};
+
 
 _.extend( EntitySet.prototype, {
     setQuery: function( query ){

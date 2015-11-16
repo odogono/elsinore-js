@@ -7,7 +7,7 @@ import * as Utils from '../util';
 
 import {printIns} from '../util';
 
-function Query(){}
+export default function Query(){}
 function QueryContext(){}
 
 Query.argCounts = {};
@@ -928,4 +928,4 @@ Query.create = function( registry, commands, options ){
     return result;
 }
 
-module.exports = Query;
+// module.exports = Query;

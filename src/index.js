@@ -6,12 +6,12 @@ module.exports = {
     EntitySet: require('./entity_set'),
     Errors: require('./error'),
     Component: require('./component'),
-    EntityProcessor: require('./entity_processor'),
-    SchemaRegistry: require('./schema'),
+    // EntityProcessor: require('./entity_processor'),
+    // SchemaRegistry: require('./schema'),
     Registry: require('./registry'),
-    Utils: require('./util'),
-    Query: require('./query/full'),
+    // Utils: require('./util'),
+    // Query: require('./query/full'),
 };
 
-require('./entity_set/view');
-require('./registry/processor');
+// require('./entity_set/view');
+// require('./registry/processor');

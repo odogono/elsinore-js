@@ -14,7 +14,7 @@ import EventsAsync from './util/events.async';
  * 
  * Standard design: c.f. http://entity-systems.wikidot.com/rdbms-with-code-in-systems
  */
-var EntityProcessor = Backbone.Model.extend({
+const EntityProcessor = Backbone.Model.extend({
     type: 'EntityProcessor',
     isEntityProcessor: true,
 
@@ -31,7 +31,7 @@ var EntityProcessor = Backbone.Model.extend({
     onInitialize: function( registry ){
     },
 
-    onUpdate: function( deltaTime, startTime, currentTime, options ){
+    onUpdate: function( entityArray, timeMs, options ){
     },
 
 
@@ -136,7 +136,7 @@ var EntityProcessor = Backbone.Model.extend({
     },
 
     toJSON: function(){
-        var result = {};
+        let result = {};
         result.name = this.name;
         return result;
     },
@@ -149,9 +149,9 @@ EntityProcessor.isEntityProcessor = function(ep){
 }
 
 
-EntityProcessor.create = function create( attrs, options ){
-    var Model = options.Model || EntityProcessor;
-    var result = new Model(attrs);
+EntityProcessor.create = function create( attrs, options={} ){
+    const Model = options.Model || EntityProcessor;
+    let result = new Model(attrs);
     return result;
 }
 

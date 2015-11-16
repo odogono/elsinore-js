@@ -1,9 +1,9 @@
 import _ from 'underscore';
-var Q = require('./index');
-var EntitySet = require('../entity_set');
+import Q from './index';
+import EntitySet from '../entity_set';
 import * as Utils from '../util'
 
-var PLUCK = 103;
+const PLUCK = 103;
 
 
 

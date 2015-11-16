@@ -20,7 +20,7 @@ import Model from './model';
 /**
  * An entity is a container for components
  */
-var Entity = Model.extend({
+const Entity = Model.extend({
     type: 'Entity',
     isEntity: true,
 
@@ -102,6 +102,7 @@ var Entity = Model.extend({
 
     addComponent: function( component ){
         var existing;
+        if( !component ){ return this; }
         existing = this.components[ component.getSchemaId() ];
         if( existing ){
             this.removeComponent( existing );
@@ -289,4 +290,4 @@ Entity.toEntity = function( entity = 0, options ){
     return null;
 };
 
-module.exports = Entity;
+export default Entity;

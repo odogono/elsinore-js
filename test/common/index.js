@@ -1,20 +1,55 @@
-var _ = require('underscore');
+import _ from 'underscore';
 
-var Fs = require('fs');
-var Es = require('event-stream');
-var Path = require('path');
-var Util = require('util');
+import Fs from 'fs';
+import Es from 'event-stream';
+import Path from 'path';
+import Util from 'util';
 
-var Sh = require('shelljs');
+import Sh from 'shelljs';
 
-var rootDir = Path.join( Path.dirname(__filename), '../../' );
-var fixtureDir = Path.join( rootDir, 'test', 'fixtures' );
-var varDir = Path.join( rootDir, 'var' );
+const rootDir = Path.join( Path.dirname(__filename), '../../' );
+const fixtureDir = Path.join( rootDir, 'test', 'fixtures' );
+const varDir = Path.join( rootDir, 'var' );
 
-var ElsinoreDir = Path.join(rootDir, 'src')
+const ElsinoreDir = Path.join(rootDir, 'src')
 
-export const Elsinore = require(ElsinoreDir);
-export const SchemaRegistry = Elsinore.SchemaRegistry;
+import {toString as entityToString} from '../../src/util/to_string';
+
+
+import Elsinore from '../../src';
+export {Elsinore as Elsinore};// from '../../src';
+
+import Component from '../../src/component';
+export {Component as Component};
+
+import * as EntityFilter from '../../src/entity_filter';
+export {EntityFilter as EntityFilter};
+
+import EntityProcessor from '../../src/entity_processor';
+export {EntityProcessor as EntityProcessor};
+
+import EntitySet from '../../src/entity_set';
+export {EntitySet as EntitySet};
+
+import Entity from '../../src/entity';
+export {Entity as Entity};
+
+import Query from '../../src/query/full';
+export {Query as Query};
+
+import Registry from '../../src/registry';
+export {Registry as Registry};
+
+import SchemaRegistry from '../../src/schema';
+export {SchemaRegistry as SchemaRegistry};
+
+export {printIns,
+    toPascalCase,
+    parseUri,
+    getEntityIdFromId,
+    getEntitySetIdFromId,
+    setEntityIdFromId} from '../../src/util';
+
 
 export function pathVar( path, clear ){
     path = Path.join( varDir, path );
@@ -35,8 +70,8 @@ export function pathVarFile( path, clear ){
 
 // compile a map of schema id(uri) to schema
 export function loadComponents(){
-    var data = loadFixtureJSON( 'components.json' );
-    var componentData = _.reduce( data, 
+    let data = loadFixtureJSON( 'components.json' );
+    let componentData = _.reduce( data, 
                         function(memo, entry){
                             memo[ entry.id ] = entry;
                             return memo;
@@ -47,14 +82,14 @@ export function loadComponents(){
 /**
 *   Returns an entityset with the given entities
 */
-export function loadEntities( registry, fixtureName, EntitySet, options ){
-    var data;
-    var lines;
-    var result;
+export function loadEntities( registry, fixtureName, entitySet, options ){
+    let data;
+    let lines;
+    let result;
 
     fixtureName = fixtureName || 'entity_set.entities.json';
     registry = registry || initialiseRegistry( options );
-    result = registry.createEntitySet( EntitySet, options );
+    result = registry.createEntitySet( entitySet, options );
 
     if( _.isString(fixtureName) ){
         if( fixtureName.indexOf('.json') === -1 ){
@@ -69,9 +104,8 @@ export function loadEntities( registry, fixtureName, EntitySet, options ){
         throw new Error('invalid fixture name specified');
     }
 
-    _.each( data, function(line){
-        // var comDef = line.id;
-        var com = registry.createComponent( line );
+    _.each( data, line => {
+        let com = registry.createComponent( line );
         result.addComponent( com );
         return com;
     });
@@ -97,9 +131,9 @@ export function loadEntities( registry, fixtureName, EntitySet, options ){
 *
 */
 export function initialiseRegistry( doLogEvents ){
-    var componentData;
-    var registry = Elsinore.Registry.create();
-    var options, load;
+    let componentData;
+    let registry = Registry.create();
+    let options, load;
 
     if( _.isObject(doLogEvents) ){
         options = doLogEvents;
@@ -126,21 +160,21 @@ export function initialiseRegistry( doLogEvents ){
 
 
 export function createFixtureReadStream( fixturePath ){
-    var path = Path.join( fixtureDir, fixturePath );
+    let path = Path.join( fixtureDir, fixturePath );
     return Fs.createReadStream( path, { encoding: 'utf-8' })
         .pipe(Es.split())
         .pipe(Es.parse());
 }
 
 export function loadFixture( fixturePath ){
-    var path = Path.join( fixtureDir, fixturePath );
-    var data = Fs.readFileSync( path, 'utf8');
+    let path = Path.join( fixtureDir, fixturePath );
+    let data = Fs.readFileSync( path, 'utf8');
     return data;
 }
 
 export function loadFixtureJSON( fixturePath, data ){
     try {
-        var data = loadFixture( fixturePath );
+        let data = loadFixture( fixturePath );
         data = JSON.parse( data );
         return data;
     } catch( e ){
@@ -156,35 +190,13 @@ export function logEvents(obj, prefix){
     });
 }
 
-export function printIns(arg,depth,showHidden,colors){
-    if( _.isUndefined(depth) ) depth = 2;
-    // var stack = __stack[1];
-    // var fnName = stack.getFunctionName();
-    // var line = stack.getLineNumber();
-    // Util.log( fnName + ':' + line + ' ' + Util.inspect(arg,showHidden,depth,colors) );
-    Util.log( Util.inspect(arg,showHidden,depth,colors) );
-};
-
-export function printVar(){
-    var i, len;
-    for (i = 0, len = arguments.length; i < len; i++) {
-        Util.log( JSON.stringify(arguments[i], null, '\t') );
-        // Util.log( Util.inspect(arguments[i], {depth:1}) );
-    }
-}
 
 
-import {toString as entityToString} from '../../src/util/to_string';
 const toStringPath = Path.join(ElsinoreDir, 'util/to_string');
 
 export function printE(e){
     Util.log( entityToString(e) );
 }
-
-// TODO: must be someway to achieve this with import/export
-const _Utils = require('../../src/util');
-export const Utils = _Utils;
-
 
 export {copyEntity} from '../../src/util/copy';
 
@@ -193,26 +205,6 @@ global.log = {
     error: console.log
 };
 
-// global.printIns = printIns;
-
 export function requireLib( path ){
     return require( Path.join(ElsinoreDir,path) );
 }
-
-// module.exports = {
-//     requireLib: function(path){
-//         return require( Path.join(ElsinoreDir, path) );
-//     },
-//     printVar: printVar,
-//     printIns: printIns,
-//     logEvents: logEvents,
-//     createFixtureReadStream: createFixtureReadStream,
-//     loadFixture: loadFixture,
-//     loadFixtureJSON: loadFixtureJSON,
-//     loadComponents: loadComponents,
-//     loadEntities: loadEntities,
-//     initialiseRegistry: initialiseRegistry,
-//     pathVar: pathVar,
-//     pathVarFile: pathVarFile,
-//     Elsinore: Elsinore
-// }

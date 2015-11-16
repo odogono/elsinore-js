@@ -1,10 +1,8 @@
-'use strict';
-
 import _ from 'underscore';
 
 import Entity from '../entity';
-let EntitySet = require('../entity_set');
-let Query = require('./query');
+import EntitySet from './index';
+import Query from './query';
 import * as Utils from '../util';
 
 _.extend( EntitySet.prototype, {
@@ -270,4 +268,4 @@ EntitySetListener.create = function(){
 }
 
 
-module.exports = EntitySet;
+export default EntitySet;

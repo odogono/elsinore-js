@@ -1,5 +1,3 @@
-'use strict';
-
 import _ from 'underscore';
 import Backbone from 'backbone';
 import BitField  from 'odgn-bitfield';
@@ -182,4 +180,4 @@ export function create( type, bitField ){
     return result;
 }
 
-// export default EntityFilter;
+export default EntityFilter;

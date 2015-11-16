@@ -1,5 +1,3 @@
-'use strict';
-
 import _ from 'underscore';
 import Backbone from 'backbone';
 
@@ -16,13 +14,13 @@ import {copyComponent} from '../util/copy';
 import {uuid as createUuid} from '../util/uuid';
 import {getPropertiesObject, getProperties} from '../schema/properties';
 
-let counter = Date.now() % 1e9;
+// let counter = Date.now() % 1e9;
 
 /**
  * Registry
  * @return {[type]} [description]
  */
-let Registry = function(){};
+ const Registry = function(){};
 
 
 _.extend(Registry.prototype, Backbone.Events, {
@@ -524,9 +522,7 @@ _.extend(Registry.prototype, Backbone.Events, {
         removeList = this.entitySetProcessors.filter( record => (record.get('entitySet') == entitySet) );
 
         // TODO: destroy any views attached to the entitySets
-        _.each( removeList, function(es){
-
-        });
+        _.each( removeList, es => {} );
 
         processors.remove( removeList );
 
@@ -584,7 +580,7 @@ function createProcessorCollection(){
  * @param  {Function} callback [description]
  * @return {[type]}            [description]
  */
-Registry.create = function(options={}){
+Registry.create = function create(options={}){
     let result = new Registry();
     result.initialize();
     return result;
