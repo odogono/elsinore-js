@@ -6,6 +6,11 @@ let test = require('tape');
 let Common = require('../common');
 let Elsinore = Common.Elsinore;
 
+let EntityProcessor = Common.EntityProcessor;
+let EntityFilter = Common.EntityFilter;
+let EntitySet = Common.EntitySet;
+let Query = Common.Query;
+
 
 //
 // Original example from https://github.com/BlackDice/scent
@@ -26,7 +31,7 @@ test('main', function(t){
         let processor;
         let DoorProcessor;
         
-        DoorProcessor = Elsinore.EntityProcessor.extend({
+        DoorProcessor = EntityProcessor.extend({
             // handle entity events
             events:{
 

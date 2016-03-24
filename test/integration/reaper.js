@@ -7,10 +7,14 @@ let Sinon = require('sinon');
 let Common = require('../common');
 let Elsinore = Common.Elsinore;
 
-let EntityProcessor = Elsinore.EntityProcessor;
-let EntityFilter = Elsinore.EntityFilter;
-let EntitySet = Elsinore.EntitySet;
-let Query = Elsinore.Query;
+import {printIns} from '../../src/util';
+
+let EntityProcessor = Common.EntityProcessor;
+let EntityFilter = Common.EntityFilter;
+let EntitySet = Common.EntitySet;
+let Query = Common.Query;
+
+
 
 /**
     This test demonstrates processors that use filters to determine which

@@ -1,17 +1,26 @@
-'use strict';
+// main file for library
+// this includes everything that you may need to use
 
-module.exports = {
-    Entity: require('./entity'),
-    EntityFilter: require('./entity_filter'),
-    EntitySet: require('./entity_set'),
-    Errors: require('./error'),
-    Component: require('./component'),
-    // EntityProcessor: require('./entity_processor'),
-    // SchemaRegistry: require('./schema'),
-    Registry: require('./registry'),
-    // Utils: require('./util'),
-    // Query: require('./query/full'),
-};
+import Component from './component';
+export {Component as Component};
 
-// require('./entity_set/view');
-// require('./registry/processor');
+import Entity from './entity';
+export {Entity as Entity};
+
+import * as EntityFilter from './entity_filter';
+export {EntityFilter as EntityFilter};
+
+import EntityProcessor from './entity_processor';
+export {EntityProcessor as EntityProcessor};
+
+import EntitySet from './entity_set';
+export {EntitySet as EntitySet};
+
+import Query from './query/full';
+export {Query as Query};
+
+import Registry from './registry';
+export {Registry as Registry};
+
+import SchemaRegistry from './schema';
+export {SchemaRegistry as SchemaRegistry};

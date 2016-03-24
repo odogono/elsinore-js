@@ -200,7 +200,7 @@ _.extend(Registry.prototype, Backbone.Events, {
         return new Promise( resolve => resolve(schemaRegistry.register(data,options)) )
             .then( schemas => {
                 return _.reduce( this._entitySets, (current, es) => {
-                    return current.then( () => {
+                    return current = current.then( () => {
                         // log.debug('registering schemas with es ' + es.cid);
                         return this._registerComponentDefsWithEntitySet( es, schemas, options );
                     })
@@ -221,7 +221,7 @@ _.extend(Registry.prototype, Backbone.Events, {
             return Promise.resolve();
         }
         return _.reduce( schemas, (current, schema) => {
-            return current.then( () => {
+            return current = current.then( () => {
                 // log.debug('registering cdef schema ' + JSON.stringify(schema) );
                 return entitySet.registerComponentDef( schema, options );
             })

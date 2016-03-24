@@ -3,10 +3,15 @@
 import _ from 'underscore';
 import Backbone from 'backbone';
 
-let EntitySet = require('../entity_set');
-let Registry = require('./index');
-let Query = require('../query/full');
 
+import Registry from './index';
+import Query from '../query/full';
+import EntitySet from '../entity_set/view';
+
+
+/**
+*   A registry which is capable of dealing with processors
+*/
 _.extend( Registry.prototype, {
     /**
     *   Adds a new processor instance
@@ -265,4 +270,5 @@ _.extend( Registry.prototype, {
     },
 });
 
-module.exports = Registry;
+// module.exports = Registry;
+export default Registry;

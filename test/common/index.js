@@ -14,10 +14,8 @@ const varDir = Path.join( rootDir, 'var' );
 const ElsinoreDir = Path.join(rootDir, 'src')
 
 import {toString as entityToString} from '../../src/util/to_string';
+export {entityToString};
 
-
-import Elsinore from '../../src';
-export {Elsinore as Elsinore};// from '../../src';
 
 import Component from '../../src/component';
 export {Component as Component};
@@ -37,11 +35,14 @@ export {Entity as Entity};
 import Query from '../../src/query/full';
 export {Query as Query};
 
-import Registry from '../../src/registry';
+import Registry from '../../src/registry/processor';
 export {Registry as Registry};
+import {printIns} from '../../src/util';
 
 import SchemaRegistry from '../../src/schema';
 export {SchemaRegistry as SchemaRegistry};
+
+
 
 export {printIns,
     toPascalCase,
