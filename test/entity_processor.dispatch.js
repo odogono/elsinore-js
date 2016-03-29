@@ -1,4 +1,5 @@
 import _ from 'underscore';
+import Backbone from 'backbone';
 import Sinon from 'sinon';
 import test from 'tape';
 
@@ -114,6 +115,31 @@ test('executing a processor with a time interval', t => {
     .catch( err => log.error('test error: %s', err.stack) ) 
 });
 
+test.only('processors can have priority', t => {
+    return initialiseRegistry().then( registry => {
+        let dispatch = EntityDispatch.create(registry);
+
+        let entity = registry.createEntity( {id:'/component/username'} );
+        let executeCount = 0;
+
+        const procA =createEntityProcessor( 
+            (entityArray, timeMs, options ) =>{ if(executeCount===1)executeCount++ });
+        const procB =createEntityProcessor( 
+            (entityArray, timeMs, options ) =>{ if(executeCount===0)executeCount++ });
+        const procC =createEntityProcessor( 
+            (entityArray, timeMs, options ) =>{ if(executeCount===2)executeCount++ });
+
+        dispatch.addProcessor( procA, null, {priority:10} );
+        dispatch.addProcessor( procB, null, {priority:100} );
+        dispatch.addProcessor( procC );
+
+        dispatch.execute( entity );
+        t.equals( executeCount, 3, 'processors executed in order');
+    })
+    .then( () => t.end() )
+    .catch(err => log.error('test error: %s', err.stack))
+})
+
 
 
 function createEntityProcessor( onUpdate ){
@@ -140,55 +166,56 @@ function createEntityProcessor( onUpdate ){
 
 
 function EntityDispatch(){
-    this.processorEntries = {};
+    this.processorEntries = new Backbone.Collection();
+    this.processorEntries.comparator = (a,b) => a.get('priority') < b.get('priority');
 }
 
 EntityDispatch.prototype.addProcessor = function( processor, query, options={} ){
     let filter;
     query = query || processor.entityFilter;
 
-    let entry = {
+
+    let entry = new Backbone.Model({
         id: _.uniqueId('procdisp'),
         processor: processor,
         createdAt: 0,
         updatedAt: -1,
+        priority: _.isUndefined(options.priority) ? 0 : options.priority,
         interval: _.isUndefined(options.interval) ? 0 : options.interval
-    };
+    });
 
     if( query ){
         // NOTE: we are not doing anything other than ensuring the query is compiled
         // eventually we should be caching identical queries
-        processor.entityFilter = entry.query = Query.create( this.registry, query );
+        processor.entityFilter = Query.create( this.registry, query );
+        entry.set('query', processor.entityFilter);
     }
 
-    this.processorEntries[ entry.id ] = entry;
+    this.processorEntries.add(entry);
     return entry;
 }
 
 EntityDispatch.prototype.execute = function( entity, timeMs ){
-    let entry, query;
+    let entry, processor, query;
     let entityArray = _.isArray(entity) ? entity : [entity];
-    for (var p in this.processorEntries) {
-        entry = this.processorEntries[p];
-        query = entry.query;
 
-        if( entry.updatedAt >= 0 && (entry.interval + entry.updatedAt > timeMs) ){
-            continue;
+    this.processorEntries.each(entry => {
+        query = entry.get('query');
+        processor = entry.get('processor');
+
+        if( entry.get('updatedAt') >= 0 && (entry.get('interval') + entry.get('updatedAt') > timeMs) ){
+            return;
         }
 
         if( query ){
             let result = query.execute( entity );
-            // console.log('exec filter', 
-            //     JSON.stringify(processor.entityFilter), 
-            //     'against', entityToString(entity),
-            //     JSON.stringify( result ) );
             if( !result ){
-                continue;
+                return;
             }
         }
-        entry.processor.onUpdate( entityArray, timeMs );
-        entry.updatedAt = timeMs;
-    }
+        processor.onUpdate( entityArray, timeMs );
+        entry.set('updatedAt', timeMs);
+    });
 }
 
 EntityDispatch.create = function( registry ){
