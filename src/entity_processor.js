@@ -148,7 +148,6 @@ EntityProcessor.isEntityProcessor = function(ep){
     return ep && ep.isEntityProcessor;
 }
 
-
 EntityProcessor.create = function create( attrs, options={} ){
     const Model = options.Model || EntityProcessor;
     let result = new Model(attrs);

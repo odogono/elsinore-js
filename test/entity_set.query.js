@@ -182,27 +182,10 @@ test.skip('stuff', t => {
 
 test('sub-queries', t => {
     initialiseEntitySet().then( ([registry,entitySet]) => {
-        let clientId = 5;
-
+        
         // this query selects the other entities which are members of the same channel
         // as entity id 5
-        //
-        // query consists of two parts:
-        // - /channel_member components which have the client attr set to `clientId` are
-        //   selected.
-        // - the channel attr from /channel_member is plucked out and placed into the alias `channelIds`
-        // - /channel_member components are selected which have their channel_ref attribute match one
-        //   of the values from the previously saved channelIds array
-        
-        // let result = entitySet.query([
-        //     // 1. select channel ids which client `clientId` belongs to and store as alias `channelIds`
-        //     Query.all('/component/channel_member')
-        //         .where(Query.attr('client').equals(clientId)),
-        //     Query.pluck('/component/channel_member', 'channel'), // get all the values for 'channel'
-        //     // Query.aliasAs( 'channelIds' ), // save the pluck result (array) in the context for later
-        //     // Query.root(),
-        //     Query.selectById( null,true)
-        //     ]);
+        let clientId = 5;
 
         let result = entitySet.query([
             // 1. select channel ids which client `clientId` belongs to and store as alias `channelIds`
@@ -215,57 +198,16 @@ test('sub-queries', t => {
             Query.root(), // this resets the context back to the original entitySet
             Query.all('/component/channel_member')
                 .where( Query.attr('channel').equals( Query.alias('channelIds')) ),
+
+            // pluck returns an array of the specified attribute from the components
             Query.pluck('/component/channel_member', 'client', {unique:true}),
             Query.without( clientId ), // remove the clientId from the result of the pluck
-            // Query.aliasAs('clientIds'),
 
             // 3. using the channel_member client ids, select an entityset of client entities by entity ids
-            // Query.root(),
-            // Query.selectById( Query.alias('clientIds') ) // creates a new ES from selected ids
             // creates a new ES from selected ids - note that the function uses the result of the last
             // query option
             Query.selectById()
             ]);
-
-        // printE( result );
-        // let result = Query.execute( entitySet,[
-
-        //     // 1. select channel ids which client `clientId` belongs to and store as alias `channelIds`
-        //     [ Query.ALL_FILTER, 
-        //         '/component/channel_member',
-        //         [ Query.EQUALS,
-        //             [ Query.ATTR, 'client' ], 
-        //             clientId
-        //         ]
-        //     ],
-
-        //     [ Query.PLUCK, '/component/channel_member',  'channel' ],
-
-        //     [ Query.ALIAS, 'channelIds' ],
-
-        //     // 2. select channel members which belong to the channel ids stored in the alias `channelIds`
-        //     // clear the value
-        //     [Query.ROOT],
-
-        //     [ Query.ALL_FILTER, 
-        //         '/component/channel_member',
-        //         [ Query.EQUALS,
-        //             [ Query.ATTR, 'channel' ], 
-        //             [ Query.ALIAS_GET, 'channelIds' ]
-        //         ]
-        //     ],
-
-        //     [ Query.PLUCK, '/component/channel_member', 'client', {unique:true} ],
-
-        //     [ Query.WITHOUT, clientId ],
-
-        //     [Query.ALIAS, 'clientIds'],
-        //     // // 3. using the channel_member client ids, select an entityset of client entities 
-        //     [ Query.ROOT ],
-
-        //     [ Query.SELECT_BY_ID, [ Query.ALIAS_GET, 'clientIds' ] ],
-
-        //     ], {value:true, debug:false} ); 
 
         // the result should have 3 entities - channel_member, channel and client
         t.equal( result.size(), 4 );

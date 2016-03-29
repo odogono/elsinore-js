@@ -5,6 +5,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased][unreleased]
 ### Fixed
 - memory entity sets were assigning their ids to incoming entities, which is not allowed.
+- EntityDispatch. A utility for directing incoming entities to their interested processors
 
 ## [0.11.0] - 2015-10-26
 ### Added
