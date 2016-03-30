@@ -25,9 +25,9 @@ test('reaper', function(t){
         let entitySet = registry.createEntitySet();
 
         return registry.registerComponent({
-            connection: {id:'/connection', addr:{ type:'string' }},
-            ttl: {id:'/ttl', expires_at:{ type:'number' }},
-            dead: {id:'/dead'}
+            connection: {'id':'/connection', addr:{ type:'string' }},
+            ttl: {'id':'/ttl', expires_at:{ type:'number' }},
+            dead: {'id':'/dead'}
         })
         .then( () => [registry,entitySet] )
     })
@@ -161,22 +161,22 @@ function FilterEntitySet( entitySet, entityFilter ){
 function createTestEntitySet( registry, entitySet ){
     return populateEntitySet( registry, entitySet, [
         [
-            [ { id:'/connection', 'addr': '192.3.0.1'} ],
-            [ { id:'/ttl', expires_at:Date.now()-300 } ]
+            [ { '@c':'/connection', 'addr': '192.3.0.1'} ],
+            [ { '@c':'/ttl', expires_at:Date.now()-300 } ]
         ],
         [
-            [ { id:'/connection', 'addr': '192.3.0.2'} ]
+            [ { '@c':'/connection', 'addr': '192.3.0.2'} ]
         ],
         [
-            [ { id:'/connection', 'addr': '192.3.0.3'} ],
-            [ { id:'/ttl', expires_at:Date.now()+600, 'comment':'a' }]
+            [ { '@c':'/connection', 'addr': '192.3.0.3'} ],
+            [ { '@c':'/ttl', expires_at:Date.now()+600, 'comment':'a' }]
         ],
         [
-            [ { id:'/connection', 'addr': '192.3.0.4'} ],
-            [ { id:'/ttl', expires_at:Date.now()+2000, 'comment':'b' } ]
+            [ { '@c':'/connection', 'addr': '192.3.0.4'} ],
+            [ { '@c':'/ttl', expires_at:Date.now()+2000, 'comment':'b' } ]
         ],
         [
-            [ { id:'/connection', 'addr': '192.3.0.5'} ]
+            [ { '@c':'/connection', 'addr': '192.3.0.5'} ]
         ]
     ] );
 }

@@ -117,8 +117,8 @@ test('removing a component from an entity', t => {
 
         entitySet.addEntity(
             registry.createEntity([
-                { id:'/component/flower', colour:'red'},
-                { id:'/component/position', x:-2, y:5 }] ));
+                { '@c':'/component/flower', colour:'red'},
+                { '@c':'/component/position', x:-2, y:5 }] ));
             
         // view.update();
         // printE( view );
@@ -144,11 +144,11 @@ test('adding a component to an entity', t => {
         var view = entitySet.view(null, {updateOnEvent:true});
 
         entitySet.addEntity(
-            registry.createEntity( { id:'/component/flower', colour:'white'} ));
+            registry.createEntity( { '@c':'/component/flower', colour:'white'} ));
 
         t.ok( view.at(0).Flower, 'the entity should have flower' );
 
-        component = registry.createComponent( {id:'/component/position', x:-2, y:5}, entitySet.at(0) );
+        component = registry.createComponent( {'@c':'/component/position', x:-2, y:5}, entitySet.at(0) );
 
         t.equals( component.getEntityId(), entitySet.at(0).getEntityId(), 'the entity ids are identical' );
 
@@ -171,7 +171,7 @@ test('adding a component to an entity triggers an entity:add event', t => {
         view.on('all', eventSpy);
 
         entitySet.addEntity(
-            registry.createEntity( { id:'/component/flower', colour:'magenta'} ));
+            registry.createEntity( { '@c':'/component/flower', colour:'magenta'} ));
 
         t.ok( eventSpy.calledWith('entity:add'), 'entity:add should have been called');
         t.end();
@@ -218,14 +218,14 @@ test('deferred addition of components with a filter', t => {
 
         var entity = entitySet.addEntity(
             registry.createEntity([
-                { id:'/component/flower', colour:'blue'}] ));
+                { '@c':'/component/flower', colour:'blue'}] ));
 
         // view.applyEvents();
 
         t.equals( view.length, 0, 'no entities yet' );
 
         entitySet.addComponent(
-            registry.createComponent({id:'/component/position', x:10, y:100}, entity ) );
+            registry.createComponent({'@c':'/component/position', x:10, y:100}, entity ) );
 
         // a new component added to a view needs an event being applied
         view.applyEvents();
@@ -283,12 +283,12 @@ test('views created with a filter', t => {
 //     // Common.logEvents( view, 'e view' );
 
 //     entity = entitySet.addEntity(
-//         registry.createEntity({ id:'/component/flower', colour:'blue'} ));
+//         registry.createEntity({ '@c':'/component/flower', colour:'blue'} ));
     
 //     t.equals( view.size(), 1, 'the view has the new entity');
 
 //     entitySet.addComponent( 
-//         registry.createComponent( {id:'/component/position', x:-2,y:5}, entity) );
+//         registry.createComponent( {'@c':'/component/position', x:-2,y:5}, entity) );
 
 //     // printE( view );
 
@@ -313,13 +313,13 @@ test('deferred removal of an entity', t => {
 
         entitySet.addEntity(
             registry.createEntity([
-                { id:'/component/flower', colour:'blue'},
-                { id:'/component/position', x:10, y:60 }] ));
+                { '@c':'/component/flower', colour:'blue'},
+                { '@c':'/component/position', x:10, y:60 }] ));
 
         entitySet.addEntity(
             registry.createEntity([
-                { id:'/component/vegetable', name:'cauliflower'},
-                { id:'/component/radius', radius:0.3 }] ));
+                { '@c':'/component/vegetable', name:'cauliflower'},
+                { '@c':'/component/radius', radius:0.3 }] ));
 
         // view.applyEvents();
 
@@ -352,13 +352,13 @@ test('deferred removal of an entity triggers correct events', t => {
 
         entityA = entitySet.addEntity(
             registry.createEntity([
-                { id:'/component/flower', colour:'blue'},
-                { id:'/component/position', x:10, y:60 }] ));
+                { '@c':'/component/flower', colour:'blue'},
+                { '@c':'/component/position', x:10, y:60 }] ));
 
         entityB = entitySet.addEntity(
             registry.createEntity([
-                { id:'/component/vegetable', name:'cauliflower'},
-                { id:'/component/radius', radius:0.3 }] ));
+                { '@c':'/component/vegetable', name:'cauliflower'},
+                { '@c':'/component/radius', radius:0.3 }] ));
 
         // view.applyEvents();
 
@@ -382,8 +382,8 @@ test('altering a component in the view also changes the component in the entitys
 
         entitySet.addEntity(
             registry.createEntity([
-                { id:'/component/flower', colour:'blue'},
-                { id:'/component/radius', radius:0.1 }] ));
+                { '@c':'/component/flower', colour:'blue'},
+                { '@c':'/component/radius', radius:0.1 }] ));
 
         // view.applyEvents();
 
@@ -410,8 +410,8 @@ test('changing a component in the view triggers a change event', t => {
 
         entitySet.addEntity(
             registry.createEntity([
-                { id:'/component/flower', colour:'yellow', type:'daisy'},
-                { id:'/component/radius', radius:0.4 }] ));
+                { '@c':'/component/flower', colour:'yellow', type:'daisy'},
+                { '@c':'/component/radius', radius:0.4 }] ));
 
         
         // log.debug('from here');

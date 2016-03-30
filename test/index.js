@@ -1,9 +1,9 @@
 import './cmd_buffer_async';
 import './component';
+import './dispatch';
 import './entity';
 import './entity_events';
 import './entity_filter';
-import './entity_processor.dispatch';
 import './entity_set';
 import './entity_set.query';
 import './entity_set.query.dsl';

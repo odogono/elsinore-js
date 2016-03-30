@@ -44,8 +44,8 @@ test('Logic op', t => {
 test('Accepting an entity', t => {
     return initialiseRegistry().then( registry => {
         let result;
-        let entity = registry.createEntity( [{ id:'/component/channel', name:'test'},
-            {id: "/component/topic", topic: "Javascript" }] );
+        let entity = registry.createEntity( [{ '@c':'/component/channel', name:'test'},
+            {'@c': "/component/topic", topic: "Javascript" }] );
         
         result = Query.all( '/component/channel' ).execute( entity, {debug:false} );
 
@@ -60,8 +60,8 @@ test('Rejecting an entity', t => {
         let result;
         
         let entity = registry.createEntity( [
-            { id:'/component/channel', name:'test'},
-            { id:'/component/topic', topic: 'Javascript'}
+            { '@c':'/component/channel', name:'test'},
+            { '@c':'/component/topic', topic: 'Javascript'}
         ]);
 
         result = Query.all( '/component/name' ).execute( entity, {debug:false} );
@@ -93,8 +93,8 @@ test('compiling a basic two stage entity filter', t => {
 test('compiling an entity filter', t => {
     return initialiseRegistry().then( registry => {
 
-        let entity = registry.createEntity( [{ id:'/component/channel', name:'test'},
-            {id: "/component/topic", topic: "Javascript" }] );
+        let entity = registry.createEntity( [{ '@c':'/component/channel', name:'test'},
+            {'@c': "/component/topic", topic: "Javascript" }] );
 
         let query = Query.all('/component/topic','/component/channel');
         // let compiled = filter.compile( registry );
@@ -122,8 +122,8 @@ test('compiling an entity filter', t => {
 
 test('a single filter query on an entity', t => {
     return initialiseRegistry().then( registry => {
-        let entity = registry.createEntity( [{ id:'/component/channel', name:'test'},
-            {id: "/component/topic", topic: "Javascript" }] );
+        let entity = registry.createEntity( [{ '@c':'/component/channel', name:'test'},
+            {'@c': "/component/topic", topic: "Javascript" }] );
 
         let query = Query.all('/component/channel');
         t.ok( !query.isCompiled );
@@ -149,15 +149,15 @@ test('accepting an entity based on its attributes', t => {
     // printIns( query );
 
     t.ok( Entity.isEntity(query.execute(
-        registry.createEntity( { id:'/component/mode/limit', limit:10} ),
+        registry.createEntity( { '@c':'/component/mode/limit', limit:10} ),
         {debug:false} )), 'the query returns the entity with a limit > 10' );
 
     t.notOk( query.execute(
-        registry.createEntity( { id:'/component/mode/limit', limit:9} )
+        registry.createEntity( { '@c':'/component/mode/limit', limit:9} )
         ), 'query rejects entity with a limit > 10');
 
     t.notOk( query.execute(
-        registry.createEntity( { id:'/component/mode/limit'} )
+        registry.createEntity( { '@c':'/component/mode/limit'} )
         ), 'query rejects entity with no limit');
 
     t.end();

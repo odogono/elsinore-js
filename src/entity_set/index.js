@@ -500,7 +500,7 @@ let EntitySet = Backbone.Collection.extend({
 
 
 EntitySet.hash = function( entitySet ){
-    let hash = entitySet.type;
+    let hash = entitySet.toJSON();// entitySet.type;
     return Utils.hash( hash, true );
 }
 

@@ -106,7 +106,7 @@ test('create from a pre-registered schema', t => {
 
 test('create from a pre-registered schema using data object', t => {
     return initialiseRegistry({loadComponents:true}).then( registry => {
-        let component = registry.createComponent( {id:'/component/nickname', nickname:'susan'} );
+        let component = registry.createComponent( {'@c':'/component/nickname', nickname:'susan'} );
         t.equals( component.get('nickname'), 'susan', 'the component is created with attributes' );
         t.end();
     });
@@ -126,10 +126,10 @@ test('create from an array of data', t => {
 test('create with an entity id', t => {
     return initialiseRegistry().then( registry => {
 
-        let component = registry.createComponent( {id:'/component/nickname', _e:15} );
+        let component = registry.createComponent( {'@c':'/component/nickname', '@e':15} );
         t.equals( component.getEntityId(), 15, 'the entity id is retrieved' );
 
-        component = registry.createComponent( {id:'/component/nickname', _e:15, _es:10} );
+        component = registry.createComponent( {'@c':'/component/nickname', '@e':15, '@es':10} );
         t.equals( component.getEntityId(), 42949672975, 'the entity id is retrieved' );
 
         t.end();
@@ -141,7 +141,7 @@ test('create with an entity id', t => {
 test('updating a components entity refs', t => {
     return initialiseRegistry().then( registry => {
         let component = registry.createComponent( 
-            {"_e":12, "id": "/component/channel_member", "channel": 1, "client": 5} );
+            {"@e":12, "@c": "/component/channel_member", "channel": 1, "client": 5} );
         
         let aComponent = mapComponentEntityRefs( registry, component, { 5: 290, 1: 340} );
 

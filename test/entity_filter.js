@@ -204,7 +204,7 @@ let Components = _.reduce( ComponentDefs, (memo,val,key) => {
 
 let ComponentIIdToObject = _.reduce( ComponentDefs, (memo,val,key) => {
     memo[ parseInt(val.schemaIId,10) ] = val;
-    val._s = val.schemaIId;
+    val['@s'] = val.schemaIId;
     return memo;
 },[]);
 
@@ -242,13 +242,13 @@ function createComponent( componentIId ){
     let result;
     let data;
     if( _.isObject(componentIId) ){
-        attrs = _.omit( componentIId, '_c' );
-        componentIId = componentIId._c;
+        attrs = _.omit( componentIId, '@c' );
+        componentIId = componentIId['@c'];
     }
-    result = Component.create(_.extend( attrs, {id: _.uniqueId() }) );
+    result = Component.create(_.extend( attrs, {'@c': _.uniqueId() }) );
     data = ComponentIIdToObject[ componentIId ];
     _.each( data, (val,key) => result[ key ] = val );
-    result.set( {_s:data._s} );
+    result.set( {'@s':data['@s']} );
     return result;
 }
 

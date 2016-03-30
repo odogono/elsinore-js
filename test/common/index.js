@@ -42,6 +42,8 @@ import {printIns} from '../../src/util';
 import SchemaRegistry from '../../src/schema';
 export {SchemaRegistry as SchemaRegistry};
 
+import Dispatch from '../../src/dispatch';
+export {Dispatch as Dispatch};
 
 
 export {printIns,

@@ -39,7 +39,7 @@ test('triggering an event on an entity', function(t){
         //     log.debug('2!eevt '  + JSON.stringify(arguments));
         // } );
         
-        entity = registry.createEntity( { id:'/component/animal', name:'tiger' } );
+        entity = registry.createEntity( { '@c':'/component/animal', name:'tiger' } );
         entity = entitySet.addEntity( entity );
 
         // entitySet.addComponent( registry.createComponent( '/component/animal', {id:5,_e:1, name:'tiger'}) );
@@ -67,7 +67,7 @@ test('the registry triggers the event on entitysets', function(t){
         });
 
         entity = entitySet.addEntity( 
-            registry.createEntity( { id:'/component/animal', name:'tiger' } ) );
+            registry.createEntity( { '@c':'/component/animal', name:'tiger' } ) );
 
         // registry.triggerEntityEvent( 'msg', entity, 'close the door' );
         entity.triggerEntityEvent( 'msg', 'close the door');
@@ -100,7 +100,7 @@ test('the registry triggers the event on a compatible entityset', function(t){
         animalEntitySet.on('msg', () => animalCalled = true );
 
         entity = entitySet.addEntity( 
-            registry.createEntity( { id:'/component/animal', name:'tiger' } ) );
+            registry.createEntity( { '@c':'/component/animal', name:'tiger' } ) );
 
         entity.triggerEntityEvent( 'msg', 'welcome' );
 
@@ -130,7 +130,7 @@ test('triggers events which are stored until release', t => {
         });
 
         entity = entitySet.addEntity( 
-            registry.createEntity( { id:'/component/animal', name:'tiger' } ) );
+            registry.createEntity( { '@c':'/component/animal', name:'tiger' } ) );
 
         entitySet.triggerEntityEvent( 'msg', entity );
 
@@ -158,7 +158,7 @@ test('still triggers on normal listeners', function(t){
         });
 
         entity = entitySet.addEntity( 
-            registry.createEntity( { id:'/component/animal', name:'tiger' } ) );
+            registry.createEntity( { '@c':'/component/animal', name:'tiger' } ) );
 
         entitySet.triggerEntityEvent( 'msg', entity );
 

@@ -3,9 +3,20 @@ Written with guidance from [Keep a CHANGELOG](http://keepachangelog.com/).
 This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased][unreleased]
+
+
+## [1.0.0] - 2016-03-30
+### Added
+- (Entity)Dispatch. A utility for directing incoming entities to their interested processors
+
+### Changed
+- altered key for component id from 'id' to '@c'
+- altered key for entity id from '_e' to '@e'
+- altered key for entityset id from '_es' to '@es'
+- altered key for schema id from '_s' to '@s'
+
 ### Fixed
 - memory entity sets were assigning their ids to incoming entities, which is not allowed.
-- EntityDispatch. A utility for directing incoming entities to their interested processors
 
 ## [0.11.0] - 2015-10-26
 ### Added

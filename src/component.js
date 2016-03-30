@@ -16,17 +16,17 @@ var Component = Model.extend({
         if( !resp || _.keys(resp).length <= 0 ){
             return resp;
         }
-        if( resp._es ){
-            esId = resp._es;
-            delete resp._es;
+        if( resp['@es'] ){
+            esId = resp['@es'];
+            delete resp['@es'];
         }
-        if( resp._e ){
-            eId = resp._e;
-            // delete resp._e;
+        if( resp['@e'] ){
+            eId = resp['@e'];
+            // delete resp['@e'];
         }
         if( esId || eId ){
             // log.debug('creating from ' + eId + ' ' + esId );
-            resp._e = Utils.setEntityIdFromId(eId, esId);
+            resp['@e'] = Utils.setEntityIdFromId(eId, esId);
         }
 
         return resp;
@@ -40,30 +40,30 @@ var Component = Model.extend({
     // },
     
     getEntityId: function(){
-        return this.get('_e');
+        return this.get('@e');
     },
 
     setEntityId: function(id, internalId){
-        this.set({'_e':id}, {silent:true});
+        this.set({'@e':id}, {silent:true});
     },
 
     getSchemaId: function(){
-        return this.get('_s');
+        return this.get('@s');
     },
     setSchemaId: function(id){
-        this.set({'_s':id});
+        this.set({'@s':id});
     },
 
     setId: function(id){
-        this.set({'_c':id}, {silent:true});  
+        this.set({'@c':id}, {silent:true});  
     },
 
     getId: function(id){
-        return this.get('_c');
+        return this.get('@c');
     },
 
     hash: function(asString){
-        let result = Utils.stringify(  _.omit(this.attributes, '_e','_es','_s', '_c') );
+        let result = Utils.stringify(  _.omit(this.attributes, '@e','@es','@s', '@c') );
         return Utils.hash( result, asString );
     },
 });

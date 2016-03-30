@@ -42,7 +42,7 @@ test('adding a component with an eid, but not a member of the es', t => {
     return initialiseRegistry().then( registry => {
         let cb = CmdBuffer.create();
         let es = createEntitySet( 50 );
-        let com = createComponent( {_e:10} );
+        let com = createComponent( {'@e':10} );
 
         return cb.addComponent( es, com )
             .then(added => {
@@ -57,7 +57,7 @@ test('adding a component with an eid, a non-member of the es', t => {
     return initialiseRegistry().then( registry => {
         let cb = CmdBuffer.create();
         let es = createEntitySet( 50 );
-        let com = createComponent( {_e:11, _es:50} );
+        let com = createComponent( {'@e':11, '@es':50} );
 
         return cb.addComponent( es, com )
             .then( added => {
@@ -76,7 +76,7 @@ test('adding a component with an eid, a non-member of the es', t => {
 test('adding a component with an eid, an existing member of the es', t => {
     let cb = CmdBuffer.create();
     let es = createEntitySet( 50, [11] );
-    let com = createComponent( {_e:11, _es:50} );
+    let com = createComponent( {'@e':11, '@es':50} );
 
     return cb.addComponent( es, com )
         .then( added => {
@@ -91,7 +91,7 @@ test('adding a component with an eid, an existing member of the es', t => {
 test('updating an existing component', t => {
     let cb = CmdBuffer.create();
     let es = createEntitySet( 50, [11] );
-    let com = createComponent( {_e:11, _es:50} );
+    let com = createComponent( {'@e':11, '@es':50} );
 
     es.getEntity = function(entityId){
         let e = createEntity(entityId);
@@ -114,7 +114,7 @@ test('adding an entity with multiple components', t => {
     let cb = CmdBuffer.create();
     let es = createEntitySet(60);
     let e = Entity.create();
-    let coms = createComponent({tag:'soft',_s:3},{tag:'hard',_s:10});
+    let coms = createComponent({tag:'soft','@s':3},{tag:'hard','@s':10});
     _.each( coms, com => e.addComponent(com) );
     // printIns( e.getComponentBitfield().toString() );
 
@@ -132,7 +132,7 @@ test('updating an entity with a new component', t => {
     let cb = CmdBuffer.create();
     let es = createEntitySet(62, [10]);
     let e = Entity.create(10,62);
-    let coms = createComponent({tag:'soft',_s:3},{tag:'hard',_s:10});
+    let coms = createComponent({tag:'soft','@s':3},{tag:'hard','@s':10});
     _.each( coms, com => e.addComponent(com) );
     // printIns( e.getComponentBitfield().toString() );
 
@@ -162,7 +162,7 @@ test('removing a component from an entity', t => {
     let cb = CmdBuffer.create();
     let es = createEntitySet(63, [12]);
     let e = Entity.create(12,63);
-    let coms = createComponent({tag:'soft',_s:4},{tag:'hard',_s:10},{tag:'kik',_s:13});
+    let coms = createComponent({tag:'soft','@s':4},{tag:'hard','@s':10},{tag:'kik','@s':13});
     _.each( coms, com => e.addComponent(com) );
     // printIns( e.getComponentBitfield().toString() );
 
@@ -184,7 +184,7 @@ test('removing the last component from an entity', t => {
     let cb = CmdBuffer.create();
     let es = createEntitySet(63, [12]);
     let e = Entity.create(12,63);
-    let com = createComponent({tag:'soft',_s:4});
+    let com = createComponent({tag:'soft','@s':4});
     
     e.addComponent(com);
 
@@ -207,7 +207,7 @@ test('removing all components from an entity', t => {
     let cb = CmdBuffer.create();
     let es = createEntitySet(63, [12]);
     let e = Entity.create(12,63);
-    let coms = createComponent({tag:'soft',_s:4},{tag:'hard',_s:10},{tag:'kik',_s:13});
+    let coms = createComponent({tag:'soft','@s':4},{tag:'hard','@s':10},{tag:'kik','@s':13});
     _.each( coms, com => e.addComponent(com) );
     // printIns( e.getComponentBitfield().toString() );
 
@@ -233,7 +233,7 @@ test('removing an existing entity', t => {
     let cb = CmdBuffer.create();
     let es = createEntitySet(64, [13]);
     let e = Entity.create(13,64);
-    let coms = createComponent({tag:'soft',_s:4},{tag:'hard',_s:10},{tag:'kik',_s:13});
+    let coms = createComponent({tag:'soft','@s':4},{tag:'hard','@s':10},{tag:'kik','@s':13});
     _.each( coms, com => e.addComponent(com) );
     // printIns( e.getComponentBitfield().toString() );
 
@@ -259,11 +259,11 @@ test('adding multiple', t => {
         let cb = CmdBuffer.create();
         let es = createEntitySet(66);
         let data = [
-            {"_e":1, "id": "/component/channel", _s:1, "name":"ecs" },
-            {"_e":1, "id": "/component/topic", _s:2, "topic": "Entity Component Systems" },
-            {"_e":5, "id": "/component/username", _s:3, "username":"aveenendaal"},
-            {"_e":5, "id": "/component/nickname", _s:4, "nickname":"alex"},
-            {"_e":12, "id": "/component/channel_member", _s:5, "channel": 1, "client": 5 },
+            {"@e":1, "@c": "/component/channel", '@s':1, "name":"ecs" },
+            {"@e":1, "@c": "/component/topic", '@s':2, "topic": "Entity Component Systems" },
+            {"@e":5, "@c": "/component/username", '@s':3, "username":"aveenendaal"},
+            {"@e":5, "@c": "/component/nickname", '@s':4, "nickname":"alex"},
+            {"@e":12, "@c": "/component/channel_member", '@s':5, "channel": 1, "client": 5 },
         ];
 
         let entities = loadEntities( registry, data );

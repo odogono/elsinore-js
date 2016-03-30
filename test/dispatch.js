@@ -4,7 +4,7 @@ import Sinon from 'sinon';
 import test from 'tape';
 
 import {
-    Entity, EntityProcessor, Query, 
+    Entity, EntityProcessor, Query, Dispatch,
     initialiseRegistry, 
     loadEntities, 
     loadFixtureJSON,
@@ -34,10 +34,27 @@ it.
     - when an entity is accepted by a query, cache it's signature (component bits) so that the
     next time it (or something similar) passes through, the query won't have to be run.
     this may not always work, because the query may be selecting on component attributes.
+
+    - the dispatch works either by having each processor process each entity in the ES:
+
+    procA - updates each e in the ES
+    procB - updates each e in the ES
+    ...
+
+    OR by limiting the execution to the first entity in the ES. by using an execute limit.
+
+    procA - updates the first e in the ES
+    procB - updates the first e in the ES - if exists
+    ...
+
+    so that is two types of operation for processors:
+    - an entityset view (based on the p. query) is prepared for the processor ahead of execution
+    - (adhoc) the processor works on the entityset as is, evaluating each entity against its query.
+
 */
 
 test('basic execution of a processor', t => {
-    let dispatch = EntityDispatch.create();
+    let dispatch = Dispatch.create();
     let executeCount = 0;
 
     const processor = createEntityProcessor(
@@ -61,7 +78,7 @@ test('basic execution of a processor', t => {
 
 test('will only execute processors which match', t => {
     return initialiseRegistry().then( registry => {
-        let dispatch = EntityDispatch.create(registry);
+        let dispatch = Dispatch.create(registry);
         let executeCount = 0;
 
         const processor =createEntityProcessor( 
@@ -73,7 +90,7 @@ test('will only execute processors which match', t => {
         dispatch.addProcessor( processor, Query.all('/component/hostname') );
         dispatch.addProcessor( otherProcessor, Query.all('/component/username') );
         
-        let entity = registry.createEntity( { id:'/component/username', username:'fred' } );
+        let entity = registry.createEntity( { '@c':'/component/username', username:'fred' } );
 
         dispatch.execute( entity );
 
@@ -89,8 +106,8 @@ test('will only execute processors which match', t => {
 
 test('executing a processor with a time interval', t => {
     return initialiseRegistry().then( registry => {
-        let dispatch = EntityDispatch.create(registry);
-        let entity = registry.createEntity( {id:'/component/username'} );
+        let dispatch = Dispatch.create(registry);
+        let entity = registry.createEntity( {'@c':'/component/username'} );
         let executeCount = 0;
 
         const processor =createEntityProcessor( 
@@ -115,19 +132,19 @@ test('executing a processor with a time interval', t => {
     .catch( err => log.error('test error: %s', err.stack) ) 
 });
 
-test.only('processors can have priority', t => {
+test('processors can have priority', t => {
     return initialiseRegistry().then( registry => {
-        let dispatch = EntityDispatch.create(registry);
+        let dispatch = Dispatch.create(registry);
 
-        let entity = registry.createEntity( {id:'/component/username'} );
+        let entity = registry.createEntity( {'@c':'/component/username'} );
         let executeCount = 0;
 
         const procA =createEntityProcessor( 
-            (entityArray, timeMs, options ) =>{ if(executeCount===1)executeCount++ });
+            (entityArray, timeMs, options ) =>{ if(executeCount===1){executeCount++} });
         const procB =createEntityProcessor( 
-            (entityArray, timeMs, options ) =>{ if(executeCount===0)executeCount++ });
+            (entityArray, timeMs, options ) =>{ if(executeCount===0){executeCount++} });
         const procC =createEntityProcessor( 
-            (entityArray, timeMs, options ) =>{ if(executeCount===2)executeCount++ });
+            (entityArray, timeMs, options ) =>{ if(executeCount===2){executeCount++} });
 
         dispatch.addProcessor( procA, null, {priority:10} );
         dispatch.addProcessor( procB, null, {priority:100} );
@@ -138,7 +155,12 @@ test.only('processors can have priority', t => {
     })
     .then( () => t.end() )
     .catch(err => log.error('test error: %s', err.stack))
-})
+});
+
+
+test('dispatch can modify the incoming entityset');
+
+test('processors executing with promises');
 
 
 
@@ -164,62 +186,3 @@ function createEntityProcessor( onUpdate ){
 // })
 
 
-
-function EntityDispatch(){
-    this.processorEntries = new Backbone.Collection();
-    this.processorEntries.comparator = (a,b) => a.get('priority') < b.get('priority');
-}
-
-EntityDispatch.prototype.addProcessor = function( processor, query, options={} ){
-    let filter;
-    query = query || processor.entityFilter;
-
-
-    let entry = new Backbone.Model({
-        id: _.uniqueId('procdisp'),
-        processor: processor,
-        createdAt: 0,
-        updatedAt: -1,
-        priority: _.isUndefined(options.priority) ? 0 : options.priority,
-        interval: _.isUndefined(options.interval) ? 0 : options.interval
-    });
-
-    if( query ){
-        // NOTE: we are not doing anything other than ensuring the query is compiled
-        // eventually we should be caching identical queries
-        processor.entityFilter = Query.create( this.registry, query );
-        entry.set('query', processor.entityFilter);
-    }
-
-    this.processorEntries.add(entry);
-    return entry;
-}
-
-EntityDispatch.prototype.execute = function( entity, timeMs ){
-    let entry, processor, query;
-    let entityArray = _.isArray(entity) ? entity : [entity];
-
-    this.processorEntries.each(entry => {
-        query = entry.get('query');
-        processor = entry.get('processor');
-
-        if( entry.get('updatedAt') >= 0 && (entry.get('interval') + entry.get('updatedAt') > timeMs) ){
-            return;
-        }
-
-        if( query ){
-            let result = query.execute( entity );
-            if( !result ){
-                return;
-            }
-        }
-        processor.onUpdate( entityArray, timeMs );
-        entry.set('updatedAt', timeMs);
-    });
-}
-
-EntityDispatch.create = function( registry ){
-    const result = new EntityDispatch();
-    result.registry = registry;
-    return result;
-}

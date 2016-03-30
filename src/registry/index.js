@@ -270,7 +270,7 @@ _.extend(Registry.prototype, Backbone.Events, {
     createComponent: function( componentDef, attrs, options = {} ){
         let ii, len, name, schema, defaults, entityId, schemaIId, result, schemaKey;
         
-        schemaKey = options.schemaKey || 'id';
+        schemaKey = options.schemaKey || '@c';
 
         entityId = options.entity || options.entityId || options.eid;
 
@@ -533,10 +533,6 @@ _.extend(Registry.prototype, Backbone.Events, {
         //     this.entitySetProcessors[ entitySet.id ] = null;
         // }
     },
-
-
-    
-
 
     triggerEntityEvent: function( name, entity ){
         let entitySet, bf, ii, len, trigger;
