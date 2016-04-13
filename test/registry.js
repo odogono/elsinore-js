@@ -62,6 +62,26 @@ test('creating an entityset with an identical uuid throws an error', t => {
 
 // creating components
 
+test('creating a component with an unknown schema throws an error', t => {
+    let registry = Registry.create();
+
+    try {
+        registry.createComponent( {'@c':'/component/status', 'status':'active'} );
+    } catch( err ){
+        t.equals( err.message, 'no schema found for component {"@c":"/component/status","status":"active"}');
+    }
+    t.end();
+});
+
+test('creating a component with an unknown schema', t => {
+    let registry = Registry.create();
+
+    registry.createComponent( {'@c':'/component/status', 'status':'active'}, null, null, (err,result) => {
+        t.equals( err, 'no schema found for component {"@c":"/component/status","status":"active"}');
+        t.end();    
+    });
+});
+
 test('create from a schema', t => {
     return initialiseRegistry({loadComponents:false}).then( registry => {
         let componentData = loadComponents();

@@ -4,6 +4,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased][unreleased]
 
+## [1.1.0] - 2016-04-13
+### Changed
+- registry.createComponent can take a callback parameter which is an alternative to throwing errors 
 
 ## [1.0.0] - 2016-03-30
 ### Added

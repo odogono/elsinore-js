@@ -267,9 +267,10 @@ _.extend(Registry.prototype, Backbone.Events, {
      * @param  {[type]} schemaUri [description]
      * @return {[type]}          [description]
      */
-    createComponent: function( componentDef, attrs, options = {} ){
+    createComponent: function( componentDef, attrs, options, cb ){
         let ii, len, name, schema, defaults, entityId, schemaIId, result, schemaKey;
         
+        options || (options={});
         schemaKey = options.schemaKey || '@c';
 
         entityId = options.entity || options.entityId || options.eid;
@@ -306,19 +307,15 @@ _.extend(Registry.prototype, Backbone.Events, {
             if( schema ){
                 schema = this.schemaRegistry.get( schema, null, {full:true} );
             }
-
-            // no existing - go ahead and register
-            // if( !schema && doRegister ){
-            //     schema = this.schemaRegistry.register( componentDef );
-            //     schema = schema[0];
-            // }
         }
         else {
             schema = this.schemaRegistry.get(componentDef, null, {full:true});
         }
 
         if( !schema ){
-            // printIns( this );
+            if( cb ){
+                return cb( 'no schema found for component ' + Utils.stringify(componentDef) );
+            }
             throw new Error('no schema found for component ' + Utils.stringify(componentDef) );
         }
 
@@ -335,10 +332,15 @@ _.extend(Registry.prototype, Backbone.Events, {
                 result.push( this._createComponent( schemaIId, name, schema, defaults, attrs[ii], entityId, options ) );
             }
 
-            return result;
+            
+        } else {
+            result = this._createComponent( schemaIId, name, schema, defaults, attrs, entityId, options );    
         }
 
-        return this._createComponent( schemaIId, name, schema, defaults, attrs, entityId, options );
+        if( cb ){
+            return cb(null, result);
+        }
+        return result;
     },
 
     /**
