@@ -1,3 +1,5 @@
+/* @flow */
+
 import test from 'tape';
 
 import {
@@ -17,7 +19,6 @@ import {
 } from './common';
 
 
-
 test('is an entity', t => {
     let e = Entity.create();
     t.equals( e.type, 'Entity' );
@@ -25,6 +26,7 @@ test('is an entity', t => {
     t.ok( Entity.isEntity(e) );
     t.end();
 });
+
 
 
 test('setting the id', t => {

@@ -21,7 +21,8 @@ var UGLIFY_VENDOR_LIBS = false;
 var UGLIFY_LIB = true;
 
 var BabelOptions = {
-    presets: ['es2015']
+    // presets: ['es2015'],
+    presets: [ 'es2015-node' ],
 };
 
 var paths = {

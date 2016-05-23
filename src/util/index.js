@@ -61,24 +61,24 @@ export function isInteger(i) {
  * @param {integer} [seed] optionally pass the hash of the previous chunk
  * @returns {integer | string}
  */
- export function hash/*Fnv32a*/(str, asString, seed) {
-    /*jshint bitwise:false */
-    let i, l,
-        hval = (seed === undefined) ? 0x811c9dc5 : seed;
+ export function hash/*Fnv32a*/(str, asString=false, seed=0x811c9dc5) {
+     /*jshint bitwise:false */
+     let ii, len, hval = seed;
+     // hval = (seed === undefined) ? 0x811c9dc5 : seed;
 
-    for (i = 0, l = str.length; i < l; i++) {
-        hval ^= str.charCodeAt(i);
-        hval += (hval << 1) + (hval << 4) + (hval << 7) + (hval << 8) + (hval << 24);
-    }
-    
-    hval = hval >>> 0;
+     for (ii = 0, len = str.length; ii < len; ii++) {
+         hval ^= str.charCodeAt(ii);
+         hval += (hval << 1) + (hval << 4) + (hval << 7) + (hval << 8) + (hval << 24);
+     }
+     
+     hval = hval >>> 0;
 
-    if( asString ){
-        // Convert to 8 digit hex string
-        return ("0000000" + hval.toString(16)).substr(-8);
-    }
-    return hval;
-}
+     if( asString ){
+         // Convert to 8 digit hex string
+         return ("0000000" + hval.toString(16)).substr(-8);
+     }
+     return hval;
+ }
 
 
 export function normalizeUri(uri){
@@ -101,6 +101,48 @@ export function parseUri( uri, parseQueryString ){
     return result;
 }
 
+
+
+
+// /**
+//  * parseUri 1.2.2
+//  * (c) Steven Levithan <stevenlevithan.com>
+//  * MIT License
+//  * http://blog.stevenlevithan.com/archives/parseuri
+//  */
+// export function parseUri( str ) {
+//     let o   = parseUri.options,
+//         m   = o.parser[o.strictMode ? "strict" : "loose"].exec(str),
+//         uri = {},
+//         i   = 14;
+
+//     while (i--) uri[o.key[i]] = m[i] || "";
+
+//     uri[o.q.name] = {};
+//     uri[o.key[12]].replace(o.q.parser, function ($0, $1, $2) {
+//         if ($1) uri[o.q.name][$1] = $2;
+//     });
+
+//     return uri;
+// };
+
+// parseUri.options = {
+//     strictMode: false,
+//     key: ["source","protocol","authority","userInfo","user","password","host","port","relative","path","directory","file","query","anchor"],
+//     q:   {
+//         name:   "queryKey",
+//         parser: /(?:^|&)([^&=]*)=?([^&]*)/g
+//     },
+//     parser: {
+//         strict: /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,
+//         loose:  /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/
+//     }
+// };
+
+
+
+
+
 export function parseIntWithDefault( value, defaultValue ){
     let result = parseInt( value, 10 );
     return isNaN(value) ? defaultValue : value;
@@ -117,15 +159,19 @@ export function deepClone( obj ){
 }
 
 // from: http://www.tuanhuynh.com/blog/2014/unpacking-underscore-clone-and-extend/
-export function deepExtend( out ){
-    let i, len;
+export function deepExtend( out, ...others ){
+    let ii, len;
     let obj;
-    let key;
+    let key,val;
 
     out || (out={});
 
-    for (i = 1, len = arguments.length; i < len; i++) {
-        obj = arguments[i];
+    for (ii = 1, len = others.length; ii < len; ii++) {
+        obj = others[ii];
+
+        if (!obj){
+            continue;
+        }
 
         if (!obj){
             continue;
@@ -135,15 +181,22 @@ export function deepExtend( out ){
             if( !obj.hasOwnProperty(key) ){
                 continue;
             }
-
-            if( _.isArray(obj[key] ) ){
-                out[key] = deepExtend( out[key] || [], obj[key] );
+            val = obj[key];
+            
+            if( _.isArray(val) ){
+                out[key] = deepExtend( out[key] || [], val );
             }
-            else if (typeof obj[key] === 'object'){
-                out[key] = deepExtend(out[key], obj[key]);
+            else if( _.isString(val) ){
+                out[key] = String.prototype.slice.call(val);
+            }
+            else if( _.isDate(val) ){
+                out[key] = new Date( val.valueOf() );
+            }
+            else if (typeof val === 'object'){
+                out[key] = deepExtend(out[key], val);
             }
             else {
-                out[key] = obj[key];
+                out[key] = val;
             }
         }
     }
@@ -269,8 +322,4 @@ export function getEntitySetIdFromId( id ){
 
 export function setEntityIdFromId( eid, esid ){
     return (esid & 0x1fffff) * 0x100000000 + (eid & 0xffffffff);
-}
-
-export function numpty(){
-    console.log('you are a numpty');
 }
