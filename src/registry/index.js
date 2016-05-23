@@ -228,26 +228,7 @@ _.extend(Registry.prototype, Backbone.Events, {
         }, Promise.resolve() );
     },
 
-    componentNameFromSchema: function( schemaUri, suffix ){
-        let name;
-        let schema = this.schemaRegistry.get( schemaUri, null, {full:true} );
-
-        if( !schema ){
-            throw new Error('unknown schema ' + schemaUri );
-        }
-
-        suffix = _.isUndefined(suffix) ? '' : suffix;
-
-        if( schema.obj.name ){
-            name = schema.obj.name;
-        } else {
-            name = schema.uri;
-            name = name.split('/').pop();
-        }
-
-        // log.debug('name for ' + schemaUri + ' is ' + name + ' ' + _.str.classify( name + suffix ) );
-        return Utils.toPascalCase( name + suffix );
-    },
+    
 
     /**
     * TODO: name this something better, like 'getComponentIID'
@@ -290,7 +271,21 @@ _.extend(Registry.prototype, Backbone.Events, {
         else if( Component.isComponent(componentDef) ){
             return componentDef;
         }
-        else if( SchemaRegistry.isSchema(componentDef) ){
+        else {
+            if( componentDef[schemaKey] ){
+                attrs = _.omit( componentDef, schemaKey );
+                componentDef = componentDef[schemaKey];
+            }
+            
+            result = this.schemaRegistry.createComponent( componentDef, attrs );
+
+            if( cb ){
+                return cb(null, result);
+            }
+            return result;
+        }
+        
+        if( SchemaRegistry.isSchema(componentDef) ){
             schema = componentDef;
             componentDef = null;
         }
@@ -309,6 +304,7 @@ _.extend(Registry.prototype, Backbone.Events, {
             }
         }
         else {
+            console.log('yo!', componentDef);
             schema = this.schemaRegistry.get(componentDef, null, {full:true});
         }
 
@@ -320,7 +316,7 @@ _.extend(Registry.prototype, Backbone.Events, {
         }
 
         schemaIId = schema.iid;
-        name = this.componentNameFromSchema( schema.hash );
+        name = this.schemaRegistry.componentNameFromSchema( schema.hash );
         
         // obtain default properties from the schema
         defaults = getPropertiesObject( this.schemaRegistry, schema.uri );
@@ -580,7 +576,7 @@ function createProcessorCollection(){
  */
 Registry.create = function create(options={}){
     let result = new Registry();
-    result.initialize();
+    result.initialize(options);
     return result;
 };
 

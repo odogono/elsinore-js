@@ -567,6 +567,7 @@ test('returns an array of schema internal ids from a series of identifiers', t =
     t.end();
 });
 
+
 test('returns schema uris from internal ids', t => {
     let registry = SchemaRegistry.create();
     registry.register( componentSchemas );

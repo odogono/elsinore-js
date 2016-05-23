@@ -1,0 +1,99 @@
+import _ from 'underscore';
+import test from 'tape';
+import Backbone from 'backbone';
+
+import {
+    Component, Entity, EntityFilter, EntitySet,
+    Registry, Query,
+    initialiseRegistry, 
+    loadEntities, 
+    loadComponents,
+    loadFixtureJSON,
+    printE,
+    printIns,
+    logEvents,
+    requireLib,
+} from './common';
+
+import ComponentRegistry from '../src/schema/index';
+
+
+import * as Utils from '../src/util/index';
+
+
+
+const COMPONENT_DEFINITIONS = [
+    { uri:'/component/position', properties:{ x:0, y:0, z:0, rotation:0 }, name:'Position', hash:'bd12d7de' },
+    { uri:'/component/radius', properties:{ radius:0}, name:'Radius' },
+    { uri:'/component/status', properties:{ status:"active"}, name:'Status' },
+    { uri:'/component/name', properties:{ name:""}, name:'Name', hash:'c6c1bcdf' },
+    { uri:'/component/geo_location', properties:{ lat:0, lng:0 }, name:'Geolocation' },
+];
+
+
+
+
+
+
+
+test('basics', t => {
+    const componentRegistry = ComponentRegistry.create();
+    // console.log('we have here', componentRegistry);
+    // logEvents( componentRegistry );
+    
+    componentRegistry.register( COMPONENT_DEFINITIONS );
+    // const registry = Registry.create({schemaRegistry:componentRegistry});
+    // console.log( componentRegistry.getSchema('/component/status', {throwOnNotFound:true}) );
+
+    let component = componentRegistry.createComponent('/component/status');
+
+    t.equals( component.get('status'), 'active' );
+    
+    t.end();
+});
+
+test('each component def has an integer id');
+
+
+
+
+test('attempting to retrieve an unknown schema throws an error', t => {
+    const registry = ComponentRegistry.create(COMPONENT_DEFINITIONS);
+
+    t.throws(()=>registry.getIId('/component/missing'), /could not find schema \/component\/missing/ );
+    
+    t.end();
+});
+
+
+test('returns an array of schema internal ids from a series of identifiers', t => {
+    const registry = ComponentRegistry.create(COMPONENT_DEFINITIONS);
+
+    t.deepEqual(
+        registry.getIId( '/component/position', 'c6c1bcdf', 2, '/component/geo_location', 'bd12d7de' ),
+        [ 1, 4, 2, 5, 1 ] );
+
+    t.end();
+});
+
+test('unregistering a schema', t => {
+    const registry = ComponentRegistry.create(COMPONENT_DEFINITIONS);
+    
+    registry.unregister( '/component/status' );
+    
+    t.throws(()=>registry.createComponent('/component/status'), 
+        /could not find schema \/component\/status/ );
+    
+    t.end();
+});
+
+test('creating a component with attributes', t => {
+    const registry = ComponentRegistry.create();
+    registry.register( {name:'velocity', properties:{ x:0, y:0, z:0 }, uri:'/component/velocity'} );
+    let component = registry.createComponent( '/component/velocity', { x:-200} );
+    
+    t.equals( component.get('x'), -200 );
+    
+    t.end();
+    
+})
