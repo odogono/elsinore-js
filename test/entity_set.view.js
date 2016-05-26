@@ -9,7 +9,7 @@ import {
     loadEntities, 
     loadComponents,
     loadFixtureJSON,
-    printE,
+    printE, entityToString, 
     printIns,
     logEvents,
     requireLib,
@@ -148,16 +148,18 @@ test('adding a component to an entity', t => {
 
         t.ok( view.at(0).Flower, 'the entity should have flower' );
 
-        component = registry.createComponent( {'@c':'/component/position', x:-2, y:5}, entitySet.at(0) );
+        component = registry.createComponent( {'@c':'/component/position', x:-2, y:5}, entitySet.at(0), {debug:true} );
 
         t.equals( component.getEntityId(), entitySet.at(0).getEntityId(), 'the entity ids are identical' );
+
+        // console.log( "component is", entityToString(component) );
 
         entitySet.addComponent( component );
 
         t.ok( view.at(0).Position, 'the views entity should have position' );
-
-        t.end();
-    });
+    })
+    .then( () => t.end() )
+    .catch( err => log.error('test error: %s', err.stack) )
 });
 
 test('adding a component to an entity triggers an entity:add event', t => {

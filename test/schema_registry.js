@@ -25,13 +25,19 @@ let componentByUri = _.reduce( componentSchemas,
                         }, {});
 
 
+/**
+ 
+ NOTE: this style of schema registry is not currently being used - its
+ been replaced with a simpler, non JSON schema, variant.
 
-test.skip('uri normalization', t => {
-    t.equal( Elsinore.Utils.normalizeUri( "HTTP://ABC.com/%7Esmith/home.html" ), "http://abc.com/~smith/home.html" );
-    t.end();
-})
+*/
 
-test('registering a schema', t => {
+// test.skip('uri normalization', t => {
+//     t.equal( Elsinore.Utils.normalizeUri( "HTTP://ABC.com/%7Esmith/home.html" ), "http://abc.com/~smith/home.html" );
+//     t.end();
+// })
+
+test.skip('registering a schema', t => {
     const registry = SchemaRegistry.create();
     const schema = { id:'/schema/basic' };
 
@@ -44,7 +50,7 @@ test('registering a schema', t => {
 
 
 
-test('retrieving schema fragments', t => {
+test.skip('retrieving schema fragments', t => {
     const schema = {
         id: 'elsinore:/schema',
         definitions:{
@@ -70,7 +76,7 @@ test('retrieving schema fragments', t => {
     t.end();
 });
 
-test('returns an array of all registered schemas', t => {
+test.skip('returns an array of all registered schemas', t => {
     const schema = {
         id: 'elsinore:/schema',
         definitions:{
@@ -100,7 +106,7 @@ test('returns an array of all registered schemas', t => {
     t.end();
 })
 
-test('retrieving an array of properties', t => {
+test.skip('retrieving an array of properties', t => {
     
     const registry = SchemaRegistry.create();
     const schema = registry.register( {
@@ -120,7 +126,7 @@ test('retrieving an array of properties', t => {
     t.end();
 });
 
-test('returning an array of sorted properties', t => {
+test.skip('returning an array of sorted properties', t => {
     const schemaData = {
         id:'elsinore:/schema/sorted',
         properties:{
@@ -150,7 +156,7 @@ test('returning an array of sorted properties', t => {
     t.end();
 });
 
-test('returning properties from multiple schemas', t => {
+test.skip('returning properties from multiple schemas', t => {
     const schemaA = {
         id:'/multiple/alpha',
         properties:{
@@ -179,7 +185,7 @@ test('returning properties from multiple schemas', t => {
 });
 
 
-test('merging two schemas', t => {
+test.skip('merging two schemas', t => {
     const schemaA = {
         id:'/schema/merge_a',
         properties:{
@@ -219,7 +225,7 @@ test('merging two schemas', t => {
 });
 
 
-test('returning default properties', t => {
+test.skip('returning default properties', t => {
     const schema = {
         id:'/schema/default',
         properties:{
@@ -261,7 +267,7 @@ test('returning default properties', t => {
 });
 
 
-test('registration of an identical schema throws an error', t => {
+test.skip('registration of an identical schema throws an error', t => {
     const schema = { id:'/schema/original', properties:{ name:{ type:'string' }} };
     const schemaCopy = { id:'/schema/original', properties:{ age:{ type:'integer' }} };
     const registry = SchemaRegistry.create();
@@ -284,7 +290,7 @@ test('registration of an identical schema throws an error', t => {
     t.end();
 });
 
-test('registration of an identical schema doesnt throw an error if required', t => {
+test.skip('registration of an identical schema doesnt throw an error if required', t => {
     const schema = { id:'/schema/original', properties:{ name:{ type:'string' }} };
     const registry = SchemaRegistry.create();
 
@@ -299,7 +305,7 @@ test('registration of an identical schema doesnt throw an error if required', t 
     t.end();
 });
 
-test('register a modified schema', t => {
+test.skip('register a modified schema', t => {
     const schemaA = {
         properties:{
             x: { type:'number' },
@@ -338,7 +344,7 @@ test('register a modified schema', t => {
     t.end();
 });
 
-test('retrieving schema with definitions', t => {
+test.skip('retrieving schema with definitions', t => {
     const sch = {
         id: 'http://foo.bar/baz',
         properties: {
@@ -360,7 +366,7 @@ test('retrieving schema with definitions', t => {
 });
 
 
-test('retrieving different versions of a schema by id', t => {
+test.skip('retrieving different versions of a schema by id', t => {
     const schemaA = { id:'/schema/alpha', properties:{ name:{type:'string'} }};
     const schemaB = { id:'/schema/alpha', properties:{ fullname:{type:'string'} }};
 
@@ -388,7 +394,7 @@ test('retrieving different versions of a schema by id', t => {
     t.end();
 });
 
-test('something or other', t => {
+test.skip('something or other', t => {
     const schema = {
         id: 'elsinore:/schema',
 
@@ -417,7 +423,7 @@ test('something or other', t => {
 
 });
 
-test('obtain full details of a schema', t => {
+test.skip('obtain full details of a schema', t => {
     const schema = {
         id:'/schema/details',
         properties:{
@@ -436,7 +442,7 @@ test('obtain full details of a schema', t => {
     t.end();
 });
 
-test('retrieving parts', t => {
+test.skip('retrieving parts', t => {
     const schema = {
         id: '/component/nix',
         properties: {
@@ -457,7 +463,7 @@ test('retrieving parts', t => {
     t.end();
 });
 
-test('retrieve schema by hash', t => {
+test.skip('retrieve schema by hash', t => {
     const schema = {
         id:'/schema/switch',
         properties:{
@@ -479,7 +485,7 @@ test('retrieve schema by hash', t => {
 });
 
 
-test('new version of sub schema', t => {
+test.skip('new version of sub schema', t => {
     const schema = {
         id:'/schema/parent',
 
@@ -523,7 +529,7 @@ test('new version of sub schema', t => {
 })
 
 
-test('registering a schema returns the schemas registered', t => {
+test.skip('registering a schema returns the schemas registered', t => {
     const registry = SchemaRegistry.create();
 
     const registered = registry.register({
@@ -547,7 +553,7 @@ test('registering a schema returns the schemas registered', t => {
 });
 
 
-test('attempting to retrieve an unknown schema throws an error', t => {
+test.skip('attempting to retrieve an unknown schema throws an error', t => {
     const registry = SchemaRegistry.create();
 
     t.throws( function(){
@@ -556,7 +562,7 @@ test('attempting to retrieve an unknown schema throws an error', t => {
     t.end();
 });
 
-test('returns an array of schema internal ids from a series of identifiers', t => {
+test.skip('returns an array of schema internal ids from a series of identifiers', t => {
     const registry = SchemaRegistry.create();
     registry.register( componentSchemas );
 
@@ -568,7 +574,7 @@ test('returns an array of schema internal ids from a series of identifiers', t =
 });
 
 
-test('returns schema uris from internal ids', t => {
+test.skip('returns schema uris from internal ids', t => {
     let registry = SchemaRegistry.create();
     registry.register( componentSchemas );
 

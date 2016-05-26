@@ -92,6 +92,8 @@ test('will only execute processors which match', t => {
         
         let entity = registry.createEntity( { '@c':'/component/username', username:'fred' } );
 
+        // console.log('entity', entityToString(entity) );
+
         dispatch.execute( entity );
 
         // only one processor matches the query

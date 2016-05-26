@@ -68,7 +68,7 @@ test('creating a component with an unknown schema throws an error', t => {
     try {
         registry.createComponent( {'@c':'/component/status', 'status':'active'} );
     } catch( err ){
-        t.equals( err.message, 'no schema found for component {"@c":"/component/status","status":"active"}');
+        t.equals( err.message, 'could not find schema /component/status');
     }
     t.end();
 });
@@ -77,22 +77,24 @@ test('creating a component with an unknown schema', t => {
     let registry = Registry.create();
 
     registry.createComponent( {'@c':'/component/status', 'status':'active'}, null, null, (err,result) => {
-        t.equals( err, 'no schema found for component {"@c":"/component/status","status":"active"}');
+        t.equals( err, 'could not find schema /component/status');
         t.end();    
     });
 });
 
 test('create from a schema', t => {
     return initialiseRegistry({loadComponents:false}).then( registry => {
-        let componentData = loadComponents();
+        let componentData = loadComponents({returnAsMap:true});
         // Common.logEvents( registry );
         // passing a schema as the first argument will cause the component to be
         // registered at the same time
+        // console.log('create with ', componentData );
         return registry.registerComponent( componentData['/component/position'] )
             .then( () => {
                 let component = registry.createComponent( '/component/position', { x:200 } );
-                t.equals( component.schemaUri, '/component/position' );
-                t.equals( component.schemaHash, '9db8f95b' );
+
+                t.equals( component._schemaUri, '/component/position' );
+                t.equals( component._schemaHash, '35829b6f' );
                 t.equals( component.get('x'), 200 );
 
                 t.end();
@@ -103,15 +105,17 @@ test('create from a schema', t => {
 
 test('create from a schema hash', t => {
     return initialiseRegistry({loadComponents:true}).then( registry => {
-    // let componentData = loadComponents();
-    // var def = registry.registerComponent( componentData['/component/score'] );
-        let component = registry.createComponent( 'd3f0bf51', {score:200} );
+
+        let first = registry.createComponent('/component/score');
+        // console.log('schema hash ', first._schemaHash);
+        let component = registry.createComponent( '2446e058', {score:200} );
         
         t.equals( component.get('score'), 200 );
         t.equals( component.get('lives'), 3 );
 
         t.end();
-    });
+    })
+    .catch( err => log.error('test error: %s', err.stack) )
 });
 
 test('create from a pre-registered schema', t => {
@@ -132,7 +136,8 @@ test('create from a pre-registered schema using data object', t => {
     });
 });
 
-test('create from an array of data', t => {
+// NOTE: not really sure we need this anymore
+test.skip('create from an array of data', t => {
     return initialiseRegistry({loadComponents:true}).then( registry => {
         let components = registry.createComponent( '/component/position', [ {x:0,y:-1}, {x:10,y:0}, {x:15,y:-2} ] );
 

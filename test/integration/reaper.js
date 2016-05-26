@@ -24,11 +24,11 @@ test('reaper', function(t){
     return Common.initialiseRegistry().then( registry => {
         let entitySet = registry.createEntitySet();
 
-        return registry.registerComponent({
-            connection: {'id':'/connection', addr:{ type:'string' }},
-            ttl: {'id':'/ttl', expires_at:{ type:'number' }},
-            dead: {'id':'/dead'}
-        })
+        return registry.registerComponent([
+            {'uri':'/connection', properties:{addr:{type:'string'}} },
+            {'uri':'/ttl', properties:{expires_at:{type:'number'}} },
+            {'uri':'/dead'}
+        ])
         .then( () => [registry,entitySet] )
     })
     .then( ([registry,entitySet]) => {

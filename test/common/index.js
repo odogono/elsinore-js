@@ -72,14 +72,16 @@ export function pathVarFile( path, clear ){
 }
 
 // compile a map of schema id(uri) to schema
-export function loadComponents(){
+export function loadComponents(options={}){
     let data = loadFixtureJSON( 'components.json' );
-    let componentData = _.reduce( data, 
-                        function(memo, entry){
-                            memo[ entry.id ] = entry;
-                            return memo;
-                        }, {});
-    return componentData;
+    if( options.returnAsMap ){
+        return _.reduce( data, 
+                            function(memo, entry){
+                                memo[ entry.uri ] = entry;
+                                return memo;
+                            }, {});
+    }
+    return data;
 }
 
 /**
@@ -152,7 +154,7 @@ export function initialiseRegistry( doLogEvents ){
 
     if( load ){
         componentData = loadComponents();
-        // log.debug('loading components ' + JSON.stringify(options) );
+        // log.debug('loaded components ', componentData);// + JSON.stringify(options) );
         // printIns( componentData );
         return registry.registerComponent( componentData, options )
             .then( () => registry )
@@ -171,6 +173,7 @@ export function createFixtureReadStream( fixturePath ){
 
 export function loadFixture( fixturePath ){
     let path = Path.join( fixtureDir, fixturePath );
+    // console.log('loadFixture', path);
     let data = Fs.readFileSync( path, 'utf8');
     return data;
 }

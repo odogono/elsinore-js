@@ -19,7 +19,7 @@ test('main', function(t){
     let cDoor;
     return initialise().then( ([registry,entitySet]) =>
         registry.registerComponent({
-            id:'/door', 
+            uri:'/door', 
             properties:{
                 open:{type:'boolean', 'default': false}, 
                 material:{type:'string'} 

@@ -55,6 +55,33 @@ test('basics', t => {
 test('each component def has an integer id');
 
 
+test('registering a schema without a name', t => {
+    const registry = ComponentRegistry.create();
+    registry.register( { uri:'/component/example' } );
+
+    let component = registry.createComponent('/component/example');
+
+    t.equals( component.name, 'Example' );
+
+    t.end();
+})
+
+test('registring a schema with default properties', t => {
+    const registry = ComponentRegistry.create();
+    registry.register( {
+        "uri": "/component/score",
+        "properties": {
+            "score": { "type":"integer" },
+            "lives": { "type":"integer", "default": 3 }
+        }
+    });
+
+    let component = registry.createComponent('/component/score');
+
+    t.equals( component.get('score'), 0);
+    t.equals( component.get('lives'), 3);
+    t.end();
+})
 
 
 test('attempting to retrieve an unknown schema throws an error', t => {
@@ -70,7 +97,7 @@ test('returns an array of schema internal ids from a series of identifiers', t =
     const registry = ComponentRegistry.create(COMPONENT_DEFINITIONS);
 
     t.deepEqual(
-        registry.getIId( '/component/position', 'c6c1bcdf', 2, '/component/geo_location', 'bd12d7de' ),
+        registry.getIId( ['/component/position', 'c6c1bcdf', 2, '/component/geo_location', 'bd12d7de'] ),
         [ 1, 4, 2, 5, 1 ] );
 
     t.end();

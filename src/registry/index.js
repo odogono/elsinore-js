@@ -197,6 +197,7 @@ _.extend(Registry.prototype, Backbone.Events, {
      */
     registerComponent: function( data, options ){
         const schemaRegistry = this.schemaRegistry;
+        // console.log('registering', data);
         return new Promise( resolve => resolve(schemaRegistry.register(data,options)) )
             .then( schemas => {
                 return _.reduce( this._entitySets, (current, es) => {
@@ -233,8 +234,13 @@ _.extend(Registry.prototype, Backbone.Events, {
     /**
     * TODO: name this something better, like 'getComponentIID'
     */
-    getIId: function(){
-        return this.schemaRegistry.getIId.apply( this.schemaRegistry, arguments );
+    getIId: function(componentIDs, options){
+        if( options && _.isBoolean(options) ){
+            options = {forceArray:true};
+            
+        }
+        // console.log('Registry.getIId:', componentIDs, options );
+        return this.schemaRegistry.getIId( componentIDs, options );
     },
 
     /**
@@ -258,8 +264,13 @@ _.extend(Registry.prototype, Backbone.Events, {
 
         if( Entity.isEntity(attrs) ){
             entityId = Entity.toEntityId( attrs );
+            attrs = {};
             // log.debug('create with entity id ' + entityId );
-            attrs = null;
+            // attrs = null;
+        }
+
+        if( entityId ){
+            attrs['@e'] = entityId;
         }
 
         // Obtain a component schema
@@ -269,101 +280,96 @@ _.extend(Registry.prototype, Backbone.Events, {
                 componentDef.map( (s) => this.createComponent(s, attrs, options) ));
         }
         else if( Component.isComponent(componentDef) ){
+            // maybe clone instead of just returning?
             return componentDef;
         }
         else {
             if( componentDef[schemaKey] ){
-                attrs = _.omit( componentDef, schemaKey );
+                // attrs are pulled out of the 1st arg
+                attrs = _.extend( {}, _.omit(componentDef,schemaKey ), attrs );
                 componentDef = componentDef[schemaKey];
             }
-            
-            result = this.schemaRegistry.createComponent( componentDef, attrs );
 
-            if( cb ){
-                return cb(null, result);
-            }
-            return result;
+            // console.log('creating with ', attrs);
+            return this.schemaRegistry.createComponent( componentDef, attrs, options, cb );
         }
         
-        if( SchemaRegistry.isSchema(componentDef) ){
-            schema = componentDef;
-            componentDef = null;
-        }
-        else if( _.isObject(componentDef) ){
-            if( componentDef[schemaKey] ){
-                schema = componentDef[schemaKey];
-                if( !attrs ){
-                    attrs = _.omit( componentDef, schemaKey );
-                }
-                // doRegister = true;
-            }
+        // if( SchemaRegistry.isSchema(componentDef) ){
+        //     schema = componentDef;
+        //     componentDef = null;
+        // }
+        // else if( _.isObject(componentDef) ){
+        //     if( componentDef[schemaKey] ){
+        //         schema = componentDef[schemaKey];
+        //         if( !attrs ){
+        //             attrs = _.omit( componentDef, schemaKey );
+        //         }
+        //     }
 
-            // attempt to retrieve existing already
-            if( schema ){
-                schema = this.schemaRegistry.get( schema, null, {full:true} );
-            }
-        }
-        else {
-            console.log('yo!', componentDef);
-            schema = this.schemaRegistry.get(componentDef, null, {full:true});
-        }
+        //     // attempt to retrieve existing already
+        //     if( schema ){
+        //         schema = this.schemaRegistry.get( schema, null, {full:true} );
+        //     }
+        // }
+        // else {
+        //     schema = this.schemaRegistry.get(componentDef, null, {full:true});
+        // }
 
-        if( !schema ){
-            if( cb ){
-                return cb( 'no schema found for component ' + Utils.stringify(componentDef) );
-            }
-            throw new Error('no schema found for component ' + Utils.stringify(componentDef) );
-        }
+        // if( !schema ){
+        //     if( cb ){
+        //         return cb( 'no schema found for component ' + Utils.stringify(componentDef) );
+        //     }
+        //     throw new Error('no schema found for component ' + Utils.stringify(componentDef) );
+        // }
 
-        schemaIId = schema.iid;
-        name = this.schemaRegistry.componentNameFromSchema( schema.hash );
+        // schemaIId = schema.iid;
+        // name = this.schemaRegistry.componentNameFromSchema( schema.hash );
         
-        // obtain default properties from the schema
-        defaults = getPropertiesObject( this.schemaRegistry, schema.uri );
+        // // obtain default properties from the schema
+        // defaults = getPropertiesObject( this.schemaRegistry, schema.uri );
 
-        if( _.isArray(attrs) ){
-            result = [];
+        // if( _.isArray(attrs) ){
+        //     result = [];
 
-            for( ii=0,len=attrs.length;ii<len;ii++ ){
-                result.push( this._createComponent( schemaIId, name, schema, defaults, attrs[ii], entityId, options ) );
-            }
+        //     for( ii=0,len=attrs.length;ii<len;ii++ ){
+        //         result.push( this._createComponent( schemaIId, name, schema, defaults, attrs[ii], entityId, options ) );
+        //     }
 
-            
-        } else {
-            result = this._createComponent( schemaIId, name, schema, defaults, attrs, entityId, options );    
-        }
+        // } else {
+        //     result = this._createComponent( schemaIId, name, schema, defaults, attrs, entityId, options );    
+        // }
 
-        if( cb ){
-            return cb(null, result);
-        }
-        return result;
+        // if( cb ){
+        //     return cb(null, result);
+        // }
+        // return result;
     },
 
     /**
     *   Create a component instance from the supplied 
     */
-    _createComponent: function( schemaIId, name, schema, defaults, data, entityId, options ){
-        let component;
-        let datum;
+    // _createComponent: function( schemaIId, name, schema, defaults, data, entityId, options ){
+    //     let component;
+    //     let datum;
 
-        datum = _.extend({}, defaults, data );
+    //     datum = _.extend({}, defaults, data );
 
-        component = Component.create( datum, _.extend({},options,{parse:true}) );
+    //     component = Component.create( datum, _.extend({},options,{parse:true}) );
 
-        component.schemaUri = schema.uri;
+    //     component.schemaUri = schema.uri;
 
-        component.name = name;
-        component.setSchemaId( schemaIId );
-        component.schemaHash = schema.hash;
+    //     component.name = name;
+    //     component.setSchemaId( schemaIId );
+    //     component.schemaHash = schema.hash;
 
-        if( entityId ){
-            component.setEntityId( entityId );
-        }
+    //     if( entityId ){
+    //         component.setEntityId( entityId );
+    //     }
 
-        this.trigger('component:create', component.schemaUri, component );
+    //     this.trigger('component:create', component.schemaUri, component );
 
-        return component;
-    },
+    //     return component;
+    // },
 
 
     destroyComponent: function( component, options ){

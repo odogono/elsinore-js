@@ -44,12 +44,14 @@ test('Logic op', t => {
 test('Accepting an entity', t => {
     return initialiseRegistry().then( registry => {
         let result;
-        let entity = registry.createEntity( [{ '@c':'/component/channel', name:'test'},
-            {'@c': "/component/topic", topic: "Javascript" }] );
+        let entity = registry.createEntity( [
+            {'@c':'/component/channel', name:'test'},
+            {'@c': '/component/topic', topic: "Javascript" }] );
         
+        // console.log('/component/name iid', registry.getIId(['/component/channel','/component/topic']) );
         result = Query.all( '/component/channel' ).execute( entity, {debug:false} );
 
-        t.ok( Entity.isEntity(result) );
+        t.ok( Entity.isEntity(result), 'query should return the entity' );
     })
     .then( () => t.end() )
     .catch( err => log.error('test error: %s', err.stack) )
@@ -67,9 +69,9 @@ test('Rejecting an entity', t => {
         result = Query.all( '/component/name' ).execute( entity, {debug:false} );
 
         t.equal( result, null, 'entity doesnt pass the filter');
-        
-        t.end();
-    });
+    })
+    .then( () => t.end() )
+    .catch( err => log.error('test error: %s', err.stack) )
 });
 
 test('compiling a basic two stage entity filter', t => {

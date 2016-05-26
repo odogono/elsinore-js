@@ -1,6 +1,6 @@
 import _ from 'underscore';
 import {copyComponent} from './copy';
-import {getProperties} from '../schema/properties';
+// import {getProperties} from '../schema/properties';
 
 
 /**
@@ -15,17 +15,20 @@ import {getProperties} from '../schema/properties';
 *   to a module by itself, or perhaps become a processor
 */
 export default function mapComponentEntityRefs( registry, component, entityIdMap, options ){
-    let ii,len, property, val, updates;
+    let name,len, property, val, updates;
     let result;
-    let properties;
+    // let properties;
 
     if( !entityIdMap || _.size(entityIdMap) === 0 ){
         return component;
     }
 
-    properties = getProperties( registry.schemaRegistry, component.schemaUri );
+    const componentSchema = registry.schemaRegistry.getSchema( component.getSchemaUri() );
+    const componentProperties = componentSchema.get('properties');
+    // properties = getProperties( registry.schemaRegistry, component.getSchemaUri() );
 
-    if( !properties ){
+
+    if( !componentProperties ){
         return component;
     }
 
@@ -33,12 +36,12 @@ export default function mapComponentEntityRefs( registry, component, entityIdMap
     
     updates = {};
 
-    for( ii=0,len=properties.length;ii<len;ii++ ){
-        property = properties[ii];
+    for( name in componentProperties ){
+        property = componentProperties[name];
         if( property.type == 'eref' || (property.type == 'integer' && property.format == 'entity') ){
-            if( (val = component.get(property.name)) !== undefined ){
+            if( (val = component.get(name)) !== undefined ){
                 if( entityIdMap.hasOwnProperty(val.toString()) ){
-                    updates[ property.name ] = entityIdMap[ val ];
+                    updates[ name ] = entityIdMap[ val ];
                 }
             }
         }

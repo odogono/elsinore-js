@@ -28,9 +28,8 @@ export default class ComponentRegistry {
             return _.each( def, d => this.register(d,options) );
         }
         
-        // console.log('registering', def);
-        
         if( !_.isObject(def) || !def.uri ){
+            // console.log('def',def);
             throw new Error('invalid component schema: ' + JSON.stringify(def) );
         }
         
@@ -49,8 +48,15 @@ export default class ComponentRegistry {
         // do we have this def already?
         
         let id = this._componentIndex++;
+        if( !def.name ){
+            def.name = ComponentRegistry.componentNameFromUri( def.uri );
+        }
+
+        def.attrs = this._createAttrsFromProperties( def.properties );
+
         let schema = new Backbone.Model( _.extend({},def,{id,hash}) );
         
+
         this._definitions.add( schema );
         
         this.trigger('schema:add', schema.get('uri'), schema.get('hash'), schema );
@@ -58,6 +64,35 @@ export default class ComponentRegistry {
         return schema;
     }
     
+    _createAttrsFromProperties( props ){
+        let name, property, value;
+        let result = {};
+        if( !props ){
+            return result;
+        }
+
+        for( name in props ){
+            value = props[name];
+            property = value;
+            if( _.isObject(value) ){
+                if( !_.isUndefined(value.default) ){
+                    value = property.default;
+                }
+                else if( !_.isUndefined(value.type) ){
+                    switch( value.type ){
+                        case 'integer': value = 0; break;
+                        case 'string': value = ''; break;
+                        case 'boolean': value = false; break;
+                        default: value = null; break;
+                    }
+                }
+            }
+            result[name] = value;
+        }
+
+        return result;
+    }
+
     /**
      * Removes a schema definition from the registry
      */
@@ -81,52 +116,80 @@ export default class ComponentRegistry {
         if( !def ){ return '' };
         return def.hash || Utils.hash(JSON.stringify(def.properties) + ":" + def.Name, true );
     }
+
+    static componentNameFromUri( schemaUri, suffix='' ){
+        let name;
+        // let schema = this.getSchema( schemaUri );
+
+        // if( !schema ){
+        //     throw new Error('unknown schema ' + schemaUri );
+        // }
+
+        // if( schema.obj.name ){
+        //     name = schema.obj.name;
+        // } else {
+            name = schemaUri;
+            name = name.split('/').pop();
+        // }
+
+        return Utils.toPascalCase( name + suffix );
+    }
     
     
-    createComponent( schemaUri, attrs, options={} ){
-        let schema = this.getSchema( schemaUri, {throwOnNotFound:true} );
-        // console.log('creating from', schemaUri, schema );
-        let result = Component.create( schema.get('properties') );
+    createComponent( schemaUri, attrs, options={}, cb ){
+        let throwOnNotFound = _.isUndefined(options.throwOnNotFound) ? true : options.throwOnNotFound;
+        if( cb ){
+            throwOnNotFound = false;
+        }
+        let schema = this.getSchema( schemaUri, {throwOnNotFound} );
+
+        if( !schema && cb ){
+            return cb('could not find schema ' + schemaUri);
+        }
+
+        // we create with attrs from the schema, not properties -
+        // since the properties describe how the attrs should be set
+
+        attrs = _.extend( {}, schema.get('attrs'), attrs );
+        // if( attrs ){
+        //     result.set( result.parse(attrs) );
+        // }
+
+        let result = Component.create( attrs, {parse:true} );
         
-        result.schemaUri = schema.get('uri');
-        result.name = schema.get('name');
-        result.hash = schema.get('hash');
+        result._schemaUri = schema.get('uri');
+        result.name = result._schemaName = schema.get('name');
+        result._schemaHash = schema.get('hash');
+        result.setSchemaId( schema.id );
         
         this.trigger('component:create', result.schemaUri, result );
         
-        if( attrs ){
-            result.set( attrs );
-        }
         
+        if( cb ){ return cb( null, result ); }
         return result;
     }
     
-    getIId( ...schemaIdentifiers ){
-        schemaIdentifiers.push({ throwOnNotFound:true, returnIds:true });
-        return this.getSchema.apply( this, schemaIdentifiers );
+    getIId( schemaIdentifiers, options={throwOnNotFound:true} ){
+        options.returnIds = true;
+        // schemaIdentifiers.push({ throwOnNotFound:true, returnIds:true });
+        return this.getSchema( schemaIdentifiers, options );
     }
     
     
     /**
      * 
      */
-    getSchema( ...schemaIdentifiers ){
-        let ii=0, len=0, schema;
-        let forceArray = false;
-        let returnIds = false;
-        let throwOnNotFound = false;
+    getSchema( schemaIdentifiers, options={} ){
+        let ii=0, len=0, schema, ident;
+        let forceArray = _.isUndefined(options.forceArray) ? false : options.forceArray;
+        let returnIds = _.isUndefined(options.returnIds) ? false : options.returnIds;
+        let throwOnNotFound = _.isUndefined(options.throwOnNotFound) ? false : options.throwOnNotFound;
         let result;
         
-        let lastItem = schemaIdentifiers[schemaIdentifiers.length-1];
-        
-        if( _.isObject(lastItem) ){
-            ({forceArray,returnIds,throwOnNotFound} = lastItem);
-            schemaIdentifiers.pop();
-        }
-        
+        schemaIdentifiers = _.isArray(schemaIdentifiers) ? schemaIdentifiers : [schemaIdentifiers];
         
         for ( ii=0,len=schemaIdentifiers.length;ii<len;ii++ ){
-            let ident = schemaIdentifiers[ii];
+            ident = schemaIdentifiers[ii];
             
             if(_.isObject(ident) ){
                 ident = ident.id || ident.hash;

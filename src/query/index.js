@@ -100,7 +100,7 @@ function gatherEntityFilters( context, expression ){
                     return null;
                 }
                 bf = context.componentsToBitfield( context, obj );
-                
+                // console.log('CONVERTED TO BF', bf.toString());
                 // filter = expression[0];
                 switch( filter ){
                     case Query.ALL_FILTER: filter = Query.ALL; break;
@@ -167,8 +167,9 @@ Query.resolveEntitySet = function resolveEntitySet( context, entitySet, compileO
 
 QueryContext.prototype.componentsToBitfield = function( context, components ){
     let componentIds, result;
-    // console.log('lookup ' + Utils.stringify(components) );
-    componentIds = context.registry.getIId( components, true );
+    
+    componentIds = context.registry.getIId( components, {forceArray:true, debug:true} );
+    // console.log('lookup ', components, componentIds );
     result = BitField.create();
     result.setValues( componentIds, true );
     return result;
@@ -180,7 +181,9 @@ function resolveComponentIIds( context, components ){
     if( _.isArray(components) && components[0] === Query.VALUE ){
         components = components[1];
     }
+
     components = Query.valueOf( context, components, true );
+    // console.log('resolving components', components);
     return components ? context.registry.getIId( components, true ) : null;
 }
 
@@ -334,7 +337,7 @@ QueryContext.prototype.commandFilter = function( context, entityFilter, filterFu
     limit = _.isUndefined(options.limit) ? 0 : options.limit;
     offset = _.isUndefined(options.offset) ? 0 : options.offset;
 
-    if( debug ){ console.log('commandFilter >'); printIns( _.rest(arguments), 2); console.log('<'); } 
+    if( debug ){ console.log('commandFilter >'); printIns( _.rest(arguments), 5); console.log('<'); } 
 
     // console.log('commandFilter> ' + offset + ' ' + limit );
     // resolve the entitySet argument into an entitySet or an entity
@@ -366,6 +369,7 @@ QueryContext.prototype.commandFilter = function( context, entityFilter, filterFu
         if( entityFilter ){
             value = entityFilter.accept(value, context);
             // console.log('yep? ' + JSON.stringify(entity) );
+            // console.log('so got back', value, entityFilter);
         } 
 
         if( value && filterFunction ){

@@ -51,6 +51,7 @@ _.extend( EntityFilter.prototype, {
             ebf = entity.getComponentBitfield();
         }
 
+        // console.log('accept with filters', this.filters);
 
         for (let type in this.filters) {
             bitField = this.filters[type];
@@ -176,6 +177,7 @@ export function accept( type, srcBitField, bitField, debug ){
 export function create( type, bitField ){
     let result = new EntityFilter();
     result.filters = {};
+    // console.log('EntityFilter.create', type, bitField);
     if( type !== undefined ){ result.add(type,bitField); }
     return result;
 }

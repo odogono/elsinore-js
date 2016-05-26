@@ -27,18 +27,15 @@ export function entityToString(entity, indent){
     return res;
 }
 
-export function componentToString(component, indent){
-    var componentJSON;
-    indent || (indent='');
+export function componentToString(component, indent=''){
+    let componentJSON;
 
     if( !component ){
         return;
     }
-
     
     componentJSON = stringify(component);
     
-
     return indent 
         + '' + component.cid 
         + ' (' + (component.getId() || '0') +') '
