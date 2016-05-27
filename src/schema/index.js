@@ -1,3 +1,5 @@
+/* @flow */
+
 import _ from 'underscore';
 import Backbone from 'backbone';
 // import Jsonpointer from 'jsonpointer';
@@ -6,6 +8,14 @@ import Component from '../component';
 import * as Utils from '../util'
 // import SchemaProperties from './properties';
 
+
+type T = number;
+
+type ComponentDefObjectType = {uri: string; name?: string, hash?: string, properties?:Object };
+type ComponentDefArrayType = Array<ComponentDefType>;
+type ComponentDefType = ComponentDefArrayType | ComponentDefObjectType;
+
+type SchemaObjectType = Object;
 
 
 export default class ComponentRegistry {
@@ -21,7 +31,7 @@ export default class ComponentRegistry {
     /**
      * Adds a component schema definition to the registry
      */
-    register( def, options={} ){
+    register( def:ComponentDefType, options:Object={} ): Object|null {
         let throwOnExists = _.isUndefined(options.throwOnExists) ? true : options.throwOnExists;
         
         if( _.isArray(def) ){
@@ -117,7 +127,7 @@ export default class ComponentRegistry {
         return def.hash || Utils.hash(JSON.stringify(def.properties) + ":" + def.Name, true );
     }
 
-    static componentNameFromUri( schemaUri, suffix='' ){
+    static componentNameFromUri( schemaUri:string, suffix:string='' ){
         let name;
         // let schema = this.getSchema( schemaUri );
 
@@ -169,7 +179,7 @@ export default class ComponentRegistry {
         return result;
     }
     
-    getIId( schemaIdentifiers, options={throwOnNotFound:true} ){
+    getIId( schemaIdentifiers, options={throwOnNotFound:true} ): Object|null|uint32 {
         options.returnIds = true;
         // schemaIdentifiers.push({ throwOnNotFound:true, returnIds:true });
         return this.getSchema( schemaIdentifiers, options );
@@ -179,7 +189,7 @@ export default class ComponentRegistry {
     /**
      * 
      */
-    getSchema( schemaIdentifiers, options={} ){
+    getSchema( schemaIdentifiers:string|SchemaObjectType, options:Object={} ): Object|null|uint32 {
         let ii=0, len=0, schema, ident;
         let forceArray = _.isUndefined(options.forceArray) ? false : options.forceArray;
         let returnIds = _.isUndefined(options.returnIds) ? false : options.returnIds;

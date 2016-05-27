@@ -37,10 +37,11 @@ const COMPONENT_DEFINITIONS = [
 
 
 test('basics', t => {
+
     const componentRegistry = ComponentRegistry.create();
     // console.log('we have here', componentRegistry);
     // logEvents( componentRegistry );
-    
+
     componentRegistry.register( COMPONENT_DEFINITIONS );
     // const registry = Registry.create({schemaRegistry:componentRegistry});
     // console.log( componentRegistry.getSchema('/component/status', {throwOnNotFound:true}) );
