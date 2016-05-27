@@ -7,7 +7,7 @@ import * as Utils from './util';
  * Components contain data
  * @type {[type]}
  */
-var Component = Model.extend({
+const Component = Model.extend({
     type: 'Component',
     isComponent: true,
 
@@ -90,4 +90,5 @@ Component.isComponent = function(obj){
     return obj && obj.isComponent;
 };
 
-module.exports = Component;
+
+export default Component;

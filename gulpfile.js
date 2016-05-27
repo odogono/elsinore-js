@@ -18,14 +18,18 @@ var packageObj = require('./package.json');
 var vendorDependencies = _.keys( packageObj.dependencies );
 
 var UGLIFY_VENDOR_LIBS = false;
-var UGLIFY_LIB = true;
+var UGLIFY_LIB = false;
 
-var BabelOptions = {
+const BabelOptions = {
     // presets: ['es2015'],
-    presets: [ 'es2015-node' ],
+    // presets: [ 'es2015-node' ],
+    presets: [ 
+        'es2015', 
+        'flow' 
+    ]
 };
 
-var paths = {
+const paths = {
     dist:{
         vendor: './dist/elsinore-vendor.js',
         lib: './dist/elsinore.js',
@@ -34,9 +38,9 @@ var paths = {
     test: './test/browser/index.js'
 };
 
-var pathExternals = paths.dist.vendor;
+const pathExternals = paths.dist.vendor;
 
-var externals = vendorDependencies;
+const externals = vendorDependencies;
 
 function handleErrors(err) {
     var args = Array.prototype.slice.call(arguments);
@@ -68,9 +72,7 @@ Gulp.task('lint', function(){
             plusplus: true,
             nomen: true
         })
-        .on('error', function (error) {
-            console.error(String(error));
-        })
+        .on('error', error => console.error(String(error)))
     );
 });
 
@@ -102,7 +104,7 @@ Gulp.task('build.bundle.vendor', function(){
         b = b.pipe(Buffer()).pipe(Uglify());
     }
 
-    b.on('error', function (err) { console.log("Error : " + err.message); })
+    b.on('error', err => console.log("Error : " + err.message) )
         .pipe(Gulp.dest( Path.dirname(pathExternals) ));
     return b;
 });
@@ -122,26 +124,23 @@ Gulp.task('build.bundle.lib', function(cb){
             debug: false
         });
 
-    b.require('./lib/index.js', {expose:'elsinore'});
+    b.require('./src/browser.js', {expose:'elsinore'});
     // browserify external doesn't currently appear to work with an array,
     // so we must manually apply each one
-    vendorDependencies.forEach( function( lib ){
-        b.external( lib );
-    });
+    vendorDependencies.forEach( lib => b.external(lib) );
 
-    b.transform( Babelify, BabelOptions);
+    b.transform( Babelify );
 
     b.transform( Envify, {
-        NODE_ENV: 'development'
+        NODE_ENV: 'development',
+        // '_': 'purge',
+        // NODE_ENV: 'production',
+        // PLATFORM_ENV: 'browser'
     });
 
     b.transform( UnreachableBranchTransform );
-    
-
     b = b.bundle()
-        .on('error', function(err){
-            return cb('error in bundle: ' + err.message );
-        })
+        .on('error', err => cb('error in bundle: ' + err.message ))
         .pipe(Source( Path.basename(paths.dist.lib) ));
     if( UGLIFY_LIB ){
         b = b.pipe(Buffer()).pipe(Uglify());
@@ -154,7 +153,7 @@ Gulp.task('build.bundle.lib', function(cb){
 });
 
 
-Gulp.task('test.browser.build', function(cb){
+Gulp.task('build.bundle.browser', function(cb){
     console.log('build with ' + paths.test );
     var b = Browserify({
         entries: [ './test/browser/index.js' ],
@@ -167,6 +166,10 @@ Gulp.task('test.browser.build', function(cb){
     // into something more browser friendly.
     // this is critical to allowing us to run the same
     // tests in both the browser and on the server
+    b.transform( Envify, {
+        NODE_ENV: 'development'
+    });
+
     b.transform( Aliasify, {
         aliases: {
             '../lib': 'elsinore',
@@ -175,35 +178,31 @@ Gulp.task('test.browser.build', function(cb){
         verbose: true
     });
 
-    b.transform( Envify, {
-        NODE_ENV: 'development'
-    });
+    
 
     b.transform( UnreachableBranchTransform );
 
     // browserify external doesn't currently appear to work with an array,
     // so we must manually apply each one
-    vendorDependencies.forEach( function( lib ){
-        b.external( lib );
-    });
+    vendorDependencies.forEach( lib => b.external(lib) );
 
     // the main library has already been packaged, so it too is a dependency
     b.external( 'elsinore' );
     
     b.bundle()
-        .on('error', function(err){
-            return cb('error in bundle: ' + err.message );
+        .on('error', err => {
+            console.log('error in bundle!', err.stack)
+            return cb('error in bundle: ' + err.message)
         })
         .pipe(Source( Path.basename(paths.dist.test) ))
         // .pipe(Buffer()).pipe(Uglify())
         .pipe(Gulp.dest( Path.dirname(paths.dist.test) ))
-        .on('finish', function(){
-            return cb();
-        });
+        .on('error', err => cb('error in bundle: ' + err.message))
+        .on('finish', () => cb());
 
 });
 
-Gulp.task('test.browser.server', function() {
+Gulp.task('test.browser.server', () => {
     Gulp.src('.')
         .pipe(Webserver({
             port:               8012,
@@ -211,19 +210,20 @@ Gulp.task('test.browser.server', function() {
                 enable:         true,
                 port:           35726
             },
-            directoryListing:   false
+            directoryListing:   true,
+            // open: 'test.html'
          }));
  });
 
 
-Gulp.task('test.browser.watch', function() {
-  Gulp.watch( [ 'test/**/*.js', 'lib/**/*' ] , ['test.browser.build']);
+Gulp.task('test.browser.watch', () => {
+  Gulp.watch( [ 'test/**/*.js', 'src/**/*' ] , ['build.bundle.browser']);
 });
 
 
-Gulp.task('test.browser', [ 'test.browser.build', 'test.browser.server', 'test.browser.watch']);
+Gulp.task('test.browser', [ 'build.bundle.lib', 'build.bundle.browser', 'test.browser.server', 'test.browser.watch']);
 
-Gulp.task('build.bundle', ['build.bundle.vendor', 'build.bundle.lib', 'test.browser.build']);
+Gulp.task('build.bundle', ['build.bundle.vendor', 'transpile', 'build.bundle.lib', 'build.bundle.browser']);
 
 Gulp.task('default', function(){
     // place code for your default task here

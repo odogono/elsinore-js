@@ -24,3 +24,16 @@ export {Registry as Registry};
 
 import SchemaRegistry from './schema';
 export {SchemaRegistry as SchemaRegistry};
+
+import Dispatch from './dispatch';
+export {Dispatch as Dispatch};
+
+import Util from './util';
+export {Util as Util};
+
+export {printIns,
+    toPascalCase,
+    parseUri,
+    getEntityIdFromId,
+    getEntitySetIdFromId,
+    setEntityIdFromId} from './util';
