@@ -67,7 +67,49 @@ test('registering a schema without a name', t => {
     t.end();
 })
 
-test('registring a schema with default properties', t => {
+test('retrieving all of the registered schemas', t => {
+    const registry = ComponentRegistry.create();
+    registry.register([
+        { uri:'/component/example' },
+        { uri:'/component/removed' },
+        {uri:'/component/position', properties:{ x:0, y:0 }},
+        { uri:'/component/placeholder' },
+    ]);
+
+    registry.unregister( '/component/removed' );
+
+    t.deepEquals(
+        registry.getAll(),
+        [ 
+            { hash: 'b54a8101', id: 1, name: 'Example', uri: '/component/example' }, 
+            { hash: 'fda65750', id: 3, name: 'Position', properties: { x: 0, y: 0 }, uri: '/component/position' }, 
+            { hash: 'b54a8101', id: 4, name: 'Placeholder', uri: '/component/placeholder' } 
+        ]
+    );
+
+    t.end();
+})
+
+
+test('registering a schema with default properties', t => {
+    const registry = ComponentRegistry.create();
+    registry.register( {
+        uri: '/component/origin',
+        properties: {
+            place: 'Exeter',
+            count: 22
+        }
+    } );
+
+    let component = registry.createComponent('/component/origin');
+
+    t.equals( component.get('place'), 'Exeter' );
+    t.equals( component.get('count'), 22 );
+
+    t.end();
+})
+
+test('registering a schema with typed default properties', t => {
     const registry = ComponentRegistry.create();
     registry.register( {
         "uri": "/component/score",
@@ -82,7 +124,8 @@ test('registring a schema with default properties', t => {
     t.equals( component.get('score'), 0);
     t.equals( component.get('lives'), 3);
     t.end();
-})
+});
+
 
 
 test('attempting to retrieve an unknown schema throws an error', t => {

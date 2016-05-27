@@ -6,7 +6,7 @@ import Backbone from 'backbone';
 
 import Component from '../component';
 import * as Utils from '../util'
-// import SchemaProperties from './properties';
+import Model from '../model';
 
 
 type T = number;
@@ -16,6 +16,8 @@ type ComponentDefArrayType = Array<ComponentDefType>;
 type ComponentDefType = ComponentDefArrayType | ComponentDefObjectType;
 
 type SchemaObjectType = Object;
+
+
 
 
 export default class ComponentRegistry {
@@ -64,12 +66,11 @@ export default class ComponentRegistry {
 
         def.attrs = this._createAttrsFromProperties( def.properties );
 
-        let schema = new Backbone.Model( _.extend({},def,{id,hash}) );
+        let schema = new ComponentDef( _.extend({},def,{id,hash}) );
         
-
         this._definitions.add( schema );
         
-        this.trigger('schema:add', schema.get('uri'), schema.get('hash'), schema );
+        this.trigger('def:add', schema.get('uri'), schema.get('hash'), schema );
         
         return schema;
     }
@@ -114,9 +115,13 @@ export default class ComponentRegistry {
         
         this._definitions.remove( schema.id );
         
-        this.trigger('schema:remove', schema.get('uri'), schema.get('hash'), schema );
+        this.trigger('def:remove', schema.get('uri'), schema.get('hash'), schema );
         
         return schema;
+    }
+
+    getAll(){
+        return this._definitions.toJSON();
     }
     
     /**
@@ -256,3 +261,12 @@ export default class ComponentRegistry {
         return result;
     }
 }
+
+
+const ComponentDef = Model.extend({
+    toJSON: function(){
+        let result = Model.prototype.toJSON.apply(this, arguments);
+        return _.omit( result, 'attrs');
+    }
+})
+
