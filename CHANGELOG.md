@@ -4,6 +4,11 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased][unreleased]
 
+## [2.0.0] - 2016-06-05
+### Changed
+- a new, simpler, component registry has been introduced to replace the existing JSON schema based on.
+
+
 ## [1.1.0] - 2016-04-13
 ### Changed
 - registry.createComponent can take a callback parameter which is an alternative to throwing errors 
