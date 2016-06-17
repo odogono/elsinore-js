@@ -3,15 +3,17 @@ Written with guidance from [Keep a CHANGELOG](http://keepachangelog.com/).
 This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased][unreleased]
-## [3.0.0] - 2016-06-17
 
+## [3.0.0] - 2016-06-17
+### Changed
+- export ComponentDef in index.js
+
+## [3.0.0] - 2016-06-17
 ### Added
-- specific component def class added
+- component def class added
 
 ### Changed
 - references to component/schema have been changed to def throughout, eg. component.getSchemaId() became component.getDefId()
-
-
 
 
 ## [2.0.1] - 2016-06-05

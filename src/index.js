@@ -4,6 +4,9 @@
 import Component from './component';
 export {Component as Component};
 
+import ComponentDef from './component_def';
+export {ComponentDef as ComponentDef};
+
 import Entity from './entity';
 export {Entity as Entity};
 
