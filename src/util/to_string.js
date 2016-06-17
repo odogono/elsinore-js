@@ -40,7 +40,7 @@ export function componentToString(component, indent=''){
         + '' + component.cid 
         + ' (' + (component.getId() || '0') +') '
         + component.name 
-        + '(' + component.getSchemaId() + ')'
+        + '(' + component.getDefId() + ')'
         + ' e:' + getEntityIdFromId(component.getEntityId()) + '' 
         + ' ' + component.hash(true)
         + ' ' + componentJSON;

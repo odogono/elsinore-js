@@ -103,15 +103,15 @@ const Entity = Model.extend({
     addComponent: function( component ){
         var existing;
         if( !component ){ return this; }
-        existing = this.components[ component.getSchemaId() ];
+        existing = this.components[ component.getDefId() ];
         if( existing ){
             this.removeComponent( existing );
         }
         component.setEntityId( this.id );
         component._entity = this;
         this[ component.name ] = component;
-        this.components[ component.getSchemaId() ] = component;
-        this.getComponentBitfield().set( component.getSchemaId(), true );
+        this.components[ component.getDefId() ] = component;
+        this.getComponentBitfield().set( component.getDefId(), true );
         component.on('all', this._onComponentEvent, this);
         return this;
     },
@@ -131,8 +131,8 @@ const Entity = Model.extend({
         component.setEntityId( null );
         component._entity = null;
         delete this[ component.name ];
-        delete this.components[ component.getSchemaId() ];
-        this.getComponentBitfield().set( component.getSchemaId(), false );
+        delete this.components[ component.getDefId() ];
+        this.getComponentBitfield().set( component.getDefId(), false );
         component.off('all', this._onComponentEvent, this);
         return this;
     },
@@ -159,7 +159,7 @@ const Entity = Model.extend({
 
     hasComponent: function( componentIId ){
         if( Component.isComponent(componentIId) ){
-            componentIId = componentIId.getSchemaId();
+            componentIId = componentIId.getDefId();
         } else if( _.isString(componentIId) ){
             componentIId = this.getRegistry().getIId( componentIId );
         }

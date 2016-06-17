@@ -343,15 +343,15 @@ let EntitySet = Backbone.Collection.extend({
     removeComponentFromEntity: function( component, entity, options ){
         let bf = entity.getComponentBitfield();
 
-        if( !bf.get(component.getSchemaId()) ){
+        if( !bf.get(component.getDefId()) ){
             // log.debug('no component found for ' + component.name + ' ' + bf.toString() );
             throw new Error('no component found for ' + component.name);
         }
 
-        bf.set( component.getSchemaId(), false );
+        bf.set( component.getDefId(), false );
 
         delete entity[ component.name ];
-        delete entity.components[ component.getSchemaId() ];
+        delete entity.components[ component.getDefId() ];
 
         this.getRegistry().destroyComponent( component );
 
@@ -360,7 +360,7 @@ let EntitySet = Backbone.Collection.extend({
 
     // TODO: remove
     getComponentFromEntity: function( component, entity, options ){
-        return entity.components[ component.getSchemaId() ];
+        return entity.components[ component.getDefId() ];
     },
 
     // TODO: remove

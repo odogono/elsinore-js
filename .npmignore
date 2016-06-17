@@ -34,3 +34,7 @@ lib/purgatory
 gulpfile.js
 TODO.md
 NOTES.md
+
+.vscode
+jsconfig.json
+test.html

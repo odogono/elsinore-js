@@ -68,7 +68,7 @@ test('creating a component with an unknown schema throws an error', t => {
     try {
         registry.createComponent( {'@c':'/component/status', 'status':'active'} );
     } catch( err ){
-        t.equals( err.message, 'could not find schema /component/status');
+        t.equals( err.message, 'could not find componentDef /component/status');
     }
     t.end();
 });
@@ -77,7 +77,7 @@ test('creating a component with an unknown schema', t => {
     let registry = Registry.create();
 
     registry.createComponent( {'@c':'/component/status', 'status':'active'}, null, null, (err,result) => {
-        t.equals( err, 'could not find schema /component/status');
+        t.equals( err, 'could not find componentDef /component/status');
         t.end();    
     });
 });
@@ -93,8 +93,8 @@ test('create from a schema', t => {
             .then( () => {
                 let component = registry.createComponent( '/component/position', { x:200 } );
 
-                t.equals( component._schemaUri, '/component/position' );
-                t.equals( component._schemaHash, '35829b6f' );
+                t.equals( component.getDefUri(), '/component/position' );
+                t.equals( component.getDefHash(), 'b9b3b24e' );
                 t.equals( component.get('x'), 200 );
 
                 t.end();
@@ -107,9 +107,10 @@ test('create from a schema hash', t => {
     return initialiseRegistry({loadComponents:true}).then( registry => {
 
         let first = registry.createComponent('/component/score');
-        // console.log('schema hash ', first._schemaHash);
-        let component = registry.createComponent( '2446e058', {score:200} );
+        // console.log('schema hash ', first );
+        let component = registry.createComponent( 'ec2640a6', {score:200} );
         
+        // console.log( component );
         t.equals( component.get('score'), 200 );
         t.equals( component.get('lives'), 3 );
 
@@ -167,7 +168,6 @@ test('updating a components entity refs', t => {
     return initialiseRegistry().then( registry => {
         let component = registry.createComponent( 
             {"@e":12, "@c": "/component/channel_member", "channel": 1, "client": 5} );
-        
         let aComponent = mapComponentEntityRefs( registry, component, { 5: 290, 1: 340} );
 
         t.equals( aComponent.get('channel'), 340 );
@@ -177,3 +177,4 @@ test('updating a components entity refs', t => {
     })
     .catch( err => log.error('test error: %s', err.stack) )
 });
+

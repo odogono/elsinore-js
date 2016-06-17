@@ -48,12 +48,18 @@ const Component = Model.extend({
         this.set({'@e':id}, {silent:true});
     },
 
-    getSchemaId: function(){
+    getDefId: function(){
         return this.get('@s');
     },
-    setSchemaId: function(id){
-        this.set({'@s':id});
-    },
+    // setDefId: function(id){
+    //     this.set({'@s':id});
+    // },
+    // getSchemaId: function(){
+    //     return this.get('@s');
+    // },
+    // setSchemaId: function(id){
+    //     this.set({'@s':id});
+    // },
 
     setId: function(id){
         this.set({'@c':id}, {silent:true});  
@@ -63,13 +69,36 @@ const Component = Model.extend({
         return this.get('@c');
     },
 
-    getSchemaUri: function(){
-        return this._schemaUri;
+    // getSchemaUri: function(){
+    //     return this._defUri;
+    // },
+    // setDefUri: function(uri:string){
+    //     this._defUri = uri;
+    // },
+    getDefUri: function(){
+        return this._defUri;
     },
-
-    getSchemaHash: function(){
-        return this._schemaHash;
+    // setDefHash: function(hash:string){
+    //     this._defHash = hash;
+    // },
+    getDefHash: function(){
+        return this._defHash;
     },
+    getDefName: function(){
+        return this._defName;
+    },
+    // setDefName: function(name:string){
+    //     this.name = this._defName = name;
+    // },
+    setDefDetails: function( id, uri:string, hash:string, name:string ){
+        this.set({'@s':id});
+        this._defUri = uri;
+        this._defHash = hash;
+        this.name = this._defName = name;  
+    },
+    // getSchemaHash: function(){
+    //     return this._defHash;
+    // },
 
     hash: function(asString){
         let result = Utils.stringify(  _.omit(this.attributes, '@e','@es','@s', '@c') );

@@ -140,7 +140,7 @@ test('updating an entity with a new component', t => {
     es.getEntity = function(entityId){
         // let e = createEntity(entityId);
         e.hasComponent = (cIId) => {
-            return (cIId.getSchemaId() === 3);
+            return (cIId.getDefId() === 3);
         };
         return Promise.resolve(e);
     }
@@ -241,7 +241,7 @@ test('removing an existing entity', t => {
         // let e = createEntity(entityId);
         e.hasComponent = (cIId) => true;
         // e.hasComponent = (cIId) => {
-        //     return (cIId.getSchemaId() === 3);
+        //     return (cIId.getDefId() === 3);
         // };
         return Promise.resolve(e);
     }

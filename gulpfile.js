@@ -111,13 +111,6 @@ Gulp.task('build.bundle.vendor', function(){
 
 
 
-Gulp.task('transpile', function () {
-    return Gulp.src('src/**/*.js')
-        .pipe(Babel(BabelOptions))
-        .pipe(Gulp.dest('lib'));
-});
-
-
 Gulp.task('build.bundle.lib', function(cb){
     var b = Browserify({
             // entries:[ './lib/index.js' ],
@@ -217,7 +210,15 @@ Gulp.task('test.browser.server', () => {
 
 
 Gulp.task('test.browser.watch', () => {
-  Gulp.watch( [ 'test/**/*.js', 'src/**/*' ] , ['build.bundle.browser']);
+  Gulp.watch( [ 'test/**/*.js', 'src/**/*' ] , ['transpile', 'build.bundle.browser']);
+});
+
+
+
+Gulp.task('transpile', () => {
+    return Gulp.src('src/**/*.js')
+        .pipe(Babel(BabelOptions))
+        .pipe(Gulp.dest('lib'));
 });
 
 

@@ -584,7 +584,8 @@ test('should not add entities that have multiple excluded components', t => {
         entitySet.addEntity( entities );
         t.equals( entitySet.size(), 1);
         t.end();
-    });
+    })
+    .catch( err => log.error('test error: %s', err.stack) )
 });
 
 test('should only add entities that are included', t => {

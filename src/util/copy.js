@@ -61,9 +61,11 @@ export function copyComponent( registry, srcComponent, options ){
     result.setId( srcComponent.getId() );
     result.id = srcComponent.id;
     result.name = srcComponent.name;
-    result.setSchemaId( srcComponent.getSchemaId() );
-    result.schemaUri = srcComponent.schemaUri;
-    result.schemaHash = srcComponent.schemaHash;
+    result.setDefDetails(
+        srcComponent.getDefId(),
+        srcComponent.getDefUri(),
+        srcComponent.getDefHash(),
+        srcComponent.getDefName() );
     result.registry = registry;
     return result;
 }

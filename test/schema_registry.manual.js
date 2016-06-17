@@ -81,9 +81,9 @@ test('retrieving all of the registered schemas', t => {
     t.deepEquals(
         registry.getAll(),
         [ 
-            { hash: 'b54a8101', id: 1, name: 'Example', uri: '/component/example' }, 
-            { hash: 'fda65750', id: 3, name: 'Position', properties: { x: 0, y: 0 }, uri: '/component/position' }, 
-            { hash: 'b54a8101', id: 4, name: 'Placeholder', uri: '/component/placeholder' } 
+            { id: 1, name: 'Example', uri: '/component/example' }, 
+            { id: 3, name: 'Position', properties: { x: 0, y: 0 }, uri: '/component/position' }, 
+            { id: 4, name: 'Placeholder', uri: '/component/placeholder' } 
         ]
     );
 
