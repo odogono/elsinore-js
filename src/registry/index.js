@@ -188,22 +188,22 @@ _.extend(Registry.prototype, Backbone.Events, {
         const schemaRegistry = this.schemaRegistry;
         // console.log('registering', data);
         return new Promise( resolve => resolve(schemaRegistry.register(data,options)) )
-            .then( schemas => {
-                if( !_.isArray(schemas) ){ schemas = [schemas]; }
+            .then( componentDefs => {
+                if( !_.isArray(componentDefs) ){ componentDefs = [componentDefs]; }
                 return _.reduce( this._entitySets, (current, es) => {
                     return current = current.then( () => {
-                        // log.debug('registering schemas with es ' + es.cid);
-                        return this._registerComponentDefsWithEntitySet( es, schemas, options );
+                        // log.debug('registering componentDefs with es ' + es.cid);
+                        return this._registerComponentDefsWithEntitySet( es, componentDefs, options );
                     })
                 }, Promise.resolve() )
-                .then( () => schemas )
+                .then( () => componentDefs )
             });
     },
 
     /**
     *   Registers the array of component def schemas with the given entitySet
     */
-    _registerComponentDefsWithEntitySet: function( entitySet, schemas, options ){
+    _registerComponentDefsWithEntitySet: function( entitySet, componentDefs, options ){
         options = _.extend( {}, options, {fromRegistry:true, fromES:false} );
         
         // memory based entitysets do not need to register component defs,
@@ -211,9 +211,9 @@ _.extend(Registry.prototype, Backbone.Events, {
         if( entitySet.isMemoryEntitySet ){
             return Promise.resolve();
         }
-        return _.reduce( schemas, (current, cdef) => {
+        return _.reduce( componentDefs, (current, cdef) => {
             return current = current.then( () => {
-                // log.debug('registering cdef ' + JSON.stringify(cdef) );
+                // log.debug('registering cdef ',cdef );
                 return entitySet.registerComponentDef( cdef, options );
             })
         }, Promise.resolve() );

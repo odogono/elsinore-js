@@ -17,27 +17,47 @@ import {
 } from './common';
 
 
-const Listener = _.extend( {}, Backbone.Events );
 
+
+
+const COMPONENT_DEFINITIONS = [
+    { uri:'/component/position', properties:{ x:0, y:0, z:0, rotation:0 }, name:'Position', hash:'bd12d7de' },
+    { uri:'/component/radius', properties:{ radius:0}, name:'Radius' },
+    { uri:'/component/status', properties:{ status:"active"}, name:'Status' },
+    { uri:'/component/name', properties:{ name:""}, name:'Name', hash:'c6c1bcdf' },
+    { uri:'/component/geo_location', properties:{ lat:0, lng:0 }, name:'Geolocation' },
+];
 
 
 test('testing an async register component', t => {
     const registry = Registry.create();
-    const schemaA = { name:'channel', uri:'/component/channel', properties:{ name:{type:'string'} }};
+    const Listener = _.extend( {}, Backbone.Events );
 
-    Listener.on('register', function( componentDef ){
-        // console.log( componentDef );
-        t.equals( componentDef.get('uri'), '/component/channel');
+    Listener.on('register', componentDef => {
+        t.equals( componentDef.get('uri'), '/component/position');
         t.end();
     });
     
-    return registry.createEntitySet( AsyncEntitySet )
-        .then( es => registry.registerComponent(schemaA) )
+    return registry.createEntitySet( AsyncEntitySet, {listener:Listener} )
+        .then( es => registry.registerComponent(COMPONENT_DEFINITIONS[0]) )
+        .catch( err => console.log('err', err, err.stack))
 })
 
 
 
+test('registering multiple component defs', t => {
+    const registry = Registry.create();
+    const Listener = _.extend( {}, Backbone.Events );
 
+    Listener.on('register', componentDef => {
+        t.ok( componentDef.get('uri') );
+    });
+
+    return registry.createEntitySet( AsyncEntitySet, {listener:Listener} )
+        .then( es => registry.registerComponent( [COMPONENT_DEFINITIONS[0],COMPONENT_DEFINITIONS[1]] ) )
+        .catch( err => console.log('err', err, err.stack))
+        .then( () => t.end() );
+})
 
 
 const AsyncEntitySet = EntitySet.extend({
@@ -47,6 +67,7 @@ const AsyncEntitySet = EntitySet.extend({
     isAsync: true, 
 
     initialize: function initialize(options={}) {
+        this.listener = options.listener;
     },
     open: function(options={}){
         this._open = true;
@@ -61,7 +82,7 @@ const AsyncEntitySet = EntitySet.extend({
         return Promise.resolve(this);
     },
     registerComponentDef: function( def, options={} ){
-        Listener.trigger('register', def);
+        this.listener.trigger('register', def);
         return Promise.resolve(this);
     },
 });

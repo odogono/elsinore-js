@@ -46,7 +46,7 @@ export default class ComponentRegistry {
         let throwOnExists = _.isUndefined(options.throwOnExists) ? true : options.throwOnExists;
         
         if( _.isArray(def) ){
-            return _.each( def, d => this.register(d,options) );
+            return _.map( def, d => this.register(d,options) );
         }
         
         if( !_.isObject(def) || !def.uri ){

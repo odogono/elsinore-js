@@ -4,6 +4,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased][unreleased]
 
+## [3.0.2] - 2016-06-27
+### Fixed
+- multiple ComponentDef registration was not returning objects properly
+
 ## [3.0.0] - 2016-06-17
 ### Changed
 - export ComponentDef in index.js
