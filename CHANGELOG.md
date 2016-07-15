@@ -4,6 +4,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased][unreleased]
 
+## [3.0.3] - 2016-07-14
+### Changed
+- entity and component toJSON expanded with a full option
+
 ## [3.0.2] - 2016-06-27
 ### Fixed
 - multiple ComponentDef registration was not returning objects properly

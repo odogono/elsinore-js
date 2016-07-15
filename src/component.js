@@ -3,6 +3,10 @@ import Backbone from 'backbone';
 import Model from './model';
 import * as Utils from './util';
 
+
+
+
+
 /**
  * Components contain data
  * @type {[type]}
@@ -104,6 +108,10 @@ const Component = Model.extend({
         let result = Utils.stringify(  _.omit(this.attributes, '@e','@es','@s', '@c') );
         return Utils.hash( result, asString );
     },
+
+    toJSON: function(options={}){
+        return _.extend( {}, _.omit(this.attributes, '@e','@es','@s'));
+    }
 });
 
 
@@ -118,6 +126,11 @@ Component.create = function( attrs, options){
 Component.isComponent = function(obj){
     return obj && obj.isComponent;
 };
+
+Component.ID = '@c';
+Component.DEF_ID = '@s';
+Component.ENTITY_SET_ID = '@es';
+
 
 
 export default Component;

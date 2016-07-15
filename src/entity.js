@@ -82,7 +82,13 @@ const Entity = Model.extend({
         }
     },
 
-    toJSON: function(){
+    toJSON: function(options={}){
+        if( options.full ){
+            return {
+                id: this.id,
+                c: _.map( this.getComponents(), c => c.toJSON({full:true}) )
+            };
+        }
         return {
             id: this.id,
             eid: this.getEntityId(),
@@ -103,10 +109,14 @@ const Entity = Model.extend({
     addComponent: function( component ){
         var existing;
         if( !component ){ return this; }
+        if( !component.getDefId() ){
+            throw new Error('attempt to add invalid component', component);
+        }
         existing = this.components[ component.getDefId() ];
         if( existing ){
             this.removeComponent( existing );
         }
+        // console.log('adding', component.getDefId() );
         component.setEntityId( this.id );
         component._entity = this;
         this[ component.name ] = component;
@@ -117,10 +127,9 @@ const Entity = Model.extend({
     },
 
     getComponents: function( componentIds ){
-        let components = this.components;
         componentIds = componentIds || this.getComponentBitfield().toValues();
         return _.reduce( componentIds, (result,id) => {
-            let com = components[id];
+            let com = this.components[id];
             if( com ){ result.push( com ); }
             return result;
         }, []);

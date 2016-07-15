@@ -42,7 +42,7 @@ export default class ComponentRegistry {
     /**
      * Adds a component definition to the registry
      */
-    register( def:ComponentDefRawType, options:Object={} ): Object|null {
+    register( def:ComponentDefRawType|ComponentDefType, options:Object={} ): Object|null {
         let throwOnExists = _.isUndefined(options.throwOnExists) ? true : options.throwOnExists;
         
         if( _.isArray(def) ){

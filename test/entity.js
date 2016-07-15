@@ -1,6 +1,7 @@
 /* @flow */
 
 import test from 'tape';
+import _ from 'underscore';
 
 import {
     Component, Entity, EntitySet,
@@ -86,16 +87,35 @@ test('hashing', t => {
     // because an entity is the sum of its components, without components it is nothing
     t.equals( e.hash(), 0 );
 
-    let c = Component.create({name:'douglas'});
+    let c = createComponent({name:'douglas'});
     e.addComponent( c );
 
     t.equals( e.hash(true), '7c7ecfd3' );
 
     let oe = Entity.create();
-    let oc = Component.create({name:'douglas'});
+    let oc = createComponent({name:'douglas'});
     oe.addComponent( oc );
 
     t.equals( e.hash(), oe.hash() );
 
     t.end();
 });
+
+test('toJSON with full options', t => {
+    let e = Entity.create();
+    let c = createComponent({name:'douglas'});
+    e.addComponent( c );
+
+    let json = e.toJSON({full:true});
+
+    // console.log( json );
+    // console.log( e.getComponentBitfield().toValues() );
+    // console.log( e.components );
+    t.deepEquals( e.toJSON({full:true}), { id: 0, c: [ { '@c': '/component/name', name: 'douglas' } ] } );
+    t.end();
+});
+
+
+function createComponent( properties ){
+    return Component.create( _.extend({'@s':1,'@c':'/component/name'}, properties) )
+}

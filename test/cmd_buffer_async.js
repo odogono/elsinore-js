@@ -328,12 +328,10 @@ function createComponent( attrs ){
             } );
     }
 
-    // if( entitySetId ){
-    //     entityId = Utils.setEntityIdFromId( entityId, entitySetId );
-    // }
+    attrs = _.extend( {}, {'@s':1}, attrs );
 
     var result = Component.create( attrs, {parse:true} );
-    // printIns( result );
+    
     return result;
 }
 
