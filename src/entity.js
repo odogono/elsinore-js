@@ -9,6 +9,7 @@ import {printIns} from './util';
 
 import Component from './component';
 import Model from './model';
+import Registry from './registry';
 // var Component = require('./component');
 // var Model = require('./model');
 
@@ -67,6 +68,7 @@ const Entity = Model.extend({
 
     setEntitySet: function( es, setId=true ){
         this._entitySet = es;
+        this.setRegistry( es.getRegistry() );
         if( setId ){
             this.setEntitySetId(es.id);
         }
@@ -83,18 +85,30 @@ const Entity = Model.extend({
     },
 
     toJSON: function(options={}){
-        if( options.full ){
-            return {
-                id: this.id,
-                c: _.map( this.getComponents(), c => c.toJSON({full:true}) )
-            };
-        }
-        return {
-            id: this.id,
-            eid: this.getEntityId(),
-            esid: this.getEntitySetId(),
-            bf: this.getComponentBitfield().toString()
-        };
+        let components = _.map( this.getComponents(), c => c.toJSON(options));
+
+        // if( options.flatEntity ){
+        //     return components;
+        // }
+        return components;
+
+        // if( this.id !== 0 ){
+
+        // }
+        // return 
+
+        // if( options.full ){
+        //     return {
+        //         id: this.id,
+        //         c: _.map( this.getComponents(), c => c.toJSON({full:true}) )
+        //     };
+        // }
+        // return {
+        //     id: this.id,
+        //     eid: this.getEntityId(),
+        //     esid: this.getEntitySetId(),
+        //     bf: this.getComponentBitfield().toString()
+        // };
     },
 
     hash: function(asString){
@@ -109,6 +123,10 @@ const Entity = Model.extend({
     addComponent: function( component ){
         var existing;
         if( !component ){ return this; }
+        if(_.isArray(component)){ 
+            _.each(component, c => this.addComponent(c));
+            return this;
+        }
         if( !component.getDefId() ){
             throw new Error('attempt to add invalid component', component);
         }
@@ -242,9 +260,56 @@ Entity.createId = function(){
 //     return (esid & 0x1fffff) * 0x100000000 + (eid & 0xffffffff);
 // }
 
+
+// Entity.createWithComponents = function( components, options={} ){
+//     let result = new Entity();
+//     result.components = [];
+//     result.cid = Entity.createId();
+
+//     return result;
+// }
+
+/**
+*
+*/
 Entity.create = function(entityId, entitySetId){
-    var result = new Entity();
+    let options = {};
+    let result = new Entity();
+    let registry;
+    result.components = [];
     result.cid = Entity.createId();
+
+    if(_.isObject(entitySetId)){
+        options = entitySetId;
+        entitySetId = 0;
+    }
+    // console.log('Entity.create', arguments);
+
+    registry = options.registry;
+
+    if( Registry.isRegistry(entityId) ){
+        registry = entityId;
+        entityId = 0;
+    }
+
+    if( registry ){
+        result.setRegistry( registry );
+
+        entityId = entityId || options.id || registry.createId();
+        result.setId( entityId );
+
+        // as a convenience, we can pass an array of components as the 2nd arg
+        // and they will be added to the entity
+
+        // console.log('components? ', options[0], _.isObject(options), Array.isArray(options), options )
+
+        let components = options['@c'] || ((_.isArray(options) && options[0])?options:null);
+        if(components){
+            components = result.getRegistry().createComponent(components);
+            result.addComponent(components);
+        }
+        return result;
+    }
 
     if( _.isUndefined(entityId) ){
         entityId = 0;
@@ -254,7 +319,6 @@ Entity.create = function(entityId, entitySetId){
     //     entitySetId = 0;
     // }
 
-    result.components = [];
     result.setId( entityId, entitySetId );
     // entityId = Utils.setEntityIdFromId( entityId, entitySetId );
     // result.set({id: entityId});

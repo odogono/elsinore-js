@@ -29,6 +29,9 @@ const Component = Model.extend({
             eId = resp['@e'];
             // delete resp['@e'];
         }
+        // if( resp['@c'] ){
+        //     this._defUri = resp['@c'];
+        // }
         if( esId || eId ){
             // log.debug('creating from ' + eId + ' ' + esId );
             resp['@e'] = Utils.setEntityIdFromId(eId, esId);
@@ -80,7 +83,7 @@ const Component = Model.extend({
     //     this._defUri = uri;
     // },
     getDefUri: function(){
-        return this._defUri;
+        return this.get('@c');
     },
     // setDefHash: function(hash:string){
     //     this._defHash = hash;
@@ -95,8 +98,7 @@ const Component = Model.extend({
     //     this.name = this._defName = name;
     // },
     setDefDetails: function( id, uri:string, hash:string, name:string ){
-        this.set({'@s':id});
-        this._defUri = uri;
+        this.set({'@s':id,'@c':uri});
         this._defHash = hash;
         this.name = this._defName = name;  
     },
@@ -110,7 +112,14 @@ const Component = Model.extend({
     },
 
     toJSON: function(options={}){
-        return _.extend( {}, _.omit(this.attributes, '@e','@es','@s'));
+        let result = _.extend( {}, _.omit(this.attributes, '@e','@es', '@c') );
+        if( options.cdefMap ){
+            result['@e'] = this.getEntityId();
+            result['@c'] = options.cdefMap[result['@s']];
+            delete result['@s'];
+        }
+        // console.log('c toJSON with options', options);
+        return result;
     }
 });
 

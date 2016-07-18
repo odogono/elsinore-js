@@ -117,7 +117,7 @@ _.extend(Registry.prototype, Backbone.Events, {
         // }
     },
 
-
+    /*
     createEntity: function( components, options={} ){
         let entityId;
         let entity;
@@ -142,12 +142,9 @@ _.extend(Registry.prototype, Backbone.Events, {
             return components;
         }
 
-        // if( options.debug ){ console.log('creating entity with', options); }
         entity = Entity.toEntity(entityId) || Entity.create();
         entity.setRegistry( this );
 
-
-        
         if( options.esid ){
             entity.setEntitySetId( options.esid );
         }
@@ -169,14 +166,14 @@ _.extend(Registry.prototype, Backbone.Events, {
         }
         
         return entity;
-    },
+    },//*/
 
-
+    /*
     destroyEntity: function( entity, options ){
         entity.removeComponents();
 
         return entity;
-    },
+    },//*/
 
     /**
      * Registers a new Component Def from data
@@ -352,6 +349,12 @@ _.extend(Registry.prototype, Backbone.Events, {
         if( result.isMemoryEntitySet ){
             // NOTE: setting the id to 0 means that entity ids would be shifted up
             result.id = 0;
+
+            if( options['@e'] ){
+                let components = _.map( options['@e'], com => this.createComponent(com) )
+                result.addComponent( components );
+            }
+
             return result;
         }
 
@@ -486,6 +489,9 @@ function createProcessorCollection(){
     return result;
 }
 
+Registry.isRegistry = function( registry ){
+    return registry && registry.isRegistry;
+}
 
 /**
  * creates a new registry instance

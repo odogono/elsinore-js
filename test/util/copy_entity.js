@@ -1,6 +1,6 @@
 import _ from 'underscore';
 import test from 'tape';
-import {printE, printIns, initialiseRegistry, copyEntity} from '../common';
+import {Entity,printE, printIns, initialiseRegistry, copyEntity} from '../common';
 
 // import {copy as CopyEntity} from '../../src/util/uuid';
 
@@ -9,7 +9,7 @@ test('copies a blank entity', t => {
     return initialiseRegistry().then( registry => {
         
         // let src = registry.createEntity();
-        let src = registry.createEntity([
+        let src = Entity.create(registry,[
             { '@c':'/component/position', x:2, y:-2 },
             { '@c':'/component/name', 'name':'alpha'}
         ]);
@@ -27,8 +27,8 @@ test('copies a blank entity', t => {
 test('will retain dst components missing from the src by default', t => {
     return initialiseRegistry().then( registry => {
         
-        let src = registry.createEntity([  {'@c':'/component/position', x:2, y:-2}  ]);
-        let dst = registry.createEntity([  {'@c':'/component/name', 'name':'alpha'} ]);
+        let src = Entity.create(registry,[  {'@c':'/component/position', x:2, y:-2}  ]);
+        let dst = Entity.create(registry,[  {'@c':'/component/name', 'name':'alpha'} ]);
         let copy = copyEntity( registry, src, dst );
         
         t.equals( copy.Position.get('y'), -2 );
@@ -41,8 +41,8 @@ test('will retain dst components missing from the src by default', t => {
 test('will remove components missing from the src', t => {
     return initialiseRegistry().then( registry => {
         
-        let src = registry.createEntity([  {'@c':'/component/position', x:2, y:-2}  ]);
-        let dst = registry.createEntity([  {'@c':'/component/name', 'name':'alpha'} ]);
+        let src = Entity.create(registry,[  {'@c':'/component/position', x:2, y:-2}  ]);
+        let dst = Entity.create(registry,[  {'@c':'/component/name', 'name':'alpha'} ]);
         let copy = copyEntity( registry, src, dst, {delete:true} );
         
         t.equals( copy.Position.get('y'), -2 );
@@ -58,12 +58,12 @@ test('returns false if nothing changed', t => {
     return initialiseRegistry().then( registry => {
         
         // let src = registry.createEntity();
-        let src = registry.createEntity([
+        let src = Entity.create(registry,[
             { '@c':'/component/position', x:2, y:-2 },
             { '@c':'/component/name', 'name':'alpha'}
         ]);
 
-        let dst = registry.createEntity([
+        let dst = Entity.create(registry,[
             { '@c':'/component/position', x:2, y:-2 },
             { '@c':'/component/name', 'name':'alpha'}
         ]);
@@ -82,12 +82,12 @@ test('returning whether anything was changed on the dst entity', t => {
     return initialiseRegistry().then( registry => {
         
         // let src = registry.createEntity();
-        let src = registry.createEntity([
+        let src = Entity.create(registry,[
             { '@c':'/component/position', x:2, y:-2 },
             { '@c':'/component/name', 'name':'alpha'}
         ]);
 
-        let dst = registry.createEntity([
+        let dst = Entity.create(registry,[
             { '@c':'/component/position', x:2, y:-2 },
             { '@c':'/component/name', 'name':'beta'}
         ]);
@@ -106,11 +106,11 @@ test('a missing dst component counts as a change', t => {
     return initialiseRegistry().then( registry => {
         
         // let src = registry.createEntity();
-        let src = registry.createEntity([
+        let src = Entity.create(registry,[
             { '@c':'/component/position', x:2, y:-2 },
         ]);
 
-        let dst = registry.createEntity([
+        let dst = Entity.create(registry,[
             { '@c':'/component/position', x:2, y:-2 },
             { '@c':'/component/name', 'name':'alpha'}
         ]);

@@ -39,7 +39,7 @@ test('triggering an event on an entity', function(t){
         //     log.debug('2!eevt '  + JSON.stringify(arguments));
         // } );
         
-        entity = registry.createEntity( { '@c':'/component/animal', name:'tiger' } );
+        entity = Entity.create(registry, [{'@c':'/component/animal', name:'tiger'}]);
         entity = entitySet.addEntity( entity );
 
         // entitySet.addComponent( registry.createComponent( '/component/animal', {id:5,_e:1, name:'tiger'}) );
@@ -66,8 +66,8 @@ test('the registry triggers the event on entitysets', function(t){
             // log.debug('called msg with ' + entity.id );
         });
 
-        entity = entitySet.addEntity( 
-            registry.createEntity( { '@c':'/component/animal', name:'tiger' } ) );
+        entity = Entity.create(registry, [{'@c':'/component/animal', name:'tiger'}]);
+        entity = entitySet.addEntity(entity);
 
         // registry.triggerEntityEvent( 'msg', entity, 'close the door' );
         entity.triggerEntityEvent( 'msg', 'close the door');
@@ -99,8 +99,8 @@ test('the registry triggers the event on a compatible entityset', function(t){
         mineralEntitySet.on('msg', () => mineralCalled = true );
         animalEntitySet.on('msg', () => animalCalled = true );
 
-        entity = entitySet.addEntity( 
-            registry.createEntity( { '@c':'/component/animal', name:'tiger' } ) );
+        entity = Entity.create(registry, [{'@c':'/component/animal', name:'tiger'}]);
+        entity = entitySet.addEntity(entity);
 
         entity.triggerEntityEvent( 'msg', 'welcome' );
 
@@ -129,8 +129,8 @@ test('triggers events which are stored until release', t => {
             t.equals( msgEntity.Animal.get('name'), 'tiger' );
         });
 
-        entity = entitySet.addEntity( 
-            registry.createEntity( { '@c':'/component/animal', name:'tiger' } ) );
+        entity = Entity.create(registry, [{'@c':'/component/animal', name:'tiger'}]);
+        entity = entitySet.addEntity(entity);
 
         entitySet.triggerEntityEvent( 'msg', entity );
 
@@ -157,8 +157,8 @@ test('still triggers on normal listeners', function(t){
             t.equals( msgEntity.Animal.get('name'), 'tiger' );
         });
 
-        entity = entitySet.addEntity( 
-            registry.createEntity( { '@c':'/component/animal', name:'tiger' } ) );
+        entity = Entity.create(registry, [{'@c':'/component/animal', name:'tiger'}]);
+        entity = entitySet.addEntity(entity);
 
         entitySet.triggerEntityEvent( 'msg', entity );
 

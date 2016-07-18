@@ -51,11 +51,26 @@ let EntitySet = Backbone.Collection.extend({
         return this.length;
     },
 
-    toJSON: function(){
-        let q,result = { cid:this.cid };
-        if( (q = this.getQuery()) ){
-            result.query = q.toJSON();
+    toJSON: function(options={}){
+        let q,result = { uuid:this._uuid };// { cid:this.cid };
+        // if( (q = this.getQuery()) ){
+        //     result.query = q.toJSON();
+        // }
+
+        if( options.mapCdefUri ){
+            options.cdefMap = this.getSchemaRegistry().getComponentDefUris();
         }
+        options.flatEntity = true;
+
+        result['@e'] = this.models.reduce( (acc,e) => {
+            return acc.concat( e.toJSON(options) );
+        }, []);
+
+        // result['@e'] = this.models.map( e => e.toJSON(options));
+        // result['@e'] = this.constructor.__super__.toJSON.apply(this, options);
+
+        // result['@r'] = this.getSchemaRegistry().toJSON();
+
         return result;
     },
 
@@ -183,28 +198,25 @@ let EntitySet = Backbone.Collection.extend({
         return this._cmdBuffer.removeEntity( this, entity, options );
     },
 
+
     _createEntity: function( entityId, returnId, options={} ){
         let result;
 
+        entityId = parseInt(entityId,10) || 0;
+
+        if( entityId <= 0 ){
+            entityId = this.getRegistry().createId();
+        }
+
         if( returnId ){
-            options.createId = true;
+            return entityId;
         }
 
-        if( entityId && parseInt(entityId,10) !== 0 ){
-            options.id = entityId;
-            // log.debug('create with existing id ' + entityId + ' ' + typeof entityId );
-        }
-
-        result = this.getRegistry().createEntity( null, options );
-
-        if( Entity.isEntity(result) ){
-            // make sure we don't the entityset id - memory entitysets do not mess
-            // with this
-            result.setEntitySet( this, false );
-        }
-
-
-
+        result = Entity.create(entityId);
+        // make sure we don't set the entityset id - memory entitysets retain
+        // the original entityset id
+        result.setEntitySet( this, false );
+        
         return result;
     },
 
@@ -379,99 +391,6 @@ let EntitySet = Backbone.Collection.extend({
         _.each( this.listeners, listener => listener.applyEvents() );
     },
 
-
-    // _runQuery: function( query, selectEntities ){
-    //     let self = this;
-    //     let registry = this.getRegistry();
-    //     // console.log('_runQuery with ' + this.type + ' ' + query.type );
-    //     let result = registry.createEntitySet(null, {register:false});
-
-    //     result = EntitySet.map( this, query, result );
-
-    //     // console.log('selectEntities? ' + selectEntities );
-    //     if( selectEntities ){
-
-    //         _.each( selectEntities, function( componentQuery ){
-    //             log.debug('looking up ' + JSON.stringify(componentQuery.componentUri));
-    //             let componentIIds = registry.getIId( componentQuery.componentUri, true );
-    //             let attrs = componentQuery.attrs;
-    //             let components, entityIds;
-
-    //             // select all the components
-    //             components = result.models.reduce( function(result,e){
-    //                 result = result.concat( e.getComponentByIId( componentIIds ) );
-    //                 return result;
-    //             }, [] );
-
-    //             // select entity id attributes
-    //             entityIds = components.reduce( function(result,com){
-    //                 let val;
-    //                 for( let i=0;i<attrs.length;i++ ){
-    //                     val = com.get( attrs[i] );
-    //                     if( Entity.isEntityId(val) ){
-    //                         result.push( val );
-    //                     }
-    //                 }
-    //                 return result;
-    //             },[]);
-
-    //             console.log('selected entity ids ' + JSON.stringify( entityIds ) );
-    //             // select the components from this entitySet
-
-    //             // componentQuery.attrs;
-
-    //             // let entityIds = Query.resolveComponentQuery( order, result, registry );
-    //         });
-    //     }
-
-    //     return result;
-    // },
-
-    // /**
-    // *   Selects a number of entities from the entityset
-    // */
-    // whereDeprecated: function( query, attrs, options ){
-    //     let result;// = EntitySet.create();
-    //     let registry = this.getRegistry();
-    //     let filters;
-    //     let componentUri;
-
-    //     options || (options={});
-
-    //     result = registry.createEntitySet( null, {register:false} );
-
-    //     // result.setRegistry( registry );
-    //     // result.id = registry.createId();
-
-    //     if( !query ){
-    //     } else if( _.isString(query) ){
-    //         componentUri = registry.getIId( query );
-    //         if( attrs ){
-    //             query = EntityFilter.create( EntityFilter.ATTRIBUTES, componentUri, attrs );
-    //         } else {
-    //             query = EntityFilter.create( EntityFilter.ALL, componentUri );
-    //         }
-    //     }
-
-    //     // log.debug('mapping with ' + query );
-        
-    //     if( options.view ){
-    //         result.type = 'EntitySetView';
-    //         result.isEntitySetView = true;
-
-    //         // make <result> listenTo <entitySet> using <query>
-    //         EntitySet.listenToEntitySet( result, this, query, options );
-
-    //         // store the view
-    //         this.views || (this.views={});
-    //         this.views[ EntityFilter.hash( query ) ] = result;
-    //         this.trigger('view:create', result);
-    //     } else {
-    //         result = EntitySet.map( this, query, result );    
-    //     }
-        
-    //     return result;
-    // },
 });
 
 

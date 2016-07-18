@@ -38,6 +38,28 @@ export default class ComponentRegistry {
             _.each( definitions, def => this.register(def) );
         }
     }
+
+    toJSON(options={}){
+        return this._componentDefs.reduce( (result,def) =>{
+            if( options.expanded){
+                result[def.id] = def;
+            } else {
+                result[def.id] = def.getUri();
+            }
+            return result;
+        },[]);
+    }
+
+    /**
+    * Returns the registered component defs as an array of def ids
+    * to def uris
+    */
+    getComponentDefUris(){
+        return this._componentDefs.reduce( (result,def) =>{
+            result[def.id] = def.getUri();
+            return result;
+        },[]);    
+    }
     
     /**
      * Adds a component definition to the registry
@@ -83,6 +105,7 @@ export default class ComponentRegistry {
         return componentDef;
     }
     
+
     
 
     /**

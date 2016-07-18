@@ -23,10 +23,6 @@ test.skip('keeping a map of entitySets and views', t => {
     return initialiseRegistry().then( registry => {
 
         let query = Query.all('/component/position');
-        
-        // let eso = registry.createEntitySet();
-
-        // printE( es );
         let es = registry.createEntitySet();
         let view = es.view( query );
         let oview = es.view( query);

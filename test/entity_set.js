@@ -49,7 +49,7 @@ test('adding an entity with a component returns the added entity', t => {
     return initialiseRegistry().then( registry => {
         let entitySet = registry.createEntitySet();
 
-        let entity = registry.createEntity( { '@c':'/component/position', x:2, y:-2 } );
+        let entity = Entity.create(registry, [{'@c':'/component/position', x:2, y:-2}]);
         entity = entitySet.addEntity( entity );
 
         // printE( entitySet );
@@ -138,7 +138,7 @@ test('removing a component from an entity with multiple components', t => {
             { '@c':'/component/radius', radius:30 },
         ]);
 
-        entity = entitySet.addEntity( registry.createEntity(components) );
+        entity = entitySet.addEntity(Entity.create(registry, components));
         component = entitySet.removeComponent( components[0] );
 
         // printE( component );
@@ -149,7 +149,8 @@ test('removing a component from an entity with multiple components', t => {
         t.equals( entity.Position, undefined, 'the component is removed from the entity');
 
         t.end();
-    });
+    })
+    .catch( err => log.error('test error: %s', err.stack))
 });
 
 test('you cant add an empty entity to an entityset', t => {
@@ -309,7 +310,9 @@ test('should remove the entities component', t => {
         let entitySet = registry.createEntitySet();
         let entity;
 
-        entity = entitySet.addEntity( registry.createEntity( {'@c':'/component/realname', name:'tom smith'} ) );
+        entity = entitySet.addEntity(Entity.create(registry, [{'@c':'/component/realname', name:'tom smith'}]));
+
+        // entity = entitySet.addEntity( registry.createEntity( {'@c':'/component/realname', name:'tom smith'} ) );
         
         entitySet.removeComponent( entity.Realname );
 
@@ -411,12 +414,12 @@ test('should really remove an entity', t => {
         // Common.logEvents( entitySet );
 
         let entityA = entitySet.addEntity(
-            registry.createEntity([
+            Entity.create(registry,[
                 { '@c':'/component/flower', colour:'blue'},
                 { '@c':'/component/position', x:10, y:60 }] ));
 
         let entityB = entitySet.addEntity(
-            registry.createEntity([
+            Entity.create(registry,[
                 { '@c':'/component/vegetable', name:'cauliflower'},
                 { '@c':'/component/radius', radius:0.3 }] ));
 
@@ -501,10 +504,10 @@ test('adding an entity with an identical id will replace the existing one', t =>
 
        // let entities = loadEntities( registry );  
        // let entity = entities.at(0);
-       let entityA = registry.createEntity([
+       let entityA = Entity.create(registry,[
             {'@c':'/component/position', x:0,y:0}
         ]);
-       let entityB = registry.createEntity([
+       let entityB = Entity.create(registry,[
             {'@c':'/component/position', x:15,y:-90},
             {'@c':'/component/status', 'status':'active'}
         ]);
@@ -726,25 +729,23 @@ test('should emit an event when a component is changed', t => {
 test('emit event when an entity component is changed', t => {
     return initialise().then( ([registry,entitySet,entities]) => {
         let spy = Sinon.spy();
-        // Common.logEvents( entitySet );
         
         entitySet.on('component:change', spy);
 
         let entityA = entitySet.addEntity( 
-            registry.createEntity( { '@c':'/component/flower', colour:'white'} ) );
+            Entity.create(registry, [{'@c':'/component/flower', colour:'white'}]) );
 
-        // printE( entitySet );
+        let entityB = Entity.create(entityA.getEntityId(),{registry, '@c':[{'@c':'/component/flower', colour:'blue'}]});
 
-        let entityB = registry.createEntity( { '@c':'/component/flower', colour:'blue'}, {id:entityA.getEntityId()} );
         t.equal( entityA.getEntityId(), entityB.getEntityId(), 'the entity ids should be equal' );
+        
         entityB = entitySet.addEntity( entityB );
 
         t.ok( spy.called, 'component:change should have been called' );
 
-        // printE( entitySet );
-
         t.end();
-    });
+    })
+    .catch( err => { log.debug('t.error: ' + err ); log.debug( err.stack );} )
 });
 
 test('emit event when a component instance is changed', t => {
@@ -754,7 +755,8 @@ test('emit event when a component instance is changed', t => {
         entitySet.on('component:change', spy);
 
         let entityA = entitySet.addEntity( 
-            registry.createEntity( { '@c':'/component/flower', colour:'white'} ) );
+            Entity.create(registry,{'@c':'/component/flower', colour:'white'}) );
+            // registry.createEntity( { '@c':'/component/flower', colour:'white'} ) );
 
         let component = entitySet.at(0).getComponentByIId('/component/flower');
 

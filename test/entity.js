@@ -73,7 +73,7 @@ test('setting entity set', t => {
     e.setEntityId( 22 );
     e.setEntitySetId( 103 );
 
-    let es = { id:0 };
+    let es = { id:0, getRegistry:() => Registry.create() };
     e.setEntitySet( es );
 
     t.equals( e.getEntityId(), 22 );
@@ -106,16 +106,14 @@ test('toJSON with full options', t => {
     let c = createComponent({name:'douglas'});
     e.addComponent( c );
 
-    let json = e.toJSON({full:true});
+    let json = e.toJSON();
 
-    // console.log( json );
-    // console.log( e.getComponentBitfield().toValues() );
-    // console.log( e.components );
-    t.deepEquals( e.toJSON({full:true}), { id: 0, c: [ { '@c': '/component/name', name: 'douglas' } ] } );
+    t.deepEquals( e.toJSON(), [ { '@s':1, name: 'douglas' } ] );
     t.end();
 });
 
 
 function createComponent( properties ){
-    return Component.create( _.extend({'@s':1,'@c':'/component/name'}, properties) )
+    properties = _.extend({'@s':1,'@c':'/component/name'}, properties);
+    return Component.create( properties )
 }

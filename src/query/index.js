@@ -167,7 +167,6 @@ Query.resolveEntitySet = function resolveEntitySet( context, entitySet, compileO
 
 QueryContext.prototype.componentsToBitfield = function( context, components ){
     let componentIds, result;
-    
     componentIds = context.registry.getIId( components, {forceArray:true, debug:true} );
     // console.log('lookup ', components, componentIds );
     result = BitField.create();

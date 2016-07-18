@@ -90,8 +90,7 @@ test('will only execute processors which match', t => {
         dispatch.addProcessor( processor, Query.all('/component/hostname') );
         dispatch.addProcessor( otherProcessor, Query.all('/component/username') );
         
-        let entity = registry.createEntity( { '@c':'/component/username', username:'fred' } );
-
+        let entity = Entity.create(registry, [{'@c':'/component/username', username:'fred'}]);
         // console.log('entity', entityToString(entity) );
 
         dispatch.execute( entity );
@@ -109,7 +108,7 @@ test('will only execute processors which match', t => {
 test('executing a processor with a time interval', t => {
     return initialiseRegistry().then( registry => {
         let dispatch = Dispatch.create(registry);
-        let entity = registry.createEntity( {'@c':'/component/username'} );
+        let entity = Entity.create(registry, [{'@c':'/component/username'}]);
         let executeCount = 0;
 
         const processor =createEntityProcessor( 
@@ -138,7 +137,7 @@ test('processors can have priority', t => {
     return initialiseRegistry().then( registry => {
         let dispatch = Dispatch.create(registry);
 
-        let entity = registry.createEntity( {'@c':'/component/username'} );
+        let entity = Entity.create(registry, [{'@c':'/component/username'}]);
         let executeCount = 0;
 
         const procA =createEntityProcessor( 

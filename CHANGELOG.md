@@ -4,6 +4,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased][unreleased]
 
+## [3.1.0] - 2016-07-18
+### Added
+- memory EntitySet can now marshall itself to and from JSON using createEntitySet and toJSON
+
 ## [3.0.3] - 2016-07-14
 ### Changed
 - entity and component toJSON expanded with a full option

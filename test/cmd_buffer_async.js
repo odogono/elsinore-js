@@ -266,7 +266,8 @@ test('adding multiple', t => {
             {"@e":12, "@c": "/component/channel_member", '@s':5, "channel": 1, "client": 5 },
         ];
 
-        let entities = loadEntities( registry, data );
+        let entities = registry.createEntitySet(null, {'@e':data});
+        // let entities = loadEntities( registry, data );
         
         return cb.addEntity( es, entities.models )
             .then( added => {

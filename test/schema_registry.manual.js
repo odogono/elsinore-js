@@ -131,7 +131,7 @@ test('registering a schema with typed default properties', t => {
 test('attempting to retrieve an unknown schema throws an error', t => {
     const registry = ComponentRegistry.create(COMPONENT_DEFINITIONS);
 
-    t.throws(()=>registry.getIId('/component/missing'), /could not find schema \/component\/missing/ );
+    t.throws(()=>registry.getIId('/component/missing'), new Error('could not find schema /component/missing') );
     
     t.end();
 });
@@ -140,8 +140,10 @@ test('attempting to retrieve an unknown schema throws an error', t => {
 test('returns an array of schema internal ids from a series of identifiers', t => {
     const registry = ComponentRegistry.create(COMPONENT_DEFINITIONS);
 
+    // console.log( registry._componentDefs.map( c => c.id + ':' + c.getUri() + ':' + c.hash() ) )
+
     t.deepEqual(
-        registry.getIId( ['/component/position', 'c6c1bcdf', 2, '/component/geo_location', 'bd12d7de'] ),
+        registry.getIId( ['/component/position', 'cc425723', 2, '/component/geo_location', '67667d21'] ),
         [ 1, 4, 2, 5, 1 ] );
 
     t.end();
@@ -153,7 +155,7 @@ test('unregistering a schema', t => {
     registry.unregister( '/component/status' );
     
     t.throws(()=>registry.createComponent('/component/status'), 
-        /could not find schema \/component\/status/ );
+        new Error('could not find schema /component/status') );
     
     t.end();
 });
