@@ -408,15 +408,6 @@ let EntitySet = Backbone.Collection.extend({
 //     }
 // };
 
-// // NOTE - should really use iterator rather than these
-// _.each( ['forEach', 'each', /*'map',*/ 'where', 'filter'], function(method){
-//     EntitySet.prototype[method] = function(){
-//         let args = Array.prototype.slice.call(arguments);
-//         args.unshift( this.entities.models );
-//         return _[method].apply( _, args );
-//     };
-// });
-
 
 EntitySet.hash = function( entitySet ){
     let hash = entitySet.toJSON();// entitySet.type;

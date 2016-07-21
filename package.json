@@ -1,6 +1,6 @@
 {
   "name": "elsinore",
-  "version": "3.1.0",
+  "version": "3.1.1",
   "description": "a javascript Entity Component System",
   "keywords": [
     "elsinore",
@@ -76,14 +76,6 @@
   "babel": {
     "plugins": [
       "transform-es2015-modules-commonjs",
-      [
-        "typecheck",
-        {
-          "disable": {
-            "production": true
-          }
-        }
-      ],
       "syntax-flow",
       "transform-flow-strip-types"
     ],
