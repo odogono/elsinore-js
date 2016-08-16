@@ -68,8 +68,19 @@
     "lib": "lib"
   },
   "scripts": {
+
+    "build": "browserify lib/index.js --standalone Elsinore -o build/elsinore.js",
+    "minify": "echo 'cd build && uglifyjs elsinore.js --compress --source-map elsinore.min.js.map --output elsinore.min.js' | sh",
+
+    "clean": "rm -rf node_modules build dist lib; mkdir build; npm install",
+
     "compile": "Gulp transpile",
-    "prepublish": "npm run compile",
+
+    "dist:noclean": "npm run compile && npm run build && npm run minify && rm -rf dist && cp -r build dist",
+    "dist": "npm run dist:noclean",
+
+    "prepublish": "npm run dist",
+
     "test": "NODE_ENV=test babel-tape-runner ./test | tap-dot",
     "spec": "NODE_ENV=test babel-tape-runner ./test | tap-spec"
   },

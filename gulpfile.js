@@ -93,7 +93,7 @@ Gulp.task('build.bundle.vendor', function(){
     b.transform( UnreachableBranchTransform );
 
     // backbone will include jquery if required
-    b.exclude('jquery');
+    // b.exclude('jquery');
 
     b.require(vendorDependencies);
 

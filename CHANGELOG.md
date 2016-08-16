@@ -4,6 +4,11 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased][unreleased]
 
+## [3.2.0] - 2016-08-16
+### Changed
+- replaced use of backbone module with odgn-backbone-model
+- updated npm scripts to build standalone into dist/
+
 ## [3.1.0] - 2016-07-18
 ### Added
 - memory EntitySet can now marshall itself to and from JSON using createEntitySet and toJSON
