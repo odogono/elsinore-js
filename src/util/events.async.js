@@ -1,20 +1,20 @@
 'use strict';
 
 import _ from 'underscore';
-import Backbone from 'backbone';
+import {Events} from 'odgn-backbone-model';
 import * as Utils from '../util';
 
 /**
 *   An event listener which captures incoming events and
 *   only releases them when instructed to.
 */
-let EventsAsync = _.extend({}, Backbone.Events, {
+let EventsAsync = _.extend({}, Events, {
 
     /**
     *
     */
     stopListening: function( obj, name, callback ){
-        Backbone.Events.stopListening.apply( this, arguments );
+        Events.stopListening.apply( this, arguments );
         delete this._asyncListenQueue;
         this.isListeningAsync = false;
         return this;

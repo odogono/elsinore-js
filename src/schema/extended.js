@@ -1,5 +1,5 @@
 import _ from 'underscore';
-import Backbone from 'backbone';
+import {Events} from 'odgn-backbone-model';
 import Jsonpointer from 'jsonpointer';
 
 import * as Utils from '../util'
@@ -58,7 +58,7 @@ Schema.create = function( obj, uri, hash ){
 }
 
 
-_.extend(SchemaRegistry.prototype, Backbone.Events, {
+_.extend(SchemaRegistry.prototype, Events, {
     
     /**
     * Registers schemas from the presented data

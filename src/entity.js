@@ -1,9 +1,6 @@
 
 import BitField  from 'odgn-bitfield';
 import _ from 'underscore';
-import Backbone from 'backbone';
-// import * as Utils from './util'
-// import * as Utils from './util';
 import * as Utils from './util';
 import {printIns} from './util';
 

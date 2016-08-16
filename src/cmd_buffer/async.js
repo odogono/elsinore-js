@@ -1,9 +1,8 @@
 'use strict';
 
 import _ from 'underscore';
-import Backbone from 'backbone';
 import BitField from 'odgn-bitfield';
-
+import {Collection} from 'odgn-backbone-model';
 let Component = require('../component');
 import Entity from '../entity';
 let EntityFilter = require('../entity_filter');
@@ -21,7 +20,7 @@ _.extend( CmdBuffer.prototype, SyncCmdBuffer.default.prototype, {
     reset: function(){
         SyncCmdBuffer.default.prototype.reset.apply(this,arguments);
         // store references to entities that exist during operations
-        this._entityCache = new Backbone.Collection(); //Utils.clearMap( this._entityCache );
+        this._entityCache = new Collection(); //Utils.clearMap( this._entityCache );
     },
 
     /**

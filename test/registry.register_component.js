@@ -1,6 +1,6 @@
 import _ from 'underscore';
 import test from 'tape';
-import Backbone from 'backbone';
+import {Events} from 'odgn-backbone-model';
 import Sinon from 'sinon';
 
 import {
@@ -31,7 +31,7 @@ const COMPONENT_DEFINITIONS = [
 
 test('testing an async register component', t => {
     const registry = Registry.create();
-    const Listener = _.extend( {}, Backbone.Events );
+    const Listener = _.extend( {}, Events );
 
     Listener.on('register', componentDef => {
         t.equals( componentDef.get('uri'), '/component/position');
@@ -47,7 +47,7 @@ test('testing an async register component', t => {
 
 test('registering multiple component defs', t => {
     const registry = Registry.create();
-    const Listener = _.extend( {}, Backbone.Events );
+    const Listener = _.extend( {}, Events );
 
     Listener.on('register', componentDef => {
         t.ok( componentDef.get('uri') );

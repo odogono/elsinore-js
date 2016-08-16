@@ -1,11 +1,11 @@
 import _ from 'underscore';
-import Backbone from 'backbone';
+import {Model as BackboneModel,Collection} from 'odgn-backbone-model';
 import * as Utils from './util';
 import Query from './query/full';
 
 
 function EntityDispatch(){
-    this.processorEntries = new Backbone.Collection();
+    this.processorEntries = new Collection();
     this.processorEntries.comparator = (a,b) => a.get('priority') < b.get('priority');
     this.executedAt = Date.now;
 }
@@ -15,7 +15,7 @@ EntityDispatch.prototype.addProcessor = function( processor, query, options={} )
     query = query || processor.entityFilter;
 
 
-    let entry = new Backbone.Model({
+    let entry = new BackboneModel({
         id: processor.id || _.uniqueId('procdisp'),
         processor: processor,
         createdAt: 0,

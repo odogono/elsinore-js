@@ -1,9 +1,7 @@
 'use strict';
 
 import _ from 'underscore';
-import Backbone from 'backbone';
-
-
+import {Model as BackboneModel} from 'odgn-backbone-model';
 import Registry from './index';
 import Query from '../query/full';
 import EntitySet from '../entity_set/view';
@@ -81,7 +79,7 @@ _.extend( Registry.prototype, {
     _mapEntitySetToProcessor: function( entitySet, processor, options ){
         let filter, hash, view, entitySetProcessors, debug;
 
-        let record = new Backbone.Model({
+        let record = new BackboneModel({
             id: processor.id,
             entitySet: entitySet,
             processor: processor

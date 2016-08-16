@@ -1,6 +1,6 @@
 import _ from 'underscore';
 import test from 'tape';
-import Backbone from 'backbone';
+import {Events} from 'odgn-backbone-model';
 import Sinon from 'sinon';
 
 
@@ -314,7 +314,7 @@ function createEntitySet( entitySetId, entityIds, registry ){
         getRegistry: function(){
             return registry;
         }
-    }, Backbone.Events );
+    }, Events );
 }
 
 

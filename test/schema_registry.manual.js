@@ -1,6 +1,5 @@
 import _ from 'underscore';
 import test from 'tape';
-import Backbone from 'backbone';
 
 import {
     Component, Entity, EntityFilter, EntitySet,

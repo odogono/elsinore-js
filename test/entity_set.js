@@ -809,7 +809,8 @@ test('attached entitysets', t => {
         t.equals( oEntitySet.size(), 2 );
 
         t.end();
-    });
+    })
+    .catch( err => { log.debug('t.error: ' + err ); log.debug( err.stack );} )
 });
 
 

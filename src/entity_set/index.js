@@ -1,5 +1,5 @@
 import _ from 'underscore';
-import Backbone from 'backbone';
+import {Collection,Events} from 'odgn-backbone-model';
 import BitField  from 'odgn-bitfield';
 
 let Component = require('../component');
@@ -11,14 +11,14 @@ import {uuid as createUuid} from '../util/uuid';
 
 import * as CmdBuffer from '../cmd_buffer/sync';
 
-let CollectionPrototype = Backbone.Collection.prototype;
+let CollectionPrototype = Collection.prototype;
 
 
 
 /**
  * An EntitySet is a container for entities
  */
-let EntitySet = Backbone.Collection.extend({
+let EntitySet = Collection.extend({
     type: 'EntitySet',
     isMemoryEntitySet: true,
     isEntitySet: true,
@@ -256,10 +256,10 @@ let EntitySet = Backbone.Collection.extend({
         }
 
         if( !this.getQuery() ){
-            return Backbone.Collection.prototype.reset.call( this, entities );
+            return CollectionPrototype.reset.call( this, entities );
         }
 
-        Backbone.Collection.prototype.reset.call( this, null, {silent:true} );
+        CollectionPrototype.reset.call( this, null, {silent:true} );
 
         for( ii=0,len=entities.length;ii<len;ii++ ){
             entity = entities[ii];
@@ -318,7 +318,7 @@ let EntitySet = Backbone.Collection.extend({
 
     listenToEntityEvent: function( entityOrFilter, name, callback, context ){
         if( !this._entityEvents ){
-            this._entityEvents = _.clone(Backbone.Events);
+            this._entityEvents = _.clone(Events);
             // this._entityEvents.on('all', function(){
             //     log.debug('eevt: ' + JSON.stringify(arguments) );
             // })

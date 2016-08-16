@@ -1,5 +1,5 @@
 import _ from 'underscore';
-import Backbone from 'backbone';
+import {Events, Collection} from 'odgn-backbone-model'
 
 import BitField  from 'odgn-bitfield';
 import Entity from '../entity';
@@ -23,7 +23,7 @@ import {getPropertiesObject, getProperties} from '../schema/properties';
  const Registry = function(){};
 
 
-_.extend(Registry.prototype, Backbone.Events, {
+_.extend(Registry.prototype, Events, {
     type: 'Registry',
     isRegistry: true,
 
@@ -479,7 +479,7 @@ _.extend(Registry.prototype, Backbone.Events, {
 
 
 function createProcessorCollection(){
-    let result = new Backbone.Collection();
+    let result = new Collection();
     result.comparator = (procA, procB) => {
         // the entriy in the collection might be a record referencing a processor
         procA = procA.get('processor') || procA;

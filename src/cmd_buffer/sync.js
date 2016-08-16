@@ -1,5 +1,4 @@
 import _ from 'underscore';
-import Backbone from 'backbone';
 
 import BitField  from 'odgn-bitfield';
 import Component from '../component';

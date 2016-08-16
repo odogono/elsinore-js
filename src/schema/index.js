@@ -1,7 +1,7 @@
 /* @flow */
 
 import _ from 'underscore';
-import Backbone from 'backbone';
+import {Collection,Events,Model as BackboneModel} from 'odgn-backbone-model';
 // import Jsonpointer from 'jsonpointer';
 
 import Component from '../component';
@@ -19,7 +19,7 @@ type ComponentDefIdentifierType = string | string[] | uint32 | ComponentDefRawTy
 
 
 
-const ComponentDefCollection = Backbone.Collection.extend({
+const ComponentDefCollection = Collection.extend({
     model: ComponentDef,
 
     getByHash: function(hash:string){
@@ -31,7 +31,7 @@ const ComponentDefCollection = Backbone.Collection.extend({
 
 export default class ComponentRegistry {
     constructor( definitions ){
-        _.extend(this, Backbone.Events);
+        _.extend(this, Events);
         this._componentIndex = 1;
         this._componentDefs = new ComponentDefCollection();
         if( definitions ){

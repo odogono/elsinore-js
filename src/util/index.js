@@ -1,5 +1,5 @@
 import _ from 'underscore';
-import Backbone from 'backbone';
+import {Collection} from 'odgn-backbone-model';
 import DeepEqual from 'deep-equal';
 import Url from 'fast-url-parser';
 import Util from 'util';
@@ -203,7 +203,7 @@ export function deepExtend( out, ...others ){
 }
 
 export function clearCollection( col ){
-    if( !col ){ return new Backbone.Collection(); }
+    if( !col ){ return new Collection(); }
     col.reset();
     return col;
 }

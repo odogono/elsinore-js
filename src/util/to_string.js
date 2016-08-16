@@ -1,5 +1,5 @@
 import _ from 'underscore';
-import Backbone from 'backbone';
+import {Collection} from 'odgn-backbone-model';
 
 import Component from '../component';
 import Entity from '../entity';
@@ -86,7 +86,7 @@ export function toString(entity, indent='', join="\n"){
         res = res.concat( entitySetToString( entity.entitySet, indent ) );
     } else if( EntitySet.isEntitySet(entity) ){
         res = res.concat( entitySetToString( entity, indent ) );
-    } else if( entity instanceof Backbone.Collection ){
+    } else if( entity instanceof Collection ){
         entity.each( item => {
             res = res.concat( toString(item,'  ') );
         });

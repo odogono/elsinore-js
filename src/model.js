@@ -1,12 +1,10 @@
-'use strict';
-
 import _ from 'underscore';
-import Backbone from 'backbone';
+import {Model as BackboneModel} from 'odgn-backbone-model'
 import * as Utils from './util'
 
 
 
-let Model = Backbone.Model.extend({
+let Model = BackboneModel.extend({
     type: 'Model',
     isModel: true,
 

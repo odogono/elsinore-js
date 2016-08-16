@@ -1,6 +1,5 @@
 import _ from 'underscore';
-import Backbone from 'backbone';
-
+import {Model as BackboneModel} from 'odgn-backbone-model';
 import EntitySet from './entity_set';
 import * as Utils from './util'
 
@@ -14,7 +13,7 @@ import EventsAsync from './util/events.async';
  * 
  * Standard design: c.f. http://entity-systems.wikidot.com/rdbms-with-code-in-systems
  */
-const EntityProcessor = Backbone.Model.extend({
+const EntityProcessor = BackboneModel.extend({
     type: 'EntityProcessor',
     isEntityProcessor: true,
 

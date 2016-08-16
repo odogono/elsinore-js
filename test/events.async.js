@@ -2,16 +2,16 @@
 
 import test from 'tape';
 import _ from 'underscore';
-import Backbone from 'backbone';
+import {Events} from 'odgn-backbone-model';
 import Common  from './common';
 let EventsAsync = Common.requireLib('util/events.async');
 let Utils = Common.requireLib('utils');
 
 
-// let EventsAsync = _.extend({}, Backbone.Events, {
+// let EventsAsync = _.extend({}, Events, {
 
 //     stopListening: function( obj, name, callback ){
-//         Backbone.Events.stopListening.apply( this, arguments );
+//         Events.stopListening.apply( this, arguments );
 //         delete this._asyncListenQueue;
 //     },
     
