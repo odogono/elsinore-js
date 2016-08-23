@@ -178,7 +178,7 @@ export function loadFixture( fixturePath ){
     return data;
 }
 
-export function loadFixtureJSON( fixturePath, data ){
+export function loadFixtureJSON( fixturePath ){
     try {
         let data = loadFixture( fixturePath );
         data = JSON.parse( data );

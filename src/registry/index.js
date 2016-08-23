@@ -117,6 +117,13 @@ _.extend(Registry.prototype, Events, {
         // }
     },
 
+    /**
+    *   Creates a new entity
+    */
+    createEntity: function(entityId, entitySetId, options){
+        return Entity.create(entityId, entitySetId, _.extend({registry:this},options));
+    },
+
     /*
     createEntity: function( components, options={} ){
         let entityId;

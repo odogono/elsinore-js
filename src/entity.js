@@ -280,8 +280,7 @@ Entity.create = function(entityId, entitySetId){
         options = entitySetId;
         entitySetId = 0;
     }
-    // console.log('Entity.create', arguments);
-
+    
     registry = options.registry;
 
     if( Registry.isRegistry(entityId) ){
@@ -312,16 +311,7 @@ Entity.create = function(entityId, entitySetId){
         entityId = 0;
     }
     
-    // if( _.isUndefined(entitySetId) ){
-    //     entitySetId = 0;
-    // }
-
     result.setId( entityId, entitySetId );
-    // entityId = Utils.setEntityIdFromId( entityId, entitySetId );
-    // result.set({id: entityId});
-
-    // result.setEntitySetId( entitySetId );
-    // result.setEntityId( entityId );
     
     return result;
 };
