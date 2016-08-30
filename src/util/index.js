@@ -158,19 +158,13 @@ export function deepClone( obj ){
 }
 
 // from: http://www.tuanhuynh.com/blog/2014/unpacking-underscore-clone-and-extend/
-export function deepExtend( out, ...others ){
+export function deepExtend( out={}, ...others ){
     let ii, len;
     let obj;
     let key,val;
 
-    out || (out={});
-
-    for (ii = 1, len = others.length; ii < len; ii++) {
+    for (ii = 0, len = others.length; ii < len; ii++) {
         obj = others[ii];
-
-        if (!obj){
-            continue;
-        }
 
         if (!obj){
             continue;
@@ -180,8 +174,9 @@ export function deepExtend( out, ...others ){
             if( !obj.hasOwnProperty(key) ){
                 continue;
             }
+
             val = obj[key];
-            
+
             if( _.isArray(val) ){
                 out[key] = deepExtend( out[key] || [], val );
             }

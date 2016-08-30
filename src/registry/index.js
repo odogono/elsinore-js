@@ -36,7 +36,7 @@ _.extend(Registry.prototype, Events, {
     initialize: function(options={}){
         this._initialized = true;
 
-        this.schemaRegistry = options.schemaRegistry || SchemaRegistry.create();
+        this.schemaRegistry = options.schemaRegistry || SchemaRegistry.create(null,{registry:this});
 
         // listen to when the schema registry registers and unregisters schemas
         // this.listenTo( this.schemaRegistry, 'schema:add', this.schemaAdded );

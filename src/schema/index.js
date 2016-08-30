@@ -30,8 +30,9 @@ const ComponentDefCollection = Collection.extend({
 
 
 export default class ComponentRegistry {
-    constructor( definitions ){
+    constructor( definitions, options={} ){
         _.extend(this, Events);
+        this.registry = options.registry;
         this._componentIndex = 1;
         this._componentDefs = new ComponentDefCollection();
         this._componentTypes = {};
@@ -73,8 +74,12 @@ export default class ComponentRegistry {
         }
 
         if( Component.isComponent(def) ){
-            let inst = new def(null,{registering:true});
+            let inst = new def(null,{registering:true, registry:this.registry});
+            if( inst.properties ){
+                def.properties = inst.properties;
+            }
             this._componentTypes[ inst.type ] = def;
+            // console.log('Component has properties', inst.properties);
             this.trigger('type:add', inst.type, def);
             return def;
         }
@@ -98,13 +103,18 @@ export default class ComponentRegistry {
         let type = def['type'];
 
         if( type ){
+            let ComponentType = this._componentTypes[type];
             // ensure we have this type registered
-            if( !this._componentTypes[type] ){
+            if( !ComponentType ){
                 if( throwOnExists ){
                     throw new Error('could not find type ' + type + ' for def ' + def['uri'] );
                 } else {
                     return null;
                 }
+            }
+
+            if( ComponentType.properties ){
+                def = Utils.deepExtend( {}, {properties:ComponentType.properties}, def );
             }
         }
         
@@ -172,11 +182,6 @@ export default class ComponentRegistry {
             return cb('could not find componentDef ' + defUri);
         }
 
-        // we create with attrs from the def, not properties -
-        // since the properties describe how the attrs should be set
-
-        attrs = _.extend( {}, def.getAttrs(), attrs );
-
         let ComponentType = Component;
         let type = def.get('type');
         // console.log('createComponent...', def.get('type') );
@@ -186,9 +191,19 @@ export default class ComponentRegistry {
             if( !ComponentType ){
                 return cb('could not find component type ' + type );
             }
+
+            // if( ComponentType.properties ){
+
+            // }
+            // console.log('create type', attrs);
         }
 
-        let result = new ComponentType( attrs, {parse:true} );
+        // we create with attrs from the def, not properties -
+        // since the properties describe how the attrs should be set
+
+        attrs = _.extend( {}, def.getAttrs(), attrs );
+
+        let result = new ComponentType( attrs, {parse:true, registry:this.registry} );
 
         if( type ){
             result['is'+type] = true;
@@ -274,8 +289,8 @@ export default class ComponentRegistry {
         return result;
     }
     
-    static create( definitions ){
-        let result = new ComponentRegistry(definitions);
+    static create( definitions, options={} ){
+        let result = new ComponentRegistry(definitions, options);
         
         return result;
     }

@@ -14,6 +14,12 @@ const Component = Model.extend({
     type: 'Component',
     isComponent: true,
 
+    // preinitialize: function( attrs, options={} ){
+    //     if( options.registry ){
+    //         this.registry = registry;
+    //     }
+    // },
+
     parse: function( resp ){
         // console.log('Component.parse', resp);
         var esId = 0, eId = 0;
