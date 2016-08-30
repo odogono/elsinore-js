@@ -34,6 +34,7 @@ export default class ComponentRegistry {
         _.extend(this, Events);
         this._componentIndex = 1;
         this._componentDefs = new ComponentDefCollection();
+        this._componentTypes = {};
         if( definitions ){
             _.each( definitions, def => this.register(def) );
         }
@@ -70,6 +71,13 @@ export default class ComponentRegistry {
         if( _.isArray(def) ){
             return _.map( def, d => this.register(d,options) );
         }
+
+        if( Component.isComponent(def) ){
+            let inst = new def(null,{registering:true});
+            this._componentTypes[ inst.type ] = def;
+            this.trigger('type:add', inst.type, def);
+            return def;
+        }
         
         if( !_.isObject(def) || !def.uri ){
             // console.log('def',def);
@@ -84,6 +92,19 @@ export default class ComponentRegistry {
                 throw new Error('def ' + existing.uri + ' (' + existing.hash + ') already exists' );
             } else {
                 return null;
+            }
+        }
+
+        let type = def['type'];
+
+        if( type ){
+            // ensure we have this type registered
+            if( !this._componentTypes[type] ){
+                if( throwOnExists ){
+                    throw new Error('could not find type ' + type + ' for def ' + def['uri'] );
+                } else {
+                    return null;
+                }
             }
         }
         
@@ -144,6 +165,7 @@ export default class ComponentRegistry {
         if( cb ){
             throwOnNotFound = false;
         }
+
         let def = this.getComponentDef( defUri, {throwOnNotFound} );
 
         if( !def && cb ){
@@ -154,13 +176,29 @@ export default class ComponentRegistry {
         // since the properties describe how the attrs should be set
 
         attrs = _.extend( {}, def.getAttrs(), attrs );
-        let result = Component.create( attrs, {parse:true} );
+
+        let ComponentType = Component;
+        let type = def.get('type');
+        // console.log('createComponent...', def.get('type') );
+        if( type ){
+            // console.log('could not find component type ' + type );
+            ComponentType = this._componentTypes[type];
+            if( !ComponentType ){
+                return cb('could not find component type ' + type );
+            }
+        }
+
+        let result = new ComponentType( attrs, {parse:true} );
+
+        if( type ){
+            result['is'+type] = true;
+        }
         
         result.setDefDetails( def.id, def.getUri(), def.hash(), def.getName() );
         
         this.trigger('component:create', result.defUri, result );
         
-        
+        // console.log('result:', result);
         if( cb ){ return cb( null, result ); }
         return result;
     }

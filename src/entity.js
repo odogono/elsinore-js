@@ -269,13 +269,13 @@ Entity.createId = function(){
 /**
 *
 */
-Entity.create = function(entityId, entitySetId){
-    let options = {};
+Entity.create = function(entityId, entitySetId, options={}){
     let result = new Entity();
     let registry;
     result.components = [];
     result.cid = Entity.createId();
 
+    // console.log('Entity.create', arguments);
     if(_.isObject(entitySetId)){
         options = entitySetId;
         entitySetId = 0;

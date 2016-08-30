@@ -120,8 +120,23 @@ _.extend(Registry.prototype, Events, {
     /**
     *   Creates a new entity
     */
-    createEntity: function(entityId, entitySetId, options){
-        return Entity.create(entityId, entitySetId, _.extend({registry:this},options));
+    createEntity: function(components, options){
+        options = _.extend({registry:this},options);
+        let entityId = 0;
+        let entitySetId = 0;
+
+        if( options.id ){ entityId = options.id; }
+        if( options['@e'] ){ entityId = options['@e']; }
+        if( options['@es'] ){ entitySetId = options['@es']; }
+        
+        let result = Entity.create(entityId, entitySetId, options );
+
+        if( components ){
+            components = this.createComponent(components);
+            result.addComponent(components);
+        }
+
+        return result;
     },
 
     /*
