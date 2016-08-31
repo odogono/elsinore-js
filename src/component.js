@@ -13,6 +13,7 @@ import * as Utils from './util';
 const Component = Model.extend({
     type: 'Component',
     isComponent: true,
+    cidPrefix: 'c',
 
     // preinitialize: function( attrs, options={} ){
     //     if( options.registry ){

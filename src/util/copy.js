@@ -4,7 +4,7 @@ import Entity from '../entity';
 
 export function copyEntity( registry, srcEntity, dstEntity, options={} ){
     let ii,len,component,srcComponent;
-    let result = Entity.create( registry );// registry.createEntity();
+    let result = registry.createEntity();// registry.createEntity();
     const returnChanges = options.returnChanges;
     const returnChanged = options.returnChanged;
     const deleteMissing = options.delete;

@@ -2,6 +2,7 @@
 
 import test from 'tape';
 import _ from 'underscore';
+import {Model} from 'odgn-backbone-model';
 
 import {
     Component, Entity, EntitySet,
@@ -19,8 +20,9 @@ import {
 } from './common';
 
 
+
 test('is an entity', t => {
-    let e = Entity.create();
+    let e = new Entity();
     t.equals( e.type, 'Entity' );
     t.equals( Entity.prototype.type, 'Entity' );
     t.ok( Entity.isEntity(e) );
@@ -28,9 +30,9 @@ test('is an entity', t => {
 });
 
 
-
 test('setting the id', t => {
-    let e = Entity.create( 456 );
+    let e = new Entity({'@e':456});
+    // let e = Entity.create( 456 );
     
     t.equals( e.getEntityId(), 456 );
     e.setEntityId( 22 );
@@ -56,6 +58,18 @@ test('setting the id', t => {
     t.end();
 });
 
+test('setting the id directly', t => {
+    let e = new Entity({id:2005});
+    t.equals( e.getEntityId(), 2005 );
+    t.end();
+});
+
+test('passing entity id in options', t => {
+    let e = new Entity({'@e': 1622});
+    t.equals( e.getEntityId(), 1622 );
+    t.end();
+});
+
 test('setting ids', t => {
     let id = 0;
     t.equals( getEntityIdFromId( id ), 0 );
@@ -69,7 +83,7 @@ test('setting ids', t => {
 });
 
 test('setting entity set', t => {
-    let e = Entity.create();
+    let e = new Entity();
     e.setEntityId( 22 );
     e.setEntitySetId( 103 );
 
@@ -83,7 +97,7 @@ test('setting entity set', t => {
 })
 
 test('hashing', t => {
-    let e = Entity.create();
+    let e = new Entity();
     // because an entity is the sum of its components, without components it is nothing
     t.equals( e.hash(), 0 );
 
@@ -92,7 +106,7 @@ test('hashing', t => {
 
     t.equals( e.hash(true), '7c7ecfd3' );
 
-    let oe = Entity.create();
+    let oe = new Entity();
     let oc = createComponent({name:'douglas'});
     oe.addComponent( oc );
 
@@ -102,7 +116,7 @@ test('hashing', t => {
 });
 
 test('toJSON with full options', t => {
-    let e = Entity.create();
+    let e = new Entity();
     let c = createComponent({name:'douglas'});
     e.addComponent( c );
 

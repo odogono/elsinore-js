@@ -102,7 +102,7 @@ _.extend( CmdBuffer.prototype, SyncCmdBuffer.default.prototype, {
     _packageEntityId: function( entitySet, entityId ){
         let entity;
         let getEntityOptions = { componentBitFieldOnly: true };
-        let registry = entitySet.getRegistry();
+        const registry = entitySet.getRegistry();
 
         // no entity id was provided
         if( !entityId ){
@@ -113,6 +113,7 @@ _.extend( CmdBuffer.prototype, SyncCmdBuffer.default.prototype, {
             return Promise.resolve( entity );
         }
 
+        // console.log('get es id', entitySet.id, 'from', entityId, Utils.getEntitySetIdFromId(entityId));
         if( Utils.getEntitySetIdFromId(entityId) === entitySet.id ){
             if( (entity = this._entityCache.get(entityId)) ){
                 // cached entity found previously
@@ -136,7 +137,6 @@ _.extend( CmdBuffer.prototype, SyncCmdBuffer.default.prototype, {
                     return entity;
                 });
         } else {
-            // log.debug('here ' + entityId + ' ' + entitySet.id );
             if( (entity = this._entityCache.get(entityId)) ){
                 return Promise.resolve(entity);
             }
@@ -155,8 +155,7 @@ _.extend( CmdBuffer.prototype, SyncCmdBuffer.default.prototype, {
     */
     _createHolderEntity: function( registry, existingId, mode, addEntityId ){
         let entityId = _.isUndefined(existingId) ? 0 : existingId;
-        let entity = Entity.create( entityId );
-        entity.setRegistry( registry );
+        let entity = registry.createEntityWithId( entityId );
         entity._addId = _.isUndefined(addEntityId) ? 0 : addEntityId;
         entity._mode = mode;
         // entity.set({mode:mode,addId:addEntityId});
@@ -273,11 +272,10 @@ _.extend( CmdBuffer.prototype, SyncCmdBuffer.default.prototype, {
                 (current,ine) => current.then( () => this.addEntity(entitySet, ine, options) )
             , Promise.resolve() )
                 .then( () => {
-                    if( execute ){
-                        return this.execute( entitySet, options )
-                            .then(() => Utils.valueArray(this.entitiesAdded.models))
-                    }
-                    return this;
+                    if( !execute ){ return this; }
+
+                    return this.execute( entitySet, options )
+                        .then(() => Utils.valueArray(this.entitiesAdded.models));
                 });
         } else {
             if( execute ){

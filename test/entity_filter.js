@@ -18,14 +18,14 @@ import {
 
 
 test('an default filter will accept an entity', t => {
-    const e = Entity.create();
+    const e = new Entity();
     t.ok( EntityFilter.accept(EntityFilter.ALL, toBitField(e), toBitField() ), 
         'the filter accepts an entity by default' );
     t.end();
 });
 
 test('will reject entities without components', t => {
-    const e = Entity.create();
+    const e = new Entity();
     t.notOk( 
         EntityFilter.accept( EntityFilter.SOME, e.getComponentBitfield() ), 
         'the filter rejects the entity without components');
@@ -45,7 +45,7 @@ test('will accept entities with one of the components', t => {
 });
 
 test('reject an entity which does not have a specific component', t => {
-    const e = Entity.create();
+    const e = new Entity();
     const type = EntityFilter.ALL;
     const bitField = toBitField( Components.Flower );
 
@@ -61,7 +61,7 @@ test('reject an entity which does not have a specific component', t => {
 });
 
 test('reject an entity which does not have the specific components', t => {
-    let e = Entity.create();
+    let e = new Entity();
     let type = EntityFilter.ALL;
     let bitField = toBitField( Components.Mineral, Components.Vegetable );
 
@@ -75,7 +75,7 @@ test('reject an entity which does not have the specific components', t => {
 });
 
 test('accepts an entity which has some of the components', t => {
-    let e = Entity.create();
+    let e = new Entity();
     let type = EntityFilter.ANY;
     let bitField = toBitField( Components.Animal, Components.Mineral, Components.Vegetable );
     
@@ -88,7 +88,7 @@ test('accepts an entity which has some of the components', t => {
 });
 
 test('rejects an entity which has any of the components', t => {
-    let e = Entity.create();
+    let e = new Entity();
     let type = EntityFilter.NONE;
     let bitField = toBitField( Components.Vegetable );
 
@@ -226,7 +226,7 @@ function createEntity( componentIIds ){
     let ii,len,com;
     let args = Array.prototype.slice.call( arguments );
 
-    let entity = Entity.create();
+    let entity = new Entity();
     entity.setEntityId( _.uniqueId() );
     
     for(ii=0,len=args.length;ii<len;i++){

@@ -236,6 +236,7 @@ let functions = {
         // does this entity exist in our es?
         entityId = Entity.toEntityId( entity );
         existingEntity = entitySet.getEntity( entityId );
+        // console.log('incoming', entityId, 'existing', existingEntity);
 
         if( !existingEntity ){
             // if( options.debug ) { console.log('no existing entity add ' + entityId ); }

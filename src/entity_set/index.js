@@ -201,18 +201,19 @@ let EntitySet = Collection.extend({
 
     _createEntity: function( entityId, returnId, options={} ){
         let result;
+        const registry = this.getRegistry();
 
         entityId = parseInt(entityId,10) || 0;
 
         if( entityId <= 0 ){
-            entityId = this.getRegistry().createId();
+            entityId = registry.createId();
         }
 
         if( returnId ){
             return entityId;
         }
 
-        result = Entity.create(entityId);
+        result = registry.createEntity(null,{'@e':entityId});
         // make sure we don't set the entityset id - memory entitysets retain
         // the original entityset id
         result.setEntitySet( this, false );

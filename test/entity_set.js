@@ -49,7 +49,7 @@ test('adding an entity with a component returns the added entity', t => {
     return initialiseRegistry().then( registry => {
         let entitySet = registry.createEntitySet();
 
-        let entity = Entity.create(registry, [{'@c':'/component/position', x:2, y:-2}]);
+        let entity = registry.createEntity( [{'@c':'/component/position', x:2, y:-2}]);
         entity = entitySet.addEntity( entity );
 
         // printE( entitySet );
@@ -138,7 +138,7 @@ test('removing a component from an entity with multiple components', t => {
             { '@c':'/component/radius', radius:30 },
         ]);
 
-        entity = entitySet.addEntity(Entity.create(registry, components));
+        entity = entitySet.addEntity(registry.createEntity( components));
         component = entitySet.removeComponent( components[0] );
 
         // printE( component );
@@ -157,14 +157,15 @@ test('you cant add an empty entity to an entityset', t => {
     return initialiseRegistry().then( registry => {
         let entitySet = registry.createEntitySet();
 
-        let e = Entity.create( 43 );
+        let e = registry.createEntityWithId(43);
 
         entitySet.addEntity( e );
 
         t.equals( entitySet.size(), 0 );
 
         t.end();
-    });
+    })
+    .catch( err => log.error('test error: %s', err.stack))
 });
 
 test('adding several components without an entity adds them to the same new entity', t => {
@@ -241,7 +242,7 @@ test('adding an entity with components', t => {
 
         entitySet.on('all', eventSpy);
 
-        let entity = Entity.create(16);
+        let entity = registry.createEntityWithId(16);
         entity.addComponent( (com=registry.createComponent( '/component/position', {id:5, x:2,y:-2})) );
         entity.addComponent( registry.createComponent( '/component/score', {id:6, score:100}) );
         entitySet.addEntity( entity );
@@ -310,7 +311,7 @@ test('should remove the entities component', t => {
         let entitySet = registry.createEntitySet();
         let entity;
 
-        entity = entitySet.addEntity(Entity.create(registry, [{'@c':'/component/realname', name:'tom smith'}]));
+        entity = entitySet.addEntity(registry.createEntity( [{'@c':'/component/realname', name:'tom smith'}]));
 
         // entity = entitySet.addEntity( registry.createEntity( {'@c':'/component/realname', name:'tom smith'} ) );
         
@@ -328,7 +329,7 @@ test('should remove the entity belonging to a component', t => {
         let entitySet = registry.createEntitySet({allowEmptyEntities:false});
         let eventSpy = Sinon.spy();
 
-        let entity = Entity.create(9);
+        let entity = registry.createEntityWithId(9);
         entity.addComponent( registry.createComponent( '/component/realname', {id:3, name:'tom smith'}) );
 
         entitySet.addComponent( entity.Realname );
@@ -414,12 +415,12 @@ test('should really remove an entity', t => {
         // Common.logEvents( entitySet );
 
         let entityA = entitySet.addEntity(
-            Entity.create(registry,[
+            registry.createEntity([
                 { '@c':'/component/flower', colour:'blue'},
                 { '@c':'/component/position', x:10, y:60 }] ));
 
         let entityB = entitySet.addEntity(
-            Entity.create(registry,[
+            registry.createEntity([
                 { '@c':'/component/vegetable', name:'cauliflower'},
                 { '@c':'/component/radius', radius:0.3 }] ));
 
@@ -504,10 +505,12 @@ test('adding an entity with an identical id will replace the existing one', t =>
 
        // let entities = loadEntities( registry );  
        // let entity = entities.at(0);
-       let entityA = Entity.create(registry,[
+       let entityA = registry.createEntity([
             {'@c':'/component/position', x:0,y:0}
         ]);
-       let entityB = Entity.create(registry,[
+       // printE( entityA );
+       // printIns( entityA );
+       let entityB = registry.createEntity([
             {'@c':'/component/position', x:15,y:-90},
             {'@c':'/component/status', 'status':'active'}
         ]);
@@ -515,7 +518,6 @@ test('adding an entity with an identical id will replace the existing one', t =>
        entityB.setId( entityA.id );
 
        entitySet.addEntity( entityA );
-       // log.debug('>--');
        entitySet.addEntity( entityB );
        
        t.equals( entitySet.size(), 1);
@@ -733,9 +735,11 @@ test('emit event when an entity component is changed', t => {
         entitySet.on('component:change', spy);
 
         let entityA = entitySet.addEntity( 
-            Entity.create(registry, [{'@c':'/component/flower', colour:'white'}]) );
+            registry.createEntity( [{'@c':'/component/flower', colour:'white'}]) );
 
-        let entityB = Entity.create(entityA.getEntityId(),{registry, '@c':[{'@c':'/component/flower', colour:'blue'}]});
+        let entityB = registry.createEntity( 
+            [{'@c':'/component/flower', colour:'blue'}], 
+            {'@e':entityA.getEntityId()} );
 
         t.equal( entityA.getEntityId(), entityB.getEntityId(), 'the entity ids should be equal' );
         
@@ -755,7 +759,7 @@ test('emit event when a component instance is changed', t => {
         entitySet.on('component:change', spy);
 
         let entityA = entitySet.addEntity( 
-            Entity.create(registry,{'@c':'/component/flower', colour:'white'}) );
+            registry.createEntity({'@c':'/component/flower', colour:'white'}) );
             // registry.createEntity( { '@c':'/component/flower', colour:'white'} ) );
 
         let component = entitySet.at(0).getComponentByIId('/component/flower');

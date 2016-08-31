@@ -4,6 +4,13 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased][unreleased]
 
+## [3.3.0] - 2016-08-16
+### Added
+- reinstated registry.createEntity and added explicit registry.createEntityWithId
+
+### Changed
+- Entity.create removed in favour of 'new Entity()' - entity id can be set from attributes
+
 ## [3.2.0] - 2016-08-16
 ### Changed
 - replaced use of backbone module with odgn-backbone-model

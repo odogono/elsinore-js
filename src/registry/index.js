@@ -36,13 +36,8 @@ _.extend(Registry.prototype, Events, {
     initialize: function(options={}){
         this._initialized = true;
 
-        this.schemaRegistry = options.schemaRegistry || SchemaRegistry.create(null,{registry:this});
-
-        // listen to when the schema registry registers and unregisters schemas
-        // this.listenTo( this.schemaRegistry, 'schema:add', this.schemaAdded );
-        // this.listenTo( this.schemaRegistry, 'schema:remove', this.schemaRemoved );
-
-        this.schemaRegistry.on('all', (...args) => this.trigger.apply(this, args));
+        // used to instantiate new entities
+        this.Entity = Entity;
 
         // a number used to assign id numbers to things - entities, components, entitysets
         this.sequenceCount = options.sequenceCount || 0;
@@ -65,26 +60,12 @@ _.extend(Registry.prototype, Events, {
         // a map of hashes to entity views
         this._entityViews = {};
 
-        // // an object of entity set ids -> instances
-        // this._entitySetIds = {};
-
-        // current index of component defs
-        // this._componentDefId = 1;
-        // an array of component def ids to componentDef objects
-        // this._componentDefs = [];
-
-        // a map of componentDef schema ids to componentDef objects
-        // this._componentSchemaIds = {};
-
-        // a map of componentDefs keyed by their hash
-        // this._componentDefsBySchemaHash = [];
-        // this._schemaHashComponentDefIds = {};
-
-        // ComponentDef constant names
-        // this.ComponentDef = {};
-
         this.updateLastTime = Date.now();
         this.processors = createProcessorCollection();
+
+        this.schemaRegistry = options.schemaRegistry || SchemaRegistry.create(null,{registry:this});
+
+        this.schemaRegistry.on('all', (...args) => this.trigger.apply(this, args));
 
         return this;
     },
@@ -120,16 +101,34 @@ _.extend(Registry.prototype, Events, {
     /**
     *   Creates a new entity
     */
-    createEntity: function(components, options){
-        options = _.extend({registry:this},options);
-        let entityId = 0;
-        let entitySetId = 0;
+    createEntity: function(components, options={}){
+        // options = _.extend({registry:this},options);
+        options.registry = this;
+        // let entityId = 0;
+        // let entitySetId = 0;
+        let attrs = {};
+        let idSet = false;
 
-        if( options.id ){ entityId = options.id; }
-        if( options['@e'] ){ entityId = options['@e']; }
-        if( options['@es'] ){ entitySetId = options['@es']; }
+        // if( options.id ){ attrs.id = options.id; }
+        if( options['@e'] ){ 
+            attrs['@e'] = options['@e']; idSet = true;
+        }
+        if( options['@es'] ){ 
+            attrs['@es'] = options['@es']; idSet = true;
+        }
+
+        if( _.isUndefined(options.id) && !idSet ){
+            attrs.id = this.createId();
+        } else { attrs.id = options.id; }
+
+
+        let result = new this.Entity( attrs, options );
         
-        let result = Entity.create(entityId, entitySetId, options );
+        // if( options.debug ){
+        //     console.log('createEntity', attrs, _.omit(options,'registry') );
+        //     console.log('result', result.id, result);
+        //     process.exit();
+        // }
 
         if( components ){
             components = this.createComponent(components);
@@ -137,6 +136,12 @@ _.extend(Registry.prototype, Events, {
         }
 
         return result;
+    },
+
+    createEntityWithId: function( entityId=0, entitySetId=0, options={} ){
+        options.registry = this;
+        const attrs = {'@e':entityId,'@es':entitySetId};
+        return new this.Entity( attrs, options );
     },
 
     /*

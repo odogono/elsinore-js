@@ -22,6 +22,47 @@ const Entity = Model.extend({
     type: 'Entity',
     isEntity: true,
 
+    cidPrefix: 'e',
+
+    initialize: function(attrs, options){
+        let eid = 0,esid = 0;
+
+        if( attrs ){
+            if( (eid = attrs['@e']) ){
+                delete attrs['e'];
+            }
+            if( (esid = attrs['@es']) ){
+                delete attrs['es'];
+            }
+        }
+        
+        if( options && options.registry ){
+            this.registry = options.registry;
+            if( eid === 0 ){
+                eid = this.registry.createId();
+            }
+        }
+
+        if( !attrs || !attrs.id ){
+            this.setId(eid, esid); 
+        }
+
+        this.components = [];
+    },
+
+    // initialize: function(attrs, options){
+
+    // },
+
+    // parse: function( resp ){
+    //     console.log('Entity parse', resp);
+    //     return resp;
+    // },
+
+    // set: function set(key, val, options) {
+    //     Model.prototype.set.apply(this, arguments);
+    // },
+
     isNew: function() {
         return this.get('id') === 0;
     },
@@ -31,8 +72,7 @@ const Entity = Model.extend({
             entityId = Utils.setEntityIdFromId( entityId, entitySetId );
         }
         this.set({id: entityId});
-        var components = this.getComponents();
-        _.each( components, component => component.setEntityId( entityId ) );
+        _.each( this.getComponents(), component => component.setEntityId( entityId ) );
     },
 
     setEntityId: function( id ){
@@ -269,7 +309,7 @@ Entity.createId = function(){
 /**
 *
 */
-Entity.create = function(entityId, entitySetId, options={}){
+/*Entity.create = function(entityId, entitySetId, options={}){
     let result = new Entity();
     let registry;
     result.components = [];
@@ -314,7 +354,7 @@ Entity.create = function(entityId, entitySetId, options={}){
     result.setId( entityId, entitySetId );
     
     return result;
-};
+};//*/
 
 Entity.isEntity = function( entity ){
     return entity && entity.isEntity;

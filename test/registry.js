@@ -40,6 +40,17 @@ test.skip('keeping a map of entitySets and views', t => {
 });
 
 
+test('creating an entity with an id', t => {
+    return initialiseRegistry().then( registry => {
+        
+        const e = registry.createEntityWithId(22);
+        t.equals( e.id, 22 );
+
+    })
+    .then( () => t.end() )
+    .catch( err => log.error('test error: %s', err.stack) )
+})
+
 
 test('creating an entityset with an identical uuid throws an error', t => {
     return initialiseRegistry().then( registry => {

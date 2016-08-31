@@ -43,7 +43,7 @@ test('entity with components', t => {
             {'@c':'/component/name', name:'squirtle'}, 
             {'@c':'/component/status'}, 
             {'@c':'/component/radius', radius:1.2}]);
-        let e = Entity.create().addComponent(components);
+        let e = registry.createEntity(components);
         t.deepEqual( e.toJSON(), [
             { radius: 1.2, '@s': 2 },
             { status: 'active', '@s': 3 },

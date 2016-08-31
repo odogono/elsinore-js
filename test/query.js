@@ -44,7 +44,7 @@ test('Logic op', t => {
 test('Accepting an entity', t => {
     return initialiseRegistry().then( registry => {
         let result;
-        let entity = Entity.create(registry,[
+        let entity = registry.createEntity([
             {'@c':'/component/channel', name:'test'},
             {'@c': '/component/topic', topic: "Javascript" }] );
         
@@ -61,7 +61,7 @@ test('Rejecting an entity', t => {
     return initialiseRegistry().then( registry => {
         let result;
         
-        let entity = Entity.create(registry,[
+        let entity = registry.createEntity([
             { '@c':'/component/channel', name:'test'},
             { '@c':'/component/topic', topic: 'Javascript'}
         ]);
@@ -95,7 +95,7 @@ test('compiling a basic two stage entity filter', t => {
 test('compiling an entity filter', t => {
     return initialiseRegistry().then( registry => {
 
-        let entity = Entity.create(registry,[
+        let entity = registry.createEntity([
             { '@c':'/component/channel', name:'test'},
             {'@c': "/component/topic", topic: "Javascript" }] );
 
@@ -125,7 +125,7 @@ test('compiling an entity filter', t => {
 
 test('a single filter query on an entity', t => {
     return initialiseRegistry().then( registry => {
-        let entity = Entity.create(registry,[
+        let entity = registry.createEntity([
             {'@c':'/component/channel', name:'test'},
             {'@c': "/component/topic", topic: "Javascript" }] );
 
@@ -153,15 +153,15 @@ test('accepting an entity based on its attributes', t => {
     // printIns( query );
 
     t.ok( Entity.isEntity(query.execute(
-        Entity.create(registry,[{ '@c':'/component/mode/limit', limit:10}] ),
+        registry.createEntity([{ '@c':'/component/mode/limit', limit:10}] ),
         {debug:false} )), 'the query returns the entity with a limit > 10' );
 
     t.notOk( query.execute(
-        Entity.create(registry,[{ '@c':'/component/mode/limit', limit:9}] )
+        registry.createEntity([{ '@c':'/component/mode/limit', limit:9}] )
         ), 'query rejects entity with a limit > 10');
 
     t.notOk( query.execute(
-        Entity.create(registry,[{ '@c':'/component/mode/limit'}] )
+        registry.createEntity([{ '@c':'/component/mode/limit'}] )
         ), 'query rejects entity with no limit');
 
     t.end();
