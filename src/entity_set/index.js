@@ -31,6 +31,11 @@ let EntitySet = Collection.extend({
     initialize: function( entities, options={} ){
         const cmdBuffer = CmdBuffer;
         this._uuid = options.uuid || createUuid();
+        this.cid = _.uniqueId('es');
+        if( options['@es'] )
+            this.id = options['@es'];
+        if( options['id'] )
+            this.id = options['id'];
 
         if( options.cmdBuffer ){
             cmdBuffer = options.cmdBuffer;
@@ -448,16 +453,16 @@ EntitySet.isMemoryEntitySet = function(es){
 }
 
 
-EntitySet.create = function(options={}){
-    let result;
-    result = new EntitySet(null,options);
+// EntitySet.create = function(options={}){
+//     let result;
+//     result = new EntitySet(null,options);
 
-    if( options.id ){
-        result.id = options.id;
-    }
+//     if( options.id ){
+//         result.id = options.id;
+//     }
 
-    return result;
-};
+//     return result;
+// };
 
 
 export default EntitySet;

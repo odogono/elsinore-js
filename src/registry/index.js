@@ -361,8 +361,8 @@ _.extend(Registry.prototype, Events, {
 
         // create a 20 bit 
         id = this.createId();
-        result = instanceClass.create(_.extend( {}, options, {id:id} ));
-        result.cid = _.uniqueId('es');
+        // result = instanceClass.create(_.extend( {}, options, {id:id} ));
+        result = new instanceClass( null, _.extend( {}, options,{id}) );
         result.setRegistry( this );
         
         if( options.register !== false ){
