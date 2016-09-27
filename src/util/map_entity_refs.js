@@ -23,7 +23,7 @@ export default function mapComponentEntityRefs( registry, component, entityIdMap
         return component;
     }
 
-    console.log('getting com def', component.getDefUri() );
+    // console.log('getting com def', component.getDefUri() );
     const componentDef = registry.schemaRegistry.getComponentDef( component.getDefUri() );
     const componentProperties = componentDef.get('properties');
     // properties = getProperties( registry.schemaRegistry, component.getSchemaUri() );

@@ -154,7 +154,13 @@ export function resolveUri( from, to ){
 
 
 export function deepClone( obj ){
-    return JSON.parse(JSON.stringify(obj));
+    // try{
+        const str = JSON.stringify(obj);
+        return JSON.parse(str);
+    // } catch(err){
+    //     console.error('could not clone', obj, JSON.stringify(obj));
+    //     return null;
+    // }
 }
 
 // from: http://www.tuanhuynh.com/blog/2014/unpacking-underscore-clone-and-extend/
@@ -282,7 +288,7 @@ export function printIns(arg,depth,showHidden,colors){
     // let fnName = stack.getFunctionName();
     // let line = stack.getLineNumber();
     // Util.log( fnName + ':' + line + ' ' + Util.inspect(arg,showHidden,depth,colors) );
-    Util.log( Util.inspect(arg,showHidden,depth,colors) );
+    console.log( Util.inspect(arg,showHidden,depth,colors) );
 };
 
 export function printVar(...args){

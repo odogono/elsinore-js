@@ -24,15 +24,15 @@ export const OP_UPDATE_EXISTING = 3;
 
 
 
-function CmdBuffer(){}
-
-
-let functions = {
+export default class CmdBuffer {
+    constructor(){
+        this.reset();
+    }
 
     /**
     * Adds a component to this set
     */
-    addComponent: function( entitySet, component, options={}){
+    addComponent( entitySet, component, options={}){
         let debug, batch, execute, silent, listenTo, entityId, entity, componentDef, componentArray, existingCom;
         let ii, len;
         let result;
@@ -125,12 +125,12 @@ let functions = {
         }
 
         return result;
-    },
+    }
 
     /**
     *
     */
-    removeComponent: function( entitySet, component, options={} ){
+    removeComponent( entitySet, component, options={} ){
         let batch,execute, debug;
         let executeOptions;
         let ii, result;
@@ -180,7 +180,7 @@ let functions = {
         }
 
         return result;
-    },
+    }
 
 
     /**
@@ -188,7 +188,7 @@ let functions = {
     - reject if filters do not pass
     - 
     */
-    addEntity: function( entitySet, entity, options={}){
+    addEntity( entitySet, entity, options={}){
         let isNew, entityId, existingEntity, debug, silent, ignoreComponents;
         let eBf, exBf, ii, len, comDefId, com;
         let addComponentOptions;
@@ -271,12 +271,12 @@ let functions = {
         }
         
         return result;
-    },
+    }
 
     /**
     *
     */
-    removeEntity: function( entitySet, entity, options={}){
+    removeEntity( entitySet, entity, options={}){
         let ii, batch, comDefId, execute, existingEntity, entityId;
         let executeOptions;
         let result;
@@ -335,9 +335,9 @@ let functions = {
         }
 
         return result;
-    },
+    }
 
-    execute: function( entitySet, options ){
+    execute( entitySet, options ){
         let ii, len,entityId,cmds,cmd;
         let com, ocom, defId, isNew, cmdOptions, query;
         let entity, tEntity, component, registry;
@@ -505,11 +505,11 @@ let functions = {
             this.triggerEvents( entitySet, options );
         }
 
-    },
+    }
 
 
 
-    reset: function(){
+    reset(){
         this.cmds = Utils.clearMap( this.cmds );
         this.entitiesAdded = Utils.clearCollection( this.entitiesAdded );
         this.entitiesUpdated = Utils.clearCollection( this.entitiesUpdated );
@@ -518,15 +518,14 @@ let functions = {
         this.componentsAdded = Utils.clearCollection( this.componentsAdded );
         this.componentsUpdated = Utils.clearCollection( this.componentsUpdated );
         this.componentsRemoved = Utils.clearCollection( this.componentsRemoved );
-    },
+    }
 
     /**
     *   Adds a add/remove/update command to a buffer of commands
     */
-    addCommand: function addCommand( type, arg/*entityId|component*/, options={} ){
+    addCommand( type, arg/*entityId|component*/, options={} ){
         let entityId;
         let entityBuffer;
-
         switch( type ){
             case CMD_ENTITY_ADD:
                 entityId = arg;
@@ -559,9 +558,9 @@ let functions = {
         this.cmds[ entityId ] = entityBuffer;
         
         return this;
-    },
+    }
 
-    findEntityAddId: function(){
+    findEntityAddId(){
         let cmds;
         let entityId;
 
@@ -572,9 +571,9 @@ let functions = {
         }
 
         return -1;
-    },
+    }
 
-    debugLog: function( logFn ){
+    debugLog( logFn ){
         if( !logFn ){
             logFn = console.log;
         }
@@ -585,9 +584,9 @@ let functions = {
         logFn('components added: ' + JSON.stringify( this.componentsAdded.pluck('id') )); 
         logFn('components updated: ' + JSON.stringify( this.componentsUpdated.pluck('id') )); 
         logFn('components removed: ' + JSON.stringify( this.componentsRemoved.pluck('id') ));
-    },
+    }
 
-    triggerEvents: function( source, options ){
+    triggerEvents( source, options ){
         options = options || {};
         triggerEvent( source, 'component:change', this.componentsUpdated );
         triggerEvent( source, 'component:remove', this.componentsRemoved );
@@ -596,8 +595,7 @@ let functions = {
         triggerEvent( source, 'entity:change', this.entitiesUpdated );
         triggerEvent( source, 'entity:add', this.entitiesAdded );
 
-    },
-
+    }
 };
 
 function triggerEvent(source,name,col){
@@ -606,12 +604,12 @@ function triggerEvent(source,name,col){
     }
 }
 
-_.extend( CmdBuffer.prototype, functions );
+// _.extend( CmdBuffer.prototype, functions );
 
-export function create (){
-    let result = new CmdBuffer();
-    result.reset();
-    return result;
-}
+// export function create (){
+//     let result = new CmdBuffer();
+//     result.reset();
+//     return result;
+// }
 
-export default CmdBuffer;
+// export default CmdBuffer;

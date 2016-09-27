@@ -1,5 +1,6 @@
 import './cmd_buffer_async';
 import './component';
+import './component.extend';
 import './dispatch';
 import './entity';
 import './entity_events';

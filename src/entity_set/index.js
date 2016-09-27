@@ -9,7 +9,9 @@ let EntityFilter = require('../entity_filter');
 import * as Utils from '../util';
 import {uuid as createUuid} from '../util/uuid';
 
-import * as CmdBuffer from '../cmd_buffer/sync';
+// import * as CmdBuffer from '../cmd_buffer/sync';
+import CmdBuffer from '../cmd_buffer/sync';
+
 
 let CollectionPrototype = Collection.prototype;
 
@@ -23,10 +25,20 @@ let EntitySet = Collection.extend({
     isMemoryEntitySet: true,
     isEntitySet: true,
     isAsync: false,
-
+    cidPrefix: 'c',
     views: null,
 
-    initialize: function( entities, options ){},
+    initialize: function( entities, options={} ){
+        const cmdBuffer = CmdBuffer;
+        this._uuid = options.uuid || createUuid();
+
+        if( options.cmdBuffer ){
+            cmdBuffer = options.cmdBuffer;
+        }
+        this._cmdBuffer = new cmdBuffer();
+
+        this.allowEmptyEntities = _.isUndefined(options.allowEmptyEntities) ? true : options.allowEmptyEntities;
+    },
 
     getEntitySetId: function(){
         return this.id;
@@ -438,21 +450,11 @@ EntitySet.isMemoryEntitySet = function(es){
 
 EntitySet.create = function(options={}){
     let result;
-    result = new EntitySet();
-
-    result._cmdBuffer = CmdBuffer.create();
-    
-    if( !_.isUndefined(options.allowEmptyEntities) ){
-        result.allowEmptyEntities = options.allowEmptyEntities;
-    } else {
-        result.allowEmptyEntities = true;
-    }
+    result = new EntitySet(null,options);
 
     if( options.id ){
         result.id = options.id;
     }
-
-    result._uuid = options.uuid || createUuid();
 
     return result;
 };

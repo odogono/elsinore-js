@@ -24,7 +24,7 @@ import CmdBuffer from '../src/cmd_buffer/async';
 
 test('adding a component with no entity id', t => {
     return initialiseRegistry().then( registry => {
-        let cb = CmdBuffer.create();
+        let cb = new CmdBuffer();
         let es = createEntitySet(registry);
         let com = createComponent();
 
@@ -40,7 +40,7 @@ test('adding a component with no entity id', t => {
 
 test('adding a component with an eid, but not a member of the es', t => {
     return initialiseRegistry().then( registry => {
-        let cb = CmdBuffer.create();
+        let cb = new CmdBuffer();
         let es = createEntitySet(registry,50);
         let com = createComponent( {'@e':10} );
 
@@ -55,7 +55,7 @@ test('adding a component with an eid, but not a member of the es', t => {
 
 test('adding a component with an eid, a non-member of the es', t => {
     return initialiseRegistry().then( registry => {
-        let cb = CmdBuffer.create();
+        let cb = new CmdBuffer();
         let es = createEntitySet(registry,50);
         let com = createComponent( {'@e':11, '@es':50} );
 
@@ -75,7 +75,7 @@ test('adding a component with an eid, a non-member of the es', t => {
 
 test('adding a component with an eid, an existing member of the es', t => {
     return initialiseRegistry().then( registry => {
-        let cb = CmdBuffer.create();
+        let cb = new CmdBuffer();
         let es = createEntitySet(registry, 50, [11] );
         let com = createComponent( {'@e':11, '@es':50} );
 
@@ -92,7 +92,7 @@ test('adding a component with an eid, an existing member of the es', t => {
 
 test('updating an existing component', t => {
     return initialiseRegistry().then( registry => {
-        let cb = CmdBuffer.create();
+        let cb = new CmdBuffer();
         let es = createEntitySet(registry, 50, [11] );
         let com = createComponent( {'@e':11, '@es':50} );
 
@@ -116,7 +116,7 @@ test('updating an existing component', t => {
 
 test('adding an entity with multiple components', t => {
     return initialiseRegistry().then( registry => {
-        let cb = CmdBuffer.create();
+        let cb = new CmdBuffer();
         let es = createEntitySet(registry,60);
         let e = registry.createEntity();
         
@@ -134,7 +134,7 @@ test('adding an entity with multiple components', t => {
 
 test('updating an entity with a new component', t => {
     return initialiseRegistry().then( registry => {
-        let cb = CmdBuffer.create();
+        let cb = new CmdBuffer();
         let es = createEntitySet(registry,62, [10]);
         let e = registry.createEntityWithId(10,62);
         let coms = createComponent({tag:'soft','@s':3},{tag:'hard','@s':10});
@@ -166,7 +166,7 @@ test('updating an entity with a new component', t => {
 
 test('removing a component from an entity', t => {
     return initialiseRegistry().then( registry => {
-        let cb = CmdBuffer.create();
+        let cb = new CmdBuffer();
         let es = createEntitySet(registry,63, [12]);
         let e = registry.createEntityWithId(12,63);
         let coms = createComponent({tag:'soft','@s':4},{tag:'hard','@s':10},{tag:'kik','@s':13});
@@ -190,7 +190,7 @@ test('removing a component from an entity', t => {
 
 test('removing the last component from an entity', t => {
     return initialiseRegistry().then( registry => {
-        let cb = CmdBuffer.create();
+        let cb = new CmdBuffer();
         let es = createEntitySet(registry,63, [12]);
         let e = registry.createEntityWithId(12,63);
         let com = createComponent({tag:'soft','@s':4});
@@ -215,7 +215,7 @@ test('removing the last component from an entity', t => {
 
 test('removing all components from an entity', t => {
     return initialiseRegistry().then( registry => {
-        let cb = CmdBuffer.create();
+        let cb = new CmdBuffer();
         let es = createEntitySet(registry,63, [12]);
         let e = registry.createEntityWithId(12,63);
         let coms = createComponent({tag:'soft','@s':4},{tag:'hard','@s':10},{tag:'kik','@s':13});
@@ -243,7 +243,7 @@ test('removing all components from an entity', t => {
 
 test('removing an existing entity', t => {
     return initialiseRegistry().then( registry => {
-        let cb = CmdBuffer.create();
+        let cb = new CmdBuffer();
         let es = createEntitySet(registry,64, [13]);
         let e = registry.createEntityWithId(13,64);
         let coms = createComponent({tag:'soft','@s':4},{tag:'hard','@s':10},{tag:'kik','@s':13});
@@ -270,7 +270,7 @@ test('removing an existing entity', t => {
 
 test('adding multiple', t => {
     return initialiseRegistry().then( registry => {
-        let cb = CmdBuffer.create();
+        let cb = new CmdBuffer();
         let es = createEntitySet(registry,66);
         let data = [
             {"@e":1, "@c": "/component/channel", '@s':1, "name":"ecs" },

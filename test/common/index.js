@@ -199,8 +199,8 @@ export function logEvents(obj, prefix='evt'){
 
 const toStringPath = Path.join(ElsinoreDir, 'util/to_string');
 
-export function printE(e){
-    Util.log( entityToString(e) );
+export function printE(e, prefix=''){
+    Util.log( prefix, entityToString(e) );
 }
 
 export {copyEntity} from '../../src/util/copy';
