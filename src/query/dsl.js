@@ -435,7 +435,7 @@ function contextData( context ){
 
 // module.exports = Q;
 
-class DslContext {
+export class DslContext {
     constructor(query){
         this.query = query;
         this.valStack = [];
@@ -462,6 +462,11 @@ class DslContext {
         return context;
     }
 
+    root(){
+        const context = this.readContext( this );
+        context.pushOp( Q.ROOT );
+        return context;
+    }
 
     and( val ){
         const context = this.readContext( this );

@@ -1,23 +1,24 @@
-import Q from './index';
-import {registerCommand} from './index';
+// import Q from './index';
+import {register,VALUE} from './index';
 import EntitySet from '../entity_set';
 import * as Utils from '../util';
 
-const ALIAS = 101;
-const ALIAS_GET = 102;
+
+const ALIAS = 'AL';
+const ALIAS_GET = 'ALG';
 
 function alias( name ){
-    var context = Q.readContext( this );
-    context.pushOp( Q.ALIAS_GET );
+    const context = this.readContext(this);
+    context.pushOp( ALIAS_GET );
     context.pushVal( name, true );
     return context;
 }
 
 function aliasAs( name ) {
     // return QFunctions.alias.call( this, name );
-    var context = Q.readContext( this );
+    const context = this.readContext(this);
     // console.log('valStack is: ' + JSON.stringify(this.valStack) );
-    context.pushOp( Q.ALIAS );
+    context.pushOp( ALIAS );
     // console.log('valStack is: ' + JSON.stringify(this.valStack) );
     context.pushVal( name, true );
 
@@ -32,15 +33,15 @@ function commandAlias( context, name ){
     context.alias = (context.alias || {});
 
     value = context.last;
-
-    name = Q.valueOf( context, name, true );
-    value = Q.valueOf( context, value, true );
+    
+    name = context.valueOf( name, true );
+    value = context.valueOf( value, true );
     
 
     if( context.debug ){ log.debug('cmd alias ' + Utils.stringify(name) + ' ' + Utils.stringify(value)); } 
     context.alias[ name ] = value;
 
-    return (context.last = [ Q.VALUE, value ] );
+    return (context.last = [ VALUE, value ] );
 }
 
 
@@ -49,37 +50,16 @@ function commandAliasGet( context, name ){
     if( context.debug ){ log.debug('aliasGet>');printIns( context.alias ); }
     // log.debug('aliasGet> ' + name);
     context.alias = (context.alias || {});
-    name = Q.valueOf( context, name, true );
+    name = context.valueOf( name, true );
     value = context.alias[ name ];
     if( !value ){
         throw new Error('no value found for alias ' + name );
     }
     if(  context.debug ){ log.debug('cmd aliasGet ' + Utils.stringify(name) + ' ' + Utils.stringify(value)); } 
-    return (context.last = [ Q.VALUE, value ] );
+    return (context.last = [ VALUE, value ] );
 }
 
 
-registerCommand(  {
-    commands:[
-        {
-            name: 'ALIAS',
-            id: ALIAS,
-            argCount: 1,
-            command: commandAlias,
-            dsl:{
-                alias: alias   
-            }
-        },
-        {
-            name: 'ALIAS_GET',
-            id: ALIAS_GET,
-            argCount: 1,
-            command: commandAliasGet,
-            dsl:{
-                aliasAs: aliasAs   
-            }
-        }
-    ]
-} );
-
-module.exports = Q;
+// the additional commands are added to Query as soon as this module is imported
+register(ALIAS, commandAlias, {alias});
+register(ALIAS_GET, commandAliasGet, {aliasAs});

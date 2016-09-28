@@ -6,6 +6,7 @@ import EntityFilter from '../entity_filter';
 import * as Utils from '../util';
 import {printIns} from '../util';
 import QueryBuilder from './dsl';
+import {DslContext} from './dsl';
 
 
 // _.extend( Query, {
@@ -59,6 +60,27 @@ export default class Query {
 
     constructor( commands, options={} ){
         this.commands = commands;
+
+        if( _.isFunction(commands) ){
+            // console.log('compiling a command builder');
+            const builder = new QueryBuilder(this);
+            const built = commands(builder);
+            if( _.isArray(built) ){
+                this.commands = _.map( built, dsl => dsl.toArray(true)[0] );
+            } else {
+                this.commands = built.toArray(true);
+            }
+            // console.log('query builder result', built);
+            // commands = commands(builder).toArray(true);
+            // console.log('query builder result', commands);
+        } else if( _.isArray(commands) ){
+            if( _.isFunction(commands[0]) ){
+                const builder = new QueryBuilder(this);
+                this.commands = _.map(commands, cmd => {
+                    return cmd(builder).toArray(true)[0];
+                });
+            }
+        }
     }
 
     toArray(){
@@ -66,12 +88,12 @@ export default class Query {
     }
 
     toJSON(){
-        const rep = (( this.isCompiled ) ? this.src : this.toArray(true));
+        const rep = (( this.compiled ) ? this.compiled : this.commands);
         return rep;
     }
 
     hash(){
-        const rep = (( this.isCompiled ) ? this.src : this.toArray(true));
+        const rep = this.toJSON();// (( this.isCompiled ) ? this.src : this.toArray(true));
         return Utils.hash( Utils.stringify(rep), true );
     }
 
@@ -89,12 +111,12 @@ export default class Query {
 
         // if( context.debug ){console.log('commands:'); printIns( query,1 ); }
 
-        console.log('execute', this.commands);
-        console.log('compiled', this.compiled );
+        // console.log('execute', this.commands);
+        // console.log('compiled', this.compiled );
 
         for( ii=0,len=this.compiled.length;ii<len;ii++ ){
             command = this.compiled[ii];
-            console.log('go ' + Utils.stringify(command) );
+            // console.log('go ' + Utils.stringify(command) );
 
             // the actual result will usually be [VALUE,...]
             result = executeCommand( context, command )[1];
@@ -116,29 +138,43 @@ export default class Query {
 
         // sanitise the query commands
 
-        if( _.isFunction(commands) ){
-            // console.log('compiling a command builder');
-            let builder = new QueryBuilder(this);
-            commands = commands(builder).toArray(true);
-            // console.log('query builder result', commands);
-        }
-        else if( Query.isQuery( commands ) ){
+        // if( _.isFunction(commands) ){
+        //     // console.log('compiling a command builder');
+        //     const builder = new QueryBuilder(this);
+        //     const built = commands(builder);
+        //     if( _.isArray(built) ){
+        //         commands = _.map( built, dsl => dsl.toArray(true)[0] );
+        //     } else {
+        //         commands = built.toArray(true);
+        //     }
+        //     // console.log('query builder result', built);
+        //     // commands = commands(builder).toArray(true);
+        //     console.log('query builder result', commands);
+        // }
+        if( Query.isQuery( commands ) ){
             if( commands.isCompiled ){
                 return commands;
             }
             commands = (commands.src || commands.toArray( true ));
         } else if( _.isArray(commands) ){
+            // if( _.isFunction(commands[0]) ){
+            //     const builder = new QueryBuilder(this);
+            //     commands = _.map(commands, cmd => {
+            //         return cmd(builder).toArray(true)[0];
+            //     });
+            // }
             if( !_.isArray(commands[0]) && !Query.isQuery(commands[0])){
                 commands = [commands];
-            }  
-            commands = _.map( commands, command => {
-                if( Query.isQuery(command) ){
-                    if( !command.isCompiled ){
-                        command = command.toArray(true)[0];
+            }else{
+                commands = _.map( commands, command => {
+                    if( Query.isQuery(command) ){
+                        if( !command.isCompiled ){
+                            command = command.toArray(true)[0];
+                        }
                     }
-                }
-                return command;
-            });
+                    return command;
+                });
+            }
             // console.log('compile> ' + Utils.stringify(commands));
         }
 
@@ -175,7 +211,7 @@ export default class Query {
                     // console.log('gathering ' + JSON.stringify(entityFilter) );
                     break;
                 case AND:
-                    result.push( (Query.resolveEntitySet( context, command, true ) || command) );
+                    result.push( (context.resolveEntitySet(command, true ) || command) );
                     break;
                 default:
                     result.push( command );
@@ -263,6 +299,92 @@ class QueryContext {
     constructor(query){
         this.query = query;
     }
+
+    /**
+    *   Returns the referenced value of the passed value providing it is a Query.VALUE
+    */
+    valueOf( value, shouldReturnValue ){
+        let command;
+        if( !value ){ return value; }
+        // if( this.debug ){ console.log('valueOf: ' + Utils.stringify(value) ); }
+        // console.log('valueOf: ' + Utils.stringify(value) );
+        if( _.isArray(value) ){
+            command = value[0];
+            // if( !_.isArray(value[1]) ){
+                // console.log('argle ' + JSON.stringify(value))
+                // just a plain array
+                // return value;
+            // }
+
+            if( command === VALUE ){
+                if( value[1] === ROOT ){
+                    return this.root;
+                }
+                // console.log('return val[1] ' + value[1] );
+                return value[1];
+            } else if( command === ROOT ){
+                return this.root;
+            }
+            
+            // if( this.debug ){ console.log('valueOf: cmd ' + command + ' ' + Utils.stringify(value) )}
+            value = executeCommand( this, value );
+
+            // if( this.debug ){ console.log('valueOf exec: ' + Utils.stringify(value) )}
+
+            if( value[0] === VALUE ){
+                return value[1];
+            }
+        }
+        if( shouldReturnValue ){
+            return value;
+        }
+        return null;
+    }
+
+    /**
+    *   Resolves the given entitySet parameter into
+    *   an actual entityset value.
+    *
+    *   If Query.ROOT is passed, the current value of 
+    *   context.entitySet is returned.
+    *
+    *   If an (array) command is passed, it is executed
+    *   (via valueOf) and returned.
+    */
+    resolveEntitySet(entitySet, compileOnly ){
+        let op, result;
+        if( !entitySet ){
+            entitySet = this.last;
+        }
+
+        if( entitySet === ROOT ){
+            return this.entitySet;
+        }
+
+        if( _.isArray(entitySet) ){
+            if( compileOnly ){
+                return entitySet;
+            }
+            entitySet = this.valueOf(entitySet );
+        }
+
+        if( EntitySet.isEntitySet(entitySet) ){
+            return entitySet;
+        }
+
+        return null;
+    }
+
+
+    /**
+     * Resolve a value of component ids
+     */
+    // resolveComponentIIds(components ){
+    //     const resolved = this.valueOf( components, true );
+    //     return resolved ? this.registry.getIId( resolved, true ) : null;
+    // }
+
+// Query.resolveComponentIIds = resolveComponentIIds;
 
     /**
      * 
@@ -486,56 +608,13 @@ function gatherEntityFilters( context, expression ){
 }
 
 
-/**
-*   Resolves the given entitySet parameter into
-*   an actual entityset value.
-*
-*   If Query.ROOT is passed, the current value of 
-*   context.entitySet is returned.
-*
-*   If an (array) command is passed, it is executed
-*   (via valueOf) and returned.
-*/
-Query.resolveEntitySet = function resolveEntitySet( context, entitySet, compileOnly ){
-    let op, result;
-    if( !entitySet ){
-        entitySet = context.last;
-    }
-
-    if( entitySet === ROOT ){
-        return context.entitySet;
-    }
-
-    if( _.isArray(entitySet) ){
-        if( compileOnly ){
-            return entitySet;
-        }
-        entitySet = Query.valueOf( context, entitySet );
-    }
-
-    if( EntitySet.isEntitySet(entitySet) ){
-        return entitySet;
-    }
-
-    return null;
-}
 
 
 
 
 
 
-function resolveComponentIIds( context, components ){
-    if( _.isArray(components) && components[0] === VALUE ){
-        components = components[1];
-    }
 
-    components = Query.valueOf( context, components, true );
-    // console.log('resolving components', components);
-    return components ? context.registry.getIId( components, true ) : null;
-}
-
-Query.resolveComponentIIds = resolveComponentIIds;
 
 
 /**
@@ -839,7 +918,7 @@ function commandComponentAttribute( context, attributes ){
 function executeCommand( context, op, args ){
     let result, cmdFunction, cmdArgs, value;
 
-    if( context.debug ){ console.log('executing ' + Utils.stringify( _.rest(arguments)) ); }
+    // if( context.debug ){ console.log('executing ' + Utils.stringify( _.rest(arguments)) ); }
 
     if( !args ){
         // assume the op and args are in the same array
@@ -863,7 +942,7 @@ function executeCommand( context, op, args ){
                 value = context.root;
             }
             result = (context.last = [ VALUE, value ]);
-            if(context.debug){ console.log('value> ' + Utils.stringify(context.last)) }
+            // if(context.debug){ console.log('value> ' + Utils.stringify(context.last)) }
             break;
         case EQUALS:
         case LESS_THAN:
@@ -890,7 +969,7 @@ function executeCommand( context, op, args ){
                 // printIns( _.rest(arguments), 1 );
                 throw new Error('unknown cmd (' + Utils.stringify(op) + ') ' + Utils.stringify(_.rest(arguments)) );
             }
-            result = cmdFunction.apply( context, cmdArgs );  
+            result = cmdFunction.apply( context, cmdArgs );
             break;
     }
     // console.log('done result ' + Utils.stringify( _.rest(arguments)) + ' ' + result );
@@ -911,34 +990,66 @@ Query.commands = function( commands ){
     return result;
 }
 
+// Query.commandBuilder(query,options={}){
+
+// }
 
 
+/**
+ * Registers a query command extension
+ */
+export function register( name, command, dslObj, options={} ){
+    // console.log('register command', name);
+    if( commandFunctions[ name ] !== undefined ){
+        throw new Error('already registered cmd ' + name );
+    }
 
+    if( dslObj ){
+        _.each( dslObj, (fn,name) => {
+            DslContext.prototype[name] = fn;
+            // console.log('register dsl', name);
+        })
+    }
+    const argCount = _.isUndefined(options.argCount) ? 1 : options.argCount;
+    argCounts[name] = argCount;
 
-export function registerCommand( options ){
-    if( options.commands ){
-        return _.each( options.commands, c => registerCommand(c) );
+    if( command ){
+        commandFunctions[name] = command;
     }
-    // console.log('Query registerCommand', options);
-    Query[ options.name ] = options.id;
-    
-    if( options.dsl ){
-        _.each( options.dsl, (func,name) => Query[name] = func )
-    }
-    if( options.argCount ){
-        argCounts[ options.id ] = options.argCount;
-    }
-    if( commandFunctions[ options.id ] !== undefined ){
-        throw new Error('already registered cmd ' + options.id );
-    }
+
     if( options.compile ){
-        compileCommands[ options.id ] = options.compile;
+        compileCommands[name] = options.compile;
     }
-    if( options.compileHook ){
-        compileHooks.push( options.compileHook );
-    }
-    commandFunctions[ options.id ] = options.command;
+    
+
+    // console.log('adding to', DslContext);
+    return Query;
 }
+
+// export function registerCommand( options ){
+//     if( options.commands ){
+//         return _.each( options.commands, c => registerCommand(c) );
+//     }
+//     // console.log('Query registerCommand', options);
+//     Query[ options.name ] = options.id;
+    
+//     if( options.dsl ){
+//         _.each( options.dsl, (func,name) => Query[name] = func )
+//     }
+//     if( options.argCount ){
+//         argCounts[ options.id ] = options.argCount;
+//     }
+//     if( commandFunctions[ options.id ] !== undefined ){
+//         throw new Error('already registered cmd ' + options.id );
+//     }
+//     if( options.compile ){
+//         compileCommands[ options.id ] = options.compile;
+//     }
+//     if( options.compileHook ){
+//         compileHooks.push( options.compileHook );
+//     }
+//     commandFunctions[ options.id ] = options.command;
+// }
 
 Query.isQuery = function( query ){
     return query && query instanceof Query;

@@ -1,10 +1,13 @@
 import _ from 'underscore';
-import Q from './index';
-import {registerCommand} from './index';
+import {register,
+    LEFT_PAREN,
+    RIGHT_PAREN,
+    VALUE} from './index';
+import Query from './index';
 import EntitySet from '../entity_set';
 import * as Utils from '../util'
 
-const SELECT_BY_ID = 100;
+const SELECT_BY_ID = 'SBI';
 
 
 _.extend( EntitySet.prototype, {
@@ -18,16 +21,16 @@ _.extend( EntitySet.prototype, {
 
 
 function dslSelectById( entityIds, selectFromRoot=false ){
-    const context = Q.readContext( this, false );
+    const context = this.readContext(this);
 
-    context.pushVal( Q.LEFT_PAREN );
+    context.pushVal( LEFT_PAREN );
     
     context.pushVal( entityIds, true );
     context.pushVal( selectFromRoot, true );
 
-    context.pushVal( Q.RIGHT_PAREN );
+    context.pushVal( RIGHT_PAREN );
 
-    context.pushOp( Q.SELECT_BY_ID );
+    context.pushOp( SELECT_BY_ID );
 
     return context;
 }
@@ -39,18 +42,18 @@ function commandSelectById( context, entityIds, selectFromRoot ) {
 
     // console.log('>entityIds: ' + Utils.stringify(entityIds) );
     // console.log('>selectFromRoot: ' + Utils.stringify(selectFromRoot) );
-    selectFromRoot = Q.valueOf(context,selectFromRoot);
+    selectFromRoot = context.valueOf(selectFromRoot);
     // console.log('<<<');
     // printIns( context );
     // entitySet = selectFromRoot ? context.root : Q.resolveEntitySet( context, entitySet );
-    entitySet = selectFromRoot ? context.root : Q.resolveEntitySet( context, context.last );
+    entitySet = selectFromRoot ? context.root : context.resolveEntitySet(context.last );
 
     if( !entitySet ){
         entitySet = context.root;
     }
 
     // console.log('entityIds: ' + JSON.stringify(entityIds) );
-    entityIds = Q.valueOf( context, entityIds );
+    entityIds = context.valueOf(entityIds );
 
     // console.log('using es ' + Utils.stringify(selectFromRoot) + ' ' + entitySet.length );
     // console.log('entityIds: ' + JSON.stringify(entityIds) );
@@ -58,7 +61,7 @@ function commandSelectById( context, entityIds, selectFromRoot ) {
 
     // 
     if( !entityIds ){
-        entityIds = Q.valueOf( context, context.last );
+        entityIds = context.valueOf(context.last );
         // console.log('entityIds: ' + JSON.stringify(entityIds) );
     }
 
@@ -72,7 +75,7 @@ function commandSelectById( context, entityIds, selectFromRoot ) {
 
     value = selectById( context.registry, entitySet, entityIds, true );
 
-    return (context.last = [ Q.VALUE, value ]);
+    return (context.last = [ VALUE, value ]);
 }
 
 function selectById( registry, entitySet, entityIds, returnAsEntitySet ){
@@ -99,20 +102,19 @@ function selectById( registry, entitySet, entityIds, returnAsEntitySet ){
     return entities;
 }
 
-const command = {
-    commands:[
-        {
-            name: 'SELECT_BY_ID',
-            id: SELECT_BY_ID,
-            argCount: 1,
-            command: commandSelectById,
-            dsl:{
-                selectById: dslSelectById   
-            }
-        }
-    ]
-};
+// const command = {
+//     commands:[
+//         {
+//             name: 'SELECT_BY_ID',
+//             id: SELECT_BY_ID,
+//             argCount: 1,
+//             command: commandSelectById,
+//             dsl:{
+//                 selectById: dslSelectById   
+//             }
+//         }
+//     ]
+// };
 
 
-registerCommand( command );
-module.exports = Q;
+register(SELECT_BY_ID, commandSelectById, {selectById:dslSelectById});

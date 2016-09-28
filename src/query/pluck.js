@@ -1,13 +1,18 @@
 import _ from 'underscore';
-import {registerCommand} from './index';
-import Q from './index';
+import {register,
+    LEFT_PAREN,
+    RIGHT_PAREN,
+    VALUE} from './index';
+import Query from './index';
 import EntitySet from '../entity_set';
 import * as Utils from '../util'
 
-const PLUCK = 103;
+const PLUCK = 'PL';
 
 
-
+/**
+ * Adds pluck functionality directory to entityset
+ */
 _.extend( EntitySet.prototype, {
     pluck: function( componentIds, attr ){
         // var result;
@@ -15,20 +20,22 @@ _.extend( EntitySet.prototype, {
         // result = selectById( this.getRegistry(), this, entityIds, returnAsEntitySet );
         // return result;
         
-        var componentIId = this.getRegistry().getIId( componentIds );
-        var query = Q.pluck( componentIds, attr );
-        return query.execute( this );
+        const componentIId = this.getRegistry().getIId( componentIds );
+        const query = new Query( Q => Q.pluck(componentIds,attr) );
+        return query.execute(this);
+        
+        // var query = Q.pluck( componentIds, attr );
+        // return query.execute( this );
     }
 });
 
 
 function dslPluck( componentIds, property, options ){
-    // var lastCommand;
-    var context = Q.readContext( this );
+    const context = this.readContext(this);
 
-    context.pushOp( Q.PLUCK );
+    context.pushOp( PLUCK );
 
-    context.pushVal( Q.LEFT_PAREN );
+    context.pushVal( LEFT_PAREN );
 
     context.pushVal( componentIds, true );
     
@@ -39,7 +46,7 @@ function dslPluck( componentIds, property, options ){
         context.pushVal( options, true );
     }
 
-    context.pushVal( Q.RIGHT_PAREN );
+    context.pushVal( RIGHT_PAREN );
     
     return context;
 }
@@ -53,22 +60,27 @@ function commandPluck( context, componentIds, attributes, options ){
     var bitField, result;
     var entitySet;// = context.last;
 
-    if( context.debug ){ log.debug('pluck> ' + Utils.stringify(_.rest(arguments))); } 
+    // if( true ){ log.debug('pluck> ' + Utils.stringify(_.rest(arguments))); } 
 
-    attributes = Q.valueOf( context, attributes, true );
+    attributes = context.valueOf(attributes, true );
     attributes = _.isArray( attributes ) ? attributes : [ attributes ];
-    options = Q.valueOf( context, options, true );
+    options = context.valueOf(options, true );
     
-    entitySet = Q.resolveEntitySet( context );
+    entitySet = context.resolveEntitySet();
+
+    // resolve the component ids
+    // componentIds = context.valueOf(componentIds,true);
+    // if( componentIds ){
+    //     componentIds = context.registry.getIId( componentIds, true );
+    // }
 
     result = pluckEntitySet( context.registry, entitySet, componentIds, attributes );
     
-
     if( options && options.unique ){
         result = _.uniq( result );
     }
 
-    return (context.last = [ Q.VALUE, result ]);
+    return (context.last = [ VALUE, result ]);
 }
 
 function pluckEntity( registry, entity, componentIds, attributes ){
@@ -80,12 +92,14 @@ function pluckEntitySet( registry, entitySet, componentIds, attributes ){
 
     // iterate through each of the entityset models and select the components
     // specified - if they exist, select the attributes required.
-    result = _.reduce( entitySet.models, function(values, entity){
-        
-        _.each( entity.getComponents( componentIds ), function(component){
+    result = _.reduce( entitySet.models, (values, entity) => {
+        const components = entity.getComponents(componentIds);
+        // log.debug('inCOMing ' + Utils.stringify(entity), componentIds );
+
+        _.each( entity.getComponents(componentIds), (component) => {
             // log.debug('inCOMing ' + Utils.stringify(component) );
-            _.each( attributes, function(attr){
-                if( attr == 'eid' ){
+            _.each( attributes, (attr) => {
+                if( attr == '@e' ){
                     values.push( entity.getEntityId() );
                 } else {
                     var val = component.get.call( component, attr );
@@ -102,29 +116,19 @@ function pluckEntitySet( registry, entitySet, componentIds, attributes ){
 
 
 
+/**
+ * 
+ */
 function compile( context, command ){
-    // var value = Q.valueOf( context, command[1], true );
-    // log.debug('well resolving ' + JSON.stringify(command) );
     if( command[1] ){
-        command[1] = Q.resolveComponentIIds( context, command[1] ); 
+        const resolved = context.valueOf( command[1], true );
+        if( resolved ){
+            command[1] = context.registry.getIId(resolved,true); 
+        }
+        // command[1] = context.resolveComponentIIds( command[1] ); 
     }
     return command;
 }
 
 
-registerCommand(  {
-    commands:[
-        {
-            name: 'PLUCK',
-            id: PLUCK,
-            argCount: 1,
-            command: commandPluck,
-            compile: compile,
-            dsl:{
-                pluck: dslPluck   
-            }
-        }
-    ]
-} );
-
-module.exports = Q;
+register(PLUCK, commandPluck, {pluck:dslPluck}, {compile} );

@@ -10,8 +10,8 @@ import EntitySet from '../entity_set';
 
 _.extend( EntitySet.prototype, {
     setQuery: function( query ){
-        if( !Query.isQuery ){
-            query = Query.create( this.getRegistry(), query );
+        if( !Query.isQuery(query) ){
+            query = new Query(query, {registry:this.getRegistry()})
         }
         this._query = query;
     },
@@ -24,8 +24,9 @@ _.extend( EntitySet.prototype, {
     *   Executes a query against the entityset and returns
     *   a new entityset with the results
     */
-    query: function( query, options ){
-        console.log('executing query', query);        
+    query: function( query, options={} ){
+        // console.log('executing query', query);
+        options.registry = this.getRegistry();        
         if( !query ){
             query = Q => Q.root();// Query.root();
         }
@@ -36,7 +37,7 @@ _.extend( EntitySet.prototype, {
     *   Removes the entities identified by the query
     */
     removeByQuery: function( query, options ){
-        let result = Query.execute( this, query, options );
+        const result = Query.exec( query, this, _.extend({},options,{registry:this.getRegistry()}));
         return this.removeEntity( result );
     },
 });
