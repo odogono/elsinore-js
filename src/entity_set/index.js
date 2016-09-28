@@ -434,15 +434,6 @@ EntitySet.hash = function( entitySet ){
 
 
 
-
-
-
-
-
-
-
-
-
 EntitySet.isEntitySet = function(es){
     return es && es.isEntitySet;
 }
@@ -451,18 +442,6 @@ EntitySet.isEntitySet = function(es){
 EntitySet.isMemoryEntitySet = function(es){
     return EntitySet.isEntitySet(es) && es.isMemoryEntitySet;   
 }
-
-
-// EntitySet.create = function(options={}){
-//     let result;
-//     result = new EntitySet(null,options);
-
-//     if( options.id ){
-//         result.id = options.id;
-//     }
-
-//     return result;
-// };
 
 
 export default EntitySet;

@@ -1,4 +1,5 @@
 import Q from './index';
+import {registerCommand} from './index';
 import EntitySet from '../entity_set';
 import * as Utils from '../util';
 
@@ -58,7 +59,7 @@ function commandAliasGet( context, name ){
 }
 
 
-Q.registerCommand(  {
+registerCommand(  {
     commands:[
         {
             name: 'ALIAS',

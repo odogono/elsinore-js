@@ -25,10 +25,11 @@ _.extend( EntitySet.prototype, {
     *   a new entityset with the results
     */
     query: function( query, options ){
+        console.log('executing query', query);        
         if( !query ){
-            query = Query.root();
+            query = Q => Q.root();// Query.root();
         }
-        return Query.execute( this, query, options );
+        return Query.exec( query, this, options );
     },
 
     /**

@@ -2,67 +2,423 @@ import _ from 'underscore';
 import BitField  from 'odgn-bitfield';
 import Entity from '../entity';
 import EntitySet from '../entity_set';
-import * as EntityFilter from '../entity_filter';
+import EntityFilter from '../entity_filter';
 import * as Utils from '../util';
-
 import {printIns} from '../util';
-
-export default function Query(){}
-function QueryContext(){}
-
-Query.argCounts = {};
-Query.precendenceValues = {};
-Query.compileCommands = {};
-Query.commandFunctions = {};
-Query.compileHooks = [];
-
-_.extend(Query.prototype, {
-    type: 'Query',
-    isQuery: true,
-});
+import QueryBuilder from './dsl';
 
 
+// _.extend( Query, {
+export const ALL = 0; // entities must have all the specified components
+export const ANY = 1; // entities must have one or any of the specified components
+export const SOME = 2; // entities must have at least one of the specified component
+export const NONE = 3; // entities should not have any of the specified components
+export const INCLUDE = 4; // the filter will only include specified components
+export const EXCLUDE = 5; // the filter will exclude specified components
+export const ROOT = 6; // select the root entity set
+export const EQUALS = 7; // == 
+export const NOT_EQUAL = 8; // !=
+export const LESS_THAN = 9; // <
+export const LESS_THAN_OR_EQUAL = 10;
+export const GREATER_THAN = 11; // >
+export const GREATER_THAN_OR_EQUAL = 12;
+export const AND = 13;
+export const OR = 14;
+export const NOT = 15;
+export const VALUE = 16; // a value
+// export const FILTER = 17;
+// export const ADD_ENTITIES = 18;
+export const ATTR = 19;
+// export const PLUCK = 20;
+// export const ALIAS = 21;
+// export const DEBUG = 22;
+// export const PRINT = 23;
+// export const WITHOUT = 25;
+// export const NOOP = 26;
+export const LEFT_PAREN = 27;
+export const RIGHT_PAREN = 28;
+// export const MEMBER_OF = 29;
+export const ENTITY_FILTER = 30;
+// export const ALIAS_GET = 31;
+// export const PIPE = 32;
+// export const SELECT_BY_ID = 33;
+export const ALL_FILTER = 34;
+export const NONE_FILTER = 35;
+export const FILTER_FUNC = 36;
+export const ANY_FILTER = 37;
+export const INCLUDE_FILTER = 38
+// });
 
-_.extend( Query, {
-    ALL: 0, // entities must have all the specified components
-    ANY: 1, // entities must have one or any of the specified components
-    SOME: 2, // entities must have at least one of the specified component
-    NONE: 3, // entities should not have any of the specified components
-    INCLUDE: 4, // the filter will only include specified components
-    EXCLUDE: 5, // the filter will exclude specified components
-    ROOT: 6, // select the root entity set
-    EQUALS: 7, // == 
-    NOT_EQUAL: 8, // !=
-    LESS_THAN: 9, // <
-    LESS_THAN_OR_EQUAL: 10,
-    GREATER_THAN: 11, // >
-    GREATER_THAN_OR_EQUAL: 12,
-    AND: 13,
-    OR: 14,
-    NOT: 15,
-    VALUE: 16, // a value
-    // FILTER: 17,
-    // ADD_ENTITIES: 18,
-    ATTR: 19,
-    // PLUCK: 20,
-    // ALIAS: 21,
-    // DEBUG: 22,
-    // PRINT: 23,
-    // WITHOUT: 25,
-    // NOOP: 26,
-    LEFT_PAREN: 27,
-    RIGHT_PAREN: 28,
-    // MEMBER_OF: 29,
-    ENTITY_FILTER: 30,
-    // ALIAS_GET: 31,
-    // PIPE: 32,
-    // SELECT_BY_ID: 33,
-    ALL_FILTER: 34,
-    NONE_FILTER: 35,
-    FILTER_FUNC: 36,
-    ANY_FILTER: 37,
-    INCLUDE_FILTER: 38
-});
+
+
+
+export default class Query {
+    // type: 'Query',
+    // isQuery: true,
+    // cidPrefix: 'q',
+
+    constructor( commands, options={} ){
+        this.commands = commands;
+    }
+
+    toArray(){
+        return this.compiled;
+    }
+
+    toJSON(){
+        const rep = (( this.isCompiled ) ? this.src : this.toArray(true));
+        return rep;
+    }
+
+    hash(){
+        const rep = (( this.isCompiled ) ? this.src : this.toArray(true));
+        return Utils.hash( Utils.stringify(rep), true );
+    }
+
+    /**
+     * 
+     */
+    execute( entity, options={} ){
+        let ii, len, command, context, result;
+    
+        // build the initial context object from the incoming arguments
+        context = this.buildEntityContext( entity, options);
+
+        this.compile( context, this.commands, options );
+        // query = Query.compile( context, query, options );
+
+        // if( context.debug ){console.log('commands:'); printIns( query,1 ); }
+
+        console.log('execute', this.commands);
+        console.log('compiled', this.compiled );
+
+        for( ii=0,len=this.compiled.length;ii<len;ii++ ){
+            command = this.compiled[ii];
+            console.log('go ' + Utils.stringify(command) );
+
+            // the actual result will usually be [VALUE,...]
+            result = executeCommand( context, command )[1];
+        }
+
+        // console.log('execute result was', JSON.stringify(result));
+        return result;
+        // return true;
+    }
+
+
+    /**
+     * compiles the instances commands into an optimised form
+     */
+    compile( context, commands, options ){
+        let result, ii, len, entityFilter;
+
+        this.compiled = [];
+
+        // sanitise the query commands
+
+        if( _.isFunction(commands) ){
+            // console.log('compiling a command builder');
+            let builder = new QueryBuilder(this);
+            commands = commands(builder).toArray(true);
+            // console.log('query builder result', commands);
+        }
+        else if( Query.isQuery( commands ) ){
+            if( commands.isCompiled ){
+                return commands;
+            }
+            commands = (commands.src || commands.toArray( true ));
+        } else if( _.isArray(commands) ){
+            if( !_.isArray(commands[0]) && !Query.isQuery(commands[0])){
+                commands = [commands];
+            }  
+            commands = _.map( commands, command => {
+                if( Query.isQuery(command) ){
+                    if( !command.isCompiled ){
+                        command = command.toArray(true)[0];
+                    }
+                }
+                return command;
+            });
+            // console.log('compile> ' + Utils.stringify(commands));
+        }
+
+        
+        // result = new Query();
+        // result.isCompiled = true;
+        // this.src = Utils.deepClone(commands);
+
+        // printIns( this.src, 6 );
+        // commands = _.reduce( commands, function(result,command){
+
+        let firstStageCompiled = _.reduce( commands, (result,command) => {
+            let op, entityFilter, compileResult, hash;
+            op = command[0];
+
+            // check for registered command compile function
+            if( (compileResult = compileCommands[ op ]) !== undefined ){
+                if( (compileResult = compileResult( context, command )) ){
+                    result.push( compileResult );
+                }
+                return result;
+            }
+
+            switch( op ){
+                case NONE_FILTER:
+                case ALL_FILTER:
+                case ANY_FILTER:
+                case INCLUDE_FILTER:
+                    entityFilter = gatherEntityFilters( context, command );
+                    // insert a basic entity_filter command here
+                    // result.push( [ Query.ENTITY_FILTER, entityFilter ] ); // NOTE: why was this here??
+                    // result.push( [ command[0], entityFilter, command[2] ] );
+                    result.push( [ ENTITY_FILTER, entityFilter, command[2] ] );
+                    // console.log('gathering ' + JSON.stringify(entityFilter) );
+                    break;
+                case AND:
+                    result.push( (Query.resolveEntitySet( context, command, true ) || command) );
+                    break;
+                default:
+                    result.push( command );
+                    break;
+            }
+
+            return result;
+        },[]);
+
+        // console.log('A compiledCommands here', firstStageCompiled);
+
+        // result.compiled = [];
+        entityFilter = null;
+
+        // combine contiguous entity filters
+        // console.log('');
+        for( ii=0,len=firstStageCompiled.length;ii<len;ii++ ){
+            // console.log('>combine', firstStageCompiled[ii] );
+            while( ii < len && firstStageCompiled[ii][0] === ENTITY_FILTER && !firstStageCompiled[ii][2] ){
+                if( !entityFilter ){
+                    entityFilter = new EntityFilter( firstStageCompiled[ii][1] );
+                } else {
+                    entityFilter.add( firstStageCompiled[ii][1] );
+                }
+                ii += 1;
+            }
+            if( entityFilter ){
+                // console.log('>combine adding', entityFilter );
+                this.compiled.push( [ ENTITY_FILTER, entityFilter ] );
+                entityFilter = null;
+            }
+            if( ii < len ){
+                this.compiled.push( firstStageCompiled[ii] );
+            }
+        }
+
+        // console.log('B compiledCommands here', this.compiled);
+        // process.exit();
+
+        // allow hooks to further process commands
+        _.each( compileHooks, hook => this.compiled = hook(context, this.compiled, this) );
+
+        // console.log('C compiledCommands here', this.compiled);
+
+        // this.commands = commands;
+        if( context.debug ) { printIns( this, 6 ); }
+        return this;
+    }
+
+
+    /**
+     * 
+     */
+    buildEntityContext( entity, options={} ){
+        let context, rootObject;
+
+        context = QueryContext.create( this, {}, options );
+
+        if( EntitySet.isEntitySet( entity ) ){
+            context.entitySet = entity;
+        } else if( Entity.isEntity( entity ) ){
+            context.entity = entity;
+        } else {
+            context.entitySet = null;
+        }
+
+        context.root = rootObject = (context.entity || context.entitySet);
+        context.registry = options.registry || (rootObject ? rootObject.getRegistry() : null);
+        context.last = [VALUE, rootObject];
+
+        if( options.debug ){
+            context.debug = true;
+        }
+        
+        if( options.alias ){
+            context.alias = _.extend({},options.alias);
+        }
+
+        return context;
+    }
+}
+
+
+class QueryContext {
+    constructor(query){
+        this.query = query;
+    }
+
+    /**
+     * 
+     */
+    componentsToBitfield( context, components ){
+        let componentIds, result;
+        componentIds = context.registry.getIId( components, {forceArray:true, debug:true} );
+        // console.log('lookup ', components, componentIds );
+        result = BitField.create();
+        result.setValues( componentIds, true );
+        return result;
+    }
+
+
+    /**
+    *   Takes an entityset and applies the filter to it resulting
+    *   in a new entityset which is returned as a value.
+    */
+    commandFilter( context, entityFilter, filterFunction, options={} ){
+        let entities, entityContext, value;
+        let entity, entitySet;
+        let debug = context.debug;
+        let limit, offset;
+        let esCount;
+
+        limit = _.isUndefined(options.limit) ? 0 : options.limit;
+        offset = _.isUndefined(options.offset) ? 0 : options.offset;
+
+        if( debug ){ console.log('commandFilter >'); printIns( _.rest(arguments), 5); console.log('<'); } 
+
+        // console.log('commandFilter> ' + offset + ' ' + limit );
+        // resolve the entitySet argument into an entitySet or an entity
+        // the argument will either be ROOT - in which case the context entityset or entity is returned,
+        // otherwise it will be some kind of entity filter
+        // entitySet = Query.resolveEntitySet( context, entitySet );
+        entitySet = Query.valueOf( context, context.last || context.entitySet, true );
+
+        if( Entity.isEntity(entitySet) ){
+            entity = entitySet;
+            // console.log('commandFilter> ' + entitySet.cid );
+        }
+
+
+        if( filterFunction ){
+            entityContext = QueryContext.create( this.query, context );// _.extend( {}, context );
+
+            if( Entity.isEntity(entitySet) ){
+                entityContext.entity = entity = entitySet;
+                entityContext.entitySet = entitySet = null;
+            }
+
+            entityContext.entityFilter = entityFilter;
+            entityContext.componentIds = entityFilter.getValues(0);
+        }
+
+        if( entity ){
+            value = entity;
+            if( entityFilter ){
+                // console.log('^QueryContext.commandFilter: ', entityFilter);
+                value = entityFilter.accept(value, context);
+                // console.log('yep? ' + JSON.stringify(value) );
+                // console.log('so got back', value, entityFilter);
+            } 
+
+            if( value && filterFunction ){
+                entityContext.entity = value;
+                value = executeCommand( entityContext, filterFunction );
+                if( value[0] === VALUE ){
+                    value = value[1] ? context.entity : null;
+                }
+            }
+
+        } else {
+            value = context.registry.createEntitySet( null, {register:false} );
+            esCount = 0;
+
+            if( !entityFilter && offset === 0 && limit === 0 ){
+                entities = entitySet.models;
+            } else {
+                // select the subset of the entities which pass through the filter
+                entities = _.reduce( entitySet.models, (result, entity) => {
+                    let cmdResult;
+
+                    // TODO: still not great that we are iterating over models
+                    // is there a way of exiting once limit has been reached?
+                    if( limit !== 0 && result.length >= limit ){
+                        return result;
+                    }
+
+                    if( entityFilter ){            
+                        entity = entityFilter.accept(entity, context);
+                    }
+                    
+                    if(!entity){
+                        return result;
+                    }
+
+                    if( filterFunction ){
+                        entityContext.entity = entity;
+                        entityContext.debug = false;
+                    
+                        cmdResult = executeCommand( entityContext, filterFunction );
+
+                        // if( true ){ console.log('eval function ' + Utils.stringify(filterFunction) + ' ' + Utils.stringify(cmdResult) ); }
+
+                        if( Query.valueOf( context, cmdResult ) !== true ){
+                            entity = null; //result.push( entity );
+                        }
+                    }
+
+
+                    if( (esCount >= offset) && entity ){
+                        result.push( entity );
+                    }
+
+                    esCount++;
+
+                    return result;
+                }, []);
+            }
+
+            
+            if( debug ){ console.log('cmd filter result length ' + entities.length ); }   
+            value.addEntity( entities );
+        }
+
+        // console.log('well final value was ' + JSON.stringify(value) );
+        // printE( value );
+
+        return (context.last = [ VALUE, value ]);
+    }
+}
+
+
+QueryContext.create = function( query, props={}, options={} ){
+    let context;
+    let type;
+    // console.log('QueryContext.create', Utils.stringify(props), options);
+    type = options.context || props.type || QueryContext;
+    context = new (type)(query);
+    context.type = type;
+    context = _.extend( context, props );
+    return context;
+}
+
+
+export let argCounts = {};
+export let precendenceValues = {};
+export let compileCommands = {};
+export let commandFunctions = {};
+export let compileHooks = [];
+
+// _.extend(Query.prototype, {
+//     type: 'Query',
+//     isQuery: true,
+// });
 
 
 
@@ -76,25 +432,25 @@ function gatherEntityFilters( context, expression ){
     let ii,len,bf,result, obj;
     
     let filter = expression[0];
-    result = EntityFilter.create();
+    result = new EntityFilter();
     
     switch( filter ){
-        case Query.ANY:
-        case Query.ANY_FILTER:
-        case Query.ALL:
-        case Query.ALL_FILTER:
-        case Query.NONE:
-        case Query.NONE_FILTER:
-        case Query.INCLUDE:
-        case Query.INCLUDE_FILTER:
-            if( expression[1] === Query.ROOT ){
-                result.add( Query.ROOT );
+        case ANY:
+        case ANY_FILTER:
+        case ALL:
+        case ALL_FILTER:
+        case NONE:
+        case NONE_FILTER:
+        case INCLUDE:
+        case INCLUDE_FILTER:
+            if( expression[1] === ROOT ){
+                result.add( ROOT );
             } else {
                 obj = Query.valueOf( context, expression[1], true );
                 
                 if( !obj ){
-                    if( filter == Query.ALL_FILTER ){
-                        result.add( Query.ROOT );
+                    if( filter == ALL_FILTER ){
+                        result.add( ROOT );
                         return;
                     }
                     return null;
@@ -103,15 +459,15 @@ function gatherEntityFilters( context, expression ){
                 // console.log('CONVERTED TO BF', bf.toString());
                 // filter = expression[0];
                 switch( filter ){
-                    case Query.ALL_FILTER: filter = Query.ALL; break;
-                    case Query.ANY_FILTER: filter = Query.ANY; break;
-                    case Query.NONE_FILTER: filter = Query.NONE; break;
-                    case Query.INCLUDE_FILTER: filter = Query.INCLUDE; break;
+                    case ALL_FILTER: filter = ALL; break;
+                    case ANY_FILTER: filter = ANY; break;
+                    case NONE_FILTER: filter = NONE; break;
+                    case INCLUDE_FILTER: filter = INCLUDE; break;
                 }
                 result.add( filter, bf );
             }
             break;
-        case Query.AND:
+        case AND:
             expression = _.rest(expression);
 
             for( ii=0,len=expression.length;ii<len;ii++ ){
@@ -146,7 +502,7 @@ Query.resolveEntitySet = function resolveEntitySet( context, entitySet, compileO
         entitySet = context.last;
     }
 
-    if( entitySet === Query.ROOT ){
+    if( entitySet === ROOT ){
         return context.entitySet;
     }
 
@@ -165,19 +521,12 @@ Query.resolveEntitySet = function resolveEntitySet( context, entitySet, compileO
 }
 
 
-QueryContext.prototype.componentsToBitfield = function( context, components ){
-    let componentIds, result;
-    componentIds = context.registry.getIId( components, {forceArray:true, debug:true} );
-    // console.log('lookup ', components, componentIds );
-    result = BitField.create();
-    result.setValues( componentIds, true );
-    return result;
-}
+
 
 
 
 function resolveComponentIIds( context, components ){
-    if( _.isArray(components) && components[0] === Query.VALUE ){
+    if( _.isArray(components) && components[0] === VALUE ){
         components = components[1];
     }
 
@@ -205,22 +554,22 @@ Query.valueOf = function valueOf( context, value, shouldReturnValue ){
             // return value;
         // }
 
-        if( command === Query.VALUE ){
-            if( value[1] === Query.ROOT ){
+        if( command === VALUE ){
+            if( value[1] === ROOT ){
                 return context.root;
             }
             // console.log('return val[1] ' + value[1] );
             return value[1];
-        } else if( command === Query.ROOT ){
+        } else if( command === ROOT ){
             return context.root;
         }
         
         // if( context.debug ){ console.log('valueOf: cmd ' + command + ' ' + Utils.stringify(value) )}
-        value = Query.executeCommand( context, value );
+        value = executeCommand( context, value );
 
         // if( context.debug ){ console.log('valueOf exec: ' + Utils.stringify(value) )}
 
-        if( value[0] === Query.VALUE ){
+        if( value[0] === VALUE ){
             return value[1];
         }
     }
@@ -253,16 +602,16 @@ function commandEquals( context, op1, op2, op ){
 
     if( !isValue1Array && !isValue2Array ){
         switch( op ){
-            case Query.LESS_THAN:
+            case LESS_THAN:
                 result = (value1 < value2);
                 break;
-            case Query.LESS_THAN_OR_EQUAL:
+            case LESS_THAN_OR_EQUAL:
                 result = (value1 <= value2);
                 break;
-            case Query.GREATER_THAN:
+            case GREATER_THAN:
                 result = (value1 > value2);
                 break;
-            case Query.GREATER_THAN_OR_EQUAL:
+            case GREATER_THAN_OR_EQUAL:
                 result = (value1 >= value2);
                 break;
             default:
@@ -271,10 +620,10 @@ function commandEquals( context, op1, op2, op ){
         }
     } else {
         switch( op ){
-            case Query.LESS_THAN:
-            case Query.LESS_THAN_OR_EQUAL:
-            case Query.GREATER_THAN:
-            case Query.GREATER_THAN_OR_EQUAL:
+            case LESS_THAN:
+            case LESS_THAN_OR_EQUAL:
+            case GREATER_THAN:
+            case GREATER_THAN_OR_EQUAL:
                 result = false;
                 break;
             default:
@@ -287,7 +636,7 @@ function commandEquals( context, op1, op2, op ){
                 break;
         }
     }
-    return (context.last = [ Query.VALUE, result ]);
+    return (context.last = [ VALUE, result ]);
 }
 
 function commandAnd( context, ops ){
@@ -302,7 +651,7 @@ function commandAnd( context, ops ){
         }
     }
     
-    return (context.last = [ Query.VALUE, value ]);
+    return (context.last = [ VALUE, value ]);
 }
 
 function commandOr( context, ops ){
@@ -317,127 +666,12 @@ function commandOr( context, ops ){
         }
     }
     
-    return (context.last = [ Query.VALUE, value ]);
+    return (context.last = [ VALUE, value ]);
 }
 
 
 
-/**
-*   Takes an entityset and applies the filter to it resulting
-*   in a new entityset which is returned as a value.
-*/
-QueryContext.prototype.commandFilter = function( context, entityFilter, filterFunction, options={} ){
-    let entities, entityContext, value;
-    let entity, entitySet;
-    let debug = context.debug;
-    let limit, offset;
-    let esCount;
 
-    limit = _.isUndefined(options.limit) ? 0 : options.limit;
-    offset = _.isUndefined(options.offset) ? 0 : options.offset;
-
-    if( debug ){ console.log('commandFilter >'); printIns( _.rest(arguments), 5); console.log('<'); } 
-
-    // console.log('commandFilter> ' + offset + ' ' + limit );
-    // resolve the entitySet argument into an entitySet or an entity
-    // the argument will either be ROOT - in which case the context entityset or entity is returned,
-    // otherwise it will be some kind of entity filter
-    // entitySet = Query.resolveEntitySet( context, entitySet );
-    entitySet = Query.valueOf( context, context.last || context.entitySet, true );
-
-    if( Entity.isEntity(entitySet) ){
-        entity = entitySet;
-        // console.log('commandFilter> ' + entitySet.cid );
-    }
-
-
-    if( filterFunction ){
-        entityContext = Query.createContext( context );// _.extend( {}, context );
-
-        if( Entity.isEntity(entitySet) ){
-            entityContext.entity = entity = entitySet;
-            entityContext.entitySet = entitySet = null;
-        }
-
-        entityContext.entityFilter = entityFilter;
-        entityContext.componentIds = entityFilter.getValues(0);
-    }
-
-    if( entity ){
-        value = entity;
-        if( entityFilter ){
-            value = entityFilter.accept(value, context);
-            // console.log('yep? ' + JSON.stringify(entity) );
-            // console.log('so got back', value, entityFilter);
-        } 
-
-        if( value && filterFunction ){
-            entityContext.entity = value;
-            value = Query.executeCommand( entityContext, filterFunction );
-            if( value[0] === Query.VALUE ){
-                value = value[1] ? context.entity : null;
-            }
-        }
-
-    } else {
-        value = context.registry.createEntitySet( null, {register:false} );
-        esCount = 0;
-
-        if( !entityFilter && offset === 0 && limit === 0 ){
-            entities = entitySet.models;
-        } else {
-            // select the subset of the entities which pass through the filter
-            entities = _.reduce( entitySet.models, (result, entity) => {
-                let cmdResult;
-
-                // TODO: still not great that we are iterating over models
-                // is there a way of exiting once limit has been reached?
-                if( limit !== 0 && result.length >= limit ){
-                    return result;
-                }
-
-                if( entityFilter ){            
-                    entity = entityFilter.accept(entity, context);
-                }
-                
-                if(!entity){
-                    return result;
-                }
-
-                if( filterFunction ){
-                    entityContext.entity = entity;
-                    entityContext.debug = false;
-                
-                    cmdResult = Query.executeCommand( entityContext, filterFunction );
-
-                    // if( true ){ console.log('eval function ' + Utils.stringify(filterFunction) + ' ' + Utils.stringify(cmdResult) ); }
-
-                    if( Query.valueOf( context, cmdResult ) !== true ){
-                        entity = null; //result.push( entity );
-                    }
-                }
-
-
-                if( (esCount >= offset) && entity ){
-                    result.push( entity );
-                }
-
-                esCount++;
-
-                return result;
-            }, []);
-        }
-
-        
-        if( debug ){ console.log('cmd filter result length ' + entities.length ); }   
-        value.addEntity( entities );
-    }
-
-    // console.log('well final value was ' + JSON.stringify(value) );
-    // printE( value );
-
-    return (context.last = [ Query.VALUE, value ]);
-}
 
 
 /**
@@ -460,7 +694,7 @@ function commandComponentAttribute( context, attributes ){
     
     if( !entity ){
         console.log('ATTR> no entity');
-        return (context.last = [ Query.VALUE, null ] );
+        return (context.last = [ VALUE, null ] );
     }
 
     attributes = _.isArray( attributes ) ? attributes : [attributes];
@@ -485,43 +719,9 @@ function commandComponentAttribute( context, attributes ){
         result = result[0];
     }
 
-    return (context.last = [ Query.VALUE, result ] );
+    return (context.last = [ VALUE, result ] );
 }
 
-
-// function EntityFilterTransform( type, registry, entity, entityBitField, filterBitField ){
-//     let ii, len, defId, bf, ebf, vals, isInclude, isExclude, result;
-//     isInclude = (type == EntityFilter.INCLUDE);
-//     isExclude = (type == EntityFilter.EXCLUDE);
-
-//     result = registry.cloneEntity( entity );
-
-//     // console.log('EFT ' + type + ' ' + isInclude + ' ' + entityBitField.toJSON() + ' ' + filterBitField.toJSON() );
-//     if( isInclude ){
-//         // iterate through each of the entities components (as c IIDs)
-//         vals = entityBitField.toValues();
-//         // console.log('EFT include ' + vals );
-//         for( ii=0,len=vals.length;ii<len;ii++ ){
-//             defId = vals[ii];
-
-//             if( !filterBitField.get(defId) ){
-//                 result.removeComponent( result.components[defId] );
-//             }
-//         }
-//     // handle exclude filter, and also no filter specified
-//     } else {
-//         vals = entityBitField.toValues();
-//         for( ii=0,len=vals.length;ii<len;ii++ ){
-//             defId = vals[ii];
-//             if( !isExclude || !bitField.get(defId) ){
-//                 // printE( srcEntity.components[defId] );
-//                 result.addComponent( entity.components[defId] );
-//             }
-//         }
-//     }
-    
-//     return result;
-// }
 
 
 
@@ -577,7 +777,7 @@ function commandComponentAttribute( context, attributes ){
 
 //         if( !entityFilter.accept(entity, context) ){
 //             // if( true || context.debug ){ console.log('commandEntityFilter> entity ' + context.entity.cid + ' rejected' ); }
-//             return (context.last = [ Query.VALUE, null ]);
+//             return (context.last = [ VALUE, null ]);
 //         }
 
 //         ebf = entity.getComponentBitfield();
@@ -590,42 +790,43 @@ function commandComponentAttribute( context, attributes ){
 //                 entity = EntityFilterTransform( filterType, registry, entity, ebf, filterBitField );
 //             }
 //             else if( !EntityFilter.accept( filterType, ebf, filterBitField, false ) ){
-//                 return (context.last = [ Query.VALUE, null ]);
+//                 return (context.last = [ VALUE, null ]);
 //             }
 //         }
 //         if( context.debug ){ console.log('commandEntityFilter> entity ' + context.entity.cid + ' passed' ); }
 
-//         return (context.last = [ Query.VALUE, entity ]);
+//         return (context.last = [ VALUE, entity ]);
 //     } else {
 //         // filter the entitySet using the component filters
 //         // result = Query._filterEntitySet( context, context.entitySet, entityFilter, options );
 //         result = context.filterEntitySet( context, context.entitySet, entityFilter, options );
-//         return (context.last = [ Query.VALUE, result ]);
+//         return (context.last = [ VALUE, result ]);
 //     }
 // }
 
 
 
 
-Query.commandFunction = function commandFunction( op ){
+ function commandFunction( op ){
     let result;
 
-    result = Query.commandFunctions[ op ];
+    result = commandFunctions[ op ];
+    
     if( result !== undefined ){
         return result;
     }
 
     switch( op ){
-        case Query.ATTR:
+        case ATTR:
             result = commandComponentAttribute;
             break;
-        case Query.EQUALS:
+        case EQUALS:
             result = commandEquals;
             break;
-        case Query.AND:
+        case AND:
             result = commandAnd;
             break;
-        case Query.OR:
+        case OR:
             result = commandOr;
             break;
         default:
@@ -635,7 +836,7 @@ Query.commandFunction = function commandFunction( op ){
 }
 
 
-Query.executeCommand = function( context, op, args ){
+function executeCommand( context, op, args ){
     let result, cmdFunction, cmdArgs, value;
 
     if( context.debug ){ console.log('executing ' + Utils.stringify( _.rest(arguments)) ); }
@@ -650,39 +851,40 @@ Query.executeCommand = function( context, op, args ){
     cmdArgs = [context].concat( args );
 
     context.op = op;
-
+    
     switch( op ){
-        case Query.ROOT:
+        case ROOT:
             // console.log('query root', cmdArgs);
-            result = (context.last = [ Query.VALUE, context.root ]);
+            result = (context.last = [ VALUE, context.root ]);
             break;
-        case Query.VALUE:
+        case VALUE:
             value = args[0];
-            if( value === Query.ROOT ){
+            if( value === ROOT ){
                 value = context.root;
             }
-            result = (context.last = [ Query.VALUE, value ]);
+            result = (context.last = [ VALUE, value ]);
             if(context.debug){ console.log('value> ' + Utils.stringify(context.last)) }
             break;
-        case Query.EQUALS:
-        case Query.LESS_THAN:
-        case Query.LESS_THAN_OR_EQUAL:
-        case Query.GREATER_THAN:
-        case Query.GREATER_THAN_OR_EQUAL:
+        case EQUALS:
+        case LESS_THAN:
+        case LESS_THAN_OR_EQUAL:
+        case GREATER_THAN:
+        case GREATER_THAN_OR_EQUAL:
             result = commandEquals.apply( context, cmdArgs.concat(op) );
             break;
-        case Query.ENTITY_FILTER:
+        case ENTITY_FILTER:
             result = context.commandFilter.apply( context, cmdArgs );
             break;
-        case Query.FILTER_FUNC:
-        case Query.ALL_FILTER:
-        case Query.INCLUDE_FILTER:
-        case Query.ANY_FILTER:
-        case Query.NONE_FILTER:
+        case FILTER_FUNC:
+        case ALL_FILTER:
+        case INCLUDE_FILTER:
+        case ANY_FILTER:
+        case NONE_FILTER:
             result = context.commandFilter.apply( context, cmdArgs );
             break;
         default:
-            cmdFunction = Query.commandFunction( op );
+
+            cmdFunction = commandFunction( op );
             if( !cmdFunction ){
                 // console.log('unknown cmd ' + op);
                 // printIns( _.rest(arguments), 1 );
@@ -695,107 +897,6 @@ Query.executeCommand = function( context, op, args ){
     return result;
 }
 
-
-Query.compile = function compileQuery( context, commands, options ){
-    let result, ii, len, entityFilter;
-
-    if( Query.isQuery( commands ) ){
-        if( commands.isCompiled ){
-            return commands;
-        }
-        commands = (commands.src || commands.toArray( true ));
-    } else if( _.isArray(commands) ){
-        // console.log('compile> ' + Utils.stringify(commands));
-        // we may have been passed a single command
-        if( !_.isArray(commands[0]) && !Query.isQuery(commands[0])){
-            commands = [commands];
-        }  
-        commands = _.map( commands, command => {
-            if( Query.isQuery(command) ){
-                if( !command.isCompiled ){
-                    command = command.toArray(true)[0];
-                }
-                // command = command.isCompiled ? command || command.toArray(true)[0];
-            }
-            // console.log('compile> ' + Utils.stringify(command));
-            return command;
-        });
-        // console.log('compile> ' + Utils.stringify(commands));
-    }
-
-    result = new Query();
-    result.isCompiled = true;
-    result.src = Utils.deepClone(commands);
-
-    // printIns( result.src, 6 );
-    // commands = _.reduce( commands, function(result,command){
-
-    commands = _.reduce( commands, (result,command) => {
-        let op, entityFilter, compileResult, hash;
-        op = command[0];
-
-        // check for registered command compile function
-        if( (compileResult = Query.compileCommands[ op ]) !== undefined ){
-            if( (compileResult = compileResult( context, command )) ){
-                result.push( compileResult );
-            }
-            return result;
-        }
-
-        switch( op ){
-            case Query.NONE_FILTER:
-            case Query.ALL_FILTER:
-            case Query.ANY_FILTER:
-            case Query.INCLUDE_FILTER:
-                entityFilter = gatherEntityFilters( context, command );
-                // insert a basic entity_filter command here
-                // result.push( [ Query.ENTITY_FILTER, entityFilter ] ); // NOTE: why was this here??
-                // result.push( [ command[0], entityFilter, command[2] ] );
-                result.push( [ Query.ENTITY_FILTER, entityFilter, command[2] ] );
-                // console.log('gathering ' + JSON.stringify(entityFilter) );
-                break;
-            case Query.AND:
-                result.push( (Query.resolveEntitySet( context, command, true ) || command) );
-                break;
-            default:
-                result.push( command );
-                break;
-        }
-
-        return result;
-    },[]);
-
-    
-
-    result.commands = [];
-    entityFilter = null;
-
-    // combine contiguous entity filters
-    for( ii=0,len=commands.length;ii<len;ii++ ){
-        while( ii < len && commands[ii][0] === Query.ENTITY_FILTER && !commands[ii][2] ){
-            if( !entityFilter ){
-                entityFilter = EntityFilter.create( commands[ii][1] );
-            } else {
-                entityFilter.add( commands[ii][1] );
-            }
-            ii += 1;
-        }
-        if( entityFilter ){
-            result.commands.push( [ Query.ENTITY_FILTER, entityFilter ] );
-            entityFilter = null;
-        }
-        if( ii < len ){
-            result.commands.push( commands[ii] );
-        }
-    }
-
-    // allow hooks to further process commands
-    _.each( Query.compileHooks, hook => result.commands = hook(context, result.commands, result) );
-
-    // result.commands = commands;
-    if( context.debug ) { printIns( result, 6 ); }
-    return result;
-}
 
 /**
 *
@@ -810,125 +911,43 @@ Query.commands = function( commands ){
     return result;
 }
 
-Query.createContext = function( props={}, options={} ){
-    let context;
-    let type;
-    type = options.context || props.type || QueryContext;
-    context = new (type)();
-    context.type = type;
-    context = _.extend( context, props );
-    return context;
-}
-
-Query.buildContext = function( entity, query, options={} ){
-    let context, rootObject;
-
-    context = Query.createContext( {}, options );
-
-    if( EntitySet.isEntitySet( entity ) ){
-        context.entitySet = entity;
-    } else if( Entity.isEntity( entity ) ){
-        context.entity = entity;
-    } else {
-        context.entitySet = null;
-    }
-
-    context.root = rootObject = (context.entity || context.entitySet);
-    context.registry = options.registry || (rootObject ? rootObject.getRegistry() : null);
-    context.last = [Query.VALUE, rootObject];
-
-    if( options.debug ){
-        context.debug = true;
-    }
-    
-    if( options.alias ){
-        context.alias = _.extend({},options.alias);
-    }
-
-    return context;
-}
 
 
-Query.execute = function executeQuery( entity, query, options={} ){
-    let ii, len, command, context, result;
-    
-    // build the initial context object from the incoming arguments
-    context = Query.buildContext( entity,query,options);
-
-    query = Query.compile( context, query, options );
-
-    // if( context.debug ){console.log('commands:'); printIns( query,1 ); }
-
-    for( ii=0,len=query.commands.length;ii<len;ii++ ){
-        command = query.commands[ii];
-        // console.log('go ' + Utils.stringify(command) );
-
-        // the actual result will usually be [VALUE,...]
-        result = Query.executeCommand( context, command )[1];
-    }
-
-    return result;
-}
-
-Query.prototype.toArray = function(){
-    return [];
-}
 
 
-Query.registerCommand = function( options ){
+export function registerCommand( options ){
     if( options.commands ){
-        return _.each( options.commands, c => Query.registerCommand(c) );
+        return _.each( options.commands, c => registerCommand(c) );
     }
-
+    // console.log('Query registerCommand', options);
     Query[ options.name ] = options.id;
     
     if( options.dsl ){
         _.each( options.dsl, (func,name) => Query[name] = func )
     }
     if( options.argCount ){
-        Query.argCounts[ options.id ] = options.argCount;
+        argCounts[ options.id ] = options.argCount;
     }
-    if( Query.commandFunctions[ options.id ] !== undefined ){
+    if( commandFunctions[ options.id ] !== undefined ){
         throw new Error('already registered cmd ' + options.id );
     }
     if( options.compile ){
-        Query.compileCommands[ options.id ] = options.compile;
+        compileCommands[ options.id ] = options.compile;
     }
     if( options.compileHook ){
-        Query.compileHooks.push( options.compileHook );
+        compileHooks.push( options.compileHook );
     }
-    Query.commandFunctions[ options.id ] = options.command;
-}
-
-Query.prototype.toJSON = function(){
-    let rep = (( this.isCompiled ) ? this.src : this.toArray(true));
-    return rep;
-}
-
-Query.prototype.hash = function(){
-    let rep = (( this.isCompiled ) ? this.src : this.toArray(true));
-    return Utils.hash( JSON.stringify(rep), true );
-}
-
-Query.prototype.execute = function( context, options ){
-    return Query.execute( context, this, options );
+    commandFunctions[ options.id ] = options.command;
 }
 
 Query.isQuery = function( query ){
     return query && query instanceof Query;
 }
 
-Query.create = function( registry, commands, options ){
-    let context;
-
-    if( Query.isQuery(commands) && commands.isCompiled ){
-        return commands;
-    }
-
-    context = Query.buildContext( null,null,_.extend({registry:registry},options));
-
-    let result = Query.compile( context, commands, options );
-    return result;
+/**
+ * Adhoc execution of a query
+ */
+Query.exec = function( query, entity, options ){
+    const q = new Query(query);
+    return q.execute(entity,options);
 }
-
-// module.exports = Query;

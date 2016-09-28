@@ -13,32 +13,53 @@ export const EXCLUDE = 5; // the filter will exclude specified components
 export const ROOT = 6; // kind of a NO-OP
 
 
-function EntityFilter(){
-}
 
-_.extend( EntityFilter.prototype, {
-    add: function( type, bitField ){
+export default class EntityFilter {
+
+    constructor( type, bitfield ){
+        this.filters = {};
+        if( !_.isUndefined(type) ){
+            this.add(type,bitfield);
+        }
+    }
+
+    /**
+     * 
+     */
+    add( type, bitField ){
         let existing;
-        if( isEntityFilter(type) ){
+        if( EntityFilter.isEntityFilter(type) ){
             for (let t in type.filters) {
                 this.add( t, type.filters[t] );
             }
             return;
+        } else if( _.isObject(type) && !bitField ){
+            // being passed a serialised form of EntityFilter
+            _.each( type, (bf,type) => {
+                type = parseInt(type,10);
+                this.add( type, bf );
+            })
+            return;
         }
-        bitField = bitField || BitField.create();
+
+        if( _.isArray(bitField) ){
+            bitField = BitField.create(bitField);
+        } else if( !bitField ){
+            bitField = BitField.create();
+        }
         if( !(existing = this.filters[type]) ){
             this.filters[type] = bitField;
         } else {
             existing.set( bitField );
         }
-    },
+    }
 
-    getValues: function(index){
+    getValues(index){
         let filter = this.filters[index || ALL ];
         return filter.toValues();
-    },
+    }
 
-    accept: function( entity, options ){
+    accept( entity, options ){
         let filter, bitField;
         let ebf;// = BitField.isBitField(entity) ? entity : entity.getComponentBitfield();
         let registry = options ? options.registry : null;
@@ -58,21 +79,21 @@ _.extend( EntityFilter.prototype, {
             if( entity && type == INCLUDE ){
                 
                 // printE( entity );
-                entity = EntityFilterTransform( type, registry, entity, ebf, bitField );
+                entity = EntityFilter.Transform( type, registry, entity, ebf, bitField );
                 // printE( entity );
             }
-            else if( !accept( type, ebf, bitField, true ) ){
+            else if( !EntityFilter.accept( type, ebf, bitField, true ) ){
                 return null;
             }
         }
         return entity;
-    },
+    }
 
-    hash: function( asString ){
+    hash( asString ){
         return Utils.hash( 'EntityFilter' + JSON.stringify(this), asString );
-    },
+    }
 
-    toJSON: function(){
+    toJSON(){
         let bitField, result = {};
         for (let type in this.filters) {
             result[type] = this.filters[type].toValues();
@@ -80,10 +101,18 @@ _.extend( EntityFilter.prototype, {
         return result;
     }
 
-});
+}
+
+EntityFilter.ALL = ALL;
+EntityFilter.ANY = ANY;
+EntityFilter.SOME = SOME;
+EntityFilter.NONE = NONE;
+EntityFilter.INCLUDE = INCLUDE;
+EntityFilter.EXCLUDE = EXCLUDE;
+EntityFilter.ROOT = ROOT;
 
 
-function EntityFilterTransform( type, registry, entity, entityBitField, filterBitField ){
+EntityFilter.Transform = function( type, registry, entity, entityBitField, filterBitField ){
     let ii, len, defId, bf, ebf, vals, isInclude, isExclude, result;
     isInclude = (type == INCLUDE);
     isExclude = (type == EXCLUDE);
@@ -118,19 +147,19 @@ function EntityFilterTransform( type, registry, entity, entityBitField, filterBi
 }
 
 
-export function hash( arr, asString ){
-    return Utils.hash( 'EntityFilter' + JSON.stringify(arr), asString );
-}
+// export function hash( arr, asString ){
+//     return Utils.hash( 'EntityFilter' + JSON.stringify(arr), asString );
+// }
 
 
-export function isEntityFilter( ef ){
+EntityFilter.isEntityFilter = function isEntityFilter( ef ){
     return ef && ef instanceof EntityFilter;
 }
 
 /**
 *   Returns true if the srcBitField is acceptable against the bitfield and type
 */
-export function accept( type, srcBitField, bitField, debug ){
+EntityFilter.accept = function( type, srcBitField, bitField, debug ){
     let bfCount, srcBitFieldCount;
     
     if( bitField ){
@@ -171,14 +200,12 @@ export function accept( type, srcBitField, bitField, debug ){
 }
 
 
+// export function create( type, bitField ){
+//     let result = new EntityFilter();
+//     result.filters = {};
+//     // console.log('EntityFilter.create', type, bitField);
+//     if( type !== undefined ){ result.add(type,bitField); }
+//     return result;
+// }
 
-
-export function create( type, bitField ){
-    let result = new EntityFilter();
-    result.filters = {};
-    // console.log('EntityFilter.create', type, bitField);
-    if( type !== undefined ){ result.add(type,bitField); }
-    return result;
-}
-
-export default EntityFilter;
+// export default EntityFilter;

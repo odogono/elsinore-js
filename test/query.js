@@ -1,9 +1,13 @@
 import _ from 'underscore';
 import test from 'tape';
 
+import Query from '../src/query';
+// import {EQUALS, VALUE} from '../src/query';
+import * as Q from '../src/query';
+
 import {
     Component, Entity, EntitySet,
-    Query,
+    // Query,
     initialiseRegistry, 
     loadEntities, 
     loadComponents,
@@ -15,27 +19,37 @@ import {
 } from './common';
 
 test('EQUALS op', t => {
-    t.deepEqual(
-        Query.execute( null, [ Query.EQUALS, 8, 8 ] ), true );
-    t.deepEqual(
-        Query.execute( null, [ Query.EQUALS, 8, [ Query.VALUE, [1,3,5,8] ] ] ), true );
+    // console.log('uhhh EQUALS', EQUALS);
+    const q = new Query( [Q.EQUALS,8,8] );
+    t.equal( q.execute(), true );
+
+    const q2 = new Query( [Q.EQUALS, 8, [ Q.VALUE, [1,3,5,8] ]] );
+    t.equal( q.execute(), true );
+
+    // t.deepEqual(
+    //     new Query()
+    // )
+
+    // t.deepEqual(
+    //     Query.execute( null, [ Query.EQUALS, 8, 8 ] ), true );
+    // t.deepEqual(
+    //     Query.execute( null, [ Query.EQUALS, 8, [ Query.VALUE, [1,3,5,8] ] ] ), true );
     t.end();
 });
+
 
 test('Logic op', t => {
 
     let commands = [
-        Query.value(true).and( Query.value(true) ),
-        Query.value(false).or( Query.value(true) )
+        // [ Query.AND, [ Query.VALUE, true ], [ Query.VALUE, true ] ],
+        (Q) => Q.value(true).and(Q.value(true)),
+        // [ Query.OR, [ Query.VALUE, false ], [ Query.VALUE, true ] ],
+        (Q) => Q.value(false).or( Q.value(true) )
     ];
-    // let commands = [
-    //     [ Query.AND, [ Query.VALUE, true ], [ Query.VALUE, true ] ],
-    //     [ Query.OR, [ Query.VALUE, false ], [ Query.VALUE, true ] ],
-    // ];
 
     _.each( commands, command => {
-        // let result = Query.execute( null, command );
-        t.deepEqual( Query.execute( null, command ), true );
+        const query = new Query(command);
+        t.deepEqual( query.execute(), true );
     });
 
     t.end();
@@ -43,13 +57,17 @@ test('Logic op', t => {
 
 test('Accepting an entity', t => {
     return initialiseRegistry().then( registry => {
-        let result;
-        let entity = registry.createEntity([
+        const entity = registry.createEntity([
             {'@c':'/component/channel', name:'test'},
             {'@c': '/component/topic', topic: "Javascript" }] );
         
+        const query = new Query( Q => Q.all('/component/channel') );
+        const result = query.execute( entity, {debug:false} );
+
+        console.log('array', query.toJSON());
+        
         // console.log('/component/name iid', registry.getIId(['/component/channel','/component/topic']) );
-        result = Query.all( '/component/channel' ).execute( entity, {debug:false} );
+        // result = Query.all( '/component/channel' ).execute( entity, {debug:false} );
 
         t.ok( Entity.isEntity(result), 'query should return the entity' );
     })
@@ -59,15 +77,13 @@ test('Accepting an entity', t => {
 
 test('Rejecting an entity', t => {
     return initialiseRegistry().then( registry => {
-        let result;
-        
-        let entity = registry.createEntity([
+
+        const entity = registry.createEntity([
             { '@c':'/component/channel', name:'test'},
             { '@c':'/component/topic', topic: 'Javascript'}
         ]);
-
-        result = Query.all( '/component/name' ).execute( entity, {debug:false} );
-
+        const result = Query.exec( Q => Q.all('/component/name'), entity, {debug:false} );
+        
         t.equal( result, null, 'entity doesnt pass the filter');
     })
     .then( () => t.end() )
@@ -76,17 +92,22 @@ test('Rejecting an entity', t => {
 
 test('compiling a basic two stage entity filter', t => {
     return initialiseRegistry().then( registry => {
-        let query;// = Query.all('/component/channel').all('/component/topic');
-        let compiled;
+        // let query;// = Query.all('/component/channel').all('/component/topic');
+        // let compiled;
 
-        query = Query.create( registry,[
-            Query.all('/component/channel'),
-            Query.none('/component/topic') 
+        const query = new Query( [
+            Q => Q.all('/component/channel'),
+            Q => Q.none('/component/topic')
         ]);
+
+        // query = Query.create( registry,[
+        //     Query.all('/component/channel'),
+        //     Query.none('/component/topic') 
+        // ]);
 
         // printIns( query, 6 );
 
-        t.equals( query.commands.length, 1 );
+        t.equals( query.commands.length, 2 );
         t.end();
     })
     .catch( err => log.error('test error: %s', err.stack) )
@@ -95,23 +116,25 @@ test('compiling a basic two stage entity filter', t => {
 test('compiling an entity filter', t => {
     return initialiseRegistry().then( registry => {
 
-        let entity = registry.createEntity([
+        const entity = registry.createEntity([
             { '@c':'/component/channel', name:'test'},
             {'@c': "/component/topic", topic: "Javascript" }] );
 
-        let query = Query.all('/component/topic','/component/channel');
+        let result = Query.exec( Q => Q.all('/component/topic','/component/channel'), entity );
+
+        // let query = Query.all('/component/topic','/component/channel');
         // let compiled = filter.compile( registry );
 
         // printIns( query );
 
-        t.ok( Query.isQuery(query) );
-        t.ok( !query.isCompiled );
+        // t.ok( Query.isQuery(query) );
+        // t.ok( !query.isCompiled );
 
         // printIns( compiled, 6 );
         // log.debug('filter hash ' + filter.hash() );
         // log.debug('hashed ' + compiled.hash() );
 
-        let result = query.execute( entity );
+        // let result = query.execute( entity );
 
         // printIns( query );
 
@@ -125,17 +148,20 @@ test('compiling an entity filter', t => {
 
 test('a single filter query on an entity', t => {
     return initialiseRegistry().then( registry => {
-        let entity = registry.createEntity([
+        const entity = registry.createEntity([
             {'@c':'/component/channel', name:'test'},
             {'@c': "/component/topic", topic: "Javascript" }] );
 
-        let query = Query.all('/component/channel');
-        t.ok( !query.isCompiled );
+        const query = new Query( Q => Q.all('/component/channel'));
+        const result = query.execute(entity);
 
-        query = Query.create( registry, query );
-        t.ok( query.isCompiled );
+        // let query = Query.all('/component/channel');
+        // t.ok( !query.isCompiled );
+
+        // query = Query.create( registry, query );
+        // t.ok( query.isCompiled );
         
-        let result = query.execute( entity );
+        // let result = query.execute( entity );
         t.ok( Entity.isEntity(result) );
 
         t.end();
@@ -146,9 +172,14 @@ test('a single filter query on an entity', t => {
 
 test('accepting an entity based on its attributes', t => {
     initialiseEntitySet().then( ([registry,entitySet]) => {
-    let query = Query.create( registry,
-        Query.all('/component/mode/limit', Query.attr('limit').greaterThan( 9 )),
-        {debug:false} );
+
+    const query = new Query( Q => 
+        Q.all('/component/mode/limit', Q.attr('limit').greaterThan(9))
+    );
+
+    // let query = Query.create( registry,
+    //     Query.all('/component/mode/limit', Query.attr('limit').greaterThan( 9 )),
+    //     {debug:false} );
 
     // printIns( query );
 
@@ -169,11 +200,11 @@ test('accepting an entity based on its attributes', t => {
     .catch( err => log.error('test error: %s', err.stack) )
 });
 
-test('query eveything', t => {
+test.only('query eveything', t => {
     initialiseEntitySet().then( ([registry,entitySet]) => {
         // Query.all with no arguments returns everything
         // - same as calling Query.root()
-        const result = entitySet.query( Query.all() );
+        const result = entitySet.query( Q => Q.all() );
         t.equals( entitySet.size(), 18 );
     })
     .then( () => t.end() )

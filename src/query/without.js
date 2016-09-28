@@ -1,4 +1,5 @@
 import _ from 'underscore';
+import {registerCommand} from './index';
 import Q from './index';
 import EntitySet from '../entity_set';
 import * as Utils from '../util'
@@ -39,7 +40,7 @@ function commandWithout( context, values ){
 
 
 
-Q.registerCommand(  {
+registerCommand(  {
     commands:[
         {
             name: 'WITHOUT',

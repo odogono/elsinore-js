@@ -3,8 +3,11 @@ import test from 'tape';
 import BitField  from 'odgn-bitfield';
 import Sinon from 'sinon';
 
+import EntityFilter from '../src/entity_filter';
+
+
 import {
-    Component, Entity, EntityFilter, EntitySet,
+    Component, Entity, EntitySet,
     Registry, Query, SchemaRegistry,
     initialiseRegistry, 
     loadEntities, 
@@ -104,7 +107,7 @@ test('rejects an entity which has any of the components', t => {
 
 
 test('adding the same type combines', t => {
-    let f = EntityFilter.create();
+    let f = new EntityFilter();
     f.add( EntityFilter.ALL, toBitField(Components.Animal,Components.Mineral) );
     f.add( EntityFilter.ALL, toBitField(Components.Vegetable) );
 
@@ -114,18 +117,28 @@ test('adding the same type combines', t => {
 });
 
 test('combine filters into a single', t => {
-    let a = EntityFilter.create( EntityFilter.ALL, toBitField(Components.Animal,Components.Mineral) );
-    let b = EntityFilter.create( EntityFilter.ALL, toBitField(Components.Vegetable) );
+    const a = new EntityFilter( EntityFilter.ALL, toBitField(Components.Animal,Components.Mineral) );
+    const b = new EntityFilter( EntityFilter.ALL, toBitField(Components.Vegetable) );
 
-    let c = EntityFilter.create( a );
+    const c = new EntityFilter( a );
     c.add( b );
 
     t.deepEquals( c.getValues(), [Components.Animal,Components.Mineral,Components.Vegetable] );
     t.end();
 });
 
+test('to/from JSON', t => {
+    const a = new EntityFilter( EntityFilter.SOME, toBitField(Components.Animal, Components.Mineral));
+    a.add( EntityFilter.EXCLUDE, toBitField(Components.Vegetable));
+
+    const b = new EntityFilter( a.toJSON() );
+    t.deepEqual( a.toJSON(), b.toJSON() );
+
+    t.end();
+});
+
 // test('transform will copy an incoming entity', t => {
-//     let te, f = EntityFilter.create();
+//     let te, f = new EntityFilter();
 //     let e = createEntity( Components.Mineral, Components.Vegetable, Components.Doctor );
 
 //     e.marked = true;
@@ -141,7 +154,7 @@ test('combine filters into a single', t => {
 // test('transform will include only specified components on an entity', t => {
 //     let e = createEntity( Components.Mineral, Components.Vegetable, Components.Robot );
 
-//     let f = EntityFilter.create( EntityFilter.INCLUDE, [Components.Animal, Components.Robot, Components.Doctor] );
+//     let f = new EntityFilter( EntityFilter.INCLUDE, [Components.Animal, Components.Robot, Components.Doctor] );
 
 //     t.ok( e.Robot, 'entity will have Robot component' );
 //     t.ok( e.Mineral, 'entity will have Mineral component' );
@@ -156,7 +169,7 @@ test('combine filters into a single', t => {
 
 // test('transform will exclude specified components on an entity', t => {
 //     let e = createEntity( Components.Mineral, Components.Vegetable, Components.Robot );
-//     let f = EntityFilter.create( EntityFilter.EXCLUDE, Components.Vegetable );
+//     let f = new EntityFilter( EntityFilter.EXCLUDE, Components.Vegetable );
 
 //     let te = f.transform( e );
 //     t.equal( e.id, te.id, 'transformed entity id will be the same' );
@@ -169,7 +182,7 @@ test('combine filters into a single', t => {
 
 // test('transform all on a single component', t => {
 //     let e = createEntity( Components.Mineral, Components.Vegetable, Components.Robot );
-//     let f = EntityFilter.create( EntityFilter.ALL, Components.Vegetable );
+//     let f = new EntityFilter( EntityFilter.ALL, Components.Vegetable );
 
 //     let te = f.transform( e );
 //     t.ok( te.Mineral, 'transformed entity will have Mineral component' );
@@ -209,17 +222,16 @@ let ComponentIIdToObject = _.reduce( ComponentDefs, (memo,val,key) => {
 },[]);
 
 
-function toBitField( componentIIds ){
-    let args = _.toArray( arguments );
-    if( args.length <= 0 ){
+function toBitField( ...componentIIds ){
+    if( componentIIds.length <= 0 ){
         return BitField.create();
     }
     
-    if( Entity.isEntity(componentIIds) ){
-        return componentIIds.getComponentBitfield();
+    if( Entity.isEntity(componentIIds[0]) ){
+        return componentIIds[0].getComponentBitfield();
     }
     
-    return BitField.create( args );
+    return BitField.create( componentIIds );
 }
 
 function createEntity( componentIIds ){

@@ -1,9 +1,10 @@
 import _ from 'underscore';
+import {registerCommand} from './index';
 import Q from './index';
 import EntitySet from '../entity_set';
 import * as Utils from '../util'
 
-var LIMIT = 105;
+export const LIMIT = 105;
 
 
 
@@ -50,7 +51,7 @@ function dslLimit( count, offset ){
 function compile( context, commands ){
     var ii, cmd, limitOptions;
 
-    // log.debug('in-compile cmds:'); printIns( commands );
+    log.debug('in-compile cmds:', commands);
 
     // look for the limit commands within the commands
     for( ii=commands.length-1;ii>=0;ii-- ){
@@ -78,7 +79,7 @@ function compile( context, commands ){
 }
 
 
-Q.registerCommand(  {
+registerCommand(  {
             name: 'LIMIT',
             id: LIMIT,
             argCount: 1,

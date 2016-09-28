@@ -1,5 +1,6 @@
 import _ from 'underscore';
-import Q from './index';
+import Query from './index';
+import * as Q from './index';
 import * as Utils from '../util';
 
 
@@ -25,7 +26,6 @@ function precendence( operator ){
         default:
             return -1;
     }
-    return -1;
 }
 
 
@@ -220,30 +220,30 @@ let QueryFunctions = {
     },
 };
 
-Q.toArray = function( query, toTree ){
-    let commands = query;
+// Q.toArray = function( query, toTree ){
+//     let commands = query;
 
-    if( Q.isQuery(query) ){
-        return query.toArray( toTree );
-    }
+//     if( Q.isQuery(query) ){
+//         return query.toArray( toTree );
+//     }
 
-    if( _.isArray(query) ){
-        return _.reduce( query, (result, command) => {
-            if( Q.isQuery(command) ){
-                command = command.toArray( toTree );
-            }
-            result = result.concat( command );
-            return result;
-        },[]);
-    }
-    return null;
-}
+//     if( _.isArray(query) ){
+//         return _.reduce( query, (result, command) => {
+//             if( Q.isQuery(command) ){
+//                 command = command.toArray( toTree );
+//             }
+//             result = result.concat( command );
+//             return result;
+//         },[]);
+//     }
+//     return null;
+// }
 
 
 /**
 *   Converts an RPN expression into an AST
 */
-Q.rpnToTree = rpnToTree;
+// Q.rpnToTree = rpnToTree;
 function rpnToTree( values ){
     let ii, len, op, stack, rightIndex, slice, result, count;
 
@@ -421,16 +421,304 @@ function contextData( context ){
 }
 
 // these are the starting functions
-_.extend( Q, {
-    readContext: readContext,
+// _.extend( Q, {
+//     readContext: readContext,
 
-    attr: QueryFunctions.attr,
-    value: QueryFunctions.value,
-    root: QueryFunctions.root,
-    pipe: QueryFunctions.pipe,
-    // pluck: QueryFunctions.pluck,
-    // without: QueryFunctions.without,
-}, FilterFunctions );
+//     attr: QueryFunctions.attr,
+//     value: QueryFunctions.value,
+//     root: QueryFunctions.root,
+//     pipe: QueryFunctions.pipe,
+//     // pluck: QueryFunctions.pluck,
+//     // without: QueryFunctions.without,
+// }, FilterFunctions );
 
 
-module.exports = Q;
+// module.exports = Q;
+
+class DslContext {
+    constructor(query){
+        this.query = query;
+        this.valStack = [];
+        this.opStack = [];
+    }
+
+    /**
+     * takes the specified context and returns a new instance
+     * of a DslContext if the passed context is not already a DslContext.
+     */
+    readContext(context){
+        // the context has to be a new instance of a DslContext,
+        // so that it is possible to compose a query using subqueries
+        if( context instanceof QueryBuilder ){
+            let result = new DslContext(context.query)
+            return result;
+        }
+        return context;
+    }
+
+    value( val ){
+        const context = this.readContext( this );
+        context.pushVal( val, true );
+        return context;
+    }
+
+
+    and( val ){
+        const context = this.readContext( this );
+        context.pushVal( val, true, 'fromAnd' );
+        context.pushOp( Q.AND );
+        return context;
+    }
+
+    or( val ){
+        this.pushVal( val, true );
+        this.pushOp( Q.OR );
+        return this;
+    }
+
+    where( ...clauses ){
+        const context = this.readContext( this );
+
+        if( clauses.length <= 0 ){
+            return context;
+        }
+        if( clauses.length === 1 ){
+            context.pushVal( clauses[0] );
+        } else {
+            clauses = _.reduce( clauses, (res, clause, i) => {
+                res.push( clause.toArray() );
+                if( res.length > 1 ){
+                    res.push( Q.AND );
+                }
+                return res;
+            },[]);
+
+            context.valStack = context.valStack.concat( _.flatten(clauses, true) );
+        }
+        return context;
+    }
+
+    equals( val ){
+        this.pushVal( val, true );
+        this.pushOp( Q.EQUALS );
+        return this;
+    }
+
+    lessThan( val ){
+        this.pushVal( val, true );
+        this.pushOp( Q.LESS_THAN );
+        return this;  
+    }
+
+    lessThanOrEqual( val ){
+        this.pushVal( val, true );
+        this.pushOp( Q.LESS_THAN_OR_EQUAL );
+        return this;  
+    }
+
+    greaterThan( val ){
+        this.pushVal( val, true );
+        this.pushOp( Q.GREATER_THAN );
+        return this;  
+    }
+
+    greaterThanOrEqual( val ){
+        this.pushVal( val, true );
+        this.pushOp( Q.GREATER_THAN_OR_EQUAL );
+        return this;  
+    }
+
+    /**
+    *   Selects a component attribute
+    */
+    attr( attr ){
+        const context = this.readContext( this );
+        context.pushVal( [Q.ATTR,attr] );
+        return context;
+
+        // let lastCommand, op, val;
+        // let context = readContext( this, false, true, true );
+
+        // context.pushVal( [Q.ATTR, attr] );
+
+        // return context;
+    }
+
+    // 
+    // Filter Functions
+    // 
+
+    /**
+    *   The entities must have ALL of the specified components
+    */
+    all(componentIds, filterFn){
+        const context = this.readContext( this );
+        context.pushOp( Q.ALL_FILTER );
+        context.pushVal( componentIds, true );
+        if( filterFn ){
+            context.pushVal( filterFn, true );
+        }
+
+        return context;
+    }
+
+    include(componentIds, filterFn){
+        const context = this.readContext( this );
+        // context.pushOp( filterFn ? Q.INCLUDE_FILTER : Q.INCLUDE );
+        context.pushOp( Q.INCLUDE_FILTER );
+        context.pushVal( componentIds, true );
+        if( filterFn ){
+            context.pushVal( filterFn, true );
+        }
+        return context;
+    }
+
+    /**
+    *   Entities should have at least one of the specified components
+    */
+    any( componentIds, filterFn ){
+        const context = this.readContext( this );
+        // context.pushOp( filterFn ? Q.ANY_FILTER : Q.ANY );
+        context.pushOp( Q.ANY_FILTER );
+        context.pushVal( componentIds, true );
+        if( filterFn ){
+            context.pushVal( filterFn, true );
+        }
+        return context;
+    }
+
+    /**
+    *   entities will be excluded if the have any of the componentIds
+    */
+    none(componentIds, filterFn ){
+        const context = this.readContext( this );
+        context.pushOp( Q.NONE_FILTER );
+        context.pushVal( componentIds, true );
+        if( filterFn ){
+            context.pushVal( filterFn, true );
+        }
+        return context;
+    }
+
+
+    popVal(){
+        let val = this.valStack.shift();
+        if( val && val.isQuery ){
+            return val.toArray();
+        }
+        return val;
+    }
+
+    peekVal(){
+        return this.valStack[0];
+    }
+
+    lastOp(){
+        return this.opStack[ this.opStack.length -1 ];
+    }
+
+    popOp(){
+        return this.opStack.pop();
+    }
+
+    pushOp( op  ){
+        let lastOp = this.lastOp();
+        while( this.opStack.length > 0 && (precendence( op ) <= precendence( lastOp )) ){
+            this.pushVal( this.popOp() );
+        }
+        this.opStack.push( op );
+    }
+
+    pushVal(val, wrapInValueTuple, label=''){
+        const isQuery = val instanceof DslContext;
+        
+        if( wrapInValueTuple ){
+            if( !isQuery ){
+                val = [Q.VALUE,val];
+            }
+        }
+
+        // log.debug(`>pushVal ${label} : ${JSON.stringify(val)}`);
+        if( val && isQuery ){
+            this.valStack = this.valStack.concat( val.toArray() );
+        } else {
+            this.valStack.push(val);
+        }
+        return this;
+    }
+
+    /**
+     * 
+     */
+    toArray( toTree=false ){
+        let count = 0;
+        let op,val,result,vals;
+        let ii,len;
+
+        // console.log('QB.toArray op', this.opStack, 'val', this.valStack );
+        // move reminaing ops
+        while( this.opStack.length > 0 ){
+            this.pushVal( this.popOp() );
+        }
+
+        // console.log('QB.toArray B val', this.valStack );
+
+        result = this.valStack;
+
+        if( toTree ){
+            return this.commands = rpnToTree( result );
+        }
+
+        return result;
+    }
+}
+
+
+// const BaseFunctions = (SuperClass) => class extends SuperClass {
+//     readContext(context){
+//         return context;
+//     }
+// }
+
+
+
+// const MainFunctions = (SuperClass) => class extends SuperClass {
+//     value( val ){
+//         const context = this.readContext(this);
+//         this.pushVal(val,true);
+//         return context;
+//     }
+// }
+
+
+
+export default class QueryBuilder extends DslContext {
+
+    constructor( query ){
+        super(query);
+    }
+
+    and(){ throw new Error('invalid function and'); }
+    or(){ throw new Error('invalid function or'); }
+    where(){ throw new Error('invalid function where'); }
+
+    // toArray( query, toTree ){
+    //     let commands = query;
+
+    //     if( Q.isQuery(query) ){
+    //         return query.toArray( toTree );
+    //     }
+
+    //     if( _.isArray(query) ){
+    //         return _.reduce( query, (result, command) => {
+    //             if( Q.isQuery(command) ){
+    //                 command = command.toArray( toTree );
+    //             }
+    //             result = result.concat( command );
+    //             return result;
+    //         },[]);
+    //     }
+    //     return null;
+    // }
+
+}

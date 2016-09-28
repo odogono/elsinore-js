@@ -1,5 +1,6 @@
 import _ from 'underscore';
 import Q from './index';
+import {registerCommand} from './index';
 import EntitySet from '../entity_set';
 import * as Utils from '../util'
 
@@ -113,5 +114,5 @@ const command = {
 };
 
 
-Q.registerCommand( command );
+registerCommand( command );
 module.exports = Q;

@@ -1,4 +1,5 @@
 import _ from 'underscore';
+import {registerCommand} from './index';
 import Q from './index';
 import EntitySet from '../entity_set';
 import * as Utils from '../util'
@@ -111,7 +112,7 @@ function compile( context, command ){
 }
 
 
-Q.registerCommand(  {
+registerCommand(  {
     commands:[
         {
             name: 'PLUCK',
