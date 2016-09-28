@@ -86,8 +86,8 @@ test('will only execute processors which match', t => {
         const otherProcessor = createEntityProcessor( 
             (entityArray, timeMs, options ) => executeCount++);
 
-        dispatch.addProcessor( processor, Query.all('/component/hostname') );
-        dispatch.addProcessor( otherProcessor, Query.all('/component/username') );
+        dispatch.addProcessor( processor, Q => Q.all('/component/hostname') );
+        dispatch.addProcessor( otherProcessor, Q => Q.all('/component/username') );
         
         let entity = registry.createEntity( [{'@c':'/component/username', username:'fred'}]);
         // console.log('entity', entityToString(entity) );

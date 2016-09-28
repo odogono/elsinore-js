@@ -27,28 +27,34 @@ function dslLimit( count, offset ){
 }
 
 
-// function commandLimit( context, count, offset ){
+function commandLimit( context, count, offset ){
 //     var result, entitySet, entities;
 
-//     count = Q.valueOf( context, count, true ) || 0;
-//     offset = Q.valueOf( context, offset, true ) || 0;
-//     entitySet = Q.resolveEntitySet( context );
+    count = context.valueOf(count, true) || 0;
+    offset = context.valueOf(offset, true ) || 0;
+    const entitySet = context.resolveEntitySet();
 //     // entitySet = Q.valueOf( context, context.last || context.entitySet, true );
 
-//     if( !EntitySet.isEntitySet(entitySet) ){
-//         throw new Error('invalid es');
-//         // return (context.last = [ Q.VALUE, result ]);        
-//     }
+    if( !EntitySet.isEntitySet(entitySet) ){
+        throw new Error('invalid entityset');        
+    }
 
-//     result = context.registry.createEntitySet( null, {register:false} );
+    if( !entitySet.isMemoryEntitySet ){
+        throw new Error('invalid entityset');
+    }
+
+    const result = context.registry.createEntitySet( null, {register:false} );
     
-//     if( count > 0 ){
-//         entities = entitySet.models.slice( offset, offset+count );
-//         result.addEntity( entities );
-//     }
+    // console.log('limit: ', offset, count, entitySet.models.length );
+
+    if( count > 0 ){
+        const entities = entitySet.models.slice( offset, offset+count );
+        // console.log('limit: got ', entities.length);
+        result.addEntity( entities );
+    }
     
-//     return (context.last = [ Q.VALUE, result ]);
-// }
+    return (context.last = [ VALUE, result ]);
+}
 
 
 /**
@@ -58,7 +64,7 @@ function dslLimit( count, offset ){
 function compile( context, commands ){
     var ii, cmd, limitOptions;
 
-    // log.debug('in-compile cmds:', commands);
+    // log.debug('limit: in-compile cmds:', commands);
 
     // look for the limit commands within the commands
     for( ii=commands.length-1;ii>=0;ii-- ){
@@ -86,4 +92,4 @@ function compile( context, commands ){
 }
 
 
-register(LIMIT, null, {limit:dslLimit}, {compile} );
+register(LIMIT, commandLimit, {limit:dslLimit}, {compile} );

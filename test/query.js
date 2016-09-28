@@ -65,8 +65,7 @@ test('Accepting an entity', t => {
         const query = new Query( Q => Q.all('/component/channel') );
         const result = query.execute( entity, {debug:false} );
 
-        console.log('array', query.toJSON());
-        
+        // console.log('array', query.toJSON());
         // console.log('/component/name iid', registry.getIId(['/component/channel','/component/topic']) );
         // result = Query.all( '/component/channel' ).execute( entity, {debug:false} );
 

@@ -15,28 +15,28 @@ import {
 } from './common';
 
 
-test('parsing', t => {
-    let query = Query.pluck( '/component/channel_member', 'client' );
-    let stack = [
-            Query.LEFT_PAREN, 
-            [ Query.VALUE, '/component/channel_member' ], 
-            [ Query.VALUE, 'client' ], 
-            Query.RIGHT_PAREN, 
-            Query.PLUCK
-        ];
+// test('parsing', t => {
+//     let query = Query.pluck( '/component/channel_member', 'client' );
+//     let stack = [
+//             Query.LEFT_PAREN, 
+//             [ Query.VALUE, '/component/channel_member' ], 
+//             [ Query.VALUE, 'client' ], 
+//             Query.RIGHT_PAREN, 
+//             Query.PLUCK
+//         ];
 
-    let ast = [
-            [ Query.PLUCK,
-                [ Query.VALUE, '/component/channel_member' ], 
-                [ Query.VALUE, 'client' ]
-            ]
-        ];
+//     let ast = [
+//             [ Query.PLUCK,
+//                 [ Query.VALUE, '/component/channel_member' ], 
+//                 [ Query.VALUE, 'client' ]
+//             ]
+//         ];
 
-    t.deepEqual( Query.toArray( query, false ), stack );        
-    t.deepEqual( Query.toArray( query, true ), ast );
+//     t.deepEqual( Query.toArray( query, false ), stack );        
+//     t.deepEqual( Query.toArray( query, true ), ast );
 
-    t.end();
-});
+//     t.end();
+// });
 
 test('pluck extracts a list of property values from the given component', t => {
     initialiseEntitySet('entity_set.entities').then( ([registry,entitySet]) => {

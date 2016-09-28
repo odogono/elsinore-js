@@ -8,7 +8,7 @@ import Sinon from 'sinon';
 
 import {
     Component, Entity, EntityFilter, EntitySet,
-    Registry, Query, SchemaRegistry,
+    Registry, SchemaRegistry,
     initialiseRegistry, 
     loadEntities, 
     loadComponents,
@@ -88,8 +88,8 @@ test('the registry triggers the event on a compatible entityset', function(t){
     
         let mineralCalled = false, animalCalled = false, mainCalled = false;
 
-        let mineralEntitySet = entitySet.view( Query.all('/component/mineral'));
-        let animalEntitySet = entitySet.view( Query.all('/component/animal'));
+        let mineralEntitySet = entitySet.view( Q => Q.all('/component/mineral'));
+        let animalEntitySet = entitySet.view( Q => Q.all('/component/animal'));
 
 
         registry.addEntitySet( mineralEntitySet );

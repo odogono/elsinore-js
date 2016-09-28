@@ -10,14 +10,20 @@ _.extend( EntitySet.prototype, {
     view: function( query, options={} ){
         let result;
         let registry = this.getRegistry();
-        
+
         result = registry.createEntitySet( null, {register:false} );
         result.type = 'EntitySetView';
         result.isEntitySetView = true;
+        // console.log('created view', result.cid, 'from', this.cid );
 
         // make <result> listenTo <entitySet> using <entityFilter>
         EntitySet.listenToEntitySet( result, this, query, options );
 
+        // if a valid query was supplied, it will have been resolved
+        // into a query object by now
+        query = result.getQuery();
+
+        // console.log('using view query', query);
         // store the view
         this.views || (this.views={});
         this.views[ query ? query.hash() : 'all' ] = result;
@@ -43,6 +49,7 @@ EntitySet.listenToEntitySet = function( srcEntitySet, targetEntitySet, query, op
 
     listener.listenToEntitySet( srcEntitySet, targetEntitySet, query );
     
+    // reset causes entities to be copied over?
     srcEntitySet.reset( targetEntitySet );
     
     return listener;

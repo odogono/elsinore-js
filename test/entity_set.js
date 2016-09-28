@@ -4,7 +4,7 @@ import test from 'tape';
 
 import {
     Component, Entity, EntityFilter, EntitySet,
-    Registry, Query, SchemaRegistry,
+    Registry, SchemaRegistry,
     initialiseRegistry, 
     loadEntities, 
     loadComponents,
@@ -538,7 +538,7 @@ test('should only add a component of an accepted type', t => {
         // printE( entities );
         // setting an entity filter means that the entitySet will
         // only add components that pass through the filter
-        EntitySet.setQuery( entitySet, Query.all('/component/position') );
+        EntitySet.setQuery( entitySet, Q => Q.all('/component/position') );
 
         entitySet.addEntity( entities.at(0) );
 
@@ -555,7 +555,7 @@ test('should only add a component of an accepted type', t => {
 test('should only retain the included component on entity', t => {
     return initialise().then( ([registry,entitySet,entities]) => {
         
-        EntitySet.setQuery( entitySet, Query.include('/component/nickname') );
+        EntitySet.setQuery( entitySet, Q => Q.include('/component/nickname') );
 
         // printIns( entities.at(0).getRegistry(), 1 );
         // printE( entities.at(0) );
@@ -572,7 +572,7 @@ test('should only retain the included component on entity', t => {
 
 test('should not add entities that have excluded components', t => {
     return initialise().then( ([registry,entitySet,entities]) => {
-        EntitySet.setQuery( entitySet, Query.none('/component/score') );
+        EntitySet.setQuery( entitySet, Q => Q.none('/component/score') );
 
         entitySet.addEntity( entities.at(1) );
         t.equals( entitySet.size(), 0);
@@ -585,7 +585,7 @@ test('should not add entities that have excluded components', t => {
 
 test('should not add entities that have multiple excluded components', t => {
     return initialise().then( ([registry,entitySet,entities]) => {
-        EntitySet.setQuery( entitySet, Query.none(['/component/score','/component/nickname']) );
+        EntitySet.setQuery( entitySet, Q => Q.none(['/component/score','/component/nickname']) );
         entitySet.addEntity( entities );
         t.equals( entitySet.size(), 1);
         t.end();
@@ -597,7 +597,7 @@ test('should only add entities that are included', t => {
     return initialise().then( ([registry,entitySet,entities]) => {
 
         // this means that any entity MUST have a Position and Nickname
-        EntitySet.setQuery( entitySet, Query.all(['/component/position','/component/nickname']) );
+        EntitySet.setQuery( entitySet, Q => Q.all(['/component/position','/component/nickname']) );
         entitySet.addEntity( entities );
         t.equals( entitySet.size(), 2);
         t.end();
@@ -607,7 +607,7 @@ test('should only add entities that are included', t => {
 test('should only add entities that are optional', t => {
     return initialise().then( ([registry,entitySet,entities]) => {
         // this means that the entity MAY have Position and/or Nickname
-        EntitySet.setQuery( entitySet, Query.any(['/component/position','/component/nickname']) );
+        EntitySet.setQuery( entitySet, Q => Q.any(['/component/position','/component/nickname']) );
         entitySet.addEntity( entities );
         t.equals( entitySet.size(), 4);
 
@@ -619,10 +619,10 @@ test('should only add entities that are optional', t => {
 test('should only add entities that pass include/exclude', t => {
     return initialise().then( ([registry,entitySet,entities]) => {
         EntitySet.setQuery( entitySet,
-            Query.commands(
-                Query.all('/component/position'), 
-                Query.none('/component/realname')
-            ) );
+            Q =>[
+                Q.all('/component/position'), 
+                Q.none('/component/realname')
+            ] );
         // EntitySet.setQuery( entitySet,
             // Query.all('/component/position').none('/component/realname') ); 
 
@@ -640,7 +640,7 @@ test('should remove entities that are excluded after their components change', t
     // let entitySet = registry.createEntitySet({allowEmptyEntities:false});
     // let entities = loadEntities( registry );
 
-        EntitySet.setQuery( entitySet, Query.none('/component/realname') );
+        EntitySet.setQuery( entitySet, Q => Q.none('/component/realname') );
         
         entitySet.addEntity( entities );
         t.equals( entitySet.size(), 2);
@@ -657,7 +657,7 @@ test('should remove entities that are excluded after their components change', t
 
 test('should remove entities that no longer included after their components change', t => {
     return initialise().then( ([registry,entitySet,entities]) => {
-        EntitySet.setQuery( entitySet, Query.all('/component/nickname') );
+        EntitySet.setQuery( entitySet, Q => Q.all('/component/nickname') );
         entitySet.addEntity( entities );
         
         t.equals( entitySet.size(), 3, 'two entities which have Nickname');
@@ -675,7 +675,7 @@ test('should remove entities that are no longer allowed when the component mask 
         entitySet.addEntity( entities );
         t.equals( entitySet.size(), 5);
 
-        EntitySet.setQuery( entitySet, Query.none('/component/score') );
+        EntitySet.setQuery( entitySet, Q => Q.none('/component/score') );
         t.equals( entitySet.size(), 2);
         t.end();
     });
@@ -687,7 +687,7 @@ test.skip('should filter', t => {
             
         entitySet.addEntity( entities );
 
-        let selected = entitySet.filter( function(e){
+        const selected = entitySet.filter( function(e){
             return e.getComponentBitfield().get( positionIId );
         });
 
@@ -800,7 +800,7 @@ test('attached entitysets', t => {
         // set a filter on the other entitySet so that it will only accept components that
         // have /position and /realname
         EntitySet.setQuery( oEntitySet, 
-            Query.all(['/component/position','/component/realname']) );
+            Q => Q.all(['/component/position','/component/realname']) );
 
         // make the other entitySet listen to the origin entitySet
         oEntitySet.attachTo( entitySet );
@@ -822,7 +822,7 @@ test('map transfers an entitySet through a filter into another entityset', t => 
     let eventSpy = Sinon.spy();
     return initialise().then( ([registry,entitySet,entities]) => {
         let oEntitySet = registry.createEntitySet();
-        let entityFilter = Query.include('/component/score');
+        let entityFilter = Q => Q.include('/component/score');
 
         // printE( loadedEntitySet );
 
@@ -853,7 +853,7 @@ test('map transfers an entitySet through a filter into another entityset again',
     let eventSpy = Sinon.spy();
     return initialise().then( ([registry,entitySet,entities]) => {
         let oEntitySet = registry.createEntitySet();
-        let entityFilter = Query.none('/component/position');
+        let entityFilter = Q => Q.none('/component/position');
 
         oEntitySet.on('all', eventSpy);
         // Common.logEvents( oEntitySet );

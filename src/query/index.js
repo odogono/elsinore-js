@@ -59,6 +59,7 @@ export default class Query {
     // cidPrefix: 'q',
 
     constructor( commands, options={} ){
+        this.cid = _.uniqueId('q');
         this.commands = commands;
 
         if( _.isFunction(commands) ){
@@ -73,6 +74,8 @@ export default class Query {
             // console.log('query builder result', built);
             // commands = commands(builder).toArray(true);
             // console.log('query builder result', commands);
+        } else if( commands instanceof Query ){
+            this.commands = commands.toJSON();
         } else if( _.isArray(commands) ){
             if( _.isFunction(commands[0]) ){
                 const builder = new QueryBuilder(this);
@@ -81,6 +84,10 @@ export default class Query {
                 });
             }
         }
+    }
+
+    isEmpty(){
+        return !this.commands || this.commands.length == 0;
     }
 
     toArray(){

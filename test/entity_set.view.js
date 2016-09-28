@@ -20,7 +20,7 @@ import '../src/entity_set/view';
 
 test('.where returns an entityset of entities', t => {
     initialiseEntitySet().then( ([registry,entitySet]) => {
-        let result = entitySet.query( Query.all('/component/name') );
+        const result = entitySet.query(Q => Q.all('/component/name') );
         t.ok( result.isEntitySet, 'the result is an entityset');
         t.equals( result.length, 7, '7 entities returned');
 
@@ -32,9 +32,9 @@ test('.query returns entities which the attributes', t => {
     initialiseEntitySet().then( ([registry,entitySet]) => {
     
         // let result = entitySet.where('/component/status', {status:'active'} );
-        let result = entitySet.query( 
-            Query.all('/component/status', 
-                Query.attr('status').equals('active')) );
+        const result = entitySet.query(Q => 
+            Q.all('/component/status', 
+                Q.attr('status').equals('active')) );
 
         t.ok( result.isEntitySet, 'the result is an entityset');
         t.equals( result.length, 6, '6 entities returned');
@@ -48,7 +48,7 @@ test('.query returns entities which the attributes', t => {
 test('the view should be identified as a view', t => {
     initialiseEntitySet().then( ([registry,entitySet]) => {
     
-        let view = entitySet.view();
+        const view = entitySet.view();
 
         t.ok( view.isEntitySetView, 'its an entityset view');
         t.ok( view.isEntitySet, 'its an entityset');
@@ -67,8 +67,10 @@ test('the view should have the same entities', t => {
         let eventSpy = Sinon.spy();
 
         let view = entitySet.view();
+
+        // printE( entitySet );
         
-        t.equals( entitySet.length, view.length, 'same number of entities');
+        t.equals( entitySet.size(), view.size(), 'same number of entities');
 
         t.end();
     });
@@ -77,7 +79,7 @@ test('the view should have the same entities', t => {
 
 test('removing an entity from the entitySet should also remove it from the view', t => {
     initialiseEntitySet().then( ([registry,entitySet]) => {
-        var eventSpy = Sinon.spy();
+        const eventSpy = Sinon.spy();
 
         let view = entitySet.view(null,{updateOnEvent: true});
 
@@ -95,11 +97,13 @@ test('removing an entity from the entitySet should also remove it from the view'
 
 test('adding an entity should also see it appear in the view', t => {
     initialiseEntitySet().then( ([registry,entitySet]) => {
-        let view = entitySet.view(null,{updateOnEvent:true});
+        const view = entitySet.view(null,{updateOnEvent:true});
 
-        var component = registry.createComponent( '/component/position', {x:-2,y:5} );
+        const component = registry.createComponent( '/component/position', {x:-2,y:5} );
         entitySet.addComponent( component );
 
+        console.log('view size', view.size());
+        console.log('es size', entitySet.size());
         t.equals( entitySet.size(), view.size(), 'same number of entities');
         t.end();
     });
@@ -110,7 +114,7 @@ test('removing a component from an entity', t => {
     initialiseEntitySet().then( ([registry,entitySet]) => {
         let entity;
         entitySet = registry.createEntitySet();
-        let view = entitySet.view(null, {updateOnEvent: true} );
+        const view = entitySet.view(null, {updateOnEvent: true} );
 
         // Common.logEvents( view );
         // Common.logEvents( entitySet );
@@ -139,10 +143,10 @@ test('removing a component from an entity', t => {
 
 test('adding a component to an entity', t => {
     initialiseEntitySet().then( ([registry,entitySet]) => {
-        var component;
-        var eventSpy = Sinon.spy();
+        let component;
+        const eventSpy = Sinon.spy();
         entitySet = registry.createEntitySet();
-        var view = entitySet.view(null, {updateOnEvent:true});
+        const view = entitySet.view(null, {updateOnEvent:true});
 
         entitySet.addEntity(
             registry.createEntity([{'@c':'/component/flower', colour:'white'}] ));
@@ -165,9 +169,9 @@ test('adding a component to an entity', t => {
 
 test('adding a component to an entity triggers an entity:add event', t => {
     initialiseEntitySet().then( ([registry,entitySet]) => {
-        var eventSpy = Sinon.spy();
+        const eventSpy = Sinon.spy();
         entitySet = registry.createEntitySet();
-        var view = entitySet.view(null, {updateOnEvent:true});
+        const view = entitySet.view(null, {updateOnEvent:true});
 
         // Common.logEvents( entitySet, 'es ' );
         // Common.logEvents( view, 'vi ' );
@@ -183,12 +187,12 @@ test('adding a component to an entity triggers an entity:add event', t => {
 
 
 test('removing a relevant component from an entity should trigger a entity:remove event', t => {
-    var entity;
-    var eventSpy = Sinon.spy();
+    let entity;
+    const eventSpy = Sinon.spy();
     initialiseEntitySet().then( ([registry,entitySet]) => {
-        let query = Query.all('/component/channel');
+        const query = new Query(Q => Q.all('/component/channel'));
         // var entityFilter = registry.createEntityFilter( EntityFilter.ALL, '/component/score' );
-        let view = entitySet.view( query, {updateOnEvent:true} );
+        const view = entitySet.view( query, {updateOnEvent:true} );
 
         // printIns( entitySet, 1 );
         view.on('all', eventSpy);
@@ -212,14 +216,14 @@ test('removing a relevant component from an entity should trigger a entity:remov
 
 test('deferred addition of components with a filter', t => {
     initialiseEntitySet().then( ([registry,entitySet]) => {
-        var eventSpy = Sinon.spy();
+        const eventSpy = Sinon.spy();
         entitySet = registry.createEntitySet();
-        let query = Query.all('/component/position');
-        let view = entitySet.view(query);
+        const query = new Query(Q => Q.all('/component/position'));
+        const view = entitySet.view(query);
 
         view.on('all', eventSpy);
 
-        var entity = entitySet.addEntity(
+        const entity = entitySet.addEntity(
             registry.createEntity([
                 { '@c':'/component/flower', colour:'blue'}] ));
 
@@ -242,8 +246,8 @@ test('deferred addition of components with a filter', t => {
 
 test('applying a filter', t => {
     initialiseEntitySet('entity_set.entities').then( ([registry,entitySet]) => {
-        let query = Query.all(['/component/position', '/component/realname']);
-        let view = entitySet.view( query );
+        const query = new Query(Q => Q.all(['/component/position', '/component/realname']));
+        const view = entitySet.view( query );
         
         // printE( entitySet );
         // printE( view );
@@ -261,8 +265,8 @@ test('applying a filter', t => {
 test('views created with a filter', t => {
 
     initialiseEntitySet('entity_set.entities').then( ([registry,entitySet]) => {
-        let query = Query.none('/component/position');
-        let view = entitySet.query( query );
+        const query = new Query(Q => Q.none('/component/position'));
+        const view = entitySet.query( query );
 
         // add another entity to the ES which the view should ignore
         entitySet.addComponent([
@@ -310,7 +314,7 @@ test('views created with a filter', t => {
 test('deferred removal of an entity', t => {
     initialiseEntitySet().then( ([registry,entitySet]) => {
         entitySet = registry.createEntitySet();
-        var view = entitySet.view();
+        const view = entitySet.view();
 
         // Common.logEvents( entitySet );
 
@@ -345,11 +349,10 @@ test('deferred removal of an entity triggers correct events', t => {
     initialiseEntitySet().then( ([registry,entitySet]) => {
     
         entitySet = registry.createEntitySet();
-        var view = entitySet.view();
-
-        var entityA, entityB;
+        const view = entitySet.view();
+        let entityA, entityB;
         
-        var eventSpy = Sinon.spy();
+        const eventSpy = Sinon.spy();
 
         // Common.logEvents( view );
 
@@ -379,7 +382,7 @@ test('deferred removal of an entity triggers correct events', t => {
 test('altering a component in the view also changes the component in the entityset', t => {
     initialiseEntitySet().then( ([registry,entitySet]) => {
         entitySet = registry.createEntitySet();
-        let view = entitySet.view();
+        const view = entitySet.view();
 
         // Common.logEvents( entitySet );
 

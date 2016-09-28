@@ -12,7 +12,7 @@ import {printIns} from '../../src/util';
 let EntityProcessor = Common.EntityProcessor;
 let EntityFilter = Common.EntityFilter;
 let EntitySet = Common.EntitySet;
-let Query = Common.Query;
+// let Query = Common.Query;
 
 
 
@@ -50,7 +50,7 @@ test('reaper', function(t){
         ReaperProcessor = EntityProcessor.extend({
             type:'ReaperProcessor',
             // the processor will receive entities which have the /dead component
-            entityFilter: Query.all('/dead'),
+            entityFilter: Q => Q.all('/dead'),
             
             onUpdate: function( entityArray, timeMs ){
                 let entity, ii, len;
@@ -69,7 +69,7 @@ test('reaper', function(t){
             type:'ConnectionProcessor',
             
             // the processor will not receive any entities which have the /dead component
-            entityFilter: Query.all('/ttl'),
+            entityFilter: Q => Q.all('/ttl'),
 
             onUpdate: function( entityArray, timeMs ){
                 let entity, ii, len;

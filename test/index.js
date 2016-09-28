@@ -7,7 +7,7 @@ import './entity_events';
 import './entity_filter';
 import './entity_set';
 import './entity_set.query';
-import './entity_set.query.dsl';
+// import './entity_set.query.dsl';
 import './entity_set.view';
 import './json';
 import './query';

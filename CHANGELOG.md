@@ -4,6 +4,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased][unreleased]
 
+## [4.0.0] - 2016-09-28
+### Changed
+- Query refactored. Queries are now built using functions.
+
 ## [3.3.0] - 2016-08-16
 ### Added
 - reinstated registry.createEntity and added explicit registry.createEntityWithId

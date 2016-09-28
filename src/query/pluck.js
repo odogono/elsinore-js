@@ -93,20 +93,28 @@ function pluckEntitySet( registry, entitySet, componentIds, attributes ){
     // iterate through each of the entityset models and select the components
     // specified - if they exist, select the attributes required.
     result = _.reduce( entitySet.models, (values, entity) => {
-        const components = entity.getComponents(componentIds);
-        // log.debug('inCOMing ' + Utils.stringify(entity), componentIds );
+        
+        // log.debug('inCOMing ' + Utils.stringify(entity), attributes, componentIds );
+        if( !componentIds ){
+            // if there are no componentIds, then the type of attribute we can pluck is limited...
+            _.each( attributes, attr => {
+                if( attr == '@e' ){ values.push( entity.getEntityId() ); }
+            });    
+        } else {
+            const components = entity.getComponents(componentIds);
 
-        _.each( entity.getComponents(componentIds), (component) => {
-            // log.debug('inCOMing ' + Utils.stringify(component) );
-            _.each( attributes, (attr) => {
-                if( attr == '@e' ){
-                    values.push( entity.getEntityId() );
-                } else {
-                    var val = component.get.call( component, attr );
-                    if( val ) { values.push( val ); }
-                }
+            _.each( entity.getComponents(componentIds), (component) => {
+                // log.debug('inCOMing ' + Utils.stringify(component) );
+                _.each( attributes, (attr) => {
+                    if( attr == '@e' ){
+                        values.push( entity.getEntityId() );
+                    } else {
+                        var val = component.get.call( component, attr );
+                        if( val ) { values.push( val ); }
+                    }
+                });
             });
-        });
+        }
 
         return values;
     }, []);
@@ -125,8 +133,13 @@ function compile( context, command ){
         if( resolved ){
             command[1] = context.registry.getIId(resolved,true); 
         }
-        // command[1] = context.resolveComponentIIds( command[1] ); 
+        else {
+            command[1] = null;
+        }
+        // command[1] = context.resolveComponentIIds( command[1] );
+        // console.log('pluck> resolve', command, resolved);
     }
+    
     return command;
 }
 

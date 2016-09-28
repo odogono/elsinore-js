@@ -1,10 +1,11 @@
 import _ from 'underscore';
 import test from 'tape';
 
+import Query from '../src/query';
+import '../src/query/limit';
 
 import {
     Component, Entity, EntitySet,
-    Query,
     initialiseRegistry, 
     loadEntities, 
     loadComponents,
@@ -17,20 +18,20 @@ import {
 
 test('limit the number of entities in the result', t => {
     initialiseEntitySet().then( ([registry,entitySet]) => {
-        let result = entitySet.query( Query.limit(7) );
+        const result = entitySet.query( Q => Q.limit(7) );
         t.equals( result.size(), 7 );
-        t.end();
-    });
+    })
+    .then( () => t.end() )
+    .catch( err => log.error('test error: %s', err.stack) )
 });
 
 test('return the first result', t => {
     initialiseEntitySet().then( ([registry,entitySet]) => {
-        let result = entitySet.query( [
-            Query.all( '/component/channel' )
-                .where(Query.attr( 'name' ).equals('ecs'))
-            ,Query.limit(1) 
+        const result = entitySet.query( Q => [
+            Q.all( '/component/channel' )
+                .where(Q.attr( 'name' ).equals('ecs'))
+            ,Q.limit(1)
         ]);
-        // printE( result );
         t.equals( result.size(), 1 );
         t.end();
     })
@@ -39,9 +40,9 @@ test('return the first result', t => {
   
 test('limit the number of entities in the result from an offset', t => {
     initialiseEntitySet().then( ([registry,entitySet]) => {
-        let result = entitySet.query([
-            Query.limit(5,10),
-            Query.pluck( null, 'eid', {unique:true})
+        let result = entitySet.query(Q => [
+            Q.limit(5,10),
+            Q.pluck( null, '@e', {unique:true})
         ]);
         
         t.deepEqual( result, [11,12,13,14,15] );
@@ -52,17 +53,15 @@ test('limit the number of entities in the result from an offset', t => {
 
 test('apply offset and limit to a select', t => {
     initialiseEntitySet().then( ([registry,entitySet]) => {
-        let result = Query.create( registry, [
-            Query.all('/component/username'),
-            Query.limit( 2 ),
+        const query = new Query( Q => [
+            Q.all('/component/username'),
+            Q.limit( 2 ),
             // Query.pluck( null, 'eid', {unique:true})
         ]);
         
-        t.deepEqual( result.commands.length, 1 );
-        result = entitySet.query( result );
-
-        t.equals( result.size(), 2, 'only two entities returned' );
+        const result = entitySet.query( query );
         
+        t.equals( result.size(), 2, 'only two entities returned' );
         t.end();
     })
     .catch( err => { log.debug('t.error: ' + err ); log.debug( err.stack );} )

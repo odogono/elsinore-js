@@ -267,21 +267,29 @@ let EntitySet = Collection.extend({
     },
 
 
+    /**
+     * Replaces the entitySets entities with the specified entities
+     */
     reset: function( entities, options ){
         let ii,len,entity;
         if( entities && entities.isEntitySet ){
+            // console.log('reset from',entities.cid,'to',this.cid,'count', entities.models.length);
             entities = entities.models;
         }
 
-        if( !this.getQuery() ){
+        const query = this.getQuery();
+
+        if( !query || query.isEmpty() ){
+            // console.log('reset - no query');
             return CollectionPrototype.reset.call( this, entities );
         }
 
+        // console.log('reset - using query', query );
         CollectionPrototype.reset.call( this, null, {silent:true} );
 
         for( ii=0,len=entities.length;ii<len;ii++ ){
             entity = entities[ii];
-            if( EntitySet.isEntityOfInterest(this, entity, this.getQuery()) ){
+            if( EntitySet.isEntityOfInterest(this, entity, query) ){
                 this.add( entity );
             }
         }

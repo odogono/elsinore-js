@@ -10,10 +10,21 @@ import EntitySet from '../entity_set';
 
 _.extend( EntitySet.prototype, {
     setQuery: function( query ){
-        if( !Query.isQuery(query) ){
-            query = new Query(query, {registry:this.getRegistry()})
+        this._query = null;
+        if( !query ){
+            return;
         }
-        this._query = query;
+        if( query instanceof Query ){
+            if( query.isEmpty() ){
+                return;
+            }
+            
+            this._query = new Query( query );
+            return;
+        }
+        if( _.isFunction(query) ){
+            this._query = new Query( query );
+        }
     },
 
     getQuery: function(){
@@ -29,6 +40,9 @@ _.extend( EntitySet.prototype, {
         options.registry = this.getRegistry();        
         if( !query ){
             query = Q => Q.root();// Query.root();
+        }
+        if( query instanceof Query ){
+            return query.execute(this,options);
         }
         return Query.exec( query, this, options );
     },

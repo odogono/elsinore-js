@@ -28,7 +28,7 @@ EntityDispatch.prototype.addProcessor = function( processor, query, options={} )
     if( query ){
         // NOTE: we are not doing anything other than ensuring the query is compiled
         // eventually we should be caching identical queries
-        processor.entityFilter = Query.create( this.registry, query );
+        processor.entityFilter = new Query(query);// Query.create( this.registry, query );
         entry.set('query', processor.entityFilter);
     }
 

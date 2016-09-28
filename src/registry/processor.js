@@ -3,7 +3,7 @@
 import _ from 'underscore';
 import {Model as BackboneModel} from 'odgn-backbone-model';
 import Registry from './index';
-import Query from '../query/full';
+import Query from '../query';
 import EntitySet from '../entity_set/view';
 
 
@@ -93,7 +93,7 @@ _.extend( Registry.prototype, {
 
             // convert the supplied directives into entityFilter instances
             if( debug ){ log.debug('creating filter ' + processor.entityFilter ); }
-            filter = Query.create( this, processor.entityFilter );
+            filter = new Query(processor.entityFilter);
 
             // do we already have a view for this filter?
             hash = EntitySet.hash( entitySet, filter );
