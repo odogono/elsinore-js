@@ -25,11 +25,11 @@ let EntitySet = Collection.extend({
     isMemoryEntitySet: true,
     isEntitySet: true,
     isAsync: false,
-    cidPrefix: 'c',
+    cidPrefix: 'es',
     views: null,
 
     initialize: function( entities, options={} ){
-        const cmdBuffer = CmdBuffer;
+        let cmdBuffer = CmdBuffer;
         this._uuid = options.uuid || createUuid();
         this.cid = _.uniqueId('es');
         if( options['@es'] )
@@ -266,6 +266,21 @@ let EntitySet = Collection.extend({
         return this.get( entity ) !== undefined;
     },
 
+
+    /**
+     * TODO: finish
+     * the async based cmd-buffer calls this function once it has resolved a list of entities and components to be added
+     */
+    update: function(entitiesAdded, entitiesUpdated, entitiesRemoved, componentsAdded, componentsUpdated, componentsRemoved) {
+        return Promise.resolve({
+            entitiesAdded,
+            entitiesUpdated,
+            entitiesRemoved,
+            componentsAdded,
+            componentsUpdated,
+            componentsRemoved,
+        });
+    },
 
     /**
      * Replaces the entitySets entities with the specified entities

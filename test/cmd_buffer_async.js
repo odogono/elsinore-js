@@ -293,6 +293,26 @@ test('adding multiple', t => {
 });
 
 
+
+test.skip('the added component is a clone of the original', t => {
+    return initialiseRegistry().then( registry => {
+        const cb = new CmdBuffer();
+        const es = registry.createEntitySet();
+
+        const component = registry.createComponent({'@c':'/component/flower', colour:'blue'});
+
+        return cb.addComponent( es, component )
+            .then( added => {
+                // console.log('so came back with', added);
+            })
+
+    })
+    .then( () => t.end() )
+    .catch( err => log.error('test error: %s', err.stack) )
+})
+
+
+
 function reportUpdates( t, es, eAdded, eUpdated, eRemoved, cAdded, cUpdated, cRemoved ){
     t.equal( es.entitiesAdded.length, eAdded, eAdded + ' entities should be added');
     t.equal( es.entitiesUpdated.length, eUpdated, eUpdated + ' entities should be updated');

@@ -7,6 +7,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## [4.0.0] - 2016-09-28
 ### Changed
 - Query refactored. Queries are now built using functions.
+- copyEntity/copyComponent moved to registry.cloneEntity/registry.cloneComponent
+- components are cloned when added to an entityset
 
 ## [3.3.0] - 2016-08-16
 ### Added

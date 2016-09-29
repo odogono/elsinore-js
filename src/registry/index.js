@@ -354,32 +354,14 @@ _.extend(Registry.prototype, Events, {
      * @param  {Function} callback   [description]
      * @return {[type]}              [description]
      */
-    createEntitySet: function( instanceClass, options ){
+    createEntitySet: function( instanceClass=EntitySet, options={} ){
         let id, uuid;
         let result;
         
-        if( !instanceClass ){
-            instanceClass = EntitySet;
-        }
-        else if( _.isUndefined(options) 
-            && !instanceClass.create
-            && _.isObject(instanceClass) ){
-            options = instanceClass;
-            instanceClass = EntitySet;
-        }
-
-        options = (options || {})
-
-        if( options.EntitySet ){
-            instanceClass = options.EntitySet;
-            options.EntitySet = null;
-        }
-
         options.uuid = options.uuid || createUuid();
 
         // create a 20 bit 
         id = this.createId();
-        // result = instanceClass.create(_.extend( {}, options, {id:id} ));
         result = new instanceClass( null, _.extend( {}, options,{id}) );
         result.setRegistry( this );
         
@@ -391,7 +373,7 @@ _.extend(Registry.prototype, Events, {
             // entity sets with it
         }
 
-        if( result.isMemoryEntitySet ){
+        if( result.isMemoryEntitySet || !result.open ){
             // NOTE: setting the id to 0 means that entity ids would be shifted up
             result.id = 0;
 
