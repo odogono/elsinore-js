@@ -15,8 +15,6 @@ import {
     requireLib,
 } from './common';
 
-import {copyComponent} from '../src/util/copy';
-
 
 
 test('type of entityset', t => {
@@ -292,16 +290,18 @@ test('should return the number of entities contained', t => {
 
 test('should return an added entity', t => {
     return initialiseRegistry().then( registry => {
-        let entitySet = registry.createEntitySet();
-        let eventSpy = Sinon.spy();
+        const entitySet = registry.createEntitySet();
+        const eventSpy = Sinon.spy();
 
-        let entities = loadEntities( registry );
+        const entities = loadEntities( registry );
 
-        let entity = entities.at(0);
+        const entity = entities.at(0);
         entitySet.addComponent( entity.Position );
-        let addedEntity = entitySet.at(0);
-        t.equals( addedEntity.getEntityId(),  entity.getEntityId() );
-        t.equals( addedEntity.Position.id,  entity.Position.id );
+
+        const addedEntity = entitySet.at(0);
+
+        t.equals( addedEntity.getEntityId(),  entity.getEntityId(), 'the component retains its entity id' );
+        t.notEqual( addedEntity.Position.id,  entity.Position.id, 'the added component is a clone' );
         t.end();
     });
 });
@@ -711,13 +711,13 @@ test('should emit an event when a component is changed', t => {
 
         let entity = entities.at(0);
         let cloned, component = entity.Position;
-        let spy = Sinon.spy();
+        const spy = Sinon.spy();
 
         entitySet.on('component:change', spy);
 
         entitySet.addEntity( entity );
 
-        cloned = copyComponent( registry, component );
+        cloned = registry.cloneComponent( component );
         cloned.set({x:0,y:-2});
 
         entitySet.addComponent( cloned );
@@ -730,7 +730,7 @@ test('should emit an event when a component is changed', t => {
 
 test('emit event when an entity component is changed', t => {
     return initialise().then( ([registry,entitySet,entities]) => {
-        let spy = Sinon.spy();
+        const spy = Sinon.spy();
         
         entitySet.on('component:change', spy);
 
@@ -754,7 +754,7 @@ test('emit event when an entity component is changed', t => {
 
 test('emit event when a component instance is changed', t => {
     return initialise().then( ([registry,entitySet,entities]) => {
-        let spy = Sinon.spy();
+        const spy = Sinon.spy();
         // Common.logEvents( entitySet );            
         entitySet.on('component:change', spy);
 
@@ -775,10 +775,30 @@ test('emit event when a component instance is changed', t => {
 });
 
 
+test('mutating a previously added component does not affect the entityset', t => {
+    return initialise().then( ([registry,entitySet,entities]) => {
+        const spy = Sinon.spy();
+        logEvents( entitySet );
+
+        const component = registry.createComponent({'@c':'/component/flower', colour:'blue'});
+
+        entitySet.addComponent(component);
+
+        const esComponent = entitySet.at(0).Flower;
+
+        component.set({colour:'white'});
+
+        t.equals( esComponent.get('colour'), 'blue', 'the es component retains its colour');
+    })
+    .then( () => t.end() )
+    .catch( err => { log.debug('t.error: ' + err ); log.debug( err.stack );} )
+})
+
+
 test('should clear all contained entities by calling reset', t => {
     return initialise().then( ([registry,entitySet,entities]) => {
 
-        let spy = Sinon.spy();
+        const spy = Sinon.spy();
 
         entitySet.on('reset', spy);
         entitySet.addEntity( entities );

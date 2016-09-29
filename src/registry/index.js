@@ -10,7 +10,6 @@ import SchemaProperties from '../schema/properties';
 import EntityProcessor from '../entity_processor';
 import EntityFilter from '../entity_filter';
 import * as Utils from '../util';
-import {copyComponent} from '../util/copy';
 import {uuid as createUuid} from '../util/uuid';
 import {getPropertiesObject, getProperties} from '../schema/properties';
 
@@ -144,63 +143,65 @@ _.extend(Registry.prototype, Events, {
         return new this.Entity( attrs, options );
     },
 
-    /*
-    createEntity: function( components, options={} ){
-        let entityId;
-        let entity;
-        let ii;
 
-        if( options.createId ){
-            return this.createId();
+    /**
+     * 
+     */
+    cloneEntity: function( srcEntity, dstEntity, options={} ){
+        let ii,len,component,srcComponent;
+        let result = this.createEntity();
+        // let result = srcEntity.clone();
+        const returnChanges = options.returnChanges;
+        const returnChanged = options.returnChanged;
+        const deleteMissing = options.delete;
+        let copyList = [];
+        let dstHasChanged = false;
+
+        if( !srcEntity ){
+            return returnChanged ? [false,null] : null;
         }
 
-        if( options.id ){
-            entityId = options.id;
+        let srcComponents = srcEntity.getComponents();
+
+        // copy over dst components to new instance
+        if( dstEntity ){
+            let dstComponents = dstEntity.getComponents();
+
+            for(ii=0,len=dstComponents.length;ii<len;ii++){
+                component = dstComponents[ii];
+                srcComponent = srcEntity[component.name];
+                
+                if( deleteMissing ){
+                    if( !srcComponent ){
+                        dstHasChanged = true;
+                        continue;
+                    }
+                }
+                // if the src already has the same component, then don't copy
+                if( srcComponent ){
+                    // the dst component should have an id
+                    srcComponent.setId( component.getId() );
+                    
+                    if( srcComponent.hash() == component.hash() ){
+                        continue;
+                    } else {
+                        dstHasChanged = true;
+                    }
+                }
+                else {
+                    result.addComponent( this.cloneComponent(component));
+                }
+            }    
         }
-        else if( options.entity ){
-            entityId = options.entity.id;
+
+        // iterate over src components, copying them to the result
+        for(ii=0,len=srcComponents.length;ii<len;ii++){
+            result.addComponent(this.cloneComponent(srcComponents[ii]));
         }
 
-        if( !entityId ){
-            entityId = this.createId();
-        }
+        return returnChanged ? [result,dstHasChanged] : result;
+    },
 
-        if( Entity.isEntity(components) ){
-            return components;
-        }
-
-        entity = Entity.toEntity(entityId) || Entity.create();
-        entity.setRegistry( this );
-
-        if( options.esid ){
-            entity.setEntitySetId( options.esid );
-        }
-
-        // log.debug('createEntity '+ entity.id + ' ' + entity.getEntityId() );
-        // if( options.debug ){ console.log('created entity', entity.id); }
-        if( !components ){
-            return entity;
-        }
-
-        components = this.createComponent( components );
-        
-        if( _.isArray(components) ){
-            for( ii in components ) {
-                entity.addComponent( components[ii] );
-            }
-        } else {
-            entity.addComponent( components ); 
-        }
-        
-        return entity;
-    },//*/
-
-    /*
-    destroyEntity: function( entity, options ){
-        entity.removeComponents();
-
-        return entity;
-    },//*/
 
     /**
      * Registers a new Component Def from data
@@ -309,6 +310,23 @@ _.extend(Registry.prototype, Events, {
         }
     },
 
+    /**
+     * Produces a copy of a component
+     */
+    cloneComponent: function( srcComponent, options ){
+        const result = srcComponent.clone();
+        // let result = new srcComponent.constructor(srcComponent.attributes);
+        result.setId( srcComponent.getId() );
+        // result.id = srcComponent.id;
+        result.name = srcComponent.name;
+        result.setDefDetails(
+            srcComponent.getDefId(),
+            srcComponent.getDefUri(),
+            srcComponent.getDefHash(),
+            srcComponent.getDefName() );
+        result.registry = this;
+        return result;
+    },
 
     destroyComponent: function( component, options ){
 

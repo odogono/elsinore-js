@@ -1,5 +1,4 @@
 import _ from 'underscore';
-import {copyComponent} from './copy';
 // import {getProperties} from '../schema/properties';
 
 
@@ -33,7 +32,7 @@ export default function mapComponentEntityRefs( registry, component, entityIdMap
         return component;
     }
 
-    result = copyComponent( registry, component );
+    result = registry.cloneComponent(component);
     
     updates = {};
 

@@ -123,7 +123,6 @@ const Entity = Model.extend({
 
     toJSON: function(options={}){
         let components = _.map( this.getComponents(), c => c.toJSON(options));
-
         // if( options.flatEntity ){
         //     return components;
         // }
@@ -172,7 +171,7 @@ const Entity = Model.extend({
             this.removeComponent( existing );
         }
         // console.log('adding', component.getDefId() );
-        component.setEntityId( this.id );
+        component.setEntityId( this.id, this.cid );
         component._entity = this;
         this[ component.name ] = component;
         this.components[ component.getDefId() ] = component;

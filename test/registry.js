@@ -173,9 +173,9 @@ test('create with an entity id', t => {
 
 test('updating a components entity refs', t => {
     return initialiseRegistry().then( registry => {
-        let component = registry.createComponent( 
+        const component = registry.createComponent( 
             {"@e":12, "@c": "/component/channel_member", "channel": 1, "client": 5} );
-        let aComponent = mapComponentEntityRefs( registry, component, { 5: 290, 1: 340} );
+        const aComponent = mapComponentEntityRefs( registry, component, { 5: 290, 1: 340} );
 
         t.equals( aComponent.get('channel'), 340 );
         t.equals( aComponent.get('client'), 290 );
@@ -185,3 +185,22 @@ test('updating a components entity refs', t => {
     .catch( err => log.error('test error: %s', err.stack) )
 });
 
+
+test('cloning a component', t => {
+    return initialiseRegistry().then( registry => {
+        const component = registry.createComponent( 
+            {"@e":12, "@c": "/component/channel_member", "channel": 1, "client": 5} );
+
+        const cloned = registry.cloneComponent(component);
+
+        t.equals( component.getEntityId(), cloned.getEntityId() );
+        t.equals( component.name, cloned.name );
+        t.equals( component.hash(), cloned.hash() );
+        t.deepEqual( component.attributes, cloned.attributes );
+        
+        // printE( component );
+        // printE( cloned );
+    })
+    .then( () => t.end() )
+    .catch( err => log.error('test error: %s', err.stack) )  
+})

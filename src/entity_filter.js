@@ -2,7 +2,6 @@ import _ from 'underscore';
 import BitField  from 'odgn-bitfield';
 import * as Utils from './util';
 import Entity from './entity';
-import {copyEntity} from './util/copy';
 
 export const ALL = 0; // entities must have all the specified components
 export const ANY = 1; // entities must have one or any of the specified components
@@ -117,7 +116,7 @@ EntityFilter.Transform = function( type, registry, entity, entityBitField, filte
     isInclude = (type == INCLUDE);
     isExclude = (type == EXCLUDE);
 
-    result = copyEntity( registry, entity );
+    result = registry.cloneEntity(entity );
 
     // log.debug('EFT ' + type + ' ' + isInclude + ' ' + entityBitField.toJSON() + ' ' + filterBitField.toJSON() );
     if( isInclude ){

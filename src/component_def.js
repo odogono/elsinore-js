@@ -94,12 +94,14 @@ ComponentDef.isComponentDef = function( cdef ){
 
 
 ComponentDef.create = function( attrs ){
+    
     attrs.attrs = createAttrsFromProperties( attrs.properties );
 
     if( !attrs.name ){
         attrs.name = componentNameFromUri( attrs.uri );
     }
 
+    // console.log('ComponentDef.create', attrs );
     let result = new ComponentDef( attrs );
 
     return result;

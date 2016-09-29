@@ -74,7 +74,8 @@ export default class ComponentRegistry {
         }
 
         if( Component.isComponent(def) ){
-            let inst = new def(null,{registering:true, registry:this.registry});
+            const defOptions = {registering:true, registry:this.registry};
+            let inst = new def(null,defOptions);
             if( inst.properties ){
                 def.properties = inst.properties;
             }
@@ -125,6 +126,7 @@ export default class ComponentRegistry {
         
         // def.attrs = this._createAttrsFromProperties( def.properties );
 
+        // console.log('creating with', def);
         let componentDef = ComponentDef.create( _.extend({},def,{id}) );
         
         this._componentDefs.add( componentDef );
@@ -202,8 +204,8 @@ export default class ComponentRegistry {
         // since the properties describe how the attrs should be set
 
         attrs = _.extend( {}, def.getAttrs(), attrs );
-
-        let result = new ComponentType( attrs, {parse:true, registry:this.registry} );
+        let createOptions = _.extend( {}, def.get('options'), {parse:true,registry:this.registry});
+        let result = new ComponentType( attrs, createOptions );
 
         if( type ){
             result['is'+type] = true;

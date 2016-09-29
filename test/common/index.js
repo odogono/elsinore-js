@@ -203,8 +203,6 @@ export function printE(e, prefix=''){
     Util.log( prefix, entityToString(e) );
 }
 
-export {copyEntity} from '../../src/util/copy';
-
 global.log = {
     debug: console.log,
     error: console.log

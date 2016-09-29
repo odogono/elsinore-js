@@ -5,7 +5,6 @@ import Component from '../component';
 import Entity from '../entity';
 import EntityFilter from '../entity_filter';
 import * as Utils from '../util';
-import {copyEntity, copyComponent} from '../util/copy';
 
 export const CMD_ENTITY_ADD = 0;
 export const CMD_ENTITY_REMOVE = 1;
@@ -365,7 +364,7 @@ export default class CmdBuffer {
             // to apply temporary operations to it
             entity = entitySet.getEntity( entityId );
             if( entity ){
-                tEntity = copyEntity( registry, entity );
+                tEntity = registry.cloneEntity(entity);
                 tEntity.setEntitySetId( entitySet.getEntitySetId() );
             }
 
@@ -385,9 +384,10 @@ export default class CmdBuffer {
                         }
                         break;
                     case CMD_COMPONENT_ADD:
-                        if( cmdOptions && cmdOptions.clone ){
-                            com = copyComponent( registry, com );
-                        }
+                        // if( cmdOptions && cmdOptions.clone ){
+                        // the component is cloned before being added
+                        com = registry.cloneComponent(com);
+                        // }
                         if( !com.id ){
                             com.id = entitySet._createComponentId();
                             // console.log('creating id for ' + com.id + ' ' + com.name );

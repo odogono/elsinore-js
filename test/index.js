@@ -15,10 +15,8 @@ import './query.limit';
 import './query.pluck';
 import './query.select_by_id';
 import './registry';
+import './registry.clone';
 import './schema_registry';
 import './utils';
-import './util/copy_entity';
 import './integration/opendoor';
 import './integration/reaper';
-
-import './util/copy_entity';
