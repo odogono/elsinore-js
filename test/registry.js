@@ -171,6 +171,23 @@ test('create with an entity id', t => {
 });
 
 
+test('create an entity with a component bitfield', t => {
+    return initialiseRegistry().then( registry => {
+        const component = registry.createComponent( {'@c':'/component/nickname'} );
+        const entity = registry.createEntity(component);
+
+        // printE( entity );
+        // console.log( entity.getComponentBitfield() );
+
+        const reEntity = registry.createEntityWithId( 456, 0, {comBf:entity.getComponentBitfield()} );
+        t.deepEqual( entity.getComponentBitfield().toValues(),
+                    reEntity.getComponentBitfield().toValues() );
+    })
+    .then( () => t.end() )
+    .catch( err => log.error('test error: %s', err.stack) )
+})
+
+
 test('updating a components entity refs', t => {
     return initialiseRegistry().then( registry => {
         const component = registry.createComponent( 

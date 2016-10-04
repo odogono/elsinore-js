@@ -11,7 +11,7 @@ _.extend( EntitySet.prototype, {
         let result;
         let registry = this.getRegistry();
 
-        result = registry.createEntitySet( null, {register:false} );
+        result = registry.createEntitySet( {register:false} );
         result.type = 'EntitySetView';
         result.isEntitySetView = true;
         // console.log('created view', result.cid, 'from', this.cid );

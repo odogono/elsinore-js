@@ -43,7 +43,7 @@ function commandLimit( context, count, offset ){
         throw new Error('invalid entityset');
     }
 
-    const result = context.registry.createEntitySet( null, {register:false} );
+    const result = context.registry.createEntitySet( {register:false} );
     
     // console.log('limit: ', offset, count, entitySet.models.length );
 

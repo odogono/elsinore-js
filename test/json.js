@@ -92,7 +92,7 @@ test('create entityset from json', t => {
             { '@c': '/component/name', '@e': 5, name: 'kakuna' } 
             ] };
 
-        let es = registry.createEntitySet(null, options);
+        const es = registry.createEntitySet(options);
 
         t.deepEqual( es.toJSON({mapCdefUri:true}), options );
     })

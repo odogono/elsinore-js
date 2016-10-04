@@ -6,6 +6,10 @@ import Util from 'util';
 
 export const deepEqual = DeepEqual;
 
+export {toString,entitySetToString,entityToString,componentToString} from './to_string';
+
+
+
 export function mergeRecursive(obj1, obj2) {
     for (let p in obj2) {
         if( obj2.hasOwnProperty(p) ){

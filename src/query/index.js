@@ -465,7 +465,7 @@ class QueryContext {
             }
 
         } else {
-            value = context.registry.createEntitySet( null, {register:false} );
+            value = context.registry.createEntitySet( {register:false} );
             esCount = 0;
 
             if( !entityFilter && offset === 0 && limit === 0 ){

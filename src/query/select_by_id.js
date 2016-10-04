@@ -94,7 +94,7 @@ function selectById( registry, entitySet, entityIds, returnAsEntitySet ){
     }
 
     if( returnAsEntitySet ){
-        result = registry.createEntitySet( null, {register:false} );
+        result = registry.createEntitySet( {register:false} );
         result.addEntity( entities );
         return result;
     }

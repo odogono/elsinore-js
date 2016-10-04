@@ -94,7 +94,7 @@ export function loadEntities( registry, fixtureName, entitySet, options ){
 
     fixtureName = fixtureName || 'entity_set.entities.json';
     registry = registry || initialiseRegistry( options );
-    result = registry.createEntitySet( entitySet, options );
+    result = registry.createEntitySet( _.extend( {instanceClass:entitySet}, options) );
 
     if( _.isString(fixtureName) ){
         if( fixtureName.indexOf('.json') === -1 ){

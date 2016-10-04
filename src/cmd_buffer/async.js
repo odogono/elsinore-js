@@ -132,22 +132,24 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
                 return Promise.resolve(entity);
             }
             
-            return entitySet.getEntity( entityId, getEntityOptions )
-                .then( (entity) => {
-                    let bf = entity.getComponentBitfield();
+            return entitySet.getEntityBitField( entityId )
+                .then( comBf => {
+                    const entity = registry.createEntityWithId(entityId, 0, {comBf});
+                    // let bf = entity.getComponentBitfield();
                     // dupe the entity bitfield, so we have an idea of it's original state
                     entity._mode = OP_UPDATE_EXISTING;
-                    entity._ocomBf = BitField.create(bf);
+                    // entity._ocomBf = BitField.create(bf);
                     // entity found, store in cache for successive queries
                     this._entityCache.add(entity);
                     return entity;
                 })
-                .catch( (err) => {
+                .catch( err => {
                     // entity does not exist, create holder entity
                     // with id
                     entity = this._createHolderEntity( registry, entityId, OP_CREATE_FROM_EXISTING_ID, entityId );
                     return entity;
                 });
+        
         } else {
             if( (entity = this._entityCache.get(entityId)) ){
                 return Promise.resolve(entity);
@@ -260,16 +262,14 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
     - reject if filters do not pass
     - 
     */
-    addEntity( entitySet, entity, options){
+    addEntity( entitySet, entity, options={}){
         let entityId, entitySetId;
         let batch;
         let execute;
         let addOptions = {batch: true, execute: false};
 
-        options || (options={});
         batch = options.batch; // cmds get batched together and then executed
         execute = _.isUndefined(options.execute) ? true : options.execute;
-
 
         if( _.isArray(entity) ){
             if( _.isUndefined(options.batch) ){

@@ -19,7 +19,7 @@ type ComponentDefIdentifierType = string | string[] | uint32 | ComponentDefRawTy
 
 
 
-const ComponentDefCollection = Collection.extend({
+export const ComponentDefCollection = Collection.extend({
     model: ComponentDef,
 
     getByHash: function(hash:string){
@@ -158,7 +158,7 @@ export default class ComponentRegistry {
     }
 
     getAll(){
-        return this._componentDefs.toJSON();
+        return this._componentDefs.models;//.toJSON();
     }
     
     /**

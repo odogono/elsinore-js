@@ -139,7 +139,11 @@ _.extend(Registry.prototype, Events, {
 
     createEntityWithId: function( entityId=0, entitySetId=0, options={} ){
         options.registry = this;
-        const attrs = {'@e':entityId,'@es':entitySetId};
+        let attrs = {'@e':entityId,'@es':entitySetId};
+        if( options.comBf ){
+            attrs.comBf = options.comBf;
+            delete options.comBf;
+        }
         return new this.Entity( attrs, options );
     },
 
@@ -354,11 +358,15 @@ _.extend(Registry.prototype, Events, {
      * @param  {Function} callback   [description]
      * @return {[type]}              [description]
      */
-    createEntitySet: function( instanceClass=EntitySet, options={} ){
+    createEntitySet: function( options={} ){
         let id, uuid;
         let result;
+        let instanceClass=EntitySet;
         
         options.uuid = options.uuid || createUuid();
+        if( options.instanceClass ){
+            instanceClass = options.instanceClass;
+        }
 
         // create a 20 bit 
         id = this.createId();
@@ -373,7 +381,9 @@ _.extend(Registry.prototype, Events, {
             // entity sets with it
         }
 
-        if( result.isMemoryEntitySet || !result.open ){
+        // TODO : there has to be a better way of identifying entitysets
+        if( result.isMemoryEntitySet ){//} result.isMemoryEntitySet && !result.open ){
+            console.log('this is a memory es');
             // NOTE: setting the id to 0 means that entity ids would be shifted up
             result.id = 0;
 
@@ -389,7 +399,7 @@ _.extend(Registry.prototype, Events, {
         // with the registry
         return result.open( options )
             .then( () => {
-                let schemas = this.schemaRegistry.getAll();
+                const schemas = this.schemaRegistry.getAll();
                 return this._registerComponentDefsWithEntitySet( result, schemas, options )
                     .then( () => result )
             });

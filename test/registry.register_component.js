@@ -38,7 +38,7 @@ test('testing an async register component', t => {
         t.end();
     });
     
-    return registry.createEntitySet( AsyncEntitySet, {listener:Listener} )
+    return registry.createEntitySet( {instanceClass:AsyncEntitySet,listener:Listener} )
         .then( es => registry.registerComponent(COMPONENT_DEFINITIONS[0]) )
         .catch( err => console.log('err', err, err.stack))
 })
@@ -53,7 +53,7 @@ test('registering multiple component defs', t => {
         t.ok( componentDef.get('uri') );
     });
 
-    return registry.createEntitySet( AsyncEntitySet, {listener:Listener} )
+    return registry.createEntitySet( {instanceClass:AsyncEntitySet,listener:Listener} )
         .then( es => registry.registerComponent( [COMPONENT_DEFINITIONS[0],COMPONENT_DEFINITIONS[1]] ) )
         .catch( err => console.log('err', err, err.stack))
         .then( () => t.end() );

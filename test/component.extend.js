@@ -19,6 +19,7 @@ import ComponentRegistry from '../src/schema/index';
 
 const COMPONENT_DEFINITIONS = [
     { uri:'/component/name', properties:{ name:""} },
+    { uri:'/component/position', properties:{ x:0,y:0} },
 ];
 
 
@@ -29,14 +30,15 @@ test('registering a custom component type', t => {
     const TestComponent = Component.extend({
         type: 'TestComponent',
 
-        // preinitialize: function(attrs,options){
-        //     console.log('TestComponent preinit');
-        // },
+        preinitialize: (attrs,options) => {
+            console.log('TestComponent preinit', attrs, options);
+        },
 
         verify: function(){
             return true;
         }
-    })
+    });
+
 
     const componentRegistry = ComponentRegistry.create();
     componentRegistry.register( COMPONENT_DEFINITIONS );
@@ -46,8 +48,8 @@ test('registering a custom component type', t => {
     
     componentRegistry.register( { 
         uri: '/component/example', 
-        type:'TestComponent', 
-        'properties': { name:'' } 
+        type:'TestComponent',
+        properties: { name:''}
     });
     
     let component = componentRegistry.createComponent('/component/example');
@@ -122,6 +124,80 @@ test('the custom component can supply properties', t => {
     t.equals( component.get('name'), 'tbd' );
 
     t.end();
+})
+
+
+test('passing options to the custom component', t => {
+    const componentRegistry = ComponentRegistry.create();
+
+    const TestComponent = Component.extend({
+        type: 'TestComponent',
+        initialize: function(attrs,options){
+            this.set({msg:options.msg});
+        }
+    });
+
+    componentRegistry.register( TestComponent );
+
+    // note that the merging of properties happens at the point of
+    // registration
+    componentRegistry.register( { 
+        uri: '/component/example', 
+        type:'TestComponent', 
+        'properties': { name:'tbd' },
+        options:{ msg:'welcome'}
+    });
+    
+    let component = componentRegistry.createComponent('/component/example');
+
+    t.equals( component.get('name'), 'tbd' );
+    t.equals( component.get('msg'), 'welcome' );
+
+    t.end();
+})
+
+
+test.skip('will be notified when the entity is added to an entityset', t => {
+    createRegistry().then( registry => {
+        // t.plan(1);
+
+        const TestComponent = Component.extend({
+            type: 'TestComponent',
+            onAdded: function( es ){
+
+            },
+            onRemoved: function(es){
+
+            }
+        });
+
+        registry.registerComponent( TestComponent );
+
+        let es = registry.createEntitySet();
+        let es2 = registry.createEntitySet();
+        let e = registry.createComponent('/component/name');
+        let e2 = registry.createComponent('/component/position');
+        
+
+        es.addComponent([e,e2]);
+
+        console.log('first entity', e.id );
+        console.log('2nd entity', e2.id );
+        console.log('es',es.size());
+        printE( es );
+
+        es2.addComponent([e,e2]);
+        printE(es2);
+
+        console.log('first entity', e.getEntityId() );
+        console.log('2nd entity', e2.getEntityId() );
+        e2.set({y:12});
+
+        printE(es);
+        printE(es2);
+    })
+    .then( () => t.end() )
+    .catch( err => console.error('test error', err, err.stack));
 })
 
 

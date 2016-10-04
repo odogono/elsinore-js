@@ -25,7 +25,7 @@ const Entity = Model.extend({
     cidPrefix: 'e',
 
     initialize: function(attrs, options){
-        let eid = 0,esid = 0;
+        let eid = 0,esid = 0, comBf;
 
         if( attrs ){
             if( (eid = attrs['@e']) ){
@@ -33,6 +33,10 @@ const Entity = Model.extend({
             }
             if( (esid = attrs['@es']) ){
                 delete attrs['es'];
+            }
+            if( (comBf = attrs.comBf) ){
+                // copy the incoming bitfield
+                attrs.comBf = BitField.create(comBf);
             }
         }
         
@@ -48,6 +52,10 @@ const Entity = Model.extend({
         }
 
         this.components = [];
+
+        
+        // call super!
+        Model.prototype.initialize.apply(this,arguments);
     },
 
     // initialize: function(attrs, options){
@@ -72,6 +80,8 @@ const Entity = Model.extend({
             entityId = Utils.setEntityIdFromId( entityId, entitySetId );
         }
         this.set({id: entityId});
+
+        // update all attached components
         _.each( this.getComponents(), component => component.setEntityId( entityId ) );
     },
 
@@ -180,10 +190,16 @@ const Entity = Model.extend({
         return this;
     },
 
+    /**
+     * Returns an array of all the components associated with this entity
+     */
     getComponents: function( componentIds ){
+        if( !this.components ){
+            return null;
+        }
         componentIds = componentIds || this.getComponentBitfield().toValues();
         return _.reduce( componentIds, (result,id) => {
-            let com = this.components[id];
+            const com = this.components[id];
             if( com ){ result.push( com ); }
             return result;
         }, []);
