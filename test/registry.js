@@ -235,3 +235,16 @@ test('cloning an entity', t => {
     .then( () => t.end() )
     .catch(err => log.error('test error: %s', err.stack))  
 });
+
+test('creating an entity with an id of 0', t => {
+    return initialiseRegistry().then( registry => {
+        const entity = registry.createEntity(null, {id:0});
+        // console.log(entity);
+
+        t.equals( entity.id, 0 );
+        t.equals( entity.getEntityId(), 0 );
+        t.equals( entity.getEntitySetId(), 0 );
+    })
+    .then( () => t.end() )
+    .catch(err => log.error('test error: %s', err.stack))
+})

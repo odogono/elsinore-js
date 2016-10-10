@@ -23,13 +23,21 @@ export default class Entity extends Model {
     initialize(attrs, options){
         let eid = -1,esid = 0, comBf;
 
+        
         if( attrs ){
-            if( (eid = attrs['@e']) ){
-                delete attrs['e'];
+            if( !_.isUndefined(attrs['@e']) ){
+                eid = attrs['@e'];
             }
-            if( (esid = attrs['@es']) ){
-                delete attrs['es'];
+            if( !_.isUndefined(attrs['@es']) ){
+                esid = attrs['@es'];
             }
+
+            // if( (eid = attrs['@e']) ){
+            //     delete attrs['e'];
+            // }
+            // if( (esid = attrs['@es']) ){
+            //     delete attrs['es'];
+            // }
             if( (comBf = attrs.comBf) ){
                 // copy the incoming bitfield
                 attrs.comBf = BitField.create(comBf);
@@ -43,9 +51,12 @@ export default class Entity extends Model {
             }
         }
 
-        if( !attrs || !attrs.id ){
+        
+        if( !attrs || _.isUndefined(attrs.id) ){
+            console.log('setId', eid,esid);
             this.setId(eid, esid); 
         }
+        // console.log('MF e id', attrs.id, this.id, attrs);
 
         this.components = [];
 
@@ -77,7 +88,7 @@ export default class Entity extends Model {
         }
 
         this.set({id: entityId});
-
+        
         // update all attached components
         _.each( this.getComponents(), component => component.setEntityId( entityId ) );
     }
@@ -216,12 +227,22 @@ export default class Entity extends Model {
     removeComponents( componentIds ){
         let components = this.components;
         componentIds = componentIds || this.getComponentBitfield().toValues();
-        _.each( componentIds, id => {
+
+        return _.reduce( componentIds, (result,id) => {
             let com = components[id];
             if( com ){
-                this.removeComponent( com );
+                this.removeComponent(com);
+                result.push(com);
             }
-        })
+            return result;
+        },[]);
+
+        // _.each( componentIds, id => {
+        //     let com = components[id];
+        //     if( com ){
+        //         this.removeComponent( com );
+        //     }
+        // })
     }
 
     getComponentByIId( componentIId ){

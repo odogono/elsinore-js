@@ -116,12 +116,27 @@ _.extend(Registry.prototype, Events, {
             attrs['@es'] = options['@es']; idSet = true;
         }
 
+        if( options.comBf ){
+            attrs.comBf = options.comBf;
+            delete options.comBf;
+        }
+
         if( _.isUndefined(options.id) && !idSet ){
             attrs.id = this.createId();
-        } else { attrs.id = options.id; }
+        } else { 
+            attrs.id = options.id; 
+        }
 
 
+        // console.log('create with', attrs, _.keys(options));
         let result = new this.Entity( attrs, options );
+        // console.log('created', result);
+
+        // if( _.isUndefined(options.id) && !idSet ){
+        //     result.id = this.createId();
+        // } else { 
+        //     result.id = options.id; 
+        // }
         
         // if( options.debug ){
         //     console.log('createEntity', attrs, _.omit(options,'registry') );
@@ -143,6 +158,9 @@ _.extend(Registry.prototype, Events, {
         if( options.comBf ){
             attrs.comBf = options.comBf;
             delete options.comBf;
+        }
+        if( options.id ){
+            attrs = {id:options.id};
         }
         return new this.Entity( attrs, options );
     },

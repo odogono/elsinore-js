@@ -14,6 +14,7 @@ export const CMD_COMPONENT_ADD = 3;
 export const CMD_COMPONENT_REMOVE = 4;
 export const CMD_COMPONENT_UPDATE = 5;
 
+// export const OP_ENTITY_NEW = 0;
 
 // the entity id is valid, but the entity does not yet exist
 export const OP_CREATE_FROM_EXISTING_ID = 1;
@@ -435,7 +436,7 @@ export default class CmdBuffer {
                             // console.log('cmd: rem com ' + com.id + ' ' + JSON.stringify(com) ); 
                             // if( true ){ printE(tEntity); }
                         // }
-                        entitySet.removeComponentFromEntity( com, tEntity );
+                        tEntity.removeComponent(com);
                         break;
                     case CMD_COMPONENT_UPDATE:
                         // if( debug ){ console.log('!!! cmd: update com ' + JSON.stringify( com )); }
@@ -451,9 +452,11 @@ export default class CmdBuffer {
             // it through any filters. If there is still a valid result, commit
             // it to the entitySet
             if( (query = entitySet.getQuery()) ){
-                if( debug ) { console.log('executing against filter ' + JSON.stringify(query) ); }
+                // if( debug ) { console.log('executing against filter ' + JSON.stringify(query) ); }
+                // console.log('>~~~~~'); 
+                // console.log( Utils.toString(tEntity) );
+                // console.log('<~~~~~');
                 tEntity = query.execute( tEntity );
-                // printE( tEntity );
             }
 
 
@@ -474,6 +477,7 @@ export default class CmdBuffer {
                 continue;
             }
 
+            
 
             isNew = entity != null;
             if( !entity ){
@@ -484,21 +488,43 @@ export default class CmdBuffer {
                 }
             }
             else {
-                // determine which components need to be removed 
-                for( defId in entity.components ){
-                    // if( debug ) console.log('b ' + defId );
-                    if( !tEntity.components[defId] ){
-                        com = entity.components[defId];
-                        if( debug ){ console.log('removing ' + defId + ' ' + JSON.stringify(com) ); }
-                        entitySet.removeComponentFromEntity( com, entity );
-                        this.componentsRemoved.add( com );
-                        // printE( entity );
-                    }
-                }
+                const changeEntityBF = tEntity.getComponentBitfield();
+                const existingEntityBF = entity.getComponentBitfield();
 
+                // the difference displays which components will be removed
+                const bfDifference = _.difference( existingEntityBF.toJSON(), changeEntityBF.toJSON() );
+                
+                // determine which components need to be removed
+                if(debug){console.log('!!! SYNC change entity bf', changeEntityBF.toJSON())}
+                if(debug){console.log('!!! SYNC existing entity bf', existingEntityBF.toJSON())} 
+                if(debug){console.log('!!! SYNC diff bf', bfDifference )}
+                if(debug){console.log('!!! entity', Utils.toString(entity) )}
+
+                this.componentsRemoved.add(
+                    entity.removeComponents(bfDifference));
+
+                // for( ii=0,len=bfDifference.length;ii<len;ii++ ){//defId in bfDifference ){
+                //     defId = bfDifference[ii];
+                //     if( debug ){ console.log('removing ' + defId + ' ' + JSON.stringify(com) ); }
+                //     com = entity.components[defId];
+                //     entitySet.removeComponentFromEntity( com, entity );
+                //     this.componentsRemoved.add( com );
+                // }
+
+                // for( defId in entity.components ){
+                //     // if( debug ) console.log('b ' + defId );
+                //     if( !tEntity.components[defId] ){
+                //         com = entity.components[defId];
+                //         if( debug ){ console.log('removing ' + defId + ' ' + JSON.stringify(com) ); }
+                //         entitySet.removeComponentFromEntity( com, entity );
+                //         this.componentsRemoved.add( com );
+                //         // printE( entity );
+                //     }
+                // }
+
+                
                 // if the entity has no more components, then remove it
-                // if( debug ){ console.log('so removeEmptyEntity is ' + (removeEmptyEntity?'true':'false')); }
-                if( (!this.allowEmptyEntities || removeEmptyEntity) && !entitySet.doesEntityHaveComponents( entity ) ){
+                if( (!this.allowEmptyEntities || removeEmptyEntity) && entity.getComponentCount() <= 0 ){
                     if( debug ){ console.log('removing entity ' + entity.getEntityId() + '/' + entity.cid ); }
                     this.entitiesRemoved.add( entitySet._removeEntity(entity) );
                 }
@@ -522,6 +548,8 @@ export default class CmdBuffer {
                     ocom = entity.components[defId];
                     // the entity already has this entity - update it
                     if( !com.isEqual(ocom) ){
+                        // if(debug){console.log('^change com', com.toJSON())}
+                        // if(debug){console.log('^change ocom', ocom.toJSON())}
                         this.componentsUpdated.add( com );
                     }
                 }
@@ -562,7 +590,7 @@ export default class CmdBuffer {
     /**
      * 
      */
-    addCommandX( type, entityId, componentId, options={} ){
+    addCommandX( type=CMD_ENTITY_ADD, entityId=0, componentId=0, options={} ){
         const entityBuffer = this.cmds[ entityId ] || [];
         if( type == CMD_ENTITY_ADD ){
             // this command should always be the first in the list - check 
@@ -646,8 +674,7 @@ export default class CmdBuffer {
         logFn('components removed: ' + JSON.stringify( this.componentsRemoved.pluck('id') ));
     }
 
-    triggerEvents( source, options ){
-        options = options || {};
+    triggerEvents( source ){
         triggerEvent( source, 'component:change', this.componentsUpdated );
         triggerEvent( source, 'component:remove', this.componentsRemoved );
         triggerEvent( source, 'entity:remove', this.entitiesRemoved );
@@ -660,6 +687,7 @@ export default class CmdBuffer {
 
 function triggerEvent(source,name,col){
     if( col.length > 0 ){
+        // console.log('trigger', name );
         source.trigger(name, col.models );
     }
 }

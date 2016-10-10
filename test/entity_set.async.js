@@ -84,20 +84,22 @@ test.only('removing a component from an entity with only one component', t => {
     
     return initialiseAll(createOptions).then( ([registry,entitySet]) => {
         entitySet.on('all', eventSpy);
-        logEvents( entitySet );
-            return entitySet.addComponent(
-                registry.createComponent( '/component/position', {x:15,y:2}))
+        const component = registry.createComponent( '/component/position', {x:15,y:2}); 
+
+        // logEvents( entitySet );
+        return entitySet.addComponent(component)
             .then( component => {
-                // log.debug('removed! ' + component.getEntityId() );
+                // printE( entitySet );
+                // log.debug('removed! ' + component.id );
                 return component;
             })
-            .then( component => entitySet.removeComponent(component) )
+            .then( component => entitySet.removeComponent(component, {debug:true}) )
             // .then( () => printKeys(entitySet, '_ent_bf', {values:false} ) )
             // .then( component => entitySet.getEntity(component.getEntityId()) )
             .then( (entity) => {
                 t.ok( eventSpy.calledWith('component:remove'), 'component:remove should have been called');
                 t.ok( eventSpy.calledWith('entity:remove'), 'entity:remove should have been called');
-                // printE( entity );
+                
             })
         })
     .then( () => t.end() )

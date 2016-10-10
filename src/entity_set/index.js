@@ -79,6 +79,10 @@ export default class EntitySet extends Collection {
     }
 
     toJSON(options={}){
+        // if( options && !_.isObject(options) ){
+            // return {uuid:this._uuid, msg:options};
+            // throw new Error(`what deal with ${options}`);
+        // }
         let q,result = { uuid:this._uuid };// { cid:this.cid };
         // if( (q = this.getQuery()) ){
         //     result.query = q.toJSON();
@@ -446,18 +450,6 @@ export default class EntitySet extends Collection {
     removeComponentFromEntity( component, entity, options ){
 
         entity.removeComponent(component);
-
-        // const bf = entity.getComponentBitfield();
-
-        // if( !bf.get(component.getDefId()) ){
-        //     // log.debug('no component found for ' + component.name + ' ' + bf.toString() );
-        //     throw new Error('no component found for ' + component.name);
-        // }
-
-        // bf.set( component.getDefId(), false );
-
-        // delete entity[ component.name ];
-        // delete entity.components[ component.getDefId() ];
 
         this.getRegistry().destroyComponent( component );
 

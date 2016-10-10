@@ -75,35 +75,46 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
         // log.debug('consider component ' + JSON.stringify(component) );
 
         // determine whether we have this component registered already
-        entityId = component.getEntityId();
+        // entityId = component.getEntityId();
 
-        let initial;
+        this.addCommandX( CMD_COMPONENT_ADD, component.getEntityId(), component );
 
-        // first create or retrieve an entity container for the component
-        return this._packageEntityId( entitySet, entityId )
-            .then( entity => {
-                let commandOptions = _.extend( {}, options, {entity:entity, id:entity.id, mode:entity._mode} );
-                if( entity._mode === OP_CREATE_NEW ||
-                    entity._mode === OP_CREATE_FROM_EXISTING_ID ){
-                        this.addCommand( CMD_ENTITY_ADD, entity.id, commandOptions );
-                }
+        // execute any outstanding commands
+        if( execute ){
+            return this.execute( entitySet, options )
+                .then( () => Utils.valueArray( 
+                        this.componentsAdded.models.concat(this.componentsUpdated.models) ) )
+        }
+        return [];
 
-                if( entity.hasComponent(component) ){
-                    this.addCommand( CMD_COMPONENT_UPDATE, component, commandOptions );
-                } else {
-                    this.addCommand( CMD_COMPONENT_ADD, component, commandOptions );
-                }
-                entity.addComponent( component );
-            })
-            .then( () => {
-                // execute any outstanding commands
-                if( execute ){
-                    return this.execute( entitySet, options )
-                        .then( () => Utils.valueArray( 
-                                this.componentsAdded.models.concat(this.componentsUpdated.models) ) )
-                }
-                return [];
-            })
+        
+        // let initial;
+
+        // // first create or retrieve an entity container for the component
+        // return this._packageEntityId( entitySet, entityId )
+        //     .then( entity => {
+        //         let commandOptions = _.extend( {}, options, {entity:entity, id:entity.id, mode:entity._mode} );
+        //         if( entity._mode === OP_CREATE_NEW ||
+        //             entity._mode === OP_CREATE_FROM_EXISTING_ID ){
+        //                 this.addCommand( CMD_ENTITY_ADD, entity.id, commandOptions );
+        //         }
+
+        //         if( entity.hasComponent(component) ){
+        //             this.addCommand( CMD_COMPONENT_UPDATE, component, commandOptions );
+        //         } else {
+        //             this.addCommand( CMD_COMPONENT_ADD, component, commandOptions );
+        //         }
+        //         entity.addComponent( component );
+        //     })
+        //     .then( () => {
+        //         // execute any outstanding commands
+        //         if( execute ){
+        //             return this.execute( entitySet, options )
+        //                 .then( () => Utils.valueArray( 
+        //                         this.componentsAdded.models.concat(this.componentsUpdated.models) ) )
+        //         }
+        //         return [];
+        //     })
 
     }
 
@@ -240,7 +251,8 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
         //     return execute ? [] : this;
         // }
 
-        this.addCommandX( CMD_COMPONENT_REMOVE, entityId, component.id);
+        // console.log('HERE remove', component.id, _.isArray(component.id) );
+        this.addCommandX( CMD_COMPONENT_REMOVE, entityId, component);
 
         return (!execute) ? this : 
             this.execute(entitySet,options)
@@ -390,15 +402,147 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
             });
     }
 
+    /**
+     * 
+     */
+    _executeEntityCommand( entity, componentBitfield, cmdType, component, options={} ){
+        // console.log('executing', entity.id, componentBitfield.toJSON(), cmdType, entity.isNew() );
+
+        const componentDefId = component.getDefId();
+        const entityHasComponent = !!componentBitfield.get(componentDefId);
+
+        switch( cmdType ){
+            case CMD_ENTITY_ADD:
+                this.entitiesAdded.add( entity );
+                
+                // if( true ){ 
+                //     console.log('cmd: adding entity ' + 
+                //         entity.getEntityId() + '/' + entity.cid + '/' + entity.getEntitySetId() ); 
+                // }
+                break;
+            case CMD_COMPONENT_ADD:
+                // console.log('add component', componentDefId,'to', entity.id, component.getEntityId() );
+                if( entityHasComponent ){
+                    this.componentsUpdated.add(component);
+                    this.entitiesUpdated.add(entity);
+                } else {
+                    entity.addComponent( component );
+                    if( !this.entitiesAdded.get(entity) ){
+                        this.entitiesUpdated.add(entity);
+                        // console.log('entity', entity.id,'was not added, updating');
+                    }
+                    this.componentsAdded.add( component );
+                }
+                break;
+
+            case CMD_COMPONENT_REMOVE:
+                // console.log('component remove', componentDefId,'from',entity.id, entityHasComponent);
+                if( !entityHasComponent ){ break; }
+                
+                this.componentsRemoved.add( component );
+
+                // update the bitfield to remove the component
+                componentBitfield.set( componentDefId, false );
+
+                // if the bitfield is now empty, then we can remove the entity
+                if( componentBitfield.count() <= 0 ){
+                    this.entitiesRemoved.add(entity,{silent:true});
+                    this.entitiesUpdated.remove(entity,{silent:true});
+                    // console.log('add component to remove', JSON.stringify(component));
+                } else {
+                    this.entitiesUpdated.add(entity);
+                }
+
+                break;
+        }
+    }
 
     /**
+     * 
+     * execute resolves a list of cmds into more concrete instructions
      * 
      */
     execute( entitySet, options ){
         let cmds, entityId;
+        let ii,len;
 
         const debug = this.debug || options.debug;
         const silent = _.isUndefined(options.silent) ? false : options.silent;
+
+        // console.log('executing entities', _.keys(this.cmds) );
+        // _.each( this.cmds, cmd => console.log( cmd ) )
+
+        // convert the incoming entity ids into entity instances which
+        // have their bitfields resolved from the database, so that we
+        // can easily test for component membership
+        return entitySet.getEntitySignatures( _.keys(this.cmds) )
+            .then( entities => {
+                // console.log('we created entities', Utils.toString(entities));
+
+                _.each( entities, entity => {
+                    const bf = entity.getComponentBitfield();
+                    let cmds = this.cmds[ entity.id ];
+                    
+                    if( entity.isNew() ){
+                        this.entitiesAdded.add( entity );
+                    }
+                    else if( entity.getEntitySetId() != entitySet.id ){
+                        this.entitiesAdded.add( entity );
+                        // console.log('entity', entity.id,'does not exist in es', entitySet.id);
+                    }
+                    else {
+                        // console.log('entity', entity.id,'exists in es', entitySet.id);
+                    }
+
+                    // console.log('executing cmds against new', entity.isNew(), entity.id );
+
+                    for( ii=0,len=cmds.length;ii<len;ii++ ){
+                        let cmd = cmds[ii];
+                        let commandType = cmd[0];
+                        let component = cmd[1];
+                        let cmdOptions = cmd[2];
+
+                        if( commandType == CMD_EX ){
+                            commandType = cmd[1];
+                            component = cmd[3];
+                            cmdOptions = cmd[4];
+                        }
+                        this._executeEntityCommand( entity, bf, commandType, component, cmdOptions );
+                    }
+                });
+                
+                return entitySet.update( 
+                    this.entitiesAdded.models, 
+                    this.entitiesUpdated.models, 
+                    this.entitiesRemoved.models, 
+                    this.componentsAdded.models,
+                    this.componentsUpdated.models,
+                    this.componentsRemoved.models )
+                    .then( updateResult => {
+                        if( updateResult.entitiesAdded ){
+                            this.entitiesAdded.set( updateResult.entitiesAdded ); }
+                        if( updateResult.entitiesUpdated ){
+                            this.entitiesUpdated.set( updateResult.entitiesUpdated ); }
+                        if( updateResult.entitiesRemoved ){
+                            this.entitiesRemoved.set( updateResult.entitiesRemoved ); }
+                        if( updateResult.componentsAdded ){ 
+                            this.componentsAdded.set( updateResult.componentsAdded ); }
+                        if( updateResult.componentsUpdated ){ 
+                            this.componentsUpdated.set( updateResult.componentsUpdated ); }
+                        if( updateResult.componentsRemoved ){ 
+                            this.componentsRemoved.set( updateResult.componentsRemoved ); }
+                        if( updateResult && !_.isUndefined(updateResult.silent) ){
+                            silent = updateResult.silent;
+                        }
+
+                        if( !silent ){
+                            this.triggerEvents( entitySet );
+                        }
+                        return this;
+                    }); 
+
+            })
+
         
         return _.keys(this.cmds).reduce( (sequence, entityId) => {
             let cmds = this.cmds[ entityId ];
@@ -407,14 +551,24 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
                 
                 // iterate through each cmd for the entity
                 cmds.forEach( cmd => {
-
+                    let commandType = cmd[0];
                     let component = cmd[1];
                     let cmdOptions = cmd[2];
                     let entity = cmdOptions.entity;
+                    let entityId = entity ? entity.id : 0;
                     let mode = cmdOptions.mode;
                     let entityChanged = false;
 
-                    switch( cmd[0] ){
+                    if( commandType == CMD_EX ){
+                        cmd = _.rest(cmd); // remove first
+                        commandType = cmd[0];
+                        entityId = cmd[1];
+                        component = cmd[2];
+                        cmdOptions = cmd[3];
+                        if(debug){console.log('cmdX', commandType, cmd[1], component, cmdOptions)}
+                    }
+
+                    switch( commandType ){
                         case CMD_ENTITY_ADD:
                             this.entitiesAdded.add( entity );
                             
@@ -443,7 +597,7 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
 
                         case CMD_COMPONENT_REMOVE:
                             // no entity to remove from?
-                            // if(debug ){ log.debug('removing component ' + JSON.stringify(component) ); }
+                            if(debug ){ log.debug('removing component ' + JSON.stringify(component),'from',entityId ); }
                             if( !entity ){
                                 return;
                             }

@@ -169,6 +169,36 @@ class AsyncEntitySet extends EntitySet {
     }
 
     /**
+     * Returns a component by its entityid and def id
+     */
+    getComponentByEntityId( entityId, componentDefId ){
+
+    }
+
+    /**
+     * Takes an (array) of entityIds and returns entity instances with
+     * their component bitfields populated, but no components retrieved
+     */
+    getEntitySignatures( entityIds ){
+        const registry = this.getRegistry();
+
+        return new Promise( (resolve,reject) => {
+            const result = _.map( entityIds, eId => {
+                eId = parseInt(eId, 10);
+                let entity = this.get(eId);
+                if( entity ){
+                    // return a copy of the entity bf
+                    return registry.createEntity( null,{id:eId,comBf:entity.getComponentBitfield()} );
+                }
+                return registry.createEntity(null,{id:eId}); 
+            });
+            return resolve(result);
+        })
+    }
+
+    
+
+    /**
      * TODO: finish
      * the async based cmd-buffer calls this function once it has resolved a list of entities and components to be added
      */
@@ -200,7 +230,7 @@ class AsyncEntitySet extends EntitySet {
             .then( () => this.componentId.getMultiple( componentsAdded.length) )
             .then( componentIds => {
                 // console.log('new component ids', componentIds);
-                _.each(componentsAdded, (com, ii) => com.set({id:componentIds}) );
+                _.each(componentsAdded, (com, ii) => com.set({id:componentIds[ii]}) );
                 // console.log('new components', Utils.toString(componentsAdded));
             })
             .then( () => this._applyUpdate(entitiesAdded,
@@ -222,7 +252,7 @@ class AsyncEntitySet extends EntitySet {
                 this.add( entitiesUpdated, addOptions );
             }
             if( entitiesRemoved ){
-                this.remove( entitiesRemoved );
+                this.remove( entitiesRemoved, addOptions );
             }
 
             return resolve({

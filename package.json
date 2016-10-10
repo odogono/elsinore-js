@@ -29,6 +29,7 @@
     "jsonpointer": "^4.0.0",
     "odgn-backbone-model": "^1.3.8",
     "odgn-bitfield": "^0.9.0",
+    "omnibox": "^1.0.0",
     "promise-queue": "^2.2.3",
     "underscore": "^1.8.2"
   },
@@ -68,19 +69,13 @@
     "lib": "lib"
   },
   "scripts": {
-
     "build": "browserify lib/index.js --standalone Elsinore -o build/elsinore.js",
     "minify": "echo 'cd build && uglifyjs elsinore.js --compress --source-map elsinore.min.js.map --output elsinore.min.js' | sh",
-
     "clean": "rm -rf node_modules build dist lib; mkdir build; npm install",
-
     "compile": "Gulp transpile",
-
     "dist:noclean": "npm run compile && npm run build && npm run minify && rm -rf dist && cp -r build dist",
     "dist": "npm run dist:noclean",
-
     "prepublish": "npm run dist",
-
     "test": "NODE_ENV=test babel-tape-runner ./test | tap-dot",
     "spec": "NODE_ENV=test babel-tape-runner ./test | tap-spec"
   },
