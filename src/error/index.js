@@ -25,23 +25,23 @@ InvalidEntityError.prototype = Object.create(ElsinoreError.prototype);
 InvalidEntityError.prototype.constructor = InvalidEntityError;
 
 
-export function EntityNotFoundError(entityId){
+export function EntityNotFoundError(entityId, message){
     this.name = 'EntityNotFoundError';
     this.entityId = entityId;
     // this.stack = (new Error()).stack;
     Error.captureStackTrace(this, this.constructor);
-    this.message = `entity ${entityId} not found`;
+    this.message = message || `entity ${entityId} not found`;
 }
 EntityNotFoundError.prototype = Object.create(ElsinoreError.prototype);
 EntityNotFoundError.prototype.constructor = EntityNotFoundError;
 
 
-export function ComponentDefNotFoundError(id){
+export function ComponentDefNotFoundError(id,message){
     this.name = 'ComponentDefNotFoundError';
     this.id = id;
     // this.stack = (new Error()).stack;
     Error.captureStackTrace(this, this.constructor);
-    this.message = `component def ${id} not found`;
+    this.message = message || `component def ${id} not found`;
 }
 ComponentDefNotFoundError.prototype = Object.create(ElsinoreError.prototype);
 ComponentDefNotFoundError.prototype.constructor = ComponentDefNotFoundError;

@@ -2,6 +2,8 @@ import _ from 'underscore';
 import Sinon from 'sinon';
 import test from 'tape';
 
+import {isInteger} from '../src/util';
+
 import {
     Component, Entity, EntityFilter, EntitySet,
     Registry, SchemaRegistry,
@@ -95,6 +97,76 @@ test('adding a component without an id or an entity id creates a new component a
         t.end();
     });
 });
+
+test('adding a component which is already a member', t => {
+    return initialiseRegistry().then( registry => {
+        const entitySet = registry.createEntitySet();
+        logEvents(entitySet);
+
+        const component = registry.createComponent('/component/position', {x:200, y:0});
+        t.equals( component.id, undefined, 'the component should be created without a valid id' );
+        // console.log(`new component '${component.id}'`);
+
+        const inserted = entitySet.addComponent( component );
+        t.ok( isInteger(inserted.id), 'the component will have been assigned an id' );
+        t.notEqual( component.id, inserted.id, 'the inserted component is a different copy');
+        
+        // change the fields of the component
+        // note - if we changed the attributes of the inserted component, it would also
+        // change inside the entityset
+        component.set({x:200,y:100,id:inserted.id});
+        entitySet.addComponent( component ); // update
+
+        // the previously inserted component instance no longer has an entity reference because it
+        // has been superceded
+        t.equal( inserted.getEntityId(), 0 );
+
+        // change the fields and insert again
+        component.set({x:200,y:-200});
+        entitySet.addComponent( component );
+
+        
+        console.log(' ');console.log(' inserting com', inserted.id, inserted.getEntityId() );
+        entitySet.addComponent( inserted,{debug:true} );
+
+        t.equals( entitySet.size(), 1 );
+
+        t.end();
+    })
+    .catch( err => log.error('test error: %s', err.stack) )
+
+});
+
+
+test.only('updating a component should not replace the instance already in the entityset', t => {
+    return initialiseRegistry().then( registry => {
+        const entitySet = registry.createEntitySet();
+        // logEvents(entitySet);
+
+        // add the component to the registry
+        // what we get back is a copy of the passed component, with an id assigned
+        const component = entitySet.addComponent(registry.createComponent('/component/position', {x:10,y:-1}));
+        const componentEntityId = component.getEntityId();
+        const componentCid = component.cid;
+        
+        let update = registry.cloneComponent(component,{x:300,y:200});
+        entitySet.addComponent(update);
+        
+        // the original component will now have updated attributes
+        t.equal( component.get('x'), 300 );
+        t.equal( component.get('y'), 200 );
+        t.equal( component.getEntityId(), componentEntityId, 'the component should retain its entity id' );
+        t.equal( component.cid, componentCid, 'the internal id remains the same' );
+
+        // printE( component );
+        // printE( update );
+        // console.log(`what the chuff ${componentEntityId} ${component.getEntityId()}`);
+        // printE( component );
+    })
+    .then(() => t.end())
+    .catch(err => log.error('test error: %s', err.stack))
+});
+
 
 test('removing a component from an entity with only one component', t => {
     return initialiseRegistry().then( registry => {

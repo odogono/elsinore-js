@@ -2,10 +2,9 @@ import _ from 'underscore';
 import {Collection,Events} from 'odgn-backbone-model';
 import BitField  from 'odgn-bitfield';
 
-let Component = require('../component');
+import Component from '../component';
 import Entity from '../entity';
-let EntityFilter = require('../entity_filter');
-// let Query = require('./entity_set/query')
+import EntityFilter from '../entity_filter';
 import * as Utils from '../util';
 import {uuid as createUuid} from '../util/uuid';
 
@@ -16,22 +15,21 @@ import CmdBuffer from '../cmd_buffer/sync';
 let CollectionPrototype = Collection.prototype;
 
 
+class ComponentCollection extends Collection {}
+ComponentCollection.model = Component;
+
 
 /**
  * An EntitySet is a container for entities
  */
-let EntitySet = Collection.extend({
-    type: 'EntitySet',
-    isMemoryEntitySet: true,
-    isEntitySet: true,
-    isAsync: false,
-    cidPrefix: 'es',
-    views: null,
-
-    initialize: function( entities, options={} ){
+export default class EntitySet extends Collection {
+    
+    initialize( entities, options={} ){
         let cmdBuffer = CmdBuffer;
         this._uuid = options.uuid || createUuid();
         this.cid = _.uniqueId('es');
+        this.components = new ComponentCollection();
+
         if( options['@es'] )
             this.id = options['@es'];
         if( options['id'] )
@@ -42,33 +40,45 @@ let EntitySet = Collection.extend({
         }
         this._cmdBuffer = new cmdBuffer();
 
+        // this.listenTo( this,'all', (name,models) => {
+        //     switch(name){
+        //         case 'component:add':
+        //             break;
+        //         case 'component:remove':
+        //             break;
+        //         case 'component:update':
+        //             break;
+        //     }
+        //     console.log('ES.listenTo', name);
+        // } );
+
         this.allowEmptyEntities = _.isUndefined(options.allowEmptyEntities) ? true : options.allowEmptyEntities;
-    },
+    }
 
-    getEntitySetId: function(){
+    getEntitySetId(){
         return this.id;
-    },
+    }
 
-    getUuid: function(){
+    getUuid(){
         return this._uuid;
-    },
+    }
 
-    hash: function(){
+    hash(){
         return EntitySet.hash( this, this.getQuery() );
-    },
+    }
 
-    destroy: function(){
+    destroy(){
         this.stopListening();
         // this.entities = null;
         this.storage = null;
         this.registry = null;
-    },
+    }
 
-    size: function(){
+    size(){
         return this.length;
-    },
+    }
 
-    toJSON: function(options={}){
+    toJSON(options={}){
         let q,result = { uuid:this._uuid };// { cid:this.cid };
         // if( (q = this.getQuery()) ){
         //     result.query = q.toJSON();
@@ -89,7 +99,7 @@ let EntitySet = Collection.extend({
         // result['@r'] = this.getSchemaRegistry().toJSON();
 
         return result;
-    },
+    }
 
 
     // iterator: function(options){
@@ -107,7 +117,7 @@ let EntitySet = Collection.extend({
     //     };
     // },
 
-    iterator: function(options){
+    iterator(options){
         let nextIndex = 0;
         return {
             next: () => {
@@ -116,35 +126,35 @@ let EntitySet = Collection.extend({
                     { done:true };
             }
         }
-    },
+    }
 
-    setRegistry: function( registry, options ){
+    setRegistry( registry, options ){
         this._registry = registry;
-    },
+    }
 
-    getRegistry: function(){
+    getRegistry(){
         return this._registry;
-    },
+    }
 
-    getSchemaRegistry: function(){
+    getSchemaRegistry(){
         return this.getRegistry().schemaRegistry;
-    },
+    }
 
 
     /**
     *   TODO: move out of here
     */
-    attachTo: function( otherEntitySet, options ){
+    attachTo( otherEntitySet, options ){
         // load the start state from this entity set
         otherEntitySet.reset( this );
         this.listenTo(otherEntitySet, 'all', this.onEntitySetEvent );
-    },
+    }
 
 
     /**
     *   TODO: move out of here
     */
-    onEntitySetEvent: function( evt ){
+    onEntitySetEvent( evt ){
         let options;
         let args = Array.prototype.slice.call(arguments, 1);
         switch( evt ){
@@ -161,62 +171,76 @@ let EntitySet = Collection.extend({
                 return this.reset.apply( this.args );
         }
         return this;
-    },
+    }
 
 
     /**
     * Adds a component to this set
     */
-    addComponent: function(component, options ){
+    addComponent(component, options ){
         return this._cmdBuffer.addComponent( this, component, options );
-    },
+    }
+
+    /**
+     * Returns an existing component instance (if it exists)
+     */
+    getComponent(component){
+        let componentId;
+        if( Utils.isInteger(component) ){
+            componentId = component;
+        } else if( Component.isComponent(component) ){
+            componentId = component.id;
+        }
+        
+        return this.components.get(componentId);
+    }
 
     /**
     *
     */
-    removeComponent: function( component, options ){
+    removeComponent( component, options ){
         return this._cmdBuffer.removeComponent( this, component, options );
-    },
+    }
 
     // add: function( entity, options ){
     //     // 
     // },
 
-    _addModels: function( models, options ){
+    _addModels( models, options ){
         return CollectionPrototype.call( this, entity, options );
-    },
+    }
 
     /**
     *   Flushes any outstanding commands in the buffer
     */
-    flush: function( options ){
+    flush( options ){
         return this._cmdBuffer.flush( this, options );
-    },
+    }
 
     /**
     *   Adds an entity with its components to the entityset
     - reject if filters do not pass
     - 
     */
-    addEntity: function( entity, options){
+    addEntity( entity, options){
         if( EntitySet.isMemoryEntitySet( entity ) ){
             entity = entity.models;
         }
         return this._cmdBuffer.addEntity( this, entity, options );
-    },
+    }
 
     /**
     *
     */
-    removeEntity: function(entity, options){
+    removeEntity(entity, options){
         if( EntitySet.isMemoryEntitySet( entity ) ){
             entity = entity.models;
         }
         return this._cmdBuffer.removeEntity( this, entity, options );
-    },
+    }
 
 
-    _createEntity: function( entityId, returnId, options={} ){
+    _createEntity( entityId, returnId, options={} ){
         let result;
         const registry = this.getRegistry();
 
@@ -236,56 +260,68 @@ let EntitySet = Collection.extend({
         result.setEntitySet( this, false );
         
         return result;
-    },
+    }
 
-    _createComponentId: function( ){
+    _createComponentId( ){
         return this.getRegistry().createId();
-    },
+    }
 
-    _addEntity: function(entity){
+    _addEntity(entity){
         entity.setRegistry( this.getRegistry() );
         // no need for us to issue add events as well as entity:add
         this.add( entity, {silent:true} );
         return entity;
-    },
+    }
 
-    _removeEntity: function(entity){
+    _removeEntity(entity){
         let entityId = Entity.toEntityId(entity);
         // no need for us to issue remove events as well as entity:remove
         this.remove( entity, {silent:true} );
         return entity;
-    },
+    }
 
     
 
-    getEntity: function( entity, options ){
+    getEntity( entity, options ){
         return this.get( entity, options );
-    },
+    }
 
-    hasEntity: function(entity){
+    hasEntity(entity){
         return this.get( entity ) !== undefined;
-    },
+    }
 
 
     /**
      * TODO: finish
      * the async based cmd-buffer calls this function once it has resolved a list of entities and components to be added
      */
-    update: function(entitiesAdded, entitiesUpdated, entitiesRemoved, componentsAdded, componentsUpdated, componentsRemoved) {
-        return Promise.resolve({
-            entitiesAdded,
-            entitiesUpdated,
-            entitiesRemoved,
-            componentsAdded,
-            componentsUpdated,
-            componentsRemoved,
-        });
-    },
+    update(entitiesAdded, entitiesUpdated, entitiesRemoved, componentsAdded, componentsUpdated, componentsRemoved) {
+        let ii,len,compoinent;
+        
+        for( ii=0,len=componentsAdded.length;ii<len;ii++ ){
+            this.components.add( componentsAdded[ii] );
+            // console.log('UPDATE/ADD', componentsAdded[ii].getEntityId() );
+        }
+        for( ii=0,len=componentsUpdated.length;ii<len;ii++ ){
+            let existing = this.components.get( componentsUpdated[ii] );
+            if( existing ){
+                // console.log(`!!ES!! EntitySet.update existing ${existing.cid} ${existing.getEntityId()}`);
+                existing.apply( componentsUpdated[ii], {silent:true} );
+                // console.log(`!!ES!! EntitySet.update existing ${existing.cid} ${existing.getEntityId()}`);
+            } else {
+                // console.log(`!!!ES!!! adding component update ${JSON.stringify(componentsUpdated[ii])}`);
+                this.components.add( componentsUpdated[ii] );
+            }
+        }
+        for( ii=0,len=componentsRemoved.length;ii<len;ii++ ){
+            this.components.remove( componentsRemoved[ii] );
+        }
+    }
 
     /**
      * Replaces the entitySets entities with the specified entities
      */
-    reset: function( entities, options ){
+    reset( entities, options ){
         let ii,len,entity;
         if( entities && entities.isEntitySet ){
             // console.log('reset from',entities.cid,'to',this.cid,'count', entities.models.length);
@@ -310,7 +346,7 @@ let EntitySet = Collection.extend({
         }
 
         return entities;
-    },
+    }
 
 
 
@@ -336,7 +372,7 @@ let EntitySet = Collection.extend({
     /**
     *   
     */
-    triggerEntityEvent: function( name, entity ){
+    triggerEntityEvent( name, entity ){
         let args = _.toArray(arguments);
         let q;
         
@@ -355,9 +391,9 @@ let EntitySet = Collection.extend({
         }
 
         return this.trigger.apply( this, args );
-    },
+    }
 
-    listenToEntityEvent: function( entityOrFilter, name, callback, context ){
+    listenToEntityEvent( entityOrFilter, name, callback, context ){
         if( !this._entityEvents ){
             this._entityEvents = _.clone(Events);
             // this._entityEvents.on('all', function(){
@@ -366,13 +402,13 @@ let EntitySet = Collection.extend({
         }
 
         this._entityEvents.listenTo( this._entityEvents, name, callback );
-    },
+    }
 
 
 
 
     // TODO: remove
-    doesEntityHaveComponent: function( entityId, componentId, options ){
+    doesEntityHaveComponent( entityId, componentId, options ){
         let entity;
         if( Utils.isInteger(entityId) ){
             entity = this.at(entityId);
@@ -390,10 +426,10 @@ let EntitySet = Collection.extend({
         return bf.get( componentId );
 
         // return entity.hasComponent( componentId );
-    },
+    }
 
     // TODO: remove
-    removeComponentFromEntity: function( component, entity, options ){
+    removeComponentFromEntity( component, entity, options ){
         let bf = entity.getComponentBitfield();
 
         if( !bf.get(component.getDefId()) ){
@@ -409,45 +445,38 @@ let EntitySet = Collection.extend({
         this.getRegistry().destroyComponent( component );
 
         return this;
-    },
+    }
 
     // TODO: remove
-    getComponentFromEntity: function( component, entity, options ){
+    getComponentFromEntity( component, entity, options ){
         return entity.components[ component.getDefId() ];
-    },
+    }
 
     // TODO: remove
-    doesEntityHaveComponents: function( entity, options ){
+    doesEntityHaveComponents( entity, options ){
         let bf = entity.getComponentBitfield();
         if( bf.count() > 0 ){
             return true;
         }
         let size = _.keys(entity.components).length;
         return size > 0;
-    },
+    }
 
 
-    applyEvents: function(){
+    applyEvents(){
         if( !this.listeners ){ return; }
         _.each( this.listeners, listener => listener.applyEvents() );
-    },
+    }
 
-});
+}
 
+EntitySet.prototype.type = 'EntitySet';
+EntitySet.prototype.isMemoryEntitySet = true;
+EntitySet.prototype.isEntitySet = true;
+EntitySet.prototype.isAsync = false;
+EntitySet.prototype.cidPrefix = 'es';
+EntitySet.prototype.views = null;
 
-
-// EntitySet.prototype[Symbol.iterator] = function() {
-//     let entities = this.entities;
-//     return {
-//         index: 0,
-//         next: function(){
-//             if( this.index < entities.length ){
-//                 return { value: entities[this.index++], done:false };
-//             }
-//             return {done:true};
-//         }
-//     }
-// };
 
 
 EntitySet.hash = function( entitySet ){
@@ -465,6 +494,3 @@ EntitySet.isEntitySet = function(es){
 EntitySet.isMemoryEntitySet = function(es){
     return EntitySet.isEntitySet(es) && es.isMemoryEntitySet;   
 }
-
-
-export default EntitySet;

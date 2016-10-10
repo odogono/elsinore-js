@@ -4,9 +4,10 @@ import * as Utils from './util'
 
 
 
-let Model = BackboneModel.extend({
-    type: 'Model',
-    isModel: true,
+export default class Model extends BackboneModel {
+    
+    get id(){ return this.attributes.id; }
+    set id(id){ this.attributes.id = id; }
 
     /**
      * Proxies event triggering to the registry
@@ -20,24 +21,24 @@ let Model = BackboneModel.extend({
     //     this.registry.trigger.apply( this.registry, args );
     // },
 
-    getRegistry: function(){
+    getRegistry(){
         return this.registry;
-    },
+    }
     
-    setRegistry: function(registry){
+    setRegistry(registry){
         this.registry = registry;
-    },
+    }
 
-    isEqual: function(other){
+    isEqual(other){
         return this.hash() === other.hash();
-    },
+    }
 
-    hash: function( asString ){
+    hash( asString ){
         let result = JSON.stringify( this.cid );//_.omit(this.attributes,'hash'));
         return Utils.hash( result, asString );
-    },
+    }
 
-    toJSON: function( options ){
+    toJSON( options ){
         let result = _.clone(this.attributes);
         // remove attributes beginning with '_'
         let copy = {};
@@ -50,7 +51,8 @@ let Model = BackboneModel.extend({
             result.id = this.id;
         }
         return copy;
-    },
-});
+    }
+}
 
-export default Model;
+Model.prototype.type = 'Model';
+Model.prototype.isModel = true;

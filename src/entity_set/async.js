@@ -4,7 +4,9 @@ import {Collection} from 'odgn-backbone-model';
 import Entity from '../entity';
 import EntitySet from './index';
 import CmdBuffer from '../cmd_buffer/async';
+import ReusableId from '../util/reusable_id';
 import * as Utils from '../util';
+import {getEntityIdFromId,getEntitySetIdFromId} from '../util';
 import {EntityNotFoundError,ComponentDefNotFoundError} from '../error';
 import {ComponentDefCollection} from '../schema';
 
@@ -23,18 +25,22 @@ class AsyncEntitySet extends EntitySet {
         // console.log('init AsyncEntitySet');
         options.cmdBuffer = CmdBuffer;
         EntitySet.prototype.initialize.apply(this, arguments);
-        console.log('AsyncEntitySet.initialize',this.id,this.cid,this.getUuid(),'with options',JSON.stringify(options));
+        // console.log('AsyncEntitySet.initialize',this.id,this.cid,this.getUuid(),'with options',JSON.stringify(options));
     }
 
     open(options={}){
-        this._open = true;
+        this.open = true;
+
+        // in a persistent es, these ids would be initialised from a backing store
+        this.entityId = new ReusableId(100);
+        this.componentId = new ReusableId(10);
         return Promise.resolve(this);
     }
 
-    isOpen(){ return this._open }
+    isOpen(){ return this.open }
 
     close(){
-        this._open = false;
+        this.open = false;
         return Promise.resolve(this);
     }
 
@@ -79,6 +85,25 @@ class AsyncEntitySet extends EntitySet {
         })
     }
 
+    /**
+    *   Returns a component def by its id/uri
+    */
+    getComponentDef(cdefId, cached) {
+        return new Promise( (resolve,reject) => {
+            // console.log('huh', this.componentDefs);
+            let def = this.componentDefs.get( cdefId );
+            if( !def ){
+                def = this.componentDefs.getByUri(cdefId);
+            }
+            if( !def ){
+                def = this.componentDefs.getByHash(cdefId);
+            }
+            if( !def ){
+                return reject(new ComponentDefNotFoundError(cdefId));
+            }
+            return resolve(def);
+        })
+    }
 
     /**
     *   Returns a registered component def by its hash
@@ -98,8 +123,6 @@ class AsyncEntitySet extends EntitySet {
      * Returns an entity
      */
     getEntity( entityId, options ){
-        entityId = Entity.toEntityId(entityId);
-        
         if (options && options.componentBitFieldOnly) {
             return this.getEntityBitField(entityId);
         }
@@ -111,6 +134,10 @@ class AsyncEntitySet extends EntitySet {
      * Returns a bitfield for the specified entityid
      */
     getEntityBitField( entityId ){
+        let e = this.get(entityId);
+        if( e ){
+            return Promise.resolve(e.getComponentBitfield());
+        }
         return Promise.reject(new EntityNotFoundError(entityId));
     }
 
@@ -118,6 +145,26 @@ class AsyncEntitySet extends EntitySet {
      * Returns an entity specified by its id
      */
     getEntityById( entityId ){
+        const esId = getEntitySetIdFromId(entityId);
+        const eId = getEntityIdFromId(entityId);
+        let e = this.get(entityId);
+        if( e ){
+            return Promise.resolve(e);
+        }
+        
+        if( esId != this.id ){
+            return Promise.reject(new EntityNotFoundError(entityId, 
+                `entity ${eId} does not belong to this entityset (${esId})`));
+        }
+        // console.log(`looking for eid ${eId} / ${esId}`);
+
+        // this.each( m => console.log('entity model id', m.id) );
+
+        let entity = this.get(eId);
+        if( entity ){
+            return Promise.resolve(entity);
+        }
+
         return Promise.reject(new EntityNotFoundError(entityId));
     }
 
@@ -128,24 +175,61 @@ class AsyncEntitySet extends EntitySet {
     update(entitiesAdded, entitiesUpdated, entitiesRemoved, componentsAdded, componentsUpdated, componentsRemoved) {
         
         // extract entities added which need new ids
-        const newEntities = _.reduce(entitiesAdded, (result, e) => {
+        entitiesAdded = _.reduce(entitiesAdded, (result, e) => {
             // console.log('we got,', this.id, this.getUuid(), e.getEntitySetId() );
             if (e.getEntitySetId() !== this.id) {
                 result.push(e);
+            } else {
+                console.log('ALERT! entitiesAdded contains already added entity', e.toJSON() );
             }
             return result;
         }, []);
 
-        console.log('new entities', Utils.toString(newEntities));
+        // console.log('new entities', Utils.toString(entitiesAdded));
 
-        return Promise.resolve({
-            entitiesAdded,
-            entitiesUpdated,
-            entitiesRemoved,
-            componentsAdded,
-            componentsUpdated,
-            componentsRemoved,
-        });
+        return this.entityId.getMultiple( entitiesAdded.length )
+            .then( newIds => {
+                // console.log('new entity ids', newIds);
+
+                // apply the new ids to the entities. this will
+                // also update the components entity ids
+                _.each( entitiesAdded, (e,ii) => e.setId( newIds[ii], this.getEntitySetId() ));
+            })
+
+            // set new ids on new components
+            .then( () => this.componentId.getMultiple( componentsAdded.length) )
+            .then( componentIds => {
+                // console.log('new component ids', componentIds);
+                _.each(componentsAdded, (com, ii) => com.set({id:componentIds}) );
+                // console.log('new components', Utils.toString(componentsAdded));
+            })
+            .then( () => this._applyUpdate(entitiesAdded,
+                    entitiesUpdated,
+                    entitiesRemoved,
+                    componentsAdded,
+                    componentsUpdated,
+                    componentsRemoved) )
+    }
+
+    _applyUpdate(entitiesAdded, entitiesUpdated, entitiesRemoved, componentsAdded, componentsUpdated, componentsRemoved){
+        return new Promise( (resolve,reject) => {
+
+            const addOptions = {silent:true};
+            if( entitiesAdded ){
+                this.add( entitiesAdded, addOptions );
+            }
+            if( entitiesUpdated ){
+                this.add( entitiesUpdated, addOptions );
+            }
+            if( entitiesRemoved ){
+                this.remove( entitiesRemoved );
+            }
+
+            return resolve({
+                entitiesAdded,entitiesUpdated, entitiesRemoved,
+                componentsAdded, componentsUpdated, componentsRemoved,
+            });
+        })
     }
 }
 

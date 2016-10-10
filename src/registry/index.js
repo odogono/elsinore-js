@@ -152,9 +152,13 @@ _.extend(Registry.prototype, Events, {
      * 
      */
     cloneEntity: function( srcEntity, dstEntity, options={} ){
-        let ii,len,component,srcComponent;
-        let result = this.createEntity();
-        // let result = srcEntity.clone();
+        let ii,len,component,srcComponent;        
+        if( !dstEntity ){
+            const result = srcEntity.clone();
+            result.setRegistry(this);
+            return result;
+        }
+
         const returnChanges = options.returnChanges;
         const returnChanged = options.returnChanged;
         const deleteMissing = options.delete;
@@ -308,8 +312,6 @@ _.extend(Registry.prototype, Events, {
                 attrs = _.extend( {}, _.omit(componentDef,defKey ), attrs );
                 componentDef = componentDef[defKey];
             }
-
-            // console.log('creating with ', attrs);
             return this.schemaRegistry.createComponent( componentDef, attrs, options, cb );
         }
     },
@@ -317,18 +319,21 @@ _.extend(Registry.prototype, Events, {
     /**
      * Produces a copy of a component
      */
-    cloneComponent: function( srcComponent, options ){
+    cloneComponent: function( srcComponent, attrs, options ){
         const result = srcComponent.clone();
         // let result = new srcComponent.constructor(srcComponent.attributes);
-        result.setId( srcComponent.getId() );
+        // result.setId( srcComponent.getId() );
         // result.id = srcComponent.id;
         result.name = srcComponent.name;
         result.setDefDetails(
             srcComponent.getDefId(),
-            srcComponent.getDefUri(),
+            srcComponent.getUri(),
             srcComponent.getDefHash(),
             srcComponent.getDefName() );
         result.registry = this;
+        if( attrs ){
+            result.set( attrs, options );
+        }
         return result;
     },
 

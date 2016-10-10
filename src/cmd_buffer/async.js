@@ -12,6 +12,7 @@ import {entityToString} from '../util/to_string';
 import * as Utils from '../util';
 import SyncCmdBuffer from './sync';
 import {
+    CMD_EX,
     CMD_ENTITY_ADD,
     CMD_ENTITY_REMOVE,
     CMD_ENTITY_UPDATE,
@@ -116,10 +117,13 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
         let getEntityOptions = { componentBitFieldOnly: true };
         const registry = entitySet.getRegistry();
 
+        
         // no entity id was provided
         if( !entityId ){
+            // this._entityCache.each( c => console.log('ecache',c.cid));
             entity = this._entityCache.get(0);
             if( !entity ){
+                // console.log('no existing cache entity found for');
                 entity = this._createHolderEntity( registry, 0, OP_CREATE_NEW );
             }
             return Promise.resolve( entity );
@@ -168,8 +172,8 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
     *   addEntityId - the id that should be used to add to this entityset
     */
     _createHolderEntity( registry, existingId, mode, addEntityId ){
-        let entityId = _.isUndefined(existingId) ? 0 : existingId;
-        let entity = registry.createEntityWithId( entityId );
+        const entityId = _.isUndefined(existingId) ? 0 : existingId;
+        const entity = registry.createEntityWithId( entityId );
         entity._addId = _.isUndefined(addEntityId) ? 0 : addEntityId;
         entity._mode = mode;
         // entity.set({mode:mode,addId:addEntityId});
@@ -181,11 +185,10 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
     /**
     *
     */
-    removeComponent( entitySet, component, options ){
+    removeComponent( entitySet, component, options={} ){
         let batch,execute, debug, entityId;
-        let getEntityOptions = { componentBitFieldOnly: true };
-        options || (options = {});
-
+        const getEntityOptions = { componentBitFieldOnly: true };
+        
         debug = options.debug;
         batch = options.batch; // cmds get batched together and then executed
         execute = _.isUndefined(options.execute) ? true : options.execute;
@@ -202,15 +205,22 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
 
             this.reset();
 
-            return _.reduce( component,
-                (current,com) => current.then(() => this.removeComponent(entitySet, com, options))
-            , Promise.resolve() )
+            return Promise.all(_.map(component, c => this.removeComponent(entitySet, c, options)))
                 .then( () => {
                     if( execute ){
-                        return this.execute( entitySet, options );
+                        return this.execute(entitySet,options);
                     }
                     return this;
                 });
+            // return _.reduce( component,
+            //     (current,com) => current.then(() => this.removeComponent(entitySet, com, options))
+            // , Promise.resolve() )
+            //     .then( () => {
+            //         if( execute ){
+            //             return this.execute( entitySet, options );
+            //         }
+            //         return this;
+            //     });
         } else {
             if( execute ){
                 this.reset();
@@ -224,36 +234,36 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
             return Promise.resolve([]);
         }
 
-        return entitySet.getEntity( entityId, getEntityOptions )
-            .then( entity => {
-                let commandOptions = _.extend( {}, options, {entity:entity, id:entity.id, mode:0} );
-                this.addCommand( CMD_COMPONENT_REMOVE, component, commandOptions );
-                if( !execute ){
-                    return this;
-                }
-                
-                return this.execute( entitySet, options )
-                    .then( () => Utils.valueArray(this.componentsRemoved.models) );
-            })
-            .catch( err => {
-                log.error('err removing notfound ' + Utils.getEntitySetIdFromId(entityId) + ' ' + entityId + ' ' + err );
-                log.error( err.stack );
-                // entity doesn't exist
-                return execute ? [] : this;
-            })
-
-        // if( debug ){ log.debug('removing component from entity ' + component.getEntityId() ); }
-        // this.addCommand( CMD_COMPONENT_REMOVE, component, options );
-
-        // // execute any outstanding commands
-        // if( execute ){
-        //     return this.execute( entitySet, options )
-        //         .then( function(){
-        //             return Utils.valueArray( this.componentsRemoved.models );
-        //         });
+        // this should be a quick check - without retrieving the full es
+        // if( !entitySet.hasEntity(entityId) ){
+        //     log.error(`entity ${entityId} not found`);
+        //     return execute ? [] : this;
         // }
 
-        // return this;
+        this.addCommandX( CMD_COMPONENT_REMOVE, entityId, component.id);
+
+        return (!execute) ? this : 
+            this.execute(entitySet,options)
+            .then( () => Utils.valueArray(this.componentsRemoved.models));
+
+        // return entitySet.getEntity( entityId, getEntityOptions )
+        //     .then( entity => {
+        //         console.log('so adding REM', entity);
+        //         const commandOptions = _.extend( {}, options, {entity:entity, id:entity.id, mode:0} );
+        //         this.addCommand( CMD_COMPONENT_REMOVE, component, commandOptions );
+        //         if( !execute ){
+        //             return this;
+        //         }
+                
+        //         return this.execute( entitySet, options )
+        //             .then( () => Utils.valueArray(this.componentsRemoved.models) );
+        //     })
+        //     .catch( err => {
+        //         log.error('err removing notfound ' + Utils.getEntitySetIdFromId(entityId) + ' ' + entityId + ' ' + err );
+        //         log.error( err.stack );
+        //         // entity doesn't exist
+        //         return execute ? [] : this;
+        //     });
     }
 
 
@@ -380,13 +390,15 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
             });
     }
 
+
+    /**
+     * 
+     */
     execute( entitySet, options ){
         let cmds, entityId;
-        let silent;
-        let debug;
 
-        debug = this.debug || options.debug;
-        silent = options.silent === undefined ? false : options.silent;
+        const debug = this.debug || options.debug;
+        const silent = _.isUndefined(options.silent) ? false : options.silent;
         
         return _.keys(this.cmds).reduce( (sequence, entityId) => {
             let cmds = this.cmds[ entityId ];
@@ -394,7 +406,7 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
             return sequence.then( () => {
                 
                 // iterate through each cmd for the entity
-                cmds.forEach( (cmd) => {
+                cmds.forEach( cmd => {
 
                     let component = cmd[1];
                     let cmdOptions = cmd[2];
@@ -436,7 +448,12 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
                                 return;
                             }
 
+                            // 1. the component will be removed from the entityset CMD_COMPONENT_REMOVE(cid)
+                            // 2. the component will be removed from the entity CMD_COMPONENT_REMOVE_FROM_ENTITY(eid,cid)
+                            // 3. if the entity has no more components, the entity is removed CMD_ENTITY_REMOVE(eid)
+                            
                             this.componentsRemoved.add( component );
+                            
                             // log.debug('remove com ' + entity.hasComponents() + ' ' + entity.getComponentBitfield().toString() );
                             entity.removeComponent( component );
                             // if( (!entitySet.allowEmptyEntities || removeEmptyEntity) && !entity.hasComponents() ){

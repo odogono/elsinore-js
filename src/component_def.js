@@ -3,32 +3,31 @@ import _ from 'underscore';
 import Model from './model';
 import * as Utils from './util'
 
-const ComponentDef = Model.extend({
-    type: 'ComponentDef',
-    isComponentDef: true,
-
-    getUri: function(){
-        return this.get('uri');
-    },
+export default class ComponentDef extends Model {
     
-    getName: function(){
+
+    getUri(){
+        return this.get('uri');
+    }
+    
+    getName(){
         return this.get('name');
-    },
+    }
 
-    getAttrs: function(){ 
+    getAttrs(){ 
         return this.get('attrs');
-    },
+    }
 
-    getProperties: function(){
+    getProperties(){
         return this.get('properties');
-    },
+    }
 
-    toJSON: function(){
+    toJSON(){
         let result = Model.prototype.toJSON.apply(this, arguments);
         return _.omit( result, 'attrs');
-    },
+    }
 
-    hash: function( asString=true ){
+    hash( asString=true ){
         let result;// = this.get('hash');
         // if( !result ){
         // 
@@ -37,8 +36,12 @@ const ComponentDef = Model.extend({
         // console.log('hash', JSON.stringify(this.getProperties()) + ":" + this.getName(), result )
         // }
         return result;
-    },
-})
+    }
+}
+
+
+ComponentDef.prototype.type = 'ComponentDef';
+ComponentDef.prototype.isComponentDef = true;
 
 
 function createAttrsFromProperties( props ){
@@ -107,5 +110,3 @@ ComponentDef.create = function( attrs ){
     return result;
 }
 
-
-export default ComponentDef;

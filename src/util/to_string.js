@@ -38,7 +38,7 @@ export function componentToString(component, indent=''){
     
     return indent 
         + '' + component.cid 
-        + ' (' + (component.getId() || '0') +') '
+        + ' (' + (component.id || '0') +') '
         + component.name 
         + '(' + component.getDefId() + ')'
         + ' e:' + getEntityIdFromId(component.getEntityId()) + '' 
@@ -53,7 +53,7 @@ export function entitySetToString(es, indent){
     
     it = es.iterator();
     indent || (indent='');
-    res.push( indent + '- ' + es.cid + ' (' + es.id + ')' )
+    res.push( indent + '- ' + es.cid + ' (' + es.id + ') ' + es.getUuid() )
     indent = indent + '  ';
     
     if( es.entityFilters ){

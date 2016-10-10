@@ -164,10 +164,9 @@ test('create with an entity id', t => {
 
         component = registry.createComponent( {'@c':'/component/nickname', '@e':15, '@es':10} );
         t.equals( component.getEntityId(), 42949672975, 'the entity id is retrieved' );
-
-        t.end();
-
-    });
+    })
+    .then( () => t.end() )
+    .catch(err => log.error('test error: %s', err.stack))  
 });
 
 
@@ -220,4 +219,19 @@ test('cloning a component', t => {
     })
     .then( () => t.end() )
     .catch( err => log.error('test error: %s', err.stack) )  
-})
+});
+
+
+test('cloning an entity', t => {
+    return initialiseRegistry().then( registry => {
+        const entity = registry.createEntityWithId(23, 16);
+        const clone = registry.cloneEntity(entity);
+
+        t.equals( entity.getEntityId(), clone.getEntityId() );
+        t.equals( entity.getEntitySetId(), clone.getEntitySetId() );
+        t.equals( clone.getRegistry(), registry );
+        t.notEqual( entity.cid, clone.cid );
+    })
+    .then( () => t.end() )
+    .catch(err => log.error('test error: %s', err.stack))  
+});

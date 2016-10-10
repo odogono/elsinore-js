@@ -18,14 +18,10 @@ import Registry from './registry';
 /**
  * An entity is a container for components
  */
-const Entity = Model.extend({
-    type: 'Entity',
-    isEntity: true,
-
-    cidPrefix: 'e',
-
-    initialize: function(attrs, options){
-        let eid = 0,esid = 0, comBf;
+export default class Entity extends Model {
+    
+    initialize(attrs, options){
+        let eid = -1,esid = 0, comBf;
 
         if( attrs ){
             if( (eid = attrs['@e']) ){
@@ -42,7 +38,7 @@ const Entity = Model.extend({
         
         if( options && options.registry ){
             this.registry = options.registry;
-            if( eid === 0 ){
+            if( eid === -1 ){
                 eid = this.registry.createId();
             }
         }
@@ -56,7 +52,7 @@ const Entity = Model.extend({
         
         // call super!
         Model.prototype.initialize.apply(this,arguments);
-    },
+    }
 
     // initialize: function(attrs, options){
 
@@ -71,67 +67,68 @@ const Entity = Model.extend({
     //     Model.prototype.set.apply(this, arguments);
     // },
 
-    isNew: function() {
-        return this.get('id') === 0;
-    },
+    isNew() {
+        return this.id === 0;
+    }
 
-    setId: function( entityId, entitySetId ){
+    setId( entityId, entitySetId ){
         if( entitySetId !== undefined ){
             entityId = Utils.setEntityIdFromId( entityId, entitySetId );
         }
+
         this.set({id: entityId});
 
         // update all attached components
         _.each( this.getComponents(), component => component.setEntityId( entityId ) );
-    },
+    }
 
-    setEntityId: function( id ){
-        var eid = this.get('id');
+    setEntityId( id ){
+        var eid = this.id;
         // // the entity id is set as the low 30 bits 
         // // eid += (id & 0x3fffffff) - (eid & 0x3fffffff);
         // the entity id is set as the low 32 bits 
         eid += (id & 0xffffffff) - (eid & 0xffffffff);
         this.set({id:eid});
-    },
+    }
 
-    getEntityId: function(){
+    getEntityId(){
         // return this.get('eid') & 0x3fffffff;
         return this.get('id') & 0xffffffff;
-    },
+    }
 
-    setEntitySetId: function( id ){
+    setEntitySetId( id ){
         var eid = this.get('id');
         // the es id is set as the high 21 bits
         // this.set( 'eid', (id & 0x3fffff) * 0x40000000 + (eid & 0x3fffffff) );
         eid = (id & 0x1fffff) * 0x100000000 +    (eid & 0xffffffff);
         this.set({id:eid});
-    },
+    }
 
-    getEntitySetId: function(){
+    getEntitySetId(){
         var id = this.get('id');
         // return (id - (id & 0x3fffffff))  / 0x40000000;
         return    (id - (id & 0xffffffff)) /  0x100000000;
-    },
+    }
 
-    setEntitySet: function( es, setId=true ){
+    setEntitySet( es, setId=true ){
         this._entitySet = es;
         this.setRegistry( es.getRegistry() );
         if( setId ){
             this.setEntitySetId(es.id);
         }
-    },
+    }
 
-    getEntitySet: function(){
+    getEntitySet(){
         return this._entitySet;
-    },
+    }
 
-    destroy: function(){
+    destroy(){
         if( this._entitySet ){
             this._entitySet.removeEntity( this );
         }
-    },
+    }
 
-    toJSON: function(options={}){
+    toJSON(options={}){
         let components = _.map( this.getComponents(), c => c.toJSON(options));
         // if( options.flatEntity ){
         //     return components;
@@ -155,18 +152,18 @@ const Entity = Model.extend({
         //     esid: this.getEntitySetId(),
         //     bf: this.getComponentBitfield().toString()
         // };
-    },
+    }
 
-    hash: function(asString){
+    hash(asString){
         var result = 0;
         for( var sid in this.components ){
             result += this.components[sid].hash(true);
         }
         if( result === 0 ){ return 0; }
         return Utils.hash( result, asString );
-    },
+    }
 
-    addComponent: function( component ){
+    addComponent( component ){
         var existing;
         if( !component ){ return this; }
         if(_.isArray(component)){ 
@@ -188,12 +185,12 @@ const Entity = Model.extend({
         this.getComponentBitfield().set( component.getDefId(), true );
         component.on('all', this._onComponentEvent, this);
         return this;
-    },
+    }
 
     /**
      * Returns an array of all the components associated with this entity
      */
-    getComponents: function( componentIds ){
+    getComponents( componentIds ){
         if( !this.components ){
             return null;
         }
@@ -203,9 +200,9 @@ const Entity = Model.extend({
             if( com ){ result.push( com ); }
             return result;
         }, []);
-    },
+    }
 
-    removeComponent: function( component ){
+    removeComponent( component ){
         if( !component ){ return this; }
         component.setEntityId( null );
         component._entity = null;
@@ -214,9 +211,9 @@ const Entity = Model.extend({
         this.getComponentBitfield().set( component.getDefId(), false );
         component.off('all', this._onComponentEvent, this);
         return this;
-    },
+    }
 
-    removeComponents: function( componentIds ){
+    removeComponents( componentIds ){
         let components = this.components;
         componentIds = componentIds || this.getComponentBitfield().toValues();
         _.each( componentIds, id => {
@@ -225,31 +222,31 @@ const Entity = Model.extend({
                 this.removeComponent( com );
             }
         })
-    },
+    }
 
-    getComponentByIId: function( componentIId ){
+    getComponentByIId( componentIId ){
         var self = this;
         componentIId = this.getRegistry().getIId( componentIId );
         if( _.isArray(componentIId) ) {
             return _.map( componentIId, id => self.components[id] )
         }
         return this.components[ componentIId ];
-    },
+    }
 
-    hasComponent: function( componentIId ){
+    hasComponent( componentIId ){
         if( Component.isComponent(componentIId) ){
             componentIId = componentIId.getDefId();
         } else if( _.isString(componentIId) ){
             componentIId = this.getRegistry().getIId( componentIId );
         }
         return this.getComponentBitfield().get( componentIId );
-    },
+    }
 
-    hasComponents: function(){
+    hasComponents(){
         return _.keys(this.components).length > 0;
-    },
+    }
 
-    getComponentBitfield: function(){
+    getComponentBitfield(){
         var bf = this.get('comBf');
         if( !bf ){
             // TODO: the size must be configured from somewhere - otherwise will run out of space
@@ -257,19 +254,19 @@ const Entity = Model.extend({
             this.set('comBf', bf);
         }
         return bf;
-    },
+    }
 
 
     /**
     *   The number of components on this entity
     */
-    getComponentCount: function(){
+    getComponentCount(){
         return _.keys(this.components).length;
         // return this.getComponentBitfield().count();
-    },
+    }
 
 
-    triggerEntityEvent: function(){
+    triggerEntityEvent(){
         let es = this.getRegistry();
         let args = _.toArray( arguments );
         args.splice(1, 0, this);
@@ -277,12 +274,12 @@ const Entity = Model.extend({
             // so we end up passing evtName, recipientEntity, ... 
             es.triggerEntityEvent.apply( es, args );
         }
-    },
+    }
 
     /**
     *   Reacts to events triggered by contained components
     */
-    _onComponentEvent: function(event, component, options) {
+    _onComponentEvent(event, component, options) {
         if (event === 'destroy'){
             this.removeComponent(component, options);
         }
@@ -293,7 +290,11 @@ const Entity = Model.extend({
         }
     }
 
-});
+}
+
+Entity.prototype.type = 'Entity';
+Entity.prototype.isEntity = true;
+Entity.prototype.cidPrefix = 'e';
 
 Entity.createId = function(){
     return _.uniqueId('e');
@@ -404,5 +405,3 @@ Entity.toEntity = function( entity = 0, options ){
 
     return null;
 };
-
-export default Entity;

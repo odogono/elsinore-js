@@ -18,13 +18,17 @@ type ComponentDefType = Object; // TODO: replace with proper backbone model
 type ComponentDefIdentifierType = string | string[] | uint32 | ComponentDefRawType | ComponentDefType;
 
 
-
 export const ComponentDefCollection = Collection.extend({
     model: ComponentDef,
 
     getByHash: function(hash:string){
         return this.find( cdef => cdef.hash() == hash );
+    },
+
+    getByUri: function(uri:string){
+        return this.find( cdef => cdef.getUri() == uri );
     }
+
 });
 
 
@@ -204,7 +208,8 @@ export default class ComponentRegistry {
         // since the properties describe how the attrs should be set
 
         attrs = _.extend( {}, def.getAttrs(), attrs );
-        let createOptions = _.extend( {}, def.get('options'), {parse:true,registry:this.registry});
+        // NOTE: no longer neccesary to pass parse:true as the component constructor calls component.parse
+        const createOptions = _.extend( {}, def.get('options'), {registry:this.registry});
         let result = new ComponentType( attrs, createOptions );
 
         if( type ){
