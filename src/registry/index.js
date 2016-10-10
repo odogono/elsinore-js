@@ -148,6 +148,8 @@ _.extend(Registry.prototype, Events, {
     },
 
 
+    
+
     /**
      * 
      */
@@ -388,7 +390,7 @@ _.extend(Registry.prototype, Events, {
 
         // TODO : there has to be a better way of identifying entitysets
         if( result.isMemoryEntitySet ){//} result.isMemoryEntitySet && !result.open ){
-            console.log('this is a memory es');
+            // console.log('this is a memory es');
             // NOTE: setting the id to 0 means that entity ids would be shifted up
             result.id = 0;
 

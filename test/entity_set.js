@@ -101,7 +101,7 @@ test('adding a component without an id or an entity id creates a new component a
 test('adding a component which is already a member', t => {
     return initialiseRegistry().then( registry => {
         const entitySet = registry.createEntitySet();
-        logEvents(entitySet);
+        // logEvents(entitySet);
 
         const component = registry.createComponent('/component/position', {x:200, y:0});
         t.equals( component.id, undefined, 'the component should be created without a valid id' );
@@ -119,15 +119,13 @@ test('adding a component which is already a member', t => {
 
         // the previously inserted component instance no longer has an entity reference because it
         // has been superceded
-        t.equal( inserted.getEntityId(), 0 );
+        // t.equal( inserted.getEntityId(), 0 );
 
         // change the fields and insert again
         component.set({x:200,y:-200});
         entitySet.addComponent( component );
 
-        
-        console.log(' ');console.log(' inserting com', inserted.id, inserted.getEntityId() );
-        entitySet.addComponent( inserted,{debug:true} );
+        entitySet.addComponent( inserted );
 
         t.equals( entitySet.size(), 1 );
 
@@ -138,7 +136,7 @@ test('adding a component which is already a member', t => {
 });
 
 
-test.only('updating a component should not replace the instance already in the entityset', t => {
+test('updating a component should not replace the instance already in the entityset', t => {
     return initialiseRegistry().then( registry => {
         const entitySet = registry.createEntitySet();
         // logEvents(entitySet);
@@ -170,13 +168,12 @@ test.only('updating a component should not replace the instance already in the e
 
 test('removing a component from an entity with only one component', t => {
     return initialiseRegistry().then( registry => {
-        let entitySet = registry.createEntitySet();
-        let eventSpy = Sinon.spy();
-        let component;
-
+        const entitySet = registry.createEntitySet();
+        const eventSpy = Sinon.spy();
+        
         entitySet.on('all', eventSpy);
 
-        component = entitySet.addComponent( 
+        let component = entitySet.addComponent( 
             registry.createComponent( '/component/position', {x:15,y:2}) );
 
         // printE( entitySet );
@@ -330,26 +327,27 @@ test('adding an entity with components', t => {
 
 test('should return the number of entities contained', t => {
     return initialiseRegistry().then( registry => {
-        let entitySet = registry.createEntitySet();
-        let eventSpy = Sinon.spy();
-        // Common.logEvents( entitySet );
+        const entitySet = registry.createEntitySet();
+        const eventSpy = Sinon.spy();
+        // 
 
-        let pos = registry.createComponent( '/component/position', {id:1,'@e':3});
-        let nick = registry.createComponent( '/component/nickname', {id:2,'@e':3});
+        const pos = registry.createComponent( '/component/position', {id:1,'@e':3});
+        const nick = registry.createComponent( '/component/nickname', {id:2,'@e':3});
 
         t.ok( pos.getEntityId(), 3 );
         t.ok( nick.getEntityId(), 3 );
         
         entitySet.addComponent( pos );
+        // t.equals( entitySet.size(), 1, 'should only be one entity' );
 
-        t.equals( entitySet.size(), 1, 'should only be one entity' );
-
+        // logEvents( entitySet );
         entitySet.addComponent( nick );
+        // printE( entitySet );
         t.equals( entitySet.size(), 1, 'should only be one entity' );
 
         // retrieve an entity by id 3
-        let entity = entitySet.getEntity(3);
-        // printE( entitySet );
+        const entity = entitySet.getEntity(3);
+        
         // log.debug( entitySet.at(0).id + ' is e id ' + entitySet.id );
 
         t.ok( entity.Position, 'entity should have position' );
@@ -573,7 +571,7 @@ test('adding an entity with an identical id will replace the existing one', t =>
        let eventSpy = Sinon.spy();
        entitySet.on('component:change', eventSpy );
 
-       // logEvents(entitySet);
+    //    logEvents(entitySet);
 
        // let entities = loadEntities( registry );  
        // let entity = entities.at(0);
@@ -592,11 +590,12 @@ test('adding an entity with an identical id will replace the existing one', t =>
        entitySet.addEntity( entityA );
        entitySet.addEntity( entityB );
        
+       const addedEntity = entitySet.at(0);
        t.equals( entitySet.size(), 1);
        t.ok( eventSpy.calledOnce, `component:change was called ${eventSpy.callCount} times`);
-       t.equals( entitySet.at(0).Status.get('status'), 'active' );
-       t.equals( entitySet.at(0).Position.get('x'), 15 );
-
+       t.equals( addedEntity.Status.get('status'), 'active' );
+       t.equals( addedEntity.Position.get('x'), 15 );
+    //    printE( entitySet );
        t.end();
    })
    .catch( err => { log.debug('t.error: ' + err ); log.debug( err.stack );} ) 
@@ -635,6 +634,7 @@ test('should only retain the included component on entity', t => {
         entitySet.addEntity( entities.at(0) );
 
         // printE( entitySet );
+
         // the entity won't have any of the other components
         t.equals( entitySet.at(0).getComponentCount(), 1);
         t.end();
@@ -850,7 +850,7 @@ test('emit event when a component instance is changed', t => {
 test('mutating a previously added component does not affect the entityset', t => {
     return initialise().then( ([registry,entitySet,entities]) => {
         const spy = Sinon.spy();
-        logEvents( entitySet );
+        // logEvents( entitySet );
 
         const component = registry.createComponent({'@c':'/component/flower', colour:'blue'});
 

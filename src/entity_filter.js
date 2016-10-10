@@ -58,6 +58,9 @@ export default class EntityFilter {
         return filter.toValues();
     }
 
+    /**
+     * 
+     */
     accept( entity, options ){
         let filter, bitField;
         let ebf;// = BitField.isBitField(entity) ? entity : entity.getComponentBitfield();
@@ -74,12 +77,12 @@ export default class EntityFilter {
 
         for (let type in this.filters) {
             bitField = this.filters[type];
-            // log.debug('EF.accept ' + type + ' ' + bitField.toString() );
+            // log.debug('EF.accept ' + type + ' ', bitField.toJSON(), ebf.toJSON() );
             if( entity && type == INCLUDE ){
                 
-                // printE( entity );
+                // log.debug('EF.accept filter pre', Utils.toString( entity ));
                 entity = EntityFilter.Transform( type, registry, entity, ebf, bitField );
-                // printE( entity );
+                // log.debug('EF.accept filter post', Utils.toString( entity ));
             }
             else if( !EntityFilter.accept( type, ebf, bitField, true ) ){
                 return null;
@@ -112,24 +115,20 @@ EntityFilter.ROOT = ROOT;
 
 
 EntityFilter.Transform = function( type, registry, entity, entityBitField, filterBitField ){
-    let ii, len, defId, bf, ebf, vals, isInclude, isExclude, result;
-    isInclude = (type == INCLUDE);
-    isExclude = (type == EXCLUDE);
+    let ii, len, defId, bf, ebf, vals, result;
+    const isInclude = (type == INCLUDE);
+    const isExclude = (type == EXCLUDE);
 
-    result = registry.cloneEntity(entity );
+    // result = registry.cloneEntity(entity);
 
-    // log.debug('EFT ' + type + ' ' + isInclude + ' ' + entityBitField.toJSON() + ' ' + filterBitField.toJSON() );
     if( isInclude ){
-        // iterate through each of the entities components (as c IIDs)
-        vals = entityBitField.toValues();
-        // log.debug('EFT include ' + vals );
-        for( ii=0,len=vals.length;ii<len;ii++ ){
-            defId = vals[ii];
+        const removeDefIds = _.difference(entityBitField.toJSON(), filterBitField.toJSON());
+        // log.debug('EFT ',type,isInclude, entityBitField.toJSON(), filterBitField.toJSON(), removeDefIds );
 
-            if( !filterBitField.get(defId) ){
-                result.removeComponent( result.components[defId] );
-            }
-        }
+        entity.removeComponents( removeDefIds );
+        
+        return entity;
+
     // handle exclude filter, and also no filter specified
     } else {
         vals = entityBitField.toValues();

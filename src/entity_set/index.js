@@ -196,6 +196,17 @@ export default class EntitySet extends Collection {
     }
 
     /**
+     * Returns a component by its entityid and def id
+     */
+    getComponentByEntityId( entityId, componentDefId ){
+        const entity = this.get(entityId);
+        if( entity ){
+            return entity.components[componentDefId];
+        }
+        return null;
+    }
+
+    /**
     *
     */
     removeComponent( component, options ){
@@ -296,21 +307,24 @@ export default class EntitySet extends Collection {
      * the async based cmd-buffer calls this function once it has resolved a list of entities and components to be added
      */
     update(entitiesAdded, entitiesUpdated, entitiesRemoved, componentsAdded, componentsUpdated, componentsRemoved) {
-        let ii,len,compoinent;
+        let ii,len,component;
         
         for( ii=0,len=componentsAdded.length;ii<len;ii++ ){
             this.components.add( componentsAdded[ii] );
             // console.log('UPDATE/ADD', componentsAdded[ii].getEntityId() );
         }
         for( ii=0,len=componentsUpdated.length;ii<len;ii++ ){
-            let existing = this.components.get( componentsUpdated[ii] );
+            component = componentsUpdated[ii];
+            // console.log(`!!ES!! updated com ${JSON.stringify(component)} ${component.getEntityId()}`);
+            let existing = this.getComponentByEntityId( component.getEntityId(), component.getDefId() );
+            // let existing = this.components.get( component );
             if( existing ){
                 // console.log(`!!ES!! EntitySet.update existing ${existing.cid} ${existing.getEntityId()}`);
-                existing.apply( componentsUpdated[ii], {silent:true} );
+                existing.apply( component, {silent:true} );
                 // console.log(`!!ES!! EntitySet.update existing ${existing.cid} ${existing.getEntityId()}`);
             } else {
-                // console.log(`!!!ES!!! adding component update ${JSON.stringify(componentsUpdated[ii])}`);
-                this.components.add( componentsUpdated[ii] );
+                // console.log(`!!!ES!!! adding component update ${JSON.stringify(component)}`);
+                this.components.add( component );
             }
         }
         for( ii=0,len=componentsRemoved.length;ii<len;ii++ ){
@@ -430,17 +444,20 @@ export default class EntitySet extends Collection {
 
     // TODO: remove
     removeComponentFromEntity( component, entity, options ){
-        let bf = entity.getComponentBitfield();
 
-        if( !bf.get(component.getDefId()) ){
-            // log.debug('no component found for ' + component.name + ' ' + bf.toString() );
-            throw new Error('no component found for ' + component.name);
-        }
+        entity.removeComponent(component);
 
-        bf.set( component.getDefId(), false );
+        // const bf = entity.getComponentBitfield();
 
-        delete entity[ component.name ];
-        delete entity.components[ component.getDefId() ];
+        // if( !bf.get(component.getDefId()) ){
+        //     // log.debug('no component found for ' + component.name + ' ' + bf.toString() );
+        //     throw new Error('no component found for ' + component.name);
+        // }
+
+        // bf.set( component.getDefId(), false );
+
+        // delete entity[ component.name ];
+        // delete entity.components[ component.getDefId() ];
 
         this.getRegistry().destroyComponent( component );
 

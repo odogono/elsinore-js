@@ -585,7 +585,7 @@ function gatherEntityFilters( context, expression ){
                     return null;
                 }
                 bf = context.componentsToBitfield( context, obj );
-                // console.log('CONVERTED TO BF', bf.toString());
+                // console.log('CONVERTED TO BF', bf.toString(), bf.toJSON() );
                 // filter = expression[0];
                 switch( filter ){
                     case ALL_FILTER: filter = ALL; break;
@@ -808,87 +808,6 @@ function commandComponentAttribute( context, attributes ){
     return (context.last = [ VALUE, result ] );
 }
 
-
-
-
-// /**
-// *   filters the given entityset with the given entityfilter returning
-// *   a new entityset
-// */
-// QueryContext.prototype.filterEntitySet = function( context, entitySet, entityFilter, options ){
-//     let entities,result;
-
-//     // filtersLength = entityFilter.filters.length;
-//     // filter the entitySet using the component filters
-//     entities = _.reduce( entitySet.models, function(result, entity){
-//         if( !entityFilter.accept( entity, context ) ){
-//             return result;
-//         }
-//         // let ii,len,filter;
-//         // let ebf = entity.getComponentBitfield();
-//         // for( ii=0;ii<filtersLength;ii++ ){
-//         //     filter = filters.filters[ii];
-//         //     if( !EntityFilter.accept( filter.type, ebf, filter.bitField, false ) ){
-//         //         // console.log(entity.getEntityId() + ' accept with ' + Utils.stringify(filter) + ' FALSE');
-//         //         return result;
-//         //     }
-//         // }
-//         // console.log( entity.getEntityId() + ' accept with ' + Utils.stringify(filter) + ' TRUE');
-//         result.push( entity );
-//         return result;
-//     }, []);
-
-//     result = context.registry.createEntitySet( null, {register:false} );
-//     result.addEntity( entities );
-
-//     return result;
-// }
-
-
-
-// Query.commandEntityFilter = function( context, entityFilter, options ){
-//     let entitySet, entity, entities, registry,result,ebf,filterType,filterBitField;
-//     // if( context.debug ){ console.log('commandEntityFilter'); }
-
-    
-//     // filtersLength = entityFilter.filters.length;
-//     entity = context.entity;
-//     registry = context.registry;
-
-//     if( entity ){
-//         // printIns( context.entity );
-//         // if( true || context.debug ){ console.log('commandEntityFilter> entity ' + context.entity.cid ); }
-//         // filter the entity using the component filters - returns a boolean
-        
-
-//         if( !entityFilter.accept(entity, context) ){
-//             // if( true || context.debug ){ console.log('commandEntityFilter> entity ' + context.entity.cid + ' rejected' ); }
-//             return (context.last = [ VALUE, null ]);
-//         }
-
-//         ebf = entity.getComponentBitfield();
-
-//         for( filterType in entityFilter.filters ){
-//             filterBitField = entityFilter.filters[filterType];
-//             // printIns( filter );
-//             // console.log('commandEntityFilter> filter ' + filterType + ' ' + JSON.stringify(filterBitField.toValues()) );
-//             if( filterType == EntityFilter.INCLUDE ){
-//                 entity = EntityFilterTransform( filterType, registry, entity, ebf, filterBitField );
-//             }
-//             else if( !EntityFilter.accept( filterType, ebf, filterBitField, false ) ){
-//                 return (context.last = [ VALUE, null ]);
-//             }
-//         }
-//         if( context.debug ){ console.log('commandEntityFilter> entity ' + context.entity.cid + ' passed' ); }
-
-//         return (context.last = [ VALUE, entity ]);
-//     } else {
-//         // filter the entitySet using the component filters
-//         // result = Query._filterEntitySet( context, context.entitySet, entityFilter, options );
-//         result = context.filterEntitySet( context, context.entitySet, entityFilter, options );
-//         return (context.last = [ VALUE, result ]);
-//     }
-// }
 
 
 
