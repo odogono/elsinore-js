@@ -571,7 +571,7 @@ test('adding an entity with an identical id will replace the existing one', t =>
        let eventSpy = Sinon.spy();
        entitySet.on('component:change', eventSpy );
 
-    //    logEvents(entitySet);
+       logEvents(entitySet);
 
        // let entities = loadEntities( registry );  
        // let entity = entities.at(0);
@@ -981,8 +981,7 @@ test('possible to add 2 entities with same entityIds but different entityset ids
 
         entitySet.addEntity(entityA);
         entitySet.addEntity(entityB);
-        // printE( entitySet );
-        // console.log('added entity ' + entityA.id + ' and ' + entityB.id );
+        
         t.equals( entitySet.size(), 2, 'two entities should have been added' );
     })
     .then( () => t.end() )

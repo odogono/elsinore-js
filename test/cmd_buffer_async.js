@@ -207,11 +207,6 @@ test('removing all components from an entity', t => {
         _.each( coms, com => e.addComponent(com) );
         // printIns( e.getComponentBitfield().toString() );
 
-        // es.getEntity = function(entityId){
-        //     e.hasComponent = (cIId) => true;
-        //     return Promise.resolve(e);
-        // }
-
         return cb.removeComponent( es, coms )
             .then( added => {
                 reportUpdates( t, es, 0, 0, 1, 0, 0, 3 );

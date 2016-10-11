@@ -10,6 +10,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - copyEntity/copyComponent moved to registry.cloneEntity/registry.cloneComponent
 - components are cloned when added to an entityset
 
+### Added
+- AsyncEntitySet - promise based, in-memory, entityset base class
+
 ## [3.3.0] - 2016-08-16
 ### Added
 - reinstated registry.createEntity and added explicit registry.createEntityWithId

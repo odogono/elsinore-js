@@ -184,9 +184,12 @@ export default class ComponentRegistry {
 
         let def = this.getComponentDef( defUri, {throwOnNotFound} );
 
-        if( !def && cb ){
-            return cb('could not find componentDef ' + defUri);
+        if(!def){
+            if(cb){ return cb('could not find componentDef ' + defUri); }
+            return null;
         }
+
+        
 
         let ComponentType = Component;
         let type = def.get('type');
@@ -237,9 +240,9 @@ export default class ComponentRegistry {
      */
     getComponentDef( identifiers:ComponentDefIdentifierType, options:Object={} ): Object|null|uint32 {
         let ii=0, len=0, cDef, ident;
-        let forceArray = _.isUndefined(options.forceArray) ? false : options.forceArray;
-        let returnIds = _.isUndefined(options.returnIds) ? false : options.returnIds;
-        let throwOnNotFound = _.isUndefined(options.throwOnNotFound) ? false : options.throwOnNotFound;
+        const forceArray = _.isUndefined(options.forceArray) ? false : options.forceArray;
+        const returnIds = _.isUndefined(options.returnIds) ? false : options.returnIds;
+        const throwOnNotFound = _.isUndefined(options.throwOnNotFound) ? false : options.throwOnNotFound;
         let result;
         
         identifiers = _.isArray(identifiers) ? identifiers : [identifiers];
@@ -247,6 +250,7 @@ export default class ComponentRegistry {
         for ( ii=0,len=identifiers.length;ii<len;ii++ ){
             ident = identifiers[ii];
             
+            // console.log('looking at', ident);
             if(_.isObject(ident) ){
                 ident = ident.id || ident.hash;
             }

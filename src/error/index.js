@@ -45,3 +45,13 @@ export function ComponentDefNotFoundError(id,message){
 }
 ComponentDefNotFoundError.prototype = Object.create(ElsinoreError.prototype);
 ComponentDefNotFoundError.prototype.constructor = ComponentDefNotFoundError;
+
+export function ComponentNotFoundError(entityId, componentDefId, message){
+    this.name = 'ComponentNotFoundError';
+    this.entityId = entityId;
+    this.componentDefId = componentDefId;
+    Error.captureStackTrace(this, this.constructor);
+    this.message = message || `component ${entityId}/${componentDefId} not found`;
+}
+ComponentNotFoundError.prototype = Object.create(ElsinoreError.prototype);
+ComponentNotFoundError.prototype.constructor = ComponentNotFoundError;

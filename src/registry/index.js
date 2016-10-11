@@ -393,8 +393,9 @@ _.extend(Registry.prototype, Events, {
             instanceClass = options.instanceClass;
         }
 
+        
         // create a 20 bit 
-        id = this.createId();
+        id = options['@es'] || this.createId();
         result = new instanceClass( null, _.extend( {}, options,{id}) );
         result.setRegistry( this );
         

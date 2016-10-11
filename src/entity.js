@@ -53,10 +53,8 @@ export default class Entity extends Model {
 
         
         if( !attrs || _.isUndefined(attrs.id) ){
-            console.log('setId', eid,esid);
             this.setId(eid, esid); 
         }
-        // console.log('MF e id', attrs.id, this.id, attrs);
 
         this.components = [];
 
@@ -65,18 +63,6 @@ export default class Entity extends Model {
         Model.prototype.initialize.apply(this,arguments);
     }
 
-    // initialize: function(attrs, options){
-
-    // },
-
-    // parse: function( resp ){
-    //     console.log('Entity parse', resp);
-    //     return resp;
-    // },
-
-    // set: function set(key, val, options) {
-    //     Model.prototype.set.apply(this, arguments);
-    // },
 
     isNew() {
         return this.id === 0;

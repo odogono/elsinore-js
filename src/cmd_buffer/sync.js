@@ -409,7 +409,7 @@ export default class CmdBuffer {
                         if( !entity ){
                             // if( debug )console.log('create entity with ' + JSON.stringify(entityId) );
                             tEntity = entitySet._createEntity( entityId, false, options );
-                            if( debug ){ console.log('adding entity', tEntity.id, entityId); }
+                            if( debug ){ console.log('adding entity', Utils.toString(tEntity));}// tEntity.id, entityId); }
                         }
                         break;
                     case CMD_COMPONENT_ADD:
@@ -483,7 +483,7 @@ export default class CmdBuffer {
             if( !entity ){
                 if( entitySet.doesEntityHaveComponents(tEntity) ){
                     entitySet._addEntity( tEntity );
-                    // console.log('add new entity ' + tEntity.id );
+                    if(debug){console.log('add new entity ' + tEntity.id );}
                     this.entitiesAdded.add( tEntity );
                 }
             }
@@ -503,26 +503,6 @@ export default class CmdBuffer {
                 this.componentsRemoved.add(
                     entity.removeComponents(bfDifference));
 
-                // for( ii=0,len=bfDifference.length;ii<len;ii++ ){//defId in bfDifference ){
-                //     defId = bfDifference[ii];
-                //     if( debug ){ console.log('removing ' + defId + ' ' + JSON.stringify(com) ); }
-                //     com = entity.components[defId];
-                //     entitySet.removeComponentFromEntity( com, entity );
-                //     this.componentsRemoved.add( com );
-                // }
-
-                // for( defId in entity.components ){
-                //     // if( debug ) console.log('b ' + defId );
-                //     if( !tEntity.components[defId] ){
-                //         com = entity.components[defId];
-                //         if( debug ){ console.log('removing ' + defId + ' ' + JSON.stringify(com) ); }
-                //         entitySet.removeComponentFromEntity( com, entity );
-                //         this.componentsRemoved.add( com );
-                //         // printE( entity );
-                //     }
-                // }
-
-                
                 // if the entity has no more components, then remove it
                 if( (!this.allowEmptyEntities || removeEmptyEntity) && entity.getComponentCount() <= 0 ){
                     if( debug ){ console.log('removing entity ' + entity.getEntityId() + '/' + entity.cid ); }

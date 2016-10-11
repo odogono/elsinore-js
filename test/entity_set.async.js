@@ -21,7 +21,7 @@ import {
     requireLib,
 } from './common';
 
-const createOptions = {instanceClass:AsyncEntitySet};
+const createOptions = {instanceClass:AsyncEntitySet, entityIdStart:100, componentIdStart:10};
 
 test('type of entityset', t => {
     return initialiseAll(createOptions).then( ([registry,entitySet]) => {
@@ -55,7 +55,7 @@ test('adding several components without an entity adds them to the same new enti
     // let registry;
 
     return initialiseAll(createOptions).then( ([registry,entitySet]) => {
-        logEvents( entitySet );
+        // logEvents( entitySet );
         entitySet.on('all', eventSpy);
 
         return entitySet.addComponent([
@@ -79,7 +79,7 @@ test('adding several components without an entity adds them to the same new enti
     .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
 });
 
-test.only('removing a component from an entity with only one component', t => {
+test('removing a component from an entity with only one component', t => {
     const eventSpy = Sinon.spy();
     
     return initialiseAll(createOptions).then( ([registry,entitySet]) => {
@@ -93,7 +93,7 @@ test.only('removing a component from an entity with only one component', t => {
                 // log.debug('removed! ' + component.id );
                 return component;
             })
-            .then( component => entitySet.removeComponent(component, {debug:true}) )
+            .then( component => entitySet.removeComponent(component) )
             // .then( () => printKeys(entitySet, '_ent_bf', {values:false} ) )
             // .then( component => entitySet.getEntity(component.getEntityId()) )
             .then( (entity) => {
@@ -125,6 +125,79 @@ test('returns the newest version of the schema', t => {
     .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
 });
 
+
+test('adding an existing entity changes its id if it didnt originate from the entityset', t => {
+    const eventSpy = Sinon.spy();
+    
+    return initialiseAll({'@es':205, ...createOptions}).then( ([registry,entitySet]) => {
+        entitySet.on('all', eventSpy);
+        const entity = registry.createEntity( { '@c':'/component/flower', colour:'white'}, {'@e':12} );
+        // printE( entity );
+        // logEvents( entitySet );
+        return entitySet.addEntity( entity )
+            .then( entity => {
+                // printE( entity );
+                t.notEqual( entity.getEntityId(), 12, 'the entity id will have been changed' );
+                t.equal( entity.getEntitySetId(), 205, 'the entityset id will have been set' );
+            })
+    })
+    .then( () => t.end() )
+    .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
+});
+
+test('adding an existing entity doesnt changes its id if it originated from the entityset', t => {
+    const eventSpy = Sinon.spy();
+    
+    return initialiseAll({'@es':205, ...createOptions}).then( ([registry,entitySet]) => {
+        entitySet.on('all', eventSpy);
+        const entity = registry.createEntity( { '@c':'/component/flower', colour:'white'}, { '@e':12, '@es':205} );
+            // logEvents( entitySet );
+            // printE( entity );
+        return entitySet.addEntity( entity )
+            .then( entity => {
+                    
+                t.equal( entity.getEntitySetId(), 205, 'the entityset id will have been set' );
+                t.equal( entity.getEntityId(), 12, 'the entity id will have been changed' );
+            })
+    })
+    .then( () => t.end() )
+    .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
+});
+
+test('adding an entity with an identical id will replace the existing one', t => {
+    const eventSpy = Sinon.spy();
+    
+    return initialiseAll({'@es':1, ...createOptions}).then( ([registry,entitySet]) => {
+        entitySet.on('all', eventSpy);
+        const entityA = registry.createEntity( {'@c':'/component/position', x:0,y:0}, {'@e':45, '@es':1} );
+        const entityB = registry.createEntity([
+            {'@c':'/component/position', x:15,y:-90},
+            {'@c':'/component/status', 'status':'active'}
+        ], {'@e':45, '@es':1});
+
+        // logEvents( entitySet );
+        return entitySet.addEntity( entityA )
+            // .then( () => { console.log(' ');})
+            .then( () => entitySet.addEntity(entityB))
+            .then( () => entitySet.getEntityById(45) )
+            .then( entity => {
+                // console.log(' ');
+                // printE( entitySet );
+                // printE( entitySet.components );
+                t.equals( entity.Status.get('status'), 'active' );
+                t.equals( entity.Position.get('x'), 15 );
+            })
+            // 
+        // return entitySet.addEntity( entity )
+        //     .then( entity => {
+                    
+        //         t.equal( entity.getEntitySetId(), 205, 'the entityset id will have been set' );
+        //         t.equal( entity.getEntityId(), 12, 'the entity id will have been changed' );
+        //     })
+    })
+    .then( () => t.end() )
+    .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
+});
 
 function initialiseAll(options){
     return initialiseRegistry().then( registry => {

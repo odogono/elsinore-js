@@ -269,7 +269,7 @@ export default class EntitySet extends Collection {
             return entityId;
         }
 
-        result = registry.createEntity(null,{'@e':entityId});
+        result = registry.createEntity(null,{id:entityId});
         // make sure we don't set the entityset id - memory entitysets retain
         // the original entityset id
         result.setEntitySet( this, false );
