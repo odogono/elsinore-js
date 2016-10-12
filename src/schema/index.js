@@ -86,6 +86,11 @@ export default class ComponentRegistry {
             this._componentTypes[ inst.type ] = def;
             // console.log('Component has properties', inst.properties);
             this.trigger('type:add', inst.type, def);
+
+            if( inst.uri ){
+                this.register({uri:inst.uri,type:inst.type});
+            }
+
             return def;
         }
         

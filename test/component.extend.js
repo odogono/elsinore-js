@@ -31,7 +31,7 @@ test('registering a custom component type', t => {
         type: 'TestComponent',
 
         preinitialize: (attrs,options) => {
-            console.log('TestComponent preinit', attrs, options);
+            // console.log('TestComponent preinit', attrs, options);
         },
 
         verify: function(){
@@ -124,6 +124,27 @@ test('the custom component can supply properties', t => {
     t.equals( component.get('name'), 'tbd' );
 
     t.end();
+});
+
+
+test('the registered component class can also include a uri', t => {
+    createRegistry().then( registry => {
+        
+        const TestComponent = Component.extend({
+            uri: '/component/test',
+            type: 'TestComponent',
+            properties: { testValue:'unfulfilled' },
+        });
+
+        registry.registerComponent( TestComponent );
+
+        const component = registry.createComponent('/component/test');
+
+        t.equals( component.get('testValue'), 'unfulfilled');
+
+    })
+    .then( () => t.end() )
+    .catch( err => console.error('test error', err, err.stack));
 })
 
 
@@ -157,17 +178,31 @@ test('passing options to the custom component', t => {
 })
 
 
-test.skip('will be notified when the entity is added to an entityset', t => {
+/**
+ * Component is added to entity
+ * the component adds a new function to the entity so that it will
+ * 
+ */
+test('will be notified when the entity is added to an entityset', t => {
     createRegistry().then( registry => {
         // t.plan(1);
 
-        const TestComponent = Component.extend({
-            type: 'TestComponent',
-            onAdded: function( es ){
+        let calledOnAdded = false;
+        let calledOnRemoved = false;
 
+        const TestComponent = Component.extend({
+            uri: '/component/test',
+            type: 'TestComponent',
+            properties: { name:'unknown' },
+
+            onAdded: function( es ){
+                calledOnAdded = true;
+                this._entity.addChild = function(){
+                    // console.log('adding the child to me,', this.id, 'es', this.collection.getUuid() );
+                }
             },
             onRemoved: function(es){
-
+                calledOnRemoved = true;
             }
         });
 
@@ -175,26 +210,21 @@ test.skip('will be notified when the entity is added to an entityset', t => {
 
         let es = registry.createEntitySet();
         let es2 = registry.createEntitySet();
-        let e = registry.createComponent('/component/name');
-        let e2 = registry.createComponent('/component/position');
-        
 
-        es.addComponent([e,e2]);
 
-        console.log('first entity', e.id );
-        console.log('2nd entity', e2.id );
-        console.log('es',es.size());
-        printE( es );
+        let e = registry.createComponent('/component/test');
+        es.addComponent(e);
 
-        es2.addComponent([e,e2]);
-        printE(es2);
+        const entity = es.at(0);
+        entity.addChild(2);
 
-        console.log('first entity', e.getEntityId() );
-        console.log('2nd entity', e2.getEntityId() );
-        e2.set({y:12});
+        // printE(es);
 
-        printE(es);
-        printE(es2);
+        entity.removeComponent( entity.Test );
+
+        t.ok(calledOnAdded, 'onAdded was called');
+        t.ok(calledOnRemoved, 'onRemoved was called');
+
     })
     .then( () => t.end() )
     .catch( err => console.error('test error', err, err.stack));

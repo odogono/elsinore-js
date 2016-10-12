@@ -176,6 +176,14 @@ _.extend(Registry.prototype, Events, {
         if( !dstEntity ){
             const result = srcEntity.clone();
             result.setRegistry(this);
+
+            if( options.full ){
+                // const components = srcEntity.getComponents();
+                _.each( srcEntity.getComponents(), com => {
+                    result.addComponent( this.cloneComponent(com) );
+                });
+            }
+
             return result;
         }
 

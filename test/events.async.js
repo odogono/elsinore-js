@@ -4,8 +4,12 @@ import test from 'tape';
 import _ from 'underscore';
 import {Events} from 'odgn-backbone-model';
 import Common  from './common';
-let EventsAsync = Common.requireLib('util/events.async');
-let Utils = Common.requireLib('utils');
+
+import EventsAsync from '../src/util/events.async';
+import Utils from '../src/util';
+
+// let EventsAsync = Common.requireLib('util/events.async');
+// let Utils = Common.requireLib('utils');
 
 
 // let EventsAsync = _.extend({}, Events, {

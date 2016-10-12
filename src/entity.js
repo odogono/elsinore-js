@@ -181,6 +181,9 @@ export default class Entity extends Model {
         this.components[ component.getDefId() ] = component;
         this.getComponentBitfield().set( component.getDefId(), true );
         component.on('all', this._onComponentEvent, this);
+        if( _.isFunction(component.onAdded) ){
+            component.onAdded(this);
+        }
         return this;
     }
 
@@ -201,12 +204,19 @@ export default class Entity extends Model {
 
     removeComponent( component ){
         if( !component ){ return this; }
-        component.setEntityId( null );
+        
+        // NOTE - the below is contentious
+        // it was commented out to allow es events to continue to make sense
+        // perhaps the old entity id should be retained somewhere else?
+        // component.setEntityId( null );
         component._entity = null;
         delete this[ component.name ];
         delete this.components[ component.getDefId() ];
         this.getComponentBitfield().set( component.getDefId(), false );
         component.off('all', this._onComponentEvent, this);
+        if( _.isFunction(component.onRemoved) ){
+            component.onRemoved(this);
+        }
         return this;
     }
 

@@ -197,16 +197,21 @@ test('removing a relevant component from an entity should trigger a entity:remov
         // printIns( entitySet, 1 );
         view.on('all', eventSpy);
 
-        // Common.logEvents( entitySet, 'e es' );
-        // Common.logEvents( view, 'e view' );
+        // logEvents( entitySet, 'e es' );
+        // logEvents( view, 'e view' );
+
+        
 
         // remove an unrelated component to the view
         entitySet.removeComponent( entitySet.at(0).Status );
-        // printE( entitySet.at(0) );
         
+        // printE( view.at(0).Channel );
         // remove the score component from the first entity in the view
-        entitySet.removeComponent( view.at(0).Channel );
+        entitySet.removeComponent( view.at(0).Channel, );
 
+        // printE( entitySet.at(0) );
+        // printE( view.at(0) );
+        
         // t.ok( eventSpy.calledOnce, 'only one event emitted from the view' );
         t.ok( eventSpy.calledWith('entity:remove'), 'entity:remove should have been called');
 

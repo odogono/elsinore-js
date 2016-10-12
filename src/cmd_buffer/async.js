@@ -60,14 +60,9 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
                 execute = true;
             }
 
-            return _.reduce( component, (current, com) => {
-                return current.then( () => this.addComponent(entitySet, com, options) );
-            }, Promise.resolve() )
-                .then( () => {
-                    if( !execute ){ return this; }
-                    return this.execute( entitySet, options )
-                        .then( () => Utils.valueArray(this.componentsAdded.models) );
-                });
+            return Promise.all(_.map(component, c => this.addComponent(entitySet, c, options)))
+                .then( () => execute ? this.execute(entitySet,options) : this )
+
         } else {
             if( execute ){ this.reset(); }
         }
@@ -223,15 +218,6 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
                     }
                     return this;
                 });
-            // return _.reduce( component,
-            //     (current,com) => current.then(() => this.removeComponent(entitySet, com, options))
-            // , Promise.resolve() )
-            //     .then( () => {
-            //         if( execute ){
-            //             return this.execute( entitySet, options );
-            //         }
-            //         return this;
-            //     });
         } else {
             if( execute ){
                 this.reset();
@@ -245,37 +231,12 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
             return Promise.resolve([]);
         }
 
-        // this should be a quick check - without retrieving the full es
-        // if( !entitySet.hasEntity(entityId) ){
-        //     log.error(`entity ${entityId} not found`);
-        //     return execute ? [] : this;
-        // }
-
         // console.log('HERE remove', component.id, _.isArray(component.id) );
         this.addCommandX( CMD_COMPONENT_REMOVE, entityId, component);
 
         return (!execute) ? this : 
             this.execute(entitySet,options)
             .then( () => Utils.valueArray(this.componentsRemoved.models));
-
-        // return entitySet.getEntity( entityId, getEntityOptions )
-        //     .then( entity => {
-        //         console.log('so adding REM', entity);
-        //         const commandOptions = _.extend( {}, options, {entity:entity, id:entity.id, mode:0} );
-        //         this.addCommand( CMD_COMPONENT_REMOVE, component, commandOptions );
-        //         if( !execute ){
-        //             return this;
-        //         }
-                
-        //         return this.execute( entitySet, options )
-        //             .then( () => Utils.valueArray(this.componentsRemoved.models) );
-        //     })
-        //     .catch( err => {
-        //         log.error('err removing notfound ' + Utils.getEntitySetIdFromId(entityId) + ' ' + entityId + ' ' + err );
-        //         log.error( err.stack );
-        //         // entity doesn't exist
-        //         return execute ? [] : this;
-        //     });
     }
 
 
@@ -323,16 +284,11 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
 
         return this.addComponent( entitySet, entity.getComponents(), _.extend({},options,addOptions) )
             .then( () => {
-                if( !execute ){
-                    // log.debug('completed e addC');
-                    // printE( entity );
-                    return this;
-                }
+                if( !execute ){ return this; }
 
                 // execute any outstanding commands
                 return this.execute( entitySet, options )
                     .then( () => {
-                        // printIns( this.entitiesUpdated );
                         return Utils.valueArray( 
                             this.entitiesAdded.models.concat( this.entitiesUpdated.models ) );
                     });
@@ -545,131 +501,131 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
             })
 
         
-        return _.keys(this.cmds).reduce( (sequence, entityId) => {
-            let cmds = this.cmds[ entityId ];
+        // return _.keys(this.cmds).reduce( (sequence, entityId) => {
+        //     let cmds = this.cmds[ entityId ];
             
-            return sequence.then( () => {
+        //     return sequence.then( () => {
                 
-                // iterate through each cmd for the entity
-                cmds.forEach( cmd => {
-                    let commandType = cmd[0];
-                    let component = cmd[1];
-                    let cmdOptions = cmd[2];
-                    let entity = cmdOptions.entity;
-                    let entityId = entity ? entity.id : 0;
-                    let mode = cmdOptions.mode;
-                    let entityChanged = false;
+        //         // iterate through each cmd for the entity
+        //         cmds.forEach( cmd => {
+        //             let commandType = cmd[0];
+        //             let component = cmd[1];
+        //             let cmdOptions = cmd[2];
+        //             let entity = cmdOptions.entity;
+        //             let entityId = entity ? entity.id : 0;
+        //             let mode = cmdOptions.mode;
+        //             let entityChanged = false;
 
-                    if( commandType == CMD_EX ){
-                        cmd = _.rest(cmd); // remove first
-                        commandType = cmd[0];
-                        entityId = cmd[1];
-                        component = cmd[2];
-                        cmdOptions = cmd[3];
-                        if(debug){console.log('cmdX', commandType, cmd[1], component, cmdOptions)}
-                    }
+        //             if( commandType == CMD_EX ){
+        //                 cmd = _.rest(cmd); // remove first
+        //                 commandType = cmd[0];
+        //                 entityId = cmd[1];
+        //                 component = cmd[2];
+        //                 cmdOptions = cmd[3];
+        //                 if(debug){console.log('cmdX', commandType, cmd[1], component, cmdOptions)}
+        //             }
 
-                    switch( commandType ){
-                        case CMD_ENTITY_ADD:
-                            this.entitiesAdded.add( entity );
+        //             switch( commandType ){
+        //                 case CMD_ENTITY_ADD:
+        //                     this.entitiesAdded.add( entity );
                             
-                            if( debug ){ 
-                                log.debug('cmd: adding entity ' + 
-                                    entity.getEntityId() + '/' + entity.cid + '/' + entity.getEntitySetId() ); 
-                            }
-                            break;
+        //                     if( debug ){ 
+        //                         log.debug('cmd: adding entity ' + 
+        //                             entity.getEntityId() + '/' + entity.cid + '/' + entity.getEntitySetId() ); 
+        //                     }
+        //                     break;
 
-                        case CMD_COMPONENT_ADD:
-                            entity.addComponent( component );
-                            if( !this.entitiesAdded.get(entity) ){
-                                this.entitiesUpdated.add(entity);
-                            }
+        //                 case CMD_COMPONENT_ADD:
+        //                     entity.addComponent( component );
+        //                     if( !this.entitiesAdded.get(entity) ){
+        //                         this.entitiesUpdated.add(entity);
+        //                     }
                             
-                            this.componentsAdded.add( component );
-                            break;
+        //                     this.componentsAdded.add( component );
+        //                     break;
 
-                        case CMD_COMPONENT_UPDATE:
-                            entity.addComponent( component );
-                            if( !this.entitiesAdded.get(entity) ){
-                                this.entitiesUpdated.add(entity);
-                            }
-                            this.componentsUpdated.add(component);
-                            break;
+        //                 case CMD_COMPONENT_UPDATE:
+        //                     entity.addComponent( component );
+        //                     if( !this.entitiesAdded.get(entity) ){
+        //                         this.entitiesUpdated.add(entity);
+        //                     }
+        //                     this.componentsUpdated.add(component);
+        //                     break;
 
-                        case CMD_COMPONENT_REMOVE:
-                            // no entity to remove from?
-                            if(debug ){ log.debug('removing component ' + JSON.stringify(component),'from',entityId ); }
-                            if( !entity ){
-                                return;
-                            }
+        //                 case CMD_COMPONENT_REMOVE:
+        //                     // no entity to remove from?
+        //                     if(debug ){ log.debug('removing component ' + JSON.stringify(component),'from',entityId ); }
+        //                     if( !entity ){
+        //                         return;
+        //                     }
 
-                            // 1. the component will be removed from the entityset CMD_COMPONENT_REMOVE(cid)
-                            // 2. the component will be removed from the entity CMD_COMPONENT_REMOVE_FROM_ENTITY(eid,cid)
-                            // 3. if the entity has no more components, the entity is removed CMD_ENTITY_REMOVE(eid)
+        //                     // 1. the component will be removed from the entityset CMD_COMPONENT_REMOVE(cid)
+        //                     // 2. the component will be removed from the entity CMD_COMPONENT_REMOVE_FROM_ENTITY(eid,cid)
+        //                     // 3. if the entity has no more components, the entity is removed CMD_ENTITY_REMOVE(eid)
                             
-                            this.componentsRemoved.add( component );
+        //                     this.componentsRemoved.add( component );
                             
-                            // log.debug('remove com ' + entity.hasComponents() + ' ' + entity.getComponentBitfield().toString() );
-                            entity.removeComponent( component );
-                            // if( (!entitySet.allowEmptyEntities || removeEmptyEntity) && !entity.hasComponents() ){
-                            if( !entity.hasComponents() ){
-                                this.entitiesRemoved.add(entity);
-                                this.entitiesUpdated.remove( entity );
-                            } else {
-                                this.entitiesUpdated.add(entity);
-                            }
-                            break;
-                    }
-                });
-            });
+        //                     // log.debug('remove com ' + entity.hasComponents() + ' ' + entity.getComponentBitfield().toString() );
+        //                     entity.removeComponent( component );
+        //                     // if( (!entitySet.allowEmptyEntities || removeEmptyEntity) && !entity.hasComponents() ){
+        //                     if( !entity.hasComponents() ){
+        //                         this.entitiesRemoved.add(entity);
+        //                         this.entitiesUpdated.remove( entity );
+        //                     } else {
+        //                         this.entitiesUpdated.add(entity);
+        //                     }
+        //                     break;
+        //             }
+        //         });
+        //     });
 
-        }, Promise.resolve() )
-        .then( () => {
-            let entity;
+        // }, Promise.resolve() )
+        // .then( () => {
+        //     let entity;
 
-            if( debug ){
-                this.debugLog();
-            }
+        //     if( debug ){
+        //         this.debugLog();
+        //     }
 
-            // save the new entities
-            return entitySet.update( 
-                this.entitiesAdded.models, 
-                this.entitiesUpdated.models, 
-                this.entitiesRemoved.models, 
-                this.componentsAdded.models,
-                this.componentsUpdated.models,
-                this.componentsRemoved.models )
-                .then( updateResult => {
-                    if( updateResult.entitiesAdded ){
-                        this.entitiesAdded.set( updateResult.entitiesAdded ); }
-                    if( updateResult.entitiesUpdated ){
-                        this.entitiesUpdated.set( updateResult.entitiesUpdated ); }
-                    if( updateResult.entitiesRemoved ){
-                        this.entitiesRemoved.set( updateResult.entitiesRemoved ); }
-                    if( updateResult.componentsAdded ){ 
-                        this.componentsAdded.set( updateResult.componentsAdded ); }
-                    if( updateResult.componentsUpdated ){ 
-                        this.componentsUpdated.set( updateResult.componentsUpdated ); }
-                    if( updateResult.componentsRemoved ){ 
-                        this.componentsRemoved.set( updateResult.componentsRemoved ); }
-                    if( updateResult && !_.isUndefined(updateResult.silent) ){
-                        silent = updateResult.silent;
-                    }
+        //     // save the new entities
+        //     return entitySet.update( 
+        //         this.entitiesAdded.models, 
+        //         this.entitiesUpdated.models, 
+        //         this.entitiesRemoved.models, 
+        //         this.componentsAdded.models,
+        //         this.componentsUpdated.models,
+        //         this.componentsRemoved.models )
+        //         .then( updateResult => {
+        //             if( updateResult.entitiesAdded ){
+        //                 this.entitiesAdded.set( updateResult.entitiesAdded ); }
+        //             if( updateResult.entitiesUpdated ){
+        //                 this.entitiesUpdated.set( updateResult.entitiesUpdated ); }
+        //             if( updateResult.entitiesRemoved ){
+        //                 this.entitiesRemoved.set( updateResult.entitiesRemoved ); }
+        //             if( updateResult.componentsAdded ){ 
+        //                 this.componentsAdded.set( updateResult.componentsAdded ); }
+        //             if( updateResult.componentsUpdated ){ 
+        //                 this.componentsUpdated.set( updateResult.componentsUpdated ); }
+        //             if( updateResult.componentsRemoved ){ 
+        //                 this.componentsRemoved.set( updateResult.componentsRemoved ); }
+        //             if( updateResult && !_.isUndefined(updateResult.silent) ){
+        //                 silent = updateResult.silent;
+        //             }
 
-                    if( !silent ){
-                        this.triggerEvents( entitySet );
-                    }
-                    return this;
-                });
-        });
+        //             if( !silent ){
+        //                 this.triggerEvents( entitySet );
+        //             }
+        //             return this;
+        //         });
+        // });
     }
 
-    isTempId( entityId ){
-        if( !entityId || (_.isString(entityId) && entityId.indexOf(TEMP_ENTITY_PREFIX) === 0) ){
-            return true;
-        }
-        return false;
-    }
+    // isTempId( entityId ){
+    //     if( !entityId || (_.isString(entityId) && entityId.indexOf(TEMP_ENTITY_PREFIX) === 0) ){
+    //         return true;
+    //     }
+    //     return false;
+    // }
 
 
 }

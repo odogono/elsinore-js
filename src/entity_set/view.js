@@ -168,13 +168,16 @@ _.extend( EntitySetListener.prototype, {
 
         // reduce down to components we are interested in
         for(ii=0,len=components.length;ii<len;ii++ ){
-            eid = Entity.getEntityId( components[ii] );
+            eid = components[ii].getEntityId();
+            // log.debug('onComponentRemove', eid, JSON.stringify(components[ii]));
+            // eid = Entity.getEntityId( components[ii] );
             if( entitySet.hasEntity( eid ) ){
                 this.changedEntityList[ eid ] = eid;
                 this.isModified = true;
             }
         }
 
+        // log.debug('onComponentRemove', this.updateOnEvent, JSON.stringify(components));
         if( this.updateOnEvent ){
             this.applyEvents();
         }
@@ -193,8 +196,9 @@ _.extend( EntitySetListener.prototype, {
         let changeOptions;
         let debug = options.debug;
 
+        
         if( !this.isModified ){
-            // if( debug ){ log.debug('not modified');}
+            if( debug ){ log.debug('not modified');}
             return;
         }
 
