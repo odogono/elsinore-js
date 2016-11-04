@@ -2,7 +2,6 @@
 
 import _ from 'underscore';
 import {Collection,Events,Model as BackboneModel} from 'odgn-backbone-model';
-// import Jsonpointer from 'jsonpointer';
 
 import Component from '../component';
 import * as Utils from '../util'
@@ -18,6 +17,9 @@ type ComponentDefType = Object; // TODO: replace with proper backbone model
 type ComponentDefIdentifierType = string | string[] | uint32 | ComponentDefRawType | ComponentDefType;
 
 
+/**
+ * 
+ */
 export const ComponentDefCollection = Collection.extend({
     model: ComponentDef,
 
@@ -32,7 +34,9 @@ export const ComponentDefCollection = Collection.extend({
 });
 
 
-
+/**
+ * 
+ */
 export default class ComponentRegistry {
     constructor( definitions, options={} ){
         _.extend(this, Events);
@@ -73,11 +77,13 @@ export default class ComponentRegistry {
     register( def:ComponentDefRawType|ComponentDefType, options:Object={} ): Object|null {
         let throwOnExists = _.isUndefined(options.throwOnExists) ? true : options.throwOnExists;
         
-        if( _.isArray(def) ){
+        if( ComponentDef.isComponentDef(def) ){
+            
+        }
+        else if( _.isArray(def) ){
             return _.map( def, d => this.register(d,options) );
         }
-
-        if( Component.isComponent(def) ){
+        else if( Component.isComponent(def) ){
             const defOptions = {registering:true, registry:this.registry};
             let inst = new def(null,defOptions);
             if( inst.properties ){
@@ -93,9 +99,8 @@ export default class ComponentRegistry {
 
             return def;
         }
-        
-        if( !_.isObject(def) || !def.uri ){
-            // console.log('def',def);
+        else if( !_.isObject(def) || !def.uri ){
+            console.log('def',def);
             throw new Error('invalid component def: ' + JSON.stringify(def) );
         }
         
@@ -104,10 +109,10 @@ export default class ComponentRegistry {
         if( existing ){
             // console.log('yep got back ', existing);
             if( throwOnExists ){
-                throw new Error('def ' + existing.uri + ' (' + existing.hash + ') already exists' );
-            } else {
-                return null;
+                throw new Error('def ' + existing.getUri() + ' (' + existing.hash() + ') already exists' );
             }
+            
+            return existing;
         }
 
         let type = def['type'];

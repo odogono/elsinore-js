@@ -12,6 +12,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 - AsyncEntitySet - promise based, in-memory, entityset base class
+- Can register Component sub-classes, which also have hooks which are called when added and removed from an entity
+
 
 ## [3.3.0] - 2016-08-16
 ### Added

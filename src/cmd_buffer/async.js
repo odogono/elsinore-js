@@ -61,7 +61,13 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
             }
 
             return Promise.all(_.map(component, c => this.addComponent(entitySet, c, options)))
-                .then( () => execute ? this.execute(entitySet,options) : this )
+                .then( () => {
+                    if( !execute ){ return this; }
+ 
+                    return this.execute( entitySet, options )
+                        .then( () => Utils.valueArray( 
+                                this.componentsAdded.models.concat(this.componentsUpdated.models) ) )
+                });
 
         } else {
             if( execute ){ this.reset(); }

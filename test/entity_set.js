@@ -571,7 +571,7 @@ test('adding an entity with an identical id will replace the existing one', t =>
        let eventSpy = Sinon.spy();
        entitySet.on('component:change', eventSpy );
 
-       logEvents(entitySet);
+    //    logEvents(entitySet);
 
        // let entities = loadEntities( registry );  
        // let entity = entities.at(0);

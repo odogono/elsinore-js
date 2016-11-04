@@ -1,17 +1,18 @@
 import _ from 'underscore';
 import {Events, Collection} from 'odgn-backbone-model'
-
 import BitField  from 'odgn-bitfield';
+
+import {createLog,createUuid} from '../util';
 import Entity from '../entity';
 import EntitySet from '../entity_set';
 import Component from '../component';
 import SchemaRegistry from '../schema';
-import SchemaProperties from '../schema/properties';
 import EntityProcessor from '../entity_processor';
 import EntityFilter from '../entity_filter';
+
+
 import * as Utils from '../util';
-import {uuid as createUuid} from '../util/uuid';
-import {getPropertiesObject, getProperties} from '../schema/properties';
+
 
 // let counter = Date.now() % 1e9;
 
@@ -20,6 +21,10 @@ import {getPropertiesObject, getProperties} from '../schema/properties';
  * @return {[type]} [description]
  */
  const Registry = function(){};
+
+// console.log('wait what', _.keys(Utils));
+
+// const Log = createLog('Registry');
 
 
 _.extend(Registry.prototype, Events, {
@@ -172,70 +177,93 @@ _.extend(Registry.prototype, Events, {
      * 
      */
     cloneEntity: function( srcEntity, dstEntity, options={} ){
-        let ii,len,component,srcComponent;        
-        if( !dstEntity ){
-            const result = srcEntity.clone();
-            result.setRegistry(this);
-
-            if( options.full ){
-                // const components = srcEntity.getComponents();
-                _.each( srcEntity.getComponents(), com => {
-                    result.addComponent( this.cloneComponent(com) );
-                });
-            }
-
-            return result;
-        }
-
-        const returnChanges = options.returnChanges;
-        const returnChanged = options.returnChanged;
+        let ii,len,component,srcComponent;
         const deleteMissing = options.delete;
-        let copyList = [];
-        let dstHasChanged = false;
+        const fullCopy = options.full;
 
-        if( !srcEntity ){
-            return returnChanged ? [false,null] : null;
+        if( !dstEntity ){
+            dstEntity = srcEntity.clone();
+            dstEntity.setRegistry(this);
         }
 
-        let srcComponents = srcEntity.getComponents();
-
-        // copy over dst components to new instance
-        if( dstEntity ){
-            let dstComponents = dstEntity.getComponents();
-
-            for(ii=0,len=dstComponents.length;ii<len;ii++){
-                component = dstComponents[ii];
-                srcComponent = srcEntity[component.name];
-                
-                if( deleteMissing ){
-                    if( !srcComponent ){
-                        dstHasChanged = true;
-                        continue;
-                    }
-                }
-                // if the src already has the same component, then don't copy
-                if( srcComponent ){
-                    // the dst component should have an id
-                    srcComponent.setId( component.getId() );
-                    
-                    if( srcComponent.hash() == component.hash() ){
-                        continue;
-                    } else {
-                        dstHasChanged = true;
-                    }
-                }
-                else {
-                    result.addComponent( this.cloneComponent(component));
-                }
-            }    
+        if( !dstEntity && !fullCopy ){
+            return dstEntity;
         }
 
-        // iterate over src components, copying them to the result
+        const srcComponents = srcEntity.getComponents();
+
         for(ii=0,len=srcComponents.length;ii<len;ii++){
-            result.addComponent(this.cloneComponent(srcComponents[ii]));
+            dstEntity.addComponent( this.cloneComponent(srcComponents[ii]) );
         }
 
-        return returnChanged ? [result,dstHasChanged] : result;
+        return dstEntity;
+
+        // if( !dstEntity ){
+        //     const result = srcEntity.clone();
+        //     result.setRegistry(this);
+
+        //     if( options.full ){
+        //         // const components = srcEntity.getComponents();
+        //         _.each( srcEntity.getComponents(), com => {
+        //             result.addComponent( this.cloneComponent(com) );
+        //         });
+        //     }
+
+        //     return result;
+        // }
+
+        // const srcComponents = srcEntity.getComponents();
+
+
+        // const returnChanges = options.returnChanges;
+        // const returnChanged = options.returnChanged;
+        // const deleteMissing = options.delete;
+        // let copyList = [];
+        // let dstHasChanged = false;
+
+        // if( !srcEntity ){
+        //     return returnChanged ? [false,null] : null;
+        // }
+
+        // let srcComponents = srcEntity.getComponents();
+
+        // // copy over dst components to new instance
+        // if( dstEntity ){
+        //     let dstComponents = dstEntity.getComponents();
+
+        //     for(ii=0,len=dstComponents.length;ii<len;ii++){
+        //         component = dstComponents[ii];
+        //         srcComponent = srcEntity[component.name];
+                
+        //         if( deleteMissing ){
+        //             if( !srcComponent ){
+        //                 dstHasChanged = true;
+        //                 continue;
+        //             }
+        //         }
+        //         // if the src already has the same component, then don't copy
+        //         if( srcComponent ){
+        //             // the dst component should have an id
+        //             srcComponent.setId( component.getId() );
+                    
+        //             if( srcComponent.hash() == component.hash() ){
+        //                 continue;
+        //             } else {
+        //                 dstHasChanged = true;
+        //             }
+        //         }
+        //         else {
+        //             result.addComponent( this.cloneComponent(component));
+        //         }
+        //     }    
+        // }
+
+        // // iterate over src components, copying them to the result
+        // for(ii=0,len=srcComponents.length;ii<len;ii++){
+        //     result.addComponent(this.cloneComponent(srcComponents[ii]));
+        // }
+
+        // return returnChanged ? [result,dstHasChanged] : result;
     },
 
 
@@ -407,13 +435,13 @@ _.extend(Registry.prototype, Events, {
         result = new instanceClass( null, _.extend( {}, options,{id}) );
         result.setRegistry( this );
         
-        if( options.register !== false ){
-            // log.debug('options.register was ' + options.register );
-            this.addEntitySet( result );
+        // if( options.register !== false ){
+        //     // log.debug('options.register was ' + options.register );
+        //     this.addEntitySet( result );
 
-            // TODO: if this is a non-memory ES, then register all existing
-            // entity sets with it
-        }
+        //     // TODO: if this is a non-memory ES, then register all existing
+        //     // entity sets with it
+        // }
 
         // TODO : there has to be a better way of identifying entitysets
         if( result.isMemoryEntitySet ){//} result.isMemoryEntitySet && !result.open ){
@@ -426,17 +454,22 @@ _.extend(Registry.prototype, Events, {
                 result.addComponent( components );
             }
 
-            return result;
+            if( options.register === false ){
+                return result;
+            }
+            // return result;
         }
+
+        return this.addEntitySet( result, options );
 
         // opening the ES will cause it to register its existing componentDefs
         // with the registry
-        return result.open( options )
-            .then( () => {
-                const schemas = this.schemaRegistry.getAll();
-                return this._registerComponentDefsWithEntitySet( result, schemas, options )
-                    .then( () => result )
-            });
+        // return result.open( options )
+        //     .then( () => {
+        //         const schemas = this.schemaRegistry.getAll();
+        //         return this._registerComponentDefsWithEntitySet( result, schemas, options )
+        //             .then( () => result )
+        //     });
 
         // return result;
     },
@@ -453,39 +486,63 @@ _.extend(Registry.prototype, Events, {
     */
     removeEntitySet: function( entitySet, options={} ){
         if( !entitySet ){ return null; }
-        let closeFn = entitySet.isMemoryEntitySet ? Promise.resolve(true) : entitySet.close();
-        return closeFn.then( () => {
+        if( options.sync || !entitySet.isAsync ){
             entitySet.setRegistry( null );
             this._entitySets = _.without( this.entitySets, entitySet );
             delete this._entitySetUUIDs[ entitySet.getUuid() ];
             return entitySet;
-        });
+        }
+
+        return entitySet.close(options).then( () => this.removeEntitySet(entitySet,{sync:true}));
+
+        // let closeFn = entitySet.isMemoryEntitySet ? Promise.resolve(true) : entitySet.close();
+        // return closeFn.then( () => {
+        //     entitySet.setRegistry( null );
+        //     this._entitySets = _.without( this.entitySets, entitySet );
+        //     delete this._entitySetUUIDs[ entitySet.getUuid() ];
+        //     return entitySet;
+        // });
     },
 
     /**
     *   
     */
-    addEntitySet: function( entitySet ){
+    addEntitySet: function( entitySet, options={} ){
         if( !entitySet ){ return null; }
 
-        // do we already have this entitySet
-        if( _.indexOf(this._entitySets, entitySet) !== -1 ){
-            return null;
-        }
-
-        if( this._entitySetUUIDs[ entitySet.getUuid() ] ){
-            throw new Error(`entityset with uuid ${entitySet.getUuid()} already exists`);
-        }
-
-        // store the entityset against its id
-        this._entitySets.push( entitySet );
-        this._entitySetUUIDs[ entitySet.getUuid() ]  = entitySet;
+        entitySet.setRegistry(this);
         
-        entitySet.setRegistry( this );
+        if( options.sync || !entitySet.isAsync ){
+            // do we already have this entitySet
+            if( _.indexOf(this._entitySets, entitySet) !== -1 ){
+                return null;
+            }
 
-        this.trigger('entityset:add', entitySet );
+            if( this._entitySetUUIDs[ entitySet.getUuid() ] ){
+                throw new Error(`entityset with uuid ${entitySet.getUuid()} already exists`);
+            }
 
-        return entitySet;
+            // store the entityset against its id
+            this._entitySets.push( entitySet );
+            this._entitySetUUIDs[ entitySet.getUuid() ]  = entitySet;
+            
+            entitySet.setRegistry( this );
+
+            this.trigger('entityset:add', entitySet );
+
+            return entitySet;
+        }
+        
+        // console.log('opening', entitySet.type,entitySet.getUuid());
+
+        return entitySet.open(options).then( () => {
+            this.addEntitySet(entitySet,{sync:true})
+
+            const schemas = this.schemaRegistry.getAll();
+            return this._registerComponentDefsWithEntitySet( entitySet, schemas, options )
+                .then( () => entitySet ) 
+        });
+        // return entitySet;
     },
 
     /**

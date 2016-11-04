@@ -1,5 +1,6 @@
 import _ from 'underscore';
 import test from 'tape';
+import Url from 'omnibox';
 
 import {
     toPascalCase,
@@ -31,4 +32,4 @@ test('parse uri', t => {
     t.equals( record.fragment, 'frag' );
     
     t.end();
-})
+});

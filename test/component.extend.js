@@ -140,6 +140,8 @@ test('the registered component class can also include a uri', t => {
 
         const component = registry.createComponent('/component/test');
 
+        t.ok( component.isTestComponent );
+        t.equals( component.getDefUri(), '/component/test');
         t.equals( component.get('testValue'), 'unfulfilled');
 
     })

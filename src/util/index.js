@@ -1,14 +1,30 @@
 import _ from 'underscore';
 import {Collection} from 'odgn-backbone-model';
 import DeepEqual from 'deep-equal';
-import Url from 'fast-url-parser';
+import Url from 'omnibox';
 import Util from 'util';
 
 export const deepEqual = DeepEqual;
 
 export {toString,entitySetToString,entityToString,componentToString} from './to_string';
+export {uuid as createUuid} from './uuid';
 
 
+export function createLog(name){
+    let fn = {};
+
+    if( !console ){
+        fn = _.map(['debug','info','log','warn','error'], l => function(){} );
+    }
+    else {
+        for( const m in console ){
+            if(typeof console[m] == 'function'){
+                fn[m] = console[m].bind(console, `[${name}:${m}]`);
+            }
+        }
+    }
+    return fn;
+}
 
 export function mergeRecursive(obj1, obj2) {
     for (let p in obj2) {
@@ -84,6 +100,9 @@ export function isInteger(i) {
  }
 
 
+/**
+ * 
+ */
 export function normalizeUri(uri){
     let result;
     if( !uri )
@@ -92,18 +111,28 @@ export function normalizeUri(uri){
     return result.href;
 }
 
+
+/**
+ * 
+ */
 export function parseUri( uri, parseQueryString ){
     let result = Url.parse( uri, true );
     if( result.hash ){
         result.fragment = result.hash.substring(1);
-        result.baseUri = result.href.slice(0, result.href.length - result.hash.length);
+        result.baseUri = result.path; //result.href.slice(0, result.href.length - result.hash.length);
     } else {
-        result.baseUri = result.href;
+        result.baseUri = result.path;// result.href;
     }
 
     return result;
 }
 
+/**
+ * 
+ */
+export function resolveUri( from, to ){
+    return Url.resolve( from, to );
+}
 
 
 
@@ -143,17 +172,23 @@ export function parseUri( uri, parseQueryString ){
 // };
 
 
-
-
+/**
+ * Converts a value to an integer - well as much as that
+ * means in JS.
+ * If the value is not convertible, the supplied defaultValue
+ * will be returned
+ */
+export function toInteger( value, defaultValue=0 ){
+    let result = parseInt(value,10);
+    if( isNaN(value) ){
+        value = defaultValue;
+    }
+    return value < 0 ? Math.ceil(value) : Math.floor(value);
+}
 
 export function parseIntWithDefault( value, defaultValue ){
     let result = parseInt( value, 10 );
     return isNaN(value) ? defaultValue : value;
-}
-
-export function resolveUri( from, to ){
-    // log.debug( JSON.stringify( from ) + ', ' + JSON.stringify( to ) );
-    return Url.resolve( from, to );
 }
 
 

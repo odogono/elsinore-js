@@ -26,21 +26,28 @@ class AsyncEntitySet extends EntitySet {
         options.cmdBuffer = CmdBuffer;
         EntitySet.prototype.initialize.apply(this, arguments);
         // console.log('AsyncEntitySet.initialize',this.id,this.cid,this.getUuid(),'with options',JSON.stringify(options));
-    }
 
-    open(options={}){
-        this.open = true;
-        
         // in a persistent es, these ids would be initialised from a backing store
         this.entityId = new ReusableId(options.entityIdStart || 1);
         this.componentId = new ReusableId(options.componentIdStart || 1);
-        return Promise.resolve(this);
     }
 
-    isOpen(){ return this.open }
+    open(options={}){
+        this._open = true;
+        
+        return this.getComponentDefs({notifyRegistry:true})
+            .then( () => {
+                // console.log(`finished ${this.type} open`);
+                return this;
+            })
+
+        // return Promise.resolve(this);
+    }
+
+    isOpen(){ return this._open }
 
     close(){
-        this.open = false;
+        this._open = false;
         return Promise.resolve(this);
     }
 
@@ -60,7 +67,7 @@ class AsyncEntitySet extends EntitySet {
         }
 
         return this.getComponentDefByHash(data.hash).then( existing => {
-            // this.log('already have existing cdef for', data.hash, existing.esid )
+            this.log('already have existing cdef for', data.hash, existing.esid )
             this._cacheComponentDef( data, existing.esid );
             return existing;
         })
@@ -116,6 +123,20 @@ class AsyncEntitySet extends EntitySet {
             }
             return reject(new ComponentDefNotFoundError(hash));
         })
+    }
+
+    /**
+    *   Reads component defs into local structures
+    *   Returns a promise for an array of registered schemas
+    */
+    getComponentDefs(options={}) {
+        const componentDefs = this.componentDefs.models;
+
+        if( !options.notifyRegistry ){ return this; }
+        
+        
+        return this.getRegistry().registerComponent(componentDefs)
+            .then( () => componentDefs );
     }
 
 

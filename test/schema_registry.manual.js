@@ -64,7 +64,7 @@ test('registering a schema without a name', t => {
     t.equals( component.name, 'Example' );
 
     t.end();
-})
+});
 
 test('retrieving all of the registered schemas', t => {
     const registry = ComponentRegistry.create();
@@ -78,7 +78,7 @@ test('retrieving all of the registered schemas', t => {
     registry.unregister( '/component/removed' );
 
     t.deepEquals(
-        registry.getAll(),
+        _.map(registry.getAll(), d => d.toJSON()),
         [ 
             { id: 1, name: 'Example', uri: '/component/example' }, 
             { id: 3, name: 'Position', properties: { x: 0, y: 0 }, uri: '/component/position' }, 
@@ -87,7 +87,7 @@ test('retrieving all of the registered schemas', t => {
     );
 
     t.end();
-})
+});
 
 
 test('registering a schema with default properties', t => {
