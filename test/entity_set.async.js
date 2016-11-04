@@ -103,8 +103,8 @@ test('removing a component from an entity with only one component', t => {
     .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
 });
 
-console.log('WARNING - reenable this test');
-test.skip('registers existing component defs with the registry when opened', t => {
+// console.log('WARNING - reenable this test');
+test('registers existing component defs with the registry when opened', t => {
     const schemaA = { uri:'/component/channel', properties:{ name:{type:'string'} }};
     const schemaB = { uri:'/schema/alpha', properties:{ channel:{type:'string'} }};
 
@@ -118,10 +118,15 @@ test.skip('registers existing component defs with the registry when opened', t =
                 .then( () => registry.addEntitySet(entitySet) )
                 
                 .then( entitySet => {
-                    console.log('good all done');
+
+                    // _.each( entitySet.getComponentDefs(), cd => console.log( `${cd.getUri()} ${cd.hash()}`  ));
+
+                    // console.log('good all done', entitySet.getComponentDefs());
                     const component = registry.createComponent( '/component/name', {name:'susan'} );
                     
                     t.equal( component.get('name'), 'susan');
+
+                    // _.each( registry.getComponentDefs(), cd => console.log( `${cd.getUri()} ${cd.hash()}`  ));
                 })
     })
     .then( () => t.end() )

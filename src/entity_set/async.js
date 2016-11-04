@@ -5,7 +5,8 @@ import Entity from '../entity';
 import EntitySet from './index';
 import CmdBuffer from '../cmd_buffer/async';
 import ReusableId from '../util/reusable_id';
-import * as Utils from '../util';
+import {setEntityIdFromId,toString} from '../util';
+// import * as Utils from '../util';
 import {getEntityIdFromId,getEntitySetIdFromId} from '../util';
 import {ComponentNotFoundError,EntityNotFoundError,ComponentDefNotFoundError} from '../error';
 import {ComponentDefCollection} from '../schema';
@@ -37,7 +38,7 @@ class AsyncEntitySet extends EntitySet {
         
         return this.getComponentDefs({notifyRegistry:true})
             .then( () => {
-                // console.log(`finished ${this.type} open`);
+                console.log(`finished ${this.type} open`);
                 return this;
             })
 
@@ -132,10 +133,12 @@ class AsyncEntitySet extends EntitySet {
     getComponentDefs(options={}) {
         const componentDefs = this.componentDefs.models;
 
-        if( !options.notifyRegistry ){ return this; }
+        if( !options.notifyRegistry ){ return Promise.resolve(componentDefs) }
         
-        
-        return this.getRegistry().registerComponent(componentDefs)
+        // if this hasn't been called from the registry, then we forward the request
+        // on to the registry, which takes care of decomposing the incoming schemas
+        // and then notifying each of the entitySets about the new component defs
+        return this.getRegistry().registerComponent(componentDefs, {fromES: this} )
             .then( () => componentDefs );
     }
 
@@ -172,7 +175,7 @@ class AsyncEntitySet extends EntitySet {
 
         if( !e ){
             // attempt to retrieve the entity using a composite id
-            e = this.get( Utils.setEntityIdFromId(entityId,this.id) );
+            e = this.get( setEntityIdFromId(entityId,this.id) );
         }
 
         if( e ){
@@ -248,7 +251,7 @@ class AsyncEntitySet extends EntitySet {
             return result;
         }, []);
 
-        // console.log('new entities', Utils.toString(entitiesAdded));
+        // console.log('new entities', toString(entitiesAdded));
 
         // retrieve ids for the new entities
         return this.entityId.getMultiple( entitiesAdded.length )
@@ -265,7 +268,7 @@ class AsyncEntitySet extends EntitySet {
             .then( componentIds => {
                 // console.log('new component ids', componentIds);
                 _.each(componentsAdded, (com, ii) => com.set({id:componentIds[ii]}) );
-                // console.log('new components', Utils.toString(componentsAdded));
+                // console.log('new components', toString(componentsAdded));
             })
             .then( () => this._applyUpdate(entitiesAdded,
                     entitiesUpdated,
@@ -281,11 +284,11 @@ class AsyncEntitySet extends EntitySet {
 
         const addOptions = {silent:true};
         if( entitiesAdded ){
-            if(debug){console.log('entitiesAdded', Utils.toString(entitiesAdded))}
+            if(debug){console.log('entitiesAdded', toString(entitiesAdded))}
             this.add( entitiesAdded, addOptions );
         }
         if( entitiesUpdated ){
-            if(debug){console.log('entitiesUpdated', Utils.toString(entitiesUpdated))}
+            if(debug){console.log('entitiesUpdated', toString(entitiesUpdated))}
             this.add( entitiesUpdated, addOptions );
         }
         if( entitiesRemoved ){

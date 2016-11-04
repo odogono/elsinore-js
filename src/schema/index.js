@@ -107,11 +107,9 @@ export default class ComponentRegistry {
         let existing = this.getComponentDef( def );
         
         if( existing ){
-            // console.log('yep got back ', existing);
             if( throwOnExists ){
                 throw new Error('def ' + existing.getUri() + ' (' + existing.hash() + ') already exists' );
             }
-            
             return existing;
         }
 

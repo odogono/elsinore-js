@@ -11,8 +11,6 @@ import EntityProcessor from '../entity_processor';
 import EntityFilter from '../entity_filter';
 
 
-import * as Utils from '../util';
-
 
 // let counter = Date.now() % 1e9;
 
@@ -20,9 +18,7 @@ import * as Utils from '../util';
  * Registry
  * @return {[type]} [description]
  */
- const Registry = function(){};
-
-// console.log('wait what', _.keys(Utils));
+const Registry = function(){};
 
 // const Log = createLog('Registry');
 
@@ -273,10 +269,14 @@ _.extend(Registry.prototype, Events, {
      * @param  {Object|Array} schema [description]
      * @return {[type]}        [description]
      */
-    registerComponent: function( data, options ){
+    registerComponent: function( data, options={} ){
         const schemaRegistry = this.schemaRegistry;
-        // console.log('registering', data);
-        return new Promise( resolve => resolve(schemaRegistry.register(data,options)) )
+        
+        if( options.fromES ){
+            options.throwOnExists = false;
+        }
+
+        return Promise.resolve( schemaRegistry.register(data,options) )
             .then( componentDefs => {
                 if( !_.isArray(componentDefs) ){ componentDefs = [componentDefs]; }
                 return _.reduce( this._entitySets, (current, es) => {
@@ -287,6 +287,13 @@ _.extend(Registry.prototype, Events, {
                 }, Promise.resolve() )
                 .then( () => componentDefs )
             });
+    },
+
+    /**
+     * Returns an array of all the Component Defs that have been registered
+     */
+    getComponentDefs: function(){
+        return this.schemaRegistry.getAll();
     },
 
     /**
@@ -533,7 +540,7 @@ _.extend(Registry.prototype, Events, {
             return entitySet;
         }
         
-        // console.log('opening', entitySet.type,entitySet.getUuid());
+        console.log('opening', entitySet.type,entitySet.getUuid());
 
         return entitySet.open(options).then( () => {
             this.addEntitySet(entitySet,{sync:true})
