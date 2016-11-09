@@ -2,7 +2,7 @@ import _ from 'underscore';
 import {Collection} from 'odgn-backbone-model';
 import DeepEqual from 'deep-equal';
 import Url from 'omnibox';
-import Util from 'util';
+// import Util from 'util';
 
 export const deepEqual = DeepEqual;
 
@@ -21,6 +21,9 @@ export function createLog(name){
             if(typeof console[m] == 'function'){
                 fn[m] = console[m].bind(console, `[${name}:${m}]`);
             }
+        }
+        if(!fn.debug){
+            fn.debug = console.log.bind(console, `[${name}:debug]`);
         }
     }
     return fn;
@@ -194,8 +197,8 @@ export function parseIntWithDefault( value, defaultValue ){
 
 export function deepClone( obj ){
     // try{
-        const str = JSON.stringify(obj);
-        return JSON.parse(str);
+        const str = stringify(obj);
+        return parseJSON(str);
     // } catch(err){
     //     console.error('could not clone', obj, JSON.stringify(obj));
     //     return null;
@@ -321,21 +324,32 @@ export function stringify( obj, space ){
     }, space);
 }
 
-export function printIns(arg,depth,showHidden,colors){
-    if( _.isUndefined(depth) ) depth = 2;
-    // let stack = __stack[1];
-    // let fnName = stack.getFunctionName();
-    // let line = stack.getLineNumber();
-    // Util.log( fnName + ':' + line + ' ' + Util.inspect(arg,showHidden,depth,colors) );
-    console.log( Util.inspect(arg,showHidden,depth,colors) );
-};
-
-export function printVar(...args){
-    let ii, len;
-    for (ii = 0, len = args.length; ii < len; ii++) {
-        Util.log( Stringify(args[ii], null, '\t') );
+/**
+ * Safe parsing of json data
+ */
+export function parseJSON( str, defaultValue=null ){
+    try{
+        return JSON.parse(str);
+    }catch(err){
+        return defaultValue;
     }
 }
+
+// export function printIns(arg,depth,showHidden,colors){
+//     if( _.isUndefined(depth) ) depth = 2;
+//     // let stack = __stack[1];
+//     // let fnName = stack.getFunctionName();
+//     // let line = stack.getLineNumber();
+//     // Util.log( fnName + ':' + line + ' ' + Util.inspect(arg,showHidden,depth,colors) );
+//     // console.log( Util.inspect(arg,showHidden,depth,colors) );
+// };
+
+// export function printVar(...args){
+//     let ii, len;
+//     // for (ii = 0, len = args.length; ii < len; ii++) {
+//         // Util.log( Stringify(args[ii], null, '\t') );
+//     // }
+// }
 
 /**
 *   Converts a string so that the words are capitalised and concatenated

@@ -19,6 +19,9 @@ export {EntityProcessor as EntityProcessor};
 import EntitySet from './entity_set';
 export {EntitySet as EntitySet};
 
+import Model from './model';
+export {Model as Model};
+
 import Query from './query/full';
 export {Query as Query};
 
@@ -31,11 +34,7 @@ export {SchemaRegistry as SchemaRegistry};
 import Dispatch from './dispatch';
 export {Dispatch as Dispatch};
 
-import Util from './util';
-export {Util as Util};
-
-export {printIns,
-    toPascalCase,
+export {
     parseUri,
     getEntityIdFromId,
     getEntitySetIdFromId,

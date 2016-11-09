@@ -26,7 +26,7 @@
   "dependencies": {
     "deep-equal": "^1.0.0",
     "jsonpointer": "^4.0.0",
-    "odgn-backbone-model": "^1.3.8",
+    "odgn-backbone-model": "^1.3.9",
     "odgn-bitfield": "^0.9.0",
     "omnibox": "^1.0.0",
     "promise-queue": "^2.2.3",
@@ -36,13 +36,14 @@
   "devDependencies": {
     "aliasify": "~2.0.0",
     "babel": "^6.5.2",
+    "babel-plugin-external-helpers": "^6.18.0",
+    "babel-plugin-transform-es2015-destructuring": "^6.18.0",
+    "babel-plugin-transform-es2015-modules-commonjs": "^6.18.0",
     "babel-plugin-transform-flow-strip-types": "^6.8.0",
-    "babel-plugin-typecheck": "^3.9.0",
-    "babel-preset-es2015": "^6.9.0",
-    "babel-preset-es2015-node": "^6.1.0",
+    "babel-plugin-transform-object-rest-spread": "^6.16.0",
+    "babel-preset-es2015-rollup": "^1.2.0",
     "babel-preset-flow": "^1.0.0",
     "babel-preset-node6": "^11.0.0",
-    "babel-preset-stage-0": "^6.16.0",
     "babel-tape-runner": "^2.0.1",
     "babelify": "^7.3.0",
     "browserify": "^13.0.1",
@@ -56,6 +57,12 @@
     "gulp-uglify": "^1.5.3",
     "gulp-util": "~3.0.2",
     "gulp-webserver": "^0.9.1",
+    "rollup-plugin-babel": "^2.6.1",
+    "rollup-plugin-commonjs": "^5.0.5",
+    "rollup-plugin-flow": "^1.0.1",
+    "rollup-plugin-node-resolve": "^2.0.0",
+    "rollup-plugin-replace": "^1.1.1",
+    "rollup-plugin-uglify": "^1.0.1",
     "shelljs": "^0.6.0",
     "sinon": "~1.17.3",
     "tap-dot": "^1.0.5",
@@ -69,7 +76,9 @@
     "lib": "lib"
   },
   "scripts": {
-    "build": "browserify lib/index.js --standalone Elsinore -o build/elsinore.js",
+    "build": "rollup -c rollup.config.js",
+    "build:prod": "rollup -c rollup.config.prod.js",
+    "build:old": "browserify lib/index.js --standalone Elsinore -o build/elsinore.js",
     "minify": "echo 'cd build && uglifyjs elsinore.js --compress --source-map elsinore.min.js.map --output elsinore.min.js' | sh",
     "clean": "rm -rf node_modules build dist lib; mkdir build; npm install",
     "compile": "Gulp transpile",
@@ -80,20 +89,12 @@
     "spec": "NODE_ENV=test babel-tape-runner ./test | tap-spec"
   },
   "babel": {
-    "presets": [
-      "es2015",
-      "stage-0"
-    ],
+    "presets": [],
     "plugins": [
-      "syntax-flow",
-      "transform-flow-strip-types"
-    ],
-    "env": {
-      "production": {
-        "presets": [
-          "es2015"
-        ]
-      }
-    }
+      "transform-es2015-modules-commonjs",
+      "transform-flow-strip-types",
+      "transform-es2015-destructuring",
+      "transform-object-rest-spread"
+    ]
   }
 }
