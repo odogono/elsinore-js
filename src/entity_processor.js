@@ -152,9 +152,9 @@ export default class EntityProcessor {
 EntityProcessor.prototype.type = 'EntityProcessor';
 EntityProcessor.prototype.isEntityProcessor = true;
 
-// EntityProcessor.isEntityProcessor = function(ep){
-//     return ep && ep.isEntityProcessor;
-// }
+EntityProcessor.isEntityProcessor = function(ep){
+    return ep && ep.isEntityProcessor;
+}
 
 EntityProcessor.create = function create( attrs, options={} ){
     const klass = options.Model || EntityProcessor;

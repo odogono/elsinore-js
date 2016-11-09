@@ -142,33 +142,13 @@ export default class Query {
 
         this.compiled = [];
 
-        // sanitise the query commands
-
-        // if( _.isFunction(commands) ){
-        //     // console.log('compiling a command builder');
-        //     const builder = new QueryBuilder(this);
-        //     const built = commands(builder);
-        //     if( _.isArray(built) ){
-        //         commands = _.map( built, dsl => dsl.toArray(true)[0] );
-        //     } else {
-        //         commands = built.toArray(true);
-        //     }
-        //     // console.log('query builder result', built);
-        //     // commands = commands(builder).toArray(true);
-        //     console.log('query builder result', commands);
-        // }
         if( Query.isQuery( commands ) ){
             if( commands.isCompiled ){
                 return commands;
             }
             commands = (commands.src || commands.toArray( true ));
         } else if( _.isArray(commands) ){
-            // if( _.isFunction(commands[0]) ){
-            //     const builder = new QueryBuilder(this);
-            //     commands = _.map(commands, cmd => {
-            //         return cmd(builder).toArray(true)[0];
-            //     });
-            // }
+            
             if( !_.isArray(commands[0]) && !Query.isQuery(commands[0])){
                 commands = [commands];
             }else{
@@ -183,12 +163,6 @@ export default class Query {
             }
             // console.log('compile> ' + stringify(commands));
         }
-
-        
-        // result = new Query();
-        // result.isCompiled = true;
-        // this.src = deepClone(commands);
-        // commands = _.reduce( commands, function(result,command){
 
         let firstStageCompiled = _.reduce( commands, (result,command) => {
             let op, entityFilter, compileResult, hash;
@@ -209,10 +183,7 @@ export default class Query {
                 case INCLUDE_FILTER:
                     entityFilter = gatherEntityFilters( context, command );
                     // insert a basic entity_filter command here
-                    // result.push( [ Query.ENTITY_FILTER, entityFilter ] ); // NOTE: why was this here??
-                    // result.push( [ command[0], entityFilter, command[2] ] );
                     result.push( [ ENTITY_FILTER, entityFilter, command[2] ] );
-                    // console.log('gathering ' + JSON.stringify(entityFilter) );
                     break;
                 case AND:
                     result.push( (context.resolveEntitySet(command, true ) || command) );
@@ -225,13 +196,9 @@ export default class Query {
             return result;
         },[]);
 
-        // console.log('A compiledCommands here', firstStageCompiled);
-
-        // result.compiled = [];
         entityFilter = null;
 
         // combine contiguous entity filters
-        // console.log('');
         for( ii=0,len=firstStageCompiled.length;ii<len;ii++ ){
             // console.log('>combine', firstStageCompiled[ii] );
             while( ii < len && firstStageCompiled[ii][0] === ENTITY_FILTER && !firstStageCompiled[ii][2] ){
@@ -251,14 +218,8 @@ export default class Query {
                 this.compiled.push( firstStageCompiled[ii] );
             }
         }
-
-        // console.log('B compiledCommands here', this.compiled);
-        // process.exit();
-
         // allow hooks to further process commands
         _.each( compileHooks, hook => this.compiled = hook(context, this.compiled, this) );
-
-        // console.log('C compiledCommands here', this.compiled);
 
         // this.commands = commands;
         if( context.debug ) { console.log(this); }
@@ -943,35 +904,8 @@ export function register( name, command, dslObj, options={} ){
         compileCommands[name] = options.compile;
     }
     
-
-    // console.log('adding to', DslContext);
     return Query;
 }
-
-// export function registerCommand( options ){
-//     if( options.commands ){
-//         return _.each( options.commands, c => registerCommand(c) );
-//     }
-//     // console.log('Query registerCommand', options);
-//     Query[ options.name ] = options.id;
-    
-//     if( options.dsl ){
-//         _.each( options.dsl, (func,name) => Query[name] = func )
-//     }
-//     if( options.argCount ){
-//         argCounts[ options.id ] = options.argCount;
-//     }
-//     if( commandFunctions[ options.id ] !== undefined ){
-//         throw new Error('already registered cmd ' + options.id );
-//     }
-//     if( options.compile ){
-//         compileCommands[ options.id ] = options.compile;
-//     }
-//     if( options.compileHook ){
-//         compileHooks.push( options.compileHook );
-//     }
-//     commandFunctions[ options.id ] = options.command;
-// }
 
 Query.isQuery = function( query ){
     return query && query instanceof Query;

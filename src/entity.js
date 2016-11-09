@@ -1,13 +1,11 @@
 
-import BitField  from 'odgn-bitfield';
 import _ from 'underscore';
+import BitField  from 'odgn-bitfield';
 import {hash,isInteger,setEntityIdFromId} from './util';
 
 import Component from './component';
 import Model from './model';
 import Registry from './registry';
-// var Component = require('./component');
-// var Model = require('./model');
 
 // const ENTITY_ID_MAX = Math.pow(2,31)-1;
 // const ENTITY_SET_ID_MAX = Math.pow(2,21)-1;
@@ -217,32 +215,26 @@ export default class Entity extends Model {
         return this;
     }
 
+    /**
+     * 
+     */
     removeComponents( componentIds ){
-        let components = this.components;
         componentIds = componentIds || this.getComponentBitfield().toValues();
 
         return _.reduce( componentIds, (result,id) => {
-            let com = components[id];
+            const com = this.components[id];
             if( com ){
                 this.removeComponent(com);
                 result.push(com);
             }
             return result;
         },[]);
-
-        // _.each( componentIds, id => {
-        //     let com = components[id];
-        //     if( com ){
-        //         this.removeComponent( com );
-        //     }
-        // })
     }
 
     getComponentByIId( componentIId ){
-        var self = this;
         componentIId = this.getRegistry().getIId( componentIId );
         if( _.isArray(componentIId) ) {
-            return _.map( componentIId, id => self.components[id] )
+            return _.map( componentIId, id => this.components[id] )
         }
         return this.components[ componentIId ];
     }

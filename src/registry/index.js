@@ -14,7 +14,7 @@ import EntityFilter from '../entity_filter';
 
 // let counter = Date.now() % 1e9;
 
-const Log = createLog('Registry');
+// const Log = createLog('Registry');
 
 
 

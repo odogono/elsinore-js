@@ -49,175 +49,175 @@ function argCount( operator ){
     }
 }
 
-let FilterFunctions = {
-    /**
-    *   The entities must have ALL of the specified components
-    */
-    all: function (componentIds, filterFn){
-        let context = readContext( this );
-        context.pushOp( Q.ALL_FILTER );
-        context.pushVal( componentIds, true );
-        if( filterFn ){
-            context.pushVal( filterFn, true );
-        }
+// let FilterFunctions = {
+//     /**
+//     *   The entities must have ALL of the specified components
+//     */
+//     all: function (componentIds, filterFn){
+//         let context = readContext( this );
+//         context.pushOp( Q.ALL_FILTER );
+//         context.pushVal( componentIds, true );
+//         if( filterFn ){
+//             context.pushVal( filterFn, true );
+//         }
 
-        return context;
-    },
+//         return context;
+//     },
 
-    include: function(componentIds, filterFn){
-        let context = readContext( this );
-        // context.pushOp( filterFn ? Q.INCLUDE_FILTER : Q.INCLUDE );
-        context.pushOp( Q.INCLUDE_FILTER );
-        context.pushVal( componentIds, true );
-        if( filterFn ){
-            context.pushVal( filterFn, true );
-        }
-        return context;
-    },
+//     include: function(componentIds, filterFn){
+//         let context = readContext( this );
+//         // context.pushOp( filterFn ? Q.INCLUDE_FILTER : Q.INCLUDE );
+//         context.pushOp( Q.INCLUDE_FILTER );
+//         context.pushVal( componentIds, true );
+//         if( filterFn ){
+//             context.pushVal( filterFn, true );
+//         }
+//         return context;
+//     },
 
-    /**
-    *   Entities should have at least one of the specified components
-    */
-    any: function( componentIds, filterFn ){
-        let context = readContext( this );
-        // context.pushOp( filterFn ? Q.ANY_FILTER : Q.ANY );
-        context.pushOp( Q.ANY_FILTER );
-        context.pushVal( componentIds, true );
-        if( filterFn ){
-            context.pushVal( filterFn, true );
-        }
-        return context;
-    },
+//     /**
+//     *   Entities should have at least one of the specified components
+//     */
+//     any: function( componentIds, filterFn ){
+//         let context = readContext( this );
+//         // context.pushOp( filterFn ? Q.ANY_FILTER : Q.ANY );
+//         context.pushOp( Q.ANY_FILTER );
+//         context.pushVal( componentIds, true );
+//         if( filterFn ){
+//             context.pushVal( filterFn, true );
+//         }
+//         return context;
+//     },
 
-    /**
-    *   entities will be excluded if the have any of the componentIds
-    */
-    none: function (componentIds, filterFn ){
-        let context = readContext( this );
-        context.pushOp( Q.NONE_FILTER );
-        context.pushVal( componentIds, true );
-        if( filterFn ){
-            context.pushVal( filterFn, true );
-        }
-        return context;
-    },
-};
+//     /**
+//     *   entities will be excluded if the have any of the componentIds
+//     */
+//     none: function (componentIds, filterFn ){
+//         let context = readContext( this );
+//         context.pushOp( Q.NONE_FILTER );
+//         context.pushVal( componentIds, true );
+//         if( filterFn ){
+//             context.pushVal( filterFn, true );
+//         }
+//         return context;
+//     },
+// };
 
 
-function isFilterOp( op ){
-    if( !op ){ return false; }
-    return (op[0] === Q.ALL || op[0] === Q.NONE);
-}
+// function isFilterOp( op ){
+//     if( !op ){ return false; }
+//     return (op[0] === Q.ALL || op[0] === Q.NONE);
+// }
 
-let QueryFunctions = {
+// let QueryFunctions = {
 
-    and: function( val ){
-        let context = readContext( this );
-        context.pushVal( val, true );
-        context.pushOp( Q.AND );
-        return context;
-    },
+//     and: function( val ){
+//         let context = readContext( this );
+//         context.pushVal( val, true );
+//         context.pushOp( Q.AND );
+//         return context;
+//     },
 
-    or: function ( val ){
-        this.pushVal( val, true );
-        this.pushOp( Q.OR );
-        return this;
-    },
+//     or: function ( val ){
+//         this.pushVal( val, true );
+//         this.pushOp( Q.OR );
+//         return this;
+//     },
 
-    where: function( clauses ){
-        let context = readContext(this);
-        clauses = _.toArray(arguments);
+//     where: function( clauses ){
+//         let context = readContext(this);
+//         clauses = _.toArray(arguments);
 
-        if( clauses.length <= 0 ){
-            return this;
-        }
-        if( clauses.length === 1 ){
-            context.pushVal( clauses[0] );
-        } else {
-            clauses = _.reduce( clauses, function(res, clause, i){
-                res.push( clause.toArray() );
-                if( res.length > 1 ){
-                    res.push( Q.AND );
-                }
-                return res;
-            },[]);
+//         if( clauses.length <= 0 ){
+//             return this;
+//         }
+//         if( clauses.length === 1 ){
+//             context.pushVal( clauses[0] );
+//         } else {
+//             clauses = _.reduce( clauses, function(res, clause, i){
+//                 res.push( clause.toArray() );
+//                 if( res.length > 1 ){
+//                     res.push( Q.AND );
+//                 }
+//                 return res;
+//             },[]);
 
-            this.valStack = this.valStack.concat( _.flatten(clauses, true) );
-        }
-        return this;
-    },
+//             this.valStack = this.valStack.concat( _.flatten(clauses, true) );
+//         }
+//         return this;
+//     },
 
-    equals: function( val ){
-        this.pushVal( val, true );
-        this.pushOp( Q.EQUALS );
-        return this;
-    },
+//     equals: function( val ){
+//         this.pushVal( val, true );
+//         this.pushOp( Q.EQUALS );
+//         return this;
+//     },
 
-    lessThan: function( val ){
-        this.pushVal( val, true );
-        this.pushOp( Q.LESS_THAN );
-        return this;  
-    },
-    lessThanOrEqual: function( val ){
-        this.pushVal( val, true );
-        this.pushOp( Q.LESS_THAN_OR_EQUAL );
-        return this;  
-    },
+//     lessThan: function( val ){
+//         this.pushVal( val, true );
+//         this.pushOp( Q.LESS_THAN );
+//         return this;  
+//     },
+//     lessThanOrEqual: function( val ){
+//         this.pushVal( val, true );
+//         this.pushOp( Q.LESS_THAN_OR_EQUAL );
+//         return this;  
+//     },
 
-    greaterThan: function( val ){
-        this.pushVal( val, true );
-        this.pushOp( Q.GREATER_THAN );
-        return this;  
-    },
+//     greaterThan: function( val ){
+//         this.pushVal( val, true );
+//         this.pushOp( Q.GREATER_THAN );
+//         return this;  
+//     },
 
-    greaterThanOrEqual: function( val ){
-        this.pushVal( val, true );
-        this.pushOp( Q.GREATER_THAN_OR_EQUAL );
-        return this;  
-    },
+//     greaterThanOrEqual: function( val ){
+//         this.pushVal( val, true );
+//         this.pushOp( Q.GREATER_THAN_OR_EQUAL );
+//         return this;  
+//     },
 
-    /**
-    *   Selects a component attribute
-    */
-    attr: function( attr ){
-        let lastCommand, op, val;
-        let context = readContext( this, false, true, true );
+//     /**
+//     *   Selects a component attribute
+//     */
+//     attr: function( attr ){
+//         let lastCommand, op, val;
+//         let context = readContext( this, false, true, true );
 
-        context.pushVal( [Q.ATTR, attr] );
+//         context.pushVal( [Q.ATTR, attr] );
 
-        return context;
-    },
+//         return context;
+//     },
 
-    value: function( val ){
-        let context = readContext( this );
-        context.pushVal( val, true );
-        return context;
-    },
+//     value: function( val ){
+//         let context = readContext( this );
+//         context.pushVal( val, true );
+//         return context;
+//     },
 
-    root: function(){
-        let context = readContext(this);
-        context.pushOp( Q.ROOT );
-        return context;
-    },
+//     root: function(){
+//         let context = readContext(this);
+//         context.pushOp( Q.ROOT );
+//         return context;
+//     },
 
-    toArray: function( toTree ){
-        let count = 0;
-        let op,val,result,vals;
-        let ii,len;
+//     toArray: function( toTree ){
+//         let count = 0;
+//         let op,val,result,vals;
+//         let ii,len;
 
-        // move reminaing ops
-        while( this.opStack.length > 0 ){
-            this.pushVal( this.popOp() );
-        }
+//         // move reminaing ops
+//         while( this.opStack.length > 0 ){
+//             this.pushVal( this.popOp() );
+//         }
 
-        result = this.valStack;
-        if( toTree ){
-            return this.commands = rpnToTree( result );
-        }
+//         result = this.valStack;
+//         if( toTree ){
+//             return this.commands = rpnToTree( result );
+//         }
 
-        return result;
-    },
-};
+//         return result;
+//     },
+// };
 
 // Q.toArray = function( query, toTree ){
 //     let commands = query;
@@ -318,117 +318,105 @@ function findMatchingRightParam( values, startIndex ){
 }
 
 
-let StackFunctions = {
-    popVal: function(){
-        let val = this.valStack.shift();
-        if( val && val.isQuery ){
-            return val.toArray();
-        }
-        return val;
-    },
-    peekVal: function(){
-        return this.valStack[0];
-    },
-    lastOp: function(){
-        return this.opStack[ this.opStack.length -1 ];
-    },
-    popOp: function(){
-        return this.opStack.pop();
-    },
-    pushOp: function( op  ){
-        let lastOp = this.lastOp();
-        while( this.opStack.length > 0 && (precendence( op ) <= precendence( lastOp )) ){
-            this.pushVal( this.popOp() );
-        }
-        this.opStack.push( op );
-    },
+// let StackFunctions = {
+//     popVal: function(){
+//         let val = this.valStack.shift();
+//         if( val && val.isQuery ){
+//             return val.toArray();
+//         }
+//         return val;
+//     },
+//     peekVal: function(){
+//         return this.valStack[0];
+//     },
+//     lastOp: function(){
+//         return this.opStack[ this.opStack.length -1 ];
+//     },
+//     popOp: function(){
+//         return this.opStack.pop();
+//     },
+//     pushOp: function( op  ){
+//         let lastOp = this.lastOp();
+//         while( this.opStack.length > 0 && (precendence( op ) <= precendence( lastOp )) ){
+//             this.pushVal( this.popOp() );
+//         }
+//         this.opStack.push( op );
+//     },
 
-    pushVal: function(val, wrapInValueTuple){
-        let out;
-        let concat;
-        let isQuery, isArray;
+//     pushVal: function(val, wrapInValueTuple){
+//         let out;
+//         let concat;
+//         let isQuery, isArray;
         
-        isQuery = Q.isQuery(val);
-        isArray = _.isArray(val);
+//         isQuery = Q.isQuery(val);
+//         isArray = _.isArray(val);
 
-        // log.debug('pushing val ' + JSON.stringify(val) + ' ' + isQuery + ' ' + isArray );
+//         // log.debug('pushing val ' + JSON.stringify(val) + ' ' + isQuery + ' ' + isArray );
 
-        if( wrapInValueTuple ){
-            if( !isQuery ){//&& (!isArray)){// || val[0] !== Q.VALUE) ){
-                // log.debug('wrapping! ' + JSON.stringify(val) );
-                val = [Q.VALUE,val];
-            }  
-            // else {
-            //     log.debug('not wrapping! ' + JSON.stringify(val) );
-            // }
-        }
-        // log.debug('>pushVal ' + JSON.stringify(val) );
-        if( val && isQuery ){//Q.isQuery(val) ){
-            out = val.toArray();
-            this.valStack = this.valStack.concat( out );
-        } else {
-            this.valStack.push( val );
-        }
-        return this;
-    }
-}
+//         if( wrapInValueTuple ){
+//             if( !isQuery ){//&& (!isArray)){// || val[0] !== Q.VALUE) ){
+//                 // log.debug('wrapping! ' + JSON.stringify(val) );
+//                 val = [Q.VALUE,val];
+//             }  
+//             // else {
+//             //     log.debug('not wrapping! ' + JSON.stringify(val) );
+//             // }
+//         }
+//         // log.debug('>pushVal ' + JSON.stringify(val) );
+//         if( val && isQuery ){//Q.isQuery(val) ){
+//             out = val.toArray();
+//             this.valStack = this.valStack.concat( out );
+//         } else {
+//             this.valStack.push( val );
+//         }
+//         return this;
+//     }
+// }
 
 
-function readContext( context, addFilterFunctions, addStackFunctions, addQueryFunctions ){
-    let result, functions;
+// function readContext( context, addFilterFunctions, addStackFunctions, addQueryFunctions ){
+//     let result, functions;
 
-    if( _.isUndefined(addStackFunctions) ){ addStackFunctions = true; }
-    if( _.isUndefined(addFilterFunctions) ){ addFilterFunctions = true; }
-    if( _.isUndefined(addQueryFunctions) ){ addQueryFunctions = true; }
+//     if( _.isUndefined(addStackFunctions) ){ addStackFunctions = true; }
+//     if( _.isUndefined(addFilterFunctions) ){ addFilterFunctions = true; }
+//     if( _.isUndefined(addQueryFunctions) ){ addQueryFunctions = true; }
 
-    if( context === Q ){
-        // create a new Query
-        // return new Query();
-        result = new Q();
-        result.valStack = [];
-        result.opStack = [];
+//     if( context === Q ){
+//         // create a new Query
+//         // return new Query();
+//         result = new Q();
+//         result.valStack = [];
+//         result.opStack = [];
 
-        functions = [];
-        if( addStackFunctions ){ functions.push( StackFunctions ); }
-        // if( addFilterFunctions ){ functions.push( FilterFunctions ); }
-        if( addQueryFunctions ){ functions.push( QueryFunctions ); }
+//         functions = [];
+//         if( addStackFunctions ){ functions.push( StackFunctions ); }
+//         // if( addFilterFunctions ){ functions.push( FilterFunctions ); }
+//         if( addQueryFunctions ){ functions.push( QueryFunctions ); }
 
-        if( functions.length > 0 ){
-            return _.extend.apply( null, [result].concat(functions) );
-        }
-        return result;
-    }
-    else if( Q.isQuery(context) ){ //context.isQuery ){
-        return context;
-    } else {
-        console.log('context ' + (typeof context) );
-        throw new Error('invalid context' );
-    }
-}
+//         if( functions.length > 0 ){
+//             return _.extend.apply( null, [result].concat(functions) );
+//         }
+//         return result;
+//     }
+//     else if( Q.isQuery(context) ){ //context.isQuery ){
+//         return context;
+//     } else {
+//         console.log('context ' + (typeof context) );
+//         throw new Error('invalid context' );
+//     }
+// }
 
-function contextData( context ){
-    let result = {
-        isQuery: true,
-        valStack: context.valStack,
-        opStack: context.opStack
-    };
-    if( context.isArguments ){
-        result.isArguments = true;
-    }
-    return result;
-}
-
-// these are the starting functions
-// _.extend( Q, {
-//     readContext: readContext,
-
-//     attr: QueryFunctions.attr,
-//     value: QueryFunctions.value,
-//     root: QueryFunctions.root,
-//     pipe: QueryFunctions.pipe,
-//     // pluck: QueryFunctions.pluck,
-//     // without: QueryFunctions.without,
-// }, FilterFunctions );
+// function contextData( context ){
+//     let result = {
+//         isQuery: true,
+//         valStack: context.valStack,
+//         opStack: context.opStack
+//     };
+//     if( context.isArguments ){
+//         result.isArguments = true;
+//     }
+//     return result;
+// }
 
 
 // module.exports = Q;
@@ -454,12 +442,18 @@ export class DslContext {
         return context;
     }
 
+    /**
+     * 
+     */
     value( val ){
         const context = this.readContext( this );
         context.pushVal( val, true );
         return context;
     }
 
+    /**
+     * 
+     */
     root(){
         const context = this.readContext( this );
         context.pushOp( Q.ROOT );
@@ -625,7 +619,7 @@ export class DslContext {
     }
 
     pushOp( op  ){
-        let lastOp = this.lastOp();
+        const lastOp = this.lastOp();
         while( this.opStack.length > 0 && (precendence( op ) <= precendence( lastOp )) ){
             this.pushVal( this.popOp() );
         }
@@ -675,25 +669,6 @@ export class DslContext {
         return result;
     }
 }
-
-
-// const BaseFunctions = (SuperClass) => class extends SuperClass {
-//     readContext(context){
-//         return context;
-//     }
-// }
-
-
-
-// const MainFunctions = (SuperClass) => class extends SuperClass {
-//     value( val ){
-//         const context = this.readContext(this);
-//         this.pushVal(val,true);
-//         return context;
-//     }
-// }
-
-
 
 export default class QueryBuilder extends DslContext {
 

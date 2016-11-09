@@ -4,11 +4,12 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased][unreleased]
 
-## [4.0.0] - 2016-09-28
+## [4.0.0] - 2016-11-09
 ### Changed
 - Query refactored. Queries are now built using functions.
 - copyEntity/copyComponent moved to registry.cloneEntity/registry.cloneComponent
 - components are cloned when added to an entityset
+- registry,entity,component and other core types are now es6 classes
 
 ### Added
 - AsyncEntitySet - promise based, in-memory, entityset base class

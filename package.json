@@ -77,6 +77,7 @@
   "scripts": {
     "build": "rollup -c rollup.config.js",
     "build:prod": "rollup -c rollup.config.prod.js",
+
     "build:old": "browserify lib/index.js --standalone Elsinore -o build/elsinore.js",
     "minify": "echo 'cd build && uglifyjs elsinore.js --compress --source-map elsinore.min.js.map --output elsinore.min.js' | sh",
     "clean": "rm -rf node_modules build dist lib; mkdir build; npm install",

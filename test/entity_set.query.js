@@ -174,9 +174,9 @@ test('sub-queries', t => {
         
         // this query selects the other entities which are members of the same channel
         // as entity id 5
-        let clientId = 5;
+        const clientId = 5;
 
-        let result = entitySet.query(Q => [
+        const result = entitySet.query( Q => [
             // 1. select channel ids which client `clientId` belongs to and store as alias `channelIds`
             Q.all('/component/channel_member')
                 .where(Q.attr('client').equals(clientId)),
@@ -221,7 +221,7 @@ test('removing entities from an entityset', t => {
 
 function initialiseEntitySet( entityDataName = 'query.entities' ){
     return initialiseRegistry(false).then( registry => {
-        let entitySet = loadEntities( registry, entityDataName );
+        const entitySet = loadEntities( registry, entityDataName );
         return [registry,entitySet];
     });
 }

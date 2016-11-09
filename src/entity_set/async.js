@@ -35,6 +35,11 @@ class AsyncEntitySet extends EntitySet {
         this.componentId = new ReusableId(options.componentIdStart || 1);
     }
 
+    /**
+     * Opens the entity set so that it is ready to be used.
+     * During the open process, any component defs registered with this entityset are
+     * registered with the Registry
+     */
     open(options={}){
         this._open = true;
         
@@ -45,13 +50,22 @@ class AsyncEntitySet extends EntitySet {
             })
     }
 
+    /**
+     * 
+     */
     isOpen(){ return this._open }
 
+    /**
+     * 
+     */
     close(){
         this._open = false;
         return Promise.resolve(this);
     }
 
+    /**
+     * 
+     */
     destroy( options={} ){
         return Promise.resolve(this);
     }
@@ -84,6 +98,9 @@ class AsyncEntitySet extends EntitySet {
         })
     }
 
+    /**
+     * 
+     */
     _registerComponentDef( cdef, options ){
         return new Promise( (resolve,reject) => {
             // Log.debug('_registerComponentDef adding', cdef.getUri(), cdef.id, cdef.cid, cdef.hash(), options );
@@ -336,9 +353,13 @@ class AsyncEntitySet extends EntitySet {
 
 
 AsyncEntitySet.prototype.type = 'AsyncEntitySet';
+AsyncEntitySet.prototype.isAsyncEntitySet = true;
 AsyncEntitySet.prototype.isMemoryEntitySet = false;
 AsyncEntitySet.prototype.isAsync = true;
 AsyncEntitySet.prototype.cidPrefix = 'aes';
 
+AsyncEntitySet.isAsyncEntitySet( obj ){
+    return obj && obj.isAsyncEntitySet;
+}
 
 export default AsyncEntitySet;
