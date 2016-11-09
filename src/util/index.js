@@ -1,33 +1,16 @@
 import _ from 'underscore';
 import {Collection} from 'odgn-backbone-model';
 import DeepEqual from 'deep-equal';
-import Url from 'omnibox';
+// import Url from 'omnibox';
 // import Util from 'util';
+
+export {createLog} from './log';
 
 export const deepEqual = DeepEqual;
 
 export {toString,entitySetToString,entityToString,componentToString} from './to_string';
 export {uuid as createUuid} from './uuid';
 
-
-export function createLog(name){
-    let fn = {};
-
-    if( !console ){
-        fn = _.map(['debug','info','log','warn','error'], l => function(){} );
-    }
-    else {
-        for( const m in console ){
-            if(typeof console[m] == 'function'){
-                fn[m] = console[m].bind(console, `[${name}:${m}]`);
-            }
-        }
-        if(!fn.debug){
-            fn.debug = console.log.bind(console, `[${name}:debug]`);
-        }
-    }
-    return fn;
-}
 
 export function mergeRecursive(obj1, obj2) {
     for (let p in obj2) {
@@ -115,20 +98,20 @@ export function normalizeUri(uri){
 }
 
 
-/**
- * 
- */
-export function parseUri( uri, parseQueryString ){
-    let result = Url.parse( uri, true );
-    if( result.hash ){
-        result.fragment = result.hash.substring(1);
-        result.baseUri = result.path; //result.href.slice(0, result.href.length - result.hash.length);
-    } else {
-        result.baseUri = result.path;// result.href;
-    }
+// /**
+//  * 
+//  */
+// export function parseUri( uri, parseQueryString ){
+//     let result = Url.parse( uri, true );
+//     if( result.hash ){
+//         result.fragment = result.hash.substring(1);
+//         result.baseUri = result.path; //result.href.slice(0, result.href.length - result.hash.length);
+//     } else {
+//         result.baseUri = result.path;// result.href;
+//     }
 
-    return result;
-}
+//     return result;
+// }
 
 /**
  * 
