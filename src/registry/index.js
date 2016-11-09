@@ -14,26 +14,15 @@ import EntityFilter from '../entity_filter';
 
 // let counter = Date.now() % 1e9;
 
-/**
- * Registry
- * @return {[type]} [description]
- */
-const Registry = function(){};
-
-// const Log = createLog('Registry');
+const Log = createLog('Registry');
 
 
-_.extend(Registry.prototype, Events, {
-    type: 'Registry',
-    isRegistry: true,
 
-    /**
-     * Initialises the entity store
-     * @param  {[type]}   options  [description]
-     * @param  {Function} callback [description]
-     * @return {[type]}            [description]
-     */
-    initialize: function(options={}){
+export default class Registry {
+
+    constructor( options={} ){
+        _.extend(this, Events);
+
         this._initialized = true;
 
         // used to instantiate new entities
@@ -61,47 +50,45 @@ _.extend(Registry.prototype, Events, {
         this._entityViews = {};
 
         this.updateLastTime = Date.now();
-        this.processors = createProcessorCollection();
+        // this.processors = createProcessorCollection();
 
         this.schemaRegistry = options.schemaRegistry || SchemaRegistry.create(null,{registry:this});
 
         this.schemaRegistry.on('all', (...args) => this.trigger.apply(this, args));
-
-        return this;
-    },
+    }
 
     /**
     *
     */
-    createId: function(){
+    createId(){
         // https://github.com/dfcreative/get-uid
         // let counter = Date.now() % 1e9;
         // return (Math.random() * 1e9 >>> 0) + (counter++ + '__')
         return ++this.sequenceCount;
-    },
+    }
 
 
-    schemaAdded: function( schemaUri, schemaHash, schema ){
+    schemaAdded( schemaUri, schemaHash, schema ){
         // log.debug('schema ' + schemaUri + ' added to registry');
         // derive an id for this schema
         // let componentDefId = this._componentDefId++;
         // this._componentDefsBySchemaHash[ componentDefId ] = schemaHash;
         // this._schemaHashComponentDefIds[ schemaHash ] = componentDefId;
-    },
+    }
 
-    schemaRemoved: function( schemaUri, schemaHash, schema ){
+    schemaRemoved( schemaUri, schemaHash, schema ){
         // log.debug('schema ' + schemaUri + ' removed from registry');
         // let componentDefId = this._schemaHashComponentDefIds[ schemaHash ];
         // if( componentDefId ){
             // delete this._schemaHashComponentDefIds[ schemaHash ];
             // this._componentDefsBySchemaHash[ componentDefId ] = undefined;
         // }
-    },
+    }
 
     /**
     *   Creates a new entity
     */
-    createEntity: function(components, options={}){
+    createEntity(components, options={}){
         // options = _.extend({registry:this},options);
         options.registry = this;
         // let entityId = 0;
@@ -151,9 +138,9 @@ _.extend(Registry.prototype, Events, {
         }
 
         return result;
-    },
+    }
 
-    createEntityWithId: function( entityId=0, entitySetId=0, options={} ){
+    createEntityWithId( entityId=0, entitySetId=0, options={} ){
         options.registry = this;
         let attrs = {'@e':entityId,'@es':entitySetId};
         if( options.comBf ){
@@ -164,18 +151,25 @@ _.extend(Registry.prototype, Events, {
             attrs = {id:options.id};
         }
         return new this.Entity( attrs, options );
-    },
+    }
 
 
     
 
     /**
-     * 
+     * Returns a clone of the srcEntity, or if dstEntity is supplied
+     * copies the components of srcEntity into dstEntity.
      */
-    cloneEntity: function( srcEntity, dstEntity, options={} ){
+    cloneEntity( srcEntity, dstEntity, options={} ){
         let ii,len,component,srcComponent;
         const deleteMissing = options.delete;
+        const returnChanged = options.returnChanged;
         const fullCopy = options.full;
+        let dstHasChanged = false;
+
+        if( !srcEntity ){
+            return returnChanged ? [false,null] : null;
+        }
 
         if( !dstEntity ){
             dstEntity = srcEntity.clone();
@@ -186,13 +180,37 @@ _.extend(Registry.prototype, Events, {
             return dstEntity;
         }
 
+        if( deleteMissing ){
+            const srcBitfield = srcEntity.getComponentBitfield();
+            const dstBitfield = dstEntity.getComponentBitfield();
+            const removeDefIds = _.difference(dstBitfield.toJSON(),srcBitfield.toJSON());
+            for(ii=0,len=removeDefIds.length;ii<len;ii++){
+                dstEntity.removeComponent(dstEntity.components[removeDefIds[ii]]);
+                dstHasChanged = true;
+            }
+        }
+
         const srcComponents = srcEntity.getComponents();
 
         for(ii=0,len=srcComponents.length;ii<len;ii++){
+            srcComponent = srcComponents[ii];
+            component = dstEntity.components[srcComponent.getDefId()]; 
+            if( component ){
+                // the dst entity already has this component
+                if( srcComponent.hash() == component.hash() ){
+                    continue;
+                } else {
+                    dstHasChanged = true;
+                }
+            } else {
+                dstHasChanged = true;
+            }
             dstEntity.addComponent( this.cloneComponent(srcComponents[ii]) );
+            
         }
 
-        return dstEntity;
+        return returnChanged ? [dstEntity,dstHasChanged] : dstEntity;
+        // return dstEntity;
 
         // if( !dstEntity ){
         //     const result = srcEntity.clone();
@@ -260,7 +278,7 @@ _.extend(Registry.prototype, Events, {
         // }
 
         // return returnChanged ? [result,dstHasChanged] : result;
-    },
+    }
 
 
     /**
@@ -269,14 +287,12 @@ _.extend(Registry.prototype, Events, {
      * @param  {Object|Array} schema [description]
      * @return {[type]}        [description]
      */
-    registerComponent: function( data, options={} ){
-        const schemaRegistry = this.schemaRegistry;
-        
-        if( options.fromES ){
+    registerComponent( data, options={} ){
+        if( options.notifyRegistry ){
             options.throwOnExists = false;
         }
 
-        return Promise.resolve( schemaRegistry.register(data,options) )
+        return Promise.resolve( this.schemaRegistry.register(data,options) )
             .then( componentDefs => {
                 if( !_.isArray(componentDefs) ){ componentDefs = [componentDefs]; }
                 return _.reduce( this._entitySets, (current, es) => {
@@ -287,19 +303,19 @@ _.extend(Registry.prototype, Events, {
                 }, Promise.resolve() )
                 .then( () => componentDefs )
             });
-    },
+    }
 
     /**
      * Returns an array of all the Component Defs that have been registered
      */
-    getComponentDefs: function(){
-        return this.schemaRegistry.getAll();
-    },
+    getComponentDefs(){
+        return this.schemaRegistry.getComponentDefs();
+    }
 
     /**
     *   Registers the array of component def schemas with the given entitySet
     */
-    _registerComponentDefsWithEntitySet: function( entitySet, componentDefs, options ){
+    _registerComponentDefsWithEntitySet( entitySet, componentDefs, options ){
         options = _.extend( {}, options, {fromRegistry:true, fromES:false} );
         
         // memory based entitysets do not need to register component defs,
@@ -309,25 +325,24 @@ _.extend(Registry.prototype, Events, {
         }
         return _.reduce( componentDefs, (current, cdef) => {
             return current = current.then( () => {
-                // log.debug('registering cdef ',cdef );
                 return entitySet.registerComponentDef( cdef, options );
             })
         }, Promise.resolve() );
-    },
+    }
 
     
 
     /**
     * TODO: name this something better, like 'getComponentIID'
     */
-    getIId: function(componentIDs, options){
+    getIId(componentIDs, options){
         if( options && _.isBoolean(options) ){
             options = {forceArray:true};
             
         }
         // console.log('Registry.getIId:', componentIDs, options );
         return this.schemaRegistry.getIId( componentIDs, options );
-    },
+    }
 
     /**
      * Creates a new component instance
@@ -340,7 +355,7 @@ _.extend(Registry.prototype, Events, {
      * @param  {[type]} schemaUri [description]
      * @return {[type]}          [description]
      */
-    createComponent: function( componentDef, attrs, options, cb ){
+    createComponent( componentDef, attrs, options, cb ){
         let ii, len, name, defaults, entityId, result, defKey;
         
         options || (options={});
@@ -377,12 +392,12 @@ _.extend(Registry.prototype, Events, {
             }
             return this.schemaRegistry.createComponent( componentDef, attrs, options, cb );
         }
-    },
+    }
 
     /**
      * Produces a copy of a component
      */
-    cloneComponent: function( srcComponent, attrs, options ){
+    cloneComponent( srcComponent, attrs, options ){
         const result = srcComponent.clone();
         // let result = new srcComponent.constructor(srcComponent.attributes);
         // result.setId( srcComponent.getId() );
@@ -398,11 +413,11 @@ _.extend(Registry.prototype, Events, {
             result.set( attrs, options );
         }
         return result;
-    },
+    }
 
-    destroyComponent: function( component, options ){
+    destroyComponent( component, options ){
 
-    },
+    }
 
 
     /**
@@ -411,12 +426,12 @@ _.extend(Registry.prototype, Events, {
      * @param  {[type]} entityId [description]
      * @return {[type]}          [description]
      */
-    toEntity: function(entityId){
+    toEntity(entityId){
         let result = Entity.toEntity(entityId);
         if( result )
             result.registry = this;
         return result;
-    },
+    }
 
 
     /**
@@ -426,7 +441,7 @@ _.extend(Registry.prototype, Events, {
      * @param  {Function} callback   [description]
      * @return {[type]}              [description]
      */
-    createEntitySet: function( options={} ){
+    createEntitySet( options={} ){
         let id, uuid;
         let result;
         let instanceClass=EntitySet;
@@ -473,25 +488,25 @@ _.extend(Registry.prototype, Events, {
         // with the registry
         // return result.open( options )
         //     .then( () => {
-        //         const schemas = this.schemaRegistry.getAll();
+        //         const schemas = this.schemaRegistry.getComponentDefs();
         //         return this._registerComponentDefsWithEntitySet( result, schemas, options )
         //             .then( () => result )
         //     });
 
         // return result;
-    },
+    }
 
 
-    removeAllEntitySets: function( options ){
+    removeAllEntitySets( options ){
         return Promise.all( 
             this._entitySets.map(es => this.removeEntitySet(es, options)) );
-    },
+    }
 
     /**
     *   Returns a Promise to removes an entitySet from the registry
     *   
     */
-    removeEntitySet: function( entitySet, options={} ){
+    removeEntitySet( entitySet, options={} ){
         if( !entitySet ){ return null; }
         if( options.sync || !entitySet.isAsync ){
             entitySet.setRegistry( null );
@@ -509,12 +524,12 @@ _.extend(Registry.prototype, Events, {
         //     delete this._entitySetUUIDs[ entitySet.getUuid() ];
         //     return entitySet;
         // });
-    },
+    }
 
     /**
     *   
     */
-    addEntitySet: function( entitySet, options={} ){
+    addEntitySet( entitySet, options={} ){
         if( !entitySet ){ return null; }
 
         entitySet.setRegistry(this);
@@ -540,33 +555,33 @@ _.extend(Registry.prototype, Events, {
             return entitySet;
         }
         
-        console.log('opening', entitySet.type,entitySet.getUuid());
+        // Log.debug('opening', entitySet.type,entitySet.getUuid());
 
         return entitySet.open(options).then( () => {
             this.addEntitySet(entitySet,{sync:true})
 
-            const schemas = this.schemaRegistry.getAll();
+            const schemas = this.schemaRegistry.getComponentDefs();
             return this._registerComponentDefsWithEntitySet( entitySet, schemas, options )
                 .then( () => entitySet ) 
         });
         // return entitySet;
-    },
+    }
 
     /**
     *
     */
-    getEntitySet: function( uuid ){
+    getEntitySet( uuid ){
         let es;
         if( (es = this._entitySetUUIDs[uuid]) ){
             return es;
         }
         return null;
-    },
+    }
 
     /**
     *
     */
-    destroyEntitySet: function( entitySet ){
+    destroyEntitySet( entitySet ){
         let processors, removeList;
         if( !entitySet ){ return null; }
 
@@ -588,9 +603,9 @@ _.extend(Registry.prototype, Events, {
         //     processors.reset();
         //     this.entitySetProcessors[ entitySet.id ] = null;
         // }
-    },
+    }
 
-    triggerEntityEvent: function( name, entity ){
+    triggerEntityEvent( name, entity ){
         let entitySet, bf, ii, len, trigger;
 
         // let args = _.toArray( arguments ).slice(2);
@@ -609,24 +624,34 @@ _.extend(Registry.prototype, Events, {
             entitySet = this._entitySets[ii];
             entitySet.triggerEntityEvent.apply( entitySet, arguments );
         }
-    },
-});
+    }
+}
 
+Registry.prototype.type = 'Registry';
+Registry.prototype.isRegistry = true;
+
+
+class ProcessorCollection extends Collection{
+    // add(models,options){
+    //     return Collection.prototype.add.apply(this,arguments);
+    // }    
+}
 
 function createProcessorCollection(){
-    let result = new Collection();
-    result.comparator = (procA, procB) => {
-        // the entriy in the collection might be a record referencing a processor
-        procA = procA.get('processor') || procA;
-        procB = procB.get('processor') || procB;
-        return procA.get('priority') < procB.get('priority');
+    
+    let result = new ProcessorCollection();
+    result.comparator = (recordA, recordB) => {
+        // the entity in the collection might be a record referencing a processor
+        const procA = recordA.get('processor') || recordA;
+        const procB = recordB.get('processor') || recordB;
+        return procA.getPriority() < procB.getPriority();
     };
     return result;
 }
 
-Registry.isRegistry = function( registry ){
-    return registry && registry.isRegistry;
-}
+// Registry.isRegistry = function( registry ){
+//     return registry && registry.isRegistry;
+// }
 
 /**
  * creates a new registry instance
@@ -635,11 +660,11 @@ Registry.isRegistry = function( registry ){
  * @param  {Function} callback [description]
  * @return {[type]}            [description]
  */
-Registry.create = function create(options={}){
-    let result = new Registry();
-    result.initialize(options);
-    return result;
-};
+// Registry.create = function create(options={}){
+//     let result = new Registry();
+//     result.initialize(options);
+//     return result;
+// };
 
 
-export default Registry;
+// export default Registry;

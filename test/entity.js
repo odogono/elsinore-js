@@ -87,7 +87,7 @@ test('setting entity set', t => {
     e.setEntityId( 22 );
     e.setEntitySetId( 103 );
 
-    let es = { id:0, getRegistry:() => Registry.create() };
+    let es = { id:0, getRegistry:() => new Registry() };
     e.setEntitySet( es );
 
     t.equals( e.getEntityId(), 22 );
@@ -129,5 +129,5 @@ test('toJSON with full options', t => {
 
 function createComponent( properties ){
     properties = _.extend({'@s':1,'@c':'/component/name'}, properties);
-    return Component.create( properties )
+    return new Component(properties);
 }

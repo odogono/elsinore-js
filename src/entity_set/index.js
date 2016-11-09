@@ -5,8 +5,7 @@ import BitField  from 'odgn-bitfield';
 import Component from '../component';
 import Entity from '../entity';
 import EntityFilter from '../entity_filter';
-import * as Utils from '../util';
-import {uuid as createUuid} from '../util/uuid';
+import {createUuid, hash, isInteger} from '../util';
 
 // import * as CmdBuffer from '../cmd_buffer/sync';
 import CmdBuffer from '../cmd_buffer/sync';
@@ -190,7 +189,7 @@ export default class EntitySet extends Collection {
      */
     getComponent(component){
         let componentId;
-        if( Utils.isInteger(component) ){
+        if( isInteger(component) ){
             componentId = component;
         } else if( Component.isComponent(component) ){
             componentId = component.id;
@@ -428,7 +427,7 @@ export default class EntitySet extends Collection {
     // TODO: remove
     doesEntityHaveComponent( entityId, componentId, options ){
         let entity;
-        if( Utils.isInteger(entityId) ){
+        if( isInteger(entityId) ){
             entity = this.at(entityId);
         }
 
@@ -490,7 +489,7 @@ EntitySet.prototype.views = null;
 
 EntitySet.hash = function( entitySet ){
     let hash = entitySet.toJSON();// entitySet.type;
-    return Utils.hash( hash, true );
+    return hash( hash, true );
 }
 
 

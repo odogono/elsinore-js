@@ -1,7 +1,9 @@
 import _ from 'underscore';
 import BitField  from 'odgn-bitfield';
-import * as Utils from './util';
 import Entity from './entity';
+import {
+    hash
+} from './util';
 
 export const ALL = 0; // entities must have all the specified components
 export const ANY = 1; // entities must have one or any of the specified components
@@ -80,9 +82,9 @@ export default class EntityFilter {
             // log.debug('EF.accept ' + type + ' ', bitField.toJSON(), ebf.toJSON() );
             if( entity && type == INCLUDE ){
                 
-                // log.debug('EF.accept filter pre', Utils.toString( entity ));
+                // log.debug('EF.accept filter pre', toString( entity ));
                 entity = EntityFilter.Transform( type, registry, entity, ebf, bitField );
-                // log.debug('EF.accept filter post', Utils.toString( entity ));
+                // log.debug('EF.accept filter post', toString( entity ));
             }
             else if( !EntityFilter.accept( type, ebf, bitField, true ) ){
                 return null;
@@ -92,7 +94,7 @@ export default class EntityFilter {
     }
 
     hash( asString ){
-        return Utils.hash( 'EntityFilter' + JSON.stringify(this), asString );
+        return hash( 'EntityFilter' + JSON.stringify(this), asString );
     }
 
     toJSON(){
@@ -146,7 +148,7 @@ EntityFilter.Transform = function( type, registry, entity, entityBitField, filte
 
 
 // export function hash( arr, asString ){
-//     return Utils.hash( 'EntityFilter' + JSON.stringify(arr), asString );
+//     return hash( 'EntityFilter' + JSON.stringify(arr), asString );
 // }
 
 

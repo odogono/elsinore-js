@@ -12,7 +12,12 @@ import Entity from '../entity';
 import EntityFilter from '../entity_filter';
 import EntitySet from '../entity_set';
 import Query from './query';
-import * as Utils from '../util'
+import {
+    deepClone,
+    isInteger,
+    reduceIterator,
+    stringify
+} from '../util'
 
 import CmdBuffer from '../cmd_buffer/async';
 
@@ -436,8 +441,7 @@ let FileSystemEntitySet = EntitySet.extend({
 
         return this._getComponentPaths( componentIds, true )
             .then( function(paths){
-                log.debug('full component paths');
-                printIns( paths );
+                // log.debug('full component paths',paths);
             });
     },
 
@@ -450,7 +454,7 @@ let FileSystemEntitySet = EntitySet.extend({
         // log.debug('esf> registering ' + JSON.stringify(data) );
         var schema = self.getRegistry().registerComponent( data );
 
-        schema = Utils.deepClone( _.pick(schema, 'uri', 'hash', 'obj') );
+        schema = deepClone( _.pick(schema, 'uri', 'hash', 'obj') );
         schema.registered_at = Date.now();
         // find next index to insert
         var schemaId = self._schemaById.indexOf( null );
@@ -496,7 +500,6 @@ let FileSystemEntitySet = EntitySet.extend({
                 // register incoming schemas
                 _.each( self._schemaById, function(schema){
                     if( !schema ){ return; }
-                    // printIns( schema );
                     registry.registerComponent( schema );
                 });
                 return self;
@@ -531,7 +534,6 @@ let FileSystemEntitySet = EntitySet.extend({
 
     //     return this._readDir( path )
     //         .then( function(schemaPaths){
-    //             // printIns( schemaPaths );
     //             return _.reduce( schemaPaths, function(current,schemaPath){
     //                 return current.then( function(){
     //                     // log.debug('load schema ' + schemaPath );
@@ -680,7 +682,7 @@ let FileSystemEntitySet = EntitySet.extend({
             Sh.mkdir('-p', Path.dirname(path) );
 
             if( toJSON ){
-                data = Utils.stringify( data, '\t' );
+                data = stringify( data, '\t' );
             }
 
             Fs.writeFile( path, data, function(err){
@@ -723,7 +725,7 @@ let FileSystemEntitySet = EntitySet.extend({
 
     _getComponentSchema: function( component ){
         var uri;
-        if( Utils.isInteger(component) ){
+        if( isInteger(component) ){
             uri = component;
         } else {
             uri = component.schemaUri;
@@ -832,7 +834,7 @@ FileSystemEntitySet.map = function( srcEntitySet, entityFilter, dstEntitySet, op
 
     it = srcEntitySet.iterator();
 
-    return Utils.reduceIterator( it, function(memo,item){
+    return reduceIterator( it, function(memo,item){
             memo.push( item );
         }, [])
         .then( function( entities ){

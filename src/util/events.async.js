@@ -2,13 +2,12 @@
 
 import _ from 'underscore';
 import {Events} from 'odgn-backbone-model';
-import * as Utils from '../util';
 
 /**
 *   An event listener which captures incoming events and
 *   only releases them when instructed to.
 */
-let EventsAsync = _.extend({}, Events, {
+const EventsAsync = _.extend({}, Events, {
 
     /**
     *
@@ -26,11 +25,11 @@ let EventsAsync = _.extend({}, Events, {
     listenToAsync: function(obj, name, callback){
         let asyncListenQueue = this._asyncListenQueue || (this._asyncListenQueue = []);
         this.isListeningAsync = true;
-        // log.debug('registered listenToAsync ' + name + ' to ' + Utils.stringify(obj)  );
+        // log.debug('registered listenToAsync ' + name + ' to ' + stringify(obj)  );
 
         // NOTE: because we use the arguments object, we can't use es6 fat arrows here
         let listenFn = function(){
-            // log.debug('listenToAsync recv ' + Utils.stringify(arguments) + ' for name '+ name);
+            // log.debug('listenToAsync recv ' + stringify(arguments) + ' for name '+ name);
             asyncListenQueue.push( {c:callback, a:_.toArray(arguments),name} );
         };
 
@@ -49,7 +48,7 @@ let EventsAsync = _.extend({}, Events, {
         for( ii = 0, len = this._asyncListenQueue.length; ii < len; ii++ ){
             item = this._asyncListenQueue[ii];
             args = [ item.name ].concat(item.a);
-            // log.debug('releasing ' + item.name, Utils.stringify(args) );
+            // log.debug('releasing ' + item.name, stringify(args) );
             item.c.apply( item.c, args );
         }
         this._asyncListenQueue.length = 0;
@@ -57,4 +56,5 @@ let EventsAsync = _.extend({}, Events, {
     },
 });
 
-module.exports = EventsAsync;
+// module.exports = EventsAsync;
+export default EventsAsync;

@@ -1,6 +1,6 @@
 import _ from 'underscore';
 import {Model as BackboneModel} from 'odgn-backbone-model'
-import * as Utils from './util'
+import {hash} from './util'
 
 
 
@@ -35,7 +35,7 @@ export default class Model extends BackboneModel {
 
     hash( asString ){
         let result = JSON.stringify( this.cid );//_.omit(this.attributes,'hash'));
-        return Utils.hash( result, asString );
+        return hash( result, asString );
     }
 
     toJSON( options ){

@@ -1,6 +1,8 @@
 import _ from 'underscore';
 import BitField  from 'odgn-bitfield';
-import * as Utils from '../util'
+import {
+    hash
+} from '../util'
 
 import Query from '../query';
 import EntitySet from '../entity_set';
@@ -57,11 +59,11 @@ _.extend( EntitySet.prototype, {
 });
 
 EntitySet.hash = function( entitySet, query ){
-    var hash = entitySet.type;
+    let result = entitySet.type;
     if( query ){
-        hash += query.hash();
+        result += query.hash();
     }
-    return Utils.hash( hash, true );
+    return hash( result, true );
 }
 
 EntitySet.setQuery = function( entitySet, query, options ){

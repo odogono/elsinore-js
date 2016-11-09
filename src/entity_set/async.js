@@ -5,11 +5,12 @@ import Entity from '../entity';
 import EntitySet from './index';
 import CmdBuffer from '../cmd_buffer/async';
 import ReusableId from '../util/reusable_id';
-import {setEntityIdFromId,toString} from '../util';
-// import * as Utils from '../util';
-import {getEntityIdFromId,getEntitySetIdFromId} from '../util';
+import {setEntityIdFromId,toString as entityToString} from '../util';
+import {createLog,getEntityIdFromId,getEntitySetIdFromId} from '../util';
 import {ComponentNotFoundError,EntityNotFoundError,ComponentDefNotFoundError} from '../error';
-import {ComponentDefCollection} from '../schema';
+import ComponentRegistry from '../schema';
+
+const Log = createLog('AsyncEntitySet');
 
 
 /**
@@ -22,7 +23,8 @@ import {ComponentDefCollection} from '../schema';
  */
 class AsyncEntitySet extends EntitySet {
     initialize(entities, options={}){
-        this.componentDefs = new ComponentDefCollection();
+        this.componentDefs = new ComponentRegistry();
+        // this.componentDefs = new ComponentDefCollection();
         // console.log('init AsyncEntitySet');
         options.cmdBuffer = CmdBuffer;
         EntitySet.prototype.initialize.apply(this, arguments);
@@ -38,11 +40,9 @@ class AsyncEntitySet extends EntitySet {
         
         return this.getComponentDefs({notifyRegistry:true})
             .then( () => {
-                console.log(`finished ${this.type} open`);
+                // Log.debug(`finished ${this.type} open`);
                 return this;
             })
-
-        // return Promise.resolve(this);
     }
 
     isOpen(){ return this._open }
@@ -64,7 +64,10 @@ class AsyncEntitySet extends EntitySet {
         // on to the registry, which takes care of decomposing the incoming schemas
         // and then notifying each of the entitySets about the new component defs
         if (!options.fromRegistry) {
-            return this.getRegistry().registerComponent(data, { fromES: this }).then( () => this )
+            if( options.debug ){ 
+                Log.debug('registering with registry'); 
+            }
+            return this.getRegistry().registerComponent(data, {fromES: this, ...options} ).then( () => this )
         }
 
         return this.getComponentDefByHash(data.hash).then( existing => {
@@ -83,11 +86,11 @@ class AsyncEntitySet extends EntitySet {
 
     _registerComponentDef( cdef, options ){
         return new Promise( (resolve,reject) => {
-            // console.log('_registerComponentDef adding', cdef.getUri(), cdef.id, cdef.cid, cdef.hash() );
-            const clonedDef = cdef.clone();
+            // Log.debug('_registerComponentDef adding', cdef.getUri(), cdef.id, cdef.cid, cdef.hash(), options );
+            // const clonedDef = cdef.clone();
             // TODO : should use a reusableId here
             // clonedDef.set({id:_.uniqueId('acd')});
-            this.componentDefs.add( clonedDef );
+            this.componentDefs.register( cdef, {throwOnExists:false} );
             // console.log('_registerComponentDef added', clonedDef.getUri(), clonedDef.id, clonedDef.cid, clonedDef.hash() );
             return resolve(this);
         })
@@ -97,15 +100,11 @@ class AsyncEntitySet extends EntitySet {
     *   Returns a component def by its id/uri
     */
     getComponentDef(cdefId, cached) {
+        
         return new Promise( (resolve,reject) => {
-            // console.log('huh', this.componentDefs);
-            let def = this.componentDefs.get( cdefId );
-            if( !def ){
-                def = this.componentDefs.getByUri(cdefId);
-            }
-            if( !def ){
-                def = this.componentDefs.getByHash(cdefId);
-            }
+
+            const def = this.componentDefs.getComponentDef(cdefId);
+
             if( !def ){
                 return reject(new ComponentDefNotFoundError(cdefId));
             }
@@ -118,7 +117,8 @@ class AsyncEntitySet extends EntitySet {
     */
     getComponentDefByHash(hash) {
         return new Promise( (resolve,reject) => {
-            const result = this.componentDefs.getByHash(hash);
+            const result = this.componentDefs.getComponentDef(hash);
+            // const result = this.componentDefs.getByHash(hash);
             if( result ){
                 return resolve(result);
             }
@@ -131,14 +131,14 @@ class AsyncEntitySet extends EntitySet {
     *   Returns a promise for an array of registered schemas
     */
     getComponentDefs(options={}) {
-        const componentDefs = this.componentDefs.models;
+        const componentDefs = this.componentDefs.getComponentDefs();// this.componentDefs.models;
 
         if( !options.notifyRegistry ){ return Promise.resolve(componentDefs) }
         
         // if this hasn't been called from the registry, then we forward the request
         // on to the registry, which takes care of decomposing the incoming schemas
         // and then notifying each of the entitySets about the new component defs
-        return this.getRegistry().registerComponent(componentDefs, {fromES: this} )
+        return this.getRegistry().registerComponent(componentDefs, {notifyRegistry:true,fromES: this} )
             .then( () => componentDefs );
     }
 
@@ -251,7 +251,7 @@ class AsyncEntitySet extends EntitySet {
             return result;
         }, []);
 
-        // console.log('new entities', toString(entitiesAdded));
+        // console.log('new entities', entityToString(entitiesAdded));
 
         // retrieve ids for the new entities
         return this.entityId.getMultiple( entitiesAdded.length )
@@ -268,7 +268,7 @@ class AsyncEntitySet extends EntitySet {
             .then( componentIds => {
                 // console.log('new component ids', componentIds);
                 _.each(componentsAdded, (com, ii) => com.set({id:componentIds[ii]}) );
-                // console.log('new components', toString(componentsAdded));
+                // console.log('new components', entityToString(componentsAdded));
             })
             .then( () => this._applyUpdate(entitiesAdded,
                     entitiesUpdated,
@@ -284,11 +284,11 @@ class AsyncEntitySet extends EntitySet {
 
         const addOptions = {silent:true};
         if( entitiesAdded ){
-            if(debug){console.log('entitiesAdded', toString(entitiesAdded))}
+            if(debug){Log.debug('entitiesAdded', entityToString(entitiesAdded))}
             this.add( entitiesAdded, addOptions );
         }
         if( entitiesUpdated ){
-            if(debug){console.log('entitiesUpdated', toString(entitiesUpdated))}
+            if(debug){Log.debug('entitiesUpdated', entityToString(entitiesUpdated))}
             this.add( entitiesUpdated, addOptions );
         }
         if( entitiesRemoved ){

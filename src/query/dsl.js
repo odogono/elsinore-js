@@ -1,7 +1,6 @@
 import _ from 'underscore';
 import Query from './index';
 import * as Q from './index';
-import * as Utils from '../util';
 
 
 function precendence( operator ){
@@ -402,7 +401,6 @@ function readContext( context, addFilterFunctions, addStackFunctions, addQueryFu
     else if( Q.isQuery(context) ){ //context.isQuery ){
         return context;
     } else {
-        // printIns( arguments );
         console.log('context ' + (typeof context) );
         throw new Error('invalid context' );
     }

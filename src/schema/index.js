@@ -4,7 +4,7 @@ import _ from 'underscore';
 import {Collection,Events,Model as BackboneModel} from 'odgn-backbone-model';
 
 import Component from '../component';
-import * as Utils from '../util'
+import {createLog,deepExtend} from '../util';
 
 import ComponentDef from '../component_def';
 
@@ -16,22 +16,41 @@ type ComponentDefRawType = ComponentDefRawArrayType | ComponentDefRawObjectType;
 type ComponentDefType = Object; // TODO: replace with proper backbone model
 type ComponentDefIdentifierType = string | string[] | uint32 | ComponentDefRawType | ComponentDefType;
 
+const Log = createLog('ComponentRegistry', false);
 
 /**
  * 
  */
-export const ComponentDefCollection = Collection.extend({
-    model: ComponentDef,
+// export const ComponentDefCollection = Collection.extend({
+//     model: ComponentDef,
 
-    getByHash: function(hash:string){
+//     getByHash: function(hash:string){
+//         return this.find( cdef => cdef.hash() == hash );
+//     },
+
+//     getByUri: function(uri:string){
+//         return this.find( cdef => cdef.getUri() == uri );
+//     }
+// });
+
+export class ComponentDefCollection extends Collection {
+    getByHash(hash:string){
         return this.find( cdef => cdef.hash() == hash );
-    },
-
-    getByUri: function(uri:string){
-        return this.find( cdef => cdef.getUri() == uri );
     }
 
-});
+    getByUri(uri:string){
+        return this.find( cdef => cdef.getUri() == uri );
+    }
+}
+ComponentDefCollection.prototype.model = ComponentDef;
+
+
+class ComponentDefUriCollection extends ComponentDefCollection {
+    modelId(attrs){
+        return attrs.uri;
+    }
+
+}
 
 
 /**
@@ -43,6 +62,7 @@ export default class ComponentRegistry {
         this.registry = options.registry;
         this._componentIndex = 1;
         this._componentDefs = new ComponentDefCollection();
+        this._componentDefByUri = new ComponentDefUriCollection();
         this._componentTypes = {};
         if( definitions ){
             _.each( definitions, def => this.register(def) );
@@ -68,17 +88,20 @@ export default class ComponentRegistry {
         return this._componentDefs.reduce( (result,def) =>{
             result[def.id] = def.getUri();
             return result;
-        },[]);    
+        },[]);
     }
     
     /**
      * Adds a component definition to the registry
      */
     register( def:ComponentDefRawType|ComponentDefType, options:Object={} ): Object|null {
+        let componentDef;
         let throwOnExists = _.isUndefined(options.throwOnExists) ? true : options.throwOnExists;
+
         
-        if( ComponentDef.isComponentDef(def) ){
-            
+        
+        if( def.isComponentDef ){
+            componentDef = def;
         }
         else if( _.isArray(def) ){
             return _.map( def, d => this.register(d,options) );
@@ -86,62 +109,75 @@ export default class ComponentRegistry {
         else if( Component.isComponent(def) ){
             const defOptions = {registering:true, registry:this.registry};
             let inst = new def(null,defOptions);
-            if( inst.properties ){
-                def.properties = inst.properties;
+            const properties = _.result(inst,'properties');
+            Log.debug('ok got', properties);
+            if( properties ){
+                def.properties = properties;
             }
-            this._componentTypes[ inst.type ] = def;
-            // console.log('Component has properties', inst.properties);
-            this.trigger('type:add', inst.type, def);
+            const type = _.result(inst,'type');
+            this._componentTypes[ type ] = def;
+            this.trigger('type:add', type, def);
 
-            if( inst.uri ){
-                this.register({uri:inst.uri,type:inst.type});
+            const uri = _.result(inst,'uri');
+            if( uri ){
+                this.register({uri,type});
             }
 
             return def;
         }
         else if( !_.isObject(def) || !def.uri ){
-            console.log('def',def);
+            Log.error('def',def);
             throw new Error('invalid component def: ' + JSON.stringify(def) );
         }
-        
-        let existing = this.getComponentDef( def );
-        
+        else {
+            // Log.info('register', def, _.keys(options), throwOnExists );
+            componentDef = new ComponentDef( {...def} );
+        }
+
+        const existing = this.getComponentDef(componentDef.hash());
+
         if( existing ){
             if( throwOnExists ){
+                // Log.debug('existing', JSON.stringify(existing));
+                // Log.debug('incoming', JSON.stringify(def));
+                // Log.debug( this._componentDefByUri.toJSON() );
                 throw new Error('def ' + existing.getUri() + ' (' + existing.hash() + ') already exists' );
             }
             return existing;
         }
 
-        let type = def['type'];
+        componentDef.id = this._componentIndex++;
+
+        
+        const type = componentDef.get('type');
 
         if( type ){
             let ComponentType = this._componentTypes[type];
             // ensure we have this type registered
             if( !ComponentType ){
                 if( throwOnExists ){
-                    throw new Error('could not find type ' + type + ' for def ' + def['uri'] );
+                    throw new Error(`could not find type ${type} for def ${componentDef.getUri()}`);
                 } else {
                     return null;
                 }
             }
 
             if( ComponentType.properties ){
-                def = Utils.deepExtend( {}, {properties:ComponentType.properties}, def );
+                Log.debug('combining properties', ComponentType.properties, def.properties );
+                def.properties = { ...ComponentType.properties, ...def.properties };
+                
+                componentDef = new ComponentDef( {...def,id:componentDef.id});
+                Log.debug('so we have', componentDef.toJSON());
             }
         }
         
-        // let hash = def.hash();// ComponentRegistry.hashSchema( def );
-        // do we have this def already?
-        
-        let id = this._componentIndex++;
-        
-        // def.attrs = this._createAttrsFromProperties( def.properties );
-
-        // console.log('creating with', def);
-        let componentDef = ComponentDef.create( _.extend({},def,{id}) );
-        
+        // if( !componentDef.getUri() ){
+        //     throw new Error(`invalid component def`);
+        // }
         this._componentDefs.add( componentDef );
+
+        this._componentDefByUri.remove( componentDef.getUri() );
+        this._componentDefByUri.add( componentDef );
         
         this.trigger('def:add', componentDef.get('uri'), componentDef.hash(), componentDef );
 
@@ -162,6 +198,7 @@ export default class ComponentRegistry {
             return null;
         }
         
+        this._componentDefByUri.remove( componentDef.getUri() );
         this._componentDefs.remove( componentDef.id );
         
         this.trigger('def:remove', componentDef.get('uri'), componentDef.hash(), componentDef );
@@ -169,8 +206,15 @@ export default class ComponentRegistry {
         return componentDef;
     }
 
-    getAll(){
-        return this._componentDefs.models;//.toJSON();
+
+    /**
+     * Returns an array of the registered componentdefs
+     */
+    getComponentDefs(options={}){
+        if( options.all ){
+            return this._componentDefs.models;
+        }
+        return this._componentDefByUri.models;
     }
     
     /**
@@ -178,7 +222,7 @@ export default class ComponentRegistry {
      */
     // static hashSchema(def){
     //     if( !def ){ return '' };
-    //     return def.hash || Utils.hash(JSON.stringify(def.properties) + ":" + def.Name, true );
+    //     return def.hash || hash(JSON.stringify(def.properties) + ":" + def.Name, true );
     // }
 
     
@@ -197,23 +241,24 @@ export default class ComponentRegistry {
             return null;
         }
 
-        
+        Log.debug('createComponent with', def.toJSON());
 
-        let ComponentType = Component;
-        let type = def.get('type');
-        // console.log('createComponent...', def.get('type') );
-        if( type ){
-            // console.log('could not find component type ' + type );
-            ComponentType = this._componentTypes[type];
-            if( !ComponentType ){
-                return cb('could not find component type ' + type );
-            }
+        const type = def.get('type');
+        let ComponentType = type ? this._componentTypes[type] : Component;
+        // 
+        // // console.log('createComponent...', def.get('type') );
+        // if( type ){
+        //     // console.log('could not find component type ' + type );
+            // ComponentType = this._componentTypes[type];
+        //     if( !ComponentType ){
+        //         return cb('could not find component type ' + type );
+        //     }
 
-            // if( ComponentType.properties ){
+        //     // if( ComponentType.properties ){
 
-            // }
-            // console.log('create type', attrs);
-        }
+        //     // }
+        //     // console.log('create type', attrs);
+        // }
 
         // we create with attrs from the def, not properties -
         // since the properties describe how the attrs should be set
@@ -248,6 +293,7 @@ export default class ComponentRegistry {
      */
     getComponentDef( identifiers:ComponentDefIdentifierType, options:Object={} ): Object|null|uint32 {
         let ii=0, len=0, cDef, ident;
+        const debug = _.isUndefined(options.debug) ? false : options.debug;
         const forceArray = _.isUndefined(options.forceArray) ? false : options.forceArray;
         const returnIds = _.isUndefined(options.returnIds) ? false : options.returnIds;
         const throwOnNotFound = _.isUndefined(options.throwOnNotFound) ? false : options.throwOnNotFound;
@@ -258,17 +304,23 @@ export default class ComponentRegistry {
         for ( ii=0,len=identifiers.length;ii<len;ii++ ){
             ident = identifiers[ii];
             
-            // console.log('looking at', ident);
+            // if( debug ){ Log.debug('looking at', ident); }
+
             if(_.isObject(ident) ){
-                ident = ident.id || ident.hash;
+                ident = ident.id || ident.hash || ident.uri;
             }
-            
+
             if( !ident ){
                 continue;
             }
             
-            cDef = this._componentDefs.get(ident);
+
+            cDef = this._componentDefByUri.get(ident);
             
+            if( !cDef ){
+                cDef = this._componentDefs.get(ident);
+            }
+
             if( !cDef ){
                 cDef = this._componentDefs.getByHash(ident);
             }
@@ -281,8 +333,9 @@ export default class ComponentRegistry {
                 cDef = this._componentDefs.findWhere({name:ident});
             }
             
+            
+
             if( !cDef ){
-                // console.log('RARR', ident, throwOnNotFound);
                 if( throwOnNotFound ){
                     throw new Error('could not find componentDef ' + ident );
                 }

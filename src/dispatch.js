@@ -1,6 +1,5 @@
 import _ from 'underscore';
 import {Model as BackboneModel,Collection} from 'odgn-backbone-model';
-import * as Utils from './util';
 import Query from './query/full';
 
 

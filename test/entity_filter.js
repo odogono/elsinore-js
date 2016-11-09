@@ -257,7 +257,7 @@ function createComponent( componentIId ){
         attrs = _.omit( componentIId, '@c' );
         componentIId = componentIId['@c'];
     }
-    result = Component.create(_.extend( attrs, {'@c': _.uniqueId() }) );
+    result = new Component(_.extend( attrs, {'@c': _.uniqueId() }) );
     data = ComponentIIdToObject[ componentIId ];
     _.each( data, (val,key) => result[ key ] = val );
     result.set( {'@s':data['@s']} );

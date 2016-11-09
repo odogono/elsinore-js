@@ -24,12 +24,12 @@ test('toPascalCase', function(t){
 });
 
 
-test('parse uri', t => {
-    const record = parseUri('/foo/bar?baz=quux#frag');
+// test('parse uri', t => {
+//     const record = parseUri('/foo/bar?baz=quux#frag');
 
-    t.deepEqual( record.query, { 'baz': 'quux'} );
-    t.equals( record.baseUri, '/foo/bar?baz=quux' );
-    t.equals( record.fragment, 'frag' );
+//     t.deepEqual( record.query, { 'baz': 'quux'} );
+//     t.equals( record.baseUri, '/foo/bar?baz=quux' );
+//     t.equals( record.fragment, 'frag' );
     
-    t.end();
-});
+//     t.end();
+// });

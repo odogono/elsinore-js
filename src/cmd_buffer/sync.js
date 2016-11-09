@@ -4,7 +4,13 @@ import BitField  from 'odgn-bitfield';
 import Component from '../component';
 import Entity from '../entity';
 import EntityFilter from '../entity_filter';
-import * as Utils from '../util';
+import {
+    clearCollection,
+    clearMap,
+    stringify,
+    toString as entityToString,
+    valueArray
+} from '../util';
 
 export const CMD_EX = 42;
 export const CMD_ENTITY_ADD = 0;
@@ -66,7 +72,7 @@ export default class CmdBuffer {
             
             if( execute ){
                 this.execute( entitySet, options );
-                result = Utils.valueArray( this.componentsAdded.models );
+                result = valueArray( this.componentsAdded.models );
             }
 
             return result;
@@ -107,7 +113,7 @@ export default class CmdBuffer {
         }
 
         if( !entity ){
-            // if(debug){ console.log('no existing entity found for', entityId); console.log( Utils.toString(entitySet)); }
+            // if(debug){ console.log('no existing entity found for', entityId); console.log( toString(entitySet)); }
             this.addCommand( CMD_ENTITY_ADD, entityId, options );
             this.addCommand( CMD_COMPONENT_ADD, component, options );
         }
@@ -116,8 +122,8 @@ export default class CmdBuffer {
 
             // if( debug ){
             //     console.log('existing ' + existingCom.hash() + ' vs new ' + component.hash() );
-            //     console.log('existing: ' + Utils.stringify(existingCom));
-            //     console.log('new: ' + Utils.stringify(component));
+            //     console.log('existing: ' + stringify(existingCom));
+            //     console.log('new: ' + stringify(component));
             // }
 
             // does the existing entity have this component?
@@ -125,7 +131,7 @@ export default class CmdBuffer {
                 this.addCommand( CMD_COMPONENT_ADD, component, options );
             } else {
                 // is the existing component different?
-                if( debug){ console.log('updating existing', Utils.stringify(component)); }
+                if( debug){ console.log('updating existing', stringify(component)); }
                 this.addCommandX( CMD_COMPONENT_UPDATE, entityId, component, options );
             }
         }
@@ -133,7 +139,7 @@ export default class CmdBuffer {
         // execute any outstanding commands
         if( execute ){
             this.execute( entitySet, options );
-            result = Utils.valueArray( this.componentsAdded.models );
+            result = valueArray( this.componentsAdded.models );
         }
 
         return result;
@@ -173,7 +179,7 @@ export default class CmdBuffer {
             
             if( execute ){
                 this.execute( entitySet, executeOptions );
-                result = Utils.valueArray( this.componentsRemoved.models );
+                result = valueArray( this.componentsRemoved.models );
             }
 
             return result;
@@ -188,7 +194,7 @@ export default class CmdBuffer {
         // execute any outstanding commands
         if( execute ){
             this.execute( entitySet, executeOptions );
-            result = Utils.valueArray( this.componentsRemoved.models );
+            result = valueArray( this.componentsRemoved.models );
         }
 
         return result;
@@ -231,7 +237,7 @@ export default class CmdBuffer {
             
             if( execute ){
                 this.execute( entitySet, options );
-                result = Utils.valueArray( this.entitiesAdded.models );
+                result = valueArray( this.entitiesAdded.models );
             }
 
             return result;
@@ -279,7 +285,7 @@ export default class CmdBuffer {
         // execute any outstanding commands
         if( execute ){
             this.execute( entitySet, options );
-            result = Utils.valueArray( this.entitiesAdded.models );
+            result = valueArray( this.entitiesAdded.models );
         }
         
         return result;
@@ -318,7 +324,7 @@ export default class CmdBuffer {
             
             if( execute ){
                 this.execute( entitySet, executeOptions );
-                result = Utils.valueArray( this.entitiesRemoved.models );
+                result = valueArray( this.entitiesRemoved.models );
             }
 
             return result;
@@ -343,7 +349,7 @@ export default class CmdBuffer {
         // execute any outstanding commands
         if( execute ){
             this.execute( entitySet, executeOptions );
-            result = Utils.valueArray( this.entitiesRemoved.models );
+            result = valueArray( this.entitiesRemoved.models );
         }
 
         return result;
@@ -409,7 +415,7 @@ export default class CmdBuffer {
                         if( !entity ){
                             // if( debug )console.log('create entity with ' + JSON.stringify(entityId) );
                             tEntity = entitySet._createEntity( entityId, false, options );
-                            if( debug ){ console.log('adding entity', Utils.toString(tEntity));}// tEntity.id, entityId); }
+                            if( debug ){ console.log('adding entity', entityToString(tEntity));}// tEntity.id, entityId); }
                         }
                         break;
                     case CMD_COMPONENT_ADD:
@@ -454,7 +460,7 @@ export default class CmdBuffer {
             if( (query = entitySet.getQuery()) ){
                 // if( debug ) { console.log('executing against filter ' + JSON.stringify(query) ); }
                 // console.log('>~~~~~'); 
-                // console.log( Utils.toString(tEntity) );
+                // console.log( entityToString(tEntity) );
                 // console.log('<~~~~~');
                 tEntity = query.execute( tEntity );
             }
@@ -498,7 +504,7 @@ export default class CmdBuffer {
                 if(debug){console.log('!!! SYNC change entity bf', changeEntityBF.toJSON())}
                 if(debug){console.log('!!! SYNC existing entity bf', existingEntityBF.toJSON())} 
                 if(debug){console.log('!!! SYNC diff bf', bfDifference )}
-                if(debug){console.log('!!! entity', Utils.toString(entity) )}
+                if(debug){console.log('!!! entity', entityToString(entity) )}
 
                 this.componentsRemoved.add(
                     entity.removeComponents(bfDifference));
@@ -557,14 +563,14 @@ export default class CmdBuffer {
 
 
     reset(){
-        this.cmds = Utils.clearMap( this.cmds );
-        this.entitiesAdded = Utils.clearCollection( this.entitiesAdded );
-        this.entitiesUpdated = Utils.clearCollection( this.entitiesUpdated );
-        this.entitiesRemoved = Utils.clearCollection( this.entitiesRemoved );
+        this.cmds = clearMap( this.cmds );
+        this.entitiesAdded = clearCollection( this.entitiesAdded );
+        this.entitiesUpdated = clearCollection( this.entitiesUpdated );
+        this.entitiesRemoved = clearCollection( this.entitiesRemoved );
 
-        this.componentsAdded = Utils.clearCollection( this.componentsAdded );
-        this.componentsUpdated = Utils.clearCollection( this.componentsUpdated );
-        this.componentsRemoved = Utils.clearCollection( this.componentsRemoved );
+        this.componentsAdded = clearCollection( this.componentsAdded );
+        this.componentsUpdated = clearCollection( this.componentsUpdated );
+        this.componentsRemoved = clearCollection( this.componentsRemoved );
     }
 
     /**

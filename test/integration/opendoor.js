@@ -29,26 +29,26 @@ test('main', function(t){
         let eDoor;
         let door;
         let processor;
-        let DoorProcessor;
         
-        DoorProcessor = EntityProcessor.extend({
-            // handle entity events
-            events:{
+        class DoorProcessor extends EntityProcessor {
 
-                'doorOpen': (entity, entitySet, msg) => entity.Door.set({'open': true, msg: msg}),
-                'doorClose': (entity, entitySet) => entity.Door.set('open', false)
-                // 'all': function(entity, es){
-                //     log.debug('!all ' + JSON.stringify(arguments));
-                // }
-            },
+            constructor(options={}){
+                super(options);
+                this.closingTime = {
+                    'wood': 200,
+                    'metal': 300,
+                    'stone': 500
+                };
+                this.events = {
+                    'doorOpen': (entity, entitySet, msg) => entity.Door.set({'open': true, msg: msg}),
+                    'doorClose': (entity, entitySet) => entity.Door.set('open', false)
+                    // 'all': function(entity, es){
+                    //     log.debug('!all ' + JSON.stringify(arguments));
+                    // }
+                }
+            }
 
-            closingTime: {
-                'wood': 200,
-                'metal': 300,
-                'stone': 500
-            },
-
-            onUpdate: function( entityArray, timeMs ){
+            onUpdate( entityArray, timeMs ){
                 let entity, ii, len;
                 let closeTime;
                 
@@ -60,7 +60,7 @@ test('main', function(t){
                     }
                 });
             }
-        });
+        }
 
         
 

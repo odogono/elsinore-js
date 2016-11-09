@@ -2,17 +2,15 @@ import _ from 'underscore';
 import Sinon from 'sinon';
 import test from 'tape';
 
-import {isInteger} from '../src/util';
-
 import {
     Component, Entity, EntityFilter, EntitySet,
     Registry, SchemaRegistry,
-    initialiseRegistry, 
+    initialiseRegistry,
+    isInteger, 
     loadEntities, 
     loadComponents,
     loadFixtureJSON,
     printE,
-    printIns,
     logEvents,
     requireLib,
 } from './common';

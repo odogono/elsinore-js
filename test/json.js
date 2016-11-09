@@ -45,9 +45,9 @@ test('entity with components', t => {
             {'@c':'/component/radius', radius:1.2}]);
         let e = registry.createEntity(components);
         t.deepEqual( e.toJSON(), [
-            { radius: 1.2, '@s': 2 },
-            { status: 'active', '@s': 3 },
-            { name: 'squirtle', '@s': 4 }
+            { radius: 1.2, '@s': 2, '@e':1 },
+            { status: 'active', '@s': 3, '@e':1 },
+            { name: 'squirtle', '@s': 4, '@e':1 }
         ]);
     })
     .then(() => t.end())
@@ -69,11 +69,18 @@ test('entityset with entities', t => {
 
         t.deepEqual( _.omit(es.toJSON({mapCdefUri:true}), 'uuid'), { 
             '@e': [ 
-            { '@c': '/component/name', '@e': 2, name: 'charmander' }, 
-            { '@c': '/component/geo_location', '@e': 2, lat: 51.2, lng: -3.65 }, 
-            { '@c': '/component/status', '@e': 5, status: 'active' }, 
-            { '@c': '/component/name', '@e': 5, name: 'kakuna' } 
+            { '@c': '/component/name', '@e': 2, '@i': 4, name: 'charmander' }, 
+            { '@c': '/component/geo_location', '@e': 2, '@i': 5, lat: 51.2, lng: -3.65 }, 
+            { '@c': '/component/status', '@e': 6, '@i': 9, status: 'active' }, 
+            { '@c': '/component/name', '@e': 6, '@i': 8, name: 'kakuna' } 
             ] });
+
+            // '@e': [ 
+            // { '@c': '/component/name', '@i': 4, '@e': 2, name: 'charmander' }, 
+            // { '@c': '/component/geo_location', '@i': 5, '@e': 2, lat: 51.2, lng: -3.65 }, 
+            // { '@c': '/component/status', '@i': 6, '@e': 5, status: 'active' }, 
+            // { '@c': '/component/name', '@i': 7, '@e': 5, name: 'kakuna' } 
+            // ] });
     })
     .catch( err => console.log('test error', err, err.stack))
     .then(() => t.end())
@@ -86,15 +93,17 @@ test('create entityset from json', t => {
         let options = { 
             'uuid':'32949155-5879-BDA7-B4F0-E206058DC168',
             '@e': [ 
-            { '@c': '/component/name', '@e': 2, name: 'charmander' }, 
-            { '@c': '/component/geo_location', '@e': 2, lat: 51.2, lng: -3.65 }, 
-            { '@c': '/component/status', '@e': 5, status: 'active' }, 
-            { '@c': '/component/name', '@e': 5, name: 'kakuna' } 
+                { '@c': '/component/name', '@e': 2, '@i': 3, name: 'charmander' }, 
+                { '@c': '/component/geo_location', '@e': 2, '@i': 4, lat: 51.2, lng: -3.65 }, 
+                { '@c': '/component/status', '@e': 5, '@i': 6, status: 'active' }, 
+                { '@c': '/component/name', '@e': 5, '@i': 7, name: 'kakuna' } 
             ] };
 
         const es = registry.createEntitySet(options);
 
-        t.deepEqual( es.toJSON({mapCdefUri:true}), options );
+        t.deepEqual( 
+            es.toJSON({mapCdefUri:true}), 
+            options );
     })
     .catch( err => console.log('test error', err, err.stack))
     .then(() => t.end())
@@ -103,6 +112,6 @@ test('create entityset from json', t => {
 
 
 function createRegistry(){
-    const registry = Registry.create();
+    const registry = new Registry();
     return registry.registerComponent(COMPONENT_DEFINITIONS).then(() => registry);
 }

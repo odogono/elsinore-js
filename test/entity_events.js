@@ -19,7 +19,7 @@ import {
     requireLib,
 } from './common';
 
-import * as EventsAsync from '../src/util/events.async';
+import EventsAsync from '../src/util/events.async';
 import '../src/entity_set/view';
 
 
@@ -120,9 +120,8 @@ test('triggers events which are stored until release', t => {
         const eventSpy = Sinon.spy();
         let entity;
 
-        var received = false;
-        var listener = _.extend({
-        }, EventsAsync);
+        let received = false;
+        let listener = _.extend({}, EventsAsync);
 
         listener.listenToAsync( entitySet, 'msg', (evt,msgEntity) => {
             received = true;

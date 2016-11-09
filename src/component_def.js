@@ -1,10 +1,32 @@
+/* @flow */
+
 import _ from 'underscore';
 
 import Model from './model';
-import * as Utils from './util'
+
+import {
+    hash,
+    stringify,
+    toPascalCase,
+    createLog
+} from './util';
+
+const Log = createLog('ComponentDef',false);
 
 export default class ComponentDef extends Model {
     
+    constructor(attrs,options){
+        Log.debug('create', attrs);
+
+        attrs.attrs = createAttrsFromProperties( attrs.properties );
+
+        if( !attrs.name ){
+            attrs.name = componentNameFromUri( attrs.uri );
+        }
+
+        Log.debug('create', attrs);
+        super(attrs,options);
+    }
 
     getUri(){
         return this.get('uri');
@@ -28,13 +50,8 @@ export default class ComponentDef extends Model {
     }
 
     hash( asString=true ){
-        let result;// = this.get('hash');
-        // if( !result ){
-        // 
-        // console.log(this);
-            result = Utils.hash(JSON.stringify(this.getProperties()) + ":" + this.getName(), asString );
-        // console.log('hash', JSON.stringify(this.getProperties()) + ":" + this.getName(), result )
-        // }
+        let result;
+        result = hash(stringify(this.getProperties()) + ":" + this.getName(), asString );
         return result;
     }
 }
@@ -88,25 +105,5 @@ function componentNameFromUri( schemaUri:string, suffix:string='' ){
         name = name.split('/').pop();
     // }
 
-    return Utils.toPascalCase( name + suffix );
+    return toPascalCase( name + suffix );
 }
-
-ComponentDef.isComponentDef = function( cdef ){
-    return cdef && cdef.isComponentDef;
-};
-
-
-ComponentDef.create = function( attrs ){
-    
-    attrs.attrs = createAttrsFromProperties( attrs.properties );
-
-    if( !attrs.name ){
-        attrs.name = componentNameFromUri( attrs.uri );
-    }
-
-    // console.log('ComponentDef.create', attrs );
-    let result = new ComponentDef( attrs );
-
-    return result;
-}
-

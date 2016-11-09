@@ -12,8 +12,10 @@ import {
     printIns,
     logEvents,
     requireLib,
+    createLog
 } from './common';
 
+const Log = createLog('TestComponentExtend',false);
 import ComponentRegistry from '../src/schema/index';
 
 
@@ -27,17 +29,17 @@ const COMPONENT_DEFINITIONS = [
 
 test('registering a custom component type', t => {
 
-    const TestComponent = Component.extend({
-        type: 'TestComponent',
+    class TestComponent extends Component {
+        type(){ return 'TestComponent'; }
 
-        preinitialize: (attrs,options) => {
+        preinitialize(attrs,options){
             // console.log('TestComponent preinit', attrs, options);
-        },
+        }
 
-        verify: function(){
+        verify(){
             return true;
         }
-    });
+    }
 
 
     const componentRegistry = ComponentRegistry.create();
@@ -83,13 +85,13 @@ test('the custom component is initialised when registered', t => {
     createRegistry().then( registry => {
         t.plan(1);
 
-        const TestComponent = Component.extend({
-            type: 'TestComponent',
+        class TestComponent extends Component{
+            type(){ return 'TestComponent'; }
 
-            preinitialize: function(attrs,options){
+            preinitialize(attrs,options){
                 t.ok( options.registry, 'the registry is passed as an option' );
             }
-        });
+        }
 
         registry.registerComponent( TestComponent );
     })
@@ -100,13 +102,18 @@ test('the custom component is initialised when registered', t => {
 
 test('the custom component can supply properties', t => {
     const componentRegistry = ComponentRegistry.create();
-
-    const TestComponent = Component.extend({
-        type: 'TestComponent',
-        properties:{
-            maximum: 10
+    // logEvents( componentRegistry );
+    class TestComponent extends Component{
+        constructor(attrs,options){
+            super(attrs,options);
+            this.type = 'TestComponent';
+            this.properties = { maximum:10 }; 
         }
-    });
+        // type(){ return 'TestComponent'; }
+        // properties(){
+        //     return { maximum:10 };
+        // }
+    }
 
     componentRegistry.register( TestComponent );
 
@@ -118,8 +125,9 @@ test('the custom component can supply properties', t => {
         'properties': { name:'tbd' } 
     });
     
-    let component = componentRegistry.createComponent('/component/example');
+    const component = componentRegistry.createComponent('/component/example');
 
+    Log.debug( component.toJSON() );
     t.equals( component.get('maximum'), 10 );
     t.equals( component.get('name'), 'tbd' );
 
@@ -130,11 +138,11 @@ test('the custom component can supply properties', t => {
 test('the registered component class can also include a uri', t => {
     createRegistry().then( registry => {
         
-        const TestComponent = Component.extend({
-            uri: '/component/test',
-            type: 'TestComponent',
-            properties: { testValue:'unfulfilled' },
-        });
+        class TestComponent extends Component{
+            uri(){ return '/component/test' }
+            type(){ return 'TestComponent'; }
+            properties(){ return { testValue:'unfulfilled'}; }
+        }
 
         registry.registerComponent( TestComponent );
 
@@ -153,12 +161,12 @@ test('the registered component class can also include a uri', t => {
 test('passing options to the custom component', t => {
     const componentRegistry = ComponentRegistry.create();
 
-    const TestComponent = Component.extend({
-        type: 'TestComponent',
-        initialize: function(attrs,options){
+    class TestComponent extends Component{
+        type(){ return 'TestComponent'; }
+        initialize(attrs,options){
             this.set({msg:options.msg});
         }
-    });
+    }
 
     componentRegistry.register( TestComponent );
 
@@ -192,21 +200,23 @@ test('will be notified when the entity is added to an entityset', t => {
         let calledOnAdded = false;
         let calledOnRemoved = false;
 
-        const TestComponent = Component.extend({
-            uri: '/component/test',
-            type: 'TestComponent',
-            properties: { name:'unknown' },
+        class TestComponent extends Component {
+            uri(){ return '/component/test' }
+            type(){ return 'TestComponent' }
+            
+            properties(){ return { name:'unknown'} }
 
-            onAdded: function( es ){
+            onAdded( es ){
                 calledOnAdded = true;
                 this._entity.addChild = function(){
                     // console.log('adding the child to me,', this.id, 'es', this.collection.getUuid() );
                 }
-            },
-            onRemoved: function(es){
+            }
+
+            onRemoved(es){
                 calledOnRemoved = true;
             }
-        });
+        }
 
         registry.registerComponent( TestComponent );
 
@@ -234,6 +244,6 @@ test('will be notified when the entity is added to an entityset', t => {
 
 
 function createRegistry(){
-    const registry = Registry.create();
+    const registry = new Registry();
     return registry.registerComponent(COMPONENT_DEFINITIONS).then(() => registry);
 }

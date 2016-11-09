@@ -3,7 +3,11 @@ import _ from 'underscore';
 import Entity from '../entity';
 import EntitySet from './index';
 import Query from './query';
-import * as Utils from '../util';
+import {
+    clearMap,
+    hash,
+    stringify,
+} from '../util';
 
 _.extend( EntitySet.prototype, {
 
@@ -218,7 +222,7 @@ _.extend( EntitySetListener.prototype, {
                 return;
             }
             entitySet.add( entity, changeOptions );
-            if( debug ){ log.debug('addedEntities includes ' + Utils.stringify(entity) + ' ' + eid); }
+            if( debug ){ log.debug('addedEntities includes ' + stringify(entity) + ' ' + eid); }
             entitiesAdded.push( entity );
         });
 
@@ -246,7 +250,7 @@ _.extend( EntitySetListener.prototype, {
         }
 
         if( entitiesAdded.length > 0 ){
-            // log.debug('+triggering add entities ' + Utils.stringify(entitiesAdded) );
+            // log.debug('+triggering add entities ' + stringify(entitiesAdded) );
             entitySet.trigger('entity:add', entitiesAdded );
         }
 
@@ -256,9 +260,9 @@ _.extend( EntitySetListener.prototype, {
 
         entitiesAdded = null;
         entitiesRemoved = null;
-        this.addedEntities = Utils.clearMap( this.addedEntities );
-        this.removedEntities = Utils.clearMap( this.removedEntities );
-        this.changedEntityList = Utils.clearMap( this.changedEntityList );
+        this.addedEntities = clearMap( this.addedEntities );
+        this.removedEntities = clearMap( this.removedEntities );
+        this.changedEntityList = clearMap( this.changedEntityList );
         this.isModified = false;
     },
 
@@ -266,11 +270,11 @@ _.extend( EntitySetListener.prototype, {
     hash: function(){
         let q;
         // start with the entitysets hash
-        let hash = _.result( this.targetEntitySet, 'hash' );
+        let str = _.result( this.targetEntitySet, 'hash' );
         if( (q = this.getQuery()) ){
-            hash += q.hash();
+            str += q.hash();
         }
-        return Utils.hash( hash, true );
+        return hash( str, true );
     },
 });
 

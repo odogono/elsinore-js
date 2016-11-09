@@ -4,7 +4,8 @@ import test from 'tape';
 import {
     Component, Entity, EntityFilter, EntitySet,
     Registry, Query,
-    initialiseRegistry, 
+    initialiseRegistry,
+    createLog,
     loadEntities, 
     loadComponents,
     loadFixtureJSON,
@@ -16,10 +17,7 @@ import {
 
 import ComponentRegistry from '../src/schema/index';
 
-
-import * as Utils from '../src/util/index';
-
-
+const Log = createLog('TestComponentRegistry');
 
 const COMPONENT_DEFINITIONS = [
     { uri:'/component/position', properties:{ x:0, y:0, z:0, rotation:0 }, name:'Position', hash:'bd12d7de' },
@@ -78,7 +76,7 @@ test('retrieving all of the registered schemas', t => {
     registry.unregister( '/component/removed' );
 
     t.deepEquals(
-        _.map(registry.getAll(), d => d.toJSON()),
+        _.map(registry.getComponentDefs(), d => d.toJSON()),
         [ 
             { id: 1, name: 'Example', uri: '/component/example' }, 
             { id: 3, name: 'Position', properties: { x: 0, y: 0 }, uri: '/component/position' }, 
@@ -139,7 +137,7 @@ test('attempting to retrieve an unknown schema throws an error', t => {
 test('returns an array of schema internal ids from a series of identifiers', t => {
     const registry = ComponentRegistry.create(COMPONENT_DEFINITIONS);
 
-    // console.log( registry._componentDefs.map( c => c.id + ':' + c.getUri() + ':' + c.hash() ) )
+    // Log.debug( registry._componentDefs.map( c => c.id + ':' + c.getUri() + ':' + c.hash() ) )
 
     t.deepEqual(
         registry.getIId( ['/component/position', 'cc425723', 2, '/component/geo_location', '67667d21'] ),
@@ -166,6 +164,53 @@ test('creating a component with attributes', t => {
     
     t.equals( component.get('x'), -200 );
     
+    t.end(); 
+});
+
+test('registering different versions of a schema', t => {
+    const registry = ComponentRegistry.create();
+    // logEvents(registry);
+
+    registry.register( { uri:'/component/change', properties:{ name:'' } } );
+    registry.register( { uri:'/component/change', properties:{ fullName:'' } } );
+
+    const def = registry.getComponentDef('/component/change');
+
+    t.deepEqual( def.getProperties(), {fullName:''} );
+
     t.end();
-    
 })
+
+test('can retrieve different versions by hash', t => {
+    const registry = ComponentRegistry.create();
+    // logEvents(registry);
+
+    registry.register( { uri:'/component/change', properties:{ name:'' } } );
+    registry.register( { uri:'/component/change', properties:{ fullName:'' } } );
+
+    // Log.debug( registry.getComponentDefs({all:true}).map(def => def.hash()) );
+
+    const first = registry.getComponentDef('4db6ef38');
+    t.deepEqual( first.getProperties(), {name:''} );
+
+    const latest = registry.getComponentDef('f66522b9');
+    t.deepEqual( latest.getProperties(), {fullName:''} );
+
+    t.end();
+})
+
+
+test('getComponentDefs returns active def only', t => {
+    const registry = ComponentRegistry.create();
+
+    registry.register( { uri:'/component/change', properties:{ name:'' } } );
+    registry.register( { uri:'/component/change', properties:{ fullName:'' } } );
+
+    t.deepEqual( registry.getComponentDefs().map( def => def.getUri() ), [ '/component/change'] );
+
+    // but we can also retrieve all versions by passing the all option
+    t.deepEqual( registry.getComponentDefs({all:true}).map( def => def.getUri() ), 
+        ['/component/change', '/component/change'] );
+
+    t.end();
+});

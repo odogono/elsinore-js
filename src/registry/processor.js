@@ -1,11 +1,11 @@
-'use strict';
-
 import _ from 'underscore';
 import {Model as BackboneModel} from 'odgn-backbone-model';
 import Registry from './index';
 import Query from '../query';
 import EntitySet from '../entity_set/view';
+import {createLog} from '../util';
 
+const Log = createLog('Registry.Processor');
 
 /**
 *   A registry which is capable of dealing with processors
@@ -28,7 +28,7 @@ _.extend( Registry.prototype, {
         priority = _.isUndefined(options.priority) ? 0 : options.priority;
         updateable = _.isUndefined(options.update) ? true : options.update;
 
-        processorAttrs = {id:processorId, priority:priority, updateable:updateable};
+        processorAttrs = {id:processorId, priority, updateable};
         processorOptions = {Model:processorModel,registry:this};
 
         if( entitySet ){
@@ -54,8 +54,9 @@ _.extend( Registry.prototype, {
         // if the processor has event listeners defined, connect those to the entityset
         this._attachEntitySetEventsToProcessor( entitySet, processor );
 
-        this.processors.add( processor );
+        // this.processors.add( processor );
 
+        // console.log('added processor', processor.type );
         this.trigger('processor:add', processor );
         
         return processor;
@@ -81,8 +82,8 @@ _.extend( Registry.prototype, {
 
         let record = new BackboneModel({
             id: processor.id,
-            entitySet: entitySet,
-            processor: processor
+            entitySet,
+            processor
         });
 
         debug = options.debug;
@@ -92,12 +93,12 @@ _.extend( Registry.prototype, {
         if( processor.entityFilter ){
 
             // convert the supplied directives into entityFilter instances
-            if( debug ){ log.debug('creating filter ' + processor.entityFilter ); }
+            // if( debug ){ log.debug('creating filter ' + processor.entityFilter ); }
             filter = new Query(processor.entityFilter);
 
             // do we already have a view for this filter?
             hash = EntitySet.hash( entitySet, filter );
-            if( debug ){ log.debug('hashed es query ' + hash + ' ' + filter.hash() + ' ' + JSON.stringify(filter) ); }
+            // if( debug ){ log.debug('hashed es query ' + hash + ' ' + filter.hash() + ' ' + JSON.stringify(filter) ); }
 
             if( this._entityViews[ hash ] ){
                 view = this._entityViews[ hash ];
@@ -109,31 +110,26 @@ _.extend( Registry.prototype, {
                 
                 this.trigger('view:create', view);
                 
-                if( debug ) {log.debug('new view ' + view.cid + '/' + view.hash() 
-                    + ' with filter ' + filter.hash() 
-                    + ' has ' + entitySet.models.length 
-                    + ' entities for ' + processor.type );}
+                // if( debug ) {log.debug('new view ' + view.cid + '/' + view.hash() 
+                //     + ' with filter ' + filter.hash() 
+                //     + ' has ' + entitySet.models.length 
+                //     + ' entities for ' + processor.type );}
             }
 
             // log.debug('setting view ' + view.cid + ' onto ' + processor.type );
             record.set('view', view);
-            processor.set({
-                view: view,
-                entityFilter: filter,
-                entitySet: entitySet
-            });
         } else {
             record.set('view', entitySet);
-            processor.set({
-                'entitySet': entitySet,
-                'view': entitySet
-            });
         }
 
         processor.entitySet = entitySet;
         processor.view = view || entitySet;
         processor.entityFilter = filter;
 
+        if( !record.get('processor') ){
+            throw new Error('no processor added!', record);
+        }
+        // Log.debug('adding record', _.keys(record.attributes) );
         this.entitySetProcessors.add( record );
 
         // store the mapping between the entityset and the processor

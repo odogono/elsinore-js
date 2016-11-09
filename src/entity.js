@@ -1,8 +1,7 @@
 
 import BitField  from 'odgn-bitfield';
 import _ from 'underscore';
-import * as Utils from './util';
-import {printIns} from './util';
+import {hash,isInteger,setEntityIdFromId} from './util';
 
 import Component from './component';
 import Model from './model';
@@ -13,7 +12,6 @@ import Registry from './registry';
 // const ENTITY_ID_MAX = Math.pow(2,31)-1;
 // const ENTITY_SET_ID_MAX = Math.pow(2,21)-1;
 
-// printIns( Utils );
 
 /**
  * An entity is a container for components
@@ -23,7 +21,6 @@ export default class Entity extends Model {
     initialize(attrs, options){
         let eid = -1,esid = 0, comBf;
 
-        
         if( attrs ){
             if( !_.isUndefined(attrs['@e']) ){
                 eid = attrs['@e'];
@@ -70,7 +67,7 @@ export default class Entity extends Model {
 
     setId( entityId, entitySetId ){
         if( entitySetId !== undefined ){
-            entityId = Utils.setEntityIdFromId( entityId, entitySetId );
+            entityId = setEntityIdFromId( entityId, entitySetId );
         }
 
         this.set({id: entityId});
@@ -157,7 +154,7 @@ export default class Entity extends Model {
             result += this.components[sid].hash(true);
         }
         if( result === 0 ){ return 0; }
-        return Utils.hash( result, asString );
+        return hash( result, asString );
     }
 
     addComponent( component ){
@@ -394,7 +391,7 @@ Entity.isEntity = function( entity ){
 };
 
 Entity.isEntityId = function( id ){
-    return Utils.isInteger( id );
+    return isInteger( id );
 }
 
 Entity.getEntityId = function( entity ){
@@ -412,7 +409,7 @@ Entity.toEntityId = function( entityId ){
 };
 
 Entity.toEntity = function( entity = 0, options ){
-    if( Utils.isInteger(entity) ){
+    if( isInteger(entity) ){
         return Entity.create( entity, options );
     }
     

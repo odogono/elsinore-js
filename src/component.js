@@ -1,7 +1,12 @@
+/* @flow */
+
 import _ from 'underscore';
 import Model from './model';
-import * as Utils from './util';
-
+import {
+    hash,
+    setEntityIdFromId,
+    stringify,
+} from './util';
 
 /**
  * Components contain data
@@ -46,7 +51,7 @@ export default class Component extends Model {
 
         if( esId || eId ){
             // log.debug('creating from ' + eId + ' ' + esId );
-            resp['@e'] = Utils.setEntityIdFromId(eId, esId);
+            resp['@e'] = setEntityIdFromId(eId, esId);
         }
 
         return resp;
@@ -63,13 +68,6 @@ export default class Component extends Model {
         this.set( _.omit(attrs, '@e','@es','@s', '@c'), options );
     }
 
-    // toJSON: function(){
-    //     var result = Model.prototype.toJSON.apply(this); //_.clone(this.attributes);
-    //     result.n = this.name;
-    //     result._cid = this.cid;
-    //     return result;
-    // },
-    
     get entityId(){ return this.attributes['@e']; }
     set entityId(id){ this.attributes['@e'] = id; }
 
@@ -107,31 +105,40 @@ export default class Component extends Model {
     getDefName(){
         return this._defName;
     }
+    
     // setDefName: function(name:string){
     //     this.name = this._defName = name;
     // },
-    setDefDetails( defId, uri:string, hash:string, name:string ){
+    setDefDetails( defId, uri: string, hash:string, name:string ){
         this.set({'@s':defId,'@c':uri});
         this._defHash = hash;
         this.name = this._defName = name;  
     }
-    // getSchemaHash: function(){
-    //     return this._defHash;
-    // },
-
+    
+    /**
+     * 
+     */
     hash(asString){
-        let result = Utils.stringify(  _.omit(this.attributes, '@e','@es','@s', '@c') );
-        return Utils.hash( result, asString );
+        let result = stringify(  _.omit(this.attributes, '@e','@es','@s', '@c') );
+        return hash( result, asString );
     }
 
+    /**
+     * 
+     */
     toJSON(options){
-        let result = _.extend( {}, _.omit(this.attributes, /*'@e',*/'@es', '@c', 'id'), {'@i':this.id} );
+        let result = _.omit(this.attributes,'@e','@es', '@c', 'id');
+        if( !_.isUndefined(this.id) ){
+            result[Component.ID] = this.id;
+        }
+        if( this.entityId > 0 ){
+            result['@e'] = this.entityId;
+        }
+        
         if( options && options.cdefMap ){
-            result['@e'] = this.getEntityId();
             result['@c'] = options.cdefMap[result['@s']];
             delete result['@s'];
         }
-        // console.log('c toJSON with options', options);
         return result;
     }
 

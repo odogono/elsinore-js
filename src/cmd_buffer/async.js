@@ -8,8 +8,11 @@ import Entity from '../entity';
 let EntityFilter = require('../entity_filter');
 let Errors = require('../error');
 
-import {entityToString} from '../util/to_string';
-import * as Utils from '../util';
+import {entityToString,
+    getEntitySetIdFromId,
+    valueArray} from '../util';
+
+
 import SyncCmdBuffer from './sync';
 import {
     CMD_EX,
@@ -65,7 +68,7 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
                     if( !execute ){ return this; }
  
                     return this.execute( entitySet, options )
-                        .then( () => Utils.valueArray( 
+                        .then( () => valueArray( 
                                 this.componentsAdded.models.concat(this.componentsUpdated.models) ) )
                 });
 
@@ -83,7 +86,7 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
         // execute any outstanding commands
         if( execute ){
             return this.execute( entitySet, options )
-                .then( () => Utils.valueArray( 
+                .then( () => valueArray( 
                         this.componentsAdded.models.concat(this.componentsUpdated.models) ) )
         }
         return [];
@@ -111,7 +114,7 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
         //         // execute any outstanding commands
         //         if( execute ){
         //             return this.execute( entitySet, options )
-        //                 .then( () => Utils.valueArray( 
+        //                 .then( () => valueArray( 
         //                         this.componentsAdded.models.concat(this.componentsUpdated.models) ) )
         //         }
         //         return [];
@@ -141,8 +144,8 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
     //         return Promise.resolve( entity );
     //     }
 
-    //     // console.log('get es id', entitySet.id, 'from', entityId, Utils.getEntitySetIdFromId(entityId));
-    //     if( Utils.getEntitySetIdFromId(entityId) === entitySet.id ){
+    //     // console.log('get es id', entitySet.id, 'from', entityId, getEntitySetIdFromId(entityId));
+    //     if( getEntitySetIdFromId(entityId) === entitySet.id ){
     //         if( (entity = this._entityCache.get(entityId)) ){
     //             // cached entity found previously
     //             return Promise.resolve(entity);
@@ -232,8 +235,8 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
 
         entityId = component.getEntityId();
 
-        if( !entityId || Utils.getEntitySetIdFromId(entityId) !== entitySet.id ){
-            log.debug('entity ' + entityId + ' does not exist in es ' + entitySet.id + ' (' + Utils.getEntitySetIdFromId(entityId) + ')' );
+        if( !entityId || getEntitySetIdFromId(entityId) !== entitySet.id ){
+            log.debug('entity ' + entityId + ' does not exist in es ' + entitySet.id + ' (' + getEntitySetIdFromId(entityId) + ')' );
             return Promise.resolve([]);
         }
 
@@ -242,7 +245,7 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
 
         return (!execute) ? this : 
             this.execute(entitySet,options)
-            .then( () => Utils.valueArray(this.componentsRemoved.models));
+            .then( () => valueArray(this.componentsRemoved.models));
     }
 
 
@@ -276,7 +279,7 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
                     if( !execute ){ return this; }
 
                     return this.execute( entitySet, options )
-                        .then(() => Utils.valueArray(this.entitiesAdded.models));
+                        .then(() => valueArray(this.entitiesAdded.models));
                 });
         } else {
             if( execute ){
@@ -295,7 +298,7 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
                 // execute any outstanding commands
                 return this.execute( entitySet, options )
                     .then( () => {
-                        return Utils.valueArray( 
+                        return valueArray( 
                             this.entitiesAdded.models.concat( this.entitiesUpdated.models ) );
                     });
             });
@@ -358,7 +361,7 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
                 // execute any outstanding commands
                 if( execute ){
                     return this.execute( entitySet, options )
-                        .then( () => Utils.valueArray(this.entitiesRemoved.models) );
+                        .then( () => valueArray(this.entitiesRemoved.models) );
                 }
                 return this;        
             });
@@ -440,7 +443,7 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
         // can easily test for component membership
         return entitySet.getEntitySignatures( _.keys(this.cmds) )
             .then( entities => {
-                // console.log('we created entities', Utils.toString(entities));
+                // console.log('we created entities', toString(entities));
 
                 _.each( entities, entity => {
                     const bf = entity.getComponentBitfield();

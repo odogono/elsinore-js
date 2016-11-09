@@ -13,9 +13,20 @@ const varDir = Path.join( rootDir, 'var' );
 
 const ElsinoreDir = Path.join(rootDir, 'src')
 
-import {toString as entityToString} from '../../src/util/to_string';
-export {entityToString};
 
+
+export {
+    createLog,
+    isInteger,
+    printIns,
+    toPascalCase,
+    parseUri,
+    getEntityIdFromId,
+    getEntitySetIdFromId,
+    toString as entityToString,
+    setEntityIdFromId} from '../../src/util';
+
+// export {toString as entityToString} from '../../src/util/to_string';
 
 import Component from '../../src/component';
 export {Component as Component};
@@ -37,7 +48,6 @@ export {Query as Query};
 
 import Registry from '../../src/registry/processor';
 export {Registry as Registry};
-import {printIns} from '../../src/util';
 
 import SchemaRegistry from '../../src/schema';
 export {SchemaRegistry as SchemaRegistry};
@@ -46,12 +56,6 @@ import Dispatch from '../../src/dispatch';
 export {Dispatch as Dispatch};
 
 
-export {printIns,
-    toPascalCase,
-    parseUri,
-    getEntityIdFromId,
-    getEntitySetIdFromId,
-    setEntityIdFromId} from '../../src/util';
 
 
 export function pathVar( path, clear ){
@@ -137,7 +141,7 @@ export function loadEntities( registry, fixtureName, entitySet, options ){
 */
 export function initialiseRegistry( doLogEvents ){
     let componentData;
-    let registry = Registry.create();
+    let registry = new Registry();
     let options, load;
 
     if( _.isObject(doLogEvents) ){

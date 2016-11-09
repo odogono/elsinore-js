@@ -5,7 +5,7 @@ import {register,
     VALUE} from './index';
 import Query from './index';
 import EntitySet from '../entity_set';
-import * as Utils from '../util'
+
 
 const PLUCK = 'PL';
 
@@ -60,7 +60,7 @@ function commandPluck( context, componentIds, attributes, options ){
     var bitField, result;
     var entitySet;// = context.last;
 
-    // if( true ){ log.debug('pluck> ' + Utils.stringify(_.rest(arguments))); } 
+    // if( true ){ log.debug('pluck> ' + stringify(_.rest(arguments))); } 
 
     attributes = context.valueOf(attributes, true );
     attributes = _.isArray( attributes ) ? attributes : [ attributes ];
@@ -94,7 +94,7 @@ function pluckEntitySet( registry, entitySet, componentIds, attributes ){
     // specified - if they exist, select the attributes required.
     result = _.reduce( entitySet.models, (values, entity) => {
         
-        // log.debug('inCOMing ' + Utils.stringify(entity), attributes, componentIds );
+        // log.debug('inCOMing ' + stringify(entity), attributes, componentIds );
         if( !componentIds ){
             // if there are no componentIds, then the type of attribute we can pluck is limited...
             _.each( attributes, attr => {
@@ -104,7 +104,7 @@ function pluckEntitySet( registry, entitySet, componentIds, attributes ){
             const components = entity.getComponents(componentIds);
 
             _.each( entity.getComponents(componentIds), (component) => {
-                // log.debug('inCOMing ' + Utils.stringify(component) );
+                // log.debug('inCOMing ' + stringify(component) );
                 _.each( attributes, (attr) => {
                     if( attr == '@e' ){
                         values.push( entity.getEntityId() );

@@ -3,8 +3,7 @@ import BitField  from 'odgn-bitfield';
 import Entity from '../entity';
 import EntitySet from '../entity_set';
 import EntityFilter from '../entity_filter';
-import * as Utils from '../util';
-import {printIns} from '../util';
+import {deepEqual, hash, stringify} from '../util';
 import QueryBuilder from './dsl';
 import {DslContext} from './dsl';
 
@@ -101,7 +100,7 @@ export default class Query {
 
     hash(){
         const rep = this.toJSON();// (( this.isCompiled ) ? this.src : this.toArray(true));
-        return Utils.hash( Utils.stringify(rep), true );
+        return hash( stringify(rep), true );
     }
 
     /**
@@ -123,7 +122,7 @@ export default class Query {
 
         for( ii=0,len=this.compiled.length;ii<len;ii++ ){
             command = this.compiled[ii];
-            // console.log('go ' + Utils.stringify(command) );
+            // console.log('go ' + stringify(command) );
 
             // the actual result will usually be [VALUE,...]
             result = executeCommand( context, command )[1];
@@ -182,15 +181,13 @@ export default class Query {
                     return command;
                 });
             }
-            // console.log('compile> ' + Utils.stringify(commands));
+            // console.log('compile> ' + stringify(commands));
         }
 
         
         // result = new Query();
         // result.isCompiled = true;
-        // this.src = Utils.deepClone(commands);
-
-        // printIns( this.src, 6 );
+        // this.src = deepClone(commands);
         // commands = _.reduce( commands, function(result,command){
 
         let firstStageCompiled = _.reduce( commands, (result,command) => {
@@ -264,7 +261,7 @@ export default class Query {
         // console.log('C compiledCommands here', this.compiled);
 
         // this.commands = commands;
-        if( context.debug ) { printIns( this, 6 ); }
+        if( context.debug ) { console.log(this); }
         return this;
     }
 
@@ -313,8 +310,8 @@ class QueryContext {
     valueOf( value, shouldReturnValue ){
         let command;
         if( !value ){ return value; }
-        // if( this.debug ){ console.log('valueOf: ' + Utils.stringify(value) ); }
-        // console.log('valueOf: ' + Utils.stringify(value) );
+        // if( this.debug ){ console.log('valueOf: ' + stringify(value) ); }
+        // console.log('valueOf: ' + stringify(value) );
         if( _.isArray(value) ){
             command = value[0];
             // if( !_.isArray(value[1]) ){
@@ -333,10 +330,10 @@ class QueryContext {
                 return this.root;
             }
             
-            // if( this.debug ){ console.log('valueOf: cmd ' + command + ' ' + Utils.stringify(value) )}
+            // if( this.debug ){ console.log('valueOf: cmd ' + command + ' ' + stringify(value) )}
             value = executeCommand( this, value );
 
-            // if( this.debug ){ console.log('valueOf exec: ' + Utils.stringify(value) )}
+            // if( this.debug ){ console.log('valueOf exec: ' + stringify(value) )}
 
             if( value[0] === VALUE ){
                 return value[1];
@@ -420,7 +417,7 @@ class QueryContext {
         limit = _.isUndefined(options.limit) ? 0 : options.limit;
         offset = _.isUndefined(options.offset) ? 0 : options.offset;
 
-        if( debug ){ console.log('commandFilter >'); printIns( _.rest(arguments), 5); console.log('<'); } 
+        if( debug ){ console.log('commandFilter >'); console.log( _.rest(arguments) ); console.log('<'); } 
 
         // console.log('commandFilter> ' + offset + ' ' + limit );
         // resolve the entitySet argument into an entitySet or an entity
@@ -495,7 +492,7 @@ class QueryContext {
                     
                         cmdResult = executeCommand( entityContext, filterFunction );
 
-                        // if( true ){ console.log('eval function ' + Utils.stringify(filterFunction) + ' ' + Utils.stringify(cmdResult) ); }
+                        // if( true ){ console.log('eval function ' + stringify(filterFunction) + ' ' + stringify(cmdResult) ); }
 
                         if( Query.valueOf( context, cmdResult ) !== true ){
                             entity = null; //result.push( entity );
@@ -529,7 +526,7 @@ class QueryContext {
 QueryContext.create = function( query, props={}, options={} ){
     let context;
     let type;
-    // console.log('QueryContext.create', Utils.stringify(props), options);
+    // console.log('QueryContext.create', stringify(props), options);
     type = options.context || props.type || QueryContext;
     context = new (type)(query);
     context.type = type;
@@ -630,8 +627,8 @@ function gatherEntityFilters( context, expression ){
 Query.valueOf = function valueOf( context, value, shouldReturnValue ){
     let command;
     if( !value ){ return value; }
-    // if( context.debug ){ console.log('valueOf: ' + Utils.stringify(value) ); }
-    // console.log('valueOf: ' + Utils.stringify(value) );
+    // if( context.debug ){ console.log('valueOf: ' + stringify(value) ); }
+    // console.log('valueOf: ' + stringify(value) );
     if( _.isArray(value) ){
         command = value[0];
         // if( !_.isArray(value[1]) ){
@@ -650,10 +647,10 @@ Query.valueOf = function valueOf( context, value, shouldReturnValue ){
             return context.root;
         }
         
-        // if( context.debug ){ console.log('valueOf: cmd ' + command + ' ' + Utils.stringify(value) )}
+        // if( context.debug ){ console.log('valueOf: cmd ' + command + ' ' + stringify(value) )}
         value = executeCommand( context, value );
 
-        // if( context.debug ){ console.log('valueOf exec: ' + Utils.stringify(value) )}
+        // if( context.debug ){ console.log('valueOf exec: ' + stringify(value) )}
 
         if( value[0] === VALUE ){
             return value[1];
@@ -676,15 +673,15 @@ function commandEquals( context, op1, op2, op ){
     let isValue1Array, isValue2Array;
     result = false;
 
-    if( context.debug ){ console.log('EQUALS op1: ' + Utils.stringify(op1) ); }
-    if( context.debug ){ console.log('EQUALS op2: ' + Utils.stringify(op2) ); }
+    if( context.debug ){ console.log('EQUALS op1: ' + stringify(op1) ); }
+    if( context.debug ){ console.log('EQUALS op2: ' + stringify(op2) ); }
 
     value1 = Query.valueOf( context, op1, true );
     value2 = Query.valueOf( context, op2, true );
     isValue1Array = _.isArray(value1);
     isValue2Array = _.isArray(value2);
 
-    if( context.debug ){ console.log('EQUALS cmd equals ' + JSON.stringify(value1) + ' === ' + JSON.stringify(value2) ); }
+    if( context.debug ){ console.log('EQUALS cmd equals ' + stringify(value1) + ' === ' + stringify(value2) ); }
 
     if( !isValue1Array && !isValue2Array ){
         switch( op ){
@@ -717,7 +714,7 @@ function commandEquals( context, op1, op2, op ){
                     // console.log('index of ' + value1 + _.indexOf(value2,value1) );
                     result = (_.indexOf(value2,value1) !== -1);
                 } else {
-                    result = Utils.deepEqual( value1, value2 );
+                    result = deepEqual( value1, value2 );
                 }
                 break;
         }
@@ -772,7 +769,7 @@ function commandComponentAttribute( context, attributes ){
     componentIds = context.componentIds;
 
     // printIns( context,1 );
-    if( debug ){ console.log('ATTR> ' + Utils.stringify(componentIds) + ' ' + Utils.stringify( _.rest(arguments))  ); } 
+    if( debug ){ console.log('ATTR> ' + stringify(componentIds) + ' ' + stringify( _.rest(arguments))  ); } 
 
     if( !componentIds ){
         throw new Error('no componentIds in context');
@@ -844,7 +841,7 @@ function commandComponentAttribute( context, attributes ){
 function executeCommand( context, op, args ){
     let result, cmdFunction, cmdArgs, value;
 
-    // if( context.debug ){ console.log('executing ' + Utils.stringify( _.rest(arguments)) ); }
+    // if( context.debug ){ console.log('executing ' + stringify( _.rest(arguments)) ); }
 
     if( !args ){
         // assume the op and args are in the same array
@@ -868,7 +865,7 @@ function executeCommand( context, op, args ){
                 value = context.root;
             }
             result = (context.last = [ VALUE, value ]);
-            // if(context.debug){ console.log('value> ' + Utils.stringify(context.last)) }
+            // if(context.debug){ console.log('value> ' + stringify(context.last)) }
             break;
         case EQUALS:
         case LESS_THAN:
@@ -893,12 +890,11 @@ function executeCommand( context, op, args ){
             if( !cmdFunction ){
                 // console.log('unknown cmd ' + op);
                 // printIns( _.rest(arguments), 1 );
-                throw new Error('unknown cmd (' + Utils.stringify(op) + ') ' + Utils.stringify(_.rest(arguments)) );
+                throw new Error('unknown cmd (' + stringify(op) + ') ' + stringify(_.rest(arguments)) );
             }
             result = cmdFunction.apply( context, cmdArgs );
             break;
     }
-    // console.log('done result ' + Utils.stringify( _.rest(arguments)) + ' ' + result );
     return result;
 }
 

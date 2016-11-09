@@ -5,7 +5,6 @@ import {register,
     VALUE} from './index';
 import Query from './index';
 import EntitySet from '../entity_set';
-import * as Utils from '../util'
 
 const SELECT_BY_ID = 'SBI';
 
@@ -40,8 +39,8 @@ function commandSelectById( context, entityIds, selectFromRoot ) {
     let ii, len, value, entity, entities;
     let entitySet;
 
-    // console.log('>entityIds: ' + Utils.stringify(entityIds) );
-    // console.log('>selectFromRoot: ' + Utils.stringify(selectFromRoot) );
+    // console.log('>entityIds: ' + stringify(entityIds) );
+    // console.log('>selectFromRoot: ' + stringify(selectFromRoot) );
     selectFromRoot = context.valueOf(selectFromRoot);
     // console.log('<<<');
     // printIns( context );
@@ -55,7 +54,7 @@ function commandSelectById( context, entityIds, selectFromRoot ) {
     // console.log('entityIds: ' + JSON.stringify(entityIds) );
     entityIds = context.valueOf(entityIds );
 
-    // console.log('using es ' + Utils.stringify(selectFromRoot) + ' ' + entitySet.length );
+    // console.log('using es ' + stringify(selectFromRoot) + ' ' + entitySet.length );
     // console.log('entityIds: ' + JSON.stringify(entityIds) );
     // printIns( entitySet );
 

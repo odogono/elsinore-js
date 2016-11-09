@@ -2,7 +2,6 @@ import _ from 'underscore';
 import {register, VALUE} from './index';
 import Query from './index';
 import EntitySet from '../entity_set';
-import * as Utils from '../util'
 
 const WITHOUT = 'WO';
 
@@ -26,7 +25,7 @@ function without( componentIds ){
 function commandWithout( context, values ){
     var value;
     var array = context.last;
-    // if( context.debug ){ log.debug('cmd without ' + Utils.stringify(array)); }
+    // if( context.debug ){ log.debug('cmd without ' + stringify(array)); }
 
     value = array = context.valueOf(array, true );
     values = context.valueOf(values, true );

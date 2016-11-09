@@ -6,7 +6,7 @@ import AsyncEntitySet from '../src/entity_set/async';
 import Entity from '../src/entity';
 import Component from '../src/component';
 import Registry from '../src/registry';
-
+import {createLog} from '../src/util';
 
 import {
     // Component, Entity, EntityFilter,
@@ -21,7 +21,12 @@ import {
     requireLib,
 } from './common';
 
+const Log = createLog('TestEntitySetAsync');
+
 const createOptions = {instanceClass:AsyncEntitySet, entityIdStart:100, componentIdStart:10};
+const createOptionsNothingRegistered = {...createOptions,loadComponents:false};
+
+
 
 test('type of entityset', t => {
     return initialiseAll(createOptions).then( ([registry,entitySet]) => {
@@ -32,6 +37,7 @@ test('type of entityset', t => {
     .then( () => t.end() )
     .catch( err => log.error('test error: %s', err.stack) )
 });
+
 
 test('adding an entity with a component returns the added entity', t => {
     return initialiseAll(createOptions).then( ([registry,entitySet]) => {
@@ -49,6 +55,7 @@ test('adding an entity with a component returns the added entity', t => {
     .catch( err => log.error('test error: %s', err.stack) )
 
 });
+
 
 test('adding several components without an entity adds them to the same new entity', function(t){
     const eventSpy = Sinon.spy();
@@ -103,32 +110,55 @@ test('removing a component from an entity with only one component', t => {
     .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
 });
 
-// console.log('WARNING - reenable this test');
+
 test('registers existing component defs with the registry when opened', t => {
     const schemaA = { uri:'/component/channel', properties:{ name:{type:'string'} }};
     const schemaB = { uri:'/schema/alpha', properties:{ channel:{type:'string'} }};
 
-    return initialiseAll(createOptions).then( ([registry,entitySet]) => {
+    return initialiseAll(createOptionsNothingRegistered).then( ([registry,entitySet]) => {
+        // logEvents(entitySet);
         return entitySet.registerComponentDef([schemaA,schemaB])
                 
-                .then( () => registry.removeEntitySet(entitySet) )
-                
-                // .then( () => console.log('!!! creating entityset') )
-                
-                .then( () => registry.addEntitySet(entitySet) )
-                
-                .then( entitySet => {
+            .then( () => registry.removeEntitySet(entitySet) )
+            
+            //  registry opens
+            //  registry registers each cdef with es (fromRegistry:true,fromES:false)
+            //  
+            
+            .then( () => registry.addEntitySet(entitySet) )
+            
+            .then( entitySet => {
 
-                    // _.each( entitySet.getComponentDefs(), cd => console.log( `${cd.getUri()} ${cd.hash()}`  ));
-
-                    // console.log('good all done', entitySet.getComponentDefs());
-                    const component = registry.createComponent( '/component/name', {name:'susan'} );
-                    
-                    t.equal( component.get('name'), 'susan');
-
-                    // _.each( registry.getComponentDefs(), cd => console.log( `${cd.getUri()} ${cd.hash()}`  ));
-                })
+                // _.each( entitySet.getComponentDefs(), cd => console.log( `${cd.getUri()} ${cd.hash()}`  ));
+                const component = registry.createComponent( '/component/channel', {name:'nine'} );
+                
+                t.equal( component.get('name'), 'nine');
+            })
     })
+    .then( () => t.end() )
+    .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
+})
+
+test('adding an entityset with registered components to a new registry', t => {
+    const schemaA = { uri:'/component/channel', properties:{ name:{type:'string'} }};
+    let schemaB = { uri:'/component/topic', properties:{ topic:{type:'string'} }};
+    let schemaC = { uri:'/component/status', properties:{ status:{type:'string'} }};
+
+    const registry = new Registry();
+    return registry.createEntitySet(createOptions)
+        .then( entitySet => {
+            return registry.registerComponent([schemaA,schemaB,schemaC])
+                .then( () => entitySet )
+        })
+        .then( entitySet => {
+            const anotherRegistry = new Registry();
+            return anotherRegistry.addEntitySet( entitySet )
+                .then( () => {
+                    t.deepEqual( 
+                        anotherRegistry.getComponentDefs().map( d => d.getUri()),
+                        [ '/component/channel', '/component/topic', '/component/status' ] );
+                })
+        })
     .then( () => t.end() )
     .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
 })
@@ -137,16 +167,35 @@ test('registers existing component defs with the registry when opened', t => {
 test('returns the newest version of the schema', t => {
     // let registry = Common.initialiseRegistry( {loadComponents:false, logEvents:false} );
     const schemaA = { uri:'/component/channel', properties:{ name:{type:'string'} }};
-    const schemaB = { uri:'/schema/alpha', properties:{ channel:{type:'string'} }};
+    const schemaB = { uri:'/component/channel', properties:{ channel:{type:'string'} }};
 
-    return initialiseAll(createOptions).then( ([registry,entitySet]) => {
+    return initialiseAll(createOptionsNothingRegistered).then( ([registry,entitySet]) => {
+        logEvents(entitySet);
             return entitySet.registerComponentDef(schemaA)
                 .then( () => entitySet.registerComponentDef(schemaB) )
-                .then( () => entitySet.getComponentDef('/schema/alpha') )
+                .then( () => entitySet.getComponentDef('/component/channel') )
                 .then( cDef => {
                     t.ok( cDef.getProperties().channel, 'the 2nd version is the one returned' );
                     return true;
                 })
+    })
+    .then( () => t.end() )
+    .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
+});
+
+test('registering the same schema again throws an error', t => {
+    t.plan(1);
+
+    const schemaA = { uri:'/component/channel', properties:{ name:{type:'string'} }};
+
+    return initialiseAll(createOptionsNothingRegistered).then( ([registry,entitySet]) => {
+        return entitySet.registerComponentDef(schemaA)
+            // register again
+            .then( () => entitySet.registerComponentDef(schemaA) )
+            .catch( err => {
+                t.equal(err.message,'def /component/channel (556eb652) already exists'); 
+                return;
+            })
     })
     .then( () => t.end() )
     .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
@@ -227,7 +276,7 @@ test('adding an entity with an identical id will replace the existing one', t =>
 });
 
 function initialiseAll(options){
-    return initialiseRegistry().then( registry => {
+    return initialiseRegistry(options).then( registry => {
         return registry.createEntitySet(options)
             .then( es => [registry,es] );
     })

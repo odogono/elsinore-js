@@ -6,7 +6,6 @@ import {register,
     VALUE} from './index';
 import Query from './index';
 import EntitySet from '../entity_set';
-import * as Utils from '../util'
 
 export const LIMIT = 'LM';
 
@@ -85,8 +84,6 @@ function compile( context, commands ){
     if( limitOptions ){
         commands.unshift( [ ENTITY_FILTER, null, null, limitOptions] );
     }
-
-    // log.debug('compile cmds:'); printIns( commands );
 
     return commands;
 }

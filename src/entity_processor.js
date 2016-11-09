@@ -1,7 +1,10 @@
 import _ from 'underscore';
-import {Model as BackboneModel} from 'odgn-backbone-model';
+import {Model, Events} from 'odgn-backbone-model';
 import EntitySet from './entity_set';
-import * as Utils from './util'
+import {
+    clearArray,
+    stringify
+} from './util';
 
 import * as CmdBuffer from './cmd_buffer/sync';
 
@@ -13,31 +16,36 @@ import EventsAsync from './util/events.async';
  * 
  * Standard design: c.f. http://entity-systems.wikidot.com/rdbms-with-code-in-systems
  */
-const EntityProcessor = BackboneModel.extend({
-    type: 'EntityProcessor',
-    isEntityProcessor: true,
+export default class EntityProcessor {
 
-    initialize: function( attrs, options ){
-        this._cmds = [];  
-    },
+    constructor(options={}){
+        // _.extend(this, Events);
+        _.extend(this, EventsAsync);
 
-    start: function(){
-    },
+        this._cmds = [];
+        this.id = _.isUndefined(options.id) ? _.uniqueId() : options.id;
+        this._priority = _.isUndefined(options.priority) ? 0 : options.priority;
+        this._updateable = _.isUndefined(options.updateable) ? 0 : options.updateable;
+    }
 
-    stop: function(){
-    },
+    getPriority(){ return this._priority; }
 
-    onInitialize: function( registry ){
-    },
+    start(){
+    }
 
-    onUpdate: function( entityArray, timeMs, options ){
-    },
+    stop(){
+    }
+
+    onInitialize( registry ){
+    }
+
+    onUpdate( entityArray, timeMs, options ){
+    }
 
 
-    applyChanges: function(){
+    applyChanges(){
         let ii,len,cmd;
         let entity, component;
-        let entitySet = this.get('entitySet');
         let componentsToAdd, componentsToRemove, entitiesToAdd, entitiesToRemove;
         let result;
 
@@ -56,7 +64,7 @@ const EntityProcessor = BackboneModel.extend({
                     componentsToAdd.push( component );
                     break;
                 case CmdBuffer.CMD_COMPONENT_REMOVE:
-                    // console.debug( this.name + ' removing COMP ' + Utils.stringify(cmd[2]));
+                    // console.debug( this.name + ' removing COMP ' + stringify(cmd[2]));
                     componentsToRemove || (componentsToRemove=[]);
                     componentsToRemove.push( cmd[2] );
                     break;
@@ -67,7 +75,7 @@ const EntityProcessor = BackboneModel.extend({
                 case CmdBuffer.CMD_ENTITY_REMOVE:
                     entitiesToRemove || (entitiesToRemove=[]);
                     entitiesToRemove.push( entity );
-                    // console.log('removing entity ' + Utils.stringify(entity) );
+                    // console.log('removing entity ' + stringify(entity) );
                     break;
                 default:
                     // log.debug(this.name + ' unknown cmd ' + cmd[0] );
@@ -76,81 +84,80 @@ const EntityProcessor = BackboneModel.extend({
         }
 
         if( componentsToAdd ){
-            result = entitySet.addComponent( componentsToAdd );
+            result = this.entitySet.addComponent( componentsToAdd );
             componentsToAdd = null;
         }
         if( componentsToRemove ){
             // log.debug('processor removing components ' + JSON.stringify(componentsToRemove) );
-            result = entitySet.removeComponent( componentsToRemove );
+            result = this.entitySet.removeComponent( componentsToRemove );
             componentsToRemove = null;
         }
         if( entitiesToAdd ){
-            result = entitySet.addEntity( entitiesToAdd );
+            result = this.entitySet.addEntity( entitiesToAdd );
             entitiesToAdd = null;
         }
 
         if( entitiesToRemove ){
-            // console.log('removing entities from ' + entitySet.cid + ' ' + Utils.stringify(entitiesToRemove) );
-            result = entitySet.removeEntity( entitiesToRemove );
-            // log.debug(' = removed entities ' + Utils.stringify(result) );
+            // console.log('removing entities from ' + entitySet.cid + ' ' + stringify(entitiesToRemove) );
+            result = this.entitySet.removeEntity( entitiesToRemove );
+            // log.debug(' = removed entities ' + stringify(result) );
             // printE( entitySet );
             entitiesToRemove = null;
         }
 
-        this._cmds = Utils.clearArray( this._cmds );
+        this._cmds = clearArray( this._cmds );
         return result;
-    },
+    }
 
-    addComponentToEntity: function( component, entity ){
+    addComponentToEntity( component, entity ){
         this._cmds.push( [CmdBuffer.CMD_COMPONENT_ADD, entity, component] );
-    },
+    }
 
-    removeComponentFromEntity: function( component, entity ){
+    removeComponentFromEntity( component, entity ){
         this._cmds.push( [CmdBuffer.CMD_COMPONENT_REMOVE, entity, component] );
-    },
+    }
 
     // addEntity: function( entity ){
     //     this._cmds.push( [CmdBuffer.CMD_ENTITY_ADD, entity] );
     // },
 
-    createEntity: function(entity){
+    createEntity(entity){
         entity = this.registry.createEntity.apply( this.registry, arguments );
         this._cmds.push( [CmdBuffer.CMD_ENTITY_ADD, entity] );
         if( this.isReleasingEvents ){
             return this.applyChanges();
         }
         return entity;
-    },
+    }
 
-    destroyEntity: function (entity, apply){
+    destroyEntity (entity, apply){
         this._cmds.push( [CmdBuffer.CMD_ENTITY_REMOVE, entity] );
         if( apply || this.isReleasingEvents){
             return this.applyChanges();
         }
         return entity;
-    },
+    }
 
-    getEntity: function( entityId ){
+    getEntity( entityId ){
         return this.entitySet.getEntity( entityId );
-    },
+    }
 
-    toJSON: function(){
+    toJSON(){
         let result = {};
         result.name = this.name;
         return result;
-    },
-});
-
-EntityProcessor.prototype = _.extend( EntityProcessor.prototype, EventsAsync );
-
-EntityProcessor.isEntityProcessor = function(ep){
-    return ep && ep.isEntityProcessor;
+    }
 }
+
+EntityProcessor.prototype.type = 'EntityProcessor';
+EntityProcessor.prototype.isEntityProcessor = true;
+
+// EntityProcessor.isEntityProcessor = function(ep){
+//     return ep && ep.isEntityProcessor;
+// }
 
 EntityProcessor.create = function create( attrs, options={} ){
-    const Model = options.Model || EntityProcessor;
-    let result = new Model(attrs);
+    const klass = options.Model || EntityProcessor;
+    let result = new klass(attrs);
     return result;
 }
-
-module.exports = EntityProcessor;

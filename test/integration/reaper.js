@@ -36,7 +36,6 @@ test('reaper', function(t){
         // printIns( registry.schemaRegistry );
         // printIns( registry.schemaRegistry.get('/connection') );
         // let cConnection, cTimeToLive, cDead;
-        let ConnectionProcessor, ReaperProcessor;
         let reaperProcessor, connectionProcessor;
 
         let eventSpy = Sinon.spy();
@@ -47,12 +46,14 @@ test('reaper', function(t){
         *   The reaper processor looks out for entities that have a certain component, and
         *   deletes them from the entitySet
         */
-        ReaperProcessor = EntityProcessor.extend({
-            type:'ReaperProcessor',
-            // the processor will receive entities which have the /dead component
-            entityFilter: Q => Q.all('/dead'),
+        class ReaperProcessor extends EntityProcessor{
+            constructor(options){
+                super(options);
+                // the processor will receive entities which have the /dead component
+                this.entityFilter = Q => Q.all('/dead');
+            }
             
-            onUpdate: function( entityArray, timeMs ){
+            onUpdate( entityArray, timeMs ){
                 let entity, ii, len;
                 // log.debug('/p/reaper ' + entityArray.length + ' models' );
                 // any entities marked as dead should be removed
@@ -63,15 +64,16 @@ test('reaper', function(t){
                     this.destroyEntity( entity );
                 }
             }
-        });
+        }
 
-        ConnectionProcessor = EntityProcessor.extend({
-            type:'ConnectionProcessor',
+        class ConnectionProcessor extends EntityProcessor {
+            constructor(options){
+                super(options);
+                
+                this.entityFilter = Q => Q.all('/ttl');
+            }
             
-            // the processor will not receive any entities which have the /dead component
-            entityFilter: Q => Q.all('/ttl'),
-
-            onUpdate: function( entityArray, timeMs ){
+            onUpdate( entityArray, timeMs ){
                 let entity, ii, len;
                 // log.debug('updating /p/connection with ' + entityArray.length + ' entities');
                 // any entities which have an expired ttl should be marked as dead
@@ -91,7 +93,7 @@ test('reaper', function(t){
                     }
                 }
             }
-        });
+        }
 
         entitySet = createTestEntitySet( registry, entitySet );
 

@@ -35,7 +35,6 @@ import Dispatch from './dispatch';
 export {Dispatch as Dispatch};
 
 export {
-    parseUri,
     getEntityIdFromId,
     getEntitySetIdFromId,
     setEntityIdFromId} from './util';
