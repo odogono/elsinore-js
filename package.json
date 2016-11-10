@@ -1,6 +1,6 @@
 {
   "name": "elsinore",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "description": "a javascript Entity Component System",
   "keywords": [
     "elsinore",
@@ -34,7 +34,7 @@
   "non-dependencies": {},
   "devDependencies": {
     "aliasify": "~2.0.0",
-    "babel": "^6.5.2",
+    "babel-cli": "^6.18.0",
     "babel-plugin-external-helpers": "^6.18.0",
     "babel-plugin-transform-es2015-destructuring": "^6.18.0",
     "babel-plugin-transform-es2015-modules-commonjs": "^6.18.0",
@@ -77,12 +77,12 @@
   "scripts": {
     "build": "rollup -c rollup.config.js",
     "build:prod": "rollup -c rollup.config.prod.js",
-
+    "compile": "cp -r src/* lib/",
     "build:old": "browserify lib/index.js --standalone Elsinore -o build/elsinore.js",
-    "minify": "echo 'cd build && uglifyjs elsinore.js --compress --source-map elsinore.min.js.map --output elsinore.min.js' | sh",
-    "clean": "rm -rf node_modules build dist lib; mkdir build; npm install",
-    "compile": "Gulp transpile",
-    "dist:noclean": "npm run compile && npm run build && npm run minify && rm -rf dist && cp -r build dist",
+    "minify:old": "echo 'cd build && uglifyjs elsinore.js --compress --source-map elsinore.min.js.map --output elsinore.min.js' | sh",
+    "clean": "rm -rf node_modules build dist lib; mkdir build; mkdir lib; npm install",
+    "compile:old": "Gulp transpile",
+    "dist:noclean": "npm run compile && npm run build && npm run build:prod",
     "dist": "npm run dist:noclean",
     "prepublish": "npm run dist",
     "test": "NODE_ENV=test babel-tape-runner ./test | tap-dot",

@@ -358,7 +358,7 @@ AsyncEntitySet.prototype.isMemoryEntitySet = false;
 AsyncEntitySet.prototype.isAsync = true;
 AsyncEntitySet.prototype.cidPrefix = 'aes';
 
-AsyncEntitySet.isAsyncEntitySet( obj ){
+AsyncEntitySet.isAsyncEntitySet = function( obj ){
     return obj && obj.isAsyncEntitySet;
 }
 

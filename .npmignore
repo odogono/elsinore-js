@@ -15,17 +15,12 @@ logs
 results
 
 bin/
-build/
 doc/
+src/
 temp/
 test/
-src/
 var/
 
-lib/entity_set_level
-lib/entity_set_redis
-lib/entity_set_sqlite
-lib/indexed_db_entity_set
 lib/fs_entity_set
 lib/purgatory
 
@@ -35,5 +30,7 @@ NOTES.md
 
 .flowconfig
 .vscode
+yarn.lock
 jsconfig.json
 test.html
+rollup.config*
