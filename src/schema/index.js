@@ -110,7 +110,6 @@ export default class ComponentRegistry {
             const defOptions = {registering:true, registry:this.registry};
             let inst = new def(null,defOptions);
             const properties = _.result(inst,'properties');
-            Log.debug('ok got', properties);
             if( properties ){
                 def.properties = properties;
             }
@@ -163,11 +162,8 @@ export default class ComponentRegistry {
             }
 
             if( ComponentType.properties ){
-                Log.debug('combining properties', ComponentType.properties, def.properties );
                 def.properties = { ...ComponentType.properties, ...def.properties };
-                
                 componentDef = new ComponentDef( {...def,id:componentDef.id});
-                Log.debug('so we have', componentDef.toJSON());
             }
         }
         
@@ -241,24 +237,8 @@ export default class ComponentRegistry {
             return null;
         }
 
-        Log.debug('createComponent with', def.toJSON());
-
         const type = def.get('type');
         let ComponentType = type ? this._componentTypes[type] : Component;
-        // 
-        // // console.log('createComponent...', def.get('type') );
-        // if( type ){
-        //     // console.log('could not find component type ' + type );
-            // ComponentType = this._componentTypes[type];
-        //     if( !ComponentType ){
-        //         return cb('could not find component type ' + type );
-        //     }
-
-        //     // if( ComponentType.properties ){
-
-        //     // }
-        //     // console.log('create type', attrs);
-        // }
 
         // we create with attrs from the def, not properties -
         // since the properties describe how the attrs should be set
@@ -304,8 +284,6 @@ export default class ComponentRegistry {
         for ( ii=0,len=identifiers.length;ii<len;ii++ ){
             ident = identifiers[ii];
             
-            // if( debug ){ Log.debug('looking at', ident); }
-
             if(_.isObject(ident) ){
                 ident = ident.id || ident.hash || ident.uri;
             }

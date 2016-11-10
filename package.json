@@ -1,6 +1,6 @@
 {
   "name": "elsinore",
-  "version": "4.0.1",
+  "version": "4.0.2",
   "description": "a javascript Entity Component System",
   "keywords": [
     "elsinore",
@@ -77,11 +77,8 @@
   "scripts": {
     "build": "rollup -c rollup.config.js",
     "build:prod": "rollup -c rollup.config.prod.js",
-    "compile": "cp -r src/* lib/",
-    "build:old": "browserify lib/index.js --standalone Elsinore -o build/elsinore.js",
-    "minify:old": "echo 'cd build && uglifyjs elsinore.js --compress --source-map elsinore.min.js.map --output elsinore.min.js' | sh",
-    "clean": "rm -rf node_modules build dist lib; mkdir build; mkdir lib; npm install",
-    "compile:old": "Gulp transpile",
+    "compile": "babel src --out-dir lib",
+    "clean": "rm -rf node_modules build dist lib; mkdir build; npm install",
     "dist:noclean": "npm run compile && npm run build && npm run build:prod",
     "dist": "npm run dist:noclean",
     "prepublish": "npm run dist",
