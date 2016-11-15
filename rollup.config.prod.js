@@ -5,7 +5,7 @@ import Uglify from 'rollup-plugin-uglify'
 import Config from './rollup.config'
 
 // Inject the production settings.
-Config.dest = 'build/elsinore.min.js'
+Config.dest = 'dist/elsinore.es2015.min.js'
 Config.plugins[0] = Replace({ 'process.env.NODE_ENV': JSON.stringify('production') })
 Config.plugins.push(Uglify());
 

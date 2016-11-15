@@ -1,6 +1,6 @@
 /*
 	ElsinoreJs v${version}
-	${time} - commit ${commitHash}
+	${time}
 	https://github.com/odogono/elsinorejs
 	Released under the MIT License.
 */

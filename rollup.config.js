@@ -18,7 +18,7 @@ export default {
     entry: 'src/index.js',
     format: 'iife',
     moduleName: 'elsinore',
-    dest: 'build/elsinore.js',
+    dest: 'dist/elsinore.es2015.js',
     sourceMap: true,
     plugins:[
         Replace({

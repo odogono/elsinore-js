@@ -1,6 +1,6 @@
 {
   "name": "elsinore",
-  "version": "4.0.2",
+  "version": "4.0.3",
   "description": "a javascript Entity Component System",
   "keywords": [
     "elsinore",
@@ -23,6 +23,7 @@
     "url": "https://github.com/odogono/elsinore-js.git"
   },
   "main": "lib/index.js",
+  "jsnext:main": "dist/elsinore.es2015.js",
   "dependencies": {
     "deep-equal": "^1.0.0",
     "jsonpointer": "^4.0.0",
@@ -72,7 +73,8 @@
     "vinyl-source-stream": "^1.0.0"
   },
   "directories": {
-    "lib": "lib"
+    "lib": "lib",
+    "dist": "dist"
   },
   "scripts": {
     "build": "rollup -c rollup.config.js",

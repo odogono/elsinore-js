@@ -37,7 +37,6 @@ function argCount( operator ){
     }
     
     switch( operator ){
-        case Q.FILTER:
         case Q.ALL:
         case Q.ANY:
         case Q.NONE:
