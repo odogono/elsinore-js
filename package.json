@@ -1,6 +1,6 @@
 {
   "name": "elsinore",
-  "version": "4.0.3",
+  "version": "4.0.4",
   "description": "a javascript Entity Component System",
   "keywords": [
     "elsinore",
@@ -37,6 +37,7 @@
     "aliasify": "~2.0.0",
     "babel-cli": "^6.18.0",
     "babel-plugin-external-helpers": "^6.18.0",
+    "babel-plugin-transform-async-to-generator": "^6.16.0",
     "babel-plugin-transform-es2015-destructuring": "^6.18.0",
     "babel-plugin-transform-es2015-modules-commonjs": "^6.18.0",
     "babel-plugin-transform-flow-strip-types": "^6.8.0",
@@ -93,7 +94,8 @@
       "transform-es2015-modules-commonjs",
       "transform-flow-strip-types",
       "transform-es2015-destructuring",
-      "transform-object-rest-spread"
+      "transform-object-rest-spread",
+      "transform-async-to-generator"
     ]
   }
 }

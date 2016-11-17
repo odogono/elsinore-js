@@ -23,6 +23,11 @@ const Log = createLog('AsyncEntitySet');
  */
 class AsyncEntitySet extends EntitySet {
     initialize(entities, options={}){
+
+        // maps external and internal component def ids
+        this._componentDefInternalToExternal = []; 
+        this._componentDefExternalToInternal = [];
+
         this.componentDefs = new ComponentRegistry();
         // this.componentDefs = new ComponentDefCollection();
         // console.log('init AsyncEntitySet');
@@ -86,7 +91,7 @@ class AsyncEntitySet extends EntitySet {
 
         return this.getComponentDefByHash(data.hash).then( existing => {
             this.log('already have existing cdef for', data.hash, existing.esid )
-            this._cacheComponentDef( data, existing.esid );
+            // this._cacheComponentDef( data, existing.esid );
             return existing;
         })
         .catch( err => {
@@ -295,6 +300,10 @@ class AsyncEntitySet extends EntitySet {
                     componentsRemoved, options) )
     }
 
+
+    /**
+     * 
+     */
     _applyUpdate(entitiesAdded, entitiesUpdated, entitiesRemoved, componentsAdded, componentsUpdated, componentsRemoved,options={}){
         const debug = options.debug;
         let ii,len,component,entity;

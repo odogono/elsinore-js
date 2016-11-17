@@ -67,23 +67,14 @@ export default class Registry {
         return ++this.sequenceCount;
     }
 
-
-    schemaAdded( schemaUri, schemaHash, schema ){
-        // log.debug('schema ' + schemaUri + ' added to registry');
-        // derive an id for this schema
-        // let componentDefId = this._componentDefId++;
-        // this._componentDefsBySchemaHash[ componentDefId ] = schemaHash;
-        // this._schemaHashComponentDefIds[ schemaHash ] = componentDefId;
+    /**
+     * Returns a new component def instance
+     */
+    createComponentDef( attrs, options ){
+        const result = new ComponentDef(attrs,options);
+        return result;
     }
 
-    schemaRemoved( schemaUri, schemaHash, schema ){
-        // log.debug('schema ' + schemaUri + ' removed from registry');
-        // let componentDefId = this._schemaHashComponentDefIds[ schemaHash ];
-        // if( componentDefId ){
-            // delete this._schemaHashComponentDefIds[ schemaHash ];
-            // this._componentDefsBySchemaHash[ componentDefId ] = undefined;
-        // }
-    }
 
     /**
     *   Creates a new entity
@@ -115,22 +106,7 @@ export default class Registry {
             attrs.id = options.id; 
         }
 
-
-        // console.log('create with', attrs, _.keys(options));
         let result = new this.Entity( attrs, options );
-        // console.log('created', result);
-
-        // if( _.isUndefined(options.id) && !idSet ){
-        //     result.id = this.createId();
-        // } else { 
-        //     result.id = options.id; 
-        // }
-        
-        // if( options.debug ){
-        //     console.log('createEntity', attrs, _.omit(options,'registry') );
-        //     console.log('result', result.id, result);
-        //     process.exit();
-        // }
 
         if( components ){
             components = this.createComponent(components);
@@ -210,74 +186,6 @@ export default class Registry {
         }
 
         return returnChanged ? [dstEntity,dstHasChanged] : dstEntity;
-        // return dstEntity;
-
-        // if( !dstEntity ){
-        //     const result = srcEntity.clone();
-        //     result.setRegistry(this);
-
-        //     if( options.full ){
-        //         // const components = srcEntity.getComponents();
-        //         _.each( srcEntity.getComponents(), com => {
-        //             result.addComponent( this.cloneComponent(com) );
-        //         });
-        //     }
-
-        //     return result;
-        // }
-
-        // const srcComponents = srcEntity.getComponents();
-
-
-        // const returnChanges = options.returnChanges;
-        // const returnChanged = options.returnChanged;
-        // const deleteMissing = options.delete;
-        // let copyList = [];
-        // let dstHasChanged = false;
-
-        // if( !srcEntity ){
-        //     return returnChanged ? [false,null] : null;
-        // }
-
-        // let srcComponents = srcEntity.getComponents();
-
-        // // copy over dst components to new instance
-        // if( dstEntity ){
-        //     let dstComponents = dstEntity.getComponents();
-
-        //     for(ii=0,len=dstComponents.length;ii<len;ii++){
-        //         component = dstComponents[ii];
-        //         srcComponent = srcEntity[component.name];
-                
-        //         if( deleteMissing ){
-        //             if( !srcComponent ){
-        //                 dstHasChanged = true;
-        //                 continue;
-        //             }
-        //         }
-        //         // if the src already has the same component, then don't copy
-        //         if( srcComponent ){
-        //             // the dst component should have an id
-        //             srcComponent.setId( component.getId() );
-                    
-        //             if( srcComponent.hash() == component.hash() ){
-        //                 continue;
-        //             } else {
-        //                 dstHasChanged = true;
-        //             }
-        //         }
-        //         else {
-        //             result.addComponent( this.cloneComponent(component));
-        //         }
-        //     }    
-        // }
-
-        // // iterate over src components, copying them to the result
-        // for(ii=0,len=srcComponents.length;ii<len;ii++){
-        //     result.addComponent(this.cloneComponent(srcComponents[ii]));
-        // }
-
-        // return returnChanged ? [result,dstHasChanged] : result;
     }
 
 
@@ -310,6 +218,10 @@ export default class Registry {
      */
     getComponentDefs(){
         return this.schemaRegistry.getComponentDefs();
+    }
+
+    getComponentDef(ident){
+        return this.schemaRegistry.getComponentDef(ident);
     }
 
     /**
@@ -558,13 +470,16 @@ export default class Registry {
         // Log.debug('opening', entitySet.type,entitySet.getUuid());
 
         return entitySet.open(options).then( () => {
-            this.addEntitySet(entitySet,{sync:true})
-
+            
             const schemas = this.schemaRegistry.getComponentDefs();
             return this._registerComponentDefsWithEntitySet( entitySet, schemas, options )
-                .then( () => entitySet ) 
+                .then( () => {
+                    // perform the normal sync adding
+                    this.addEntitySet(entitySet,{sync:true})
+
+                    return entitySet; 
+                });
         });
-        // return entitySet;
     }
 
     /**

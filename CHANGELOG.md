@@ -4,6 +4,11 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased][unreleased]
 
+## [4.0.4]
+### Added
+- create components using a schema id or hash
+
+
 ## [4.0.0] - 2016-11-09
 ### Changed
 - Query refactored. Queries are now built using functions.

@@ -24,6 +24,7 @@ export {
     getEntityIdFromId,
     getEntitySetIdFromId,
     toString as entityToString,
+    stringify,
     setEntityIdFromId} from '../../src/util';
 
 // export {toString as entityToString} from '../../src/util/to_string';
@@ -195,7 +196,7 @@ export function loadFixtureJSON( fixturePath ){
 
 export function logEvents(obj, prefix='evt'){
     obj.on('all', function(evt){
-        log.debug(prefix + ' ' + JSON.stringify( _.toArray(arguments) ) );
+        log.debug(prefix + ' ' + stringify( _.toArray(arguments) ) );
     });
 }
 

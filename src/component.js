@@ -77,10 +77,6 @@ export default class Component extends Model {
     }
 
     setEntityId(id, internalId){
-        // console.log('COMPONENT.sETENTITYID', id);
-        // if( id === null ){
-        //     throw new Error('NO WAIT STOP');
-        // }
         this.attributes['@e'] = id;
     }
 

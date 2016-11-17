@@ -10,11 +10,13 @@ import {
     loadComponents,
     loadFixtureJSON,
     printE,
-    printIns,
+    createLog,
     logEvents,
-    requireLib,
+    stringify,
+    entityToString,
 } from './common';
 
+const Log = createLog('TestRegistry');
 
 import mapComponentEntityRefs from '../src/util/map_entity_refs';
 
@@ -167,6 +169,32 @@ test('create with an entity id', t => {
     })
     .then( () => t.end() )
     .catch(err => log.error('test error: %s', err.stack))  
+});
+
+
+test('create component from schema id', async t => {
+    const registry = await initialiseRegistry({loadComponents:true});
+
+    try {
+    const component = registry.createComponent( {'@s':6, x:100,y:200} );
+
+    Log.debug('created', entityToString(component) );
+
+    t.equals( component.get('x'), 100 );
+    }catch(err){ Log.error('test error: %s', err.stack); }
+    t.end();
+});
+
+test('create component from schema hash', async t => {
+    const registry = await initialiseRegistry({loadComponents:true});
+    const def = registry.getComponentDef('/component/position');
+    try {
+
+    const component = registry.createComponent( {'@s':def.hash(), x:100,y:200} );
+    t.equals( component.get('x'), 100 );
+
+    }catch(err){ Log.error('test error: %s', err.stack); }
+    t.end();
 });
 
 

@@ -16,7 +16,7 @@ type ComponentDefRawType = ComponentDefRawArrayType | ComponentDefRawObjectType;
 type ComponentDefType = Object; // TODO: replace with proper backbone model
 type ComponentDefIdentifierType = string | string[] | uint32 | ComponentDefRawType | ComponentDefType;
 
-const Log = createLog('ComponentRegistry', false);
+const Log = createLog('ComponentRegistry',false);
 
 /**
  * 
@@ -213,23 +213,17 @@ export default class ComponentRegistry {
         return this._componentDefByUri.models;
     }
     
+    
+    
     /**
-     * 
+     * Creates a new component instance
      */
-    // static hashSchema(def){
-    //     if( !def ){ return '' };
-    //     return def.hash || hash(JSON.stringify(def.properties) + ":" + def.Name, true );
-    // }
-
-    
-    
-    
     createComponent( defUri, attrs, options={}, cb ){
         let throwOnNotFound = _.isUndefined(options.throwOnNotFound) ? true : options.throwOnNotFound;
         if( cb ){
             throwOnNotFound = false;
         }
-
+        // Log.debug('createComponent', defUri, attrs, options);
         let def = this.getComponentDef( defUri, {throwOnNotFound} );
 
         if(!def){
@@ -239,6 +233,10 @@ export default class ComponentRegistry {
 
         const type = def.get('type');
         let ComponentType = type ? this._componentTypes[type] : Component;
+
+        if( _.isUndefined(attrs) && _.isObject(defUri) ){
+            attrs = defUri;
+        }
 
         // we create with attrs from the def, not properties -
         // since the properties describe how the attrs should be set
@@ -285,14 +283,13 @@ export default class ComponentRegistry {
             ident = identifiers[ii];
             
             if(_.isObject(ident) ){
-                ident = ident.id || ident.hash || ident.uri;
+                ident = ident.id || ident.hash || ident.uri || ident['@s'];
             }
 
             if( !ident ){
                 continue;
             }
             
-
             cDef = this._componentDefByUri.get(ident);
             
             if( !cDef ){
