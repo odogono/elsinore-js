@@ -5,6 +5,8 @@ import Model from './model';
 import {
     hash,
     setEntityIdFromId,
+    getEntityIdFromId,
+    getEntitySetIdFromId,
     stringify,
 } from './util';
 
@@ -15,24 +17,14 @@ import {
 export default class Component extends Model {
 
     constructor(attrs,options){
-        // console.log('Component.constructor', attrs);
-        attrs = Component.prototype.parse.apply(null,[attrs]);
+        attrs = Component.prototype.parse.call(null,attrs);
         super(attrs,options);
     }
 
 
-    // preinitialize( attrs, options={} ){
-        // console.log('preinit', attrs);
-        // options.parse = true;
-        // attrs.poo = true;
-    //     if( options.registry ){
-    //         this.registry = registry;
-    //     }
-    // }
-
     parse( resp ){
         // console.log('Component.parse', resp);
-        var esId = 0, eId = 0;
+        var esId = undefined, eId = undefined;
         if( !resp || _.keys(resp).length <= 0 ){
             return resp;
         }
@@ -40,19 +32,25 @@ export default class Component extends Model {
             esId = resp['@es'];
             delete resp['@es'];
         }
-        if( resp['@e'] ){
-            eId = resp['@e'];
+        // if( resp['@e'] ){
+            // eId = resp['@e'];
             // delete resp['@e'];
-        }
+        // }
         if( resp['@i'] ){
             resp.id = resp['@i'];
             delete resp['@i'];
         }
 
-        if( esId || eId ){
-            // log.debug('creating from ' + eId + ' ' + esId );
+        if( esId !== undefined ){
+            eId = resp['@e'] === undefined ? 0 : resp['@e'];
             resp['@e'] = setEntityIdFromId(eId, esId);
         }
+
+        // if( esId || eId ){
+            // log.debug('creating from ' + eId + ' ' + esId );
+            // resp['@e'] = setEntityIdFromId(eId, esId);
+            // resp['@es'] = getEntitySetIdFromId
+        // }
 
         return resp;
     }
@@ -72,8 +70,14 @@ export default class Component extends Model {
     set entityId(id){ this.attributes['@e'] = id; }
 
 
-    getEntityId(){
-        return this.get('@e');
+    getEntityId(total=true){
+        if( total ){ return this.get('@e'); }
+        return getEntityIdFromId(this.get('@e'));        
+    }
+
+
+    getEntitySetId(){
+        return getEntitySetIdFromId(this.get('@e'));
     }
 
     setEntityId(id, internalId){
@@ -154,3 +158,9 @@ Component.URI = '@c';
 Component.DEF_ID = '@s';
 Component.ENTITY_SET_ID = '@es';
 
+Component.create = function(attrs,options){
+    const result = new Component();
+    result.set( result.parse(attrs) );
+    // attrs = Component.prototype.parse.apply(null,[attrs]);
+    return result;
+}

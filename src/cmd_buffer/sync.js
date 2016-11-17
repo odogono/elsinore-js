@@ -671,6 +671,9 @@ export default class CmdBuffer {
     }
 };
 
+CmdBuffer.prototype.type = 'CmdBuffer';
+CmdBuffer.prototype.isCmdBuffer = true;
+
 function triggerEvent(source,name,col){
     if( col.length > 0 ){
         // console.log('trigger', name );
@@ -678,12 +681,8 @@ function triggerEvent(source,name,col){
     }
 }
 
-// _.extend( CmdBuffer.prototype, functions );
-
-// export function create (){
-//     let result = new CmdBuffer();
-//     result.reset();
-//     return result;
-// }
-
-// export default CmdBuffer;
+CmdBuffer.create = function(){
+    const result = new CmdBuffer();
+    result.reset();
+    return result;
+}

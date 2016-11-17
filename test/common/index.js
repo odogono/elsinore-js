@@ -13,7 +13,7 @@ const varDir = Path.join( rootDir, 'var' );
 
 const ElsinoreDir = Path.join(rootDir, 'src')
 
-
+import {stringify} from '../../src/util';
 
 export {
     createLog,

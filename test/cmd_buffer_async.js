@@ -14,9 +14,9 @@ import {
     loadComponents,
     loadFixtureJSON,
     printE,
-    printIns,
+    entityToString,
     logEvents,
-    requireLib,
+    createLog,
     getEntityIdFromId,
     getEntitySetIdFromId,
     setEntityIdFromId,
@@ -24,6 +24,8 @@ import {
 
 import CmdBuffer from '../src/cmd_buffer/async';
 import AsyncEntitySet from '../src/entity_set/async';
+
+const Log = createLog('TestCmdBufferAsync');
 
 test('adding a component with no entity id', t => {
     return initialiseRegistry().then( registry => {
@@ -76,20 +78,21 @@ test('adding a component with an eid, a non-member of the es', t => {
 });
 
 
-test('adding a component with an eid, an existing member of the es', t => {
-    return initialiseRegistry().then( registry => {
-        const cb = new CmdBuffer();
-        const com = createComponent( {'@e':11, '@es':50} );
-        const es = createEntitySet(registry, 50, [11] );
+test('adding a component with an eid, an existing member of the es', async t => {
+    try{
+    const registry = await initialiseRegistry();
+    const cb = new CmdBuffer();
+    const com = createComponent( {'@e':11, '@es':50} );
+    // Log.debug('com', com.attributes, com.getEntitySetId() );
+    const es = createEntitySet(registry, 50, [11] );
         
-        return cb.addComponent( es, com )
-            .then( added => {
-                reportUpdates( t, es, 0, 1, 0, 1, 0, 0 );
-                t.ok( Component.isComponent(added) );
-            })
-        })
-        .then( () => t.end() )
-        .catch( err => log.error('test error: %s', err.stack) )
+    const added = await cb.addComponent(es, com);
+
+    reportUpdates( t, es, 0, 1, 0, 1, 0, 0 );
+    t.ok( Component.isComponent(added) );
+
+    } catch(err){ log.error('test error: %s', err.stack); }
+    t.end();
 });
 
 
@@ -129,24 +132,26 @@ test('adding an entity with multiple components', t => {
         .catch( err => log.error('test error: %s', err.stack) ) 
 });
 
-test('updating an entity with a new component', t => {
-    return initialiseRegistry().then( registry => {
-        let cb = new CmdBuffer();
-        
+test('updating an entity with a new component', async t => {
+    try{ 
+        const registry = await initialiseRegistry();
+        const cb = new CmdBuffer();
         const coms = createComponent({tag:'soft','@s':3},{tag:'hard','@s':10});
 
-        const es = createEntitySet(registry,62, [10], [coms[1]] );
-        let e = registry.createEntityWithId(10,62);
-        
-        _.each( coms, com => e.addComponent(com) );
+        const es = createEntitySet(registry, 62, [10], [coms[1]] );
+        // logEvents(es);
+        const e = registry.createEntityWithId(10,62);
 
-        return cb.addEntity( es, e )
-            .then( added => {
-                reportUpdates( t, es, 0, 1, 0, 1, 1, 0 );
-            })
-        })
-        .then( () => t.end() )
-        .catch( err => log.error('test error: %s', err.stack) )
+        coms.forEach( com => e.addComponent(com) );
+
+        // Log.debug(`entity ids`, e.id, e.getEntityId(), e.getEntitySetId(), entityToString(e) );
+
+        const added = await cb.addEntity( es, e );
+        
+        reportUpdates( t, es, 0, 1, 0, 1, 1, 0 );
+        
+    } catch(err){ log.error('test error: %s', err.stack) }
+    t.end();
 });
 
 
@@ -311,21 +316,6 @@ function reportUpdates( t, es, eAdded, eUpdated, eRemoved, cAdded, cUpdated, cRe
 */
 function createEntitySet(registry, entitySetId, entityIds, existingComponents){
 
-    // let result = new AsyncEntitySet(null, {id:entitySetId});
-    // // result.id = entitySetId;
-    // result._registry = registry;
-
-    // result.update = function( eAdd, eUp, eRem, cAdd, cUp, cRem ){
-    //     // printIns( arguments, 1 );
-    //     [this.entitiesAdded,
-    //     this.entitiesUpdated,
-    //     this.entitiesRemoved,
-    //     this.componentsAdded,
-    //     this.componentsUpdated,
-    //     this.componentsRemoved] = arguments;
-    //     return Promise.resolve(true);
-    // };
-
     // return result;
     const existingComponentDefIds = _.compact(_.map(existingComponents, c => c.getDefId() ));
 
@@ -381,7 +371,7 @@ function createComponent( attrs ){
 
     attrs = _.extend( {}, {'@s':1}, attrs );
 
-    var result = new Component(attrs);
+    const result = Component.create(attrs);
     
     return result;
 }

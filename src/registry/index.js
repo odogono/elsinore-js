@@ -2,7 +2,7 @@ import _ from 'underscore';
 import {Events, Collection} from 'odgn-backbone-model'
 import BitField  from 'odgn-bitfield';
 
-import {createLog,createUuid} from '../util';
+import {createLog,createUuid,getEntityIdFromId,getEntitySetIdFromId} from '../util';
 import Entity from '../entity';
 import EntitySet from '../entity_set';
 import Component from '../component';
@@ -80,14 +80,10 @@ export default class Registry {
     *   Creates a new entity
     */
     createEntity(components, options={}){
-        // options = _.extend({registry:this},options);
         options.registry = this;
-        // let entityId = 0;
-        // let entitySetId = 0;
         let attrs = {};
         let idSet = false;
 
-        // if( options.id ){ attrs.id = options.id; }
         if( options['@e'] ){ 
             attrs['@e'] = options['@e']; idSet = true;
         }
@@ -95,7 +91,21 @@ export default class Registry {
             attrs['@es'] = options['@es']; idSet = true;
         }
 
-        if( options.comBf ){
+        if( components ){
+            components = this.createComponent(components);
+
+            // check to see whether the entity id is set on the component.
+            const first = _.isArray(components) ? components[0] : components;
+            const reportedEntityId = first.getEntityId();
+            if( !_.isUndefined(reportedEntityId) ){
+                // attrs['@e'] = getEntityIdFromId(reportedEntityId);
+                // attrs['@es'] = getEntitySetIdFromId(reportedEntityId);
+                options.id = reportedEntityId;
+                // console.log('setting eid from component', reportedEntityId);
+                idSet = false;
+            }
+        }
+        else if( options.comBf ){
             attrs.comBf = options.comBf;
             delete options.comBf;
         }
@@ -109,13 +119,16 @@ export default class Registry {
         let result = new this.Entity( attrs, options );
 
         if( components ){
-            components = this.createComponent(components);
+            // components = this.createComponent(components);
             result.addComponent(components);
         }
 
         return result;
     }
 
+    /**
+     * 
+     */
     createEntityWithId( entityId=0, entitySetId=0, options={} ){
         options.registry = this;
         let attrs = {'@e':entityId,'@es':entitySetId};

@@ -90,111 +90,8 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
                         this.componentsAdded.models.concat(this.componentsUpdated.models) ) )
         }
         return [];
-
-        
-        // let initial;
-
-        // // first create or retrieve an entity container for the component
-        // return this._packageEntityId( entitySet, entityId )
-        //     .then( entity => {
-        //         let commandOptions = _.extend( {}, options, {entity:entity, id:entity.id, mode:entity._mode} );
-        //         if( entity._mode === OP_CREATE_NEW ||
-        //             entity._mode === OP_CREATE_FROM_EXISTING_ID ){
-        //                 this.addCommand( CMD_ENTITY_ADD, entity.id, commandOptions );
-        //         }
-
-        //         if( entity.hasComponent(component) ){
-        //             this.addCommand( CMD_COMPONENT_UPDATE, component, commandOptions );
-        //         } else {
-        //             this.addCommand( CMD_COMPONENT_ADD, component, commandOptions );
-        //         }
-        //         entity.addComponent( component );
-        //     })
-        //     .then( () => {
-        //         // execute any outstanding commands
-        //         if( execute ){
-        //             return this.execute( entitySet, options )
-        //                 .then( () => valueArray( 
-        //                         this.componentsAdded.models.concat(this.componentsUpdated.models) ) )
-        //         }
-        //         return [];
-        //     })
-
     }
 
-
-    // /**
-    // *   Returns an entity wrapper for the given entity id which will be
-    // * passed
-    // */
-    // _packageEntityId( entitySet, entityId ){
-    //     let entity;
-    //     let getEntityOptions = { componentBitFieldOnly: true };
-    //     const registry = entitySet.getRegistry();
-
-        
-    //     // no entity id was provided
-    //     if( !entityId ){
-    //         // this._entityCache.each( c => console.log('ecache',c.cid));
-    //         entity = this._entityCache.get(0);
-    //         if( !entity ){
-    //             // console.log('no existing cache entity found for');
-    //             entity = this._createHolderEntity( registry, 0, OP_CREATE_NEW );
-    //         }
-    //         return Promise.resolve( entity );
-    //     }
-
-    //     // console.log('get es id', entitySet.id, 'from', entityId, getEntitySetIdFromId(entityId));
-    //     if( getEntitySetIdFromId(entityId) === entitySet.id ){
-    //         if( (entity = this._entityCache.get(entityId)) ){
-    //             // cached entity found previously
-    //             return Promise.resolve(entity);
-    //         }
-            
-    //         return entitySet.getEntityBitField( entityId )
-    //             .then( comBf => {
-    //                 const entity = registry.createEntityWithId(entityId, 0, {comBf});
-    //                 // let bf = entity.getComponentBitfield();
-    //                 // dupe the entity bitfield, so we have an idea of it's original state
-    //                 entity._mode = OP_UPDATE_EXISTING;
-    //                 // entity._ocomBf = BitField.create(bf);
-    //                 // entity found, store in cache for successive queries
-    //                 this._entityCache.add(entity);
-    //                 return entity;
-    //             })
-    //             .catch( err => {
-    //                 // entity does not exist, create holder entity
-    //                 // with id
-    //                 entity = this._createHolderEntity( registry, entityId, OP_CREATE_FROM_EXISTING_ID, entityId );
-    //                 return entity;
-    //             });
-        
-    //     } else {
-    //         if( (entity = this._entityCache.get(entityId)) ){
-    //             return Promise.resolve(entity);
-    //         }
-    //         // entity does not belong to this ES - create new entity with a new id
-    //         entity = this._createHolderEntity( registry, entityId, OP_CREATE_NEW );
-    //         this._entityCache.add(entity);
-    //         return Promise.resolve( entity );
-    //     }
-    // }
-
-
-
-
-    // /**
-    // *   addEntityId - the id that should be used to add to this entityset
-    // */
-    // _createHolderEntity( registry, existingId, mode, addEntityId ){
-    //     const entityId = _.isUndefined(existingId) ? 0 : existingId;
-    //     const entity = registry.createEntityWithId( entityId );
-    //     entity._addId = _.isUndefined(addEntityId) ? 0 : addEntityId;
-    //     entity._mode = mode;
-    //     // entity.set({mode:mode,addId:addEntityId});
-    //     this._entityCache.add(entity);
-    //     return entity;
-    // }
 
 
     /**
@@ -380,7 +277,7 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
         switch( cmdType ){
             case CMD_ENTITY_ADD:
                 this.entitiesAdded.add( entity );
-                
+                // console.log('add entity', entity.id );
                 // if( true ){ 
                 //     console.log('cmd: adding entity ' + 
                 //         entity.getEntityId() + '/' + entity.cid + '/' + entity.getEntitySetId() ); 
@@ -454,10 +351,10 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
                     }
                     else if( entity.getEntitySetId() != entitySet.id ){
                         this.entitiesAdded.add( entity );
-                        if(debug){console.log('entity', entity.id,'does not exist in es', entitySet.id);}
+                        // if(true){console.log('entity', entity.id,'does not exist in es', entitySet.id);}
                     }
                     else {
-                        if(debug){console.log('entity', entity.id,'exists in es', entitySet.id);}
+                        // if(debug){console.log('entity', entity.id,'exists in es', entitySet.id);}
                     }
 
                     // console.log('executing cmds against new', entity.isNew(), entity.id );
@@ -639,10 +536,11 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
 
 }
 
-// CmdBuffer.create = function(){
-//     let result = new CmdBuffer();
-//     result.reset();
-//     return result;
-// }
+AsyncCmdBuffer.prototype.type = 'AsyncCmdBuffer';
+AsyncCmdBuffer.prototype.isAsyncCmdBuffer = true;
 
-// module.exports = CmdBuffer;
+AsyncCmdBuffer.create = function(){
+    let result = new AsyncCmdBuffer();
+    result.reset();
+    return result;
+}

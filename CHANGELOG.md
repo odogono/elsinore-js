@@ -4,9 +4,12 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased][unreleased]
 
-## [4.0.4]
+## [4.0.5] - 2016-11-17
 ### Added
 - create components using a schema id or hash
+
+### Changed
+- component.getEntityId will return the full entity id (entity+entitySet), unless a flag is passed for just the entity id.
 
 
 ## [4.0.0] - 2016-11-09

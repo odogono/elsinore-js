@@ -13,7 +13,7 @@ import {
     createLog,
     logEvents,
     stringify,
-    entityToString,
+    entityToString, setEntityIdFromId,
 } from './common';
 
 const Log = createLog('TestRegistry');
@@ -158,17 +158,18 @@ test.skip('create from an array of data', t => {
     });
 });
 
-test('create with an entity id', t => {
-    return initialiseRegistry().then( registry => {
+test('create with an entity id', async t => {
+    const registry = await initialiseRegistry();
+    try{
+    let component = registry.createComponent( {'@c':'/component/nickname', '@e':15} );
+    t.equals( component.getEntityId(false), 15, 'the entity id is retrieved' );
 
-        let component = registry.createComponent( {'@c':'/component/nickname', '@e':15} );
-        t.equals( component.getEntityId(), 15, 'the entity id is retrieved' );
-
-        component = registry.createComponent( {'@c':'/component/nickname', '@e':15, '@es':10} );
-        t.equals( component.getEntityId(), 42949672975, 'the entity id is retrieved' );
-    })
-    .then( () => t.end() )
-    .catch(err => log.error('test error: %s', err.stack))  
+    component = registry.createComponent( {'@c':'/component/nickname', '@e':42949672975} );
+    t.equals( component.getEntityId(false), 15, 'the entity id is retrieved' );
+    t.equals( component.getEntitySetId(), 10 );
+    
+    }catch(err){ Log.error('test error: %s', err.stack); }
+    t.end();
 });
 
 
@@ -196,6 +197,29 @@ test('create component from schema hash', async t => {
     }catch(err){ Log.error('test error: %s', err.stack); }
     t.end();
 });
+
+
+test('creating an entity from a component with an entity id', async t => {
+    try {
+
+    const registry = await initialiseRegistry({loadComponents:true});
+    const entityId = 301;
+    const entitySetId = 2;
+    const id = setEntityIdFromId(entityId,entitySetId);
+
+    const component = registry.createComponent( {'@s':'/component/nickname', nickname:'alex', '@e':id } );
+    t.equals( component.getEntityId(false), entityId );
+
+    const entity = registry.createEntity(component);
+
+    // Log.debug('entity', entityToString(entity) );
+
+    t.equals( entity.getEntitySetId(), entitySetId );
+    t.equals( entity.getEntityId(), entityId );
+
+    }catch(err){ Log.error('test error: %s', err.stack); }
+    t.end();
+})
 
 
 test('create an entity with a component bitfield', t => {
