@@ -4,6 +4,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased][unreleased]
 
+## [4.0.6] - 2016-11-20
+
 ### Added
 - Util.toBoolean function
 
