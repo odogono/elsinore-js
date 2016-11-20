@@ -158,6 +158,25 @@ export function resolveUri( from, to ){
 // };
 
 
+export function toBoolean( value, defaultValue=false ){
+    switch(value){
+        case true:
+        case 'true':
+        case 1:
+        case '1':
+        case 'yes':
+            return true;
+        case false:
+        case 'false':
+        case 0:
+        case '0':
+        case 'no':
+            return false;
+        default:
+            return defaultValue;
+    }
+}
+
 /**
  * Converts a value to an integer - well as much as that
  * means in JS.

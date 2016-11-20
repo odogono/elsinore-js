@@ -57,7 +57,7 @@ test('adding an entity with a component returns the added entity', t => {
 });
 
 
-test('adding several components without an entity adds them to the same new entity', function(t){
+test('adding several components without an entity adds them to the same new entity', async t => {
     const eventSpy = Sinon.spy();
 
     return initialiseAll(createOptions).then( ([registry,entitySet]) => {
@@ -83,31 +83,28 @@ test('adding several components without an entity adds them to the same new enti
     .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
 });
 
-test('removing a component from an entity with only one component', t => {
-    const eventSpy = Sinon.spy();
-    
-    return initialiseAll(createOptions).then( ([registry,entitySet]) => {
+test('removing a component from an entity with only one component', async t => {
+    const [registry,entitySet] = await initialiseAll(createOptions);
+    try{
+        const eventSpy = Sinon.spy();
         entitySet.on('all', eventSpy);
         const component = registry.createComponent( '/component/position', {x:15,y:2}); 
 
-        // logEvents( entitySet );
-        return entitySet.addComponent(component)
-            .then( component => {
-                // printE( entitySet );
-                // log.debug('removed! ' + component.id );
-                return component;
-            })
-            .then( component => entitySet.removeComponent(component) )
-            // .then( () => printKeys(entitySet, '_ent_bf', {values:false} ) )
-            // .then( component => entitySet.getEntity(component.getEntityId()) )
-            .then( (entity) => {
-                t.ok( eventSpy.calledWith('component:remove'), 'component:remove should have been called');
-                t.ok( eventSpy.calledWith('entity:remove'), 'entity:remove should have been called');
-                
-            })
-        })
-    .then( () => t.end() )
-    .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
+        
+        const addedComponent = await entitySet.addComponent(component);
+        const addedEntityId = addedComponent.getEntityId();
+
+        Log.debug('and remove');
+        await entitySet.removeComponent(addedComponent);
+
+        t.ok( eventSpy.calledWith('component:remove'), 'component:remove should have been called');
+        t.ok( eventSpy.calledWith('entity:remove'), 'entity:remove should have been called');
+
+        const entity = await entitySet.getEntityById(addedEntityId,false);
+        t.ok( _.isNull(entity), 'no entity should be returned' );
+             
+    } catch( err ){ Log.error('test error', err.message, err.stack); }
+    await finalise(t,registry);
 });
 
 
@@ -280,4 +277,10 @@ function initialiseAll(options){
         return registry.createEntitySet(options)
             .then( es => [registry,es] );
     })
+}
+
+function finalise(t,registry){
+    return registry.removeAllEntitySets()
+        .catch( err => console.log('finalize error:', err ))
+        .then( () => t.end() )
 }

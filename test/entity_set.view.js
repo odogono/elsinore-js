@@ -77,22 +77,22 @@ test('the view should have the same entities', t => {
 });
 
 
-test('removing an entity from the entitySet should also remove it from the view', t => {
-    initialiseEntitySet().then( ([registry,entitySet]) => {
-        const eventSpy = Sinon.spy();
+test('removing an entity from the entitySet should also remove it from the view', async t => {
+    try{ const [registry,entitySet] = await initialiseEntitySet();
+    const eventSpy = Sinon.spy();
 
-        let view = entitySet.view(null,{updateOnEvent: true});
+    const view = entitySet.view(null,{updateOnEvent: true});
 
         // Common.logEvents( entitySet, 'entitySet' );
         // Common.logEvents( view, 'view' );
 
-        entitySet.removeEntity( entitySet.at(0) );
+    entitySet.removeEntity( entitySet.at(0) );
         // view.update();
         
-        t.equals( entitySet.size(), view.length, 'same number of entities');
+    t.equals( entitySet.size(), view.length, 'same number of entities');
 
-        t.end(); 
-    });   
+    t.end();
+    }catch(err){ console.log('test error',err.stack); }
 });
 
 test('adding an entity should also see it appear in the view', t => {

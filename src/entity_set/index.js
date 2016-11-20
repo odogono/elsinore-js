@@ -5,7 +5,8 @@ import BitField  from 'odgn-bitfield';
 import Component from '../component';
 import Entity from '../entity';
 import EntityFilter from '../entity_filter';
-import {createUuid, hash, isInteger} from '../util';
+import Query from '../query';
+import {createUuid, hash, isInteger,stringify} from '../util';
 
 // import * as CmdBuffer from '../cmd_buffer/sync';
 import CmdBuffer from '../cmd_buffer/sync';
@@ -357,7 +358,7 @@ export default class EntitySet extends Collection {
 
         for( ii=0,len=entities.length;ii<len;ii++ ){
             entity = entities[ii];
-            if( EntitySet.isEntityOfInterest(this, entity, query) ){
+            if( this.isEntityOfInterest(entity, query) ){
                 this.add( entity );
             }
         }
@@ -365,26 +366,6 @@ export default class EntitySet extends Collection {
         return entities;
     }
 
-
-
-    /**
-    *
-    */
-    /*reset: function(entities, options){
-        options || (options = {});
-        let opOptions = _.extend({silent: false, removeEmptyEntity:false},options);
-
-        this.removeEntity( this.models, opOptions );
-        this._reset();
-        
-        if( entities ){
-            this.addEntity( entities, opOptions );
-        }
-
-        if (!options.silent) {
-            this.trigger('reset', this, options);
-        }
-    },//*/
 
     /**
     *   
@@ -476,6 +457,125 @@ export default class EntitySet extends Collection {
         _.each( this.listeners, listener => listener.applyEvents() );
     }
 
+
+    // Query Functions
+
+    /**
+     * Sets a query against this entityset.
+     * All entities which are added to the ES are
+     * passed through the query for validity
+     */
+    setQuery(query,options={}){
+        this._query = null;
+        if( !query ){ return; }
+        if( query instanceof Query ){
+            if( query.isEmpty() ){
+                return;
+            }
+            this._query = new Query( query );
+            return;
+        }
+        if( _.isFunction(query) ){
+            this._query = new Query( query );
+        }
+
+        // check that entities are still allowed to belong to this set
+        this.evaluateEntities();
+
+        return this._query;
+    }
+
+    getQuery(){
+        return this._query;
+    }
+
+    /**
+     * Executes a query against this entityset
+     */
+    query( query, options = {}){
+        options.registry = this.getRegistry();        
+        if( !query ){
+            query = Q => Q.root();// Query.root();
+        }
+        if( query instanceof Query ){
+            return query.execute(this,options);
+        }
+        return Query.exec( query, this, options );
+    }
+
+    /**
+    *   Removes the entities identified by the query
+    */
+    removeByQuery( query, options={} ){
+        options = { ...options, registry:this.getRegistry() };
+        const result = Query.exec( query, this, options);
+        return this.removeEntity( result );
+    }
+
+    isEntityOfInterest( entity, options ){
+        if( !this._query ){
+            return true;
+        }
+        const tEntity = this._query.execute( entity );
+        return tEntity ? true : false;
+    }
+
+    /**
+    *   Checks through all contained entities, ensuring that they
+    *   are still valid members of this entitySet according to the
+    *   query
+    */
+    evaluateEntities( entityIdArray, options={} ){
+        let ii,len,entity;
+        let entities;
+        let removed = [];
+
+        if( !this._query ){
+            return removed;
+        }
+
+        if( entityIdArray ){
+            for( ii=0,len=entityIdArray.length;ii<len;ii++ ){
+                entity = this.get( entityIdArray[ii] );
+                if( entity && !this._query.execute( entity ) ){
+                    removed.push( entity );
+                }
+            }
+        } else {
+            // entities = this.entities || this;
+
+            for( ii=this.length-1; ii>=0; ii-- ){
+                entity = this.at(ii);
+                if( entity && !this._query.execute( entity ) ){
+                    removed.push( entity );
+                }
+            }
+        }
+
+        if( removed.length > 0 ){
+            return this.removeEntity( removed, options );
+        }
+        return removed;
+    }
+
+    /**
+    *   Transfers entities from src to dst whilst applying the filter
+    *   The query is then set on the dstEntitySet
+    */
+    map( query, dstEntitySet, options={} ){
+        var entity;
+        
+        dstEntitySet.reset();
+
+        if( query ){
+            dstEntitySet.setQuery( query );
+        }
+
+        dstEntitySet.addEntity( this );
+
+        return dstEntitySet;
+    }
+
 }
 
 EntitySet.prototype.type = 'EntitySet';
@@ -487,9 +587,14 @@ EntitySet.prototype.views = null;
 
 
 
-EntitySet.hash = function( entitySet ){
-    let hash = entitySet.toJSON();// entitySet.type;
-    return hash( hash, true );
+EntitySet.hash = function( entitySet, query ){
+    let str = stringify(entitySet.toJSON());
+    query = query || this._query;
+    if( query ){
+        str += query.hash();
+    }
+
+    return hash( str, true );
 }
 
 

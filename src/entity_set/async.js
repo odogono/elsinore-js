@@ -6,7 +6,7 @@ import EntitySet from './index';
 import CmdBuffer from '../cmd_buffer/async';
 import ReusableId from '../util/reusable_id';
 import {setEntityIdFromId,toString as entityToString} from '../util';
-import {createLog,getEntityIdFromId,getEntitySetIdFromId} from '../util';
+import {createLog,toInteger,getEntityIdFromId,getEntitySetIdFromId} from '../util';
 import {ComponentNotFoundError,EntityNotFoundError,ComponentDefNotFoundError} from '../error';
 import ComponentRegistry from '../schema';
 
@@ -168,21 +168,25 @@ class AsyncEntitySet extends EntitySet {
     /**
      * Returns an entity
      */
-    getEntity( entityId, options ){
-        if (options && options.componentBitFieldOnly) {
-            return this.getEntityBitField(entityId);
+    getEntity( entityId, options={} ){
+        const throwsOnError = _.isUndefined(options.throwsOnError) ? true : options.throwsOnError;
+        if (options.componentBitFieldOnly) {
+            return this.getEntityBitField(entityId,throwsOnError);
         }
-        return this.getEntityById(entityId);
+        return this.getEntityById(entityId,throwsOnError);
     }
 
 
     /**
      * Returns a bitfield for the specified entityid
      */
-    getEntityBitField( entityId ){
+    getEntityBitField( entityId, throwsOnError=true ){
         let e = this.get(entityId);
         if( e ){
             return Promise.resolve(e.getComponentBitfield());
+        }
+        if( !throwsOnError ){
+            return Promise.resolve(null);
         }
         return Promise.reject(new EntityNotFoundError(entityId));
     }
@@ -190,7 +194,7 @@ class AsyncEntitySet extends EntitySet {
     /**
      * Returns an entity specified by its id
      */
-    getEntityById( entityId ){
+    getEntityById( entityId, throwsOnError=true ){
         const esId = getEntitySetIdFromId(entityId);
         const eId = getEntityIdFromId(entityId);
         let e = this.get(entityId);
@@ -205,6 +209,9 @@ class AsyncEntitySet extends EntitySet {
         }
         
         if( esId != this.id ){
+            if( !throwsOnError ){
+                return Promise.resolve(null);
+            }
             return Promise.reject(new EntityNotFoundError(entityId, 
                 `entity ${eId} does not belong to this entityset (${esId})`));
         }
@@ -217,6 +224,9 @@ class AsyncEntitySet extends EntitySet {
             return Promise.resolve(entity);
         }
 
+        if( !throwsOnError ){
+            return Promise.resolve(null);
+        }
         return Promise.reject(new EntityNotFoundError(entityId));
     }
 
@@ -241,7 +251,7 @@ class AsyncEntitySet extends EntitySet {
 
         return new Promise( (resolve,reject) => {
             const result = _.map( entityIds, eId => {
-                eId = parseInt(eId, 10);
+                eId = toInteger(eId);
                 let entity = this.get(eId);
                 if( entity ){
                     // return a copy of the entity bf

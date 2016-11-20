@@ -80,36 +80,37 @@ test('the registry triggers the event on entitysets', function(t){
 });
 
 
-test('the registry triggers the event on a compatible entityset', function(t){
-    return initialiseRegistry().then( registry => {
-        const entitySet = registry.createEntitySet();
-        const eventSpy = Sinon.spy();
-        let entity;
+test('the registry triggers the event on a compatible entityset', async t => {
+    try{
+    const registry = await initialiseRegistry();
+    const entitySet = registry.createEntitySet();
+    const eventSpy = Sinon.spy();
+    let entity;
     
-        let mineralCalled = false, animalCalled = false, mainCalled = false;
+    let mineralCalled = false, animalCalled = false, mainCalled = false;
 
-        let mineralEntitySet = entitySet.view( Q => Q.all('/component/mineral'));
-        let animalEntitySet = entitySet.view( Q => Q.all('/component/animal'));
+    let mineralEntitySet = entitySet.view( Q => Q.all('/component/mineral'));
+    let animalEntitySet = entitySet.view( Q => Q.all('/component/animal'));
 
 
-        registry.addEntitySet( mineralEntitySet );
-        registry.addEntitySet( animalEntitySet );
+    registry.addEntitySet( mineralEntitySet );
+    registry.addEntitySet( animalEntitySet );
 
-        entitySet.on('msg', () => mainCalled = true );    
-        mineralEntitySet.on('msg', () => mineralCalled = true );
-        animalEntitySet.on('msg', () => animalCalled = true );
+    entitySet.on('msg', () => mainCalled = true );    
+    mineralEntitySet.on('msg', () => mineralCalled = true );
+    animalEntitySet.on('msg', () => animalCalled = true );
 
-        entity = registry.createEntity( [{'@c':'/component/animal', name:'tiger'}]);
-        entity = entitySet.addEntity(entity);
+    entity = registry.createEntity( [{'@c':'/component/animal', name:'tiger'}]);
+    entity = entitySet.addEntity(entity);
 
-        entity.triggerEntityEvent( 'msg', 'welcome' );
+    entity.triggerEntityEvent( 'msg', 'welcome' );
 
-        t.notOk( mineralCalled, 'events not triggered on mineral entitySet');
-        t.ok( animalCalled, 'events triggered on animal entitySet');
-        t.ok( mainCalled, 'events triggered on base entitySet');
-    })
-    .then( () => t.end() )
-    .catch( err => log.error('test error: %s', err.stack) )
+    t.notOk( mineralCalled, 'events not triggered on mineral entitySet');
+    t.ok( animalCalled, 'events triggered on animal entitySet');
+    t.ok( mainCalled, 'events triggered on base entitySet');
+    
+    } catch(err){ log.error('test error: %s', err.stack); }
+    t.end();
 });
 
 

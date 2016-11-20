@@ -2,7 +2,8 @@ import _ from 'underscore';
 
 import Entity from '../entity';
 import EntitySet from './index';
-import Query from './query';
+import Query from '../query';
+
 import {
     clearMap,
     hash,
@@ -153,7 +154,7 @@ _.extend( EntitySetListener.prototype, {
                 // listening entitySet - in this case the entity has to be
                 // added before the component can
                 entity = this.targetEntitySet.get( eid );
-                if( entity && EntitySet.isEntityOfInterest(entitySet,entity) ){
+                if( entity && entitySet.isEntityOfInterest(entity) ){
                     this.isModified = true;
                     this.addedEntities[ eid ] = entity;
                 }
@@ -218,7 +219,7 @@ _.extend( EntitySetListener.prototype, {
         // }
         // add entities
         _.each( this.addedEntities, (entity, eid) => {
-            if( query && !EntitySet.isEntityOfInterest( entitySet, entity, query ) ){
+            if( query && !entitySet.isEntityOfInterest(entity, query ) ){
                 return;
             }
             entitySet.add( entity, changeOptions );
@@ -237,7 +238,7 @@ _.extend( EntitySetListener.prototype, {
         changedEntityIdList = _.values( this.changedEntityList );
         if( changedEntityIdList.length > 0 ){
             entitiesRemoved = entitiesRemoved.concat( 
-                EntitySet.evaluateEntities(entitySet, changedEntityIdList, changeOptions) );
+                entitySet.evaluateEntities(changedEntityIdList, changeOptions) );
 
             // for( i=0,len=changedEntityIdList.length;i<len;i++ ){
             //     entity = entitySet.get( changedEntityIdList[i] );

@@ -4,6 +4,14 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased][unreleased]
 
+### Added
+- Util.toBoolean function
+
+### Changed
+- entity.getEntityById has option not to throw an error when entity is not found
+- removes jsonpointer dependency
+- cleaned up entityset/query
+
 ## [4.0.5] - 2016-11-17
 ### Added
 - create components using a schema id or hash
