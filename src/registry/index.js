@@ -378,7 +378,9 @@ export default class Registry {
 
         
         // create a 20 bit 
-        id = options['@es'] || this.createId();
+        
+        id = options['@es'] || options['id'] || this.createId();
+        // console.log('createEntitySet', id, options);
         result = new instanceClass( null, _.extend( {}, options,{id}) );
         result.setRegistry( this );
         

@@ -60,7 +60,7 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
             if( _.isUndefined(options.batch) ){
                 options.batch = true;
                 options.execute = false;
-                execute = true;
+                if( execute !== false ){ execute = true; }
             }
 
             return Promise.all(_.map(component, c => this.addComponent(entitySet, c, options)))
@@ -112,7 +112,7 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
             if( _.isUndefined(options.batch) ){
                 options.batch = true;
                 options.execute = false;
-                execute = true;   
+                if( execute !== false ){ execute = true; }
             }
 
             this.reset();
@@ -164,17 +164,16 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
             if( _.isUndefined(options.batch) ){
                 options.batch = true;
                 options.execute = false;
-                execute = true;
+                if( execute !== false ){ execute = true; }
             }
 
-            this.reset();
+            if( execute !== false ){ this.reset(); }
 
             return _.reduce( entity,
                 (current,ine) => current.then( () => this.addEntity(entitySet, ine, options) )
             , Promise.resolve() )
                 .then( () => {
                     if( !execute ){ return this; }
-
                     return this.execute( entitySet, options )
                         .then(() => valueArray(this.entitiesAdded.models));
                 });
@@ -201,6 +200,9 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
             });
     }
 
+    /**
+     * 
+     */
     flush( entitySet, options={} ){
         return this.execute( entitySet, options )
             .then( () => this );
@@ -228,10 +230,10 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
             if( _.isUndefined(options.batch) ){
                 options.batch = true;
                 options.execute = false;
-                execute = true;
+                if( execute !== false ){ execute = true; }
             }
 
-            this.reset();
+            if( execute !== false ){ this.reset(); }
 
             return _.reduce( entity, (current, ine) => {
                 return current.then( () => self.removeEntity(entitySet, ine) )

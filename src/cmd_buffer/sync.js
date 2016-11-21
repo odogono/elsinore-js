@@ -61,10 +61,10 @@ export default class CmdBuffer {
             if( _.isUndefined(options.batch) ){
                 options.batch = true;
                 options.execute = false;
-                execute = true;   
+                if( execute !== false ){ execute = true; }
             }
 
-            this.reset();
+            if( execute !== false ){ this.reset(); }
 
             for( ii in component ){
                 this.addComponent( entitySet, component[ii], options );
@@ -168,10 +168,10 @@ export default class CmdBuffer {
             if( _.isUndefined(options.batch) ){
                 options.batch = true;
                 options.execute = false;
-                execute = true;   
+                if( execute !== false ){ execute = true; }
             }
 
-            this.reset();
+            if( execute !== false ){ this.reset(); }
 
             for( ii in component ){
                 this.removeComponent( entitySet, component[ii], options );
@@ -226,10 +226,10 @@ export default class CmdBuffer {
             if( _.isUndefined(options.batch) ){
                 options.batch = true;
                 options.execute = false;
-                execute = true;   
+                if( execute !== false ){ execute = true; }
             }
 
-            this.reset();
+            if( execute !== false ){ this.reset(); }
 
             for( ii in entity ){
                 this.addEntity( entitySet, entity[ii], options );
@@ -313,10 +313,10 @@ export default class CmdBuffer {
             if( _.isUndefined(options.batch) ){
                 options.batch = true;
                 options.execute = false;
-                execute = true;   
+                if( execute !== false ){ execute = true; }
             }
             
-            this.reset();
+            if( execute !== false ){ this.reset(); }
 
             for( ii in entity ){
                 this.removeEntity( entitySet, entity[ii], options );
@@ -355,6 +355,10 @@ export default class CmdBuffer {
         return result;
     }
 
+
+    /**
+     * 
+     */
     execute( entitySet, options ){
         let ii,ie, len,entityId,cmds,cmd;
         let com, ocom, defId, isNew, cmdOptions, query;

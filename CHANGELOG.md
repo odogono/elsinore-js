@@ -5,7 +5,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased][unreleased]
 
 ### Fixed
-- fixes ALL queries with attribute selection
+- All() queries with attribute selection would throw an error
+- fixed entityset batching when adding arrays of entities/components 
 
 ## [4.0.6] - 2016-11-20
 

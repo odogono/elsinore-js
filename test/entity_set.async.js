@@ -18,7 +18,7 @@ import {
     printE,
     printIns,
     logEvents,
-    requireLib,
+    entityToString,
 } from './common';
 
 const Log = createLog('TestEntitySetAsync');
@@ -218,23 +218,22 @@ test('adding an existing entity changes its id if it didnt originate from the en
     .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
 });
 
-test('adding an existing entity doesnt changes its id if it originated from the entityset', t => {
+test('adding an existing entity doesnt changes its id if it originated from the entityset', async t => {
     const eventSpy = Sinon.spy();
     
-    return initialiseAll({'@es':205, ...createOptions}).then( ([registry,entitySet]) => {
-        entitySet.on('all', eventSpy);
-        const entity = registry.createEntity( { '@c':'/component/flower', colour:'white'}, { '@e':12, '@es':205} );
-            // logEvents( entitySet );
-            // printE( entity );
-        return entitySet.addEntity( entity )
-            .then( entity => {
-                    
-                t.equal( entity.getEntitySetId(), 205, 'the entityset id will have been set' );
-                t.equal( entity.getEntityId(), 12, 'the entity id will have been changed' );
-            })
-    })
-    .then( () => t.end() )
-    .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
+    const [registry,entitySet] = await initialiseAll({'@es':205, ...createOptions});
+    entitySet.on('all', eventSpy);
+    const entity = registry.createEntity( { '@c':'/component/flower', colour:'white'}, { '@e':12, '@es':205} );
+    const added = await entitySet.addEntity(entity);
+                
+    t.equal( entitySet.id, 205 );
+    t.equal( added.getEntitySetId(), 205, 'the entityset id will have been set' );
+    t.equal( added.getEntityId(), 12, 'the entity id will have been changed' );
+
+    // Log.debug('es', entityToString(entitySet));
+    // .then( () => t.end() )
+    // .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
+    t.end();
 });
 
 test('adding an entity with an identical id will replace the existing one', t => {
@@ -271,6 +270,35 @@ test('adding an entity with an identical id will replace the existing one', t =>
     .then( () => t.end() )
     .catch( err => { log.debug('error: ' + err ); log.debug( err.stack );} )
 });
+
+
+test('deferred adding of entities', async t => {
+    const [registry,entitySet] = await initialiseAll(createOptions);
+    try{
+        
+        await entitySet.addEntity([
+            registry.createEntity( {'@c':'/component/channel', name:'#javascript'} ),
+            registry.createEntity( {'@c':'/component/channel', name:'#nodejs'} ),
+        ],{execute:false});
+
+        await entitySet.addEntity([
+            registry.createEntity( {'@c':'/component/channel', name:'#dotnet'} ),
+            registry.createEntity( {'@c':'/component/channel', name:'#elixir'} ),
+        ],{execute:false});
+
+        // entitySet._echo('>---');
+        t.equals( entitySet.length, 0 );
+
+        await entitySet.flush();
+
+        t.equals( entitySet.length, 4 );
+
+        // Log.debug('all good', entityToString(entitySet) );
+        
+    } catch( err ){ Log.error('test error', err.message, err.stack); }
+    await finalise(t,registry);
+})
+
 
 function initialiseAll(options){
     return initialiseRegistry(options).then( registry => {

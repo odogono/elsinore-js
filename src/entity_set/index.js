@@ -30,8 +30,6 @@ export default class EntitySet extends Collection {
         this.cid = _.uniqueId('es');
         this.components = new ComponentCollection();
 
-        if( options['@es'] )
-            this.id = options['@es'];
         if( options['id'] )
             this.id = options['id'];
 
@@ -39,19 +37,6 @@ export default class EntitySet extends Collection {
             cmdBuffer = options.cmdBuffer;
         }
         this._cmdBuffer = new cmdBuffer();
-
-        // this.listenTo( this,'all', (name,models) => {
-        //     switch(name){
-        //         case 'component:add':
-        //             break;
-        //         case 'component:remove':
-        //             break;
-        //         case 'component:update':
-        //             break;
-        //     }
-        //     console.log('ES.listenTo', name);
-        // } );
-
         this.allowEmptyEntities = _.isUndefined(options.allowEmptyEntities) ? true : options.allowEmptyEntities;
     }
 
