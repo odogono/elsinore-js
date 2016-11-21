@@ -201,11 +201,14 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
     }
 
     /**
-     * 
+     * Executes any outstanding add/remove commands
      */
     flush( entitySet, options={} ){
         return this.execute( entitySet, options )
-            .then( () => this );
+            .then( () => {
+                this.reset();
+                return this 
+            });
     }
 
     /**
