@@ -174,14 +174,12 @@ test('create with an entity id', async t => {
 
 
 test('create component from schema id', async t => {
-    const registry = await initialiseRegistry({loadComponents:true});
+    const registry = await initialiseRegistry({loadComponents:true}); try {
 
-    try {
     const component = registry.createComponent( {'@s':6, x:100,y:200} );
-
-    Log.debug('created', entityToString(component) );
-
+    // Log.debug('created', entityToString(component) );
     t.equals( component.get('x'), 100 );
+
     }catch(err){ Log.error('test error: %s', err.stack); }
     t.end();
 });

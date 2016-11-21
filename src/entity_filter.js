@@ -14,7 +14,9 @@ export const EXCLUDE = 5; // the filter will exclude specified components
 export const ROOT = 6; // kind of a NO-OP
 
 
-
+/**
+ * 
+ */
 export default class EntityFilter {
 
     constructor( type, bitfield ){
@@ -55,8 +57,11 @@ export default class EntityFilter {
         }
     }
 
+    /**
+     * 
+     */
     getValues(index){
-        let filter = this.filters[index || ALL ];
+        const filter = this.filters[index || ALL ];
         return filter.toValues();
     }
 

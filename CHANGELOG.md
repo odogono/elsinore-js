@@ -4,6 +4,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased][unreleased]
 
+### Fixed
+- fixes ALL queries with attribute selection
+
 ## [4.0.6] - 2016-11-20
 
 ### Added

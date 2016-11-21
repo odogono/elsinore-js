@@ -372,29 +372,30 @@ class QueryContext {
         let entities, entityContext, value;
         let entity, entitySet;
         let debug = context.debug;
-        let limit, offset;
         let esCount;
 
-        limit = _.isUndefined(options.limit) ? 0 : options.limit;
-        offset = _.isUndefined(options.offset) ? 0 : options.offset;
+        const limit = _.isUndefined(options.limit) ? 0 : options.limit;
+        const offset = _.isUndefined(options.offset) ? 0 : options.offset;
 
-        if( debug ){ console.log('commandFilter >'); console.log( _.rest(arguments) ); console.log('<'); } 
+        // console.log('context is', context);
+        // console.log('entityfilter is', entityFilter);
+        // if( true ){ console.log('commandFilter >'); console.log( _.rest(arguments) ); console.log('<'); } 
 
         // console.log('commandFilter> ' + offset + ' ' + limit );
         // resolve the entitySet argument into an entitySet or an entity
         // the argument will either be ROOT - in which case the context entityset or entity is returned,
         // otherwise it will be some kind of entity filter
         // entitySet = Query.resolveEntitySet( context, entitySet );
+        
         entitySet = Query.valueOf( context, context.last || context.entitySet, true );
 
         if( Entity.isEntity(entitySet) ){
             entity = entitySet;
-            // console.log('commandFilter> ' + entitySet.cid );
         }
 
 
         if( filterFunction ){
-            entityContext = QueryContext.create( this.query, context );// _.extend( {}, context );
+            entityContext = QueryContext.create( this.query, context );
 
             if( Entity.isEntity(entitySet) ){
                 entityContext.entity = entity = entitySet;
@@ -402,10 +403,14 @@ class QueryContext {
             }
 
             entityContext.entityFilter = entityFilter;
-            entityContext.componentIds = entityFilter.getValues(0);
+            
+            if( entityFilter ){
+                entityContext.componentIds = entityFilter.getValues(0);
+            }
         }
 
         if( entity ){
+            
             value = entity;
             if( entityFilter ){
                 // console.log('^QueryContext.commandFilter: ', entityFilter);
@@ -426,7 +431,7 @@ class QueryContext {
             value = context.registry.createEntitySet( {register:false} );
             esCount = 0;
 
-            if( !entityFilter && offset === 0 && limit === 0 ){
+            if( !filterFunction && !entityFilter && offset === 0 && limit === 0 ){
                 entities = entitySet.models;
             } else {
                 // select the subset of the entities which pass through the filter
@@ -456,7 +461,7 @@ class QueryContext {
                         // if( true ){ console.log('eval function ' + stringify(filterFunction) + ' ' + stringify(cmdResult) ); }
 
                         if( Query.valueOf( context, cmdResult ) !== true ){
-                            entity = null; //result.push( entity );
+                            entity = null;
                         }
                     }
 
@@ -724,17 +729,17 @@ function commandOr( context, ops ){
 *   This command operates on the single entity within context.
 */
 function commandComponentAttribute( context, attributes ){
-    let componentIds, components, result;
+    let ii,len,result;
     let entity = context.entity;
     let debug = context.debug;
-    componentIds = context.componentIds;
+    const componentIds = context.componentIds;
 
     // printIns( context,1 );
     if( debug ){ console.log('ATTR> ' + stringify(componentIds) + ' ' + stringify( _.rest(arguments))  ); } 
 
-    if( !componentIds ){
-        throw new Error('no componentIds in context');
-    }
+    // if( !componentIds ){
+    //     throw new Error('no componentIds in context');
+    // }
     
     if( !entity ){
         console.log('ATTR> no entity');
@@ -742,20 +747,16 @@ function commandComponentAttribute( context, attributes ){
     }
 
     attributes = _.isArray( attributes ) ? attributes : [attributes];
-
-    components = entity.components;
+    // components = entity.components;
     result = [];
 
-    // if( debug ){
-    //     console.log('ATTR> e');
-    //     printE( entity );
-    // }
-        
-    _.each( componentIds, id => {
-        let component = components[ id ];
-        if( !component ){ return; }
-        _.each( attributes, attr => result.push(component.get.call(component, attr)) );    
-    });
+    const components = entity.getComponents(componentIds);
+
+    // console.log('commandComponentAttribute', attributes);    
+    for( ii=0,len=components.length;ii<len;ii++ ){
+        const component = components[ii];
+        _.each( attributes, attr => result.push(component.get.call(component, attr)) );
+    }
 
     if( result.length === 0 ){
         result = null;

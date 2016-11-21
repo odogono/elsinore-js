@@ -10,12 +10,12 @@ import {
     loadComponents,
     loadFixtureJSON,
     printE,
-    printIns,
+    createLog,
     logEvents,
     requireLib,
 } from './common';
 
-
+const Log = createLog('TestEntitySetQuery');
 
 test('entityset filter ALL', t => {
     initialiseEntitySet().then( ([registry,entitySet]) => {
@@ -30,18 +30,20 @@ test('entityset filter ALL', t => {
     });
 });
 
-test('entityset filter by attribute', t => {
-    initialiseEntitySet().then( ([registry,entitySet]) => {
-        // select entities which have the component /channel_member and 
-        //  have the client attribute
-        // aka Query.all( '/component/channel_member', Query.attr('client').equals(5) );
-        let result = entitySet.query(Q =>
-            Q.all( '/component/channel_member', 
-                Q.attr('client').equals(5)) );
-        
-        t.equals( result.size(), 2 );
-        t.end();
-    });
+test('entityset filter by attribute', async t => {
+    try{const [registry,entitySet] = await initialiseEntitySet();
+
+    // select entities which have the component /channel_member and 
+    //  have the client attribute
+    // aka Query.all( '/component/channel_member', Query.attr('client').equals(5) );
+    const result = entitySet.query(Q =>
+        Q.all( '/component/channel_member', 
+            Q.attr('client').equals(5)) );
+    
+    t.equals( result.size(), 2 );
+
+    }catch(err){ Log.error(err.message,err.stack); }
+    t.end();
 });
 
 test('include will filter an entity', t => {
@@ -76,6 +78,20 @@ test('entityset filter by attribute being within a value array', t => {
         t.end();
     });
 });
+
+test('where filter by string', async t => {
+    try{const [registry,entitySet] = await initialiseEntitySet();
+
+    // const def = registry.getComponentDef(11);
+    // Log.debug('def 11 is', def.getUri());
+    const result = entitySet.query( Q => Q.all().where( Q.attr('username').equals('aveenendaal')) );
+    // const result = entitySet.query( Q => Q.all('/component/channel_member').where( Q.attr('username').equals('aveenendaal')) );
+
+    t.equals( result.length, 1 );
+    
+    t.end();} catch(err){ log.error('test error: %s', err.stack); }
+})
+
 
 test('multiple component filters', t => {
     initialiseEntitySet().then( ([registry,entitySet]) => {
@@ -219,9 +235,9 @@ test('removing entities from an entityset', t => {
     .catch( err => log.error('test error: %s', err.stack) )
 })
 
-function initialiseEntitySet( entityDataName = 'query.entities' ){
-    return initialiseRegistry(false).then( registry => {
-        const entitySet = loadEntities( registry, entityDataName );
-        return [registry,entitySet];
-    });
+
+async function initialiseEntitySet( entityDataName = 'query.entities' ){
+    const registry = await initialiseRegistry(false);
+    const entitySet = loadEntities( registry, entityDataName );
+    return [registry,entitySet];
 }

@@ -123,24 +123,10 @@ export function loadEntities( registry, fixtureName, entitySet, options ){
     return result;
 }
 
-// function initialiseRegistry(_logEvents){
-//     var componentData;
-//     var registry = Elsinore.Registry.create();
-//     if( _logEvents ){
-//         logEvents( registry );
-//     }
-    
-//     componentData = loadComponents();
-//     registry.registerComponent( componentData );
-
-//     return registry;
-// }
-
-
 /**
 *
 */
-export function initialiseRegistry( doLogEvents ){
+export async function initialiseRegistry( doLogEvents ){
     let componentData;
     let registry = new Registry();
     let options, load;
@@ -161,11 +147,10 @@ export function initialiseRegistry( doLogEvents ){
         componentData = loadComponents();
         // log.debug('loaded components ', componentData);// + JSON.stringify(options) );
         // printIns( componentData );
-        return registry.registerComponent( componentData, options )
-            .then( () => registry )
+        await registry.registerComponent(componentData, options);
     }
 
-    return Promise.resolve(registry);
+    return registry;
 }
 
 
