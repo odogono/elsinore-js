@@ -1,9 +1,12 @@
 import _ from 'underscore';
 
+let logActive = true;
+
+
 export function createLog(name,active=true){
     let fn = {};
 
-    if( !active || !console ){
+    if( !logActive || !active || !console ){
         ['debug','info','log','warn','error'].forEach( l => fn[l] = ()=>{} );
     }
     else {
@@ -17,4 +20,8 @@ export function createLog(name,active=true){
         }
     }
     return fn;
+}
+
+export function setActive(isit=true){
+    logActive = isit;
 }

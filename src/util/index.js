@@ -1,10 +1,9 @@
 import _ from 'underscore';
 import {Collection} from 'odgn-backbone-model';
 import DeepEqual from 'deep-equal';
-// import Url from 'omnibox';
-// import Util from 'util';
 
-export {createLog} from './log';
+
+export {createLog,setActive as setLogActive} from './log';
 
 export const deepEqual = DeepEqual;
 
