@@ -1,6 +1,6 @@
 {
   "name": "elsinore",
-  "version": "4.0.6",
+  "version": "4.0.7",
   "description": "a javascript Entity Component System",
   "keywords": [
     "elsinore",
@@ -42,21 +42,10 @@
     "babel-plugin-transform-flow-strip-types": "^6.8.0",
     "babel-plugin-transform-object-rest-spread": "^6.16.0",
     "babel-preset-es2015-rollup": "^1.2.0",
-    "babel-preset-flow": "^1.0.0",
-    "babel-preset-node6": "^11.0.0",
-    "babel-tape-runner": "^2.0.1",
     "babelify": "^7.3.0",
-    "browserify": "^13.0.1",
-    "browserify-tape-spec": "^1.1.2",
     "del": "^2.2.0",
     "envify": "^3.4.0",
     "event-stream": "^3.3.2",
-    "gulp": "~3.9.1",
-    "gulp-babel": "^6.1.2",
-    "gulp-jslint": "^0.2.2",
-    "gulp-uglify": "^1.5.3",
-    "gulp-util": "~3.0.2",
-    "gulp-webserver": "^0.9.1",
     "rollup-plugin-babel": "^2.6.1",
     "rollup-plugin-commonjs": "^5.0.5",
     "rollup-plugin-flow": "^1.0.1",
@@ -79,22 +68,12 @@
   "scripts": {
     "build": "rollup -c rollup.config.js",
     "build:prod": "rollup -c rollup.config.prod.js",
-    "compile": "babel src --out-dir lib",
+    "compile": "babel src --out-dir lib --plugins=transform-es2015-modules-commonjs,transform-flow-strip-types,transform-es2015-destructuring,transform-object-rest-spread,transform-async-to-generator",
     "clean": "rm -rf node_modules build dist lib; mkdir build; npm install",
     "dist:noclean": "npm run compile && npm run build && npm run build:prod",
     "dist": "npm run dist:noclean",
     "prepublish": "npm run dist",
-    "test": "NODE_ENV=test babel-tape-runner ./test | tap-dot",
-    "spec": "NODE_ENV=test babel-tape-runner ./test | tap-spec"
-  },
-  "babel": {
-    "presets": [],
-    "plugins": [
-      "transform-es2015-modules-commonjs",
-      "transform-flow-strip-types",
-      "transform-es2015-destructuring",
-      "transform-object-rest-spread",
-      "transform-async-to-generator"
-    ]
+    "test": "NODE_ENV=test babel-node test/index.js --plugins=transform-es2015-modules-commonjs,transform-flow-strip-types,transform-es2015-destructuring,transform-object-rest-spread,transform-async-to-generator | tap-dot",
+    "spec": "NODE_ENV=test babel-node test/index.js --plugins=transform-es2015-modules-commonjs,transform-flow-strip-types,transform-es2015-destructuring,transform-object-rest-spread,transform-async-to-generator | tap-spec"
   }
 }
