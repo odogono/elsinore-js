@@ -1,5 +1,5 @@
 import _ from 'underscore';
-import PromiseQ from 'promise-queue';
+// import PromiseQ from 'promise-queue';
 
 export default class ReusableId {
 
@@ -7,7 +7,7 @@ export default class ReusableId {
         this.defaultValue = _.isUndefined(defaultValue) ? 1 : defaultValue;
         this.activeIds = [];
         this.availableIds = [];
-        this.promiseQ = new PromiseQ(1);
+        // this.promiseQ = new PromiseQ(1);
         this.currentId = this.defaultValue;
     }
 
@@ -16,7 +16,7 @@ export default class ReusableId {
      * Returns a single re-useable id
      */
     get(){
-        return this.promiseQ.add( () => {
+        // return this.promiseQ.add( () => {
             return this.nextFree()
                 .then( val => {
                     if( val ){
@@ -29,7 +29,7 @@ export default class ReusableId {
                     this.currentId = this.currentId + 1;
                     return result;
                 })
-        })
+        // })
     }
 
     /**
@@ -43,7 +43,7 @@ export default class ReusableId {
      * Releases an id so that it can be used again
      */
     release(id){
-        return this.promiseQ.add( () => {
+        // return this.promiseQ.add( () => {
             return new Promise( (resolve,reject) => {
                 
                 // determine that this belongs to us
@@ -54,7 +54,7 @@ export default class ReusableId {
                 this.availableIds.push(id);
                 return resolve(id);
             });
-        });
+        // });
     }
 
     /**
@@ -79,12 +79,12 @@ export default class ReusableId {
     }
 
     clear(){
-        return this.promiseQ.add( () => {
+        // return this.promiseQ.add( () => {
             return new Promise( (resolve) => {
                 this.availableIds = [];
                 this.activeIds = [];
                 this.currentId = this.defaultValue;
             })
-        })
+        // })
     }
 }

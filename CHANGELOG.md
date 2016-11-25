@@ -4,12 +4,17 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased][unreleased]
 
+
+## [4.1.0] - 2016-11-25
+
 ### Fixed
 - All() queries with attribute selection would throw an error
 - fixed entityset batching when adding arrays of entities/components
 
 ### Changed
-- removed babel from package.json - this appears to confuse react-native 
+- removed babel from package.json - this appears to confuse react-native
+- removed dependency on promise-queue - was used by reusable_id
+
 
 ## [4.0.6] - 2016-11-20
 
