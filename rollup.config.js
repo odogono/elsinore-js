@@ -18,7 +18,7 @@ export default {
     entry: 'src/index.js',
     format: 'iife',
     moduleName: 'elsinore',
-    dest: 'dist/elsinore.es2015.js',
+    dest: 'dist/elsinore.js',
     sourceMap: true,
     plugins:[
         Replace({
@@ -41,8 +41,9 @@ export default {
                 "es2015-rollup"
             ],
             plugins: [
-                "external-helpers",
-                "transform-es2015-destructuring",
+                // "external-helpers",
+                // "transform-es2015-destructuring",
+                "transform-inline-environment-variables",
                 "transform-object-rest-spread"
             ]
         })

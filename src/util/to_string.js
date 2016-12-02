@@ -93,3 +93,28 @@ export function toString(entity, indent='', join="\n"){
     }
     return res.join(join);
 }
+
+export function secretToString(entity, indent='', join="\n"){
+    let res = [''];
+    let e;
+    
+    if( _.isArray(entity) ){
+        _.each( entity, e => {
+            res = res.concat( toString(e,'  ', ' ' ) );
+        });
+    }
+    else if( Entity.isEntity(entity) ){
+        res = res.concat( entityToString(entity,indent) );
+    } else if( Component.isComponent(entity) ){
+        res = res.concat( componentToString(entity,indent) );
+    } else if( EntityProcessor.isEntityProcessor(entity) ){
+        res = res.concat( entitySetToString( entity.entitySet, indent ) );
+    } else if( EntitySet.isEntitySet(entity) ){
+        res = res.concat( entitySetToString( entity, indent ) );
+    } else if( entity instanceof Collection ){
+        entity.each( item => {
+            res = res.concat( toString(item,'  ') );
+        });
+    }
+    return res.join(join);
+}

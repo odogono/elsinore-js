@@ -6,7 +6,8 @@ import Component from '../component';
 import Entity from '../entity';
 import EntityFilter from '../entity_filter';
 import Query from '../query';
-import {createUuid, hash, isInteger,stringify} from '../util';
+import {hash, isInteger,stringify} from '../util';
+import {uuid as createUuid} from '../util/uuid';
 
 // import * as CmdBuffer from '../cmd_buffer/sync';
 import CmdBuffer from '../cmd_buffer/sync';

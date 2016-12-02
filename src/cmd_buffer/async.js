@@ -3,14 +3,16 @@
 import _ from 'underscore';
 import BitField from 'odgn-bitfield';
 import {Collection} from 'odgn-backbone-model';
-let Component = require('../component');
+import Component from '../component';
 import Entity from '../entity';
-let EntityFilter = require('../entity_filter');
-let Errors = require('../error');
+import EntityFilter  from '../entity_filter';
+import {
+    InvalidEntityError
+} from '../error';
 
-import {entityToString,
-    getEntitySetIdFromId,
+import { getEntitySetIdFromId,
     valueArray} from '../util';
+import {toString as entityToString} from '../util/to_string';
 
 
 import SyncCmdBuffer from './sync';
@@ -184,7 +186,7 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
         }
 
         if( !Entity.isEntity(entity) ){
-            throw new Errors.InvalidEntityError('entity instance not passed');
+            throw new InvalidEntityError('entity instance not passed');
         }
 
         return this.addComponent( entitySet, entity.getComponents(), _.extend({},options,addOptions) )
@@ -254,7 +256,7 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
         }
 
         if( !Entity.isEntity(entity) ){
-            throw new Errors.InvalidEntity('entity instance not passed');
+            throw new InvalidEntityError('entity instance not passed');
         }
 
 

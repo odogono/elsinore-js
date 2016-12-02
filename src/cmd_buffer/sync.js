@@ -8,9 +8,10 @@ import {
     clearCollection,
     clearMap,
     stringify,
-    toString as entityToString,
     valueArray
 } from '../util';
+import {toString as entityToString} from '../util/to_string';
+
 
 export const CMD_EX = 42;
 export const CMD_ENTITY_ADD = 0;
@@ -505,10 +506,10 @@ export default class CmdBuffer {
                 const bfDifference = _.difference( existingEntityBF.toJSON(), changeEntityBF.toJSON() );
                 
                 // determine which components need to be removed
-                if(debug){console.log('!!! SYNC change entity bf', changeEntityBF.toJSON())}
-                if(debug){console.log('!!! SYNC existing entity bf', existingEntityBF.toJSON())} 
-                if(debug){console.log('!!! SYNC diff bf', bfDifference )}
-                if(debug){console.log('!!! entity', entityToString(entity) )}
+                // if(debug){console.log('!!! SYNC change entity bf', changeEntityBF.toJSON())}
+                // if(debug){console.log('!!! SYNC existing entity bf', existingEntityBF.toJSON())} 
+                // if(debug){console.log('!!! SYNC diff bf', bfDifference )}
+                // if(debug){console.log('!!! entity', entityToString(entity) )}
 
                 this.componentsRemoved.add(
                     entity.removeComponents(bfDifference));

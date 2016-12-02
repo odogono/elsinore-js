@@ -4,6 +4,14 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased][unreleased]
 
+## [4.1.1] - 2016-11-25
+
+###Added
+- es6 directory contains transpiled to es6 code
+
+### Fixed
+- lib directory now contains properly transpiled code (compatible with rollup)
+
 
 ## [4.1.0] - 2016-11-25
 

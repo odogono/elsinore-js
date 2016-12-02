@@ -3,12 +3,12 @@ import {Collection} from 'odgn-backbone-model';
 import DeepEqual from 'deep-equal';
 
 
-export {createLog,setActive as setLogActive} from './log';
+// export {createLog,setActive as setLogActive} from './log';
 
 export const deepEqual = DeepEqual;
 
-export {toString,entitySetToString,entityToString,componentToString} from './to_string';
-export {uuid as createUuid} from './uuid';
+// export {toString,entitySetToString,entityToString,componentToString} from './to_string';
+// export {uuid as createUuid} from './uuid';
 
 
 export function mergeRecursive(obj1, obj2) {

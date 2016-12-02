@@ -6,7 +6,7 @@ import AsyncEntitySet from '../src/entity_set/async';
 import Entity from '../src/entity';
 import Component from '../src/component';
 import Registry from '../src/registry';
-import {createLog} from '../src/util';
+import {createLog} from '../src/util/log';
 
 import {
     // Component, Entity, EntityFilter,

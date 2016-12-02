@@ -16,18 +16,18 @@ const ElsinoreDir = Path.join(rootDir, 'src')
 import {stringify} from '../../src/util';
 
 export {
-    createLog,
     isInteger,
     printIns,
     toPascalCase,
     parseUri,
     getEntityIdFromId,
     getEntitySetIdFromId,
-    toString as entityToString,
     stringify,
     setEntityIdFromId} from '../../src/util';
 
-// export {toString as entityToString} from '../../src/util/to_string';
+
+export {createLog} from '../../src/util/log';
+export {toString as entityToString} from '../../src/util/to_string';
 
 import Component from '../../src/component';
 export {Component as Component};

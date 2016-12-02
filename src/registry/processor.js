@@ -3,7 +3,7 @@ import {Model as BackboneModel} from 'odgn-backbone-model';
 import Registry from './index';
 import Query from '../query';
 import EntitySet from '../entity_set/view';
-import {createLog} from '../util';
+import {createLog} from '../util/log';
 
 const Log = createLog('Registry.Processor');
 

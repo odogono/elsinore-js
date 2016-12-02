@@ -2,7 +2,9 @@ import _ from 'underscore';
 import {Events, Collection} from 'odgn-backbone-model'
 import BitField  from 'odgn-bitfield';
 
-import {createLog,createUuid,getEntityIdFromId,getEntitySetIdFromId} from '../util';
+import {uuid as createUuid} from '../util/uuid';
+import {createLog} from '../util/log';
+import {getEntityIdFromId,getEntitySetIdFromId} from '../util';
 import Entity from '../entity';
 import EntitySet from '../entity_set';
 import Component from '../component';

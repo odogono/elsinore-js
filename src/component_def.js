@@ -8,8 +8,8 @@ import {
     hash,
     stringify,
     toPascalCase,
-    createLog
 } from './util';
+import {createLog} from './util/log';
 
 const Log = createLog('ComponentDef',false);
 

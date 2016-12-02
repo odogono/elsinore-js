@@ -5,10 +5,12 @@ import Entity from '../entity';
 import EntitySet from './index';
 import CmdBuffer from '../cmd_buffer/async';
 import ReusableId from '../util/reusable_id';
-import {setEntityIdFromId,toString as entityToString} from '../util';
-import {createLog,toInteger,getEntityIdFromId,getEntitySetIdFromId} from '../util';
+import {setEntityIdFromId} from '../util';
+import {toInteger,getEntityIdFromId,getEntitySetIdFromId} from '../util';
+import {createLog} from '../util/log';
 import {ComponentNotFoundError,EntityNotFoundError,ComponentDefNotFoundError} from '../error';
 import ComponentRegistry from '../schema';
+import {toString as entityToString} from '../util/to_string';
 
 const Log = createLog('AsyncEntitySet');
 

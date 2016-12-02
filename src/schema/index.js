@@ -4,7 +4,8 @@ import _ from 'underscore';
 import {Collection,Events,Model as BackboneModel} from 'odgn-backbone-model';
 
 import Component from '../component';
-import {createLog,deepExtend} from '../util';
+import {deepExtend} from '../util';
+import {createLog} from '../util/log';
 
 import ComponentDef from '../component_def';
 
