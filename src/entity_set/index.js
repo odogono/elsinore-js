@@ -220,14 +220,29 @@ export default class EntitySet extends Collection {
 
     /**
     *   Adds an entity with its components to the entityset
-    - reject if filters do not pass
-    - 
+    * @param entity - Entity, array of entities, array of raw components
     */
     addEntity( entity, options){
+        let add = null;
+        let isArray = _.isArray(entity);
         if( EntitySet.isMemoryEntitySet( entity ) ){
             entity = entity.models;
+            isArray = true;
+        } 
+
+        if( isArray ){
+            if( entity.length <= 0 ){ return; }
+            if( Entity.isEntity(entity[0]) ){
+                add = entity;
+            }
+        } else if( Entity.isEntity(entity) ){
+            add = entity;
         }
-        return this._cmdBuffer.addEntity( this, entity, options );
+
+        if( !add ){
+            add = this.getRegistry().createEntity(entity);
+        }
+        return this._cmdBuffer.addEntity( this, add, options );
     }
 
     /**

@@ -10,11 +10,12 @@ import {
     loadEntities, 
     loadComponents,
     loadFixtureJSON,
-    printE,
+    entityToString,
     logEvents,
-    requireLib,
+    createLog,
 } from './common';
 
+const Log = createLog('TestEntitySet');
 
 
 test('type of entityset', t => {
@@ -23,7 +24,7 @@ test('type of entityset', t => {
         t.ok( entitySet.isEntitySet, 'it is an entitySet' );
     })
     .then( () => t.end() )
-    .catch( err => log.error('test error: %s', err.stack) )
+    .catch( err => Log.error(err.stack) )
 });
 
 test('entityset has a uuid assigned', t => {
@@ -32,7 +33,7 @@ test('entityset has a uuid assigned', t => {
         t.equals( es.getUuid().length, 36 );
     })
     .then( () => t.end() )
-    .catch( err => log.error('test error: %s', err.stack) )
+    .catch( err => Log.error(err.stack) )
 })
 
 test('non existence of an entity', t => {
@@ -56,9 +57,37 @@ test('adding an entity with a component returns the added entity', t => {
         t.ok( entitySet.hasEntity(entity.id), 'the entity should exist');
         
         t.end();
-    }).catch( err => log.error('test error: %s', err.stack) )
-
+    }).catch( err => Log.error(err.stack) )
 });
+
+test('can add a raw component directly', async t => {
+    try{
+    const registry = await initialiseRegistry();
+    const entitySet = registry.createEntitySet();
+
+    const entity = entitySet.addEntity( {'@c':'/component/position', x:-14,y:12} );
+
+    t.equal( entitySet.size(), 1 );
+    t.end();
+
+    }catch(err){ Log.error(err.message,err.stack); }
+});
+
+test('can add an array of raw components', async t => {
+    try{
+    const registry = await initialiseRegistry();
+    const entitySet = registry.createEntitySet();
+
+    const entity = entitySet.addEntity( [{'@c':'/component/position', x:-14,y:12}, {'@c':'/component/radius', radius:16}] );
+
+    // Log.debug('haz', entityToString(entitySet) );
+    t.equal( entitySet.size(), 1 );
+    t.end();
+
+    }catch(err){ Log.error(err.message,err.stack); }
+});
+
+
 
 test('adding several components returns an array of added components', t => {
     let entities;
@@ -74,7 +103,7 @@ test('adding several components returns an array of added components', t => {
         t.ok( Component.isComponent(components[0]), 'returns an array of components' );
         t.end();
     })
-    .catch( err => log.error('test error: %s', err.stack) )
+    .catch( err => Log.error(err.stack) )
 });
 
 
@@ -129,7 +158,7 @@ test('adding a component which is already a member', t => {
 
         t.end();
     })
-    .catch( err => log.error('test error: %s', err.stack) )
+    .catch( err => Log.error(err.stack) )
 
 });
 
@@ -160,7 +189,7 @@ test('updating a component should not replace the instance already in the entity
         // printE( component );
     })
     .then(() => t.end())
-    .catch(err => log.error('test error: %s', err.stack))
+    .catch(err => Log.error(err.stack))
 });
 
 
@@ -184,7 +213,7 @@ test('removing a component from an entity with only one component', t => {
 
         t.end();
     })
-    .catch( err => log.error('test error: %s', err.stack) )
+    .catch( err => Log.error(err.stack) )
 });
 
 test('removing a component from an entity with multiple components', t => {
@@ -215,7 +244,7 @@ test('removing a component from an entity with multiple components', t => {
 
         t.end();
     })
-    .catch( err => log.error('test error: %s', err.stack))
+    .catch( err => Log.error(err.stack))
 });
 
 test('you cant add an empty entity to an entityset', t => {
@@ -230,7 +259,7 @@ test('you cant add an empty entity to an entityset', t => {
 
         t.end();
     })
-    .catch( err => log.error('test error: %s', err.stack))
+    .catch( err => Log.error(err.stack))
 });
 
 test('adding several components without an entity adds them to the same new entity', t => {
@@ -294,7 +323,7 @@ test('adding several components at once generates a single add event', t => {
         t.ok( eventSpy.calledWith('entity:add'), 'entity:add should have been called' );
         t.end();
     })
-    .catch( err => { log.debug('t.error: ' + err ); log.debug( err.stack );} )
+    .catch( err => { Log.debug( err.stack );} )
 });
 
 
@@ -346,13 +375,13 @@ test('should return the number of entities contained', t => {
         // retrieve an entity by id 3
         const entity = entitySet.getEntity(3);
         
-        // log.debug( entitySet.at(0).id + ' is e id ' + entitySet.id );
+        // Log.debug( entitySet.at(0).id + ' is e id ' + entitySet.id );
 
         t.ok( entity.Position, 'entity should have position' );
         t.ok( entity.Nickname, 'entity should have nickname' );
         t.end();
     })
-    .catch( err => log.error('test error: %s', err.stack) )
+    .catch( err => Log.error(err.stack) )
 });
 
 
@@ -445,7 +474,7 @@ test('should add an entity only once', t => {
         t.equals( entitySet.size(), 1);
         t.end();
     })
-    .catch( err => { log.debug('t.error: ' + err ); log.debug( err.stack );} )
+    .catch( err => { Log.error( err.stack );} )
 });
 
 
@@ -596,7 +625,7 @@ test('adding an entity with an identical id will replace the existing one', t =>
     //    printE( entitySet );
        t.end();
    })
-   .catch( err => { log.debug('t.error: ' + err ); log.debug( err.stack );} ) 
+   .catch( err => { Log.error( err.stack );} ) 
 })
 
 
@@ -616,7 +645,7 @@ test('should only add a component of an accepted type', async t => {
     t.equals( entitySet.size(), 1);
 
     t.end();
-    } catch(err){ log.error('test error: %s', err.stack); }
+    } catch(err){ Log.error(err.stack); }
 });
 
 
@@ -633,7 +662,7 @@ test('should only retain the included component on entity', async t => {
     t.equals( entitySet.at(0).getComponentCount(), 1);
     
     t.end();
-    } catch(err){ log.error('test error: %s', err.stack); }
+    } catch(err){ Log.error(err.stack); }
 });
 
 test('should not add entities that have excluded components', t => {
@@ -649,14 +678,16 @@ test('should not add entities that have excluded components', t => {
     });
 });
 
-test('should not add entities that have multiple excluded components', t => {
-    return initialise().then( ([registry,entitySet,entities]) => {
-        entitySet.setQuery( Q => Q.none(['/component/score','/component/nickname']) );
-        entitySet.addEntity( entities );
-        t.equals( entitySet.size(), 1);
-        t.end();
-    })
-    .catch( err => log.error('test error: %s', err.stack) )
+test('should not add entities that have multiple excluded components', async t => {
+    try{
+    const [registry,entitySet,entities] = await initialise();
+
+    entitySet.setQuery( Q => Q.none(['/component/score','/component/nickname']) );
+    entitySet.addEntity( entities );
+    t.equals( entitySet.size(), 1);
+    t.end();
+    
+    }catch(err){ Log.error(err.stack); }
 });
 
 test('should only add entities that are included', async t => {
@@ -690,7 +721,7 @@ test('should only add entities that pass include/exclude', async t => {
     entitySet.addEntity( entities );
     t.equals( entitySet.size(), 1);
     
-    t.end(); } catch(err){ log.error('test error: %s', err.stack); }     
+    t.end(); } catch(err){ Log.error(err.stack); }     
 });
 
 test('should remove entities that are excluded after their components change', t => {
@@ -784,7 +815,7 @@ test('should emit an event when a component is changed', t => {
         t.ok( spy.called, 'component:change should have been called' );
     })
     .then( () => t.end() )
-    .catch( err => log.error('test error: %s', err.stack) )
+    .catch( err => Log.error(err.stack) )
 });
 
 test('emit event when an entity component is changed', t => {
@@ -808,7 +839,7 @@ test('emit event when an entity component is changed', t => {
 
         t.end();
     })
-    .catch( err => { log.debug('t.error: ' + err ); log.debug( err.stack );} )
+    .catch( err => { Log.error( err.stack );} )
 });
 
 test('emit event when a component instance is changed', t => {
@@ -830,7 +861,7 @@ test('emit event when a component instance is changed', t => {
         t.ok( spy.called, 'component:change should have been called' );
         t.end();
     })
-    .catch( err => { log.debug('t.error: ' + err ); log.debug( err.stack );} )
+    .catch( err => { Log.error( err.stack );} )
 });
 
 
@@ -850,7 +881,7 @@ test('mutating a previously added component does not affect the entityset', t =>
         t.equals( esComponent.get('colour'), 'blue', 'the es component retains its colour');
     })
     .then( () => t.end() )
-    .catch( err => { log.debug('t.error: ' + err ); log.debug( err.stack );} )
+    .catch( err => { Log.error( err.stack );} )
 })
 
 
@@ -923,7 +954,7 @@ test('map transfers an entitySet through a filter into another entityset', t => 
 
         t.end();
     })
-    .catch( err => log.error('test error: %s', err.stack) )
+    .catch( err => Log.error(err.stack) )
 });
 
 
@@ -949,7 +980,7 @@ test('map transfers an entitySet through a filter into another entityset again',
 
         t.end();
     })
-    .catch( err => log.error('test error: %s', err.stack) )
+    .catch( err => Log.error(err.stack) )
 });
 
 
@@ -971,7 +1002,7 @@ test('possible to add 2 entities with same entityIds but different entityset ids
         t.equals( entitySet.size(), 2, 'two entities should have been added' );
     })
     .then( () => t.end() )
-    .catch( err => log.error('test error: %s', err.stack) )
+    .catch( err => Log.error(err.stack) )
 })
 
 
