@@ -12,11 +12,12 @@ import {
     printE, entityToString, 
     printIns,
     logEvents,
-    requireLib,
+    createLog,
 } from './common';
 
 import '../src/entity_set/view';
 
+const Log = createLog('TestEntitySetView');
 
 test('.where returns an entityset of entities', t => {
     initialiseEntitySet().then( ([registry,entitySet]) => {
@@ -95,7 +96,7 @@ test('removing an entity from the entitySet should also remove it from the view'
     }catch(err){ console.log('test error',err.stack); }
 });
 
-test('adding an entity should also see it appear in the view', t => {
+test('adding an entity to the entityset also adds it to the view', t => {
     initialiseEntitySet().then( ([registry,entitySet]) => {
         const view = entitySet.view(null,{updateOnEvent:true});
 
@@ -108,6 +109,26 @@ test('adding an entity should also see it appear in the view', t => {
         t.end();
     });
 });
+
+test('adding an entity to the view also adds it to the entityset', async t => {
+    try{
+    const registry = await initialiseRegistry();
+    const entitySet = registry.createEntitySet();
+
+    const view = entitySet.view( Q => Q.all('/component/position') );
+
+    view.addEntity( {'@c':'/component/position', x:0,y:2});
+    // entitySet.addEntity( {'@c':'/component/status', status:'active'});
+    // entitySet.addEntity( {'@c':'/component/name', name:'alice'});
+
+    // Log.debug('es is', entityToString(entitySet));
+    // Log.debug('view is', entityToString(view));
+
+    t.equals(entitySet.length,1,'only 1 entity added');
+
+    t.end();
+    }catch(err){Log.error(err.stack);}
+})
 
 
 test('removing a component from an entity', t => {
@@ -217,6 +238,28 @@ test('removing a relevant component from an entity should trigger a entity:remov
 
         t.end();
     });
+});
+
+
+test('adding selected entities', async t => {
+    try{
+    
+    const registry = await initialiseRegistry();
+    const entitySet = registry.createEntitySet();
+
+    const view = entitySet.view( Q => Q.all('/component/status') );
+
+    entitySet.addEntity( {'@c':'/component/position', x:0,y:2});
+    entitySet.addEntity( {'@c':'/component/status', status:'active'});
+    entitySet.addEntity( {'@c':'/component/name', name:'alice'});
+
+    // Log.debug('es is', entityToString(entitySet));
+    // Log.debug('view is', entityToString(view));
+
+    t.equals(view.length,1,'only 1 entity added');
+
+    t.end();
+    }catch(err){Log.error(err.stack);}
 });
 
 test('deferred addition of components with a filter', t => {

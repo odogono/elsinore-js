@@ -7,6 +7,7 @@ import DeepEqual from 'deep-equal';
 
 export const deepEqual = DeepEqual;
 
+// export {entityToString} from './to_string';
 // export {toString,entitySetToString,entityToString,componentToString} from './to_string';
 // export {uuid as createUuid} from './uuid';
 
@@ -22,6 +23,17 @@ export function mergeRecursive(obj1, obj2) {
     return obj1;
 }
 
+
+/**
+ * Pushes item onto the end of the array and returns the array
+ */
+export function arrayPush( array=[], item ){
+    if(_.isArray(item)){
+        return array.concat(item);
+    }
+    array.push(item);
+    return array;
+}
 
 // 
 // Returns an array broken into set lengths

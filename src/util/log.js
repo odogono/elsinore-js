@@ -7,9 +7,6 @@ let logActive = true;
 export function createLog(name,active=true){
     let fn = {};
 
-    if( process.env.NODE_ENV == 'production' ){
-        console.log('hi 5');
-    }
     if( process.env.NO_LOG || !logActive || !active || !console ){
         ['debug','info','log','warn','error'].forEach( l => fn[l] = ()=>{} );
     }

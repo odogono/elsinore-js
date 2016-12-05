@@ -4,9 +4,18 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased][unreleased]
 
+### Changed
+- EntitySet.addEntity can take a raw component as an argument
+- refactored Query commands .attr and .equals
+
+### Fixed
+- ES build (dist/elsinore.es2015.js) now includes dependencies. it is compatible with rollup.
+- Query attribute equality can now match on regex's
+- Adding/Removing an entity/component from a View also affects the parent EntitySet.
+
 ## [4.1.1] - 2016-11-25
 
-###Added
+### Added
 - es6 directory contains transpiled to es6 code
 
 ### Fixed

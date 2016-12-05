@@ -3,7 +3,7 @@ import {Model as BackboneModel} from 'odgn-backbone-model';
 import Registry from './index';
 import Query from '../query';
 import EntitySet from '../entity_set/view';
-import {createLog} from '../util/log';
+import {createLog,stringify} from '../util/log';
 
 const Log = createLog('Registry.Processor');
 
@@ -35,8 +35,6 @@ _.extend( Registry.prototype, {
             processorAttrs.entitySet = entitySet;
         }
 
-        
-
         // create the processor instance using either the passed processor, or the base
         // processor create function
         processor = (processorModel.create || EntityProcessor.create)(
@@ -52,7 +50,7 @@ _.extend( Registry.prototype, {
         this._mapEntitySetToProcessor( entitySet, processor, options );
         
         // if the processor has event listeners defined, connect those to the entityset
-        this._attachEntitySetEventsToProcessor( entitySet, processor );
+        this._attachProcessorEvents( processor.entitySet, processor );
 
         // this.processors.add( processor );
 
@@ -88,41 +86,40 @@ _.extend( Registry.prototype, {
 
         debug = options.debug;
 
-        // log.debug('adding processor ' + processor.type );
+        // Log.debug('adding processor ' + processor.type );
         // decide on which view (if any) to use with the processor
-        if( processor.entityFilter ){
-
+        if( !processor.entityFilter ){
+            record.set('view', entitySet);
+        } else {
             // convert the supplied directives into entityFilter instances
-            // if( debug ){ log.debug('creating filter ' + processor.entityFilter ); }
+            if( debug ){ Log.debug('creating filter ' + processor.entityFilter ); }
             filter = new Query(processor.entityFilter);
 
             // do we already have a view for this filter?
             hash = EntitySet.hash( entitySet, filter );
-            // if( debug ){ log.debug('hashed es query ' + hash + ' ' + filter.hash() + ' ' + JSON.stringify(filter) ); }
+            if( debug ){ Log.debug('hashed es query ' + hash + ' ' + filter.hash() + ' ' + stringify(filter) ); }
 
             if( this._entityViews[ hash ] ){
                 view = this._entityViews[ hash ];
             } else {
                 // query a view using the filter from the source entitySet
-                view = entitySet.view( filter );
+                view = entitySet.view(filter);
 
                 this._entityViews[ hash ] = view;
                 
                 this.trigger('view:create', view);
                 
-                // if( debug ) {log.debug('new view ' + view.cid + '/' + view.hash() 
-                //     + ' with filter ' + filter.hash() 
-                //     + ' has ' + entitySet.models.length 
-                //     + ' entities for ' + processor.type );}
+                if( debug ) {Log.debug('new view ' + view.cid + '/' + view.hash() 
+                    + ' with filter ' + filter.hash() 
+                    + ' has ' + entitySet.models.length 
+                    + ' entities for ' + processor.type );}
             }
 
-            // log.debug('setting view ' + view.cid + ' onto ' + processor.type );
+            // Log.debug('setting view ' + view.cid + ' onto ' + processor.type );
             record.set('view', view);
-        } else {
-            record.set('view', entitySet);
         }
 
-        processor.entitySet = entitySet;
+        processor.entitySet = view || entitySet;
         processor.view = view || entitySet;
         processor.entityFilter = filter;
 
@@ -139,25 +136,38 @@ _.extend( Registry.prototype, {
         // this.entitySetProcessors[ entitySet.id ] = entitySetProcessors;
     },
 
-    _attachEntitySetEventsToProcessor: function( entitySet, processor ){
+    /**
+     * Connects entity events originating from the entityset to the processors
+     * listeners.
+     */
+    _attachProcessorEvents: function( entitySet, processor ){
         let name;
         if( !processor.events ){ return; }
-        
         for( name in processor.events ){
-            this._createProcessorEvent( entitySet, processor, name, processor.events[name] );
+            const event = processor.events[name];
+            // this._createProcessorEvent( entitySet, processor, name, processor.events[name] );
+
+            processor.listenToAsync( entitySet, name, function( pName, pEntity, pEntitySet ){
+                let args = Array.prototype.slice.call( arguments, 2 );
+                args = [pEntity, entitySet].concat(args);
+                return event.apply( processor, args);
+            });
         }
     },
 
-    _createProcessorEvent: function( entitySet, processor, name, event ){
-        // // curry the event function so that it receives the entity and the entityset as arguments
-        // // NOTE: because we use the arguments object, we can't use es6 fat arrows here
-        return processor.listenToAsync( entitySet, name, function( pName, pEntity, pEntitySet ){
-            let args = Array.prototype.slice.call( arguments, 2 );
-            args = [pEntity, entitySet].concat(args);
-            // log.debug('apply evt ' + pName + ' ' + JSON.stringify(args) );
-            return event.apply( processor, args);
-        });
-    },
+    /**
+     * 
+     */
+    // _createProcessorEvent: function( entitySet, processor, name, event ){
+    //     // // curry the event function so that it receives the entity and the entityset as arguments
+    //     // // NOTE: because we use the arguments object, we can't use es6 fat arrows here
+    //     return processor.listenToAsync( entitySet, name, function( pName, pEntity, pEntitySet ){
+    //         let args = Array.prototype.slice.call( arguments, 2 );
+    //         args = [pEntity, entitySet].concat(args);
+    //         // Log.debug('apply evt ' + pName + ' ' + JSON.stringify(args) );
+    //         return event.apply( processor, args);
+    //     });
+    // },
     
 
     // update: function( callback ){
@@ -175,7 +185,7 @@ _.extend( Registry.prototype, {
     //     return Promise.all( 
     //         this.processors.models.map( function(processor){
     //             return current = current.then(function() {
-    //                 // log.debug('calling update ' + dt );
+    //                 // Log.debug('calling update ' + dt );
     //                 return processor.update( dt, self.updateStartTime, now, updateOptions );
     //             });
     //         })).then( function( results ){
@@ -219,7 +229,7 @@ _.extend( Registry.prototype, {
 
         debug = options.debug;
         
-        if(debug){ log.debug('> registry.updateSync'); }
+        if(debug){ Log.debug('> registry.updateSync'); }
 
         // iterate through each of the entitysets which have processors
         this.entitySetProcessors.each( (processorRecord) => {
@@ -237,8 +247,8 @@ _.extend( Registry.prototype, {
 
             // execute any queued events that the processor has received
             if( debug ){ 
-                log.debug('executing processor ' + processor.type + ' ' + 
-                    processor.get('priority') + 
+                Log.debug('executing processor ' + processor.type + ' ' + 
+                    processor.getPriority() + 
                     ' with ' + view.cid +'/'+ view.hash() + ' ' + 
                     entityArray.length + ' entities'); 
             }

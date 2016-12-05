@@ -70,9 +70,19 @@ export function commandEquals( context, op1, op2 ){
     isValue1Array = _.isArray(value1);
     isValue2Array = _.isArray(value2);
 
-    // if( true ){ console.log('EQUALS cmd equals ' + stringify(value1) + ' === ' + stringify(value2) ); }
+    // if( true ){ console.log('commandEquals', stringify(value1), op, stringify(value2) ); }
 
-    if( !isValue1Array && !isValue2Array ){
+    if( isValue1Array && !isValue2Array ){
+        if( op == EQUALS ){
+            result = _.indexOf(value1,value2) !== -1;
+        }
+    }
+    else if( !isValue1Array && isValue2Array ){
+        if( op == EQUALS ){
+            result = (_.indexOf(value2,value1) !== -1);
+        }
+    }
+    else if( !isValue1Array && !isValue2Array ){
         switch( op ){
             case LESS_THAN:
                 result = (value1 < value2);
@@ -87,27 +97,19 @@ export function commandEquals( context, op1, op2 ){
                 result = (value1 >= value2);
                 break;
             default:
-                result = (value1 === value2);
-                break;
-        }
-    } else {
-        switch( op ){
-            case LESS_THAN:
-            case LESS_THAN_OR_EQUAL:
-            case GREATER_THAN:
-            case GREATER_THAN_OR_EQUAL:
-                result = false;
-                break;
-            default:
-                if( isValue2Array && !isValue1Array ){
-                    // console.log('index of ' + value1 + _.indexOf(value2,value1) );
-                    result = (_.indexOf(value2,value1) !== -1);
-                } else {
-                    result = deepEqual( value1, value2 );
+                if( value2 instanceof RegExp ){
+                    result = value2.test(value1);
+                }else {
+                    result = (value1 === value2);
                 }
                 break;
         }
+    } else {
+        if( op == EQUALS ){
+            result = deepEqual( value1, value2 );
+        }
     }
+    
     return (context.last = [ VALUE, result ]);
 }
 

@@ -183,7 +183,6 @@ export default class Query {
                 case ALL_FILTER:
                 case ANY_FILTER:
                 case INCLUDE_FILTER:
-                    
                     entityFilter = gatherEntityFilters( context, command );
                     // console.log('gathering', command, 'to', entityFilter.toJSON());
                     // insert a basic entity_filter command here

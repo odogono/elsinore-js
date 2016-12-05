@@ -11,6 +11,7 @@ import './entity_set.query';
 import './entity_set.view';
 import './json';
 import './query';
+import './query.equals';
 import './query.limit';
 import './query.pluck';
 import './query.select_by_id';

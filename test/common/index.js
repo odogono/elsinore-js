@@ -25,7 +25,7 @@ export {
     stringify,
     setEntityIdFromId} from '../../src/util';
 
-
+import {createLog} from '../../src/util/log';
 export {createLog} from '../../src/util/log';
 export {toString as entityToString} from '../../src/util/to_string';
 
@@ -56,7 +56,7 @@ export {SchemaRegistry as SchemaRegistry};
 import Dispatch from '../../src/dispatch';
 export {Dispatch as Dispatch};
 
-
+const Log = createLog('Test');
 
 
 export function pathVar( path, clear ){
@@ -181,7 +181,7 @@ export function loadFixtureJSON( fixturePath ){
 
 export function logEvents(obj, prefix='evt'){
     obj.on('all', function(evt){
-        log.debug(prefix + ' ' + stringify( _.toArray(arguments) ) );
+        Log.debug(prefix + ' ' + stringify( _.toArray(arguments) ) );
     });
 }
 
@@ -193,10 +193,10 @@ export function printE(e, prefix=''){
     Util.log( prefix, entityToString(e) );
 }
 
-global.log = {
-    debug: console.log,
-    error: console.log
-};
+// global.log = {
+//     debug: console.log,
+//     error: console.log
+// };
 
 export function requireLib( path ){
     return require( Path.join(ElsinoreDir,path) );

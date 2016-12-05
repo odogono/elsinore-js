@@ -371,11 +371,14 @@ export default class Registry {
     createEntitySet( options={} ){
         let id, uuid;
         let result;
-        let instanceClass=EntitySet;
+        let entitySetType=EntitySet;
         
         options.uuid = options.uuid || createUuid();
+        if( options.type ){
+            entitySetType = options.type;
+        }
         if( options.instanceClass ){
-            instanceClass = options.instanceClass;
+            entitySetType = options.instanceClass;
         }
 
         
@@ -383,7 +386,7 @@ export default class Registry {
         
         id = options['@es'] || options['id'] || this.createId();
         // console.log('createEntitySet', id, options);
-        result = new instanceClass( null, _.extend( {}, options,{id}) );
+        result = new entitySetType( null, _.extend( {}, options,{id}) );
         result.setRegistry( this );
         
         // if( options.register !== false ){

@@ -196,6 +196,23 @@ test('create component from schema hash', async t => {
     t.end();
 });
 
+test('create two components with the same entity id', async t => {
+    try {
+    const registry = await initialiseRegistry({loadComponents:true});
+    // const def = registry.getComponentDef('/component/position');
+    const position = {'@c':'/component/position'}
+    const status = {'@c':'/component/status', status:'active'};
+
+    const components = registry.createComponent( [position,status], {'@e':22} );
+
+    // Log.debug('result', component );
+    _.each( components, c => t.equals(c.getEntityId(),22) );
+    // t.equals( component.get('x'), 100 );
+
+    }catch(err){ Log.error('test error: %s', err.stack); }
+    t.end();
+});
+
 
 test('creating an entity from a component with an entity id', async t => {
     try {

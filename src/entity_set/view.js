@@ -8,7 +8,40 @@ import {
     clearMap,
     hash,
     stringify,
+    entityToString,
 } from '../util';
+
+
+
+/**
+ * 
+ */
+class EntitySetView extends EntitySet {
+    addEntity(entity, options){
+        return this._parent.addEntity(entity,options);
+    }
+    removeEntity(entity, options){
+        return this._parent.removeEntity(entity,options);
+    }
+    addComponent(component, options ){
+        return this._parent.addComponent(component,options);
+    }
+    removeComponent( component, options ){
+        return this._parent.removeComponent(component,options);
+    }
+
+    /**
+     * 
+     */
+    applyEvents(){
+        if( !this.listeners ){ return; }
+        _.each( this.listeners, listener => listener.applyEvents() );
+    }
+}
+
+EntitySetView.prototype.type = 'EntitySetView';
+EntitySetView.prototype.isMemoryEntitySet = true;
+EntitySetView.prototype.isEntitySetView = true;
 
 _.extend( EntitySet.prototype, {
 
@@ -16,10 +49,9 @@ _.extend( EntitySet.prototype, {
         let result;
         let registry = this.getRegistry();
 
-        result = registry.createEntitySet( {register:false} );
-        result.type = 'EntitySetView';
-        result.isEntitySetView = true;
-        // console.log('created view', result.cid, 'from', this.cid );
+        result = registry.createEntitySet( {type:EntitySetView,register:false} );
+        result._parent = this;
+        // console.log('EntitySetView created view', result.id, result.cid, result.getUuid(), 'from', this.cid );
 
         // make <result> listenTo <entitySet> using <entityFilter>
         EntitySet.listenToEntitySet( result, this, query, options );
@@ -35,56 +67,29 @@ _.extend( EntitySet.prototype, {
         this.trigger('view:create', result);
 
         return result;
-    }
+    },
 
+    applyEvents: function(){}
 });
-
-EntitySet.listenToEntitySet = function( srcEntitySet, targetEntitySet, query, options ){
-    let listener, updateOnEvent;
-
-    listener = EntitySetListener.create();
-
-    srcEntitySet.listeners || (srcEntitySet.listeners={});
-    // are we already listening to this entityset?
-    srcEntitySet.listeners[ targetEntitySet.cid ] = listener;
-
-    listener.updateOnEvent = options.updateOnEvent;
-
-    srcEntitySet.setQuery( query );
-
-    listener.listenToEntitySet( srcEntitySet, targetEntitySet, query );
-    
-    // reset causes entities to be copied over?
-    srcEntitySet.reset( targetEntitySet );
-    
-    return listener;
-}
 
 
 
 /**
     The EntitySet listener keeps track of one entitySet listening to enother.
 */
-function EntitySetListener(){
-}
+class EntitySetListener{
 
-/**
-    Methods which enable this object to respond to 
-*/
-_.extend( EntitySetListener.prototype, {
-    isEntitySetListener: true,
-
-    setQuery: function(q){
+    setQuery(q){
         this._query = q;
-    },
-    getQuery: function(){
+    }
+    getQuery(){
         return this._query;
-    },
+    }
 
     /**
     *   srcEntitySet listens to targetEntitySet using the specified query
     */
-    listenToEntitySet: function(srcEntitySet, targetEntitySet, query){
+    listenToEntitySet(srcEntitySet, targetEntitySet, query){
         this.entitySet = srcEntitySet;
         this.targetEntitySet = targetEntitySet;
         this.setQuery( query );
@@ -102,9 +107,9 @@ _.extend( EntitySetListener.prototype, {
         // srcEntitySet.listenTo( targetEntitySet, 'component:change', (...args) => {
         //     log.debug('listen to es change ' + JSON.stringify(args) );
         // })
-    },
+    }
 
-    onEntityAdd: function( entities, apply=true ){
+    onEntityAdd( entities, apply=true ){
         this.entitySet.isModified = true;
         
         _.each( entities, e => {
@@ -112,15 +117,16 @@ _.extend( EntitySetListener.prototype, {
             this.addedEntities[ eid ] = e;
             this.isModified = true;
         });
+        
 
         // instantanous updating of a view is probably the best policy
         // when it comes to adding/removing entities
         if( apply /*this.updateOnEvent*/ ){
             this.applyEvents();
         }
-    },
+    }
 
-    onEntityRemove: function(entities, apply=true){
+    onEntityRemove(entities, apply=true){
         _.each( entities, e => {
             let eid = Entity.toEntityId( e );
             if( !this.entitySet.get(eid) ){
@@ -136,9 +142,9 @@ _.extend( EntitySetListener.prototype, {
         if( apply /*this.updateOnEvent*/ ){
             this.applyEvents();
         }
-    },
+    }
 
-    onComponentAdd: function(components){
+    onComponentAdd(components){
         let entitySet = this.entitySet;
         let entity;
 
@@ -165,9 +171,9 @@ _.extend( EntitySetListener.prototype, {
         if( this.updateOnEvent ){
             this.applyEvents();
         }
-    },
+    }
 
-    onComponentRemove: function(components){
+    onComponentRemove(components){
         let ii,len,com,eid;
         let entitySet = this.entitySet;
 
@@ -186,12 +192,12 @@ _.extend( EntitySetListener.prototype, {
         if( this.updateOnEvent ){
             this.applyEvents();
         }
-    },
+    }
 
     /**
     *   
     */
-    applyEvents: function(options={}){
+    applyEvents(options={}){
         let ii,len,com,entity;
         let entitySet;
         let query;
@@ -219,18 +225,19 @@ _.extend( EntitySetListener.prototype, {
         // }
         // add entities
         _.each( this.addedEntities, (entity, eid) => {
-            if( query && !entitySet.isEntityOfInterest(entity, query ) ){
+            
+            if( query && !entitySet.isEntityOfInterest(entity, query) ){
                 return;
             }
             entitySet.add( entity, changeOptions );
-            if( debug ){ log.debug('addedEntities includes ' + stringify(entity) + ' ' + eid); }
+            // if( debug ){ Log.debug('addedEntities includes ' + stringify(entity) + ' ' + eid); }
             entitiesAdded.push( entity );
         });
 
         // remove entities
         _.each( this.removedEntities, entity => {
             entitySet.remove( entity, changeOptions );
-            if( debug ){ log.debug( entitySet.cid + ' removed entity ' + entity.id ); }
+            // if( debug ){ Log.debug( entitySet.cid + ' removed entity ' + entity.id ); }
             entitiesRemoved.push( entity );
         });
 
@@ -265,10 +272,10 @@ _.extend( EntitySetListener.prototype, {
         this.removedEntities = clearMap( this.removedEntities );
         this.changedEntityList = clearMap( this.changedEntityList );
         this.isModified = false;
-    },
+    }
 
 
-    hash: function(){
+    hash(){
         let q;
         // start with the entitysets hash
         let str = _.result( this.targetEntitySet, 'hash' );
@@ -276,12 +283,38 @@ _.extend( EntitySetListener.prototype, {
             str += q.hash();
         }
         return hash( str, true );
-    },
-});
+    }
+}
 
 EntitySetListener.create = function(){
     return new EntitySetListener();
 }
+
+
+EntitySet.listenToEntitySet = function( srcEntitySet, targetEntitySet, query, options ){
+    let listener, updateOnEvent;
+
+    listener = EntitySetListener.create();
+
+    srcEntitySet.listeners || (srcEntitySet.listeners={});
+    // are we already listening to this entityset?
+    srcEntitySet.listeners[ targetEntitySet.cid ] = listener;
+
+    listener.updateOnEvent = options.updateOnEvent;
+
+    srcEntitySet.setQuery( query );
+
+    listener.listenToEntitySet( srcEntitySet, targetEntitySet, query );
+    
+    // reset causes entities to be copied over?
+    srcEntitySet.reset( targetEntitySet );
+    
+    return listener;
+}
+
+
+EntitySetListener.prototype.type = 'EntitySetListener';
+EntitySetListener.prototype.isEntitySetListener = true;
 
 
 export default EntitySet;

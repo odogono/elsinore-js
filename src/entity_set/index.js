@@ -1,3 +1,5 @@
+/* @flow */
+
 import _ from 'underscore';
 import {Collection,Events} from 'odgn-backbone-model';
 import BitField  from 'odgn-bitfield';
@@ -64,16 +66,15 @@ export default class EntitySet extends Collection {
         return this.length;
     }
 
-    toJSON(options={}){
-        // if( options && !_.isObject(options) ){
+    toJSON(options:object={}){
+        if( !_.isObject(options) ){
+            options={};
             // return {uuid:this._uuid, msg:options};
-            // throw new Error(`what deal with ${options}`);
-        // }
+            // console.log(`what deal with`, this, options);
+            // throw new Error(`what deal with ${options}`, this, typeof this);
+        }
         let q,result = { uuid:this._uuid };// { cid:this.cid };
-        // if( (q = this.getQuery()) ){
-        //     result.query = q.toJSON();
-        // }
-
+        
         if( options.mapCdefUri ){
             options.cdefMap = this.getSchemaRegistry().getComponentDefUris();
         }
@@ -82,11 +83,6 @@ export default class EntitySet extends Collection {
         result['@e'] = this.models.reduce( (acc,e) => {
             return acc.concat( e.toJSON(options) );
         }, []);
-
-        // result['@e'] = this.models.map( e => e.toJSON(options));
-        // result['@e'] = this.constructor.__super__.toJSON.apply(this, options);
-
-        // result['@r'] = this.getSchemaRegistry().toJSON();
 
         return result;
     }
@@ -453,10 +449,13 @@ export default class EntitySet extends Collection {
     }
 
 
-    applyEvents(){
-        if( !this.listeners ){ return; }
-        _.each( this.listeners, listener => listener.applyEvents() );
-    }
+    // /**
+    //  * 
+    //  */
+    // applyEvents(){
+    //     if( !this.listeners ){ return; }
+    //     _.each( this.listeners, listener => listener.applyEvents() );
+    // }
 
 
     // Query Functions

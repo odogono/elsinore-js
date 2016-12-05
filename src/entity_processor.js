@@ -3,7 +3,8 @@ import {Model, Events} from 'odgn-backbone-model';
 import EntitySet from './entity_set';
 import {
     clearArray,
-    stringify
+    stringify,
+    arrayPush
 } from './util';
 
 import * as CmdBuffer from './cmd_buffer/sync';
@@ -43,6 +44,9 @@ export default class EntityProcessor {
     }
 
 
+    /**
+     * 
+     */
     applyChanges(){
         let ii,len,cmd;
         let entity, component;
@@ -57,25 +61,19 @@ export default class EntityProcessor {
 
             switch( cmd[0] ){
                 case CmdBuffer.CMD_COMPONENT_ADD:
-                    // log.debug( this.name + ' adding COMP ' + JSON.stringify(cmd[2]));
-                    componentsToAdd || (componentsToAdd=[]);
-                    component = this.registry.createComponent( cmd[2] );
-                    component.setEntityId( entity.getEntityId() );
-                    componentsToAdd.push( component );
+                    // console.log( this.name + ' adding COMP ' + JSON.stringify(cmd[2]));
+                    component = this.registry.createComponent( cmd[2], {'@e':entity.getEntityId()} );
+                    componentsToAdd = arrayPush( componentsToAdd, component);
                     break;
                 case CmdBuffer.CMD_COMPONENT_REMOVE:
                     // console.debug( this.name + ' removing COMP ' + stringify(cmd[2]));
-                    componentsToRemove || (componentsToRemove=[]);
-                    componentsToRemove.push( cmd[2] );
+                    componentsToRemove = arrayPush( componentsToRemove, cmd[2] );
                     break;
                 case CmdBuffer.CMD_ENTITY_ADD:
-                    entitiesToAdd || (entitiesToAdd=[]);
-                    entitiesToAdd.push( entity );
+                    entitiesToAdd = arrayPush( entitiesToAdd, entity);
                     break;
                 case CmdBuffer.CMD_ENTITY_REMOVE:
-                    entitiesToRemove || (entitiesToRemove=[]);
-                    entitiesToRemove.push( entity );
-                    // console.log('removing entity ' + stringify(entity) );
+                    entitiesToRemove = arrayPush(entitiesToRemove, entity);
                     break;
                 default:
                     // log.debug(this.name + ' unknown cmd ' + cmd[0] );
@@ -109,6 +107,9 @@ export default class EntityProcessor {
         return result;
     }
 
+    /**
+     * Adds the specified component to the entity
+     */
     addComponentToEntity( component, entity ){
         this._cmds.push( [CmdBuffer.CMD_COMPONENT_ADD, entity, component] );
     }
@@ -121,8 +122,8 @@ export default class EntityProcessor {
     //     this._cmds.push( [CmdBuffer.CMD_ENTITY_ADD, entity] );
     // },
 
-    createEntity(entity){
-        entity = this.registry.createEntity.apply( this.registry, arguments );
+    createEntity(...args){
+        let entity = this.registry.createEntity.apply( this.registry, args );
         this._cmds.push( [CmdBuffer.CMD_ENTITY_ADD, entity] );
         if( this.isReleasingEvents ){
             return this.applyChanges();
