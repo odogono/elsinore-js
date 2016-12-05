@@ -16,19 +16,19 @@ export const NONE = 3; // entities should not have any of the specified componen
 export const INCLUDE = 4; // the filter will only include specified components
 export const EXCLUDE = 5; // the filter will exclude specified components
 export const ROOT = 6; // select the root entity set
-export const EQUALS = 7; // == 
-export const NOT_EQUAL = 8; // !=
-export const LESS_THAN = 9; // <
-export const LESS_THAN_OR_EQUAL = 10;
-export const GREATER_THAN = 11; // >
-export const GREATER_THAN_OR_EQUAL = 12;
+export const EQUALS = '=='; // == 
+export const NOT_EQUAL = '!='; // !=
+export const LESS_THAN = '<'; // <
+export const LESS_THAN_OR_EQUAL = '<=';
+export const GREATER_THAN = '>'; // >
+export const GREATER_THAN_OR_EQUAL = '>=';
 export const AND = 13;
 export const OR = 14;
 export const NOT = 15;
-export const VALUE = 16; // a value
+export const VALUE = 'VL'; // a value
 // export const FILTER = 17;
 // export const ADD_ENTITIES = 18;
-export const ATTR = 19;
+// export const ATTR = 19;
 // export const PLUCK = 20;
 // export const ALIAS = 21;
 // export const DEBUG = 22;
@@ -42,11 +42,11 @@ export const ENTITY_FILTER = 30;
 // export const ALIAS_GET = 31;
 // export const PIPE = 32;
 // export const SELECT_BY_ID = 33;
-export const ALL_FILTER = 34;
-export const NONE_FILTER = 35;
-export const FILTER_FUNC = 36;
-export const ANY_FILTER = 37;
-export const INCLUDE_FILTER = 38
+export const ALL_FILTER = 'FA';
+export const NONE_FILTER = 'FN';
+export const FILTER_FUNC = 'FF';
+export const ANY_FILTER = 'FY';
+export const INCLUDE_FILTER = 'FI';
 // });
 
 
@@ -128,7 +128,7 @@ export default class Query {
             result = executeCommand( context, command )[1];
         }
 
-        // console.log('execute result was', JSON.stringify(result));
+        // console.log('execute result was', stringify(result));
         return result;
         // return true;
     }
@@ -164,6 +164,8 @@ export default class Query {
             // console.log('compile> ' + stringify(commands));
         }
 
+        // _.each(commands, f => console.log('pre',f));
+
         let firstStageCompiled = _.reduce( commands, (result,command) => {
             let op, entityFilter, compileResult, hash;
             op = command[0];
@@ -181,7 +183,9 @@ export default class Query {
                 case ALL_FILTER:
                 case ANY_FILTER:
                 case INCLUDE_FILTER:
+                    
                     entityFilter = gatherEntityFilters( context, command );
+                    // console.log('gathering', command, 'to', entityFilter.toJSON());
                     // insert a basic entity_filter command here
                     result.push( [ ENTITY_FILTER, entityFilter, command[2] ] );
                     break;
@@ -195,6 +199,8 @@ export default class Query {
 
             return result;
         },[]);
+
+        // _.each(firstStageCompiled, f => console.log('1st',stringify(f)));
 
         entityFilter = null;
 
@@ -221,8 +227,9 @@ export default class Query {
         // allow hooks to further process commands
         _.each( compileHooks, hook => this.compiled = hook(context, this.compiled, this) );
 
+        // console.log('compiled', this.compiled);
         // this.commands = commands;
-        if( context.debug ) { console.log(this); }
+        // if( context.debug ) { console.log(this); }
         return this;
     }
 
@@ -271,27 +278,19 @@ class QueryContext {
     valueOf( value, shouldReturnValue ){
         let command;
         if( !value ){ return value; }
-        // if( this.debug ){ console.log('valueOf: ' + stringify(value) ); }
+        // if(true ){ console.log('valueOf: ' + stringify(value) ); }
         // console.log('valueOf: ' + stringify(value) );
         if( _.isArray(value) ){
             command = value[0];
-            // if( !_.isArray(value[1]) ){
-                // console.log('argle ' + JSON.stringify(value))
-                // just a plain array
-                // return value;
-            // }
-
             if( command === VALUE ){
                 if( value[1] === ROOT ){
                     return this.root;
                 }
-                // console.log('return val[1] ' + value[1] );
                 return value[1];
             } else if( command === ROOT ){
                 return this.root;
             }
-            
-            // if( this.debug ){ console.log('valueOf: cmd ' + command + ' ' + stringify(value) )}
+            // if( true ){ console.log('valueOf: cmd ' + command + ' ' + stringify(value) )}
             value = executeCommand( this, value );
 
             // if( this.debug ){ console.log('valueOf exec: ' + stringify(value) )}
@@ -387,12 +386,13 @@ class QueryContext {
         // otherwise it will be some kind of entity filter
         // entitySet = Query.resolveEntitySet( context, entitySet );
         
-        entitySet = Query.valueOf( context, context.last || context.entitySet, true );
+        entitySet = context.valueOf( context.last || context.entitySet, true );
 
         if( Entity.isEntity(entitySet) ){
             entity = entitySet;
+        } else {
+            // console.log('commandFilter no entityset', entitySet);
         }
-
 
         if( filterFunction ){
             entityContext = QueryContext.create( this.query, context );
@@ -413,12 +413,12 @@ class QueryContext {
             
             value = entity;
             if( entityFilter ){
-                // console.log('^QueryContext.commandFilter: ', entityFilter);
+                
                 value = entityFilter.accept(value, context);
                 // console.log('yep? ' + JSON.stringify(value) );
                 // console.log('so got back', value, entityFilter);
             } 
-
+            
             if( value && filterFunction ){
                 entityContext.entity = value;
                 value = executeCommand( entityContext, filterFunction );
@@ -433,7 +433,10 @@ class QueryContext {
 
             if( !filterFunction && !entityFilter && offset === 0 && limit === 0 ){
                 entities = entitySet.models;
+                
             } else {
+                
+                // console.log('g', entitySet );
                 // select the subset of the entities which pass through the filter
                 entities = _.reduce( entitySet.models, (result, entity) => {
                     let cmdResult;
@@ -444,6 +447,7 @@ class QueryContext {
                         return result;
                     }
 
+                    
                     if( entityFilter ){            
                         entity = entityFilter.accept(entity, context);
                     }
@@ -458,9 +462,9 @@ class QueryContext {
                     
                         cmdResult = executeCommand( entityContext, filterFunction );
 
-                        // if( true ){ console.log('eval function ' + stringify(filterFunction) + ' ' + stringify(cmdResult) ); }
+                        // if( true ){ console.log('eval function ' + stringify(filterFunction) + ' ' + stringify(cmdResult), stringify(entity) ); }
 
-                        if( Query.valueOf( context, cmdResult ) !== true ){
+                        if( context.valueOf(cmdResult) !== true ){
                             entity = null;
                         }
                     }
@@ -477,7 +481,7 @@ class QueryContext {
             }
 
             
-            if( debug ){ console.log('cmd filter result length ' + entities.length ); }   
+            // if( true ){ console.log('cmd filter result length ' + entities.length ); }   
             value.addEntity( entities );
         }
 
@@ -507,12 +511,6 @@ export let compileCommands = {};
 export let commandFunctions = {};
 export let compileHooks = [];
 
-// _.extend(Query.prototype, {
-//     type: 'Query',
-//     isQuery: true,
-// });
-
-
 
 /**
 *   Query functions for the memory based entity set.   
@@ -538,7 +536,7 @@ function gatherEntityFilters( context, expression ){
             if( expression[1] === ROOT ){
                 result.add( ROOT );
             } else {
-                obj = Query.valueOf( context, expression[1], true );
+                obj = context.valueOf( expression[1], true );
                 
                 if( !obj ){
                     if( filter == ALL_FILTER ){
@@ -579,122 +577,13 @@ function gatherEntityFilters( context, expression ){
 
 
 
-
-
-
-
-
-
-
-
-/**
-*   Returns the referenced value of the passed value providing it is a Query.VALUE
-*/
-Query.valueOf = function valueOf( context, value, shouldReturnValue ){
-    let command;
-    if( !value ){ return value; }
-    // if( context.debug ){ console.log('valueOf: ' + stringify(value) ); }
-    // console.log('valueOf: ' + stringify(value) );
-    if( _.isArray(value) ){
-        command = value[0];
-        // if( !_.isArray(value[1]) ){
-            // console.log('argle ' + JSON.stringify(value))
-            // just a plain array
-            // return value;
-        // }
-
-        if( command === VALUE ){
-            if( value[1] === ROOT ){
-                return context.root;
-            }
-            // console.log('return val[1] ' + value[1] );
-            return value[1];
-        } else if( command === ROOT ){
-            return context.root;
-        }
-        
-        // if( context.debug ){ console.log('valueOf: cmd ' + command + ' ' + stringify(value) )}
-        value = executeCommand( context, value );
-
-        // if( context.debug ){ console.log('valueOf exec: ' + stringify(value) )}
-
-        if( value[0] === VALUE ){
-            return value[1];
-        }
-    }
-    if( shouldReturnValue ){
-        return value;
-    }
-    return null;
-}
-
-/**
-*   Compares the two operands for equality and returns 
-*   a VALUE with the boolean result of that comparison
-*/
-function commandEquals( context, op1, op2, op ){
-    let result;
-    let value1;
-    let value2;
-    let isValue1Array, isValue2Array;
-    result = false;
-
-    if( context.debug ){ console.log('EQUALS op1: ' + stringify(op1) ); }
-    if( context.debug ){ console.log('EQUALS op2: ' + stringify(op2) ); }
-
-    value1 = Query.valueOf( context, op1, true );
-    value2 = Query.valueOf( context, op2, true );
-    isValue1Array = _.isArray(value1);
-    isValue2Array = _.isArray(value2);
-
-    if( context.debug ){ console.log('EQUALS cmd equals ' + stringify(value1) + ' === ' + stringify(value2) ); }
-
-    if( !isValue1Array && !isValue2Array ){
-        switch( op ){
-            case LESS_THAN:
-                result = (value1 < value2);
-                break;
-            case LESS_THAN_OR_EQUAL:
-                result = (value1 <= value2);
-                break;
-            case GREATER_THAN:
-                result = (value1 > value2);
-                break;
-            case GREATER_THAN_OR_EQUAL:
-                result = (value1 >= value2);
-                break;
-            default:
-                result = (value1 === value2);
-                break;
-        }
-    } else {
-        switch( op ){
-            case LESS_THAN:
-            case LESS_THAN_OR_EQUAL:
-            case GREATER_THAN:
-            case GREATER_THAN_OR_EQUAL:
-                result = false;
-                break;
-            default:
-                if( isValue2Array && !isValue1Array ){
-                    // console.log('index of ' + value1 + _.indexOf(value2,value1) );
-                    result = (_.indexOf(value2,value1) !== -1);
-                } else {
-                    result = deepEqual( value1, value2 );
-                }
-                break;
-        }
-    }
-    return (context.last = [ VALUE, result ]);
-}
-
 function commandAnd( context, ops ){
     let ii,len,value;
     
     ops = _.rest( arguments );
 
     for( ii=0,len=ops.length;ii<len;ii++ ){
-        value = Query.valueOf( context, ops[ii], true );
+        value = context.valueOf(ops[ii], true );
         if( !value ){
             break;
         }
@@ -709,7 +598,7 @@ function commandOr( context, ops ){
     ops = _.rest( arguments );
 
     for( ii=0,len=ops.length;ii<len;ii++ ){
-        value = Query.valueOf( context, ops[ii], true );
+        value = context.valueOf(ops[ii], true );
         if( value ){
             break;
         }
@@ -717,57 +606,6 @@ function commandOr( context, ops ){
     
     return (context.last = [ VALUE, value ]);
 }
-
-
-
-
-
-
-/**
-*   Takes the attribute value of the given component and returns it
-*
-*   This command operates on the single entity within context.
-*/
-function commandComponentAttribute( context, attributes ){
-    let ii,len,result;
-    let entity = context.entity;
-    let debug = context.debug;
-    const componentIds = context.componentIds;
-
-    // printIns( context,1 );
-    if( debug ){ console.log('ATTR> ' + stringify(componentIds) + ' ' + stringify( _.rest(arguments))  ); } 
-
-    // if( !componentIds ){
-    //     throw new Error('no componentIds in context');
-    // }
-    
-    if( !entity ){
-        console.log('ATTR> no entity');
-        return (context.last = [ VALUE, null ] );
-    }
-
-    attributes = _.isArray( attributes ) ? attributes : [attributes];
-    // components = entity.components;
-    result = [];
-
-    const components = entity.getComponents(componentIds);
-
-    // console.log('commandComponentAttribute', attributes);    
-    for( ii=0,len=components.length;ii<len;ii++ ){
-        const component = components[ii];
-        _.each( attributes, attr => result.push(component.get.call(component, attr)) );
-    }
-
-    if( result.length === 0 ){
-        result = null;
-    } else if( result.length === 1 ){
-        result = result[0];
-    }
-
-    return (context.last = [ VALUE, result ] );
-}
-
-
 
 
 
@@ -781,12 +619,6 @@ function commandComponentAttribute( context, attributes ){
     }
 
     switch( op ){
-        case ATTR:
-            result = commandComponentAttribute;
-            break;
-        case EQUALS:
-            result = commandEquals;
-            break;
         case AND:
             result = commandAnd;
             break;
@@ -813,6 +645,8 @@ function executeCommand( context, op, args ){
 
     // prepend the context to the beginning of the arguments
     cmdArgs = [context].concat( args );
+    // cmdArgs.push(op);
+    // console.log('executeCommand args', op, args);
 
     context.op = op;
     
@@ -827,18 +661,9 @@ function executeCommand( context, op, args ){
                 value = context.root;
             }
             result = (context.last = [ VALUE, value ]);
-            // if(context.debug){ console.log('value> ' + stringify(context.last)) }
-            break;
-        case EQUALS:
-        case LESS_THAN:
-        case LESS_THAN_OR_EQUAL:
-        case GREATER_THAN:
-        case GREATER_THAN_OR_EQUAL:
-            result = commandEquals.apply( context, cmdArgs.concat(op) );
+            // if(true){ console.log('value> ' + stringify(context.last)) }
             break;
         case ENTITY_FILTER:
-            result = context.commandFilter.apply( context, cmdArgs );
-            break;
         case FILTER_FUNC:
         case ALL_FILTER:
         case INCLUDE_FILTER:
@@ -847,13 +672,13 @@ function executeCommand( context, op, args ){
             result = context.commandFilter.apply( context, cmdArgs );
             break;
         default:
-
             cmdFunction = commandFunction( op );
             if( !cmdFunction ){
                 // console.log('unknown cmd ' + op);
                 // printIns( _.rest(arguments), 1 );
                 throw new Error('unknown cmd (' + stringify(op) + ') ' + stringify(_.rest(arguments)) );
             }
+            // console.log('running CmdFunction for op', op);
             result = cmdFunction.apply( context, cmdArgs );
             break;
     }
@@ -882,28 +707,41 @@ Query.commands = function( commands ){
 /**
  * Registers a query command extension
  */
-export function register( name, command, dslObj, options={} ){
-    // console.log('register command', name);
-    if( commandFunctions[ name ] !== undefined ){
-        throw new Error('already registered cmd ' + name );
-    }
+export function register( token, command, dslObj, options={} ){
+    
+    // if( commandFunctions[ name ] !== undefined ){
+    //     throw new Error('already registered cmd ' + name );
+    // }
 
     if( dslObj ){
         _.each( dslObj, (fn,name) => {
             DslContext.prototype[name] = fn;
-            // console.log('register dsl', name);
         })
     }
+
     const argCount = _.isUndefined(options.argCount) ? 1 : options.argCount;
-    argCounts[name] = argCount;
 
-    if( command ){
-        commandFunctions[name] = command;
+    if( !_.isArray(token) ){
+        token = [token];
     }
 
-    if( options.compile ){
-        compileCommands[name] = options.compile;
-    }
+    _.each( token, name => {
+        if( commandFunctions[ name ] !== undefined ){
+            throw new Error('already registered cmd ' + name );
+        }
+        
+        // if( options.debug ){ console.log('registering', name); }
+        
+        argCounts[name] = argCount;
+
+        if( command ){
+            commandFunctions[name] = command;
+        }
+
+        if( options.compile ){
+            compileCommands[name] = options.compile;
+        }
+    })
     
     return Query;
 }
@@ -918,4 +756,15 @@ Query.isQuery = function( query ){
 Query.exec = function( query, entity, options ){
     const q = new Query(query);
     return q.execute(entity,options);
+}
+
+
+Query.toQuery = function( query ){
+    if( Query.isQuery(query) ){
+        return query;
+    }
+    if( _.isFunction(query) ){
+        return new Query(query);
+    }
+    return null;
 }

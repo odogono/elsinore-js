@@ -7,6 +7,7 @@ function precendence( operator ){
     let result;
 
     result = Q.precendenceValues[ operator ];
+    // console.log('precendence of', operator,'is', result);
     if( result !== undefined ){
         return result;
     }
@@ -21,13 +22,15 @@ function precendence( operator ){
         case Q.VALUE:
             return 2;
         case Q.EQUALS:
-        // case Q.ALL_FILTER:
         default:
             return -1;
     }
 }
 
 
+/**
+ * 
+ */
 function argCount( operator ){
     let result;
 
@@ -40,7 +43,6 @@ function argCount( operator ){
         case Q.ALL:
         case Q.ANY:
         case Q.NONE:
-        case Q.ATTR:
             return 1;
         case Q.ROOT:
         default:
@@ -175,17 +177,6 @@ function argCount( operator ){
 //         return this;  
 //     },
 
-//     /**
-//     *   Selects a component attribute
-//     */
-//     attr: function( attr ){
-//         let lastCommand, op, val;
-//         let context = readContext( this, false, true, true );
-
-//         context.pushVal( [Q.ATTR, attr] );
-
-//         return context;
-//     },
 
 //     value: function( val ){
 //         let context = readContext( this );
@@ -274,6 +265,7 @@ function rpnToTree( values ){
 
                 // figure out how many arguments to take from the stack
                 count = argCount( op );
+                // console.log('argCount',op,count);
                 slice = stack.splice( stack.length-count, count );
 
                 if( _.isArray(slice) && slice.length === 1 ){
@@ -524,22 +516,6 @@ export class DslContext {
         return this;  
     }
 
-    /**
-    *   Selects a component attribute
-    */
-    attr( attr ){
-        const context = this.readContext( this );
-        context.pushVal( [Q.ATTR,attr] );
-        return context;
-
-        // let lastCommand, op, val;
-        // let context = readContext( this, false, true, true );
-
-        // context.pushVal( [Q.ATTR, attr] );
-
-        // return context;
-    }
-
     // 
     // Filter Functions
     // 
@@ -668,6 +644,7 @@ export class DslContext {
         return result;
     }
 }
+
 
 export default class QueryBuilder extends DslContext {
 

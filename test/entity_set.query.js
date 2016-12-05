@@ -9,10 +9,9 @@ import {
     loadEntities, 
     loadComponents,
     loadFixtureJSON,
-    printE,
     createLog,
     logEvents,
-    requireLib,
+    entityToString,
 } from './common';
 
 const Log = createLog('TestEntitySetQuery');
@@ -87,9 +86,10 @@ test('where filter by string', async t => {
     const result = entitySet.query( Q => Q.all().where( Q.attr('username').equals('aveenendaal')) );
     // const result = entitySet.query( Q => Q.all('/component/channel_member').where( Q.attr('username').equals('aveenendaal')) );
 
-    t.equals( result.length, 1 );
+    // Log.debug('result was', entityToString(result));
+    t.equals( result.length, 3 );
     
-    t.end();} catch(err){ log.error('test error: %s', err.stack); }
+    t.end();} catch(err){ Log.error('test error: %s', err.stack); }
 })
 
 

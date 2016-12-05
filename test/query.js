@@ -1,23 +1,23 @@
 import _ from 'underscore';
 import test from 'tape';
 
-import Query from '../src/query';
 // import {EQUALS, VALUE} from '../src/query';
 import * as Q from '../src/query';
 import '../src/query/alias';
 
 import {
     Component, Entity, EntitySet,
-    // Query,
+    Query,
     initialiseRegistry, 
     loadEntities, 
     loadComponents,
     loadFixtureJSON,
-    printE,
-    printIns,
     logEvents,
-    requireLib,
+    createLog, entityToString,
 } from './common';
+
+const Log = createLog('TestQuery');
+
 
 test('EQUALS op', t => {
     // console.log('uhhh EQUALS', EQUALS);
@@ -169,19 +169,28 @@ test('a single filter query on an entity', t => {
     .catch( err => log.error('test error: %s', err.stack) )
 })
 
+/*
+[ 
+    [ 16, '/component/mode/limit' ], 
+    [ 30, EntityFilter { filters: [Object] }, [ '>', [Object] ] ] 
+]
 
-test('accepting an entity based on its attributes', t => {
-    initialiseEntitySet().then( ([registry,entitySet]) => {
+*/
+test('accepting an entity based on its attributes', async t => {
+    try{
+    const [registry,entitySet] = await initialiseEntitySet();
 
     const query = new Query( Q => 
         Q.all('/component/mode/limit', Q.attr('limit').greaterThan(9))
     );
 
-    // let query = Query.create( registry,
-    //     Query.all('/component/mode/limit', Query.attr('limit').greaterThan( 9 )),
+    // Log.debug('/component/mode/limit is', registry.getIId('/component/mode/limit') )
+
+    // const result = query.execute(
+    //     registry.createEntity([{ '@c':'/component/mode/limit', limit:10}] ),
     //     {debug:false} );
 
-    // printIns( query );
+    // Log.debug('result was', entityToString(result) );
 
     t.ok( Entity.isEntity(query.execute(
         registry.createEntity([{ '@c':'/component/mode/limit', limit:10}] ),
@@ -196,8 +205,7 @@ test('accepting an entity based on its attributes', t => {
         ), 'query rejects entity with no limit');
 
     t.end();
-    })
-    .catch( err => log.error('test error: %s', err.stack) )
+    }catch(err){ Log.error('test error: %s', err.stack) }
 });
 
 test('query eveything', t => {
@@ -345,11 +353,11 @@ test('query serialisation', t => {
         let json = query.toJSON();
 
         t.deepEqual( json, [
-            [ 34, [ 16, '/component/channel_member' ] ], 
-            [ 35, [ 16, '/component/mode/invisible' ] ], 
-            [ 34, 
-                [ 16, '/component/channel_member' ], 
-                [ 7, [ 19, 'channel' ], [ 16, 2 ] ] 
+            [ 'FA', [ 'VL', '/component/channel_member' ] ], 
+            [ 'FN', [ 'VL', '/component/mode/invisible' ] ], 
+            [ 'FA', 
+                [ 'VL', '/component/channel_member' ], 
+                [ '==', [ 'AT', 'channel' ], [ 'VL', 2 ] ] 
             ] ] );
 
         const reQuery = new Query( json );

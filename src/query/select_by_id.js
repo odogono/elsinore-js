@@ -101,19 +101,4 @@ function selectById( registry, entitySet, entityIds, returnAsEntitySet ){
     return entities;
 }
 
-// const command = {
-//     commands:[
-//         {
-//             name: 'SELECT_BY_ID',
-//             id: SELECT_BY_ID,
-//             argCount: 1,
-//             command: commandSelectById,
-//             dsl:{
-//                 selectById: dslSelectById   
-//             }
-//         }
-//     ]
-// };
-
-
 register(SELECT_BY_ID, commandSelectById, {selectById:dslSelectById});
