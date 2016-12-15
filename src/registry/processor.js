@@ -3,7 +3,8 @@ import {Model as BackboneModel} from 'odgn-backbone-model';
 import Registry from './index';
 import Query from '../query';
 import EntitySet from '../entity_set/view';
-import {createLog,stringify} from '../util/log';
+import {stringify} from '../util';
+import {createLog} from '../util/log';
 
 const Log = createLog('Registry.Processor');
 
@@ -37,8 +38,7 @@ _.extend( Registry.prototype, {
 
         // create the processor instance using either the passed processor, or the base
         // processor create function
-        processor = (processorModel.create || EntityProcessor.create)(
-            processorAttrs, processorOptions);
+        processor = (processorModel.create || EntityProcessor.create)(processorAttrs, processorOptions);
 
         processor.registry = this;
 

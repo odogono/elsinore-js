@@ -33,7 +33,7 @@ export {AsyncEntitySet};
 import Query from './query/full';
 export {Query as Query};
 
-import Registry from './registry/processor';
+import Registry from './registry';///processor';
 export {Registry as Registry};
 
 import SchemaRegistry from './schema';

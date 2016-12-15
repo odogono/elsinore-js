@@ -54,11 +54,41 @@ it.
         so that is two types of operation for processors:
         - an entityset view (based on the p. query) is prepared for the processor ahead of execution
         - (adhoc) the processor works on the entityset as is, evaluating each entity against its query.
+
+    
+    - execute can be called with an entity, an entityset, or nothing at all. processors are called
+    regardless
+
 */
 
 
+
+test('adding a processor', async t => {
+    try {
+        const registry = await initialiseRegistry();
+        const dispatch = Dispatch.create();
+
+        class Proc extends EntityProcessor {
+        }
+        Proc.prototype.type = 'ProcProcessor';
+
+        dispatch.addProcessor(Proc);
+
+        const instance = dispatch.getProcessors()[0];
+
+        // Log.debug('instance isa', typeof instance, Proc.prototype );
+        // ensure that what is stored is an instance not the class
+        t.equals( instance.isEntityProcessor, true );
+        t.equals( instance.type, 'ProcProcessor' );
+        t.equals( instance instanceof Proc, true );
+
+        t.end();
+    }catch(err){ Log.error(err.message,err.stack);}
+});
+
+
 test('basic execution of a processor', t => {
-    let dispatch = Dispatch.create();
+    const dispatch = Dispatch.create();
     let executeCount = 0;
 
     const processor = createEntityProcessor(
@@ -71,7 +101,7 @@ test('basic execution of a processor', t => {
     dispatch.addProcessor( otherProcessor );
     
     // register a second processor with no query
-    let entity = new Entity();
+    const entity = new Entity();
 
     dispatch.execute( entity );
 
@@ -112,56 +142,30 @@ test('will only execute processors which match', async t => {
 
 test('executing a processor with a time interval', async t => {
     try{
-    const registry = await initialiseRegistry();
-    const dispatch = Dispatch.create(registry);
-    let entity = registry.createEntity( {'@c':'/component/username'} );
-    let executeCount = 0;
+        const registry = await initialiseRegistry();
+        const dispatch = Dispatch.create(registry);
+        let entity = registry.createEntity( {'@c':'/component/username'} );
+        let executeCount = 0;
 
-    const processor = createEntityProcessor( 
-        (entityArray, timeMs, options ) => executeCount++);
+        const processor = createEntityProcessor( 
+            (entityArray, timeMs, options ) => executeCount++);
 
-    // executes every 1000ms
-    dispatch.addProcessor( processor, null, {interval:1000});
+        // executes every 1000ms
+        dispatch.addProcessor( processor, null, {interval:1000});
 
-    dispatch.execute(entity, 0);
-    t.equals( executeCount, 1);
+        dispatch.execute(entity, 0);
+        t.equals( executeCount, 1);
 
-    dispatch.execute(entity, 100);
-    t.equals( executeCount, 1, 'no further execution within interval');
+        dispatch.execute(entity, 100);
+        t.equals( executeCount, 1, 'no further execution within interval');
 
-    dispatch.execute(entity, 1000);
-    t.equals( executeCount, 2, 'another execution now that interval expired');
+        dispatch.execute(entity, 1000);
+        t.equals( executeCount, 2, 'another execution now that interval expired');
 
-    dispatch.execute(entity, 1900);
-    t.equals( executeCount, 2);        
-    
-    t.end();
-    }catch(err){ Log.error(err.stack) }
-});
-
-test('processors can have priority', async t => {
-    try{
-    const registry = await initialiseRegistry();
-    const dispatch = Dispatch.create(registry);
-
-    let entity = registry.createEntity( [{'@c':'/component/username'}]);
-    let executeCount = 0;
-
-    const procA = createEntityProcessor( 
-        (entityArray, timeMs, options ) =>{ if(executeCount===1){executeCount++} });
-    const procB = createEntityProcessor( 
-        (entityArray, timeMs, options ) =>{ if(executeCount===0){executeCount++} });
-    const procC = createEntityProcessor( 
-        (entityArray, timeMs, options ) =>{ if(executeCount===2){executeCount++} });
-
-    dispatch.addProcessor( procA, null, {priority:10} );
-    dispatch.addProcessor( procB, null, {priority:100} );
-    dispatch.addProcessor( procC );
-
-    dispatch.execute( entity );
-    t.equals( executeCount, 3, 'processors executed in order');
-    
-    t.end();
+        dispatch.execute(entity, 999, true);
+        t.equals( executeCount, 2);
+        
+        t.end();
     }catch(err){ Log.error(err.stack) }
 });
 
@@ -190,6 +194,166 @@ test('retrieving all the processors assigned to a query', async t => {
 
 
 
+test('processors receive update events', async t => {
+    try{
+        const registry = await initialiseRegistry();
+        const dispatch = Dispatch.create();
+        let updateCount = 0;
+
+        class Processor extends EntityProcessor {
+            update(){
+                updateCount += 1;
+            }
+        }
+
+        dispatch.addProcessor(Processor);
+        dispatch.update();
+        dispatch.update();
+
+        t.equals( updateCount, 2 );
+
+        t.end();
+    }catch(err){ Log.error(err.message,err.stack);}
+});
+
+test('processor update intervals', async t => {
+    try{
+        const registry = await initialiseRegistry();
+        const dispatch = Dispatch.create();
+        let updateCount = 0;
+
+        class Processor extends EntityProcessor {
+            update(){
+                updateCount += 1;
+            }
+        }
+
+        dispatch.addProcessor(Processor, null,{interval:1000});
+        dispatch.update();
+        dispatch.update(600);
+        dispatch.update(600);
+        dispatch.update(1000);
+        dispatch.update();
+
+        t.equals( updateCount, 3 );
+
+        t.end();
+    }catch(err){ Log.error(err.message,err.stack);}
+});
+
+
+test('processor priority', async t => {
+    try{
+        const registry = await initialiseRegistry();
+        const dispatch = Dispatch.create();
+        let result = []
+
+        const procA = createEntityProcessor( () =>{ result.push('a') });
+        const procB = createEntityProcessor( () =>{ result.push('b') });
+        const procC = createEntityProcessor( () =>{ result.push('c') });
+
+        dispatch.addProcessor( procA, null, {priority:100} );
+        dispatch.addProcessor( procB, null, {priority:-10} ); // lowest number is highest priority
+        dispatch.addProcessor( procC, null, {priority:0} );
+
+        dispatch.update();
+        // Log.debug('bleah', dispatch.processorEntries.map( e => e.get('priority')) );
+
+        t.deepEqual( result, ['b','c','a'] );
+
+    t.end();
+    }catch(err){ Log.error(err.message,err.stack);}
+})
+
+
+test('processor should receive an event when entities are added', async t => {
+    try{
+        const registry = await initialiseRegistry();
+        const entitySet = registry.createEntitySet();
+        const dispatch = Dispatch.create(entitySet);
+        let isAdded = false;
+        class Proc extends EntityProcessor {
+            constructor(...args){
+                super(...args);
+                this.events = {
+                    'entity:add': this.onAdded
+                }; 
+            }
+            onAdded( entityArray ){
+                isAdded = true;
+            }
+        }
+
+        const processor = dispatch.addProcessor(Proc);
+
+        entitySet.addEntity( {'@c':'/component/position', x:100, y:22} );
+        t.assert( !isAdded, 'entity not added until update is called' );
+
+        dispatch.update( 0, {debug:true} );
+        t.assert( isAdded, 'entity added when update is called' );
+
+        t.end();
+    }catch(err){ Log.error(err.message,err.stack);}
+});
+
+
+test('processor can affect original entityset', async t => {
+    try{
+        const registry = await initialiseRegistry();
+        const entitySet = registry.createEntitySet();
+        const dispatch = Dispatch.create(entitySet);
+
+        class Proc extends EntityProcessor {
+            constructor(...args){
+                super(...args);
+                this.entityFilter = Q => Q.all('/component/username');
+                this.events = {
+                    'entity:add': this.onAdded
+                }; 
+            }
+
+            onAdded( entityArray ){
+                const entity = entityArray[0]; 
+                const username = entity.Username.get('username');
+                const component = {'@c':'/component/status', status:'active'};
+                const position = {'@c':'/component/position'}
+                _.each( entityArray, e => this.addComponentToEntity([component,position],e) );
+                this.createEntity( [
+                    {'@c':'/component/username', username:`friend of ${username}`}, 
+                    {'@c':'/component/status',status:'active'}
+                    ]);
+            }
+        }
+
+        const processor = dispatch.addProcessor(Proc).get('processor');
+
+        entitySet.addEntity( {'@c':'/component/username', username:'bob'} );
+        entitySet.addEntity( {'@c':'/component/channel', name:'channel4'} );
+        entitySet.addEntity( {'@c':'/component/username', username:'alice'} );
+
+        dispatch.update( 0, {debug:false} );
+        // t.equals( addCount, 2, 'only two applicable entities added' );
+
+        // Log.debug('proc es', entityToString(processor.entitySet));
+        // Log.debug('proc es', entityToString(entitySet));
+
+        t.equals(
+            entitySet.query( Q => Q.all('/component/username').where(Q.attr('username').equals(/friend of/)) ).length, 
+            2, 'two new entities added to src entityset');
+
+        // Log.debug('friends', entityToString(friends));
+
+        // entitySet.removeByQuery( Q => Q.all('/component/username') );
+        // registry.updateSync( 0, {debug:false} );
+        // t.equals( removeCount, 2, 'two applicable entities removed' );
+
+        // Log.debug('proc es', entityToString(processor.entitySet));
+
+        t.end();
+    }catch(err){ Log.error(err.message,err.stack);}
+})
+
+
 test('dispatch can modify the incoming entityset');
 
 test('processors executing with promises');
@@ -197,8 +361,16 @@ test('processors executing with promises');
 
 
 function createEntityProcessor( onUpdate ){
-    const result = EntityProcessor.create();
-    result.onUpdate = onUpdate;
+    class Processor extends EntityProcessor {
+    }
+
+    let result = new Processor();
+    if( onUpdate ){
+        result.update = _.bind( onUpdate, result );
+    }
+
+    // const result = EntityProcessor.create();
+    // result.onUpdate = onUpdate;
     return result;
 }
 

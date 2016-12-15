@@ -40,7 +40,7 @@ export default class EntityProcessor {
     onInitialize( registry ){
     }
 
-    onUpdate( entityArray, timeMs, options ){
+    update( entityArray, timeMs, options ){
     }
 
 
@@ -154,7 +154,7 @@ EntityProcessor.prototype.type = 'EntityProcessor';
 EntityProcessor.prototype.isEntityProcessor = true;
 
 EntityProcessor.isEntityProcessor = function(ep){
-    return ep && ep.isEntityProcessor;
+    return ep && ep.isEntityProcessor === true;
 }
 
 EntityProcessor.create = function create( attrs, options={} ){

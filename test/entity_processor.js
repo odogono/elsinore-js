@@ -39,7 +39,7 @@ test('processor should receive an event when entities are added', async t => {
     entitySet.addEntity( {'@c':'/component/position', x:100, y:22} );
     t.assert( !isAdded, 'entity not added until update is called' );
 
-    registry.updateSync( 0, {debug:true} );    
+    registry.updateSync( 0, {debug:true} );
     t.assert( isAdded, 'entity added when update is called' );
 
     t.end();
