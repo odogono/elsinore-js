@@ -4,14 +4,24 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased][unreleased]
 
+## [4.2.0] - 2016-12-15
+
+### Added
+- EntityDispatch gets the same update functionality as previously seen in Registry.updateSync
+
 ### Changed
 - EntitySet.addEntity can take a raw component as an argument
 - refactored Query commands .attr and .equals
+- EntityDispatch.execute takes a timeMs parameter which is the amount of time since the last execution
 
 ### Fixed
 - ES build (dist/elsinore.es2015.js) now includes dependencies. it is compatible with rollup.
 - Query attribute equality can now match on regex's
 - Adding/Removing an entity/component from a View also affects the parent EntitySet.
+
+### Removed
+- registry/processor extensions taken over by EntityDispatch
+
 
 ## [4.1.1] - 2016-11-25
 
