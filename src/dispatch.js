@@ -1,7 +1,7 @@
 import _ from 'underscore';
 import {Model as Entry,Collection,Events} from 'odgn-backbone-model';
 
-import EntitySet from './entity_set';
+import EntitySet from './entity_set/view';
 import Query from './query/full';
 import EntityProcessor from './entity_processor';
 import {createLog} from './util/log';
