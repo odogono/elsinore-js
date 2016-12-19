@@ -10,7 +10,9 @@ lib-cov
 *~
 .vscode
 
-# we generate lib dir from transpiled src/
+# we generate lib and es2015 dir from transpiled src/
+es6
+es2015
 lib 
 dist
 build

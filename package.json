@@ -1,6 +1,6 @@
 {
   "name": "elsinore",
-  "version": "4.2.1",
+  "version": "4.2.2",
   "description": "a javascript Entity Component System",
   "keywords": [
     "elsinore",
@@ -62,6 +62,7 @@
     "vinyl-source-stream": "^1.0.0"
   },
   "directories": {
+    "es2015": "es2015",
     "lib": "lib",
     "dist": "dist"
   },
@@ -69,10 +70,10 @@
     "build": "rollup -c rollup.config.js",
     "build:es": "rollup -c rollup.config.es.js",
     "build:prod": "rollup -c rollup.config.prod.js",
-    "compile:es6": "babel src --out-dir es6 --plugins=transform-inline-environment-variables,transform-es2015-modules-commonjs,transform-flow-strip-types,transform-es2015-destructuring,transform-object-rest-spread,transform-async-to-generator",
-    "compile": "babel src --out-dir lib --plugins=transform-inline-environment-variables,transform-es2015-classes,transform-flow-strip-types,transform-es2015-destructuring,transform-object-rest-spread,transform-async-to-generator",
+    "compile": "babel src --out-dir lib --plugins=transform-inline-environment-variables,transform-es2015-modules-commonjs,transform-flow-strip-types,transform-es2015-destructuring,transform-object-rest-spread,transform-async-to-generator",
+    "compile:es2015": "babel src --out-dir es2015 --plugins=transform-inline-environment-variables,transform-es2015-classes,transform-flow-strip-types,transform-es2015-destructuring,transform-object-rest-spread,transform-async-to-generator",
     "clean": "rm -rf node_modules build dist lib; mkdir build; npm install",
-    "dist:noclean": "npm run compile && npm run compile:es6 && npm run build && npm run build:prod && npm run build:es",
+    "dist:noclean": "npm run compile && npm run compile:es2015 && npm run build && npm run build:prod && npm run build:es",
     "dist": "npm run dist:noclean",
     "prepublish": "npm run dist",
     "test": "NODE_ENV=test babel-node test/index.js --plugins=transform-inline-environment-variables,transform-es2015-modules-commonjs,transform-flow-strip-types,transform-es2015-destructuring,transform-object-rest-spread,transform-async-to-generator | tap-dot",

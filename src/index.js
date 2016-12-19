@@ -3,8 +3,7 @@
 
 export {_} from 'underscore';
 export {Collection,Model,Events} from 'odgn-backbone-model';
-import BitField from 'odgn-bitfield';
-export {Bitfield}
+export {default as Bitfield} from 'odgn-bitfield';
 
 import Component from './component';
 export {Component as Component};
@@ -29,9 +28,6 @@ export {EntitySet as EntitySet};
 
 import AsyncEntitySet from './entity_set/async';
 export {AsyncEntitySet};
-
-// import Model from './model';
-// export {Model as Model};
 
 import Query from './query/full';
 export {Query as Query};
