@@ -7,8 +7,7 @@ import Query from '../query';
 import {
     clearMap,
     hash,
-    stringify,
-    entityToString,
+    // stringify
 } from '../util';
 
 
@@ -105,7 +104,7 @@ class EntitySetListener{
         srcEntitySet.listenTo( targetEntitySet, 'component:add', this.onComponentAdd );
         srcEntitySet.listenTo( targetEntitySet, 'component:remove', this.onComponentRemove );
         // srcEntitySet.listenTo( targetEntitySet, 'component:change', (...args) => {
-        //     log.debug('listen to es change ' + JSON.stringify(args) );
+        //     log.debug('listen to es change ' + stringify(args) );
         // })
     }
 
@@ -148,7 +147,7 @@ class EntitySetListener{
         let entitySet = this.entitySet;
         let entity;
 
-        // log.debug( entitySet.cid + '_oCA ' + JSON.stringify(components) );
+        // log.debug( entitySet.cid + '_oCA ' + stringify(components) );
         _.each( components, component => {
             let eid = Entity.getEntityId( component );
             if( entitySet.hasEntity(eid) ){
@@ -180,7 +179,7 @@ class EntitySetListener{
         // reduce down to components we are interested in
         for(ii=0,len=components.length;ii<len;ii++ ){
             eid = components[ii].getEntityId();
-            // log.debug('onComponentRemove', eid, JSON.stringify(components[ii]));
+            // log.debug('onComponentRemove', eid, stringify(components[ii]));
             // eid = Entity.getEntityId( components[ii] );
             if( entitySet.hasEntity( eid ) ){
                 this.changedEntityList[ eid ] = eid;
@@ -188,7 +187,7 @@ class EntitySetListener{
             }
         }
 
-        // log.debug('onComponentRemove', this.updateOnEvent, JSON.stringify(components));
+        // log.debug('onComponentRemove', this.updateOnEvent, stringify(components));
         if( this.updateOnEvent ){
             this.applyEvents();
         }
