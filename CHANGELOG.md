@@ -4,6 +4,16 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased][unreleased]
 
+## [4.2.4] - 2017-01-11
+
+### Changed
+- createUuid renamed to createUUID
+
+### Fixed
+- createLog function fails in firefox due to for(const m in... 
+
+
+
 ## [4.2.0] - 2016-12-15
 
 ### Added
