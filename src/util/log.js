@@ -11,7 +11,7 @@ export function createLog(name,active=true){
         ['debug','info','log','warn','error'].forEach( l => fn[l] = ()=>{} );
     }
     else {
-        for( const m in console ){
+        for( let m in console ){
             if(typeof console[m] == 'function'){
                 fn[m] = console[m].bind(console, `[${name}:${m}]`);
             }
