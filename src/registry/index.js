@@ -2,7 +2,7 @@ import _ from 'underscore';
 import {Events, Collection} from 'odgn-backbone-model'
 import BitField  from 'odgn-bitfield';
 
-import {uuid as createUuid} from '../util/uuid';
+import {uuid as createUUID} from '../util/uuid';
 import {createLog} from '../util/log';
 import {getEntityIdFromId,getEntitySetIdFromId} from '../util';
 import Entity from '../entity';
@@ -373,7 +373,7 @@ export default class Registry {
         let result;
         let entitySetType=EntitySet;
         
-        options.uuid = options.uuid || createUuid();
+        options.uuid = options.uuid || createUUID();
         if( options.type ){
             entitySetType = options.type;
         }

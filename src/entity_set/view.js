@@ -72,10 +72,9 @@ _.extend( EntitySet.prototype, {
 });
 
 
-
 /**
-    The EntitySet listener keeps track of one entitySet listening to enother.
-*/
+ * The EntitySet listener keeps track of one entitySet listening to enother.
+ */
 class EntitySetListener{
 
     setQuery(q){
@@ -108,11 +107,14 @@ class EntitySetListener{
         // })
     }
 
+    /**
+     * 
+     */
     onEntityAdd( entities, apply=true ){
         this.entitySet.isModified = true;
         
         _.each( entities, e => {
-            let eid = Entity.toEntityId( e );
+            const eid = Entity.toEntityId( e );
             this.addedEntities[ eid ] = e;
             this.isModified = true;
         });
@@ -125,9 +127,12 @@ class EntitySetListener{
         }
     }
 
+    /**
+     * 
+     */
     onEntityRemove(entities, apply=true){
         _.each( entities, e => {
-            let eid = Entity.toEntityId( e );
+            const eid = Entity.toEntityId( e );
             if( !this.entitySet.get(eid) ){
                 return;
             }

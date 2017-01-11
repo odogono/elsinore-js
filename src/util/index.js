@@ -9,7 +9,7 @@ export const deepEqual = DeepEqual;
 
 // export {entityToString} from './to_string';
 // export {toString,entitySetToString,entityToString,componentToString} from './to_string';
-// export {uuid as createUuid} from './uuid';
+// export {uuid as createUUID} from './uuid';
 
 
 export function mergeRecursive(obj1, obj2) {
@@ -97,16 +97,16 @@ export function isInteger(i) {
  }
 
 
-/**
- * 
- */
-export function normalizeUri(uri){
-    let result;
-    if( !uri )
-        return null;
-    result = Url.parse( uri );
-    return result.href;
-}
+// /**
+//  * 
+//  */
+// export function normalizeUri(uri){
+//     let result;
+//     if( !uri )
+//         return null;
+//     result = Url.parse( uri );
+//     return result.href;
+// }
 
 
 // /**
@@ -127,9 +127,9 @@ export function normalizeUri(uri){
 /**
  * 
  */
-export function resolveUri( from, to ){
-    return Url.resolve( from, to );
-}
+// export function resolveUri( from, to ){
+//     return Url.resolve( from, to );
+// }
 
 
 

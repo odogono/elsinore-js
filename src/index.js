@@ -45,3 +45,7 @@ export {
     toBoolean, toInteger,
     stringify, parseJSON
 } from './util';
+
+export {
+    uuid as createUUID
+} from './util/uuid.js';

@@ -9,7 +9,7 @@ import Entity from '../entity';
 import EntityFilter from '../entity_filter';
 import Query from '../query';
 import {hash, isInteger,stringify} from '../util';
-import {uuid as createUuid} from '../util/uuid';
+import {uuid as createUUID} from '../util/uuid';
 
 // import * as CmdBuffer from '../cmd_buffer/sync';
 import CmdBuffer from '../cmd_buffer/sync';
@@ -29,7 +29,7 @@ export default class EntitySet extends Collection {
     
     initialize( entities, options={} ){
         let cmdBuffer = CmdBuffer;
-        this._uuid = options.uuid || createUuid();
+        this._uuid = options.uuid || createUUID();
         this.cid = _.uniqueId('es');
         this.components = new ComponentCollection();
 
