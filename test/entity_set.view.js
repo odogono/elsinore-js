@@ -221,8 +221,6 @@ test('removing a relevant component from an entity should trigger a entity:remov
         // logEvents( entitySet, 'e es' );
         // logEvents( view, 'e view' );
 
-        
-
         // remove an unrelated component to the view
         entitySet.removeComponent( entitySet.at(0).Status );
         
@@ -262,25 +260,30 @@ test('adding selected entities', async t => {
     }catch(err){Log.error(err.stack);}
 });
 
-test('deferred addition of components with a filter', t => {
-    initialiseEntitySet().then( ([registry,entitySet]) => {
+test('deferred addition of components with a filter', async t => {
+    try{
+    
+        const registry = await initialiseRegistry();
+        const entitySet = registry.createEntitySet();
         const eventSpy = Sinon.spy();
-        entitySet = registry.createEntitySet();
+        
         const query = new Query(Q => Q.all('/component/position'));
         const view = entitySet.view(query);
 
         view.on('all', eventSpy);
 
-        const entity = entitySet.addEntity(
-            registry.createEntity([
-                { '@c':'/component/flower', colour:'blue'}] ));
+        // const entity = entitySet.addEntity(
+        //     registry.createEntity([
+        //         { '@c':'/component/flower', colour:'blue'}] ));
+        const entity = entitySet.addEntity( {'@c':'/component/flower', colour:'blue'} );
 
         // view.applyEvents();
 
         t.equals( view.length, 0, 'no entities yet' );
 
-        entitySet.addComponent(
-            registry.createComponent({'@c':'/component/position', x:10, y:100}, entity ) );
+        entitySet.addEntity( {'@c':'/component/position', x:10, y:100} );
+        // entitySet.addComponent(
+        //     registry.createComponent({'@c':'/component/position', x:10, y:100}, entity ) );
 
         // a new component added to a view needs an event being applied
         view.applyEvents();
@@ -288,7 +291,7 @@ test('deferred addition of components with a filter', t => {
         t.equals( view.length, 1, 'only one entity added' );
 
         t.end();
-    });
+    }catch(err){Log.error(err.stack);}
 });
 
 

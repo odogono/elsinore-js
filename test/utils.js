@@ -1,6 +1,6 @@
 import _ from 'underscore';
 import test from 'tape';
-import Url from 'omnibox';
+// import Url from 'omnibox';
 
 import {
     toPascalCase,
