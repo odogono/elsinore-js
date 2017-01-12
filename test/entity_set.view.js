@@ -4,7 +4,7 @@ import Sinon from 'sinon';
 
 import {
     Component, Entity, EntityFilter, EntitySet,
-    Registry, Query, SchemaRegistry,
+    Registry, SchemaRegistry,
     initialiseRegistry, 
     loadEntities, 
     loadComponents,
@@ -211,7 +211,7 @@ test('removing a relevant component from an entity should trigger a entity:remov
     let entity;
     const eventSpy = Sinon.spy();
     initialiseEntitySet().then( ([registry,entitySet]) => {
-        const query = new Query(Q => Q.all('/component/channel'));
+        const query = (Q) => Q.all('/component/channel');
         // var entityFilter = registry.createEntityFilter( EntityFilter.ALL, '/component/score' );
         const view = entitySet.view( query, {updateOnEvent:true} );
 
@@ -267,7 +267,7 @@ test('deferred addition of components with a filter', async t => {
         const entitySet = registry.createEntitySet();
         const eventSpy = Sinon.spy();
         
-        const query = new Query(Q => Q.all('/component/position'));
+        const query = (Q) => Q.all('/component/position');
         const view = entitySet.view(query);
 
         view.on('all', eventSpy);
@@ -297,7 +297,7 @@ test('deferred addition of components with a filter', async t => {
 
 test('applying a filter', t => {
     initialiseEntitySet('entity_set.entities').then( ([registry,entitySet]) => {
-        const query = new Query(Q => Q.all(['/component/position', '/component/realname']));
+        const query = (Q) => Q.all(['/component/position', '/component/realname']);
         const view = entitySet.view( query );
         
         // printE( entitySet );
@@ -316,7 +316,7 @@ test('applying a filter', t => {
 test('views created with a filter', t => {
 
     initialiseEntitySet('entity_set.entities').then( ([registry,entitySet]) => {
-        const query = new Query(Q => Q.none('/component/position'));
+        const query = (Q) => Q.none('/component/position');
         const view = entitySet.query( query );
 
         // add another entity to the ES which the view should ignore
