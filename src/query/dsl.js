@@ -79,7 +79,7 @@ function rpnToTree( values ){
             stack.push( slice );
         }
         else {
-            if( _.isArray(op) ){
+            if( Array.isArray(op) ){
                 // log.debug('pushing ' + JSON.stringify(op) );
                 stack.push( op );
             } else {
@@ -89,7 +89,7 @@ function rpnToTree( values ){
                 // console.log('argCount',op,count);
                 slice = stack.splice( stack.length-count, count );
 
-                if( _.isArray(slice) && slice.length === 1 ){
+                if( Array.isArray(slice) && slice.length === 1 ){
                     slice = _.flatten( slice, true );
                 }
 
@@ -373,24 +373,4 @@ export default class QueryBuilder extends DslContext {
     and(){ throw new Error('invalid function and'); }
     or(){ throw new Error('invalid function or'); }
     where(){ throw new Error('invalid function where'); }
-
-    // toArray( query, toTree ){
-    //     let commands = query;
-
-    //     if( Q.isQuery(query) ){
-    //         return query.toArray( toTree );
-    //     }
-
-    //     if( _.isArray(query) ){
-    //         return _.reduce( query, (result, command) => {
-    //             if( Q.isQuery(command) ){
-    //                 command = command.toArray( toTree );
-    //             }
-    //             result = result.concat( command );
-    //             return result;
-    //         },[]);
-    //     }
-    //     return null;
-    // }
-
 }

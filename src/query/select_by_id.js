@@ -80,7 +80,7 @@ function commandSelectById( context, entityIds, selectFromRoot ) {
 function selectById( registry, entitySet, entityIds, returnAsEntitySet ){
     let ii,len,entity,result, entities = [];
 
-    entityIds = _.isArray(entityIds) ? entityIds : [entityIds];
+    entityIds = Array.isArray(entityIds) ? entityIds : [entityIds];
 
     // remove duplicates
     entityIds = _.uniq( entityIds );

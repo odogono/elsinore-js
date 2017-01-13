@@ -97,7 +97,7 @@ export default class Registry {
             components = this.createComponent(components);
 
             // check to see whether the entity id is set on the component.
-            const first = _.isArray(components) ? components[0] : components;
+            const first = Array.isArray(components) ? components[0] : components;
             const reportedEntityId = first.getEntityId();
             if( !_.isUndefined(reportedEntityId) ){
                 // attrs['@e'] = getEntityIdFromId(reportedEntityId);
@@ -217,7 +217,7 @@ export default class Registry {
 
         return Promise.resolve( this.schemaRegistry.register(data,options) )
             .then( componentDefs => {
-                if( !_.isArray(componentDefs) ){ componentDefs = [componentDefs]; }
+                if( !Array.isArray(componentDefs) ){ componentDefs = [componentDefs]; }
                 return _.reduce( this._entitySets, (current, es) => {
                     return current = current.then( () => {
                         // log.debug('registering componentDefs with es ' + es.cid);
@@ -302,7 +302,7 @@ export default class Registry {
         }
 
         // Obtain a component schema
-        if( _.isArray(componentDef) ){
+        if( Array.isArray(componentDef) ){
             // recurse each entry
             return Array.prototype.concat.apply( [], 
                 componentDef.map( (s) => this.createComponent(s, attrs, options) ));

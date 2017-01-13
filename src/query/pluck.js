@@ -63,7 +63,7 @@ function commandPluck( context, componentIds, attributes, options ){
     // if( true ){ log.debug('pluck> ' + stringify(_.rest(arguments))); } 
 
     attributes = context.valueOf(attributes, true );
-    attributes = _.isArray( attributes ) ? attributes : [ attributes ];
+    attributes = Array.isArray( attributes ) ? attributes : [ attributes ];
     options = context.valueOf(options, true );
     
     entitySet = context.resolveEntitySet();

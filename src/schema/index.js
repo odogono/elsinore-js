@@ -104,7 +104,7 @@ export default class ComponentRegistry {
         if( def.isComponentDef ){
             componentDef = def;
         }
-        else if( _.isArray(def) ){
+        else if( Array.isArray(def) ){
             return _.map( def, d => this.register(d,options) );
         }
         else if( Component.isComponent(def) ){
@@ -278,7 +278,7 @@ export default class ComponentRegistry {
         const throwOnNotFound = _.isUndefined(options.throwOnNotFound) ? false : options.throwOnNotFound;
         let result;
         
-        identifiers = _.isArray(identifiers) ? identifiers : [identifiers];
+        identifiers = Array.isArray(identifiers) ? identifiers : [identifiers];
         
         for ( ii=0,len=identifiers.length;ii<len;ii++ ){
             ident = identifiers[ii];

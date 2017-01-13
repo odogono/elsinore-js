@@ -220,7 +220,7 @@ export default class EntitySet extends Collection {
     */
     addEntity( entity, options){
         let add = null;
-        let isArray = _.isArray(entity);
+        let isArray = Array.isArray(entity);
         if( EntitySet.isMemoryEntitySet( entity ) ){
             entity = entity.models;
             isArray = true;

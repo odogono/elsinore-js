@@ -58,7 +58,7 @@ export default class CmdBuffer {
         }
 
         // if we have been passed an array, then batch all those commands together
-        if( _.isArray(component) ){
+        if( Array.isArray(component) ){
             if( _.isUndefined(options.batch) ){
                 options.batch = true;
                 options.execute = false;
@@ -165,7 +165,7 @@ export default class CmdBuffer {
 
 
         // if we have been passed an array, then batch all those commands together
-        if( _.isArray(component) ){
+        if( Array.isArray(component) ){
             if( _.isUndefined(options.batch) ){
                 options.batch = true;
                 options.execute = false;
@@ -223,7 +223,7 @@ export default class CmdBuffer {
 
         // if we are dealing with an array of entities, ensure they all get executed in
         // a single batch
-        if( _.isArray(entity) ){
+        if( Array.isArray(entity) ){
             if( _.isUndefined(options.batch) ){
                 options.batch = true;
                 options.execute = false;
@@ -310,7 +310,7 @@ export default class CmdBuffer {
 
         // if we are dealing with an array of entities, ensure they all get executed in
         // a single batch
-        if( _.isArray(entity) ){
+        if( Array.isArray(entity) ){
             if( _.isUndefined(options.batch) ){
                 options.batch = true;
                 options.execute = false;

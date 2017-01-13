@@ -65,7 +65,7 @@ export default class Query {
             // console.log('compiling a command builder');
             const builder = new QueryBuilder(this);
             const built = commands(builder);
-            if( _.isArray(built) ){
+            if( Array.isArray(built) ){
                 this.commands = _.map( built, dsl => dsl.toArray(true)[0] );
             } else {
                 this.commands = built.toArray(true);
@@ -75,7 +75,7 @@ export default class Query {
             // console.log('query builder result', commands);
         } else if( commands instanceof Query ){
             this.commands = commands.toJSON();
-        } else if( _.isArray(commands) ){
+        } else if( Array.isArray(commands) ){
             if( _.isFunction(commands[0]) ){
                 const builder = new QueryBuilder(this);
                 this.commands = _.map(commands, cmd => {
@@ -147,9 +147,9 @@ export default class Query {
                 return commands;
             }
             commands = (commands.src || commands.toArray( true ));
-        } else if( _.isArray(commands) ){
+        } else if( Array.isArray(commands) ){
             
-            if( !_.isArray(commands[0]) && !Query.isQuery(commands[0])){
+            if( !Array.isArray(commands[0]) && !Query.isQuery(commands[0])){
                 commands = [commands];
             }else{
                 commands = _.map( commands, command => {
@@ -279,7 +279,7 @@ class QueryContext {
         if( !value ){ return value; }
         // if(true ){ console.log('valueOf: ' + stringify(value) ); }
         // console.log('valueOf: ' + stringify(value) );
-        if( _.isArray(value) ){
+        if( Array.isArray(value) ){
             command = value[0];
             if( command === VALUE ){
                 if( value[1] === ROOT ){
@@ -324,7 +324,7 @@ class QueryContext {
             return this.entitySet;
         }
 
-        if( _.isArray(entitySet) ){
+        if( Array.isArray(entitySet) ){
             if( compileOnly ){
                 return entitySet;
             }
@@ -720,7 +720,7 @@ export function register( token, command, dslObj, options={} ){
 
     const argCount = _.isUndefined(options.argCount) ? 1 : options.argCount;
 
-    if( !_.isArray(token) ){
+    if( !Array.isArray(token) ){
         token = [token];
     }
 

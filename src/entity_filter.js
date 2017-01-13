@@ -45,7 +45,7 @@ export default class EntityFilter {
             return;
         }
 
-        if( _.isArray(bitField) ){
+        if( Array.isArray(bitField) ){
             bitField = BitField.create(bitField);
         } else if( !bitField ){
             bitField = BitField.create();

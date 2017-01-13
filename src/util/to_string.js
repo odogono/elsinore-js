@@ -73,7 +73,7 @@ export function toString(entity, indent='', join="\n"){
     let res = [''];
     let e;
     
-    if( _.isArray(entity) ){
+    if( Array.isArray(entity) ){
         _.each( entity, e => {
             res = res.concat( toString(e,'  ', ' ' ) );
         });
@@ -98,7 +98,7 @@ export function secretToString(entity, indent='', join="\n"){
     let res = [''];
     let e;
     
-    if( _.isArray(entity) ){
+    if( Array.isArray(entity) ){
         _.each( entity, e => {
             res = res.concat( toString(e,'  ', ' ' ) );
         });

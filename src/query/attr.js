@@ -41,7 +41,7 @@ function commandAttr( context, attributes ){
         return (context.last = [ VALUE, null ] );
     }
 
-    attributes = _.isArray( attributes ) ? attributes : [attributes];
+    attributes = Array.isArray( attributes ) ? attributes : [attributes];
     // components = entity.components;
     result = [];
 

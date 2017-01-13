@@ -67,8 +67,8 @@ export function commandEquals( context, op1, op2 ){
 
     value1 = context.valueOf( op1, true );
     value2 = context.valueOf( op2, true );
-    isValue1Array = _.isArray(value1);
-    isValue2Array = _.isArray(value2);
+    isValue1Array = Array.isArray(value1);
+    isValue2Array = Array.isArray(value2);
 
     // if( true ){ console.log('commandEquals', stringify(value1), op, stringify(value2) ); }
 

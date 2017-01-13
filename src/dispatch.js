@@ -110,7 +110,7 @@ export default class EntityDispatch {
      * @param {timeMs} timeMs - the time in milliseconds
      */
     execute( entity, timeMs, debug ){
-        let entityArray = _.isArray(entity) ? entity : [entity];
+        let entityArray = Array.isArray(entity) ? entity : [entity];
 
         // add the updated time to this dispatches idea of what the current time is
         this.time += timeMs;

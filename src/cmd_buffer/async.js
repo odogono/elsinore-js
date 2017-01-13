@@ -58,7 +58,7 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
         }
 
         // handle an array of components
-        if( _.isArray(component) ){
+        if( Array.isArray(component) ){
             if( _.isUndefined(options.batch) ){
                 options.batch = true;
                 options.execute = false;
@@ -110,7 +110,7 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
         if( !component ){ return this; }
 
         // handle an array of components
-        if( _.isArray(component) ){
+        if( Array.isArray(component) ){
             if( _.isUndefined(options.batch) ){
                 options.batch = true;
                 options.execute = false;
@@ -139,7 +139,6 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
             return Promise.resolve([]);
         }
 
-        // console.log('HERE remove', component.id, _.isArray(component.id) );
         this.addCommandX( CMD_COMPONENT_REMOVE, entityId, component);
 
         return (!execute) ? this : 
@@ -162,7 +161,7 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
         batch = options.batch; // cmds get batched together and then executed
         execute = _.isUndefined(options.execute) ? true : options.execute;
 
-        if( _.isArray(entity) ){
+        if( Array.isArray(entity) ){
             if( _.isUndefined(options.batch) ){
                 options.batch = true;
                 options.execute = false;
@@ -231,7 +230,7 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
 
         // if we are dealing with an array of entities, ensure they all get executed in
         // a single batch
-        if( _.isArray(entity) ){
+        if( Array.isArray(entity) ){
             if( _.isUndefined(options.batch) ){
                 options.batch = true;
                 options.execute = false;

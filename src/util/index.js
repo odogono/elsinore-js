@@ -28,7 +28,7 @@ export function mergeRecursive(obj1, obj2) {
  * Pushes item onto the end of the array and returns the array
  */
 export function arrayPush( array=[], item ){
-    if(_.isArray(item)){
+    if(Array.isArray(item)){
         return array.concat(item);
     }
     array.push(item);
@@ -238,7 +238,7 @@ export function deepExtend( out={}, ...others ){
 
             val = obj[key];
 
-            if( _.isArray(val) ){
+            if( Array.isArray(val) ){
                 out[key] = deepExtend( out[key] || [], val );
             }
             else if( _.isString(val) ){

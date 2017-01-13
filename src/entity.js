@@ -158,7 +158,7 @@ export default class Entity extends Model {
     addComponent( component ){
         var existing;
         if( !component ){ return this; }
-        if(_.isArray(component)){ 
+        if(Array.isArray(component)){ 
             _.each(component, c => this.addComponent(c));
             return this;
         }
@@ -233,7 +233,7 @@ export default class Entity extends Model {
 
     getComponentByIId( componentIId ){
         componentIId = this.getRegistry().getIId( componentIId );
-        if( _.isArray(componentIId) ) {
+        if( Array.isArray(componentIId) ) {
             return _.map( componentIId, id => this.components[id] )
         }
         return this.components[ componentIId ];
@@ -327,56 +327,6 @@ Entity.createId = function(){
 
 //     return result;
 // }
-
-/**
-*
-*/
-/*Entity.create = function(entityId, entitySetId, options={}){
-    let result = new Entity();
-    let registry;
-    result.components = [];
-    result.cid = Entity.createId();
-
-    // console.log('Entity.create', arguments);
-    if(_.isObject(entitySetId)){
-        options = entitySetId;
-        entitySetId = 0;
-    }
-    
-    registry = options.registry;
-
-    if( Registry.isRegistry(entityId) ){
-        registry = entityId;
-        entityId = 0;
-    }
-
-    if( registry ){
-        result.setRegistry( registry );
-
-        entityId = entityId || options.id || registry.createId();
-        result.setId( entityId );
-
-        // as a convenience, we can pass an array of components as the 2nd arg
-        // and they will be added to the entity
-
-        // console.log('components? ', options[0], _.isObject(options), Array.isArray(options), options )
-
-        let components = options['@c'] || ((_.isArray(options) && options[0])?options:null);
-        if(components){
-            components = result.getRegistry().createComponent(components);
-            result.addComponent(components);
-        }
-        return result;
-    }
-
-    if( _.isUndefined(entityId) ){
-        entityId = 0;
-    }
-    
-    result.setId( entityId, entitySetId );
-    
-    return result;
-};//*/
 
 Entity.isEntity = function( entity ){
     return entity && entity.isEntity;

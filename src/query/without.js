@@ -30,7 +30,7 @@ function commandWithout( context, values ){
     value = array = context.valueOf(array, true );
     values = context.valueOf(values, true );
 
-    if( _.isArray(array) && values ){
+    if( Array.isArray(array) && values ){
         value = _.without( array, values );
     }
 
