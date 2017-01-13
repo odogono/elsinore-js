@@ -171,7 +171,7 @@ class AsyncEntitySet extends EntitySet {
      * Returns an entity
      */
     getEntity( entityId, options={} ){
-        const throwsOnError = _.isUndefined(options.throwsOnError) ? true : options.throwsOnError;
+        const throwsOnError = options.throwsOnError === void 0 ? true : options.throwsOnError;
         if (options.componentBitFieldOnly) {
             return this.getEntityBitField(entityId,throwsOnError);
         }

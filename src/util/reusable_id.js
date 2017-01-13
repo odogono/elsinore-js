@@ -4,7 +4,7 @@ import _ from 'underscore';
 export default class ReusableId {
 
     constructor( defaultValue ){
-        this.defaultValue = _.isUndefined(defaultValue) ? 1 : defaultValue;
+        this.defaultValue = defaultValue === void 0 ? 1 : defaultValue;
         this.activeIds = [];
         this.availableIds = [];
         // this.promiseQ = new PromiseQ(1);
@@ -70,7 +70,7 @@ export default class ReusableId {
     nextFree(){
         return new Promise( (resolve) => {
              let free = this.availableIds.pop();
-             if( _.isUndefined(free) ){
+             if( free === void 0 ){
                  return resolve(undefined);
              } 
              this.activeIds.push(free);

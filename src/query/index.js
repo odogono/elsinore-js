@@ -372,8 +372,8 @@ class QueryContext {
         let debug = context.debug;
         let esCount;
 
-        const limit = _.isUndefined(options.limit) ? 0 : options.limit;
-        const offset = _.isUndefined(options.offset) ? 0 : options.offset;
+        const limit = options.limit === void 0 ? 0 : options.limit;
+        const offset = options.offset === void 0 ? 0 : options.offset;
 
         // console.log('context is', context);
         // console.log('entityfilter is', entityFilter);
@@ -718,7 +718,7 @@ export function register( token, command, dslObj, options={} ){
         })
     }
 
-    const argCount = _.isUndefined(options.argCount) ? 1 : options.argCount;
+    const argCount = options.argCount === void 0 ? 1 : options.argCount;
 
     if( !Array.isArray(token) ){
         token = [token];

@@ -75,8 +75,8 @@ export default class EntityDispatch {
             createdAt: 0,
             updatedAt: -1,
             executedAt: Date.now,
-            priority: _.isUndefined(options.priority) ? 0 : options.priority,
-            interval: _.isUndefined(options.interval) ? 0 : options.interval
+            priority: options.priority === void 0 ? 0 : options.priority,
+            interval: options.interval === void 0 ? 0 : options.interval
         };
         processor._priority = entryAttrs.priority;
 

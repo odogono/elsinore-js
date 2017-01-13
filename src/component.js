@@ -128,7 +128,7 @@ export default class Component extends Model {
      */
     toJSON(options){
         let result = _.omit(this.attributes,'@e','@es', '@c', 'id');
-        if( !_.isUndefined(this.id) ){
+        if( this.id !== void 0 ){
             result[Component.ID] = this.id;
         }
         if( this.entityId > 0 ){

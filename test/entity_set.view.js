@@ -156,7 +156,7 @@ test('removing a component from an entity', t => {
         // printE( entitySet );
         // printE( view );
 
-        t.ok( _.isUndefined( view.at(0).Position ), 'the entity should have no position' );
+        t.ok( view.at(0).Position === void 0, 'the entity should have no position' );
         t.end();
     })
     .catch( err => console.log('test error', err, err.stack))

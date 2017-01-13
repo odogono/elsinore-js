@@ -72,10 +72,10 @@ function createAttrsFromProperties( props ){
         value = props[name];
         property = value;
         if( _.isObject(value) ){
-            if( !_.isUndefined(value.default) ){
+            if( value.default !== void 0 ){
                 value = property.default;
             }
-            else if( !_.isUndefined(value.type) ){
+            else if( value.type !== void 0 ){
                 switch( value.type ){
                     case 'integer': value = 0; break;
                     case 'string': value = ''; break;

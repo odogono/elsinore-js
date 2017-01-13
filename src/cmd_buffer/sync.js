@@ -51,7 +51,7 @@ export default class CmdBuffer {
         listenTo = options.listen;
 
         batch = options.batch; // cmds get batched together and then executed
-        execute = _.isUndefined(options.execute) ? true : options.execute;
+        execute = options.execute === void 0 ? true : options.execute;
 
         if( !component ){
             return this;
@@ -59,7 +59,7 @@ export default class CmdBuffer {
 
         // if we have been passed an array, then batch all those commands together
         if( Array.isArray(component) ){
-            if( _.isUndefined(options.batch) ){
+            if( options.batch === void 0 ){
                 options.batch = true;
                 options.execute = false;
                 if( execute !== false ){ execute = true; }
@@ -156,7 +156,7 @@ export default class CmdBuffer {
         
         debug = options.debug;
         batch = options.batch; // cmds get batched together and then executed
-        execute = _.isUndefined(options.execute) ? true : options.execute;
+        execute = options.execute === void 0 ? true : options.execute;
         executeOptions = _.extend( {}, options, {removeEmptyEntity:true} );
 
         if( !component ){
@@ -166,7 +166,7 @@ export default class CmdBuffer {
 
         // if we have been passed an array, then batch all those commands together
         if( Array.isArray(component) ){
-            if( _.isUndefined(options.batch) ){
+            if( options.batch === void 0 ){
                 options.batch = true;
                 options.execute = false;
                 if( execute !== false ){ execute = true; }
@@ -219,12 +219,12 @@ export default class CmdBuffer {
         }
 
         batch = options.batch; // cmds get batched together and then executed
-        execute = _.isUndefined(options.execute) ? true : options.execute;
+        execute = options.execute === void 0 ? true : options.execute;
 
         // if we are dealing with an array of entities, ensure they all get executed in
         // a single batch
         if( Array.isArray(entity) ){
-            if( _.isUndefined(options.batch) ){
+            if( options.batch === void 0 ){
                 options.batch = true;
                 options.execute = false;
                 if( execute !== false ){ execute = true; }
@@ -305,13 +305,13 @@ export default class CmdBuffer {
         }
 
         batch = options.batch; // cmds get batched together and then executed
-        execute = _.isUndefined(options.execute) ? true : options.execute;
+        execute = options.execute === void 0 ? true : options.execute;
         executeOptions = _.extend( {}, options, {removeEmptyEntity:true} );
 
         // if we are dealing with an array of entities, ensure they all get executed in
         // a single batch
         if( Array.isArray(entity) ){
-            if( _.isUndefined(options.batch) ){
+            if( options.batch === void 0 ){
                 options.batch = true;
                 options.execute = false;
                 if( execute !== false ){ execute = true; }

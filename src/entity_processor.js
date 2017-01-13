@@ -24,9 +24,9 @@ export default class EntityProcessor {
         _.extend(this, EventsAsync);
 
         this._cmds = [];
-        this.id = _.isUndefined(options.id) ? _.uniqueId() : options.id;
-        this._priority = _.isUndefined(options.priority) ? 0 : options.priority;
-        this._updateable = _.isUndefined(options.updateable) ? 0 : options.updateable;
+        this.id = options.id === void 0 ? _.uniqueId() : options.id;
+        this._priority = options.priority === void 0 ? 0 : options.priority;
+        this._updateable = options.updateable === void 0 ? 0 : options.updateable;
     }
 
     getPriority(){ return this._priority; }

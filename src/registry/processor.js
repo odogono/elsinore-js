@@ -26,8 +26,8 @@ _.extend( Registry.prototype, {
         let updateable;
 
         processorId = this.createId(); //processorModel.id || options.id;
-        priority = _.isUndefined(options.priority) ? 0 : options.priority;
-        updateable = _.isUndefined(options.update) ? true : options.update;
+        priority = options.priority === void 0 ? 0 : options.priority;
+        updateable = options.update === void 0 ? true : options.update;
 
         processorAttrs = {id:processorId, priority, updateable};
         processorOptions = {Model:processorModel,registry:this};

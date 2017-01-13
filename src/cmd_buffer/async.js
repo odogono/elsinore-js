@@ -51,7 +51,7 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
         silent = options.silent;
         entity = options.entity;
         listenTo = options.listen;
-        execute = _.isUndefined(options.execute) ? true : options.execute;
+        execute = options.execute === void 0 ? true : options.execute;
 
         if( !component ){
             return [];
@@ -59,7 +59,7 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
 
         // handle an array of components
         if( Array.isArray(component) ){
-            if( _.isUndefined(options.batch) ){
+            if( options.batch === void 0 ){
                 options.batch = true;
                 options.execute = false;
                 if( execute !== false ){ execute = true; }
@@ -105,13 +105,13 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
         
         debug = options.debug;
         batch = options.batch; // cmds get batched together and then executed
-        execute = _.isUndefined(options.execute) ? true : options.execute;
+        execute = options.execute === void 0 ? true : options.execute;
 
         if( !component ){ return this; }
 
         // handle an array of components
         if( Array.isArray(component) ){
-            if( _.isUndefined(options.batch) ){
+            if( options.batch === void 0 ){
                 options.batch = true;
                 options.execute = false;
                 if( execute !== false ){ execute = true; }
@@ -159,10 +159,10 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
         let addOptions = {batch: true, execute: false};
 
         batch = options.batch; // cmds get batched together and then executed
-        execute = _.isUndefined(options.execute) ? true : options.execute;
+        execute = options.execute === void 0 ? true : options.execute;
 
         if( Array.isArray(entity) ){
-            if( _.isUndefined(options.batch) ){
+            if( options.batch === void 0 ){
                 options.batch = true;
                 options.execute = false;
                 if( execute !== false ){ execute = true; }
@@ -225,13 +225,13 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
         }
 
         batch = options.batch; // cmds get batched together and then executed
-        execute = _.isUndefined(options.execute) ? true : options.execute;
+        execute = options.execute === void 0 ? true : options.execute;
         executeOptions = _.extend( {}, options, {removeEmptyEntity:true} );
 
         // if we are dealing with an array of entities, ensure they all get executed in
         // a single batch
         if( Array.isArray(entity) ){
-            if( _.isUndefined(options.batch) ){
+            if( options.batch === void 0 ){
                 options.batch = true;
                 options.execute = false;
                 if( execute !== false ){ execute = true; }
@@ -336,7 +336,7 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
         let ii,len;
 
         const debug = this.debug || options.debug;
-        let silent = _.isUndefined(options.silent) ? false : options.silent;
+        let silent = options.silent === void 0 ? false : options.silent;
 
         // console.log('executing entities', _.keys(this.cmds), options );
         // _.each( this.cmds, cmd => console.log( cmd ) )
@@ -400,7 +400,7 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
                             this.componentsUpdated.set( updateResult.componentsUpdated ); }
                         if( updateResult.componentsRemoved ){ 
                             this.componentsRemoved.set( updateResult.componentsRemoved ); }
-                        if( updateResult && !_.isUndefined(updateResult.silent) ){
+                        if( updateResult && updateResult.silent !== void 0 ){
                             silent = updateResult.silent;
                         }
 
@@ -412,134 +412,7 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
 
             })
 
-        
-        // return _.keys(this.cmds).reduce( (sequence, entityId) => {
-        //     let cmds = this.cmds[ entityId ];
-            
-        //     return sequence.then( () => {
-                
-        //         // iterate through each cmd for the entity
-        //         cmds.forEach( cmd => {
-        //             let commandType = cmd[0];
-        //             let component = cmd[1];
-        //             let cmdOptions = cmd[2];
-        //             let entity = cmdOptions.entity;
-        //             let entityId = entity ? entity.id : 0;
-        //             let mode = cmdOptions.mode;
-        //             let entityChanged = false;
-
-        //             if( commandType == CMD_EX ){
-        //                 cmd = _.rest(cmd); // remove first
-        //                 commandType = cmd[0];
-        //                 entityId = cmd[1];
-        //                 component = cmd[2];
-        //                 cmdOptions = cmd[3];
-        //                 if(debug){console.log('cmdX', commandType, cmd[1], component, cmdOptions)}
-        //             }
-
-        //             switch( commandType ){
-        //                 case CMD_ENTITY_ADD:
-        //                     this.entitiesAdded.add( entity );
-                            
-        //                     if( debug ){ 
-        //                         log.debug('cmd: adding entity ' + 
-        //                             entity.getEntityId() + '/' + entity.cid + '/' + entity.getEntitySetId() ); 
-        //                     }
-        //                     break;
-
-        //                 case CMD_COMPONENT_ADD:
-        //                     entity.addComponent( component );
-        //                     if( !this.entitiesAdded.get(entity) ){
-        //                         this.entitiesUpdated.add(entity);
-        //                     }
-                            
-        //                     this.componentsAdded.add( component );
-        //                     break;
-
-        //                 case CMD_COMPONENT_UPDATE:
-        //                     entity.addComponent( component );
-        //                     if( !this.entitiesAdded.get(entity) ){
-        //                         this.entitiesUpdated.add(entity);
-        //                     }
-        //                     this.componentsUpdated.add(component);
-        //                     break;
-
-        //                 case CMD_COMPONENT_REMOVE:
-        //                     // no entity to remove from?
-        //                     if(debug ){ log.debug('removing component ' + JSON.stringify(component),'from',entityId ); }
-        //                     if( !entity ){
-        //                         return;
-        //                     }
-
-        //                     // 1. the component will be removed from the entityset CMD_COMPONENT_REMOVE(cid)
-        //                     // 2. the component will be removed from the entity CMD_COMPONENT_REMOVE_FROM_ENTITY(eid,cid)
-        //                     // 3. if the entity has no more components, the entity is removed CMD_ENTITY_REMOVE(eid)
-                            
-        //                     this.componentsRemoved.add( component );
-                            
-        //                     // log.debug('remove com ' + entity.hasComponents() + ' ' + entity.getComponentBitfield().toString() );
-        //                     entity.removeComponent( component );
-        //                     // if( (!entitySet.allowEmptyEntities || removeEmptyEntity) && !entity.hasComponents() ){
-        //                     if( !entity.hasComponents() ){
-        //                         this.entitiesRemoved.add(entity);
-        //                         this.entitiesUpdated.remove( entity );
-        //                     } else {
-        //                         this.entitiesUpdated.add(entity);
-        //                     }
-        //                     break;
-        //             }
-        //         });
-        //     });
-
-        // }, Promise.resolve() )
-        // .then( () => {
-        //     let entity;
-
-        //     if( debug ){
-        //         this.debugLog();
-        //     }
-
-        //     // save the new entities
-        //     return entitySet.update( 
-        //         this.entitiesAdded.models, 
-        //         this.entitiesUpdated.models, 
-        //         this.entitiesRemoved.models, 
-        //         this.componentsAdded.models,
-        //         this.componentsUpdated.models,
-        //         this.componentsRemoved.models )
-        //         .then( updateResult => {
-        //             if( updateResult.entitiesAdded ){
-        //                 this.entitiesAdded.set( updateResult.entitiesAdded ); }
-        //             if( updateResult.entitiesUpdated ){
-        //                 this.entitiesUpdated.set( updateResult.entitiesUpdated ); }
-        //             if( updateResult.entitiesRemoved ){
-        //                 this.entitiesRemoved.set( updateResult.entitiesRemoved ); }
-        //             if( updateResult.componentsAdded ){ 
-        //                 this.componentsAdded.set( updateResult.componentsAdded ); }
-        //             if( updateResult.componentsUpdated ){ 
-        //                 this.componentsUpdated.set( updateResult.componentsUpdated ); }
-        //             if( updateResult.componentsRemoved ){ 
-        //                 this.componentsRemoved.set( updateResult.componentsRemoved ); }
-        //             if( updateResult && !_.isUndefined(updateResult.silent) ){
-        //                 silent = updateResult.silent;
-        //             }
-
-        //             if( !silent ){
-        //                 this.triggerEvents( entitySet );
-        //             }
-        //             return this;
-        //         });
-        // });
     }
-
-    // isTempId( entityId ){
-    //     if( !entityId || (_.isString(entityId) && entityId.indexOf(TEMP_ENTITY_PREFIX) === 0) ){
-    //         return true;
-    //     }
-    //     return false;
-    // }
-
-
 }
 
 AsyncCmdBuffer.prototype.type = 'AsyncCmdBuffer';

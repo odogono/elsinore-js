@@ -40,7 +40,7 @@ export default class EntitySet extends Collection {
             cmdBuffer = options.cmdBuffer;
         }
         this._cmdBuffer = new cmdBuffer();
-        this.allowEmptyEntities = _.isUndefined(options.allowEmptyEntities) ? true : options.allowEmptyEntities;
+        this.allowEmptyEntities = options.allowEmptyEntities === void 0 ? true : options.allowEmptyEntities;
     }
 
     getEntitySetId(){

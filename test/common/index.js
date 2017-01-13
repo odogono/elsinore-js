@@ -141,7 +141,7 @@ export async function initialiseRegistry( doLogEvents ){
     }
 
     options = (options || {});
-    load = _.isUndefined(options.loadComponents) ? true : options.loadComponents;
+    load = options.loadComponents === void 0 ? true : options.loadComponents;
 
     if( load ){
         componentData = loadComponents();

@@ -99,7 +99,7 @@ export default class Registry {
             // check to see whether the entity id is set on the component.
             const first = Array.isArray(components) ? components[0] : components;
             const reportedEntityId = first.getEntityId();
-            if( !_.isUndefined(reportedEntityId) ){
+            if( reportedEntityId !== void 0 ){
                 // attrs['@e'] = getEntityIdFromId(reportedEntityId);
                 // attrs['@es'] = getEntitySetIdFromId(reportedEntityId);
                 options.id = reportedEntityId;
@@ -112,7 +112,7 @@ export default class Registry {
             delete options.comBf;
         }
 
-        if( _.isUndefined(options.id) && !idSet ){
+        if( options.id === void 0 && !idSet ){
             attrs.id = this.createId();
         } else { 
             attrs.id = options.id; 

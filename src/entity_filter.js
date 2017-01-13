@@ -21,7 +21,7 @@ export default class EntityFilter {
 
     constructor( type, bitfield ){
         this.filters = {};
-        if( !_.isUndefined(type) ){
+        if( type !== void 0 ){
             this.add(type,bitfield);
         }
     }

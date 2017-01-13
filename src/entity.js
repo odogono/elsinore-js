@@ -20,10 +20,10 @@ export default class Entity extends Model {
         let eid = -1,esid = 0, comBf;
 
         if( attrs ){
-            if( !_.isUndefined(attrs['@e']) ){
+            if( attrs['@e'] !== void 0 ){
                 eid = attrs['@e'];
             }
-            if( !_.isUndefined(attrs['@es']) ){
+            if( attrs['@es'] !== void 0 ){
                 esid = attrs['@es'];
             }
 
@@ -47,7 +47,7 @@ export default class Entity extends Model {
         }
 
         
-        if( !attrs || _.isUndefined(attrs.id) ){
+        if( !attrs || attrs.id === void 0 ){
             this.setId(eid, esid); 
         }
 

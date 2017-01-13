@@ -97,7 +97,7 @@ export default class ComponentRegistry {
      */
     register( def:ComponentDefRawType|ComponentDefType, options:Object={} ): Object|null {
         let componentDef;
-        let throwOnExists = _.isUndefined(options.throwOnExists) ? true : options.throwOnExists;
+        let throwOnExists = options.throwOnExists === void 0 ? true : options.throwOnExists;
 
         
         
@@ -220,7 +220,7 @@ export default class ComponentRegistry {
      * Creates a new component instance
      */
     createComponent( defUri, attrs, options={}, cb ){
-        let throwOnNotFound = _.isUndefined(options.throwOnNotFound) ? true : options.throwOnNotFound;
+        let throwOnNotFound = options.throwOnNotFound === void 0 ? true : options.throwOnNotFound;
         if( cb ){
             throwOnNotFound = false;
         }
@@ -235,7 +235,7 @@ export default class ComponentRegistry {
         const type = def.get('type');
         let ComponentType = type ? this._componentTypes[type] : Component;
 
-        if( _.isUndefined(attrs) && _.isObject(defUri) ){
+        if( attrs === void 0 && _.isObject(defUri) ){
             attrs = defUri;
         }
 
@@ -272,10 +272,10 @@ export default class ComponentRegistry {
      */
     getComponentDef( identifiers:ComponentDefIdentifierType, options:Object={} ): Object|null|uint32 {
         let ii=0, len=0, cDef, ident;
-        const debug = _.isUndefined(options.debug) ? false : options.debug;
-        const forceArray = _.isUndefined(options.forceArray) ? false : options.forceArray;
-        const returnIds = _.isUndefined(options.returnIds) ? false : options.returnIds;
-        const throwOnNotFound = _.isUndefined(options.throwOnNotFound) ? false : options.throwOnNotFound;
+        const debug = options.debug === void 0 ? false : options.debug;
+        const forceArray = options.forceArray === void 0 ? false : options.forceArray;
+        const returnIds = options.returnIds === void 0 ? false : options.returnIds;
+        const throwOnNotFound = options.throwOnNotFound === void 0 ? false : options.throwOnNotFound;
         let result;
         
         identifiers = Array.isArray(identifiers) ? identifiers : [identifiers];

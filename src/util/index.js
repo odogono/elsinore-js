@@ -348,21 +348,6 @@ export function parseJSON( str, defaultValue=null ){
     }
 }
 
-// export function printIns(arg,depth,showHidden,colors){
-//     if( _.isUndefined(depth) ) depth = 2;
-//     // let stack = __stack[1];
-//     // let fnName = stack.getFunctionName();
-//     // let line = stack.getLineNumber();
-//     // Util.log( fnName + ':' + line + ' ' + Util.inspect(arg,showHidden,depth,colors) );
-//     // console.log( Util.inspect(arg,showHidden,depth,colors) );
-// };
-
-// export function printVar(...args){
-//     let ii, len;
-//     // for (ii = 0, len = args.length; ii < len; ii++) {
-//         // Util.log( Stringify(args[ii], null, '\t') );
-//     // }
-// }
 
 /**
 *   Converts a string so that the words are capitalised and concatenated
