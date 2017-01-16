@@ -9,8 +9,6 @@ import Registry from '../src/registry';
 import {createLog} from '../src/util/log';
 
 import {
-    // Component, Entity, EntityFilter,
-    // Registry, SchemaRegistry,
     initialiseRegistry, 
     loadEntities, 
     loadComponents,

@@ -3,6 +3,7 @@ import {Model, Events} from 'odgn-backbone-model';
 import EntitySet from './entity_set';
 import {
     clearArray,
+    isUndefined,
     stringify,
     arrayPush
 } from './util';
@@ -19,14 +20,17 @@ import EventsAsync from './util/events.async';
  */
 export default class EntityProcessor {
 
+    /**
+     * 
+     */
     constructor(options={}){
-        // _.extend(this, Events);
-        _.extend(this, EventsAsync);
+        Object.assign(this, EventsAsync);
+        options = {id:_.uniqueId(), priority:0,updateable:true, ...options };
 
         this._cmds = [];
-        this.id = options.id === void 0 ? _.uniqueId() : options.id;
-        this._priority = options.priority === void 0 ? 0 : options.priority;
-        this._updateable = options.updateable === void 0 ? 0 : options.updateable;
+        this.id = options.id;
+        this._priority = options.priority;
+        this._updateable = options.updateable;
     }
 
     getPriority(){ return this._priority; }

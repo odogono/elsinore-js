@@ -13,21 +13,19 @@ const PLUCK = 'PL';
 /**
  * Adds pluck functionality directory to entityset
  */
-_.extend( EntitySet.prototype, {
-    pluck: function( componentIds, attr ){
-        // var result;
-        // returnAsEntitySet = (returnAsEntitySet === undefined) ? true : returnAsEntitySet;
-        // result = selectById( this.getRegistry(), this, entityIds, returnAsEntitySet );
-        // return result;
-        
-        const componentIId = this.getRegistry().getIId( componentIds );
-        const query = new Query( Q => Q.pluck(componentIds,attr) );
-        return query.execute(this);
-        
-        // var query = Q.pluck( componentIds, attr );
-        // return query.execute( this );
-    }
-});
+EntitySet.prototype.pluck = function( componentIds, attr ){
+    // var result;
+    // returnAsEntitySet = (returnAsEntitySet === undefined) ? true : returnAsEntitySet;
+    // result = selectById( this.getRegistry(), this, entityIds, returnAsEntitySet );
+    // return result;
+    
+    const componentIId = this.getRegistry().getIId( componentIds );
+    const query = new Query( Q => Q.pluck(componentIds,attr) );
+    return query.execute(this);
+    
+    // var query = Q.pluck( componentIds, attr );
+    // return query.execute( this );
+}
 
 
 function dslPluck( componentIds, property, options ){

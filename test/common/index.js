@@ -92,14 +92,14 @@ export function loadComponents(options={}){
 /**
 *   Returns an entityset with the given entities
 */
-export function loadEntities( registry, fixtureName, entitySet, options ){
+export function loadEntities( registry, fixtureName, entitySet, options={} ){
     let data;
     let lines;
     let result;
 
     fixtureName = fixtureName || 'entity_set.entities.json';
     registry = registry || initialiseRegistry( options );
-    result = registry.createEntitySet( _.extend( {instanceClass:entitySet}, options) );
+    result = registry.createEntitySet( {instanceClass:entitySet,...options} );
 
     if( _.isString(fixtureName) ){
         if( fixtureName.indexOf('.json') === -1 ){

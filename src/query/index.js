@@ -8,7 +8,6 @@ import QueryBuilder from './dsl';
 import {DslContext} from './dsl';
 
 
-// _.extend( Query, {
 export const ALL = 0; // entities must have all the specified components
 export const ANY = 1; // entities must have one or any of the specified components
 export const SOME = 2; // entities must have at least one of the specified component
@@ -258,7 +257,7 @@ export default class Query {
         }
         
         if( options.alias ){
-            context.alias = _.extend({},options.alias);
+            context.alias = {...options.alias};
         }
 
         return context;
@@ -499,7 +498,7 @@ QueryContext.create = function( query, props={}, options={} ){
     type = options.context || props.type || QueryContext;
     context = new (type)(query);
     context.type = type;
-    context = _.extend( context, props );
+    Object.assign(context, props);
     return context;
 }
 

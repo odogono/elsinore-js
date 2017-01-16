@@ -147,7 +147,7 @@ export default class EntitySet extends Collection {
             // case 'entity:add':
                 // return this.add.apply( this, args );
             case 'component:add':
-                args[1] = _.extend({}, args[1], {clone:true});
+                args[1] = {...args[1], clone:true};
                 return this.addComponent.apply(this, args);
             case 'component:remove':
                 return this.removeComponent.apply( this, args );

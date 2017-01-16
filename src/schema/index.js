@@ -59,7 +59,7 @@ class ComponentDefUriCollection extends ComponentDefCollection {
  */
 export default class ComponentRegistry {
     constructor( definitions, options={} ){
-        _.extend(this, Events);
+        Object.assign(this,Events);
         this.registry = options.registry;
         this._componentIndex = 1;
         this._componentDefs = new ComponentDefCollection();
@@ -242,9 +242,12 @@ export default class ComponentRegistry {
         // we create with attrs from the def, not properties -
         // since the properties describe how the attrs should be set
 
-        attrs = _.extend( {}, def.getAttrs(), attrs );
+        const defAttrs = def.getAttrs();
+        attrs = {...defAttrs,...attrs};
+
         // NOTE: no longer neccesary to pass parse:true as the component constructor calls component.parse
-        const createOptions = _.extend( {}, def.get('options'), {registry:this.registry});
+        const defOptions = def.get('options') || {};
+        const createOptions = {...defOptions, registry:this.registry};
         let result = new ComponentType( attrs, createOptions );
 
         if( type ){

@@ -321,7 +321,10 @@ export function reduceIterator( iterator, eachFn, memo ){
     });
 }
 
-
+/**
+ * @param {object} obj
+ * @param space
+ */
 export function stringify( obj, space ){
     let cache = [];
     return JSON.stringify(obj, function(key, value) {
@@ -348,6 +351,29 @@ export function parseJSON( str, defaultValue=null ){
     }
 }
 
+/**
+ * Returns true if the value is undefined
+ * 
+ * @param val
+ * @returns {boolean}
+ */
+export function isUndefined(val){
+    return val === void 0;
+}
+
+
+/**
+ * Checks if the value is an object
+ * 
+ * taken from https://github.com/lodash/lodash/blob/master/isObject.js
+ * 
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an object, else `false`.
+ */
+function isObject(value) {
+    const type = typeof value;
+    return value != null && (type == 'object' || type == 'function');
+}
 
 /**
 *   Converts a string so that the words are capitalised and concatenated
@@ -374,3 +400,29 @@ export function getEntitySetIdFromId( id ){
 export function setEntityIdFromId( eid, esid ){
     return (esid & 0x1fffff) * 0x100000000 + (eid & 0xffffffff);
 }
+
+
+// if (typeof Object.assign != 'function') {
+//   Object.assign = function (target, varArgs) { // .length of function is 2
+//     'use strict';
+//     if (target == null) { // TypeError if undefined or null
+//       throw new TypeError('Cannot convert undefined or null to object');
+//     }
+
+//     var to = Object(target);
+
+//     for (var index = 1; index < arguments.length; index++) {
+//       var nextSource = arguments[index];
+
+//       if (nextSource != null) { // Skip over if undefined or null
+//         for (var nextKey in nextSource) {
+//           // Avoid bugs when hasOwnProperty is shadowed
+//           if (Object.prototype.hasOwnProperty.call(nextSource, nextKey)) {
+//             to[nextKey] = nextSource[nextKey];
+//           }
+//         }
+//       }
+//     }
+//     return to;
+//   };
+// }

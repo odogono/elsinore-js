@@ -5,7 +5,7 @@ import {Events} from 'odgn-backbone-model';
 *   An event listener which captures incoming events and
 *   only releases them when instructed to.
 */
-const EventsAsync = _.extend({}, Events, {
+const EventsAsync = Object.assign({}, Events, {
 
     /**
     *

@@ -51,20 +51,16 @@ test('limit the number of entities in the result from an offset', t => {
     .catch( err => { log.debug('t.error: ' + err ); log.debug( err.stack );} )
 });
 
-test('apply offset and limit to a select', t => {
-    initialiseEntitySet().then( ([registry,entitySet]) => {
-        const query = new Query( Q => [
-            Q.all('/component/username'),
-            Q.limit( 2 ),
-            // Query.pluck( null, 'eid', {unique:true})
-        ]);
+test('apply offset and limit to a select', async t => {
+    const [registry,entitySet] = await initialiseEntitySet();
+    const query = Q => [
+        Q.all('/component/username'),
+        Q.limit( 2 ),
+    ];
+    const result = entitySet.query( query );
         
-        const result = entitySet.query( query );
-        
-        t.equals( result.size(), 2, 'only two entities returned' );
-        t.end();
-    })
-    .catch( err => { log.debug('t.error: ' + err ); log.debug( err.stack );} )
+    t.equals( result.size(), 2, 'only two entities returned' );
+    t.end();
 });
 
 

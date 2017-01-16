@@ -61,7 +61,7 @@ function commandLimit( context, count, offset ){
  * limit arguments
  */
 function compile( context, commands ){
-    var ii, cmd, limitOptions;
+    let ii, cmd, limitOptions;
 
     // log.debug('limit: in-compile cmds:', commands);
 
@@ -75,7 +75,9 @@ function compile( context, commands ){
         }
         else if( limitOptions && cmd[0] === ENTITY_FILTER ){
             // set the options object of the entityFilter command
-            cmd[3] = _.extend( {}, cmd[3], limitOptions );
+            if( limitOptions ){
+                cmd[3] = {...cmd[3], ...limitOptions};
+            }
             limitOptions = null;
         }
     }

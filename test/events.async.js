@@ -8,51 +8,10 @@ import Common  from './common';
 import EventsAsync from '../src/util/events.async';
 import Utils from '../src/util';
 
-// let EventsAsync = Common.requireLib('util/events.async');
-// let Utils = Common.requireLib('utils');
-
-
-// let EventsAsync = _.extend({}, Events, {
-
-//     stopListening: function( obj, name, callback ){
-//         Events.stopListening.apply( this, arguments );
-//         delete this._asyncListenQueue;
-//     },
-    
-//     listenToAsync: function(obj, name, callback){
-//         let self = this;
-//         let asyncListenQueue = this._asyncListenQueue || (this._asyncListenQueue = []);
-//         return this.listenTo( obj, name, () => {
-//             asyncListenQueue.push( {c:callback, a:_.toArray(arguments)} );
-//         });
-//     },
-
-//     // triggerAsync: function(name){
-//     //     if (!this._events ) { return this; }
-//     //     this._asyncEvents || (this._asyncEvents = []);
-//     //     this._asyncEvents.push( _.toArray(arguments) );
-//     // },
-
-//     /**
-//     *   Releases all previously received events
-//     */
-//     releaseAsync: function(){
-//         let item, ii, len;
-//         if(!this._asyncListenQueue){ return this; }
-//         for( ii = 0, len = this._asyncListenQueue.length; ii < len; ii++ ){
-//             item = this._asyncListenQueue[ii];
-//             item.c.apply( item.c, item.a );
-//         }
-//         this._asyncListenQueue.length = 0;
-//         return this;
-//     },
-// });
-
-
 
 test('basic', function(t){
-    let core = _.extend({}, EventsAsync);
-    let bus = _.extend({}, EventsAsync);
+    let core = Object.assign({}, EventsAsync);
+    let bus = Object.assign({}, EventsAsync);
 
     core.listenToAsync( bus, 'all', name => {
         console.log('nailed it ' + name + ' ' + JSON.stringify(_.toArray(arguments).slice(0)) );

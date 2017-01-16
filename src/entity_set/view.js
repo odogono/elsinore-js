@@ -44,35 +44,32 @@ EntitySetView.prototype.type = 'EntitySetView';
 EntitySetView.prototype.isMemoryEntitySet = true;
 EntitySetView.prototype.isEntitySetView = true;
 
-_.extend( EntitySet.prototype, {
+EntitySet.prototype.view = function( query, options={} ){
+    let result, listener;
+    let registry = this.getRegistry();
 
-    view: function( query, options={} ){
-        let result, listener;
-        let registry = this.getRegistry();
+    result = registry.createEntitySet( {type:EntitySetView,register:false} );
+    result._parent = this;
+    // console.log('EntitySetView created view', result.id, result.cid, result.getUuid(), 'from', this.cid );
 
-        result = registry.createEntitySet( {type:EntitySetView,register:false} );
-        result._parent = this;
-        // console.log('EntitySetView created view', result.id, result.cid, result.getUuid(), 'from', this.cid );
+    // make <result> listenTo <entitySet> using <entityFilter>
+    result.listener = EntitySetListener.create(result, this, query, options);
+    // EntitySet.listenToEntitySet( result, this, query, options );
 
-        // make <result> listenTo <entitySet> using <entityFilter>
-        result.listener = EntitySetListener.create(result, this, query, options);
-        // EntitySet.listenToEntitySet( result, this, query, options );
+    // if a valid query was supplied, it will have been resolved
+    // into a query object by now
+    query = result.getQuery();
 
-        // if a valid query was supplied, it will have been resolved
-        // into a query object by now
-        query = result.getQuery();
+    // console.log('using view query', query);
+    // store the view
+    this.views || (this.views={});
+    this.views[ query ? query.hash() : 'all' ] = result;
+    this.trigger('view:create', result);
 
-        // console.log('using view query', query);
-        // store the view
-        this.views || (this.views={});
-        this.views[ query ? query.hash() : 'all' ] = result;
-        this.trigger('view:create', result);
+    return result;
+};
 
-        return result;
-    },
-
-    applyEvents: function(){}
-});
+EntitySet.prototype.applyEvents = function(){}
 
 
 

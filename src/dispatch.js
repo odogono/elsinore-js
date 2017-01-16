@@ -352,7 +352,8 @@ export default class EntityDispatch {
 
 EntityDispatch.create = function( registry, entitySet ){
     const result = new EntityDispatch();
-    _.extend(result, Events);
+    Object.assign(result,Events);
+    
     if( EntitySet.isEntitySet(registry) ){
         entitySet = registry;
         registry = entitySet.getRegistry();

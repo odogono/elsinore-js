@@ -196,7 +196,7 @@ test('to/from JSON', t => {
 
 
 let MockComponent = function( attrs ){
-    return _.extend({}, attrs,{
+    return Object.assign({}, attrs,{
         setEntityId: eid => this['_e'] = eid
     });
 }
@@ -257,7 +257,7 @@ function createComponent( componentIId ){
         attrs = _.omit( componentIId, '@c' );
         componentIId = componentIId['@c'];
     }
-    result = new Component(_.extend( attrs, {'@c': _.uniqueId() }) );
+    result = new Component( {...attrs, '@c': _.uniqueId() } );
     data = ComponentIIdToObject[ componentIId ];
     _.each( data, (val,key) => result[ key ] = val );
     result.set( {'@s':data['@s']} );

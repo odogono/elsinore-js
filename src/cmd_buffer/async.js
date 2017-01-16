@@ -188,7 +188,7 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
             throw new InvalidEntityError('entity instance not passed');
         }
 
-        return this.addComponent( entitySet, entity.getComponents(), _.extend({},options,addOptions) )
+        return this.addComponent( entitySet, entity.getComponents(), {...options,...addOptions} )
             .then( () => {
                 if( !execute ){ return this; }
 
@@ -226,7 +226,7 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
 
         batch = options.batch; // cmds get batched together and then executed
         execute = options.execute === void 0 ? true : options.execute;
-        executeOptions = _.extend( {}, options, {removeEmptyEntity:true} );
+        executeOptions = {...options, removeEmptyEntity:true};
 
         // if we are dealing with an array of entities, ensure they all get executed in
         // a single batch
@@ -259,7 +259,7 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
         }
 
 
-        return this.removeComponent( entitySet, entity.getComponents(), _.extend({},options,removeOptions) )
+        return this.removeComponent( entitySet, entity.getComponents(), {...options,...removeOptions} )
             .then( () => {
                 // execute any outstanding commands
                 if( execute ){

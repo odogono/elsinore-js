@@ -23,7 +23,7 @@ import EntityFilter from '../entity_filter';
 export default class Registry {
 
     constructor( options={} ){
-        _.extend(this, Events);
+        Object.assign(this,Events);
 
         this._initialized = true;
 
@@ -242,8 +242,8 @@ export default class Registry {
     /**
     *   Registers the array of component def schemas with the given entitySet
     */
-    _registerComponentDefsWithEntitySet( entitySet, componentDefs, options ){
-        options = _.extend( {}, options, {fromRegistry:true, fromES:false} );
+    _registerComponentDefsWithEntitySet( entitySet, componentDefs, options={} ){
+        options = {...options, fromRegistry:true, fromES:false};
         
         // memory based entitysets do not need to register component defs,
         // as they are tied directly to the registry/schemaRegistry
@@ -314,7 +314,7 @@ export default class Registry {
         else {
             if( componentDef[defKey] ){
                 // attrs are pulled out of the 1st arg
-                attrs = _.extend( {}, _.omit(componentDef,defKey ), attrs );
+                attrs = Object.assign( {}, _.omit(componentDef,defKey ), attrs );
                 componentDef = componentDef[defKey];
             }
             return this.schemaRegistry.createComponent( componentDef, attrs, options, cb );
@@ -386,7 +386,7 @@ export default class Registry {
         
         id = options['@es'] || options['id'] || this.createId();
         // console.log('createEntitySet', id, options);
-        result = new entitySetType( null, _.extend( {}, options,{id}) );
+        result = new entitySetType( null, {...options, id} );
         result.setRegistry( this );
         
         // if( options.register !== false ){

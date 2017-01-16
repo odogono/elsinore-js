@@ -128,6 +128,6 @@ test('toJSON with full options', t => {
 
 
 function createComponent( properties ){
-    properties = _.extend({'@s':1,'@c':'/component/name'}, properties);
+    properties = {'@s':1,'@c':'/component/name', ...properties};
     return new Component(properties);
 }

@@ -321,7 +321,7 @@ function createEntitySet(registry, entitySetId, entityIds, existingComponents){
 
 
     entityIds = _.map( entityIds, id => setEntityIdFromId(id,entitySetId) );
-    return _.extend({
+    return Object.assign({},Events,{
         id: entitySetId,
         update: function( eAdd, eUp, eRem, cAdd, cUp, cRem ){
             // printIns( arguments, 1 );
@@ -354,7 +354,7 @@ function createEntitySet(registry, entitySetId, entityIds, existingComponents){
         getRegistry: function(){
             return registry;
         }
-    }, Events );
+    });
 }
 
 
@@ -369,7 +369,7 @@ function createComponent( attrs ){
             } );
     }
 
-    attrs = _.extend( {}, {'@s':1}, attrs );
+    attrs = { '@s':1, ...attrs};
 
     const result = Component.create(attrs);
     

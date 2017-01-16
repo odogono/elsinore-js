@@ -157,7 +157,7 @@ export default class CmdBuffer {
         debug = options.debug;
         batch = options.batch; // cmds get batched together and then executed
         execute = options.execute === void 0 ? true : options.execute;
-        executeOptions = _.extend( {}, options, {removeEmptyEntity:true} );
+        executeOptions = {...options, removeEmptyEntity:true};
 
         if( !component ){
             return [];
@@ -264,7 +264,7 @@ export default class CmdBuffer {
                 return this;
             }
 
-            let cmdOptions = _.extend({},options,{eid:entityId});
+            let cmdOptions = {...options,eid:entityId};
 
             this.addCommand( CMD_ENTITY_ADD, entityId, cmdOptions );
 
@@ -306,7 +306,7 @@ export default class CmdBuffer {
 
         batch = options.batch; // cmds get batched together and then executed
         execute = options.execute === void 0 ? true : options.execute;
-        executeOptions = _.extend( {}, options, {removeEmptyEntity:true} );
+        executeOptions = {...options, removeEmptyEntity:true};
 
         // if we are dealing with an array of entities, ensure they all get executed in
         // a single batch

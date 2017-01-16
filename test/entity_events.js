@@ -122,7 +122,7 @@ test('triggers events which are stored until release', t => {
         let entity;
 
         let received = false;
-        let listener = _.extend({}, EventsAsync);
+        let listener = Object.assign({}, EventsAsync);
 
         listener.listenToAsync( entitySet, 'msg', (evt,msgEntity) => {
             received = true;
@@ -150,7 +150,7 @@ test('still triggers on normal listeners', function(t){
             let entity;
 
         let received = false;
-        let listener = _.extend({}, EventsAsync);
+        let listener = Object.assign({}, EventsAsync);
 
         listener.listenTo( entitySet, 'msg', function(msgEntity){
             received = true;

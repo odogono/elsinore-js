@@ -9,14 +9,13 @@ import EntitySet from '../entity_set';
 const SELECT_BY_ID = 'SBI';
 
 
-_.extend( EntitySet.prototype, {
-    selectById: function( entityIds, returnAsEntitySet ){
-        let result;
-        returnAsEntitySet = (returnAsEntitySet === undefined) ? true : returnAsEntitySet;
-        result = selectById( this.getRegistry(), this, entityIds, returnAsEntitySet );
-        return result;
-    }
-});
+
+EntitySet.prototype.selectById = function( entityIds, returnAsEntitySet ){
+    let result;
+    returnAsEntitySet = (returnAsEntitySet === undefined) ? true : returnAsEntitySet;
+    result = selectById( this.getRegistry(), this, entityIds, returnAsEntitySet );
+    return result;
+}
 
 
 function dslSelectById( entityIds, selectFromRoot=false ){
