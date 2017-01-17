@@ -47,7 +47,7 @@ export {Entity as Entity};
 import Query from '../../src/query/full';
 export {Query as Query};
 
-import Registry from '../../src/registry/processor';
+import Registry from '../../src/registry';
 export {Registry as Registry};
 
 import SchemaRegistry from '../../src/schema';

@@ -4,6 +4,11 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased][unreleased]
 
+### Added
+- JSONLoader interprets simple JSON directives to populate an entityset
+
+### Removed
+- Registry processor functionality removed in favour of EntityDispatch
 
 ### Changed
 - eslint rules applied to codebase

@@ -38,15 +38,10 @@ export default class Registry {
         // a map of entityset uuids to entityset instances
         this._entitySetUUIDs = {};
 
-        // a map of entitySet ids mapped to a backbone collection of processors
-        // for the particular entitySet
-        this.entitySetProcessors = createProcessorCollection();// {};    
-
         // a map of hashes to entity views
         this._entityViews = {};
 
         this.updateLastTime = Date.now();
-        // this.processors = createProcessorCollection();
 
         this.schemaRegistry = options.schemaRegistry || SchemaRegistry.create(null,{registry:this});
 
@@ -512,27 +507,10 @@ export default class Registry {
     *
     */
     destroyEntitySet( entitySet ){
-        let processors, removeList;
         if( !entitySet ){ return null; }
 
         entitySet.setRegistry( null );
         this._entitySets = _.without( this.entitySets, entitySet );
-        // this._entitySetIds.remove( entitySet );
-
-        // remove  the records
-        removeList = this.entitySetProcessors.filter( record => (record.get('entitySet') == entitySet) );
-
-        // TODO: destroy any views attached to the entitySets
-        _.each( removeList, es => {} );
-
-        processors.remove( removeList );
-
-        // processors = this.entitySetProcessors[ entitySet.id ];
-
-        // if( processors ){
-        //     processors.reset();
-        //     this.entitySetProcessors[ entitySet.id ] = null;
-        // }
     }
 
     triggerEntityEvent( name, entity, ...rest ){
@@ -594,11 +572,10 @@ function createProcessorCollection(){
  * @param  {Function} callback [description]
  * @return {[type]}            [description]
  */
-// Registry.create = function create(options={}){
-//     let result = new Registry();
-//     result.initialize(options);
-//     return result;
-// };
+Registry.create = function create(options={}){
+    let result = new Registry(options);
+    return result;
+};
 
 
 // export default Registry;
