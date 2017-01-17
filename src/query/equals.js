@@ -1,12 +1,7 @@
 import _ from 'underscore';
-import Query from './index';
-import {DslContext} from './dsl';
-import EntitySet from '../entity_set';
-import {deepEqual, hash, stringify} from '../util';
+import {deepEqual} from '../util';
 
 import {register,
-    LEFT_PAREN,
-    RIGHT_PAREN,
     VALUE} from './index';
 
 export const EQUALS = '=='; // == 
@@ -110,7 +105,7 @@ export function commandEquals( context, op1, op2 ){
         }
     }
     
-    return (context.last = [ VALUE, result ]);
+    return (context.last = [VALUE, result]);
 }
 
 
@@ -120,10 +115,12 @@ const tokens = [EQUALS,
     GREATER_THAN,
     GREATER_THAN_OR_EQUAL];
 
-const dslFunctions = {'equals': dslEquals,
-         'lessThan': dslLessThan,
-         'lessThanOrEqual': dslLessThanOrEqual,
-         'greaterThan': dslGreaterThan,
-         'greaterThanOrEqual': dslGreaterThanOrEqual};
+const dslFunctions = {
+    'equals': dslEquals,
+    'lessThan': dslLessThan,
+    'lessThanOrEqual': dslLessThanOrEqual,
+    'greaterThan': dslGreaterThan,
+    'greaterThanOrEqual': dslGreaterThanOrEqual
+};
 
 register(tokens, commandEquals, dslFunctions, {argCount:2,precedence:-1, debug:true} );

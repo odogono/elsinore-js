@@ -16,7 +16,7 @@ export function mergeRecursive(obj1, obj2) {
     for (let p in obj2) {
         if( obj2.hasOwnProperty(p) ){
             if( obj1 === undefined )
-                obj1 = {};
+                {obj1 = {};}
             obj1[p] = (typeof obj2[p] === 'object') ? mergeRecursive(obj1[p], obj2[p]) : obj2[p];
         }
     }
@@ -39,7 +39,7 @@ export function arrayPush( array=[], item ){
 // Returns an array broken into set lengths
 // 
 export function chunk( array, chunkLength ){
-    let i,j,temparray;
+    let i,j;
     let result = [];
     for (i=0,j=array.length; i<j; i+=chunkLength) {
         result.push( array.slice(i,i+chunkLength) );
@@ -78,23 +78,23 @@ export function isInteger(i) {
  * @param {integer} [seed] optionally pass the hash of the previous chunk
  * @returns {integer | string}
  */
- export function hash/*Fnv32a*/(str, asString=false, seed=0x811c9dc5) {
+export function hash/*Fnv32a*/(str, asString=false, seed=0x811c9dc5) {
      /*jshint bitwise:false */
-     let ii, len, hval = seed;
+    let ii, len, hval = seed;
      // hval = (seed === undefined) ? 0x811c9dc5 : seed;
 
-     for (ii = 0, len = str.length; ii < len; ii++) {
-         hval ^= str.charCodeAt(ii);
-         hval += (hval << 1) + (hval << 4) + (hval << 7) + (hval << 8) + (hval << 24);
-     }
-     hval = hval >>> 0;
+    for (ii = 0, len = str.length; ii < len; ii++) {
+        hval ^= str.charCodeAt(ii);
+        hval += (hval << 1) + (hval << 4) + (hval << 7) + (hval << 8) + (hval << 24);
+    }
+    hval = hval >>> 0;
      
-     if( asString ){
+    if( asString ){
          // Convert to 8 digit hex string
-         return ("0000000" + hval.toString(16)).substr(-8);
-     }
-     return hval;
- }
+        return ("0000000" + hval.toString(16)).substr(-8);
+    }
+    return hval;
+}
 
 
 // /**
@@ -195,7 +195,7 @@ export function toBoolean( value, defaultValue=false ){
  * will be returned
  */
 export function toInteger( value, defaultValue=0 ){
-    let result = parseInt(value,10);
+    // let result = parseInt(value,10);
     if( isNaN(value) ){
         value = defaultValue;
     }
@@ -203,15 +203,15 @@ export function toInteger( value, defaultValue=0 ){
 }
 
 export function parseIntWithDefault( value, defaultValue ){
-    let result = parseInt( value, 10 );
+    // let result = parseInt( value, 10 );
     return isNaN(value) ? defaultValue : value;
 }
 
 
 export function deepClone( obj ){
     // try{
-        const str = stringify(obj);
-        return parseJSON(str);
+    const str = stringify(obj);
+    return parseJSON(str);
     // } catch(err){
     //     console.error('could not clone', obj, JSON.stringify(obj));
     //     return null;
@@ -370,7 +370,7 @@ export function isUndefined(val){
  * @param {*} value The value to check.
  * @returns {boolean} Returns `true` if `value` is an object, else `false`.
  */
-function isObject(value) {
+export function isObject(value) {
     const type = typeof value;
     return value != null && (type == 'object' || type == 'function');
 }
@@ -394,7 +394,7 @@ export function getEntityIdFromId( id ){
 }
 
 export function getEntitySetIdFromId( id ){
-    return (id - (id & 0xffffffff)) /  0x100000000;
+    return (id - (id & 0xffffffff)) / 0x100000000;
 }
 
 export function setEntityIdFromId( eid, esid ){

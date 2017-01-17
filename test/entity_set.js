@@ -478,8 +478,10 @@ test('should add an entity only once', t => {
 });
 
 
-test('should remove an entity', t => {
-    return initialiseRegistry().then( registry => {
+test('should remove an entity', async t => {
+    const registry = await initialiseRegistry();
+    
+    try{
         let entitySet = registry.createEntitySet();
         let eventSpy = Sinon.spy();
 
@@ -502,7 +504,9 @@ test('should remove an entity', t => {
 
 
         t.end();
-    });
+    } catch( err ){
+        Log.error(err.stack);
+    }
 });
 
 test('should really remove an entity', t => {

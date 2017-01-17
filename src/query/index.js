@@ -1,9 +1,9 @@
 import _ from 'underscore';
-import BitField  from 'odgn-bitfield';
+import BitField from 'odgn-bitfield';
 import Entity from '../entity';
 import EntitySet from '../entity_set';
 import EntityFilter from '../entity_filter';
-import {deepEqual, hash, stringify} from '../util';
+import {hash, stringify} from '../util';
 import QueryBuilder from './dsl';
 import {DslContext} from './dsl';
 
@@ -137,7 +137,7 @@ export default class Query {
      * compiles the instances commands into an optimised form
      */
     compile( context, commands, options ){
-        let result, ii, len, entityFilter;
+        let ii, len, entityFilter;
 
         this.compiled = [];
 
@@ -166,7 +166,7 @@ export default class Query {
         // _.each(commands, f => console.log('pre',f));
 
         let firstStageCompiled = _.reduce( commands, (result,command) => {
-            let op, entityFilter, compileResult, hash;
+            let op, entityFilter, compileResult;
             op = command[0];
 
             // check for registered command compile function
@@ -185,7 +185,7 @@ export default class Query {
                     entityFilter = gatherEntityFilters( context, command );
                     // console.log('gathering', command, 'to', entityFilter.toJSON());
                     // insert a basic entity_filter command here
-                    result.push( [ ENTITY_FILTER, entityFilter, command[2] ] );
+                    result.push( [ENTITY_FILTER, entityFilter, command[2]] );
                     break;
                 case AND:
                     result.push( (context.resolveEntitySet(command, true ) || command) );
@@ -215,7 +215,7 @@ export default class Query {
             }
             if( entityFilter ){
                 // console.log('>combine adding', entityFilter );
-                this.compiled.push( [ ENTITY_FILTER, entityFilter ] );
+                this.compiled.push( [ENTITY_FILTER, entityFilter] );
                 entityFilter = null;
             }
             if( ii < len ){
@@ -314,7 +314,6 @@ class QueryContext {
     *   (via valueOf) and returned.
     */
     resolveEntitySet(entitySet, compileOnly ){
-        let op, result;
         if( !entitySet ){
             entitySet = this.last;
         }
@@ -368,7 +367,6 @@ class QueryContext {
     commandFilter( context, entityFilter, filterFunction, options={} ){
         let entities, entityContext, value;
         let entity, entitySet;
-        let debug = context.debug;
         let esCount;
 
         const limit = options.limit === void 0 ? 0 : options.limit;
@@ -486,7 +484,7 @@ class QueryContext {
         // console.log('well final value was ' + JSON.stringify(value) );
         // printE( value );
 
-        return (context.last = [ VALUE, value ]);
+        return (context.last = [VALUE, value]);
     }
 }
 
@@ -551,6 +549,8 @@ function gatherEntityFilters( context, expression ){
                     case ANY_FILTER: filter = ANY; break;
                     case NONE_FILTER: filter = NONE; break;
                     case INCLUDE_FILTER: filter = INCLUDE; break;
+                    default:
+                        break;
                 }
                 result.add( filter, bf );
             }
@@ -575,10 +575,11 @@ function gatherEntityFilters( context, expression ){
 
 
 
-function commandAnd( context, ops ){
+/**
+ * 
+ */
+function commandAnd( context, ...ops ){
     let ii,len,value;
-    
-    ops = _.rest( arguments );
 
     for( ii=0,len=ops.length;ii<len;ii++ ){
         value = context.valueOf(ops[ii], true );
@@ -587,14 +588,12 @@ function commandAnd( context, ops ){
         }
     }
     
-    return (context.last = [ VALUE, value ]);
+    return (context.last = [VALUE, value]);
 }
 
-function commandOr( context, ops ){
+function commandOr( context, ...ops ){
     let ii,len,value;
     
-    ops = _.rest( arguments );
-
     for( ii=0,len=ops.length;ii<len;ii++ ){
         value = context.valueOf(ops[ii], true );
         if( value ){
@@ -602,12 +601,12 @@ function commandOr( context, ops ){
         }
     }
     
-    return (context.last = [ VALUE, value ]);
+    return (context.last = [VALUE, value]);
 }
 
 
 
- function commandFunction( op ){
+function commandFunction( op ){
     let result;
 
     result = commandFunctions[ op ];
@@ -630,7 +629,7 @@ function commandOr( context, ops ){
 }
 
 
-function executeCommand( context, op, args ){
+function executeCommand( context, op, args, ...rest ){
     let result, cmdFunction, cmdArgs, value;
 
     // if( context.debug ){ console.log('executing ' + stringify( _.rest(arguments)) ); }
@@ -640,9 +639,11 @@ function executeCommand( context, op, args ){
         args = _.rest( op );
         op = op[0];
     }
+    const allArgs = [op,args,...rest];
 
     // prepend the context to the beginning of the arguments
-    cmdArgs = [context].concat( args );
+    cmdArgs = [context].concat(args);
+
     // cmdArgs.push(op);
     // console.log('executeCommand args', op, args);
 
@@ -651,14 +652,14 @@ function executeCommand( context, op, args ){
     switch( op ){
         case ROOT:
             // console.log('query root', cmdArgs);
-            result = (context.last = [ VALUE, context.root ]);
+            result = (context.last = [VALUE, context.root]);
             break;
         case VALUE:
             value = args[0];
             if( value === ROOT ){
                 value = context.root;
             }
-            result = (context.last = [ VALUE, value ]);
+            result = (context.last = [VALUE, value]);
             // if(true){ console.log('value> ' + stringify(context.last)) }
             break;
         case ENTITY_FILTER:
@@ -667,14 +668,14 @@ function executeCommand( context, op, args ){
         case INCLUDE_FILTER:
         case ANY_FILTER:
         case NONE_FILTER:
-            result = context.commandFilter.apply( context, cmdArgs );
+            result = context.commandFilter(...cmdArgs);
             break;
         default:
             cmdFunction = commandFunction( op );
             if( !cmdFunction ){
                 // console.log('unknown cmd ' + op);
                 // printIns( _.rest(arguments), 1 );
-                throw new Error('unknown cmd (' + stringify(op) + ') ' + stringify(_.rest(arguments)) );
+                throw new Error('unknown cmd (' + stringify(op) + ') ' + stringify(allArgs) );
             }
             // console.log('running CmdFunction for op', op);
             result = cmdFunction.apply( context, cmdArgs );
@@ -687,9 +688,8 @@ function executeCommand( context, op, args ){
 /**
 *
 */
-Query.commands = function( commands ){
+Query.commands = function( ...commands ){
     let result;
-    commands = _.toArray(arguments);
 
     result = new Query();
     result.src = _.map( commands, function(command){ return command.toArray(true)[0]; });

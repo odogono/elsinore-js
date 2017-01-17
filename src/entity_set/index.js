@@ -2,11 +2,11 @@
 
 import _ from 'underscore';
 import {Collection,Events} from 'odgn-backbone-model';
-import BitField  from 'odgn-bitfield';
+import BitField from 'odgn-bitfield';
 
 import Component from '../component';
 import Entity from '../entity';
-import EntityFilter from '../entity_filter';
+// import EntityFilter from '../entity_filter';
 import Query from '../query';
 import {hash, isInteger,stringify} from '../util';
 import {uuid as createUUID} from '../util/uuid';
@@ -34,7 +34,7 @@ export default class EntitySet extends Collection {
         this.components = new ComponentCollection();
 
         if( options['id'] )
-            this.id = options['id'];
+            {this.id = options['id'];}
 
         if( options.cmdBuffer ){
             cmdBuffer = options.cmdBuffer;
@@ -66,14 +66,14 @@ export default class EntitySet extends Collection {
         return this.length;
     }
 
-    toJSON(options:object={}){
+    toJSON(options: object={}){
         if( !_.isObject(options) ){
             options={};
             // return {uuid:this._uuid, msg:options};
             // console.log(`what deal with`, this, options);
             // throw new Error(`what deal with ${options}`, this, typeof this);
         }
-        let q,result = { uuid:this._uuid };// { cid:this.cid };
+        let result = { uuid:this._uuid };// { cid:this.cid };
         
         if( options.mapCdefUri ){
             options.cdefMap = this.getSchemaRegistry().getComponentDefUris();
@@ -140,9 +140,8 @@ export default class EntitySet extends Collection {
     /**
     *   TODO: move out of here
     */
-    onEntitySetEvent( evt ){
-        let options;
-        let args = Array.prototype.slice.call(arguments, 1);
+    onEntitySetEvent( evt, ...args ){
+        
         switch( evt ){
             // case 'entity:add':
                 // return this.add.apply( this, args );
@@ -154,7 +153,9 @@ export default class EntitySet extends Collection {
             // case 'entity:remove':
                 // return this.remove.apply( this, args );
             case 'reset':
-                return this.reset.apply( this.args );
+                return this.reset.apply( this, args );
+            default:
+                break;
         }
         return this;
     }
@@ -164,6 +165,10 @@ export default class EntitySet extends Collection {
     * Adds a component to this set
     */
     addComponent(component, options ){
+        // conveniently create a component instance if raw data is passed
+        if( component['@c'] ){
+            component = this.getRegistry().createComponent(component);
+        }
         return this._cmdBuffer.addComponent( this, component, options );
     }
 
@@ -286,7 +291,7 @@ export default class EntitySet extends Collection {
     }
 
     _removeEntity(entity){
-        let entityId = Entity.toEntityId(entity);
+        // let entityId = Entity.toEntityId(entity);
         // no need for us to issue remove events as well as entity:remove
         this.remove( entity, {silent:true} );
         return entity;
@@ -365,13 +370,16 @@ export default class EntitySet extends Collection {
 
 
     /**
-    *   
-    */
-    triggerEntityEvent( name, entity ){
-        let args = _.toArray(arguments);
-        let q;
+     * 
+     * 
+     * @param {string} name
+     * @param entity
+     */
+    triggerEntityEvent( name, entity, ...rest ){
+        // const args = [name,entity,...rest];
+        let q = this.getQuery();
         
-        if( (q=this.getQuery()) && !q.execute(entity) ){
+        if( q && !q.execute(entity) ){
             return false;
         }
 
@@ -380,12 +388,13 @@ export default class EntitySet extends Collection {
             _.each( this.views, view => {
                 if( (q = view.getQuery()) && q.execute(entity) ){
                     // NOTE: wierd, but it seems that arguments gets clobbered by the time it gets here - don't yet know why
-                    view.triggerEntityEvent.apply( view, args );
+                    view.triggerEntityEvent.apply(view, [name,entity,view,...rest]);
                 }
             });
         }
 
-        return this.trigger.apply( this, args );
+        // console.log(`[entitySet][triggerEntityEvent]`, JSON.stringify(args));
+        return this.trigger.apply( this, [name,entity,this,...rest] );
     }
 
     listenToEntityEvent( entityOrFilter, name, callback, context ){
@@ -527,7 +536,7 @@ export default class EntitySet extends Collection {
     */
     evaluateEntities( entityIdArray, options={} ){
         let ii,len,entity;
-        let entities;
+        // let entities;
         let removed = [];
 
         if( !this._query ){
@@ -563,7 +572,7 @@ export default class EntitySet extends Collection {
     *   The query is then set on the dstEntitySet
     */
     map( query, dstEntitySet, options={} ){
-        var entity;
+        // let entity;
         
         dstEntitySet.reset();
 

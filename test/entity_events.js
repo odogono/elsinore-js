@@ -1,26 +1,24 @@
-import _  from 'underscore';
+// import _  from 'underscore';
 import test from 'tape';
 
 
-import Es from 'event-stream';
+// import Es from 'event-stream';
 import Sinon from 'sinon';
 
 
 import {
-    Component, Entity, EntityFilter, EntitySet,
-    Registry, SchemaRegistry,
+    createLog,
+    // Component, Entity, EntityFilter, EntitySet,
+    // Registry, SchemaRegistry,
+    entityToString,
     initialiseRegistry, 
-    loadEntities, 
-    loadComponents,
-    loadFixtureJSON,
-    printE,
-    printIns,
-    logEvents,
-    requireLib,
+    stringify,
 } from './common';
 
 import EventsAsync from '../src/util/events.async';
 import '../src/entity_set/view';
+
+const Log = createLog('TestEntityEvents');
 
 
 test('triggering an event on an entity', function(t){
@@ -32,11 +30,11 @@ test('triggering an event on an entity', function(t){
         // listen to all msg events from all entities
         entitySet.on( 'msg', eventSpy );
         // entitySet.listenToEntityEvent( 'all', function(){
-        //     log.debug('!eevt ' + JSON.stringify(arguments));
+        //     Log.debug('!eevt ' + JSON.stringify(arguments));
         // } );
 
         // entitySet.listenToEntityEvent( 'msg', function( name ){
-        //     log.debug('2!eevt '  + JSON.stringify(arguments));
+        //     Log.debug('2!eevt '  + JSON.stringify(arguments));
         // } );
         
         entity = registry.createEntity( [{'@c':'/component/animal', name:'tiger'}]);
@@ -49,68 +47,69 @@ test('triggering an event on an entity', function(t){
         t.ok( eventSpy.called, 'msg event should have been called' );
     })
     .then( () => t.end() )
-    .catch( err => log.error('test error: %s', err.stack) )
+    .catch( err => Log.error('test error: %s', err.stack) )
 });
 
 
-test('the registry triggers the event on entitysets', function(t){
-    return initialiseRegistry().then( registry => {
+test('the registry triggers the event on entitysets', async t => {
+    try{
+        const registry = await initialiseRegistry();
         const entitySet = registry.createEntitySet();
         const eventSpy = Sinon.spy();
         let entity;
 
         // Common.logEvents( entitySet, 'ese!' );
         entitySet.on('all', eventSpy );
-        entitySet.on('all', entity => {
+        entitySet.on('all', (entity,...rest) => {
             // printIns( arguments );
-            // log.debug('called msg with ' + entity.id );
+            // Log.debug('called msg with ', stringify([entity,...rest]) );
         });
 
-        entity = registry.createEntity( [{'@c':'/component/animal', name:'tiger'}]);
-        entity = entitySet.addEntity(entity);
+        // entity = registry.createEntity(  );
+        entity = entitySet.addEntity( [{'@c':'/component/animal', name:'tiger'}] );
 
+        // Log.debug('ok entity', entityToString(entity) );
         // registry.triggerEntityEvent( 'msg', entity, 'close the door' );
         entity.triggerEntityEvent( 'msg', 'close the door');
 
-        t.ok( eventSpy.calledWith('msg', entity, 'close the door'), 'entity was called with event' );
+        t.ok( eventSpy.calledWith('msg', entity, entitySet, 'close the door'), 'entity was called with event' );
 
-    })
-    .then( () => t.end() )
-    .catch( err => log.error('test error: %s', err.stack) )
+        t.end();
+    } catch(err){ Log.error('test error: %s', err.stack); }
 });
 
 
 test('the registry triggers the event on a compatible entityset', async t => {
     try{
-    const registry = await initialiseRegistry();
-    const entitySet = registry.createEntitySet();
-    const eventSpy = Sinon.spy();
-    let entity;
+        const registry = await initialiseRegistry();
+        const entitySet = registry.createEntitySet();
+        const eventSpy = Sinon.spy();
+        let entity;
+        
+        let mineralCalled = false, animalCalled = false, mainCalled = false;
+
+        let mineralEntitySet = entitySet.view( Q => Q.all('/component/mineral'));
+        let animalEntitySet = entitySet.view( Q => Q.all('/component/animal'));
+
+
+        registry.addEntitySet( mineralEntitySet );
+        registry.addEntitySet( animalEntitySet );
+
+        entitySet.on('msg', () => mainCalled = true );    
+        mineralEntitySet.on('msg', () => mineralCalled = true );
+        animalEntitySet.on('msg', () => animalCalled = true );
+
+        entity = registry.createEntity( [{'@c':'/component/animal', name:'tiger'}]);
+        entity = entitySet.addEntity(entity);
+
+        entity.triggerEntityEvent( 'msg', 'welcome' );
+
+        t.notOk( mineralCalled, 'events not triggered on mineral entitySet');
+        t.ok( animalCalled, 'events triggered on animal entitySet');
+        t.ok( mainCalled, 'events triggered on base entitySet');
+        t.end();
+    } catch(err){ Log.error('test error: %s', err.stack); }
     
-    let mineralCalled = false, animalCalled = false, mainCalled = false;
-
-    let mineralEntitySet = entitySet.view( Q => Q.all('/component/mineral'));
-    let animalEntitySet = entitySet.view( Q => Q.all('/component/animal'));
-
-
-    registry.addEntitySet( mineralEntitySet );
-    registry.addEntitySet( animalEntitySet );
-
-    entitySet.on('msg', () => mainCalled = true );    
-    mineralEntitySet.on('msg', () => mineralCalled = true );
-    animalEntitySet.on('msg', () => animalCalled = true );
-
-    entity = registry.createEntity( [{'@c':'/component/animal', name:'tiger'}]);
-    entity = entitySet.addEntity(entity);
-
-    entity.triggerEntityEvent( 'msg', 'welcome' );
-
-    t.notOk( mineralCalled, 'events not triggered on mineral entitySet');
-    t.ok( animalCalled, 'events triggered on animal entitySet');
-    t.ok( mainCalled, 'events triggered on base entitySet');
-    
-    } catch(err){ log.error('test error: %s', err.stack); }
-    t.end();
 });
 
 
@@ -139,7 +138,7 @@ test('triggers events which are stored until release', t => {
         t.ok( received, 'the msg was received' );
     })
     .then( () => t.end() )
-    .catch( err => log.error('test error: %s', err.stack) )
+    .catch( err => Log.error('test error: %s', err.stack) )
 });
 
 
@@ -165,7 +164,7 @@ test('still triggers on normal listeners', function(t){
         t.ok( received, 'the msg was received' );
     })
     .then( () => t.end() )
-    .catch( err => log.error('test error: %s', err.stack) )
+    .catch( err => Log.error('test error: %s', err.stack) )
 });
 
 // test('listen to events on entities that have certain components');

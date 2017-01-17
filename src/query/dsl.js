@@ -1,5 +1,5 @@
 import _ from 'underscore';
-import Query from './index';
+
 import * as Q from './index';
 
 
@@ -55,10 +55,10 @@ function argCount( operator ){
 *   Converts an RPN expression into an AST
 */
 function rpnToTree( values ){
-    let ii, len, op, stack, rightIndex, slice, result, count;
+    let ii, len, op, stack, slice, count;
 
     stack = [];
-    result = [];
+    // result = [];
 
     for( ii=0,len=values.length;ii<len;ii++ ){
         op = values[ii];
@@ -311,7 +311,7 @@ export class DslContext {
         return this.opStack.pop();
     }
 
-    pushOp( op  ){
+    pushOp( op ){
         const lastOp = this.lastOp();
         while( this.opStack.length > 0 && (precendence( op ) <= precendence( lastOp )) ){
             this.pushVal( this.popOp() );
@@ -341,9 +341,7 @@ export class DslContext {
      * 
      */
     toArray( toTree=false ){
-        let count = 0;
-        let op,val,result,vals;
-        let ii,len;
+        let result;
 
         // console.log('QB.toArray op', this.opStack, 'val', this.valStack );
         // move reminaing ops

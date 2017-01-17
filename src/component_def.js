@@ -6,6 +6,7 @@ import Model from './model';
 
 import {
     hash,
+    isObject,
     stringify,
     toPascalCase,
 } from './util';
@@ -44,8 +45,8 @@ export default class ComponentDef extends Model {
         return this.get('properties');
     }
 
-    toJSON(){
-        let result = Model.prototype.toJSON.apply(this, arguments);
+    toJSON(...args){
+        let result = Model.prototype.toJSON.apply(this, args);
         return _.omit( result, 'attrs');
     }
 
@@ -71,7 +72,7 @@ function createAttrsFromProperties( props ){
     for( name in props ){
         value = props[name];
         property = value;
-        if( _.isObject(value) ){
+        if( isObject(value) ){
             if( value.default !== void 0 ){
                 value = property.default;
             }
@@ -90,7 +91,10 @@ function createAttrsFromProperties( props ){
     return result;
 }
 
-function componentNameFromUri( schemaUri:string, suffix:string='' ){
+/**
+ * 
+ */
+function componentNameFromUri( schemaUri: string, suffix: string='' ){
     let name;
     // let schema = this.getSchema( schemaUri );
 
@@ -101,8 +105,8 @@ function componentNameFromUri( schemaUri:string, suffix:string='' ){
     // if( schema.obj.name ){
     //     name = schema.obj.name;
     // } else {
-        name = schemaUri;
-        name = name.split('/').pop();
+    name = schemaUri;
+    name = name.split('/').pop();
     // }
 
     return toPascalCase( name + suffix );

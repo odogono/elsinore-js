@@ -24,7 +24,7 @@ export default class Component extends Model {
 
     parse( resp ){
         // console.log('Component.parse', resp);
-        var esId = undefined, eId = undefined;
+        let esId = undefined, eId = undefined;
         if( !resp || _.keys(resp).length <= 0 ){
             return resp;
         }
@@ -109,7 +109,7 @@ export default class Component extends Model {
     // setDefName: function(name:string){
     //     this.name = this._defName = name;
     // },
-    setDefDetails( defId, uri: string, hash:string, name:string ){
+    setDefDetails( defId, uri: string, hash: string, name: string ){
         this.set({'@s':defId,'@c':uri});
         this._defHash = hash;
         this.name = this._defName = name;  
@@ -119,7 +119,7 @@ export default class Component extends Model {
      * 
      */
     hash(asString){
-        let result = stringify(  _.omit(this.attributes, '@e','@es','@s', '@c') );
+        let result = stringify( _.omit(this.attributes, '@e','@es','@s', '@c') );
         return hash( result, asString );
     }
 

@@ -1,7 +1,7 @@
 import _ from 'underscore';
-import {Collection} from 'odgn-backbone-model';
+// import {Collection} from 'odgn-backbone-model';
 
-import Entity from '../entity';
+// import Entity from '../entity';
 import EntitySet from './index';
 import CmdBuffer from '../cmd_buffer/async';
 import ReusableId from '../util/reusable_id';
@@ -24,7 +24,7 @@ const Log = createLog('AsyncEntitySet');
  * added/removed updated
  */
 class AsyncEntitySet extends EntitySet {
-    initialize(entities, options={}){
+    initialize(entities, options={},...rest){
 
         // maps external and internal component def ids
         this._componentDefInternalToExternal = []; 
@@ -34,7 +34,7 @@ class AsyncEntitySet extends EntitySet {
         // this.componentDefs = new ComponentDefCollection();
         // console.log('init AsyncEntitySet');
         options.cmdBuffer = CmdBuffer;
-        EntitySet.prototype.initialize.apply(this, arguments);
+        EntitySet.prototype.initialize.apply(this, [entities,options,...rest] );
         // console.log('AsyncEntitySet.initialize',this.id,this.cid,this.getUuid(),'with options',JSON.stringify(options));
 
         // in a persistent es, these ids would be initialised from a backing store
@@ -272,7 +272,7 @@ class AsyncEntitySet extends EntitySet {
      * the async based cmd-buffer calls this function once it has resolved a list of entities and components to be added
      */
     update(entitiesAdded, entitiesUpdated, entitiesRemoved, componentsAdded, componentsUpdated, componentsRemoved, options={}) {
-        const debug = options.debug;
+        // const debug = options.debug;
 
         // extract entities added which need new ids
         entitiesAdded = _.reduce(entitiesAdded, (result, e) => {
@@ -280,7 +280,7 @@ class AsyncEntitySet extends EntitySet {
             if (e.getEntitySetId() !== this.id) {
                 result.push(e);
             } else {
-                console.log('ALERT! entitiesAdded contains already added entity', e.toJSON() );
+                // console.log('ALERT! entitiesAdded contains already added entity', e.toJSON() );
             }
             return result;
         }, []);
@@ -339,7 +339,7 @@ class AsyncEntitySet extends EntitySet {
             if( entity ){
                 entity.addComponent(component,{silent:true});
                 this.components.add( componentsAdded[ii] );
-                if(debug){console.log('componentsAdded', JSON.stringify(component) );}
+                // if(debug){console.log('componentsAdded', JSON.stringify(component) );}
             }
         }
         for( ii=0,len=componentsUpdated.length;ii<len;ii++ ){

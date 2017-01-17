@@ -1,12 +1,12 @@
 import _ from 'underscore';
 
-import Entity from '../entity';
+// import Entity from '../entity';
 import EntitySet from './index';
 import EntitySetListener from './listener';
 
 import {
-    clearMap,
-    hash,
+    // clearMap,
+    // hash,
     // stringify
 } from '../util';
 
@@ -45,7 +45,7 @@ EntitySetView.prototype.isMemoryEntitySet = true;
 EntitySetView.prototype.isEntitySetView = true;
 
 EntitySet.prototype.view = function( query, options={} ){
-    let result, listener;
+    let result;
     let registry = this.getRegistry();
 
     result = registry.createEntitySet( {type:EntitySetView,register:false} );

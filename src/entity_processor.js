@@ -1,10 +1,10 @@
 import _ from 'underscore';
-import {Model, Events} from 'odgn-backbone-model';
-import EntitySet from './entity_set';
+// import {Model, Events} from 'odgn-backbone-model';
+// import EntitySet from './entity_set';
 import {
     clearArray,
-    isUndefined,
-    stringify,
+    // isUndefined,
+    // stringify,
     arrayPush
 } from './util';
 

@@ -14,17 +14,8 @@ const PLUCK = 'PL';
  * Adds pluck functionality directory to entityset
  */
 EntitySet.prototype.pluck = function( componentIds, attr ){
-    // var result;
-    // returnAsEntitySet = (returnAsEntitySet === undefined) ? true : returnAsEntitySet;
-    // result = selectById( this.getRegistry(), this, entityIds, returnAsEntitySet );
-    // return result;
-    
-    const componentIId = this.getRegistry().getIId( componentIds );
     const query = new Query( Q => Q.pluck(componentIds,attr) );
     return query.execute(this);
-    
-    // var query = Q.pluck( componentIds, attr );
-    // return query.execute( this );
 }
 
 
@@ -55,13 +46,13 @@ function dslPluck( componentIds, property, options ){
 */
 function commandPluck( context, componentIds, attributes, options ){
     // resolve the components to ids
-    var bitField, result;
-    var entitySet;// = context.last;
+    let result;
+    let entitySet;
 
     // if( true ){ log.debug('pluck> ' + stringify(_.rest(arguments))); } 
 
     attributes = context.valueOf(attributes, true );
-    attributes = Array.isArray( attributes ) ? attributes : [ attributes ];
+    attributes = Array.isArray( attributes ) ? attributes : [attributes];
     options = context.valueOf(options, true );
     
     entitySet = context.resolveEntitySet();
@@ -78,15 +69,12 @@ function commandPluck( context, componentIds, attributes, options ){
         result = _.uniq( result );
     }
 
-    return (context.last = [ VALUE, result ]);
+    return (context.last = [VALUE, result]);
 }
 
-function pluckEntity( registry, entity, componentIds, attributes ){
-
-}
 
 function pluckEntitySet( registry, entitySet, componentIds, attributes ){
-    var result;
+    let result;
 
     // iterate through each of the entityset models and select the components
     // specified - if they exist, select the attributes required.
@@ -99,7 +87,7 @@ function pluckEntitySet( registry, entitySet, componentIds, attributes ){
                 if( attr == '@e' ){ values.push( entity.getEntityId() ); }
             });    
         } else {
-            const components = entity.getComponents(componentIds);
+            // const components = entity.getComponents(componentIds);
 
             _.each( entity.getComponents(componentIds), (component) => {
                 // log.debug('inCOMing ' + stringify(component) );
@@ -107,7 +95,7 @@ function pluckEntitySet( registry, entitySet, componentIds, attributes ){
                     if( attr == '@e' ){
                         values.push( entity.getEntityId() );
                     } else {
-                        var val = component.get.call( component, attr );
+                        let val = component.get.call( component, attr );
                         if( val ) { values.push( val ); }
                     }
                 });

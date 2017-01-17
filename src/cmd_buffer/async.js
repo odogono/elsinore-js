@@ -1,32 +1,27 @@
 'use strict';
 
 import _ from 'underscore';
-import BitField from 'odgn-bitfield';
 import {Collection} from 'odgn-backbone-model';
-import Component from '../component';
+
 import Entity from '../entity';
-import EntityFilter  from '../entity_filter';
 import {
     InvalidEntityError
 } from '../error';
 
-import { getEntitySetIdFromId,
-    valueArray} from '../util';
-import {toString as entityToString} from '../util/to_string';
+import { 
+    getEntitySetIdFromId,
+    isUndefined,
+    valueArray
+} from '../util';
+// import {toString as entityToString} from '../util/to_string';
 
 
 import SyncCmdBuffer from './sync';
 import {
     CMD_EX,
     CMD_ENTITY_ADD,
-    CMD_ENTITY_REMOVE,
-    CMD_ENTITY_UPDATE,
     CMD_COMPONENT_ADD,
-    CMD_COMPONENT_REMOVE,
-    CMD_COMPONENT_UPDATE,
-    OP_CREATE_FROM_EXISTING_ID,
-    OP_CREATE_NEW,
-    OP_UPDATE_EXISTING,
+    CMD_COMPONENT_REMOVE
 } from './sync';
 
 
@@ -45,13 +40,12 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
     * Adds a component to this set
     */
     addComponent( entitySet, component, options = {}){
-        let debug, batch, execute, silent, listenTo, entityId, entity, existingCom;
+        let execute;
         
-        debug = options.debug;
-        silent = options.silent;
-        entity = options.entity;
-        listenTo = options.listen;
-        execute = options.execute === void 0 ? true : options.execute;
+        // silent = options.silent;
+        // entity = options.entity;
+        // listenTo = options.listen;
+        execute = isUndefined(options.execute) ? true : options.execute;
 
         if( !component ){
             return [];
@@ -100,12 +94,8 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
     *
     */
     removeComponent( entitySet, component, options={} ){
-        let batch,execute, debug, entityId;
-        const getEntityOptions = { componentBitFieldOnly: true };
-        
-        debug = options.debug;
-        batch = options.batch; // cmds get batched together and then executed
-        execute = options.execute === void 0 ? true : options.execute;
+        let execute,entityId;
+        execute = isUndefined(options.execute) ? true : options.execute;
 
         if( !component ){ return this; }
 
@@ -153,12 +143,9 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
     - 
     */
     addEntity( entitySet, entity, options={}){
-        let entityId, entitySetId;
-        let batch;
         let execute;
         let addOptions = {batch: true, execute: false};
 
-        batch = options.batch; // cmds get batched together and then executed
         execute = options.execute === void 0 ? true : options.execute;
 
         if( Array.isArray(entity) ){
@@ -216,17 +203,15 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
     *
     */
     removeEntity( entitySet, entity, options={}){
-        let ii, batch, execute, existingEntity, entityId;
-        let executeOptions;
+        let execute;
         let removeOptions = {batch: true, execute: false};
 
         if( !entity ){
             return this;
         }
 
-        batch = options.batch; // cmds get batched together and then executed
         execute = options.execute === void 0 ? true : options.execute;
-        executeOptions = {...options, removeEmptyEntity:true};
+        // executeOptions = {...options, removeEmptyEntity:true};
 
         // if we are dealing with an array of entities, ensure they all get executed in
         // a single batch
@@ -274,9 +259,7 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
      * 
      */
     _executeEntityCommand( entity, componentBitfield, cmdType, component, options={} ){
-        const debug = this.debug || options.debug;
-        // console.log('executing', entity.id, componentBitfield.toJSON(), cmdType, entity.isNew() );
-
+        
         const componentDefId = component.getDefId();
         const entityHasComponent = !!componentBitfield.get(componentDefId);
 
@@ -323,6 +306,8 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
                 }
 
                 break;
+            default:
+                break;
         }
     }
 
@@ -332,10 +317,8 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
      * 
      */
     execute( entitySet, options ){
-        let cmds, entityId;
         let ii,len;
 
-        const debug = this.debug || options.debug;
         let silent = options.silent === void 0 ? false : options.silent;
 
         // console.log('executing entities', _.keys(this.cmds), options );

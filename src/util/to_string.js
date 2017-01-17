@@ -9,8 +9,8 @@ import EntityProcessor from '../entity_processor';
 import { stringify, getEntityIdFromId } from './index'
 
 export function entityToString(entity, indent){
-    var res = [];
-    var comDefId;
+    let res = [];
+    let comDefId;
     
     indent || (indent='');
     res.push( indent + 
@@ -47,9 +47,9 @@ export function componentToString(component, indent=''){
 }
 
 export function entitySetToString(es, indent){
-    var entity;
-    var res = [];
-    var it;
+    let entity;
+    let res = [];
+    let it;
     
     it = es.iterator();
     indent || (indent='');
@@ -71,7 +71,6 @@ export function entitySetToString(es, indent){
 
 export function toString(entity, indent='', join="\n"){
     let res = [''];
-    let e;
     
     if( Array.isArray(entity) ){
         _.each( entity, e => {
@@ -96,7 +95,6 @@ export function toString(entity, indent='', join="\n"){
 
 export function secretToString(entity, indent='', join="\n"){
     let res = [''];
-    let e;
     
     if( Array.isArray(entity) ){
         _.each( entity, e => {

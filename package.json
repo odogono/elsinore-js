@@ -1,6 +1,6 @@
 {
   "name": "elsinore",
-  "version": "4.2.4",
+  "version": "4.2.5",
   "description": "a javascript Entity Component System",
   "keywords": [
     "elsinore",
@@ -33,6 +33,7 @@
   "non-dependencies": {},
   "devDependencies": {
     "babel-cli": "^6.18.0",
+    "babel-eslint": "^7.1.1",
     "babel-plugin-external-helpers": "^6.18.0",
     "babel-plugin-transform-async-to-generator": "^6.16.0",
     "babel-plugin-transform-es2015-classes": "^6.18.0",
@@ -42,6 +43,9 @@
     "babel-plugin-transform-inline-environment-variables": "^6.8.0",
     "babel-plugin-transform-object-rest-spread": "6.20.2",
     "babel-preset-es2015-rollup": "3.0.0",
+    "eslint": "^3.13.1",
+    "eslint-plugin-flowtype": "^2.30.0",
+    "eslint-plugin-import": "^2.2.0",
     "event-stream": "^3.3.2",
     "rollup-plugin-babel": "2.7.1",
     "rollup-plugin-commonjs": "7.0.0",
@@ -69,6 +73,8 @@
     "clean": "rm -rf node_modules build dist lib; mkdir build; npm install",
     "dist:noclean": "npm run compile && npm run compile:es2015 && npm run build && npm run build:prod && npm run build:es",
     "dist": "npm run dist:noclean",
+    "lint": "./node_modules/.bin/eslint ./src --ext .js",
+    "lint-fix": "./node_modules/.bin/eslint --fix ./src --ext .js",
     "prepublish": "npm run dist",
     "test": "NODE_ENV=test babel-node test/index.js --plugins=transform-inline-environment-variables,transform-es2015-modules-commonjs,transform-flow-strip-types,transform-es2015-destructuring,transform-object-rest-spread,transform-async-to-generator | tap-dot",
     "spec": "NODE_ENV=test babel-node test/index.js --plugins=transform-inline-environment-variables,transform-es2015-modules-commonjs,transform-flow-strip-types,transform-es2015-destructuring,transform-object-rest-spread,transform-async-to-generator | tap-spec"

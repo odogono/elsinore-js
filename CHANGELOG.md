@@ -4,6 +4,11 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased][unreleased]
 
+
+### Changed
+- eslint rules applied to codebase
+
+
 ## [4.2.4] - 2017-01-11
 
 ### Changed

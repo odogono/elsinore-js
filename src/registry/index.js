@@ -1,20 +1,14 @@
 import _ from 'underscore';
 import {Events, Collection} from 'odgn-backbone-model'
-import BitField  from 'odgn-bitfield';
+
 
 import {uuid as createUUID} from '../util/uuid';
-import {createLog} from '../util/log';
-import {getEntityIdFromId,getEntitySetIdFromId} from '../util';
+// import {createLog} from '../util/log';
+// import {getEntityIdFromId,getEntitySetIdFromId} from '../util';
 import Entity from '../entity';
 import EntitySet from '../entity_set';
 import Component from '../component';
 import SchemaRegistry from '../schema';
-import EntityProcessor from '../entity_processor';
-import EntityFilter from '../entity_filter';
-
-
-
-// let counter = Date.now() % 1e9;
 
 // const Log = createLog('Registry');
 
@@ -283,7 +277,7 @@ export default class Registry {
      * @return {[type]}          [description]
      */
     createComponent( componentDef, attrs, options, cb ){
-        let ii, len, name, defaults, entityId, result, defKey;
+        let entityId, defKey;
         
         options || (options={});
         defKey = options.defKey || '@c';
@@ -355,8 +349,9 @@ export default class Registry {
      */
     toEntity(entityId){
         let result = Entity.toEntity(entityId);
-        if( result )
+        if( result ){
             result.registry = this;
+        }
         return result;
     }
 
@@ -369,7 +364,7 @@ export default class Registry {
      * @return {[type]}              [description]
      */
     createEntitySet( options={} ){
-        let id, uuid;
+        let id;
         let result;
         let entitySetType=EntitySet;
         
@@ -478,7 +473,7 @@ export default class Registry {
 
             // store the entityset against its id
             this._entitySets.push( entitySet );
-            this._entitySetUUIDs[ entitySet.getUuid() ]  = entitySet;
+            this._entitySetUUIDs[ entitySet.getUuid() ] = entitySet;
             
             entitySet.setRegistry( this );
 
@@ -540,8 +535,8 @@ export default class Registry {
         // }
     }
 
-    triggerEntityEvent( name, entity ){
-        let entitySet, bf, ii, len, trigger;
+    triggerEntityEvent( name, entity, ...rest ){
+        let entitySet, ii, len;
 
         // let args = _.toArray( arguments ).slice(2);
 
@@ -555,9 +550,13 @@ export default class Registry {
 
         // the trick is to only trigger on entitySets that have the entity
 
+        const args = [name,entity,...rest];
+
         for( ii=0,len=this._entitySets.length; ii < len; ii++ ){
             entitySet = this._entitySets[ii];
-            entitySet.triggerEntityEvent.apply( entitySet, arguments );
+            
+            // console.log(`[registry][triggerEntityEvent]`, JSON.stringify(args));
+            entitySet.triggerEntityEvent.apply( entitySet, args );
         }
     }
 }

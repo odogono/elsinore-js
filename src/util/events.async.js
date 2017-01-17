@@ -45,8 +45,8 @@ const EventsAsync = Object.assign({}, Events, {
         if(!this._asyncListenQueue) { return this; }
         for( ii = 0, len = this._asyncListenQueue.length; ii < len; ii++ ){
             item = this._asyncListenQueue[ii];
-            args = [ item.name ].concat(item.a);
-            // log.debug('releasing ' + item.name, stringify(args) );
+            args = [item.name].concat(item.a);
+            // console.log('[EventsAsync][releaseAsync] releasing', item.name, JSON.stringify(args) );
             item.c.apply( item.c, args );
         }
         this._asyncListenQueue.length = 0;

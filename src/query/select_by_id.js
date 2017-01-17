@@ -3,7 +3,7 @@ import {register,
     LEFT_PAREN,
     RIGHT_PAREN,
     VALUE} from './index';
-import Query from './index';
+// import Query from './index';
 import EntitySet from '../entity_set';
 
 const SELECT_BY_ID = 'SBI';
@@ -35,7 +35,7 @@ function dslSelectById( entityIds, selectFromRoot=false ){
 
 
 function commandSelectById( context, entityIds, selectFromRoot ) {
-    let ii, len, value, entity, entities;
+    let value;
     let entitySet;
 
     // console.log('>entityIds: ' + stringify(entityIds) );
@@ -73,7 +73,7 @@ function commandSelectById( context, entityIds, selectFromRoot ) {
 
     value = selectById( context.registry, entitySet, entityIds, true );
 
-    return (context.last = [ VALUE, value ]);
+    return (context.last = [VALUE, value]);
 }
 
 function selectById( registry, entitySet, entityIds, returnAsEntitySet ){

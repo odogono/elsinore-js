@@ -26,7 +26,7 @@ export {
     setEntityIdFromId} from '../../src/util';
 
 import {createLog} from '../../src/util/log';
-export {createLog} from '../../src/util/log';
+export {createLog};
 export {toString as entityToString} from '../../src/util/to_string';
 
 import Component from '../../src/component';

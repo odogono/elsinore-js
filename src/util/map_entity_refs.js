@@ -14,7 +14,7 @@ import _ from 'underscore';
 *   to a module by itself, or perhaps become a processor
 */
 export default function mapComponentEntityRefs( registry, component, entityIdMap, options ){
-    let name,len, property, val, updates;
+    let name,property, val, updates;
     let result;
     // let properties;
 

@@ -1,10 +1,10 @@
-import _ from 'underscore';
+// import _ from 'underscore';
 import {register,
     ENTITY_FILTER,
     LEFT_PAREN,
     RIGHT_PAREN,
     VALUE} from './index';
-import Query from './index';
+// import Query from './index';
 import EntitySet from '../entity_set';
 
 export const LIMIT = 'LM';
@@ -52,7 +52,7 @@ function commandLimit( context, count, offset ){
         result.addEntity( entities );
     }
     
-    return (context.last = [ VALUE, result ]);
+    return (context.last = [VALUE, result]);
 }
 
 
@@ -84,7 +84,7 @@ function compile( context, commands ){
 
     // if we still have an open limit and no entity filter was found, add one
     if( limitOptions ){
-        commands.unshift( [ ENTITY_FILTER, null, null, limitOptions] );
+        commands.unshift( [ENTITY_FILTER, null, null, limitOptions] );
     }
 
     return commands;

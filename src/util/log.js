@@ -1,4 +1,5 @@
-import _ from 'underscore';
+/* eslint no-console: "off" */
+// import _ from 'underscore';
 
 let logActive = true;
 

@@ -1,12 +1,10 @@
 import _ from 'underscore';
 
 import Entity from '../entity';
-import EntitySet from './index';
 
 import {
     clearMap,
-    hash,
-    stringify
+    hash
 } from '../util';
 
 // import {createLog} from '../util/log';
@@ -77,7 +75,7 @@ export default class EntitySetListener {
                 return;
             }
             delete this.addedEntities[ eid ];
-            this.removedEntities[ eid ]  = e;
+            this.removedEntities[ eid ] = e;
             this.isModified = true;
         });
         
@@ -121,7 +119,7 @@ export default class EntitySetListener {
     }
 
     onComponentRemove(components){
-        let ii,len,com,eid;
+        let ii,len,eid;
         let entitySet = this.entitySet;
 
         // reduce down to components we are interested in
@@ -145,14 +143,12 @@ export default class EntitySetListener {
     *   
     */
     applyEvents(options={}){
-        let ii,len,com,entity;
         let entitySet;
         let query;
         let changedEntityIdList;
         let entitiesAdded;
         let entitiesRemoved;
         let changeOptions;
-        let debug = options.debug;
 
         
         if( !this.isModified ){

@@ -1,6 +1,4 @@
-// import Q from './index';
 import {register,VALUE} from './index';
-import EntitySet from '../entity_set';
 import {stringify} from '../util';
 
 
@@ -29,7 +27,7 @@ function aliasAs( name ) {
 *   Stores or retrieves a value with the given name in the context
 */
 function commandAlias( context, name ){
-    var value;
+    let value;
     context.alias = (context.alias || {});
 
     value = context.last;
@@ -41,12 +39,12 @@ function commandAlias( context, name ){
     if( context.debug ){ log.debug('cmd alias ' + stringify(name) + ' ' + stringify(value)); } 
     context.alias[ name ] = value;
 
-    return (context.last = [ VALUE, value ] );
+    return (context.last = [VALUE, value] );
 }
 
 
 function commandAliasGet( context, name ){
-    var value;
+    let value;
     // if( context.debug ){ log.debug('aliasGet>'); }
     // log.debug('aliasGet> ' + name);
     context.alias = (context.alias || {});
@@ -55,8 +53,8 @@ function commandAliasGet( context, name ){
     if( !value ){
         throw new Error('no value found for alias ' + name );
     }
-    if(  context.debug ){ log.debug('cmd aliasGet ' + stringify(name) + ' ' + stringify(value)); } 
-    return (context.last = [ VALUE, value ] );
+    if( context.debug ){ log.debug('cmd aliasGet ' + stringify(name) + ' ' + stringify(value)); } 
+    return (context.last = [VALUE, value] );
 }
 
 

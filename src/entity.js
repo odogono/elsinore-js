@@ -1,11 +1,10 @@
 
 import _ from 'underscore';
-import BitField  from 'odgn-bitfield';
+import BitField from 'odgn-bitfield';
 import {hash,isInteger,setEntityIdFromId} from './util';
 
 import Component from './component';
 import Model from './model';
-import Registry from './registry';
 
 // const ENTITY_ID_MAX = Math.pow(2,31)-1;
 // const ENTITY_SET_ID_MAX = Math.pow(2,21)-1;
@@ -75,7 +74,7 @@ export default class Entity extends Model {
     }
 
     setEntityId( id ){
-        var eid = this.id;
+        let eid = this.id;
         // // the entity id is set as the low 30 bits 
         // // eid += (id & 0x3fffffff) - (eid & 0x3fffffff);
         // the entity id is set as the low 32 bits 
@@ -89,17 +88,17 @@ export default class Entity extends Model {
     }
 
     setEntitySetId( id ){
-        var eid = this.get('id');
+        let eid = this.get('id');
         // the es id is set as the high 21 bits
         // this.set( 'eid', (id & 0x3fffff) * 0x40000000 + (eid & 0x3fffffff) );
-        eid = (id & 0x1fffff) * 0x100000000 +    (eid & 0xffffffff);
+        eid = (id & 0x1fffff) * 0x100000000 + (eid & 0xffffffff);
         this.set({id:eid});
     }
 
     getEntitySetId(){
-        var id = this.get('id');
+        let id = this.get('id');
         // return (id - (id & 0x3fffffff))  / 0x40000000;
-        return    (id - (id & 0xffffffff)) /  0x100000000;
+        return (id - (id & 0xffffffff)) / 0x100000000;
     }
 
     setEntitySet( es, setId=true ){
@@ -147,8 +146,8 @@ export default class Entity extends Model {
     }
 
     hash(asString){
-        var result = 0;
-        for( var sid in this.components ){
+        let result = 0;
+        for( let sid in this.components ){
             result += this.components[sid].hash(true);
         }
         if( result === 0 ){ return 0; }
@@ -156,7 +155,7 @@ export default class Entity extends Model {
     }
 
     addComponent( component ){
-        var existing;
+        let existing;
         if( !component ){ return this; }
         if(Array.isArray(component)){ 
             _.each(component, c => this.addComponent(c));
@@ -253,7 +252,7 @@ export default class Entity extends Model {
     }
 
     getComponentBitfield(){
-        var bf = this.get('comBf');
+        let bf = this.get('comBf');
         if( !bf ){
             // TODO: the size must be configured from somewhere - otherwise will run out of space
             bf = BitField.create();
@@ -272,13 +271,14 @@ export default class Entity extends Model {
     }
 
 
-    triggerEntityEvent(){
+    triggerEntityEvent(...args){
         let es = this.getRegistry();
-        let args = _.toArray( arguments );
-        args.splice(1, 0, this);
+        // let args = _.toArray( arguments );
         if( es ){
+            args.splice(1, 0, this);
+            // console.log(`[entity][triggerEntityEvent]`, JSON.stringify(args));
             // so we end up passing evtName, recipientEntity, ... 
-            es.triggerEntityEvent.apply( es, args );
+            es.triggerEntityEvent.apply(es,args);
         }
     }
 

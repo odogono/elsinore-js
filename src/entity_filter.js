@@ -1,6 +1,6 @@
 import _ from 'underscore';
-import BitField  from 'odgn-bitfield';
-import Entity from './entity';
+import BitField from 'odgn-bitfield';
+// import Entity from './entity';
 import {
     hash
 } from './util';
@@ -69,7 +69,7 @@ export default class EntityFilter {
      * 
      */
     accept( entity, options ){
-        let filter, bitField;
+        let bitField;
         let ebf;// = BitField.isBitField(entity) ? entity : entity.getComponentBitfield();
         let registry = options ? options.registry : null;
 
@@ -103,7 +103,7 @@ export default class EntityFilter {
     }
 
     toJSON(){
-        let bitField, result = {};
+        let result = {};
         for (let type in this.filters) {
             result[type] = this.filters[type].toValues();
         }
@@ -122,7 +122,7 @@ EntityFilter.ROOT = ROOT;
 
 
 EntityFilter.Transform = function( type, registry, entity, entityBitField, filterBitField ){
-    let ii, len, defId, bf, ebf, vals, result;
+    let ii, len, defId, vals, result;
     const isInclude = (type == INCLUDE);
     const isExclude = (type == EXCLUDE);
 

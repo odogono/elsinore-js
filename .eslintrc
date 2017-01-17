@@ -1,0 +1,46 @@
+// Use this file as a starting point for your project's .eslintrc.
+// Copy this file, and add rule overrides as needed.
+{
+    // "parser": "babel-eslint",
+
+    "extends": [
+        "plugin:flowtype/recommended"
+    ],
+
+    "env": {
+        "es6": true,
+        "node": true
+    },
+
+    "ecmaFeatures": {
+        "experimentalObjectRestSpread": true
+    },
+
+    "globals": {
+    },
+
+    "rules": {
+        "array-bracket-spacing": ["error", "never"],
+        "curly": "error",
+        "indent": ["error", 4, { "SwitchCase": 1 }],
+        "no-cond-assign": [2, "except-parens"],
+        "no-unused-vars": [1, {"vars": "local", "args": "none"}],
+        
+        "default-case": "error",
+        "no-console": "error",
+
+        // I've found this to work incorrectly
+        "no-else-return": 0,
+        "no-empty": "error",
+        "no-multi-spaces": "error",
+        "no-var": "error",
+        "prefer-rest-params": 0, //"error",
+        "prefer-spread": 0,
+
+        "rest-spread-spacing": ["error", "never"]
+    },
+
+    "plugins": [
+        "flowtype"
+    ]
+}

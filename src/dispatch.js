@@ -5,6 +5,7 @@ import EntitySet from './entity_set/view';
 import Query from './query/full';
 import EntityProcessor from './entity_processor';
 import {createLog} from './util/log';
+import {stringify} from './util';
 
 
 const Log = createLog('EntityDispatch');
@@ -50,7 +51,7 @@ export default class EntityDispatch {
      * @returns {object} returns the record describing the processor
      */
     addProcessor( processor, query, options={} ){
-        let filter;
+        // let filter;
         if( !processor ){ return null; }
 
         if( !EntityProcessor.isEntityProcessor(processor) ){
@@ -157,13 +158,13 @@ export default class EntityDispatch {
      * @param {object} options
      */
     update(timeMs=0, options={}){
-        let entitySet;
-        let entitySetId;
-        let entitySetProcessors;
-        let debug;
-        let ii,len;
+        // let entitySet;
+        // let entitySetId;
+        // let entitySetProcessors;
+        // let debug;
+        // let ii,len;
 
-        debug = options.debug;
+        // debug = options.debug;
 
         // Log.debug(`adding ${timeMs} to ${this.time}`);
         // add the updated time to this dispatches idea of what the current time is
@@ -174,7 +175,7 @@ export default class EntityDispatch {
         this.processorEntries.each( entry => {
             const processor = entry.get('processor');
             const view = entry.get('view');
-            const priority = entry.get('priority');
+            // const priority = entry.get('priority');
             const interval = entry.get('interval');
             
             let entityArray = view ? view.models : null;
@@ -189,11 +190,11 @@ export default class EntityDispatch {
             }
 
             // execute any queued events that the processor has received
-            if( debug ){ 
-                Log.debug('executing processor',processor.type, 
-                    priority,
-                    'with', `${view.cid}/${view.hash()} ${entityArray.length} entities`); 
-            }
+            // if( debug ){ 
+            //     Log.debug('executing processor',processor.type, 
+            //         priority,
+            //         'with', `${view.cid}/${view.hash()} ${entityArray.length} entities`); 
+            // }
             
             // if the view needs updating due to entities or components being 
             // added/updated/removed, then do so now
@@ -244,7 +245,7 @@ export default class EntityDispatch {
         const queryId = entry.get('queryId');
         const query = entry.get('query');
         const processor = entry.get('processor');
-        const debug = options.debug;
+        // const debug = options.debug;
 
         if( !query ){
             entry.set('view', this._entitySet);
@@ -280,18 +281,21 @@ export default class EntityDispatch {
         for( name in processor.events ){
             const event = processor.events[name];
             
-            processor.listenToAsync( entitySet, name, function( pName, pEntity, pEntitySet ){
-                let args = Array.prototype.slice.call( arguments, 2 );
-                args = [pEntity, entitySet].concat(args);
+            // processor.listenToAsync( entitySet, name, function( pName, pEntity, pEntitySet ){
+            processor.listenToAsync( entitySet, name, ( pName, pEntity, pEntitySet, ...rest ) => {
+                // let args = Array.prototype.slice.call( arguments, 2 );
+                // args = [pEntity, entitySet].concat(args);
+                const args = [pEntity, entitySet, ...rest];
+                Log.debug(`[_attachProcessorEvents] evt `, stringify(args) );
                 return event.apply( processor, args);
             });
         }
     }
 
     _removeEntry(entry){
-        const query = entry.get('query');
-        const processor = entry.get('processor');
-        const view = entry.get('view');
+        // const query = entry.get('query');
+        // const processor = entry.get('processor');
+        // const view = entry.get('view');
 
     }
 
@@ -306,7 +310,7 @@ export default class EntityDispatch {
         processors.push(entry.id);
         views[queryId] = _.uniq(processors)
         this._viewsToProcessors = views;
-        console.log('added processor', entry.id, 'to view', queryId);
+        // console.log('added processor', entry.id, 'to view', queryId);
         return entry;
     }
 

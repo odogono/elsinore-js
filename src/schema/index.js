@@ -1,17 +1,17 @@
 /* @flow */
 
 import _ from 'underscore';
-import {Collection,Events,Model as BackboneModel} from 'odgn-backbone-model';
+import {Collection,Events} from 'odgn-backbone-model';
 
 import Component from '../component';
-import {deepExtend} from '../util';
+// import {deepExtend} from '../util';
 import {createLog} from '../util/log';
 
 import ComponentDef from '../component_def';
 
-type T = number;
+// type T = number;
 
-type ComponentDefRawObjectType = {uri: string; name?: string, hash?: string, properties?:Object };
+type ComponentDefRawObjectType = {uri: string; name?: string, hash?: string, properties?: Object };
 type ComponentDefRawArrayType = Array<ComponentDefRawObjectType>;
 type ComponentDefRawType = ComponentDefRawArrayType | ComponentDefRawObjectType;
 type ComponentDefType = Object; // TODO: replace with proper backbone model
@@ -35,11 +35,11 @@ const Log = createLog('ComponentRegistry',false);
 // });
 
 export class ComponentDefCollection extends Collection {
-    getByHash(hash:string){
+    getByHash(hash: string){
         return this.find( cdef => cdef.hash() == hash );
     }
 
-    getByUri(uri:string){
+    getByUri(uri: string){
         return this.find( cdef => cdef.getUri() == uri );
     }
 }
@@ -95,7 +95,7 @@ export default class ComponentRegistry {
     /**
      * Adds a component definition to the registry
      */
-    register( def:ComponentDefRawType|ComponentDefType, options:Object={} ): Object|null {
+    register( def: ComponentDefRawType | ComponentDefType, options: Object={} ): Object | null {
         let componentDef;
         let throwOnExists = options.throwOnExists === void 0 ? true : options.throwOnExists;
 
@@ -263,7 +263,7 @@ export default class ComponentRegistry {
         return result;
     }
     
-    getIId( defIdentifiers, options={throwOnNotFound:true} ): Object|null|uint32 {
+    getIId( defIdentifiers, options={throwOnNotFound:true} ): Object | null | uint32 {
         options.returnIds = true;
         // defIdentifiers.push({ throwOnNotFound:true, returnIds:true });
         return this.getComponentDef( defIdentifiers, options );
@@ -273,9 +273,9 @@ export default class ComponentRegistry {
     /**
      * 
      */
-    getComponentDef( identifiers:ComponentDefIdentifierType, options:Object={} ): Object|null|uint32 {
+    getComponentDef( identifiers: ComponentDefIdentifierType, options: Object={} ): Object | null | uint32 {
         let ii=0, len=0, cDef, ident;
-        const debug = options.debug === void 0 ? false : options.debug;
+        // const debug = options.debug === void 0 ? false : options.debug;
         const forceArray = options.forceArray === void 0 ? false : options.forceArray;
         const returnIds = options.returnIds === void 0 ? false : options.returnIds;
         const throwOnNotFound = options.throwOnNotFound === void 0 ? false : options.throwOnNotFound;

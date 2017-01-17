@@ -17,7 +17,7 @@ export default class ReusableId {
      */
     get(){
         // return this.promiseQ.add( () => {
-            return this.nextFree()
+        return this.nextFree()
                 .then( val => {
                     if( val ){
                         return val;
@@ -44,16 +44,16 @@ export default class ReusableId {
      */
     release(id){
         // return this.promiseQ.add( () => {
-            return new Promise( (resolve,reject) => {
+        return new Promise( (resolve,reject) => {
                 
                 // determine that this belongs to us
-                if( _.indexOf(this.activeIds,id) === -1 ){
-                    return reject(new Error(`${id} is not a member`));
-                }
-                this.activeIds = _.without( this.activeIds, id );
-                this.availableIds.push(id);
-                return resolve(id);
-            });
+            if( _.indexOf(this.activeIds,id) === -1 ){
+                return reject(new Error(`${id} is not a member`));
+            }
+            this.activeIds = _.without( this.activeIds, id );
+            this.availableIds.push(id);
+            return resolve(id);
+        });
         // });
     }
 
@@ -69,22 +69,22 @@ export default class ReusableId {
      */
     nextFree(){
         return new Promise( (resolve) => {
-             let free = this.availableIds.pop();
-             if( free === void 0 ){
-                 return resolve(undefined);
-             } 
-             this.activeIds.push(free);
-             return resolve(free);
+            let free = this.availableIds.pop();
+            if( free === void 0 ){
+                return resolve(undefined);
+            } 
+            this.activeIds.push(free);
+            return resolve(free);
         });
     }
 
     clear(){
         // return this.promiseQ.add( () => {
-            return new Promise( (resolve) => {
-                this.availableIds = [];
-                this.activeIds = [];
-                this.currentId = this.defaultValue;
-            })
+        return new Promise( (resolve) => {
+            this.availableIds = [];
+            this.activeIds = [];
+            this.currentId = this.defaultValue;
+        })
         // })
     }
 }

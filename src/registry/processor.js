@@ -76,7 +76,7 @@ Registry.prototype.addProcessor = function( processorModel, entitySet, options={
         - if the hash doesn't exist, create the view from the src entityset
     */
 Registry.prototype._mapEntitySetToProcessor = function( entitySet, processor, options ){
-    let filter, hash, view, entitySetProcessors, debug;
+    let filter, hash, view, debug;
 
     let record = new BackboneModel({
         id: processor.id,
@@ -145,11 +145,9 @@ Registry.prototype._attachProcessorEvents = function( entitySet, processor ){
     if( !processor.events ){ return; }
     for( name in processor.events ){
         const event = processor.events[name];
-        // this._createProcessorEvent( entitySet, processor, name, processor.events[name] );
-
-        processor.listenToAsync( entitySet, name, function( pName, pEntity, pEntitySet ){
-            let args = Array.prototype.slice.call( arguments, 2 );
-            args = [pEntity, entitySet].concat(args);
+        
+        processor.listenToAsync( entitySet, name, function( pName, pEntity, pEntitySet, ...rest ){
+            const args = [pEntity, entitySet,...rest];
             return event.apply( processor, args);
         });
     }
@@ -194,9 +192,8 @@ Registry.prototype._attachProcessorEvents = function( entitySet, processor ){
     // },
 
 Registry.prototype.update = function( timeMs, options={} ){
-    let debug;
-    debug = options.debug;
-
+    
+    
     return _.reduce( this.entitySetProcessors, (current, record) => {
         return current.then(() => {
             let processor = record.get('processor');
@@ -221,13 +218,7 @@ Registry.prototype.update = function( timeMs, options={} ){
     *   Updates the processors attached to each entityset
     */
 Registry.prototype.updateSync = function( timeMs, options={} ){
-    let entitySet;
-    let entitySetId;
-    let entitySetProcessors;
-    let debug;
-    let ii,len;
-
-    debug = options.debug;
+    let debug = options.debug;
     
     if(debug){ Log.debug('> registry.updateSync'); }
 

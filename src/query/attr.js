@@ -1,11 +1,12 @@
-import _ from 'underscore';
-import Query from './index';
-import EntitySet from '../entity_set';
+// import _ from 'underscore';
+// import Query from './index';
+// import EntitySet from '../entity_set';
 
 import {register,
-    LEFT_PAREN,
-    RIGHT_PAREN,
-    VALUE} from './index';
+    // LEFT_PAREN,
+    // RIGHT_PAREN,
+    VALUE
+} from './index';
 
 export const ATTR = 'AT';
 
@@ -26,7 +27,7 @@ function dslAttr(attr){
 function commandAttr( context, attributes ){
     let ii,jj,len,jlen,result;
     let entity = context.entity;
-    let debug = context.debug;
+    // let debug = context.debug;
     const componentIds = context.componentIds;
 
     // printIns( context,1 );
@@ -37,8 +38,8 @@ function commandAttr( context, attributes ){
     // }
     
     if( !entity ){
-        console.log('ATTR> no entity');
-        return (context.last = [ VALUE, null ] );
+        // console.log('ATTR> no entity');
+        return (context.last = [VALUE, null] );
     }
 
     attributes = Array.isArray( attributes ) ? attributes : [attributes];
@@ -65,7 +66,7 @@ function commandAttr( context, attributes ){
         result = result[0];
     }
 
-    return (context.last = [ VALUE, result ] );
+    return (context.last = [VALUE, result] );
 }
 
 

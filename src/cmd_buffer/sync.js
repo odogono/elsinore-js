@@ -1,16 +1,16 @@
 import _ from 'underscore';
 
-import BitField  from 'odgn-bitfield';
+
 import Component from '../component';
 import Entity from '../entity';
-import EntityFilter from '../entity_filter';
+
 import {
     clearCollection,
     clearMap,
-    stringify,
+    // stringify,
     valueArray
 } from '../util';
-import {toString as entityToString} from '../util/to_string';
+// import {toString as entityToString} from '../util/to_string';
 
 
 export const CMD_EX = 42;
@@ -41,16 +41,13 @@ export default class CmdBuffer {
     * Adds a component to this set
     */
     addComponent( entitySet, component, options={}){
-        let debug, batch, execute, silent, listenTo, entityId, entity, componentDef, componentArray, existingCom;
-        let ii, len;
+        let execute, entityId, entity, existingCom;
+        let ii;
         let result;
 
-        debug = options.debug;
-        silent = options.silent;
+        // debug = options.debug;
         entity = options.entity;
-        listenTo = options.listen;
 
-        batch = options.batch; // cmds get batched together and then executed
         execute = options.execute === void 0 ? true : options.execute;
 
         if( !component ){
@@ -132,7 +129,7 @@ export default class CmdBuffer {
                 this.addCommand( CMD_COMPONENT_ADD, component, options );
             } else {
                 // is the existing component different?
-                if( debug){ console.log('updating existing', stringify(component)); }
+                // if( debug){ console.log('updating existing', stringify(component)); }
                 this.addCommandX( CMD_COMPONENT_UPDATE, entityId, component, options );
             }
         }
@@ -150,12 +147,12 @@ export default class CmdBuffer {
     *
     */
     removeComponent( entitySet, component, options={} ){
-        let batch,execute, debug;
+        let execute;
         let executeOptions;
         let ii, result;
         
-        debug = options.debug;
-        batch = options.batch; // cmds get batched together and then executed
+        // debug = options.debug;
+        // batch = options.batch; // cmds get batched together and then executed
         execute = options.execute === void 0 ? true : options.execute;
         executeOptions = {...options, removeEmptyEntity:true};
 
@@ -208,17 +205,16 @@ export default class CmdBuffer {
     - 
     */
     addEntity( entitySet, entity, options={}){
-        let isNew, entityId, existingEntity, debug, silent, ignoreComponents;
-        let eBf, exBf, ii, len, comDefId, com;
-        let addComponentOptions;
-        let batch, execute;
+        let entityId, existingEntity;
+        let ii, comDefId;
+        let execute;
         let result;
         
         if( !entity ){
             return null;
         }
 
-        batch = options.batch; // cmds get batched together and then executed
+        // batch = options.batch; // cmds get batched together and then executed
         execute = options.execute === void 0 ? true : options.execute;
 
         // if we are dealing with an array of entities, ensure they all get executed in
@@ -276,10 +272,11 @@ export default class CmdBuffer {
         else {
             // entity already exists, determine whether components should be updated
             for( comDefId in entity.components ){
-                if( existingEntity.components[comDefId] )
+                if( existingEntity.components[comDefId] ){
                     this.addCommand( CMD_COMPONENT_UPDATE, entity.components[comDefId], options );
-                else
+                } else {
                     this.addCommand( CMD_COMPONENT_ADD, entity.components[comDefId], options );
+                }
             }
         }
         
@@ -296,7 +293,7 @@ export default class CmdBuffer {
     *
     */
     removeEntity( entitySet, entity, options={}){
-        let ii, batch, comDefId, execute, existingEntity, entityId;
+        let ii, comDefId, execute, existingEntity, entityId;
         let executeOptions;
         let result;
 
@@ -304,7 +301,7 @@ export default class CmdBuffer {
             return null;
         }
 
-        batch = options.batch; // cmds get batched together and then executed
+        // batch = options.batch; // cmds get batched together and then executed
         execute = options.execute === void 0 ? true : options.execute;
         executeOptions = {...options, removeEmptyEntity:true};
 
@@ -361,9 +358,9 @@ export default class CmdBuffer {
      * 
      */
     execute( entitySet, options ){
-        let ii,ie, len,entityId,cmds,cmd;
-        let com, ocom, defId, isNew, cmdOptions, query;
-        let entity, tEntity, component, registry;
+        let ii,ie, len,cmds,cmd;
+        let com, ocom, defId, query;
+        let entity, tEntity, registry;
         let removeEmptyEntity;
         let debug;
         let silent;
@@ -382,36 +379,28 @@ export default class CmdBuffer {
 
             const entityId = parseInt( ie, 10 ); // no integer keys in js :(
 
-            // if( debug ){ console.log('executing for entity ' + entityId + ' ' + JSON.stringify(cmds)); }
-
             // if the entity already exists, then clone it in order
             // to apply temporary operations to it
             // console.log('get it', entityId);
             entity = entitySet.getEntity( entityId );
             if( entity ){
-                // console.log('=-=-=-=-=-=-=-=-=-=-');
                 tEntity = registry.cloneEntity(entity);
-                // console.log('=-=-=-=-=-=-=-=-=-=-');
                 tEntity.setEntitySetId( entitySet.getEntitySetId() );
-                // console.log('found', entityId, tEntity.id, tEntity.getEntityId() );
-                
             } 
-            // else {
-            //     console.log('not found', entityId );
-            // }
+            
             
 
             // go through the incoming commands
             for( ii=0,len=cmds.length;ii<len;ii++ ){
                 cmd = cmds[ii];
                 com = cmd[1];
-                cmdOptions = cmd[2];
+                // cmdOptions = cmd[2];
 
                 if( cmd[0] == CMD_EX ){
                     cmd = _.rest(cmd); // remove first
                     // entityId = cmd[1];
                     com = cmd[2];
-                    cmdOptions = cmd[3];
+                    // cmdOptions = cmd[3];
                 }
 
                 switch( cmd[0] ){
@@ -420,7 +409,7 @@ export default class CmdBuffer {
                         if( !entity ){
                             // if( debug )console.log('create entity with ' + JSON.stringify(entityId) );
                             tEntity = entitySet._createEntity( entityId, false, options );
-                            if( debug ){ console.log('adding entity', entityToString(tEntity));}// tEntity.id, entityId); }
+                            // if( debug ){ console.log('adding entity', entityToString(tEntity));}// tEntity.id, entityId); }
                         }
                         break;
                     case CMD_COMPONENT_ADD:
@@ -454,6 +443,8 @@ export default class CmdBuffer {
                         // console.log('££ com update', com.getEntityId(), JSON.stringify(com));
                         tEntity.addComponent( com );
                         // console.log('££ com update', com.getEntityId(), JSON.stringify(com));
+                        break;
+                    default:
                         break;
                 }
             }
@@ -490,11 +481,11 @@ export default class CmdBuffer {
 
             
 
-            isNew = entity != null;
+            // isNew = entity != null;
             if( !entity ){
                 if( entitySet.doesEntityHaveComponents(tEntity) ){
                     entitySet._addEntity( tEntity );
-                    if(debug){console.log('add new entity ' + tEntity.id );}
+                    // if(debug){console.log('add new entity ' + tEntity.id );}
                     this.entitiesAdded.add( tEntity );
                 }
             }
@@ -516,7 +507,7 @@ export default class CmdBuffer {
 
                 // if the entity has no more components, then remove it
                 if( (!this.allowEmptyEntities || removeEmptyEntity) && entity.getComponentCount() <= 0 ){
-                    if( debug ){ console.log('removing entity ' + entity.getEntityId() + '/' + entity.cid ); }
+                    // if( debug ){ console.log('removing entity ' + entity.getEntityId() + '/' + entity.cid ); }
                     this.entitiesRemoved.add( entitySet._removeEntity(entity) );
                 }
             }
@@ -645,8 +636,9 @@ export default class CmdBuffer {
 
         for( entityId in this.cmds ){
             cmds = this.cmds[entityId];
-            if( cmds[0][0] == CMD_ENTITY_ADD )
+            if( cmds[0][0] == CMD_ENTITY_ADD ){
                 return entityId;
+            }
         }
 
         return -1;
@@ -654,7 +646,8 @@ export default class CmdBuffer {
 
     debugLog( logFn ){
         if( !logFn ){
-            logFn = console.log;
+            return;
+            // logFn = console.log;
         }
         logFn('entities added: ' + JSON.stringify( this.entitiesAdded.pluck('id') )); 
         logFn('entities updated: ' + JSON.stringify( this.entitiesUpdated.pluck('id') )); 

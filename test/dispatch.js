@@ -7,13 +7,13 @@ import test from 'tape';
 import {
     Entity, EntityProcessor, Dispatch,
     initialiseRegistry, 
-    loadEntities, 
-    loadFixtureJSON,
-    printE,
-    stringify,
-    logEvents,
+    // loadEntities, 
+    // loadFixtureJSON,
+    // printE,
+    // stringify,
+    // logEvents,
     createLog,
-    entityToString,
+    // entityToString,
 } from './common';
 
 const Log = createLog('TestDispatch');
@@ -112,30 +112,30 @@ test('basic execution of a processor', t => {
 
 test('will only execute processors which match', async t => {
     try{
-    const registry = await initialiseRegistry();
-    const dispatch = Dispatch.create(registry);
-    let executeCount = 0;
+        const registry = await initialiseRegistry();
+        const dispatch = Dispatch.create(registry);
+        let executeCount = 0;
 
-    const processor = createEntityProcessor( 
-        (entityArray, timeMs, options ) => executeCount++);
+        const processor = createEntityProcessor( 
+            (entityArray, timeMs, options ) => executeCount++);
 
-    const otherProcessor = createEntityProcessor( 
-        (entityArray, timeMs, options ) => executeCount++);
+        const otherProcessor = createEntityProcessor( 
+            (entityArray, timeMs, options ) => executeCount++);
 
-    dispatch.addProcessor( processor, Q => Q.all('/component/hostname') );
-    dispatch.addProcessor( otherProcessor, Q => Q.all('/component/username') );
-    
-    let entity = registry.createEntity( {'@c':'/component/username', username:'fred'} );
-    
-    dispatch.execute( entity );
+        dispatch.addProcessor( processor, Q => Q.all('/component/hostname') );
+        dispatch.addProcessor( otherProcessor, Q => Q.all('/component/username') );
+        
+        let entity = registry.createEntity( {'@c':'/component/username', username:'fred'} );
+        
+        dispatch.execute( entity );
 
-    // only one processor matches the query
-    t.equals( executeCount, 1);
+        // only one processor matches the query
+        t.equals( executeCount, 1);
 
-    dispatch.execute( entity );
-    t.equals( executeCount, 2);
-    
-    t.end();
+        dispatch.execute( entity );
+        t.equals( executeCount, 2);
+        
+        t.end();
 
     }catch(err){ Log.error(err.stack) }
 });
@@ -171,24 +171,24 @@ test('executing a processor with a time interval', async t => {
 
 test('retrieving all the processors assigned to a query', async t => {
     try{
-    const registry = await initialiseRegistry();
-    const entitySet = registry.createEntitySet();
-    const dispatch = Dispatch.create(entitySet);
+        const registry = await initialiseRegistry();
+        const entitySet = registry.createEntitySet();
+        const dispatch = Dispatch.create(entitySet);
 
-    const a = createEntityProcessor();
-    const b = createEntityProcessor();
-    class ProcC extends EntityProcessor{
-        entityFilter(){ return Q => Q.all('/component/username') }
-    }
+        const a = createEntityProcessor();
+        const b = createEntityProcessor();
+        class ProcC extends EntityProcessor{
+            entityFilter(){ return Q => Q.all('/component/username') }
+        }
 
-    dispatch.addProcessor( a, Q => Q.all('/component/username') );
-    dispatch.addProcessor( b, Q => Q.none('/component/username') );
-    dispatch.addProcessor( ProcC, Q => Q.all('/component/username') );
+        dispatch.addProcessor( a, Q => Q.all('/component/username') );
+        dispatch.addProcessor( b, Q => Q.none('/component/username') );
+        dispatch.addProcessor( ProcC, Q => Q.all('/component/username') );
 
-    const procs = dispatch.getProcessorsForQuery( Q => Q.all('/component/username') );
-    t.equal(procs.length,2);
-    
-    t.end();
+        const procs = dispatch.getProcessorsForQuery( Q => Q.all('/component/username') );
+        t.equal(procs.length,2);
+        
+        t.end();
     }catch(err){ Log.error(err.stack) }
 });
 
