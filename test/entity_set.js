@@ -30,7 +30,7 @@ test('type of entityset', t => {
 test('entityset has a uuid assigned', t => {
     return initialiseRegistry().then( registry => {
         let es = registry.createEntitySet();
-        t.equals( es.getUuid().length, 36 );
+        t.equals( es.getUUID().length, 36 );
     })
     .then( () => t.end() )
     .catch( err => Log.error(err.stack) )

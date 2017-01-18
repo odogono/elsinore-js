@@ -57,7 +57,7 @@ test('creating an entity with an id', t => {
 test('creating an entityset with an identical uuid throws an error', t => {
     return initialiseRegistry().then( registry => {
         const es = registry.createEntitySet({uuid:'50FC7026-C6DB-4FEB-991D-061A07CBD210'});
-        t.equals( es.getUuid(), '50FC7026-C6DB-4FEB-991D-061A07CBD210' );
+        t.equals( es.getUUID(), '50FC7026-C6DB-4FEB-991D-061A07CBD210' );
 
         t.throws( () => registry.createEntitySet({uuid:'50FC7026-C6DB-4FEB-991D-061A07CBD210'}), 
             new Error('entityset with uuid 50FC7026-C6DB-4FEB-991D-061A07CBD210 already exists') );

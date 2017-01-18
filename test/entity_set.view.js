@@ -55,8 +55,8 @@ test('the view should be identified as a view', t => {
         t.ok( view.isEntitySet, 'its an entityset');
         t.equals( view.type, 'EntitySetView', 'its type is EntitySetView');
         
-        t.notEqual( view.getUuid(), entitySet.getUuid() );
-        t.equals( view.getUuid().length, 36 );
+        t.notEqual( view.getUUID(), entitySet.getUUID() );
+        t.equals( view.getUUID().length, 36 );
 
         t.end();
     });

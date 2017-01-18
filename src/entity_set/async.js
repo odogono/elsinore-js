@@ -370,6 +370,13 @@ class AsyncEntitySet extends EntitySet {
             componentsAdded, componentsUpdated, componentsRemoved,
         });
     }
+
+    /**
+     * 
+     */
+    // createReadStream(options={}){
+
+    // }
 }
 
 

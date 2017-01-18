@@ -50,7 +50,7 @@ EntitySet.prototype.view = function( query, options={} ){
 
     result = registry.createEntitySet( {type:EntitySetView,register:false} );
     result._parent = this;
-    // console.log('EntitySetView created view', result.id, result.cid, result.getUuid(), 'from', this.cid );
+    // console.log('EntitySetView created view', result.id, result.cid, result.getUUID(), 'from', this.cid );
 
     // make <result> listenTo <entitySet> using <entityFilter>
     result.listener = EntitySetListener.create(result, this, query, options);

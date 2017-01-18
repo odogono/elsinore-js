@@ -207,7 +207,9 @@ export function parseIntWithDefault( value, defaultValue ){
     return isNaN(value) ? defaultValue : value;
 }
 
-
+/**
+ * 
+ */
 export function deepClone( obj ){
     // try{
     const str = stringify(obj);
@@ -258,12 +260,18 @@ export function deepExtend( out={}, ...others ){
     return out;
 }
 
+/**
+ * 
+ */
 export function clearCollection( col ){
     if( !col ){ return new Collection(); }
     col.reset();
     return col;
 }
 
+/**
+ * 
+ */
 export function clearArray( arr ){
     if( !arr ){
         return [];
@@ -274,6 +282,9 @@ export function clearArray( arr ){
     return arr;
 }
 
+/**
+ * 
+ */
 export function clearMap( map ){
     return {};
 }
@@ -401,6 +412,34 @@ export function setEntityIdFromId( eid, esid ){
     return (esid & 0x1fffff) * 0x100000000 + (eid & 0xffffffff);
 }
 
+/**
+ * Returns the given property from the object, or returns a
+ * default if the property does not exist
+ * 
+ * @param {object} obj
+ * @param {string} name
+ * @param defaultTo
+ * @return {object}
+ */
+export function readProperty( obj, name, defaultTo=null ){
+    let result;
+
+    if( _.isArray(name) ){
+        let pathResults = _.map(name, p => obj[p] );
+        
+        // pick the first non-undefined value
+        result = _.find(pathResults, r => !isUndefined(r))
+    }
+    else {
+        result = obj[name];
+    }
+
+    if( _.isUndefined(result) ){
+        result = defaultTo;
+    }
+
+    return result;
+}
 
 // if (typeof Object.assign != 'function') {
 //   Object.assign = function (target, varArgs) { // .length of function is 2

@@ -433,7 +433,7 @@ export default class Registry {
         if( options.sync || !entitySet.isAsync ){
             entitySet.setRegistry( null );
             this._entitySets = _.without( this.entitySets, entitySet );
-            delete this._entitySetUUIDs[ entitySet.getUuid() ];
+            delete this._entitySetUUIDs[ entitySet.getUUID() ];
             return entitySet;
         }
 
@@ -443,7 +443,7 @@ export default class Registry {
         // return closeFn.then( () => {
         //     entitySet.setRegistry( null );
         //     this._entitySets = _.without( this.entitySets, entitySet );
-        //     delete this._entitySetUUIDs[ entitySet.getUuid() ];
+        //     delete this._entitySetUUIDs[ entitySet.getUUID() ];
         //     return entitySet;
         // });
     }
@@ -462,13 +462,13 @@ export default class Registry {
                 return null;
             }
 
-            if( this._entitySetUUIDs[ entitySet.getUuid() ] ){
-                throw new Error(`entityset with uuid ${entitySet.getUuid()} already exists`);
+            if( this._entitySetUUIDs[ entitySet.getUUID() ] ){
+                throw new Error(`entityset with uuid ${entitySet.getUUID()} already exists`);
             }
 
             // store the entityset against its id
             this._entitySets.push( entitySet );
-            this._entitySetUUIDs[ entitySet.getUuid() ] = entitySet;
+            this._entitySetUUIDs[ entitySet.getUUID() ] = entitySet;
             
             entitySet.setRegistry( this );
 
@@ -477,11 +477,11 @@ export default class Registry {
             return entitySet;
         }
         
-        // Log.debug('opening', entitySet.type,entitySet.getUuid());
+        // Log.debug('opening', entitySet.type,entitySet.getUUID());
 
         return entitySet.open(options).then( () => {
             
-            const schemas = this.schemaRegistry.getComponentDefs();
+            const schemas = this.getComponentDefs();
             return this._registerComponentDefsWithEntitySet( entitySet, schemas, options )
                 .then( () => {
                     // perform the normal sync adding

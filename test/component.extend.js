@@ -209,7 +209,7 @@ test('will be notified when the entity is added to an entityset', t => {
             onAdded( es ){
                 calledOnAdded = true;
                 this._entity.addChild = function(){
-                    // console.log('adding the child to me,', this.id, 'es', this.collection.getUuid() );
+                    // console.log('adding the child to me,', this.id, 'es', this.collection.getUUID() );
                 }
             }
 

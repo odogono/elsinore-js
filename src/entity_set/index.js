@@ -51,6 +51,10 @@ export default class EntitySet extends Collection {
         return this._uuid;
     }
 
+    getUUID(){
+        return this._uuid;
+    }
+
     hash(){
         return EntitySet.hash( this, this.getQuery() );
     }
@@ -66,6 +70,9 @@ export default class EntitySet extends Collection {
         return this.length;
     }
 
+    /**
+     * 
+     */
     toJSON(options: object={}){
         if( !_.isObject(options) ){
             options={};
@@ -103,6 +110,9 @@ export default class EntitySet extends Collection {
     //     };
     // },
 
+    /**
+     * 
+     */
     iterator(options){
         let nextIndex = 0;
         return {
@@ -114,14 +124,75 @@ export default class EntitySet extends Collection {
         }
     }
 
+    /**
+     * Create a 'faux' readStream which returns the entitysets
+     * components in an asynchronous manner.
+     * And by 'faux', it is not compatible with any official
+     * readstream implementation.
+     * 
+     * Each component is emitted with a 'data' event. Once the
+     * components have been exhausted, a 'end' event is emitted.
+     * 
+     */
+    createReadStream(options={}){
+        let index = 0;
+        let length = this.length;
+        let entity = null;
+        let components = null;
+        let entityIndex = 0;
+        let stream = Object.assign({}, Events);
+
+        const fnIterate = () => {
+            // calls -= 1;
+            if( index == length ){
+                stream.trigger('end');
+                return;
+            }
+            if( !components || entityIndex == components.length ) {
+                entity = null;
+            }
+
+            if( !entity ){
+                entity = this.at(index++);
+                components = entity.getComponents();
+                entityIndex = 0;
+            }
+
+            let component = components[entityIndex++];
+
+            stream.trigger('data', component);
+
+            fnResume();
+        };
+
+        const fnResume = () => {
+            // calls += 1;
+            setTimeout(fnIterate,1);
+        };
+
+        fnResume();
+
+        return stream;  
+    }
+
+
+    /**
+     * 
+     */
     setRegistry( registry, options ){
         this._registry = registry;
     }
 
+    /**
+     * 
+     */
     getRegistry(){
         return this._registry;
     }
 
+    /**
+     * 
+     */
     getSchemaRegistry(){
         return this.getRegistry().schemaRegistry;
     }

@@ -53,7 +53,7 @@ export function entitySetToString(es, indent){
     
     it = es.iterator();
     indent || (indent='');
-    res.push( indent + '- ' + es.cid + ' (' + es.id + ') ' + es.getUuid() )
+    res.push( indent + '- ' + es.cid + ' (' + es.id + ') ' + es.getUUID() )
     indent = indent + '  ';
     
     if( es.entityFilters ){
