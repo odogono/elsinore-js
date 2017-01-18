@@ -5,8 +5,10 @@ import EventsAsync from './events.async';
 import {createLog} from './log';
 import {stringify} from './index';
 import {toString as entityToString} from './to_string';
+import {readProperty} from './index';
 
 const Log = createLog('JSONExporter');
+
 
 
 
@@ -15,18 +17,32 @@ export class JSONExporter {
         Object.assign(this, EventsAsync);
     }
 
+
+    /**
+     * anonymous - components will be emitted without an id or entity id (default:false)
+     */
     attachEntitySet( entitySet, options={} ){
+        const triggerDefs = readProperty(options,'triggerDefs',true);
+        const triggerExisting = readProperty(options,'triggerExisting',true);
+        const anonymous = readProperty(options,'anonymous',false);
+        const useDefUris = readProperty(options,'useDefUris',false);
+
         // emit an initial event which will identify the current entityset
         this.trigger('es', {'@cmd':'es', uuid:entitySet.getUUID(), id:entitySet.id });
 
-        this._releaseRegisteredComponents(entitySet);
+        if( triggerDefs ){
+            this._triggerComponentDefs(entitySet);
+        }
 
-        this._triggerExistingComponents(entitySet);
+        if( triggerExisting ){
+            this._triggerExistingComponents(entitySet, options);
+        }
 
         this.listenTo(entitySet, 'entity:add', entities => {
+            const cdefMap = useDefUris ? entitySet.getSchemaRegistry().getComponentDefUris() : null;
             _.each( entities, e => {
                 let components = e.getComponents();
-                _.each( components, com => this.trigger('es:com', com.toJSON() ));
+                _.each( components, com => this.trigger('es:com', this.componentToJSON(com,cdefMap,anonymous) ));
                 this.trigger('es:e', {'@cmd':'entity'});
             });
         });
@@ -34,18 +50,12 @@ export class JSONExporter {
         this.listenTo(entitySet, 'component:add', components => {
             // _.each( components, com => this.trigger('es:add', com) );
         })
-
-        // this.listenTo(entitySet, 'all', (name,...evtArgs) => {
-        //     Log.debug('BLAH', name);
-        //     this.trigger('es:com', ...evtArgs );
-        // });
-        
     }
 
     /**
      * 
      */
-    _releaseRegisteredComponents(entitySet){
+    _triggerComponentDefs(entitySet){
         const schemas = entitySet.getRegistry().getComponentDefs();
 
         schemas.forEach( schema => {
@@ -59,21 +69,31 @@ export class JSONExporter {
 
     /**
      * https://github.com/Level/levelup#createReadStream
+     * 
+     * useDefUris - components will be emitted with their full uri (default: false)
+     * anonymous - components will be emitted without an id or entity id (default:false)
+     * 
      */
-    _triggerExistingComponents(entitySet, completeCb){
+    _triggerExistingComponents(entitySet, options={}){
+        const useDefUris = readProperty(options,'useDefUris',false);
+        const anonymous = readProperty(options,'anonymous',false);
+
         let currentEntityId = -1;
-        const cdefMap = entitySet.getSchemaRegistry().getComponentDefUris();
+        const cdefMap = useDefUris ? entitySet.getSchemaRegistry().getComponentDefUris() : null;
 
         entitySet.createReadStream()
             .on('data', (component) => {
                 if( currentEntityId === -1 ){
                     currentEntityId = component.getEntityId();
                 } else if( currentEntityId !== component.getEntityId() ){
-                    this.trigger('es:e', {'@cmd':'entity'});
+                    if( anonymous ){
+                        this.trigger('es:e', {'@cmd':'entity'});
+                    }
                     currentEntityId = component.getEntityId();
                 }
+                
                 const payload = {
-                    ...component.toJSON({cdefMap})
+                    ...this.componentToJSON(component,cdefMap,anonymous)
                 };
                 this.trigger('es:com', payload);
             })
@@ -85,20 +105,31 @@ export class JSONExporter {
             // })
             .on('end', () => {
                 // flush final entity
-                if( currentEntityId !== -1 ){
+                if( anonymous && currentEntityId !== -1 ){
                     this.trigger('es:e', {'@cmd':'entity'});
-                }
-                // this.trigger('es:stream:end');
-                if( completeCb ){
-                    completeCb();
                 }
             });
     }
+
+    /**
+     * Converts a component to JSON representation
+     * 
+     * @param component
+     * @param cdefMap
+     * @param {boolean} anonymous
+     * @param options
+     */
+    componentToJSON(component,cdefMap,anonymous,options={}){
+        const json = component.toJSON({cdefMap});
+        if( anonymous ){
+            delete json['@e'];
+            delete json['@i'];
+        }
+        return json;
+    }
 }
 
-function componentToJSON(component,entitySet,options={}){
-    
-}
+
 
 
 JSONExporter.create = function(options={}){
