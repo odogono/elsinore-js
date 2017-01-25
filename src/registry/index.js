@@ -61,10 +61,11 @@ export default class Registry {
     /**
      * Returns a new component def instance
      */
-    createComponentDef( attrs, options ){
-        const result = new ComponentDef(attrs,options);
-        return result;
-    }
+    // createComponentDef( attrs, options ){
+    //     const result = new ComponentDef(attrs,options);
+    //     return result;
+    // }
+
 
 
     /**

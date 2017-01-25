@@ -8,7 +8,7 @@ import Component from '../component';
 import Entity from '../entity';
 // import EntityFilter from '../entity_filter';
 import Query from '../query';
-import {hash, isInteger,stringify} from '../util';
+import {hash, isInteger,stringify,isPromise} from '../util';
 import {uuid as createUUID} from '../util/uuid';
 
 // import * as CmdBuffer from '../cmd_buffer/sync';
@@ -173,6 +173,81 @@ export default class EntitySet extends Collection {
         fnResume();
 
         return stream;  
+    }
+
+
+    /**
+     * Creates a pull-stream sink which accepts either Entity or 
+     * Component instances and adds them to the entityset
+     * 
+     * @param {Object} options
+     * @param {function} completeCb called when complete
+     * @returns {function}
+     */
+    createPullStreamSink(options={}, completeCb){
+        const self = this;
+        return function (read) {
+            read(null, function next (end, data) {
+                if( end === true ){ return completeCb(); }
+                if( end ){ return completeCb(end); }
+                let result = null;
+
+                if( Entity.isEntity(data) ){
+                    result = self.addEntity(data);
+                } else if( Component.isComponent(data) ){
+                    result = self.addComponent(data);
+                } else {
+                    return read( new Error('invalid data', data), completeCb );
+                }
+
+                if( isPromise(result)) {
+                    result.then( () => {
+                        read(null, next);
+                    })
+                    .catch( err => {
+                        read( err, completeCb );
+                    })
+                } else {
+                    read(null,next);
+                }
+            });
+        }
+    }
+
+
+    /**
+     * creates a pullstream of components in the entityset
+     * 
+     * see https://pull-stream.github.io/
+     * 
+     * @returns {function}
+     */
+    createPullStreamSource(options={}) {
+        let index = 0;
+        const length = this.length;
+        let entity = null;
+        let components = null;
+        let entityIndex = 0;
+
+        return (abort, cb) => {
+            if( abort ) {
+                return cb(abort);
+            }
+            if( index >= length ){
+                return cb(true,null);
+            }
+            if( !components || entityIndex == components.length ){
+                entity = null;
+            }
+            if( !entity ){
+                entity = this.at(index++);
+                components = entity.getComponents();
+                entityIndex = 0;
+            }
+            let component = components[entityIndex++];
+
+            return cb( null, component );
+        }
     }
 
 

@@ -12,6 +12,7 @@ const Log = createLog('JSONExporter');
 
 
 
+
 export class JSONExporter {
     constructor(options={}){
         Object.assign(this, EventsAsync);
@@ -80,6 +81,16 @@ export class JSONExporter {
 
         let currentEntityId = -1;
         const cdefMap = useDefUris ? entitySet.getSchemaRegistry().getComponentDefUris() : null;
+
+        const stream = entitySet.createPullStream();
+
+        // stream( null, (end,component) => {
+        //     if( end == true ){
+
+        //         return;
+        //     }
+        // })
+
 
         entitySet.createReadStream()
             .on('data', (component) => {

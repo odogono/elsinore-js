@@ -2,13 +2,7 @@ import _ from 'underscore';
 import test from 'tape';
 
 import {
-    Component, Entity, EntityFilter, EntitySet,
-    Registry, Query,
-    initialiseRegistry, 
-    loadEntities, 
-    loadComponents,
-    loadFixtureJSON,
-    printE,
+    Registry,
     entityToString,
     logEvents,
     createLog,
@@ -20,7 +14,13 @@ import {JSONExporter} from '../src/util/exporter';
 const Log = createLog('TestJSONLoader');
 
 test('basic', async t => {
-    const registry = await setup();
+    const registry = new Registry();
+
+    await registry.registerComponent([
+        {'uri':'/connection', properties:{addr:{type:'string'}} },
+        {'uri':'/ttl', properties:{expires_at:{type:'number'}} },
+        {'uri':'/dead'}
+    ]);
 
     try{
         const entitySet = registry.createEntitySet();
@@ -57,7 +57,7 @@ test('register components', async t => {
 });
 
 
-test.only('json export', async t => {
+test('json export', async t => {
     const registry = Registry.create();
 
     try {
@@ -86,8 +86,6 @@ test.only('json export', async t => {
 });
 
 
-
-
 const commandsA = [
     { '@c':'/connection', 'addr': '192.3.0.1'},
     { '@c':'/ttl', expires_at:-300 },
@@ -109,17 +107,3 @@ const commandsB = [
     { '@cmd':'register', 'uri':'/dead'},
     { '@cmd':'register', 'uri':'/name', properties:{name:{type:'string'}}},
 ];
-
-
-async function setup(){
-    const registry = new Registry();
-
-    await registry.registerComponent([
-        {'uri':'/connection', properties:{addr:{type:'string'}} },
-        {'uri':'/ttl', properties:{expires_at:{type:'number'}} },
-        {'uri':'/dead'}
-    ]);
-
-    return registry;
-    
-}

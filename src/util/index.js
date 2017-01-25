@@ -66,6 +66,17 @@ export function isInteger(i) {
     return !isNaN(parseFloat(i)) && isFinite(i) && i % 1 === 0;
 };
 
+/**
+ * Returns true if the value is a Promise
+ * https://github.com/then/is-promise
+ * 
+ * @param p the value to be tested
+ * @returns {boolean}
+ */
+export function isPromise(p){
+    return !!p && (typeof p === 'object' || typeof p === 'function') && typeof p.then === 'function';
+}
+
 
 /**
  * Calculate a 32 bit FNV-1a hash
