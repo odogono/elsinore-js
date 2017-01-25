@@ -7,14 +7,17 @@ import {hash, stringify} from '../util';
 import QueryBuilder from './dsl';
 import {DslContext} from './dsl';
 
+import {
+    ALL, ANY, SOME, NONE, INCLUDE, EXCLUDE
+} from '../entity_filter';
 
-export const ALL = 0; // entities must have all the specified components
-export const ANY = 1; // entities must have one or any of the specified components
-export const SOME = 2; // entities must have at least one of the specified component
-export const NONE = 3; // entities should not have any of the specified components
-export const INCLUDE = 4; // the filter will only include specified components
-export const EXCLUDE = 5; // the filter will exclude specified components
-export const ROOT = 6; // select the root entity set
+// export const ALL = 0; // entities must have all the specified components
+// export const ANY = 1; // entities must have one or any of the specified components
+// export const SOME = 2; // entities must have at least one of the specified component
+// export const NONE = 3; // entities should not have any of the specified components
+// export const INCLUDE = 4; // the filter will only include specified components
+// export const EXCLUDE = 5; // the filter will exclude specified components
+export const ROOT = 'RT'; // select the root entity set
 export const EQUALS = '=='; // == 
 export const NOT_EQUAL = '!='; // !=
 export const LESS_THAN = '<'; // <
@@ -207,7 +210,7 @@ export default class Query {
             // console.log('>combine', firstStageCompiled[ii] );
             while( ii < len && firstStageCompiled[ii][0] === ENTITY_FILTER && !firstStageCompiled[ii][2] ){
                 if( !entityFilter ){
-                    entityFilter = new EntityFilter( firstStageCompiled[ii][1] );
+                    entityFilter = EntityFilter.create( firstStageCompiled[ii][1] );
                 } else {
                     entityFilter.add( firstStageCompiled[ii][1] );
                 }
@@ -518,7 +521,7 @@ function gatherEntityFilters( context, expression ){
     let ii,len,bf,result, obj;
     
     let filter = expression[0];
-    result = new EntityFilter();
+    result = EntityFilter.create();
     
     switch( filter ){
         case ANY:
@@ -542,7 +545,7 @@ function gatherEntityFilters( context, expression ){
                     return null;
                 }
                 bf = context.componentsToBitfield( context, obj );
-                // console.log('CONVERTED TO BF', bf.toString(), bf.toJSON() );
+                
                 // filter = expression[0];
                 switch( filter ){
                     case ALL_FILTER: filter = ALL; break;
@@ -552,6 +555,7 @@ function gatherEntityFilters( context, expression ){
                     default:
                         break;
                 }
+                // console.log('CONVERTED TO BF', filter, bf.toString(), bf.toJSON() );
                 result.add( filter, bf );
             }
             break;

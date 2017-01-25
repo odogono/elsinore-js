@@ -5,26 +5,20 @@ import {
     hash
 } from './util';
 
-export const ALL = 0; // entities must have all the specified components
-export const ANY = 1; // entities must have one or any of the specified components
-export const SOME = 2; // entities must have at least one component
-export const NONE = 3; // entities should not have any of the specified components
-export const INCLUDE = 4; // the filter will only include specified components
-export const EXCLUDE = 5; // the filter will exclude specified components
-export const ROOT = 6; // kind of a NO-OP
+
+export const ALL = 'AL'; // entities must have all the specified components
+export const ANY = 'AN'; // entities must have one or any of the specified components
+export const SOME = 'SM'; // entities must have at least one component
+export const NONE = 'NO'; // entities should not have any of the specified components
+export const INCLUDE = 'IN'; // the filter will only include specified components
+export const EXCLUDE = 'EX'; // the filter will exclude specified components
+export const ROOT = 'RT'; // kind of a NO-OP
 
 
 /**
  * 
  */
 export default class EntityFilter {
-
-    constructor( type, bitfield ){
-        this.filters = {};
-        if( type !== void 0 ){
-            this.add(type,bitfield);
-        }
-    }
 
     /**
      * 
@@ -39,7 +33,6 @@ export default class EntityFilter {
         } else if( _.isObject(type) && !bitField ){
             // being passed a serialised form of EntityFilter
             _.each( type, (bf,type) => {
-                type = parseInt(type,10);
                 this.add( type, bf );
             })
             return;
@@ -112,13 +105,13 @@ export default class EntityFilter {
 
 }
 
-EntityFilter.ALL = ALL;
-EntityFilter.ANY = ANY;
-EntityFilter.SOME = SOME;
-EntityFilter.NONE = NONE;
-EntityFilter.INCLUDE = INCLUDE;
-EntityFilter.EXCLUDE = EXCLUDE;
-EntityFilter.ROOT = ROOT;
+// EntityFilter.ALL = ALL;
+// EntityFilter.ANY = ANY;
+// EntityFilter.SOME = SOME;
+// EntityFilter.NONE = NONE;
+// EntityFilter.INCLUDE = INCLUDE;
+// EntityFilter.EXCLUDE = EXCLUDE;
+// EntityFilter.ROOT = ROOT;
 
 
 EntityFilter.Transform = function( type, registry, entity, entityBitField, filterBitField ){
@@ -170,11 +163,11 @@ EntityFilter.accept = function( type, srcBitField, bitField, debug ){
     if( bitField ){
         bfCount = bitField.count();
     }
-    type = parseInt( type, 10 );
+    
     srcBitFieldCount = srcBitField.count();
 
-    // log.debug('accept src> ' + JSON.stringify(srcBitField) );
-    // log.debug('accept btf> ' + JSON.stringify(bitField) );
+    // console.log('[accept] src> ' + JSON.stringify(srcBitField), srcBitFieldCount );
+    // console.log('[accept] btf> ' + JSON.stringify(bitField) );
     
     switch( type ){
         case SOME:
@@ -205,12 +198,12 @@ EntityFilter.accept = function( type, srcBitField, bitField, debug ){
 }
 
 
-// export function create( type, bitField ){
-//     let result = new EntityFilter();
-//     result.filters = {};
-//     // console.log('EntityFilter.create', type, bitField);
-//     if( type !== undefined ){ result.add(type,bitField); }
-//     return result;
-// }
+EntityFilter.create = function( type, bitField ){
+    let result = new EntityFilter();
+    result.filters = {};
+    if( type !== undefined ){ result.add(type,bitField); }
+
+    return result;
+}
 
 // export default EntityFilter;
