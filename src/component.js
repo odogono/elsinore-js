@@ -119,7 +119,7 @@ export default class Component extends Model {
      * 
      */
     hash(asString){
-        let result = stringify( _.omit(this.attributes, '@e','@es','@s', '@c') );
+        let result = stringify( _.omit(this.attributes, '@e','@es','@s', '@c', 'id') );
         return hash( result, asString );
     }
 
