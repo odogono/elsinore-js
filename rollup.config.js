@@ -44,7 +44,8 @@ export default {
                 // "external-helpers",
                 // "transform-es2015-destructuring",
                 "transform-inline-environment-variables",
-                "transform-object-rest-spread"
+                "transform-object-rest-spread",
+                "transform-es2015-shorthand-properties", // uglifyjs has been having problems with this
             ]
         })
     ]
