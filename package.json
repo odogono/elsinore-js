@@ -76,7 +76,7 @@
     "lint": "./node_modules/.bin/eslint ./src --ext .js",
     "lint-fix": "./node_modules/.bin/eslint --fix ./src --ext .js",
     "prepublish": "npm run dist",
-    "test": "NODE_ENV=test babel-node test/index.js --plugins=transform-inline-environment-variables,transform-es2015-modules-commonjs,transform-flow-strip-types | tap-dot",
-    "spec": "NODE_ENV=test babel-node test/index.js --plugins=transform-inline-environment-variables,transform-es2015-modules-commonjs,transform-flow-strip-types | tap-spec"
+    "test": "NODE_ENV=test babel-node test/index.js --plugins=transform-inline-environment-variables,transform-es2015-modules-commonjs,transform-flow-strip-types,transform-object-rest-spread | tap-dot",
+    "spec": "NODE_ENV=test babel-node test/index.js --plugins=transform-inline-environment-variables,transform-es2015-modules-commonjs,transform-flow-strip-types,transform-object-rest-spread | tap-spec"
   }
 }

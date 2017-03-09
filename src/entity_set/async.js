@@ -268,7 +268,7 @@ class AsyncEntitySet extends EntitySet {
     
 
     /**
-     * TODO: finish
+     * 
      * the async based cmd-buffer calls this function once it has resolved a list of entities and components to be added
      */
     update(entitiesAdded, entitiesUpdated, entitiesRemoved, componentsAdded, componentsUpdated, componentsRemoved, options={}) {

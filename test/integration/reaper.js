@@ -15,7 +15,7 @@ import {
     toInteger
 } from '../../src/util';
 
-const Log = createLog('TestIntegrationOpenDoor');
+const Log = createLog('TestIntegrationReaper');
 
 import EntityProcessor from '../../src/entity_processor';
 import Dispatch from '../../src/dispatch';
@@ -109,7 +109,7 @@ class ConnectionProcessor extends EntityProcessor {
         for( ii=0,len=entityArray.length;ii<len;ii++ ){
             entity = entityArray[ii];
             const ttl = entity.Ttl.get('expires_at');
-            Log.debug('[ConnectionProcessor] update', entity.id, ttl, this.currentTime );
+            // Log.debug('[ConnectionProcessor] update', entity.id, ttl, this.currentTime );
 
             if( ttl <= this.currentTime ){
                 // removing /ttl means that this will no longer be processed

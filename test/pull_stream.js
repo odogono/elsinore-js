@@ -13,14 +13,36 @@ import {readProperty,isPromise} from '../src/util';
 import {JSONLoader} from '../src/util/loader';
 import {JSONExporter} from '../src/util/exporter';
 
+// import Loader from 'elsinore-io/lib/loader';
+
 // import Pushable from 'pull-pushable';
 import Pull from 'pull-stream';
 
 
 const Log = createLog('TestPullStream');
 
+// TODO: create a sink which writes JSON commandsA
+// TODO: create a sink which creates a new EntitySet from incoming commands?
+// TODO: create through which applies a query
 
-test.only('entity sink', async t => {
+
+test('query', async t => {
+    // let result = entitySet.query( Q => Q.all('/component/mode/invite_only') );
+    // Pull( entitySet.queryStream(Q => Q.all('/component/mode/invite_only')), outputEntitySet );
+})
+
+
+test.only('select', async t => {
+    try{
+        const {registry,entitySet} = await initialise({loadEntities:false});
+        Loader.create(registry,entitySet);
+
+        t.end();
+    } catch( err ){ Log.error( err.stack); }
+});
+
+
+test('entity sink', async t => {
     try {
         const {registry,entitySet} = await initialise({loadEntities:false,instanceClass:AsyncEntitySet});
         
