@@ -1,21 +1,13 @@
-// import _ from 'underscore';
-// import Query from './index';
-// import EntitySet from '../entity_set';
-
-import {register,
-    // LEFT_PAREN,
-    // RIGHT_PAREN,
-    VALUE
-} from './index';
+import { register, VALUE } from './index';
 
 export const ATTR = 'AT';
 
 /**
  * 
  */
-function dslAttr(attr){
-    const context = this.readContext( this );
-    context.pushVal( [ATTR,attr] );
+function dslAttr(attr) {
+    const context = this.readContext(this);
+    context.pushVal([ATTR, attr]);
     return context;
 }
 
@@ -24,50 +16,49 @@ function dslAttr(attr){
 *
 *   This command operates on the single entity within context.
 */
-function commandAttr( context, attributes ){
-    let ii,jj,len,jlen,result;
+function commandAttr(context, attributes) {
+    let ii, jj, len, jlen, result;
     let entity = context.entity;
     // let debug = context.debug;
     const componentIds = context.componentIds;
 
     // printIns( context,1 );
-    // if( debug ){ console.log('ATTR> ' + stringify(componentIds) + ' ' + stringify( _.rest(arguments))  ); } 
+    // if( debug ){ console.log('ATTR> ' + stringify(componentIds) + ' ' + stringify( _.rest(arguments))  ); }
 
     // if( !componentIds ){
     //     throw new Error('no componentIds in context');
     // }
-    
-    if( !entity ){
+
+    if (!entity) {
         // console.log('ATTR> no entity');
-        return (context.last = [VALUE, null] );
+        return context.last = [VALUE, null];
     }
 
-    attributes = Array.isArray( attributes ) ? attributes : [attributes];
+    attributes = Array.isArray(attributes) ? attributes : [attributes];
     // components = entity.components;
     result = [];
 
     const components = entity.getComponents(componentIds);
 
-    // console.log('commandComponentAttribute', attributes);    
-    for( ii=0,len=components.length;ii<len;ii++ ){
+    // console.log('commandComponentAttribute', attributes);
+    for (ii = 0, len = components.length; ii < len; ii++) {
         const component = components[ii];
-        for(jj=0, jlen=attributes.length;jj<jlen;jj++ ){
+        for (jj = 0, jlen = attributes.length; jj < jlen; jj++) {
             const attr = attributes[jj];
             const val = component.get(attr);
-            if( val !== undefined ){
+            if (val !== undefined) {
                 result.push(val);
             }
         }
     }
 
-    if( result.length === 0 ){
+    if (result.length === 0) {
         result = null;
-    } else if( result.length === 1 ){
+    } else if (result.length === 1) {
         result = result[0];
     }
 
-    return (context.last = [VALUE, result] );
+    return context.last = [VALUE, result];
 }
 
-
-register(ATTR, commandAttr, {attr:dslAttr} );
+register(ATTR, commandAttr, { attr: dslAttr });

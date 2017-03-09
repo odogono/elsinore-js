@@ -1,5 +1,5 @@
 import _ from 'underscore';
-import {register, VALUE} from './index';
+import { register, VALUE } from './index';
 // import Query from './index';
 // import EntitySet from '../entity_set';
 
@@ -8,36 +8,33 @@ const WITHOUT = 'WO';
 /**
 *   Returns a value with componentsIds with all of values excluded
 */
-function without( componentIds ){
+function without(componentIds) {
     const context = this.readContext(this);
 
-    context.pushOp( WITHOUT );
+    context.pushOp(WITHOUT);
     // the preceeding command is used as the first argument
-    context.pushVal( componentIds, true );
+    context.pushVal(componentIds, true);
 
     return context;
 }
 
-
 /**
 *
 */
-function commandWithout( context, values ){
+function commandWithout(context, values) {
     let value;
     let array = context.last;
     // if( context.debug ){ log.debug('cmd without ' + stringify(array)); }
 
-    value = array = context.valueOf(array, true );
-    values = context.valueOf(values, true );
+    value = array = context.valueOf(array, true);
+    values = context.valueOf(values, true);
 
-    if( Array.isArray(array) && values ){
-        value = _.without( array, values );
+    if (Array.isArray(array) && values) {
+        value = _.without(array, values);
     }
 
-    return (context.last = [VALUE, value]);
+    return context.last = [VALUE, value];
 }
-
-
 
 // registerCommand(  {
 //     commands:[
@@ -47,11 +44,11 @@ function commandWithout( context, values ){
 //             argCount: 1,
 //             command: commandWithout,
 //             dsl:{
-//                 without: without   
+//                 without: without
 //             }
 //         }
 //     ]
 // } );
 
 // module.exports = Q;
-register(WITHOUT, commandWithout, {without});
+register(WITHOUT, commandWithout, { without });
