@@ -114,8 +114,8 @@ export default class Query {
         // build the initial context object from the incoming arguments
         context = this.buildEntityContext( entity, options);
 
-        this.compile( context, this.commands, options );
-        // query = Query.compile( context, query, options );
+        // this.compile( context, this.commands, options );
+        this.compiled = compile(context, this.commands, options );
 
         // if( context.debug ){console.log('commands:'); printIns( query,1 ); }
 
@@ -133,105 +133,6 @@ export default class Query {
         // console.log('execute result was', stringify(result));
         return result;
         // return true;
-    }
-
-
-    /**
-     * compiles the instances commands into an optimised form
-     */
-    compile( context, commands, options ){
-        let ii, len, entityFilter;
-
-        this.compiled = [];
-
-        if( Query.isQuery( commands ) ){
-            if( commands.isCompiled ){
-                return commands;
-            }
-            commands = (commands.src || commands.toArray( true ));
-        } else if( Array.isArray(commands) ){
-            
-            if( !Array.isArray(commands[0]) && !Query.isQuery(commands[0])){
-                commands = [commands];
-            }else{
-                commands = _.map( commands, command => {
-                    if( Query.isQuery(command) ){
-                        if( !command.isCompiled ){
-                            command = command.toArray(true)[0];
-                        }
-                    }
-                    return command;
-                });
-            }
-            // console.log('compile> ' + stringify(commands));
-        }
-
-        // _.each(commands, f => console.log('pre',f));
-
-        let firstStageCompiled = _.reduce( commands, (result,command) => {
-            let op, entityFilter, compileResult;
-            op = command[0];
-
-            // check for registered command compile function
-            if( (compileResult = compileCommands[ op ]) !== undefined ){
-                if( (compileResult = compileResult( context, command )) ){
-                    result.push( compileResult );
-                }
-                return result;
-            }
-
-            switch( op ){
-                case NONE_FILTER:
-                case ALL_FILTER:
-                case ANY_FILTER:
-                case INCLUDE_FILTER:
-                    entityFilter = gatherEntityFilters( context, command );
-                    // console.log('gathering', command, 'to', entityFilter.toJSON());
-                    // insert a basic entity_filter command here
-                    result.push( [ENTITY_FILTER, entityFilter, command[2]] );
-                    break;
-                case AND:
-                    result.push( (context.resolveEntitySet(command, true ) || command) );
-                    break;
-                default:
-                    result.push( command );
-                    break;
-            }
-
-            return result;
-        },[]);
-
-        // _.each(firstStageCompiled, f => console.log('1st',stringify(f)));
-
-        entityFilter = null;
-
-        // combine contiguous entity filters
-        for( ii=0,len=firstStageCompiled.length;ii<len;ii++ ){
-            // console.log('>combine', firstStageCompiled[ii] );
-            while( ii < len && firstStageCompiled[ii][0] === ENTITY_FILTER && !firstStageCompiled[ii][2] ){
-                if( !entityFilter ){
-                    entityFilter = EntityFilter.create( firstStageCompiled[ii][1] );
-                } else {
-                    entityFilter.add( firstStageCompiled[ii][1] );
-                }
-                ii += 1;
-            }
-            if( entityFilter ){
-                // console.log('>combine adding', entityFilter );
-                this.compiled.push( [ENTITY_FILTER, entityFilter] );
-                entityFilter = null;
-            }
-            if( ii < len ){
-                this.compiled.push( firstStageCompiled[ii] );
-            }
-        }
-        // allow hooks to further process commands
-        _.each( compileHooks, hook => this.compiled = hook(context, this.compiled, this) );
-
-        // console.log('compiled', this.compiled);
-        // this.commands = commands;
-        // if( context.debug ) { console.log(this); }
-        return this;
     }
 
 
@@ -636,7 +537,8 @@ function commandFunction( op ){
 function executeCommand( context, op, args, ...rest ){
     let result, cmdFunction, cmdArgs, value;
 
-    // if( context.debug ){ console.log('executing ' + stringify( _.rest(arguments)) ); }
+    if( context.debug ){ console.log('[executeCommand]', stringify(op) ); }
+
 
     if( !args ){
         // assume the op and args are in the same array
@@ -686,6 +588,99 @@ function executeCommand( context, op, args, ...rest ){
             break;
     }
     return result;
+}
+
+
+export function compile( context, commands, options ){
+    let ii, len, entityFilter;
+
+    let compiled = [];
+
+    if( Query.isQuery( commands ) ){
+        if( commands.isCompiled ){
+            return commands;
+        }
+        commands = (commands.src || commands.toArray( true ));
+    } else if( Array.isArray(commands) ){
+        
+        if( !Array.isArray(commands[0]) && !Query.isQuery(commands[0])){
+            commands = [commands];
+        }else{
+            commands = _.map( commands, command => {
+                if( Query.isQuery(command) ){
+                    if( !command.isCompiled ){
+                        command = command.toArray(true)[0];
+                    }
+                }
+                return command;
+            });
+        }
+        // console.log('compile> ' + stringify(commands));
+    }
+
+    // _.each(commands, f => console.log('pre',f));
+
+    let firstStageCompiled = _.reduce( commands, (result,command) => {
+        let op, entityFilter, compileResult;
+        op = command[0];
+
+        // check for registered command compile function
+        if( (compileResult = compileCommands[ op ]) !== undefined ){
+            if( (compileResult = compileResult( context, command )) ){
+                result.push( compileResult );
+            }
+            return result;
+        }
+
+        switch( op ){
+            case NONE_FILTER:
+            case ALL_FILTER:
+            case ANY_FILTER:
+            case INCLUDE_FILTER:
+                entityFilter = gatherEntityFilters( context, command );
+                // insert a basic entity_filter command here
+                result.push( [ENTITY_FILTER, entityFilter, command[2]] );
+                break;
+            case AND:
+                result.push( (context.resolveEntitySet(command, true ) || command) );
+                break;
+            default:
+                result.push( command );
+                break;
+        }
+
+        return result;
+    },[]);
+
+    entityFilter = null;
+
+    // combine contiguous entity filters
+    for( ii=0,len=firstStageCompiled.length;ii<len;ii++ ){
+        // console.log('>combine', firstStageCompiled[ii] );
+        while( ii < len && firstStageCompiled[ii][0] === ENTITY_FILTER && !firstStageCompiled[ii][2] ){
+            if( !entityFilter ){
+                entityFilter = EntityFilter.create( firstStageCompiled[ii][1] );
+            } else {
+                entityFilter.add( firstStageCompiled[ii][1] );
+            }
+            ii += 1;
+        }
+        if( entityFilter ){
+            // console.log('>combine adding', entityFilter );
+            compiled.push( [ENTITY_FILTER, entityFilter] );
+            entityFilter = null;
+        }
+        if( ii < len ){
+            compiled.push( firstStageCompiled[ii] );
+        }
+    }
+    // allow hooks to further process commands
+    // _.each( compileHooks, hook => compiled = hook(context, compiled, this) );
+
+    // console.log('compiled', this.compiled);
+    // this.commands = commands;
+    // if( context.debug ) { console.log(this); }
+    return compiled;
 }
 
 
