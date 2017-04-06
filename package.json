@@ -1,6 +1,6 @@
 {
   "name": "elsinore",
-  "version": "4.2.5",
+  "version": "4.2.6",
   "description": "a javascript Entity Component System",
   "keywords": [
     "elsinore",
@@ -32,12 +32,12 @@
   },
   "non-dependencies": {},
   "devDependencies": {
-    "babel-cli": "^6.23.0",
-    "babel-eslint": "^7.1.1",
+    "babel-cli": "6.24.0",
+    "babel-eslint": "7.2.1",
     "babel-plugin-external-helpers": "^6.22.0",
     "babel-plugin-transform-es2015-classes": "^6.23.0",
     "babel-plugin-transform-es2015-destructuring": "^6.23.0",
-    "babel-plugin-transform-es2015-modules-commonjs": "^6.23.0",
+    "babel-plugin-transform-es2015-modules-commonjs": "6.24.0",
     "babel-plugin-transform-es2015-shorthand-properties": "^6.22.0",
     "babel-plugin-transform-flow-strip-types": "6.22.0",
     "babel-plugin-transform-inline-environment-variables": "^6.8.0",
@@ -48,16 +48,17 @@
     "eslint-plugin-import": "^2.2.0",
     "event-stream": "^3.3.2",
     "rollup-plugin-babel": "2.7.1",
-    "rollup-plugin-commonjs": "7.0.0",
+    "rollup-plugin-commonjs": "8.0.2",
     "rollup-plugin-flow": "1.1.1",
     "rollup-plugin-node-resolve": "^2.0.0",
     "rollup-plugin-replace": "^1.1.1",
     "rollup-plugin-uglify": "^1.0.1",
     "shelljs": "0.7.6",
-    "sinon": "1.17.7",
+    "sinon": "2.1.0",
     "tap-dot": "^1.0.5",
     "tap-spec": "^4.1.1",
-    "tape": "4.6.3"
+    "tape": "4.6.3",
+    "uglify-js": "github:mishoo/UglifyJS2#harmony"
   },
   "directories": {
     "es2015": "es2015",
@@ -67,7 +68,7 @@
   "scripts": {
     "build": "rollup -c rollup.config.js",
     "build:es": "rollup -c rollup.config.es.js",
-    "build:prod": "rollup -c rollup.config.prod.js",
+    "build:prod": "NODE_ENV=production npm run build",
     "compile": "babel src --out-dir lib --plugins=transform-es2015-shorthand-properties,transform-inline-environment-variables,transform-es2015-modules-commonjs,transform-flow-strip-types,transform-es2015-destructuring,transform-object-rest-spread",
     "compile:es2015": "babel src --out-dir es2015 --plugins=transform-es2015-shorthand-properties,transform-inline-environment-variables,transform-flow-strip-types,transform-object-rest-spread",
     "clean": "rm -rf node_modules build dist lib; mkdir build; npm install",
