@@ -1,11 +1,9 @@
-import _ from 'underscore';
-// import {Model, Events} from 'odgn-backbone-model';
-// import EntitySet from './entity_set';
 import {
     clearArray,
     // isUndefined,
     // stringify,
-    arrayPush
+    arrayPush,
+    uniqueId
 } from './util';
 
 import * as CmdBuffer from './cmd_buffer/sync';
@@ -25,7 +23,7 @@ export default class EntityProcessor {
      */
     constructor(options={}){
         Object.assign(this, EventsAsync);
-        options = {id:_.uniqueId(), priority:0,updateable:true, ...options };
+        options = {id:uniqueId(), priority:0,updateable:true, ...options };
 
         this._cmds = [];
         this.id = options.id;

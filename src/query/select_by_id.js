@@ -1,15 +1,13 @@
-import _ from 'underscore';
 import { register, LEFT_PAREN, RIGHT_PAREN, VALUE } from './index';
 // import Query from './index';
 import EntitySet from '../entity_set';
+import { arrayUnique } from '../util';
 
 const SELECT_BY_ID = 'SBI';
 
 EntitySet.prototype.selectById = function(entityIds, returnAsEntitySet) {
     let result;
-    returnAsEntitySet = returnAsEntitySet === undefined
-        ? true
-        : returnAsEntitySet;
+    returnAsEntitySet = returnAsEntitySet === undefined ? true : returnAsEntitySet;
     result = selectById(this.getRegistry(), this, entityIds, returnAsEntitySet);
     return result;
 };
@@ -39,9 +37,7 @@ function commandSelectById(context, entityIds, selectFromRoot) {
     // console.log('<<<');
     // printIns( context );
     // entitySet = selectFromRoot ? context.root : Q.resolveEntitySet( context, entitySet );
-    entitySet = selectFromRoot
-        ? context.root
-        : context.resolveEntitySet(context.last);
+    entitySet = selectFromRoot ? context.root : context.resolveEntitySet(context.last);
 
     if (!entitySet) {
         entitySet = context.root;
@@ -53,7 +49,6 @@ function commandSelectById(context, entityIds, selectFromRoot) {
     // console.log('using es ' + stringify(selectFromRoot) + ' ' + entitySet.length );
     // console.log('entityIds: ' + JSON.stringify(entityIds) );
     // printIns( entitySet );
-
     //
     if (!entityIds) {
         entityIds = context.valueOf(context.last);
@@ -67,19 +62,18 @@ function commandSelectById(context, entityIds, selectFromRoot) {
     // printE( context.last );
     // console.log('selectFromRoot ' + selectFromRoot + ' ' + entitySet.cid + ' ' + context.last.cid );
     // process.exit();
-
     value = selectById(context.registry, entitySet, entityIds, true);
 
-    return context.last = [VALUE, value];
+    return context.last = [ VALUE, value ];
 }
 
 function selectById(registry, entitySet, entityIds, returnAsEntitySet) {
     let ii, len, entity, result, entities = [];
 
-    entityIds = Array.isArray(entityIds) ? entityIds : [entityIds];
+    entityIds = Array.isArray(entityIds) ? entityIds : [ entityIds ];
 
     // remove duplicates
-    entityIds = _.uniq(entityIds);
+    entityIds = arrayUnique(entityIds);
 
     for (ii = 0, len = entityIds.length; ii < len; ii++) {
         if (entity = entitySet.getEntity(entityIds[ii])) {

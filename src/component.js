@@ -1,12 +1,13 @@
 /* @flow */
 
-import _ from 'underscore';
+
 import Model from './model';
 import {
     hash,
     setEntityIdFromId,
     getEntityIdFromId,
     getEntitySetIdFromId,
+    omit,
     stringify,
 } from './util';
 
@@ -25,7 +26,7 @@ export default class Component extends Model {
     parse( resp ){
         // console.log('Component.parse', resp);
         let esId = undefined, eId = undefined;
-        if( !resp || _.keys(resp).length <= 0 ){
+        if( !resp || Object.keys(resp).length <= 0 ){
             return resp;
         }
         if( resp['@es'] ){
@@ -63,7 +64,19 @@ export default class Component extends Model {
         if( Component.isComponent(other) ){
             attrs = other.attributes;
         }
-        this.set( _.omit(attrs, '@e','@es','@s', '@c'), options );
+        
+        // let copy = {};
+        // for( let key in attrs ){
+        //     switch( key ){
+        //         case '@e': case '@es': case '@s': case '@c':
+        //             break;
+        //         default:
+        //             copy[key] = attrs[key];
+        //             break;
+        //     }
+        // }
+        // // this.set( copy, options );
+        this.set( omit(attrs, '@e','@es','@s', '@c'), options );
     }
 
     get entityId(){ return this.attributes['@e']; }
@@ -119,7 +132,7 @@ export default class Component extends Model {
      * 
      */
     hash(asString){
-        let result = stringify( _.omit(this.attributes, '@e','@es','@s', '@c', 'id') );
+        let result = stringify( omit(this.attributes, '@e','@es','@s', '@c', 'id') );
         return hash( result, asString );
     }
 
@@ -127,7 +140,7 @@ export default class Component extends Model {
      * 
      */
     toJSON(options){
-        let result = _.omit(this.attributes,'@e','@es', '@c', 'id');
+        let result = omit(this.attributes,'@e','@es', '@c', 'id');
         if( this.id !== void 0 ){
             result[Component.ID] = this.id;
         }

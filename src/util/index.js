@@ -1,34 +1,31 @@
-import _ from 'underscore';
-import {Collection} from 'odgn-backbone-model';
+import { Collection } from 'odgn-backbone-model';
 import DeepEqual from 'deep-equal';
 
+const getClass = {}.toString;
 
 // export {createLog,setActive as setLogActive} from './log';
-
 export const deepEqual = DeepEqual;
 
 // export {entityToString} from './to_string';
 // export {toString,entitySetToString,entityToString,componentToString} from './to_string';
 // export {uuid as createUUID} from './uuid';
-
-
 export function mergeRecursive(obj1, obj2) {
     for (let p in obj2) {
-        if( obj2.hasOwnProperty(p) ){
-            if( obj1 === undefined )
-                {obj1 = {};}
-            obj1[p] = (typeof obj2[p] === 'object') ? mergeRecursive(obj1[p], obj2[p]) : obj2[p];
+        if (obj2.hasOwnProperty(p)) {
+            if (obj1 === undefined) {
+                obj1 = {};
+            }
+            obj1[p] = typeof obj2[p] === 'object' ? mergeRecursive(obj1[p], obj2[p]) : obj2[p];
         }
     }
     return obj1;
 }
 
-
 /**
  * Pushes item onto the end of the array and returns the array
  */
-export function arrayPush( array=[], item ){
-    if(Array.isArray(item)){
+export function arrayPush(array = [], item) {
+    if (Array.isArray(item)) {
         return array.concat(item);
     }
     array.push(item);
@@ -38,25 +35,24 @@ export function arrayPush( array=[], item ){
 // 
 // Returns an array broken into set lengths
 // 
-export function chunk( array, chunkLength ){
-    let i,j;
+export function chunk(array, chunkLength) {
+    let i, j;
     let result = [];
-    for (i=0,j=array.length; i<j; i+=chunkLength) {
-        result.push( array.slice(i,i+chunkLength) );
+    for (i = 0, j = array.length; i < j; i += chunkLength) {
+        result.push(array.slice(i, i + chunkLength));
     }
 
     return result;
-};
+}
 
 // taken from underscore-contrib/underscore.function.predicates
 // cannot include directly in node
-
 // A numeric is a letiable that contains a numeric value, regardless its type
 // It can be a String containing a numeric value, exponential notation, or a Number object
 // See here for more discussion: http://stackoverflow.com/questions/18082/validate-numbers-in-javascript-isnumeric/1830844#1830844
 export function isNumeric(n) {
     return !isNaN(parseFloat(n)) && isFinite(n);
-};
+}
 
 // An integer contains an optional minus sign to begin and only the digits 0-9
 // Objects that can be parsed that way are also considered ints, e.g. "123"
@@ -64,7 +60,7 @@ export function isNumeric(n) {
 // See here for more discussion: http://stackoverflow.com/questions/1019515/javascript-test-for-an-integer
 export function isInteger(i) {
     return !isNaN(parseFloat(i)) && isFinite(i) && i % 1 === 0;
-};
+}
 
 /**
  * Returns true if the value is a Promise
@@ -73,10 +69,9 @@ export function isInteger(i) {
  * @param p the value to be tested
  * @returns {boolean}
  */
-export function isPromise(p){
+export function isPromise(p) {
     return !!p && (typeof p === 'object' || typeof p === 'function') && typeof p.then === 'function';
 }
-
 
 /**
  * Calculate a 32 bit FNV-1a hash
@@ -89,24 +84,22 @@ export function isPromise(p){
  * @param {integer} [seed] optionally pass the hash of the previous chunk
  * @returns {integer | string}
  */
-export function hash/*Fnv32a*/(str, asString=false, seed=0x811c9dc5) {
-     /*jshint bitwise:false */
+export function hash /*Fnv32a*/(str, asString = false, seed = 2166136261) {
+    /*jshint bitwise:false */
     let ii, len, hval = seed;
-     // hval = (seed === undefined) ? 0x811c9dc5 : seed;
-
+    // hval = (seed === undefined) ? 0x811c9dc5 : seed;
     for (ii = 0, len = str.length; ii < len; ii++) {
         hval ^= str.charCodeAt(ii);
         hval += (hval << 1) + (hval << 4) + (hval << 7) + (hval << 8) + (hval << 24);
     }
     hval = hval >>> 0;
-     
-    if( asString ){
-         // Convert to 8 digit hex string
-        return ("0000000" + hval.toString(16)).substr(-8);
+
+    if (asString) {
+        // Convert to 8 digit hex string
+        return ('0000000' + hval.toString(16)).substr(-8);
     }
     return hval;
 }
-
 
 // /**
 //  * 
@@ -118,8 +111,6 @@ export function hash/*Fnv32a*/(str, asString=false, seed=0x811c9dc5) {
 //     result = Url.parse( uri );
 //     return result.href;
 // }
-
-
 // /**
 //  * 
 //  */
@@ -131,19 +122,14 @@ export function hash/*Fnv32a*/(str, asString=false, seed=0x811c9dc5) {
 //     } else {
 //         result.baseUri = result.path;// result.href;
 //     }
-
 //     return result;
 // }
-
 /**
  * 
  */
 // export function resolveUri( from, to ){
 //     return Url.resolve( from, to );
 // }
-
-
-
 // /**
 //  * parseUri 1.2.2
 //  * (c) Steven Levithan <stevenlevithan.com>
@@ -155,17 +141,13 @@ export function hash/*Fnv32a*/(str, asString=false, seed=0x811c9dc5) {
 //         m   = o.parser[o.strictMode ? "strict" : "loose"].exec(str),
 //         uri = {},
 //         i   = 14;
-
 //     while (i--) uri[o.key[i]] = m[i] || "";
-
 //     uri[o.q.name] = {};
 //     uri[o.key[12]].replace(o.q.parser, function ($0, $1, $2) {
 //         if ($1) uri[o.q.name][$1] = $2;
 //     });
-
 //     return uri;
 // };
-
 // parseUri.options = {
 //     strictMode: false,
 //     key: ["source","protocol","authority","userInfo","user","password","host","port","relative","path","directory","file","query","anchor"],
@@ -178,10 +160,8 @@ export function hash/*Fnv32a*/(str, asString=false, seed=0x811c9dc5) {
 //         loose:  /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/
 //     }
 // };
-
-
-export function toBoolean( value, defaultValue=false ){
-    switch(value){
+export function toBoolean(value, defaultValue = false) {
+    switch (value) {
         case true:
         case 'true':
         case 1:
@@ -205,65 +185,81 @@ export function toBoolean( value, defaultValue=false ){
  * If the value is not convertible, the supplied defaultValue
  * will be returned
  */
-export function toInteger( value, defaultValue=0 ){
-    // let result = parseInt(value,10);
-    if( isNaN(value) ){
+export function toInteger(value, defaultValue = 0) {
+    if (isNaN(value)) {
         value = defaultValue;
     }
     return value < 0 ? Math.ceil(value) : Math.floor(value);
 }
 
-export function parseIntWithDefault( value, defaultValue ){
-    // let result = parseInt( value, 10 );
-    return isNaN(value) ? defaultValue : value;
+/**
+ * 
+ * @param {*} obj 
+ */
+export function clone(obj) {
+    return Object.assign({}, obj);
+}
+
+/**
+ * Returns a clone of the object without the blacklisted keys
+ * 
+ * @param {*} obj 
+ * @param {*} blacklist 
+ */
+export function omit(obj, ...blacklist) {
+    if (!isObject(obj)) {
+        return;
+    }
+    if (blacklist.length === 0) {
+        return clone(obj);
+    }
+    let result = {};
+    for (let key in obj) {
+        if (blacklist.includes(key)) {
+            continue;
+        }
+        result[key] = obj[key];
+    }
+    return result;
 }
 
 /**
  * 
  */
-export function deepClone( obj ){
-    // try{
+export function deepClone(obj) {
     const str = stringify(obj);
     return parseJSON(str);
-    // } catch(err){
-    //     console.error('could not clone', obj, JSON.stringify(obj));
-    //     return null;
-    // }
 }
 
 // from: http://www.tuanhuynh.com/blog/2014/unpacking-underscore-clone-and-extend/
-export function deepExtend( out={}, ...others ){
+export function deepExtend(out = {}, ...others) {
     let ii, len;
     let obj;
-    let key,val;
+    let key, val;
 
     for (ii = 0, len = others.length; ii < len; ii++) {
         obj = others[ii];
 
-        if (!obj){
+        if (!obj) {
             continue;
         }
 
         for (key in obj) {
-            if( !obj.hasOwnProperty(key) ){
+            if (!obj.hasOwnProperty(key)) {
                 continue;
             }
 
             val = obj[key];
 
-            if( Array.isArray(val) ){
-                out[key] = deepExtend( out[key] || [], val );
-            }
-            else if( _.isString(val) ){
+            if (Array.isArray(val)) {
+                out[key] = deepExtend(out[key] || [], val);
+            } else if (isString(val)) {
                 out[key] = String.prototype.slice.call(val);
-            }
-            else if( _.isDate(val) ){
-                out[key] = new Date( val.valueOf() );
-            }
-            else if (typeof val === 'object'){
+            } else if (isDate(val)) {
+                out[key] = new Date(val.valueOf());
+            } else if (typeof val === 'object') {
                 out[key] = deepExtend(out[key], val);
-            }
-            else {
+            } else {
                 out[key] = val;
             }
         }
@@ -274,8 +270,10 @@ export function deepExtend( out={}, ...others ){
 /**
  * 
  */
-export function clearCollection( col ){
-    if( !col ){ return new Collection(); }
+export function clearCollection(col) {
+    if (!col) {
+        return new Collection();
+    }
     col.reset();
     return col;
 }
@@ -283,8 +281,8 @@ export function clearCollection( col ){
 /**
  * 
  */
-export function clearArray( arr ){
-    if( !arr ){
+export function clearArray(arr) {
+    if (!arr) {
         return [];
     }
     while (arr.length > 0) {
@@ -296,7 +294,7 @@ export function clearArray( arr ){
 /**
  * 
  */
-export function clearMap( map ){
+export function clearMap(map) {
     return {};
 }
 
@@ -304,15 +302,15 @@ export function clearMap( map ){
 *   If the passed array has only a single value, return
 *   that value, otherwise return the array
 */
-export function valueArray( array ){
-    if (array == null) { return void 0; }
-    if( array.length === 1 ){
+export function valueArray(array) {
+    if (array == null) {
+        return void 0;
+    }
+    if (array.length === 1) {
         return array[0];
     }
     return array;
 }
-
-
 
 /**
 *   calls a passed iterator until it is exhausted.
@@ -320,24 +318,24 @@ export function valueArray( array ){
 *   which returns an object containing the value, or if
 *   no more values are available, it should return a Promise.reject
 */
-export function reduceIterator( iterator, eachFn, memo ){
-    return new Promise( function( resolve, reject){
-        function iterateOk(item){
-            return Promise.resolve()
-                .then( function(){
-                    if( item.value ){ item = item.value; }
-                    return eachFn(memo,item);
-                })
-                .then( iterate );
-        };
-
-        function iterateFail(){
-            return resolve( memo );
+export function reduceIterator(iterator, eachFn, memo) {
+    return new Promise(function(resolve, reject) {
+        function iterateOk(item) {
+            return Promise.resolve().then(function() {
+                if (item.value) {
+                    item = item.value;
+                }
+                return eachFn(memo, item);
+            }).then(iterate);
         }
 
-        function iterate(){
-            return iterator.next().then( iterateOk, iterateFail );
-        };
+        function iterateFail() {
+            return resolve(memo);
+        }
+
+        function iterate() {
+            return iterator.next().then(iterateOk, iterateFail);
+        }
 
         iterate();
     });
@@ -347,28 +345,32 @@ export function reduceIterator( iterator, eachFn, memo ){
  * @param {object} obj
  * @param space
  */
-export function stringify( obj, space ){
+export function stringify(obj, space) {
     let cache = [];
-    return JSON.stringify(obj, function(key, value) {
-        if (typeof value === 'object' && value !== null) {
-            if (cache.indexOf(value) !== -1) {
-                // Circular reference found, discard key
-                return;
+    return JSON.stringify(
+        obj,
+        function(key, value) {
+            if (typeof value === 'object' && value !== null) {
+                if (cache.indexOf(value) !== -1) {
+                    // Circular reference found, discard key
+                    return;
+                }
+                // Store value in our collection
+                cache.push(value);
             }
-            // Store value in our collection
-            cache.push(value);
-        }
-        return value;
-    }, space);
+            return value;
+        },
+        space,
+    );
 }
 
 /**
  * Safe parsing of json data
  */
-export function parseJSON( str, defaultValue=null ){
-    try{
+export function parseJSON(str, defaultValue = null) {
+    try {
         return JSON.parse(str);
-    }catch(err){
+    } catch (err) {
         return defaultValue;
     }
 }
@@ -379,10 +381,9 @@ export function parseJSON( str, defaultValue=null ){
  * @param val
  * @returns {boolean}
  */
-export function isUndefined(val){
+export function isUndefined(val) {
     return val === void 0;
 }
-
 
 /**
  * Checks if the value is an object
@@ -398,29 +399,49 @@ export function isObject(value) {
 }
 
 /**
+ * 
+ * @param {*} object 
+ */
+export function isFunction(object) {
+    return object && getClass.call(object) == '[object Function]';
+}
+
+export function isBoolean(object) {
+    return object && getClass.call(object) == '[object Boolean]';
+}
+
+export function isString(object){
+    return object && getClass.call(object) == '[object String]';
+}
+
+export function isDate(object){
+    return object && getClass.call(object) == '[object Date]';
+}
+
+/**
 *   Converts a string so that the words are capitalised and concatenated
 */
-export function toPascalCase( str ){
-    return str.match(/[A-Z]?[a-z]+/g).map(function(word){
+export function toPascalCase(str) {
+    return str.match(/[A-Z]?[a-z]+/g).map(function(word) {
         return word.charAt(0).toUpperCase() + word.substring(1);
     }).join('');
     // return str.replace(/([A-Z]?[a-z]+)/gi, function(m,word){
-        // doesn't deal with the delimiters...
-        // return word.charAt(0).toUpperCase() + word.substring(1);
+    // doesn't deal with the delimiters...
+    // return word.charAt(0).toUpperCase() + word.substring(1);
     // });
     // return Classify( str );
 }
 
-export function getEntityIdFromId( id ){
-    return (id & 0xffffffff);
+export function getEntityIdFromId(id) {
+    return id & 4294967295;
 }
 
-export function getEntitySetIdFromId( id ){
-    return (id - (id & 0xffffffff)) / 0x100000000;
+export function getEntitySetIdFromId(id) {
+    return (id - (id & 4294967295)) / 4294967296;
 }
 
-export function setEntityIdFromId( eid, esid ){
-    return (esid & 0x1fffff) * 0x100000000 + (eid & 0xffffffff);
+export function setEntityIdFromId(eid, esid) {
+    return (esid & 2097151) * 4294967296 + (eid & 4294967295);
 }
 
 /**
@@ -432,47 +453,122 @@ export function setEntityIdFromId( eid, esid ){
  * @param defaultTo
  * @return {object}
  */
-export function readProperty( obj, name, defaultTo=null ){
+export function readProperty(obj, name, defaultTo = null) {
     let result;
 
-    if( _.isArray(name) ){
-        let pathResults = _.map(name, p => obj[p] );
-        
+    if (Array.isArray(name)) {
+        let pathResults = name.map(p => obj[p]);
+
         // pick the first non-undefined value
-        result = _.find(pathResults, r => !isUndefined(r))
-    }
-    else {
+        result = pathResults.find(r => !isUndefined(r));
+    } else {
         result = obj[name];
     }
 
-    if( _.isUndefined(result) ){
+    if (isUndefined(result)) {
         result = defaultTo;
     }
 
     return result;
 }
 
-// if (typeof Object.assign != 'function') {
-//   Object.assign = function (target, varArgs) { // .length of function is 2
-//     'use strict';
-//     if (target == null) { // TypeError if undefined or null
-//       throw new TypeError('Cannot convert undefined or null to object');
+// Traverses the children of `obj` along `path`. If a child is a function, it
+// is invoked with its parent as context. Returns the value of the final
+// child, or `fallback` if any child is undefined.
+export function result(obj, path, fallback) {
+    if (!Array.isArray(path)) {
+        path = [ path ];
+    }
+    const length = path.length;
+    if (!length) {
+        return isFunction(fallback) ? fallback.call(obj) : fallback;
+    }
+    for (let ii = 0; ii < length; ii++) {
+        let prop = obj == null ? void 0 : obj[path[ii]];
+        if (prop === void 0) {
+            prop = fallback;
+            ii = length; // Ensure we don't continue iterating.
+        }
+        obj = isFunction(prop) ? prop.call(obj) : prop;
+    }
+    return obj;
+}
+
+/**
+ * Similar to without, but returns the values from array that are not present in the other arrays. 
+ * @param {*} array 
+ * @param {*} others 
+ */
+export function arrayDifference(array, other) {
+    return array && array.filter(x => other.indexOf(x) < 0);
+}
+
+/**
+ * 
+ * @param {*} array 
+ * @param {*} other 
+ */
+export function arrayWithout(array, other) {
+    if( !Array.isArray(other) ){
+        return array.filter(x => x !== other );
+    }
+    return arrayDifference(array, other);
+}
+
+/**
+ * Returns an array containing the unique members of the passed array
+ * @param {*} array 
+ */
+export function arrayUnique(array) {
+    // http://stackoverflow.com/a/17903018/2377677
+    return array.reduce(
+        (p, c) => {
+            if (p.indexOf(c) < 0) {
+                p.push(c);
+            }
+            return p;
+        },
+        [],
+    );
+}
+
+/**
+ * 
+ * @param {*} ary 
+ * @param {*} ret 
+ */
+export function arrayFlatten(ary, shallow = false) {
+    if (shallow) {
+        return [].concat.apply([], ary);
+    }
+    let ret = [];
+    //ret = ret === undefined ? [] : ret;
+    for (let ii = 0; ii < ary.length; ii++) {
+        if (Array.isArray(ary[ii])) {
+            arrayFlatten(ary[ii], ret);
+        } else {
+            ret.push(ary[ii]);
+        }
+    }
+    return ret;
+}
+
+let idCounter = 0;
+
+/**
+ * Generate a unique integer id (unique within the entire client session).
+ * from underscorejs
+ * 
+ * @param {*} prefix 
+ */
+export function uniqueId(prefix) {
+    let id = ++idCounter + '';
+    return prefix ? prefix + id : id;
+}
+
+
+// export function size(object){
+//     if( isObject(object) ){
+//         return Object.keys(object).length;
 //     }
-
-//     var to = Object(target);
-
-//     for (var index = 1; index < arguments.length; index++) {
-//       var nextSource = arguments[index];
-
-//       if (nextSource != null) { // Skip over if undefined or null
-//         for (var nextKey in nextSource) {
-//           // Avoid bugs when hasOwnProperty is shadowed
-//           if (Object.prototype.hasOwnProperty.call(nextSource, nextKey)) {
-//             to[nextKey] = nextSource[nextKey];
-//           }
-//         }
-//       }
-//     }
-//     return to;
-//   };
 // }

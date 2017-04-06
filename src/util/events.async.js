@@ -1,5 +1,5 @@
-import _ from 'underscore';
 import {Events} from 'odgn-backbone-model';
+import {stringify} from './index';
 
 /**
 *   An event listener which captures incoming events and
@@ -23,12 +23,12 @@ const EventsAsync = Object.assign({}, Events, {
     listenToAsync: function(obj, name, callback){
         let asyncListenQueue = this._asyncListenQueue || (this._asyncListenQueue = []);
         this.isListeningAsync = true;
-        // log.debug('registered listenToAsync ' + name + ' to ' + stringify(obj)  );
+        // console.log('[EventsAsync][listenToAsync] registered listenToAsync', name, 'to', obj.cid, stringify(obj)  );
 
         // NOTE: because we use the arguments object, we can't use es6 fat arrows here
-        let listenFn = function(){
-            // log.debug('listenToAsync recv ' + stringify(arguments) + ' for name '+ name);
-            asyncListenQueue.push( {c:callback, a:_.toArray(arguments),name} );
+        let listenFn = function(...args){
+            // console.log('[EventsAsync][listenToAsync] recv ' + stringify(arguments) + ' for name '+ name);
+            asyncListenQueue.push( {c:callback, a:args,name} );
         };
 
         // this._asyncListeneners = this._asyncListeneners || (this._asyncListeneners={});

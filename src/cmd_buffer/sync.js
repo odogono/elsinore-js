@@ -1,13 +1,11 @@
-import _ from 'underscore';
-
-
 import Component from '../component';
 import Entity from '../entity';
 
 import {
+    arrayDifference,
     clearCollection,
     clearMap,
-    // stringify,
+    toInteger,
     valueArray
 } from '../util';
 // import {toString as entityToString} from '../util/to_string';
@@ -377,7 +375,7 @@ export default class CmdBuffer {
         for( ie in this.cmds ){
             cmds = this.cmds[ie];
 
-            const entityId = parseInt( ie, 10 ); // no integer keys in js :(
+            const entityId = toInteger( ie ); // no integer keys in js :(
 
             // if the entity already exists, then clone it in order
             // to apply temporary operations to it
@@ -397,10 +395,8 @@ export default class CmdBuffer {
                 // cmdOptions = cmd[2];
 
                 if( cmd[0] == CMD_EX ){
-                    cmd = _.rest(cmd); // remove first
-                    // entityId = cmd[1];
+                    cmd = cmd.slice(1);// _.rest(cmd);
                     com = cmd[2];
-                    // cmdOptions = cmd[3];
                 }
 
                 switch( cmd[0] ){
@@ -494,7 +490,7 @@ export default class CmdBuffer {
                 const existingEntityBF = entity.getComponentBitfield();
 
                 // the difference displays which components will be removed
-                const bfDifference = _.difference( existingEntityBF.toJSON(), changeEntityBF.toJSON() );
+                const bfDifference = arrayDifference( existingEntityBF.toJSON(), changeEntityBF.toJSON() );
                 
                 // determine which components need to be removed
                 // if(debug){console.log('!!! SYNC change entity bf', changeEntityBF.toJSON())}

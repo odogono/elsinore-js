@@ -1,4 +1,3 @@
-import _ from 'underscore';
 import {deepEqual} from '../util';
 
 import {register,
@@ -69,12 +68,12 @@ export function commandEquals( context, op1, op2 ){
 
     if( isValue1Array && !isValue2Array ){
         if( op == EQUALS ){
-            result = _.indexOf(value1,value2) !== -1;
+            result = value1.indexOf(value2) !== -1;
         }
     }
     else if( !isValue1Array && isValue2Array ){
         if( op == EQUALS ){
-            result = (_.indexOf(value2,value1) !== -1);
+            result = (value2.indexOf(value1) !== -1);
         }
     }
     else if( !isValue1Array && !isValue2Array ){

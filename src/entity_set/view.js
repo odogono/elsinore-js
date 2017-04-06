@@ -1,6 +1,3 @@
-import _ from 'underscore';
-
-// import Entity from '../entity';
 import EntitySet from './index';
 import EntitySetListener from './listener';
 
@@ -36,7 +33,9 @@ class EntitySetView extends EntitySet {
         if( this.listener ){
             this.listener.applyEvents();
         }
-        _.each( this.listeners, listener => listener.applyEvents() );
+        if( this.listeners ){
+            this.listeners.each(listener => listener.applyEvents() );
+        }
     }
 }
 

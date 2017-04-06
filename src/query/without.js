@@ -1,7 +1,6 @@
-import _ from 'underscore';
+
 import { register, VALUE } from './index';
-// import Query from './index';
-// import EntitySet from '../entity_set';
+import {arrayWithout} from '../util';
 
 const WITHOUT = 'WO';
 
@@ -30,7 +29,7 @@ function commandWithout(context, values) {
     values = context.valueOf(values, true);
 
     if (Array.isArray(array) && values) {
-        value = _.without(array, values);
+        value = arrayWithout(array, values);
     }
 
     return context.last = [VALUE, value];

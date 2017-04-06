@@ -1,5 +1,5 @@
-import _ from 'underscore';
-// import PromiseQ from 'promise-queue';
+import {arrayWithout} from './index';
+
 
 export default class ReusableId {
 
@@ -36,7 +36,11 @@ export default class ReusableId {
      * Returns <count> new ids
      */
     getMultiple(count){
-        return Promise.all( _.times(count, c => this.get()));
+        let ops = [];
+        for(let ii=0; ii < count; ii++){
+            ops.push( this.get() );
+        }
+        return Promise.all( ops );
     }
 
     /**
@@ -47,10 +51,10 @@ export default class ReusableId {
         return new Promise( (resolve,reject) => {
                 
                 // determine that this belongs to us
-            if( _.indexOf(this.activeIds,id) === -1 ){
+            if( this.activeIds.indexOf(id) === -1 ){
                 return reject(new Error(`${id} is not a member`));
             }
-            this.activeIds = _.without( this.activeIds, id );
+            this.activeIds = arrayWithout( this.activeIds, id );
             this.availableIds.push(id);
             return resolve(id);
         });

@@ -1,5 +1,3 @@
-import _  from 'underscore';
-
 import EventsAsync from './events.async';
 // import {Events} from 'odgn-backbone-model';
 import {createLog} from './log';
@@ -41,16 +39,16 @@ export class JSONExporter {
 
         this.listenTo(entitySet, 'entity:add', entities => {
             const cdefMap = useDefUris ? entitySet.getSchemaRegistry().getComponentDefUris() : null;
-            _.each( entities, e => {
+            entities.forEach( e => {
                 let components = e.getComponents();
-                _.each( components, com => this.trigger('es:com', this.componentToJSON(com,cdefMap,anonymous) ));
+                components.forEach( com => this.trigger('es:com', this.componentToJSON(com,cdefMap,anonymous) ));
                 this.trigger('es:e', {'@cmd':'entity'});
             });
         });
 
-        this.listenTo(entitySet, 'component:add', components => {
-            // _.each( components, com => this.trigger('es:add', com) );
-        })
+        // this.listenTo(entitySet, 'component:add', components => {
+        //     // components.forEach( com => this.trigger('es:add', com) );
+        // })
     }
 
     /**

@@ -1,4 +1,3 @@
-import _ from 'underscore';
 import {Collection} from 'odgn-backbone-model';
 
 import Component from '../component';
@@ -57,9 +56,7 @@ export function entitySetToString(es, indent){
     indent = indent + '  ';
     
     if( es.entityFilters ){
-        _.each( es.entityFilters, function(ef){
-            res.push( indent + 'ef( ' + ef.toString() + ' )');    
-        });
+        es.entityFilters.forEach( ef => res.push( indent + 'ef( ' + ef.toString() + ' )') );
     }
     
     while( (entity = it.next().value) ){
@@ -73,9 +70,7 @@ export function toString(entity, indent='', join="\n"){
     let res = [''];
     
     if( Array.isArray(entity) ){
-        _.each( entity, e => {
-            res = res.concat( toString(e,'  ', ' ' ) );
-        });
+        entity.forEach( e => res = res.concat( toString(e,'  ', ' ')));
     }
     else if( Entity.isEntity(entity) ){
         res = res.concat( entityToString(entity,indent) );
@@ -97,9 +92,7 @@ export function secretToString(entity, indent='', join="\n"){
     let res = [''];
     
     if( Array.isArray(entity) ){
-        _.each( entity, e => {
-            res = res.concat( toString(e,'  ', ' ' ) );
-        });
+        entity.forEach( e => res = res.concat( toString(e,'  ', ' ' ) ))
     }
     else if( Entity.isEntity(entity) ){
         res = res.concat( entityToString(entity,indent) );

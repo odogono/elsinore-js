@@ -1,6 +1,3 @@
-import _ from 'underscore';
-// import {getProperties} from '../schema/properties';
-
 
 /**
 *   Updates any entity references on a component instance
@@ -18,7 +15,7 @@ export default function mapComponentEntityRefs( registry, component, entityIdMap
     let result;
     // let properties;
 
-    if( !entityIdMap || _.size(entityIdMap) === 0 ){
+    if( !entityIdMap || Object.keys(entityIdMap).length === 0 ){
         return component;
     }
 

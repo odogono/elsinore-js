@@ -1,8 +1,9 @@
-import _ from 'underscore';
 import BitField from 'odgn-bitfield';
-// import Entity from './entity';
+
 import {
-    hash
+    arrayDifference,
+    hash, 
+    isObject
 } from './util';
 
 
@@ -30,11 +31,11 @@ export default class EntityFilter {
                 this.add( t, type.filters[t] );
             }
             return;
-        } else if( _.isObject(type) && !bitField ){
+        } else if( isObject(type) && !bitField ){
             // being passed a serialised form of EntityFilter
-            _.each( type, (bf,type) => {
-                this.add( type, bf );
-            })
+            for(let ftype in type){
+                this.add( ftype, type[ftype] );
+            }
             return;
         }
 
@@ -105,14 +106,6 @@ export default class EntityFilter {
 
 }
 
-// EntityFilter.ALL = ALL;
-// EntityFilter.ANY = ANY;
-// EntityFilter.SOME = SOME;
-// EntityFilter.NONE = NONE;
-// EntityFilter.INCLUDE = INCLUDE;
-// EntityFilter.EXCLUDE = EXCLUDE;
-// EntityFilter.ROOT = ROOT;
-
 
 EntityFilter.Transform = function( type, registry, entity, entityBitField, filterBitField ){
     let ii, len, defId, vals, result;
@@ -122,7 +115,7 @@ EntityFilter.Transform = function( type, registry, entity, entityBitField, filte
     // result = registry.cloneEntity(entity);
 
     if( isInclude ){
-        const removeDefIds = _.difference(entityBitField.toJSON(), filterBitField.toJSON());
+        const removeDefIds = arrayDifference(entityBitField.toJSON(), filterBitField.toJSON());
         // log.debug('EFT ',type,isInclude, entityBitField.toJSON(), filterBitField.toJSON(), removeDefIds );
 
         entity.removeComponents( removeDefIds );

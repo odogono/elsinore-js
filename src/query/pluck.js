@@ -1,7 +1,7 @@
-import _ from 'underscore';
 import { register, LEFT_PAREN, RIGHT_PAREN, VALUE } from './index';
 import Query from './index';
 import EntitySet from '../entity_set';
+import {arrayUnique} from '../util';
 
 const PLUCK = 'PL';
 
@@ -65,7 +65,7 @@ function commandPluck(context, componentIds, attributes, options) {
     );
 
     if (options && options.unique) {
-        result = _.uniq(result);
+        result = arrayUnique(result);
     }
 
     return context.last = [VALUE, result];
@@ -76,23 +76,23 @@ function pluckEntitySet(registry, entitySet, componentIds, attributes) {
 
     // iterate through each of the entityset models and select the components
     // specified - if they exist, select the attributes required.
-    result = _.reduce(
-        entitySet.models,
+    result = entitySet.models.reduce(
         (values, entity) => {
             // log.debug('inCOMing ' + stringify(entity), attributes, componentIds );
             if (!componentIds) {
                 // if there are no componentIds, then the type of attribute we can pluck is limited...
-                _.each(attributes, attr => {
+                attributes.forEach( attr => {
                     if (attr == '@e') {
                         values.push(entity.getEntityId());
                     }
                 });
             } else {
                 // const components = entity.getComponents(componentIds);
+                const components = entity.getComponents(componentIds);
 
-                _.each(entity.getComponents(componentIds), component => {
+                components.forEach( component => {
                     // log.debug('inCOMing ' + stringify(component) );
-                    _.each(attributes, attr => {
+                    attributes.forEach( attr => {
                         if (attr == '@e') {
                             values.push(entity.getEntityId());
                         } else {

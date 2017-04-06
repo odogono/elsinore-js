@@ -1,7 +1,4 @@
-import _ from 'underscore';
-// import {Collection} from 'odgn-backbone-model';
 
-// import Entity from '../entity';
 import EntitySet from './index';
 import CmdBuffer from '../cmd_buffer/async';
 import ReusableId from '../util/reusable_id';
@@ -101,7 +98,6 @@ class AsyncEntitySet extends EntitySet {
                 return this._registerComponentDef(data);
             }
             return Promise.reject(err);
-            // _.defer( () => {throw err} );
         })
     }
 
@@ -113,7 +109,6 @@ class AsyncEntitySet extends EntitySet {
             // Log.debug('_registerComponentDef adding', cdef.getUri(), cdef.id, cdef.cid, cdef.hash(), options );
             // const clonedDef = cdef.clone();
             // TODO : should use a reusableId here
-            // clonedDef.set({id:_.uniqueId('acd')});
             this.componentDefs.register( cdef, {throwOnExists:false} );
             // console.log('_registerComponentDef added', clonedDef.getUri(), clonedDef.id, clonedDef.cid, clonedDef.hash() );
             return resolve(this);
@@ -252,7 +247,7 @@ class AsyncEntitySet extends EntitySet {
         const registry = this.getRegistry();
 
         return new Promise( (resolve,reject) => {
-            const result = _.map( entityIds, eId => {
+            const result = entityIds.map( eId => {
                 eId = toInteger(eId);
                 let entity = this.get(eId);
                 if( entity ){
@@ -275,7 +270,7 @@ class AsyncEntitySet extends EntitySet {
         // const debug = options.debug;
 
         // extract entities added which need new ids
-        entitiesAdded = _.reduce(entitiesAdded, (result, e) => {
+        entitiesAdded = entitiesAdded.reduce(  (result, e) => {
             // console.log('we got,', this.id, this.getUuid(), e.getEntitySetId() );
             if (e.getEntitySetId() !== this.id) {
                 result.push(e);
@@ -294,14 +289,14 @@ class AsyncEntitySet extends EntitySet {
 
                 // apply the new ids to the entities. this will
                 // also update the components entity ids
-                _.each( entitiesAdded, (e,ii) => e.setId( newIds[ii], this.getEntitySetId() ));
+                entitiesAdded.forEach( (e,ii) => e.setId( newIds[ii], this.getEntitySetId() ));
             })
 
             // retrieve ids for the new components
             .then( () => this.componentId.getMultiple( componentsAdded.length) )
             .then( componentIds => {
                 // console.log('new component ids', componentIds);
-                _.each(componentsAdded, (com, ii) => com.set({id:componentIds[ii]}) );
+                componentsAdded.forEach( (com, ii) => com.set({id:componentIds[ii]}) );
                 // console.log('new components', entityToString(componentsAdded));
             })
             .then( () => this._applyUpdate(entitiesAdded,

@@ -4,7 +4,9 @@ import {Events} from 'odgn-backbone-model';
 import BitField from 'odgn-bitfield';
 // import Sinon from 'sinon';
 
-
+import {
+    toInteger
+} from '../src/util/index';
 
 import {
     Component, 
@@ -126,7 +128,7 @@ test('adding an entity with multiple components', async t => {
     const e = registry.createEntity();
         
     //add created coms to created entity
-    _.each( coms, com => e.addComponent(com) );
+    coms.forEach( com => e.addComponent(com) );
 
     try {
 
@@ -175,7 +177,7 @@ test('removing a component from an entity', async t => {
     const es = createEntitySet(registry,63, [12], coms );
     const e = registry.createEntityWithId(12,63);
     
-    _.each( coms, com => e.addComponent(com) );
+    coms.forEach( com => e.addComponent(com) );
     
     try {
         await cb.removeComponent( es, coms[1] )
@@ -220,7 +222,7 @@ test('removing all components from an entity', async t => {
     const es = createEntitySet(registry,63, [12], coms);
     const e = registry.createEntityWithId(12,63);
     
-    _.each( coms, com => e.addComponent(com) );
+    coms.forEach( com => e.addComponent(com) );
 
     await cb.removeComponent( es, coms );
             
@@ -238,7 +240,7 @@ test('removing an existing entity', async t => {
     const es = createEntitySet(registry,64, [13], coms );
     const e = registry.createEntityWithId(13,64);
     
-    _.each( coms, com => e.addComponent(com) );
+    coms.forEach( com => e.addComponent(com) );
     
     try {
         await cb.removeEntity( es, e )
@@ -335,7 +337,7 @@ function createEntitySet(registry, entitySetId, entityIds, existingComponents){
 
             return new Promise( (resolve,reject) => {
                 const result = _.map( entityIds, eid => {
-                    eid = parseInt(eid, 10);
+                    eid = toInteger(eid);
                     const comBf = BitField.create( existingComponentDefIds );
                     // console.log('YO', comBf.toJSON());
                     return registry.createEntity(null,{id:eid,comBf}); 

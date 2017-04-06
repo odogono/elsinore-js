@@ -6,6 +6,11 @@ import Sinon from 'sinon';
 import EntityFilter from '../src/entity_filter';
 
 import {
+    toInteger,
+    uniqueId
+} from '../src/util';
+
+import {
     ALL, ANY, SOME, NONE, INCLUDE, EXCLUDE
 } from '../src/entity_filter';
 
@@ -125,7 +130,7 @@ test('combine filters into a single', t => {
 
 test('to/from JSON', t => {
     const a = EntityFilter.create( SOME, toBitField(Components.Animal, Components.Mineral));
-    a.add( EntityFilter.EXCLUDE, toBitField(Components.Vegetable));
+    a.add( EXCLUDE, toBitField(Components.Vegetable));
 
     const b = EntityFilter.create( a.toJSON() );
     t.deepEqual( a.toJSON(), b.toJSON() );
@@ -216,7 +221,7 @@ let Components = _.reduce( ComponentDefs, (memo,val,key) => {
 },{});
 
 let ComponentIIdToObject = _.reduce( ComponentDefs, (memo,val,key) => {
-    memo[ parseInt(val.schemaIId,10) ] = val;
+    memo[ toInteger(val.schemaIId) ] = val;
     val['@s'] = val.schemaIId;
     return memo;
 },[]);
@@ -239,7 +244,7 @@ function createEntity( componentIIds ){
     let args = Array.prototype.slice.call( arguments );
 
     let entity = new Entity();
-    entity.setEntityId( _.uniqueId() );
+    entity.setEntityId( uniqueId() );
     
     for(ii=0,len=args.length;ii<len;i++){
         com = createComponent( args[ii] );
@@ -257,7 +262,7 @@ function createComponent( componentIId ){
         attrs = _.omit( componentIId, '@c' );
         componentIId = componentIId['@c'];
     }
-    result = new Component( {...attrs, '@c': _.uniqueId() } );
+    result = new Component( {...attrs, '@c': uniqueId() } );
     data = ComponentIIdToObject[ componentIId ];
     _.each( data, (val,key) => result[ key ] = val );
     result.set( {'@s':data['@s']} );

@@ -1,6 +1,5 @@
 'use strict';
 
-import _ from 'underscore';
 import {Collection} from 'odgn-backbone-model';
 
 import Entity from '../entity';
@@ -59,7 +58,7 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
                 if( execute !== false ){ execute = true; }
             }
 
-            return Promise.all(_.map(component, c => this.addComponent(entitySet, c, options)))
+            return Promise.all( component.map( c => this.addComponent(entitySet, c, options)))
                 .then( () => {
                     if( !execute ){ return this; }
  
@@ -109,7 +108,7 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
 
             this.reset();
 
-            return Promise.all(_.map(component, c => this.removeComponent(entitySet, c, options)))
+            return Promise.all( component.map( c => this.removeComponent(entitySet, c, options)))
                 .then( () => {
                     if( execute ){
                         return this.execute(entitySet,options);
@@ -157,7 +156,7 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
 
             if( execute !== false ){ this.reset(); }
 
-            return _.reduce( entity,
+            return entity.reduce(
                 (current,ine) => current.then( () => this.addEntity(entitySet, ine, options) )
             , Promise.resolve() )
                 .then( () => {
@@ -224,7 +223,7 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
 
             if( execute !== false ){ this.reset(); }
 
-            return _.reduce( entity, (current, ine) => {
+            return entity.reduce( (current, ine) => {
                 return current.then( () => self.removeEntity(entitySet, ine) )
             }, Promise.resolve() )
                 .then( () => {
@@ -321,17 +320,15 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
 
         let silent = options.silent === void 0 ? false : options.silent;
 
-        // console.log('executing entities', _.keys(this.cmds), options );
-        // _.each( this.cmds, cmd => console.log( cmd ) )
 
         // convert the incoming entity ids into entity instances which
         // have their bitfields resolved from the database, so that we
         // can easily test for component membership
-        return entitySet.getEntitySignatures( _.keys(this.cmds) )
+        return entitySet.getEntitySignatures( Object.keys(this.cmds) )
             .then( entities => {
                 // console.log('we created entities', toString(entities));
 
-                _.each( entities, entity => {
+                entities.forEach( entity => {
                     const bf = entity.getComponentBitfield();
                     let cmds = this.cmds[ entity.id ];
                     

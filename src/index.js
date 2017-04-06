@@ -1,7 +1,6 @@
 // main file for library
 // this includes everything that you may need to use
 
-export {_} from 'underscore';
 export {Collection,Model,Events} from 'odgn-backbone-model';
 export {default as Bitfield} from 'odgn-bitfield';
 

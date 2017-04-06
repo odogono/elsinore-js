@@ -1,23 +1,17 @@
-import _ from 'underscore';
-import {Events, Collection} from 'odgn-backbone-model'
+import { Events, Collection } from 'odgn-backbone-model';
 
+import { arrayDifference, arrayWithout, isBoolean, omit } from '../util';
+import { uuid as createUUID } from '../util/uuid';
 
-import {uuid as createUUID} from '../util/uuid';
-// import {createLog} from '../util/log';
-// import {getEntityIdFromId,getEntitySetIdFromId} from '../util';
 import Entity from '../entity';
 import EntitySet from '../entity_set';
 import Component from '../component';
 import SchemaRegistry from '../schema';
 
 // const Log = createLog('Registry');
-
-
-
 export default class Registry {
-
-    constructor( options={} ){
-        Object.assign(this,Events);
+    constructor(options = {}) {
+        Object.assign(this, Events);
 
         this._initialized = true;
 
@@ -34,7 +28,8 @@ export default class Registry {
         this.entitySetCount = 0;
 
         // an array of entitysets created and active
-        this._entitySets = []; //new Backbone.Collection();
+        this._entitySets = [];
+        //new Backbone.Collection();
         // a map of entityset uuids to entityset instances
         this._entitySetUUIDs = {};
 
@@ -43,7 +38,7 @@ export default class Registry {
 
         this.updateLastTime = Date.now();
 
-        this.schemaRegistry = options.schemaRegistry || SchemaRegistry.create(null,{registry:this});
+        this.schemaRegistry = options.schemaRegistry || SchemaRegistry.create(null, { registry: this });
 
         this.schemaRegistry.on('all', (...args) => this.trigger.apply(this, args));
     }
@@ -51,7 +46,7 @@ export default class Registry {
     /**
     *
     */
-    createId(){
+    createId() {
         // https://github.com/dfcreative/get-uid
         // let counter = Date.now() % 1e9;
         // return (Math.random() * 1e9 >>> 0) + (counter++ + '__')
@@ -65,52 +60,49 @@ export default class Registry {
     //     const result = new ComponentDef(attrs,options);
     //     return result;
     // }
-
-
-
     /**
     *   Creates a new entity
     */
-    createEntity(components, options={}){
+    createEntity(components, options = {}) {
         options.registry = this;
         let attrs = {};
         let idSet = false;
 
-        if( options['@e'] ){ 
-            attrs['@e'] = options['@e']; idSet = true;
+        if (options['@e']) {
+            attrs['@e'] = options['@e'];
+            idSet = true;
         }
-        if( options['@es'] ){ 
-            attrs['@es'] = options['@es']; idSet = true;
+        if (options['@es']) {
+            attrs['@es'] = options['@es'];
+            idSet = true;
         }
 
-        if( components ){
+        if (components) {
             components = this.createComponent(components);
 
             // check to see whether the entity id is set on the component.
             const first = Array.isArray(components) ? components[0] : components;
             const reportedEntityId = first.getEntityId();
-            if( reportedEntityId !== void 0 ){
+            if (reportedEntityId !== void 0) {
                 // attrs['@e'] = getEntityIdFromId(reportedEntityId);
                 // attrs['@es'] = getEntitySetIdFromId(reportedEntityId);
                 options.id = reportedEntityId;
-                // console.log('setting eid from component', reportedEntityId);
                 idSet = false;
             }
-        }
-        else if( options.comBf ){
+        } else if (options.comBf) {
             attrs.comBf = options.comBf;
             delete options.comBf;
         }
 
-        if( options.id === void 0 && !idSet ){
+        if (options.id === void 0 && !idSet) {
             attrs.id = this.createId();
-        } else { 
-            attrs.id = options.id; 
+        } else {
+            attrs.id = options.id;
         }
 
-        let result = new this.Entity( attrs, options );
+        let result = new this.Entity(attrs, options);
 
-        if( components ){
+        if (components) {
             // components = this.createComponent(components);
             result.addComponent(components);
         }
@@ -121,51 +113,48 @@ export default class Registry {
     /**
      * 
      */
-    createEntityWithId( entityId=0, entitySetId=0, options={} ){
+    createEntityWithId(entityId = 0, entitySetId = 0, options = {}) {
         options.registry = this;
-        let attrs = {'@e':entityId,'@es':entitySetId};
-        if( options.comBf ){
+        let attrs = { '@e': entityId, '@es': entitySetId };
+        if (options.comBf) {
             attrs.comBf = options.comBf;
             delete options.comBf;
         }
-        if( options.id ){
-            attrs = {id:options.id};
+        if (options.id) {
+            attrs = { id: options.id };
         }
-        return new this.Entity( attrs, options );
+        return new this.Entity(attrs, options);
     }
-
-
-    
 
     /**
      * Returns a clone of the srcEntity, or if dstEntity is supplied
      * copies the components of srcEntity into dstEntity.
      */
-    cloneEntity( srcEntity, dstEntity, options={} ){
-        let ii,len,component,srcComponent;
+    cloneEntity(srcEntity, dstEntity, options = {}) {
+        let ii, len, component, srcComponent;
         const deleteMissing = options.delete;
         const returnChanged = options.returnChanged;
         const fullCopy = options.full;
         let dstHasChanged = false;
 
-        if( !srcEntity ){
-            return returnChanged ? [false,null] : null;
+        if (!srcEntity) {
+            return returnChanged ? [ false, null ] : null;
         }
 
-        if( !dstEntity ){
+        if (!dstEntity) {
             dstEntity = srcEntity.clone();
             dstEntity.setRegistry(this);
         }
 
-        if( !dstEntity && !fullCopy ){
+        if (!dstEntity && !fullCopy) {
             return dstEntity;
         }
 
-        if( deleteMissing ){
+        if (deleteMissing) {
             const srcBitfield = srcEntity.getComponentBitfield();
             const dstBitfield = dstEntity.getComponentBitfield();
-            const removeDefIds = _.difference(dstBitfield.toJSON(),srcBitfield.toJSON());
-            for(ii=0,len=removeDefIds.length;ii<len;ii++){
+            const removeDefIds = arrayDifference(dstBitfield.toJSON(), srcBitfield.toJSON());
+            for (ii = 0, len = removeDefIds.length; ii < len; ii++) {
                 dstEntity.removeComponent(dstEntity.components[removeDefIds[ii]]);
                 dstHasChanged = true;
             }
@@ -173,12 +162,13 @@ export default class Registry {
 
         const srcComponents = srcEntity.getComponents();
 
-        for(ii=0,len=srcComponents.length;ii<len;ii++){
+        for (ii = 0, len = srcComponents.length; ii < len; ii++) {
             srcComponent = srcComponents[ii];
-            component = dstEntity.components[srcComponent.getDefId()]; 
-            if( component ){
+            component = dstEntity.components[srcComponent.getDefId()];
+
+            if (component) {
                 // the dst entity already has this component
-                if( srcComponent.hash() == component.hash() ){
+                if (srcComponent.hash() == component.hash()) {
                     continue;
                 } else {
                     dstHasChanged = true;
@@ -186,13 +176,11 @@ export default class Registry {
             } else {
                 dstHasChanged = true;
             }
-            dstEntity.addComponent( this.cloneComponent(srcComponents[ii]) );
-            
+            dstEntity.addComponent(this.cloneComponent(srcComponents[ii]));
         }
 
-        return returnChanged ? [dstEntity,dstHasChanged] : dstEntity;
+        return returnChanged ? [ dstEntity, dstHasChanged ] : dstEntity;
     }
-
 
     /**
      * Registers a new Component Def from data
@@ -200,65 +188,70 @@ export default class Registry {
      * @param  {Object|Array} schema [description]
      * @return {[type]}        [description]
      */
-    registerComponent( data, options={} ){
-        if( options.notifyRegistry ){
+    registerComponent(data, options = {}) {
+        if (options.notifyRegistry) {
             options.throwOnExists = false;
         }
 
-        return Promise.resolve( this.schemaRegistry.register(data,options) )
-            .then( componentDefs => {
-                if( !Array.isArray(componentDefs) ){ componentDefs = [componentDefs]; }
-                return _.reduce( this._entitySets, (current, es) => {
-                    return current = current.then( () => {
-                        // log.debug('registering componentDefs with es ' + es.cid);
-                        return this._registerComponentDefsWithEntitySet( es, componentDefs, options );
-                    })
-                }, Promise.resolve() )
-                .then( () => componentDefs )
-            });
+        return Promise.resolve(this.schemaRegistry.register(data, options)).then(componentDefs => {
+            if (!Array.isArray(componentDefs)) {
+                componentDefs = [ componentDefs ];
+            }
+
+            return this._entitySets
+                .reduce(
+                    (current, es) => {
+                        return current = current.then(() => {
+                            // log.debug('registering componentDefs with es ' + es.cid);
+                            return this._registerComponentDefsWithEntitySet(es, componentDefs, options);
+                        });
+                    },
+                    Promise.resolve(),
+                )
+                .then(() => componentDefs);
+        });
     }
 
     /**
      * Returns an array of all the Component Defs that have been registered
      */
-    getComponentDefs(){
+    getComponentDefs() {
         return this.schemaRegistry.getComponentDefs();
     }
 
-    getComponentDef(ident){
+    getComponentDef(ident) {
         return this.schemaRegistry.getComponentDef(ident);
     }
 
     /**
     *   Registers the array of component def schemas with the given entitySet
     */
-    _registerComponentDefsWithEntitySet( entitySet, componentDefs, options={} ){
-        options = {...options, fromRegistry:true, fromES:false};
-        
+    _registerComponentDefsWithEntitySet(entitySet, componentDefs, options = {}) {
+        options = { ...options, fromRegistry: true, fromES: false };
+
         // memory based entitysets do not need to register component defs,
         // as they are tied directly to the registry/schemaRegistry
-        if( entitySet.isMemoryEntitySet ){
+        if (entitySet.isMemoryEntitySet) {
             return Promise.resolve();
         }
-        return _.reduce( componentDefs, (current, cdef) => {
-            return current = current.then( () => {
-                return entitySet.registerComponentDef( cdef, options );
-            })
-        }, Promise.resolve() );
+        return componentDefs.reduce(
+            (current, cdef) => {
+                return current = current.then(() => {
+                    return entitySet.registerComponentDef(cdef, options);
+                });
+            },
+            Promise.resolve(),
+        );
     }
-
-    
 
     /**
     * TODO: name this something better, like 'getComponentIID'
     */
-    getIId(componentIDs, options){
-        if( options && _.isBoolean(options) ){
-            options = {forceArray:true};
-            
+    getIId(componentIDs, options) {
+        if (options && isBoolean(options)) {
+            options = { forceArray: true };
         }
-        // console.log('Registry.getIId:', componentIDs, options );
-        return this.schemaRegistry.getIId( componentIDs, options );
+        return this.schemaRegistry.getIId(componentIDs, options);
     }
 
     /**
@@ -272,49 +265,46 @@ export default class Registry {
      * @param  {[type]} schemaUri [description]
      * @return {[type]}          [description]
      */
-    createComponent( componentDef, attrs, options, cb ){
+    createComponent(componentDef, attrs, options, cb) {
         let entityId, defKey;
-        
-        options || (options={});
+
+        options || (options = {});
         defKey = options.defKey || '@c';
 
         entityId = options.entity || options.entityId || options.eid;
 
-        if( Entity.isEntity(attrs) ){
-            entityId = Entity.toEntityId( attrs );
+        if (Entity.isEntity(attrs)) {
+            entityId = Entity.toEntityId(attrs);
             attrs = {};
             // log.debug('create with entity id ' + entityId );
             // attrs = null;
         }
 
-        if( entityId ){
+        if (entityId) {
             attrs['@e'] = entityId;
         }
 
         // Obtain a component schema
-        if( Array.isArray(componentDef) ){
+        if (Array.isArray(componentDef)) {
             // recurse each entry
-            return Array.prototype.concat.apply( [], 
-                componentDef.map( (s) => this.createComponent(s, attrs, options) ));
-        }
-        else if( Component.isComponent(componentDef) ){
+            return Array.prototype.concat.apply([], componentDef.map(s => this.createComponent(s, attrs, options)));
+        } else if (Component.isComponent(componentDef)) {
             // maybe clone instead of just returning?
             return componentDef;
-        }
-        else {
-            if( componentDef[defKey] ){
+        } else {
+            if (componentDef[defKey]) {
                 // attrs are pulled out of the 1st arg
-                attrs = Object.assign( {}, _.omit(componentDef,defKey ), attrs );
+                attrs = Object.assign({}, omit(componentDef, defKey), attrs);
                 componentDef = componentDef[defKey];
             }
-            return this.schemaRegistry.createComponent( componentDef, attrs, options, cb );
+            return this.schemaRegistry.createComponent(componentDef, attrs, options, cb);
         }
     }
 
     /**
      * Produces a copy of a component
      */
-    cloneComponent( srcComponent, attrs, options ){
+    cloneComponent(srcComponent, attrs, options) {
         const result = srcComponent.clone();
         // let result = new srcComponent.constructor(srcComponent.attributes);
         // result.setId( srcComponent.getId() );
@@ -324,18 +314,16 @@ export default class Registry {
             srcComponent.getDefId(),
             srcComponent.getUri(),
             srcComponent.getDefHash(),
-            srcComponent.getDefName() );
+            srcComponent.getDefName(),
+        );
         result.registry = this;
-        if( attrs ){
-            result.set( attrs, options );
+        if (attrs) {
+            result.set(attrs, options);
         }
         return result;
     }
 
-    destroyComponent( component, options ){
-
-    }
-
+    destroyComponent(component, options) {}
 
     /**
      * Converts an entity id to an entity instance
@@ -343,14 +331,13 @@ export default class Registry {
      * @param  {[type]} entityId [description]
      * @return {[type]}          [description]
      */
-    toEntity(entityId){
+    toEntity(entityId) {
         let result = Entity.toEntity(entityId);
-        if( result ){
+        if (result) {
             result.registry = this;
         }
         return result;
     }
-
 
     /**
      * Creates a new EntitySet instance.
@@ -359,54 +346,49 @@ export default class Registry {
      * @param  {Function} callback   [description]
      * @return {[type]}              [description]
      */
-    createEntitySet( options={} ){
+    createEntitySet(options = {}) {
         let id;
         let result;
-        let entitySetType=EntitySet;
-        
+        let entitySetType = EntitySet;
+
         options.uuid = options.uuid || createUUID();
-        if( options.type ){
+        if (options.type) {
             entitySetType = options.type;
         }
-        if( options.instanceClass ){
+        if (options.instanceClass) {
             entitySetType = options.instanceClass;
         }
 
-        
         // create a 20 bit 
-        
         id = options['@es'] || options['id'] || this.createId();
-        // console.log('createEntitySet', id, options);
-        result = new entitySetType( null, {...options, id} );
-        result.setRegistry( this );
-        
+        result = new entitySetType(null, { ...options, id });
+        result.setRegistry(this);
+
         // if( options.register !== false ){
         //     // log.debug('options.register was ' + options.register );
         //     this.addEntitySet( result );
-
         //     // TODO: if this is a non-memory ES, then register all existing
         //     // entity sets with it
         // }
-
         // TODO : there has to be a better way of identifying entitysets
-        if( result.isMemoryEntitySet ){//} result.isMemoryEntitySet && !result.open ){
-            // console.log('this is a memory es');
+        if (result.isMemoryEntitySet) {
+            //} result.isMemoryEntitySet && !result.open ){
             // NOTE: setting the id to 0 means that entity ids would be shifted up
             result.id = 0;
 
-            if( options['@e'] ){
-                let components = _.map( options['@e'], com => this.createComponent(com) )
-                result.addComponent( components );
+            let eIds = options['@e'];
+            if (Array.isArray(eIds)) {
+                let components = eIds.map(com => this.createComponent(com));
+                result.addComponent(components);
             }
 
-            if( options.register === false ){
+            if (options.register === false) {
                 return result;
             }
             // return result;
         }
 
-        return this.addEntitySet( result, options );
-
+        return this.addEntitySet(result, options);
         // opening the ES will cause it to register its existing componentDefs
         // with the registry
         // return result.open( options )
@@ -415,90 +397,80 @@ export default class Registry {
         //         return this._registerComponentDefsWithEntitySet( result, schemas, options )
         //             .then( () => result )
         //     });
-
         // return result;
     }
 
-
-    removeAllEntitySets( options ){
-        return Promise.all( 
-            this._entitySets.map(es => this.removeEntitySet(es, options)) );
+    removeAllEntitySets(options) {
+        return Promise.all(this._entitySets.map(es => this.removeEntitySet(es, options)));
     }
 
     /**
     *   Returns a Promise to removes an entitySet from the registry
     *   
     */
-    removeEntitySet( entitySet, options={} ){
-        if( !entitySet ){ return null; }
-        if( options.sync || !entitySet.isAsync ){
-            entitySet.setRegistry( null );
-            this._entitySets = _.without( this.entitySets, entitySet );
-            delete this._entitySetUUIDs[ entitySet.getUUID() ];
+    removeEntitySet(entitySet, options = {}) {
+        if (!entitySet) {
+            return null;
+        }
+        if (options.sync || !entitySet.isAsync) {
+            entitySet.setRegistry(null);
+            this._entitySets = arrayWithout(this._entitySets, entitySet);
+            delete this._entitySetUUIDs[entitySet.getUUID()];
             return entitySet;
         }
 
-        return entitySet.close(options).then( () => this.removeEntitySet(entitySet,{sync:true}));
-
-        // let closeFn = entitySet.isMemoryEntitySet ? Promise.resolve(true) : entitySet.close();
-        // return closeFn.then( () => {
-        //     entitySet.setRegistry( null );
-        //     this._entitySets = _.without( this.entitySets, entitySet );
-        //     delete this._entitySetUUIDs[ entitySet.getUUID() ];
-        //     return entitySet;
-        // });
+        return entitySet.close(options).then(() => this.removeEntitySet(entitySet, { sync: true }));
     }
 
     /**
     *   
     */
-    addEntitySet( entitySet, options={} ){
-        if( !entitySet ){ return null; }
+    addEntitySet(entitySet, options = {}) {
+        if (!entitySet) {
+            return null;
+        }
 
         entitySet.setRegistry(this);
-        
-        if( options.sync || !entitySet.isAsync ){
+
+        if (options.sync || !entitySet.isAsync) {
             // do we already have this entitySet
-            if( _.indexOf(this._entitySets, entitySet) !== -1 ){
+            if ( this._entitySets.indexOf(entitySet) !== -1) {
                 return null;
             }
 
-            if( this._entitySetUUIDs[ entitySet.getUUID() ] ){
+            if (this._entitySetUUIDs[entitySet.getUUID()]) {
                 throw new Error(`entityset with uuid ${entitySet.getUUID()} already exists`);
             }
 
             // store the entityset against its id
-            this._entitySets.push( entitySet );
-            this._entitySetUUIDs[ entitySet.getUUID() ] = entitySet;
-            
-            entitySet.setRegistry( this );
+            this._entitySets.push(entitySet);
+            this._entitySetUUIDs[entitySet.getUUID()] = entitySet;
 
-            this.trigger('entityset:add', entitySet );
+            entitySet.setRegistry(this);
+
+            this.trigger('entityset:add', entitySet);
 
             return entitySet;
         }
-        
+
         // Log.debug('opening', entitySet.type,entitySet.getUUID());
-
-        return entitySet.open(options).then( () => {
-            
+        return entitySet.open(options).then(() => {
             const schemas = this.getComponentDefs();
-            return this._registerComponentDefsWithEntitySet( entitySet, schemas, options )
-                .then( () => {
-                    // perform the normal sync adding
-                    this.addEntitySet(entitySet,{sync:true})
+            return this._registerComponentDefsWithEntitySet(entitySet, schemas, options).then(() => {
+                // perform the normal sync adding
+                this.addEntitySet(entitySet, { sync: true });
 
-                    return entitySet; 
-                });
+                return entitySet;
+            });
         });
     }
 
     /**
     *
     */
-    getEntitySet( uuid ){
+    getEntitySet(uuid) {
         let es;
-        if( (es = this._entitySetUUIDs[uuid]) ){
+        if (es = this._entitySetUUIDs[uuid]) {
             return es;
         }
         return null;
@@ -507,35 +479,30 @@ export default class Registry {
     /**
     *
     */
-    destroyEntitySet( entitySet ){
-        if( !entitySet ){ return null; }
+    destroyEntitySet(entitySet) {
+        if (!entitySet) {
+            return null;
+        }
 
-        entitySet.setRegistry( null );
-        this._entitySets = _.without( this.entitySets, entitySet );
+        entitySet.setRegistry(null);
+        this._entitySets = _.without(this._entitySets, entitySet);
     }
 
-    triggerEntityEvent( name, entity, ...rest ){
+    triggerEntityEvent(name, entity, ...rest) {
         let entitySet, ii, len;
 
         // let args = _.toArray( arguments ).slice(2);
-
         // bf = entity.getComponentBitfield();
-
         // 1. the bitfield for this entity is extracted
-
         // 2. check against all registered entitysets/view to determine whether this entity is accepted
-
         // 3. if accepted, and the es has the entity, trigger that event on that entityset
-
         // the trick is to only trigger on entitySets that have the entity
+        const args = [ name, entity, ...rest ];
 
-        const args = [name,entity,...rest];
-
-        for( ii=0,len=this._entitySets.length; ii < len; ii++ ){
+        for (ii = 0, len = this._entitySets.length; ii < len; ii++) {
             entitySet = this._entitySets[ii];
-            
-            // console.log(`[registry][triggerEntityEvent]`, JSON.stringify(args));
-            entitySet.triggerEntityEvent.apply( entitySet, args );
+
+            entitySet.triggerEntityEvent.apply(entitySet, args);
         }
     }
 }
@@ -543,15 +510,9 @@ export default class Registry {
 Registry.prototype.type = 'Registry';
 Registry.prototype.isRegistry = true;
 
+class ProcessorCollection extends Collection {}
 
-class ProcessorCollection extends Collection{
-    // add(models,options){
-    //     return Collection.prototype.add.apply(this,arguments);
-    // }    
-}
-
-function createProcessorCollection(){
-    
+function createProcessorCollection() {
     let result = new ProcessorCollection();
     result.comparator = (recordA, recordB) => {
         // the entity in the collection might be a record referencing a processor
@@ -565,7 +526,6 @@ function createProcessorCollection(){
 // Registry.isRegistry = function( registry ){
 //     return registry && registry.isRegistry;
 // }
-
 /**
  * creates a new registry instance
  * 
@@ -573,10 +533,8 @@ function createProcessorCollection(){
  * @param  {Function} callback [description]
  * @return {[type]}            [description]
  */
-Registry.create = function create(options={}){
+Registry.create = function create(options = {}) {
     let result = new Registry(options);
     return result;
 };
-
-
 // export default Registry;

@@ -1,13 +1,13 @@
-import _ from 'underscore';
 import BitField from 'odgn-bitfield';
 import Entity from '../entity';
 import EntitySet from '../entity_set';
 import EntityFilter from '../entity_filter';
-import { hash, stringify } from '../util';
+import { hash, isFunction, stringify, uniqueId } from '../util';
 import QueryBuilder from './dsl';
 import { DslContext } from './dsl';
 
 import { ALL, ANY, SOME, NONE, INCLUDE, EXCLUDE } from '../entity_filter';
+export { ALL, ANY, SOME, NONE, INCLUDE, EXCLUDE } from '../entity_filter';
 
 // export const ALL = 0; // entities must have all the specified components
 // export const ANY = 1; // entities must have one or any of the specified components
@@ -55,15 +55,15 @@ export default class Query {
     // cidPrefix: 'q',
 
     constructor(commands, options = {}) {
-        this.cid = _.uniqueId('q');
+        this.cid = uniqueId('q');
         this.commands = commands;
 
-        if (_.isFunction(commands)) {
+        if( isFunction(commands)) {
             // console.log('compiling a command builder');
             const builder = new QueryBuilder(this);
             const built = commands(builder);
             if (Array.isArray(built)) {
-                this.commands = _.map(built, dsl => dsl.toArray(true)[0]);
+                this.commands = built.map(dsl => dsl.toArray(true)[0]);
             } else {
                 this.commands = built.toArray(true);
             }
@@ -74,9 +74,9 @@ export default class Query {
         } else if (commands instanceof Query) {
             this.commands = commands.toJSON();
         } else if (Array.isArray(commands)) {
-            if (_.isFunction(commands[0])) {
+            if (isFunction(commands[0])) {
                 const builder = new QueryBuilder(this);
-                this.commands = _.map(commands, cmd => {
+                this.commands = commands.map(cmd => {
                     return cmd(builder).toArray(true)[0];
                 });
             }
@@ -110,6 +110,7 @@ export default class Query {
         // build the initial context object from the incoming arguments
         context = this.buildEntityContext(entity, options);
 
+        // console.log('[Query][execute] go', entity);
         // this.compile( context, this.commands, options );
         this.compiled = compile(context, this.commands, options);
 
@@ -252,11 +253,13 @@ class QueryContext {
      */
     componentsToBitfield(context, components) {
         let componentIds, result;
+        if( !context.registry ){
+            console.log('[componentsToBitfield]', context, stringify(components));
+        }
         componentIds = context.registry.getIId(components, {
             forceArray: true,
             debug: true
         });
-        // console.log('lookup ', components, componentIds );
         result = BitField.create();
         result.setValues(componentIds, true);
         return result;
@@ -333,8 +336,7 @@ class QueryContext {
             } else {
                 // console.log('g', entitySet );
                 // select the subset of the entities which pass through the filter
-                entities = _.reduce(
-                    entitySet.models,
+                entities = entitySet.models.reduce(
                     (result, entity) => {
                         let cmdResult;
 
@@ -394,10 +396,10 @@ class QueryContext {
 QueryContext.create = function(query, props = {}, options = {}) {
     let context;
     let type;
-    // console.log('QueryContext.create', stringify(props), options);
     type = options.context || props.type || QueryContext;
     context = new type(query);
     context.type = type;
+    context.cid = uniqueId('qc');
     Object.assign(context, props);
     return context;
 };
@@ -465,7 +467,7 @@ function gatherEntityFilters(context, expression) {
             }
             break;
         case AND:
-            expression = _.rest(expression);
+            expression = expression.slice(1);// _.rest(expression);
 
             for (ii = 0, len = expression.length; ii < len; ii++) {
                 obj = gatherEntityFilters(context, expression[ii]);
@@ -542,7 +544,7 @@ function executeCommand(context, op, args, ...rest) {
 
     if (!args) {
         // assume the op and args are in the same array
-        args = _.rest(op);
+        args = op.slice(1);// _.rest(op);
         op = op[0];
     }
     const allArgs = [op, args, ...rest];
@@ -606,7 +608,7 @@ export function compile(context, commands, options) {
         if (!Array.isArray(commands[0]) && !Query.isQuery(commands[0])) {
             commands = [commands];
         } else {
-            commands = _.map(commands, command => {
+            commands = commands.map( command => {
                 if (Query.isQuery(command)) {
                     if (!command.isCompiled) {
                         command = command.toArray(true)[0];
@@ -615,14 +617,9 @@ export function compile(context, commands, options) {
                 return command;
             });
         }
-
-        // console.log('compile> ' + stringify(commands));
     }
 
-    // _.each(commands, f => console.log('pre',f));
-
-    let firstStageCompiled = _.reduce(
-        commands,
+    let firstStageCompiled = commands.reduce(
         (result, command) => {
             let op, entityFilter, compileResult;
             op = command[0];
@@ -686,8 +683,7 @@ export function compile(context, commands, options) {
         }
     }
     // allow hooks to further process commands
-    // _.each( compileHooks, hook => compiled = hook(context, compiled, this) );
-
+    
     // console.log('compiled', this.compiled);
     // this.commands = commands;
     // if( context.debug ) { console.log(this); }
@@ -701,9 +697,7 @@ Query.commands = function(...commands) {
     let result;
 
     result = new Query();
-    result.src = _.map(commands, function(command) {
-        return command.toArray(true)[0];
-    });
+    result.src = commands.map( command => command.toArray(true)[0] );
 
     return result;
 };
@@ -721,9 +715,9 @@ export function register(token, command, dslObj, options = {}) {
     // }
 
     if (dslObj) {
-        _.each(dslObj, (fn, name) => {
-            DslContext.prototype[name] = fn;
-        });
+        for( let name in dslObj ){
+            DslContext.prototype[name] = dslObj[name];
+        }
     }
 
     const argCount = options.argCount === void 0 ? 1 : options.argCount;
@@ -732,7 +726,7 @@ export function register(token, command, dslObj, options = {}) {
         token = [token];
     }
 
-    _.each(token, name => {
+    token.forEach( name => {
         if (commandFunctions[name] !== undefined) {
             throw new Error('already registered cmd ' + name);
         }
@@ -769,7 +763,7 @@ Query.toQuery = function(query) {
     if (Query.isQuery(query)) {
         return query;
     }
-    if (_.isFunction(query)) {
+    if (isFunction(query)) {
         return new Query(query);
     }
     return null;

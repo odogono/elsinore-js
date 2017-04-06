@@ -148,8 +148,9 @@ test('plucking entity ids from the given entityset', t => {
     });
 });
 
-test('resetting the context entitySet', t => {
-    initialiseEntitySet().then( ([registry,entitySet]) => {
+test('resetting the context entitySet', async t => {
+    try {
+        const [registry,entitySet] = await initialiseEntitySet();
 
         let result = entitySet.query(Q => [
             Q.any( ['/component/username','/component/channel'] ),
@@ -159,8 +160,10 @@ test('resetting the context entitySet', t => {
 
         t.equal( result.length, 18 );
         t.end();
-    })
-    .catch( err => { log.debug('t.error: ' + err ); log.debug( err.stack );} )
+
+    } catch( err ){
+        Log.error(err.stack);
+    }
 });
 
 
@@ -185,8 +188,10 @@ test('resetting the context entitySet', t => {
 //     });
 // });
 
-test('sub-queries', t => {
-    initialiseEntitySet().then( ([registry,entitySet]) => {
+test('sub-queries', async t => {
+    try{
+    
+    const [registry,entitySet] = await initialiseEntitySet();
         
         // this query selects the other entities which are members of the same channel
         // as entity id 5
@@ -216,9 +221,11 @@ test('sub-queries', t => {
 
         // the result should have 3 entities - channel_member, channel and client
         t.equal( result.size(), 4 );
-    })
-    .then( () => t.end() )
-    .catch( err => log.error('test error: %s', err.stack) )
+        
+        t.end();
+    } catch( err ){
+        Log.error(err.stack);
+    }
 });
 
 

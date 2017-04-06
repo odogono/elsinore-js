@@ -1,26 +1,43 @@
-import _ from 'underscore';
-
-import * as Q from './index';
+import {
+    argCounts,
+    precendenceValues,
+    ALL_FILTER,
+    ANY_FILTER,
+    NONE_FILTER,
+    INCLUDE_FILTER,
+    LEFT_PAREN,
+    RIGHT_PAREN,
+    AND,
+    ALL,
+    ANY,
+    NONE,
+    NOT,
+    OR,
+    ROOT,
+    VALUE,
+    EQUALS,
+} from './index';
+import { arrayFlatten } from '../util';
 
 function precendence(operator) {
     let result;
 
-    result = Q.precendenceValues[operator];
+    result = precendenceValues[operator];
     // console.log('precendence of', operator,'is', result);
     if (result !== undefined) {
         return result;
     }
 
     switch (operator) {
-        case Q.AND:
-        case Q.ALL:
-        case Q.ANY:
-        case Q.NOT:
-        case Q.OR:
+        case AND:
+        case ALL:
+        case ANY:
+        case NOT:
+        case OR:
             return 1;
-        case Q.VALUE:
+        case VALUE:
             return 2;
-        case Q.EQUALS:
+        case EQUALS:
         default:
             return -1;
     }
@@ -32,17 +49,17 @@ function precendence(operator) {
 function argCount(operator) {
     let result;
 
-    result = Q.argCounts[operator];
+    result = argCounts[operator];
     if (result !== undefined) {
         return result;
     }
 
     switch (operator) {
-        case Q.ALL:
-        case Q.ANY:
-        case Q.NONE:
+        case ALL:
+        case ANY:
+        case NONE:
             return 1;
-        case Q.ROOT:
+        case ROOT:
         default:
             return 2;
     }
@@ -56,11 +73,10 @@ function rpnToTree(values) {
 
     stack = [];
     // result = [];
-
     for (ii = 0, len = values.length; ii < len; ii++) {
         op = values[ii];
 
-        if (op === Q.LEFT_PAREN) {
+        if (op === LEFT_PAREN) {
             // cut out this sub and convert it to a tree
             slice = findMatchingRightParam(values, ii);
 
@@ -76,25 +92,24 @@ function rpnToTree(values) {
             stack.push(slice);
         } else {
             if (Array.isArray(op)) {
-                // log.debug('pushing ' + JSON.stringify(op) );
                 stack.push(op);
             } else {
                 // figure out how many arguments to take from the stack
                 count = argCount(op);
-                // console.log('argCount',op,count);
+
                 slice = stack.splice(stack.length - count, count);
 
                 if (Array.isArray(slice) && slice.length === 1) {
-                    slice = _.flatten(slice, true);
+                    slice = arrayFlatten(slice, true);
                 }
 
                 // TODO: ugh, occasionally args will get flattened too much
-                if (slice[0] === Q.VALUE) {
-                    // note only happens with Q.ALIAS_GET
+                if (slice[0] === VALUE) {
+                    // note only happens with ALIAS_GET
                     // log.debug('overly flat ' + JSON.stringify([op].concat(slice)));
-                    slice = [slice];
+                    slice = [ slice ];
                 }
-                stack.push([op].concat(slice));
+                stack.push([ op ].concat(slice));
             }
         }
     }
@@ -107,9 +122,9 @@ function findMatchingRightParam(values, startIndex) {
     let result = [];
 
     for (ii = 0, len = values.length; ii < len; ii++) {
-        if (values[ii] === Q.LEFT_PAREN) {
+        if (values[ii] === LEFT_PAREN) {
             parenCount++;
-        } else if (values[ii] === Q.RIGHT_PAREN) {
+        } else if (values[ii] === RIGHT_PAREN) {
             parenCount--;
             if (parenCount === 0) {
                 return result;
@@ -157,20 +172,20 @@ export class DslContext {
      */
     root() {
         const context = this.readContext(this);
-        context.pushOp(Q.ROOT);
+        context.pushOp(ROOT);
         return context;
     }
 
     and(val) {
         const context = this.readContext(this);
         context.pushVal(val, true, 'fromAnd');
-        context.pushOp(Q.AND);
+        context.pushOp(AND);
         return context;
     }
 
     or(val) {
         this.pushVal(val, true);
-        this.pushOp(Q.OR);
+        this.pushOp(OR);
         return this;
     }
 
@@ -183,65 +198,58 @@ export class DslContext {
         if (clauses.length === 1) {
             context.pushVal(clauses[0]);
         } else {
-            clauses = _.reduce(
-                clauses,
-                (res, clause, i) => {
-                    res.push(clause.toArray());
-                    if (res.length > 1) {
-                        res.push(Q.AND);
-                    }
-                    return res;
-                },
-                []
-            );
+            clauses = _.reduce(clauses, (res, clause, i) => {
+                res.push(clause.toArray());
+                if (res.length > 1) {
+                    res.push(AND);
+                }
+                return res;
+            }, []);
 
-            context.valStack = context.valStack.concat(
-                _.flatten(clauses, true)
-            );
+            context.valStack = context.valStack.concat(_.flatten(clauses, true));
         }
         return context;
     }
 
     equals(val) {
         this.pushVal(val, true);
-        this.pushOp(Q.EQUALS);
+        this.pushOp(EQUALS);
         return this;
     }
 
     lessThan(val) {
         this.pushVal(val, true);
-        this.pushOp(Q.LESS_THAN);
+        this.pushOp(LESS_THAN);
         return this;
     }
 
     lessThanOrEqual(val) {
         this.pushVal(val, true);
-        this.pushOp(Q.LESS_THAN_OR_EQUAL);
+        this.pushOp(LESS_THAN_OR_EQUAL);
         return this;
     }
 
     greaterThan(val) {
         this.pushVal(val, true);
-        this.pushOp(Q.GREATER_THAN);
+        this.pushOp(GREATER_THAN);
         return this;
     }
 
     greaterThanOrEqual(val) {
         this.pushVal(val, true);
-        this.pushOp(Q.GREATER_THAN_OR_EQUAL);
+        this.pushOp(GREATER_THAN_OR_EQUAL);
         return this;
     }
 
     //
     // Filter Functions
     //
-
     /**
     *   The entities must have ALL of the specified components
     */
     all(componentIds, filterFn) {
         const context = this.readContext(this);
-        context.pushOp(Q.ALL_FILTER);
+        context.pushOp(ALL_FILTER);
         context.pushVal(componentIds, true);
         if (filterFn) {
             context.pushVal(filterFn, true);
@@ -252,8 +260,8 @@ export class DslContext {
 
     include(componentIds, filterFn) {
         const context = this.readContext(this);
-        // context.pushOp( filterFn ? Q.INCLUDE_FILTER : Q.INCLUDE );
-        context.pushOp(Q.INCLUDE_FILTER);
+        // context.pushOp( filterFn ? INCLUDE_FILTER : INCLUDE );
+        context.pushOp(INCLUDE_FILTER);
         context.pushVal(componentIds, true);
         if (filterFn) {
             context.pushVal(filterFn, true);
@@ -266,8 +274,8 @@ export class DslContext {
     */
     any(componentIds, filterFn) {
         const context = this.readContext(this);
-        // context.pushOp( filterFn ? Q.ANY_FILTER : Q.ANY );
-        context.pushOp(Q.ANY_FILTER);
+        // context.pushOp( filterFn ? ANY_FILTER : ANY );
+        context.pushOp(ANY_FILTER);
         context.pushVal(componentIds, true);
         if (filterFn) {
             context.pushVal(filterFn, true);
@@ -280,7 +288,7 @@ export class DslContext {
     */
     none(componentIds, filterFn) {
         const context = this.readContext(this);
-        context.pushOp(Q.NONE_FILTER);
+        context.pushOp(NONE_FILTER);
         context.pushVal(componentIds, true);
         if (filterFn) {
             context.pushVal(filterFn, true);
@@ -310,9 +318,7 @@ export class DslContext {
 
     pushOp(op) {
         const lastOp = this.lastOp();
-        while (
-            this.opStack.length > 0 && precendence(op) <= precendence(lastOp)
-        ) {
+        while (this.opStack.length > 0 && precendence(op) <= precendence(lastOp)) {
             this.pushVal(this.popOp());
         }
         this.opStack.push(op);
@@ -323,7 +329,7 @@ export class DslContext {
 
         if (wrapInValueTuple) {
             if (!isQuery) {
-                val = [Q.VALUE, val];
+                val = [ VALUE, val ];
             }
         }
 
@@ -349,7 +355,6 @@ export class DslContext {
         }
 
         // console.log('QB.toArray B val', this.valStack );
-
         result = this.valStack;
 
         if (toTree) {

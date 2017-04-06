@@ -1,7 +1,6 @@
-import _  from 'underscore';
 
 import {createLog} from './log';
-import {stringify} from './index';
+import {omit,stringify} from './index';
 import {toString as entityToString} from './to_string';
 
 export const CMD_UNKNOWN = "@unk";
@@ -23,8 +22,7 @@ export class JSONLoader {
         let context = { entitySet, registry };
         
         // execute each command in turn
-        return _.reduce( 
-            commands, 
+        return commands.reduce(
             (current,cmd) => current.then( () => this._processCommand(context,cmd) ), 
             Promise.resolve() );
     }
@@ -101,7 +99,7 @@ export class JSONLoader {
 
 function findCommand( obj ){
     if( obj[CMD_COMMAND] ){
-        return [CMD_COMMAND, obj[CMD_COMMAND], _.omit(obj,CMD_COMMAND)];
+        return [CMD_COMMAND, obj[CMD_COMMAND], omit(obj,CMD_COMMAND)];
     }
     return [CMD_UNKNOWN,null];
 }

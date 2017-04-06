@@ -254,8 +254,10 @@ test('create an entity with a component bitfield', t => {
 })
 
 
-test('updating a components entity refs', t => {
-    return initialiseRegistry().then( registry => {
+test('updating a components entity refs', async t => {
+    try {
+        const registry = await initialiseRegistry();
+    
         const component = registry.createComponent( 
             {"@e":12, "@c": "/component/channel_member", "channel": 1, "client": 5} );
         const aComponent = mapComponentEntityRefs( registry, component, { 5: 290, 1: 340} );
@@ -264,8 +266,10 @@ test('updating a components entity refs', t => {
         t.equals( aComponent.get('client'), 290 );
 
         t.end();
-    })
-    .catch( err => log.error('test error: %s', err.stack) )
+    
+    } catch( err ){
+        Log.error(err.stack);
+    }
 });
 
 

@@ -57,7 +57,7 @@ test('register components', async t => {
 });
 
 
-test('json export', async t => {
+test.skip('json export', async t => {
     const registry = Registry.create();
 
     try {

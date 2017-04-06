@@ -1,7 +1,5 @@
 /* @flow */
 
-import _ from 'underscore';
-
 import Model from './model';
 
 import {
@@ -47,7 +45,8 @@ export default class ComponentDef extends Model {
 
     toJSON(...args){
         let result = Model.prototype.toJSON.apply(this, args);
-        return _.omit( result, 'attrs');
+        delete result.attrs;
+        return result; //omit( result, 'attrs');
     }
 
     hash( asString=true ){
