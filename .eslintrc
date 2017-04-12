@@ -4,7 +4,6 @@
     // "parser": "babel-eslint",
 
     "extends": [
-        "plugin:flowtype/recommended"
     ],
 
     "env": {
@@ -41,6 +40,5 @@
     },
 
     "plugins": [
-        "flowtype"
     ]
 }

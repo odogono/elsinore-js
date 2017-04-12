@@ -1,5 +1,3 @@
-/* @flow */
-
 
 import Model from './model';
 import {
@@ -122,7 +120,7 @@ export default class Component extends Model {
     // setDefName: function(name:string){
     //     this.name = this._defName = name;
     // },
-    setDefDetails( defId, uri: string, hash: string, name: string ){
+    setDefDetails( defId, uri, hash, name ){
         this.set({'@s':defId,'@c':uri});
         this._defHash = hash;
         this.name = this._defName = name;  

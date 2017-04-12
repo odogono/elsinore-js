@@ -1,5 +1,3 @@
-/* @flow */
-
 import { Collection, Events } from 'odgn-backbone-model';
 import BitField from 'odgn-bitfield';
 
@@ -69,7 +67,7 @@ export default class EntitySet extends Collection {
     /**
      * 
      */
-    toJSON(options: object = {}) {
+    toJSON(options= {}) {
         if (!isObject(options)) {
             options = {};
             // return {uuid:this._uuid, msg:options};

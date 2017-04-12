@@ -1,5 +1,3 @@
-/* @flow */
-
 import test from 'tape';
 import _ from 'underscore';
 import {Model} from 'odgn-backbone-model';

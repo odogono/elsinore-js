@@ -1,4 +1,3 @@
-/* @flow */
 import { Collection, Events } from 'odgn-backbone-model';
 
 import Component from '../component';
@@ -7,13 +6,6 @@ import { createLog } from '../util/log';
 
 import ComponentDef from '../component_def';
 
-// type T = number;
-type ComponentDefRawObjectType = { uri: string, name?: string, hash?: string, properties?: Object };
-type ComponentDefRawArrayType = Array<ComponentDefRawObjectType>;
-type ComponentDefRawType = ComponentDefRawArrayType | ComponentDefRawObjectType;
-type ComponentDefType = Object;
-// TODO: replace with proper backbone model
-type ComponentDefIdentifierType = string | string[] | uint32 | ComponentDefRawType | ComponentDefType;
 
 const Log = createLog('ComponentRegistry', false);
 
@@ -30,11 +22,11 @@ const Log = createLog('ComponentRegistry', false);
 //     }
 // });
 export class ComponentDefCollection extends Collection {
-    getByHash(hash: string) {
+    getByHash(hash) {
         return this.find(cdef => cdef.hash() == hash);
     }
 
-    getByUri(uri: string) {
+    getByUri(uri) {
         return this.find(cdef => cdef.getUri() == uri);
     }
 }
@@ -93,7 +85,7 @@ export default class ComponentRegistry {
     /**
      * Adds a component definition to the registry
      */
-    register(def: ComponentDefRawType | ComponentDefType, options: Object = {}): Object | null {
+    register(def, options={}){
         let componentDef;
         let throwOnExists = options.throwOnExists === void 0 ? true : options.throwOnExists;
 
@@ -250,7 +242,7 @@ export default class ComponentRegistry {
         return result;
     }
 
-    getIId(defIdentifiers, options = { throwOnNotFound: true }): Object | null | uint32 {
+    getIId(defIdentifiers, options = { throwOnNotFound: true }) {
         options.returnIds = true;
         // defIdentifiers.push({ throwOnNotFound:true, returnIds:true });
         return this.getComponentDef(defIdentifiers, options);
@@ -259,7 +251,7 @@ export default class ComponentRegistry {
     /**
      * 
      */
-    getComponentDef(identifiers: ComponentDefIdentifierType, options: Object = {}): Object | null | uint32 {
+    getComponentDef(identifiers, options={}) {
         let ii = 0, len = 0, cDef, ident;
         // const debug = options.debug === void 0 ? false : options.debug;
         const forceArray = options.forceArray === void 0 ? false : options.forceArray;

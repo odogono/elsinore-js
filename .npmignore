@@ -28,7 +28,6 @@ gulpfile.js
 TODO.md
 NOTES.md
 
-.flowconfig
 .vscode
 yarn.lock
 jsconfig.json

@@ -32,12 +32,12 @@ import CmdBuffer from '../src/cmd_buffer/async';
 const Log = createLog('TestCmdBufferAsync');
 
 test('adding a component with no entity id', async t => {
-    const registry = await initialiseRegistry();
-    const cb = new CmdBuffer();
-    const es = createEntitySet(registry);
-    const com = createComponent();
-
     try {
+        const registry = await initialiseRegistry();
+        const cb = new CmdBuffer();
+        const es = createEntitySet(registry);
+        const com = createComponent();
+
         await cb.addComponent(es,com);
         reportUpdates( t, es, 1, 0, 0, 1, 0, 0 );
     

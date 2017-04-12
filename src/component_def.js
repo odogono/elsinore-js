@@ -1,5 +1,3 @@
-/* @flow */
-
 import Model from './model';
 
 import {
@@ -93,7 +91,7 @@ function createAttrsFromProperties( props ){
 /**
  * 
  */
-function componentNameFromUri( schemaUri: string, suffix: string='' ){
+function componentNameFromUri( schemaUri, suffix='' ){
     let name;
     // let schema = this.getSchema( schemaUri );
 
