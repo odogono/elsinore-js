@@ -3,14 +3,19 @@ import test from 'tape';
 
 import Pull from 'pull-stream';
 import Pushable from 'pull-pushable';
-const PullMap = require('pull-stream/throughs/map');
+import PullMap from 'pull-stream/throughs/map';
+import PullFilter from 'pull-stream/throughs/filter';
 
+import Entity from '../src/entity';
 import { Registry, entityToString, logEvents, createLog, stringify } from './common';
 import AsyncEntitySet from '../src/entity_set/async';
 
 import { readProperty, isPromise } from '../src/util';
 import { JSONLoader } from '../src/util/loader';
 import { JSONExporter } from '../src/util/exporter';
+
+import QueryFilter from '../src/query/through'
+
 
 // import Loader from 'elsinore-io/lib/loader';
 const Log = createLog('TestPullStream');
@@ -124,6 +129,81 @@ test('source emits components with resolved component uris', async t => {
         Log.error(err.stack);
     }
 });
+
+test('source emits entities', async t => {
+    try {
+        const { registry, entitySet } = await initialise({ loadEntities: true });
+
+        Pull(
+            entitySet.source({ emitEntities: true, closeAfterExisting:true}),
+            
+            PullFilter( val => {
+                return Entity.isEntity(val);
+            }),
+
+            Pull.collect((err, entities) => {
+                // Log.debug('[collect]', entityToString(entities));
+                t.equals( entities.length, 5 );
+                t.end();
+            }),
+        );
+    } catch (err) {
+        Log.error(err.stack);
+    }
+})
+
+
+test('sink', async t => {
+    try {
+        const { registry, entitySet } = await initialise({ loadEntities: true });
+        const receivingES = registry.createEntitySet();
+
+        // receivingES.on('all', (name,...args) => Log.debug('[receivingES]', name))
+
+        Pull(
+            Pull.values([
+                { '@e': 2, '@i': 5, '@s': 1, addr: '192.3.0.1' },
+                { '@e': 2, '@i': 6, '@s': 2, expires_at: -300 },
+                { '@e': 7, '@i': 10, '@s': 1, addr: '192.3.0.2' },
+                { '@e': 11, '@i': 14, '@s': 1, addr: '192.3.0.3' },
+                { '@e': 15, '@i': 18, '@s': 1, addr: '192.3.0.4' },
+                { '@cmd': 'rme', eid:11 },
+            ]),
+            receivingES.sink({}, (err) => {
+                // Log.debug('[sink]', entityToString(receivingES));
+                t.equals( receivingES.size(), 3 );
+                t.end();
+            } ),
+        );
+    } catch (err) {
+        Log.error(err.stack);
+    }
+});
+
+
+test('query through', async t => {
+    try {
+        const { registry, entitySet } = await initialise({ loadEntities: true });
+        const receivingES = registry.createEntitySet();
+
+        Pull(
+            entitySet.source({ emitEntities:true, closeAfterExisting:true}),
+            
+            // the filter will only allow entities that have the /ttl component through
+            QueryFilter( Q => Q.all('/ttl') ),
+
+            receivingES.sink({debug:false}, (err) => {
+                // Log.debug('[sink]', entityToString(receivingES));
+                t.equals( receivingES.size(), 2 );
+                t.end();
+            } ),
+        );
+    } catch (err) {
+        Log.error(err.stack);
+    }
+});
+
+
 
 // test('source', async t => {
 //     try {

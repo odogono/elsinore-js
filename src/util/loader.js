@@ -1,12 +1,14 @@
 
 import {createLog} from './log';
-import {omit,stringify} from './index';
+import {omit,readProperty,stringify} from './index';
 import {toString as entityToString} from './to_string';
 
 export const CMD_UNKNOWN = "@unk";
 export const CMD_COMMAND = "@cmd";
 export const CMD_ADD_ENTITY = 'entity';
 export const CMD_REGISTER_COMPONENT = 'register';
+export const CMD_DELETE_ENTITY = 'rme';
+export const CMD_DELETE_COMPONENT = 'rmc';
 
 const Log = createLog('JSONLoader');
 
@@ -36,12 +38,16 @@ export class JSONLoader {
 
         switch(cmd){
             case CMD_ADD_ENTITY:
-                return this._addEntityToEntitySet(context);
+                return this._addEntityToEntitySet(context,options);
                 // return addEntity(registry, entitySet, loader.entity)
             case CMD_REGISTER_COMPONENT:
                 return this._registerComponent(context,arg);
+            case CMD_DELETE_ENTITY:
+                return this._deleteEntity(context,arg,options);
+            case CMD_DELETE_COMPONENT:
+                return this._deleteComponent(context,arg,options);
             default:
-                return this._createComponent(context,command);
+                return this._createComponent(context,command,options);
         }
         
     }
@@ -59,6 +65,28 @@ export class JSONLoader {
         return Promise.resolve(context);
     }
 
+    _deleteEntity(context, args, options={}){
+        const entityId = args ? args.eid : undefined;
+        if( entityId === undefined ){
+            return Promise.resolve(context);
+        }
+
+        return Promise.resolve(context.entitySet.removeEntity(entityId))
+            .then( () => context );
+    }
+
+    _deleteComponent(context, args, options={}){
+        const componentId = args ? args.cid : undefined;
+        if( componentId === undefined ){
+            return Promise.resolve(context);
+        }
+
+        return Promise.resolve(context);
+
+        // return Promise.resolve(context.entitySet.removeComponent(componentId))
+            // .then( () => context );
+    }
+
     /**
      * 
      */
@@ -74,17 +102,28 @@ export class JSONLoader {
     /**
      * 
      */
-    _createComponent( context, obj ){
+    _createComponent( context, obj, options ){
+        const debug = readProperty(options,'debug',false);
+        if( debug ){ Log.debug(`[createComponent] from`, (obj) ); }
         const component = context.registry.createComponent( obj );
 
-        // Log.debug(`[createComponent]`, stringify(component) );
+        // if( debug ){ Log.debug(`[createComponent]`, stringify(component) ); }
+
+        // if an explicit entityid is set, then add directly to the entityset
+        if( obj['@e'] ){
+            return context.entitySet.addComponent( component );
+        }
 
         if( !context.entity ){
             return this._createEntity(context)
                 .then( () => context.entity.addComponent(component) );
         }
 
+        
         context.entity.addComponent(component);
+
+        if( debug ) Log.debug('[createComponent] add to entity', context.entitySet.cid, entityToString(context.entity));
+
         return component;
     }
 

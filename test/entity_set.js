@@ -911,79 +911,79 @@ test('should clear all contained entities by calling reset', t => {
     });
 });
 
-test('attached entitysets', async t => {
-    const [ registry, entitySet, entities ] = await initialise();
+// test('attached entitysets', async t => {
+//     const [ registry, entitySet, entities ] = await initialise();
 
-    // other ES will accept only entities with Position and Realname
-    const oEntitySet = registry.createEntitySet();
-    // set a filter on the other entitySet so that it will only accept components that
-    // have /position and /realname
-    oEntitySet.setQuery(Q => Q.all([ '/component/position', '/component/realname' ]));
+//     // other ES will accept only entities with Position and Realname
+//     const oEntitySet = registry.createEntitySet();
+//     // set a filter on the other entitySet so that it will only accept components that
+//     // have /position and /realname
+//     oEntitySet.setQuery(Q => Q.all([ '/component/position', '/component/realname' ]));
 
-    // make the other entitySet listen to the origin entitySet
-    oEntitySet.attachTo(entitySet);
+//     // make the other entitySet listen to the origin entitySet
+//     oEntitySet.attachTo(entitySet);
 
-    // add some entities to the origin entitySet
-    entitySet.addEntity(entities.at(0));
-    entitySet.addEntity(entities.at(4));
+//     // add some entities to the origin entitySet
+//     entitySet.addEntity(entities.at(0));
+//     entitySet.addEntity(entities.at(4));
 
-    // these added entities should end up in the other entityset
-    t.equals(oEntitySet.size(), 2);
+//     // these added entities should end up in the other entityset
+//     t.equals(oEntitySet.size(), 2);
 
-    t.end();
-});
+//     t.end();
+// });
 
-test('map transfers an entitySet through a filter into another entityset', t => {
-    let eventSpy = Sinon.spy();
-    return initialise()
-        .then(([ registry, entitySet, entities ]) => {
-            let oEntitySet = registry.createEntitySet();
-            let entityFilter = Q => Q.include('/component/score');
+// test('map transfers an entitySet through a filter into another entityset', t => {
+//     let eventSpy = Sinon.spy();
+//     return initialise()
+//         .then(([ registry, entitySet, entities ]) => {
+//             let oEntitySet = registry.createEntitySet();
+//             let entityFilter = Q => Q.include('/component/score');
 
-            // printE( loadedEntitySet );
-            // Common.logEvents( oEntitySet );
-            oEntitySet.on('all', eventSpy);
+//             // printE( loadedEntitySet );
+//             // Common.logEvents( oEntitySet );
+//             oEntitySet.on('all', eventSpy);
 
-            // Common.logEvents( oEntitySet );
-            // map the entities from the loaded set into the other set, using the entityfilter
-            entities.map(entityFilter, oEntitySet);
+//             // Common.logEvents( oEntitySet );
+//             // map the entities from the loaded set into the other set, using the entityfilter
+//             entities.map(entityFilter, oEntitySet);
 
-            // loadedEntitySet.map( entityFilter, oEntitySet );
-            // printIns( eventSpy.args[1] );
-            t.ok(eventSpy.calledWith('reset'), 'entitySet should trigger a reset event');
-            t.ok(eventSpy.calledWith('component:add'), 'entitySet should trigger a component:add event');
-            t.ok(eventSpy.calledWith('entity:add'), 'entitySet should trigger a entity:add event');
+//             // loadedEntitySet.map( entityFilter, oEntitySet );
+//             // printIns( eventSpy.args[1] );
+//             t.ok(eventSpy.calledWith('reset'), 'entitySet should trigger a reset event');
+//             t.ok(eventSpy.calledWith('component:add'), 'entitySet should trigger a component:add event');
+//             t.ok(eventSpy.calledWith('entity:add'), 'entitySet should trigger a entity:add event');
 
-            t.equal(_.size(eventSpy.args[1][1]), 3, 'three components reported as being added');
-            t.equal(_.size(eventSpy.args[2][1]), 3, 'three entities reported as being added');
+//             t.equal(_.size(eventSpy.args[1][1]), 3, 'three components reported as being added');
+//             t.equal(_.size(eventSpy.args[2][1]), 3, 'three entities reported as being added');
 
-            t.end();
-        })
-        .catch(err => Log.error(err.stack));
-});
+//             t.end();
+//         })
+//         .catch(err => Log.error(err.stack));
+// });
 
-test('map transfers an entitySet through a filter into another entityset again', t => {
-    let eventSpy = Sinon.spy();
-    return initialise()
-        .then(([ registry, entitySet, entities ]) => {
-            const oEntitySet = registry.createEntitySet();
-            let entityFilter = Q => Q.none('/component/position');
+// test('map transfers an entitySet through a filter into another entityset again', t => {
+//     let eventSpy = Sinon.spy();
+//     return initialise()
+//         .then(([ registry, entitySet, entities ]) => {
+//             const oEntitySet = registry.createEntitySet();
+//             let entityFilter = Q => Q.none('/component/position');
 
-            oEntitySet.on('all', eventSpy);
-            // Common.logEvents( oEntitySet );
-            // Common.logEvents( oEntitySet );
-            // map the entities from the loaded set into the other set, using the entityfilter
-            entities.map(entityFilter, oEntitySet);
-            // loadedEntitySet.map( entityFilter, oEntitySet );
-            // printE( loadedEntitySet );
-            // printE( oEntitySet );
-            t.equal(_.size(eventSpy.args[1][1]), 5, 'three components reported as being added');
-            t.equal(_.size(eventSpy.args[2][1]), 2, 'two entities reported as being added');
+//             oEntitySet.on('all', eventSpy);
+//             // Common.logEvents( oEntitySet );
+//             // Common.logEvents( oEntitySet );
+//             // map the entities from the loaded set into the other set, using the entityfilter
+//             entities.map(entityFilter, oEntitySet);
+//             // loadedEntitySet.map( entityFilter, oEntitySet );
+//             // printE( loadedEntitySet );
+//             // printE( oEntitySet );
+//             t.equal(_.size(eventSpy.args[1][1]), 5, 'three components reported as being added');
+//             t.equal(_.size(eventSpy.args[2][1]), 2, 'two entities reported as being added');
 
-            t.end();
-        })
-        .catch(err => Log.error(err.stack));
-});
+//             t.end();
+//         })
+//         .catch(err => Log.error(err.stack));
+// });
 
 test('possible to add 2 entities with same entityIds but different entityset ids', t => {
     return initialise()

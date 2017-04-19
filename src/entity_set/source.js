@@ -9,6 +9,7 @@ import {readProperty} from '../util';
 export default function source(entitySet, options={}){
     const useDefUris = readProperty(options,'useDefUris',false);
     const isAnonymous = readProperty(options,'anonymous',false);
+    const emitEntities = readProperty(options,'emitEntities', false);
 
     const cdefMap = useDefUris ? entitySet.getSchemaRegistry().getComponentDefUris() : null;
 
@@ -34,7 +35,10 @@ export default function source(entitySet, options={}){
     for(ii;ii<length;ii++){
         entity = entitySet.at(ii);
         components = entity.getComponents();
-
+        if( emitEntities ){
+            pushable.push( entity );
+            continue;
+        }
         for(cc=0,count=components.length;cc<count;cc++){
             pushComponent( pushable, components[cc], cdefMap, isAnonymous );
         }
@@ -48,6 +52,10 @@ export default function source(entitySet, options={}){
         let entity,component,cc=0,clen=0,ee=0,elen=entities.length;
         for(ee=0;ee<elen;ee++){
             entity = entities[ee];
+            if( emitEntities ){
+                pushable.push( entity );
+                continue;
+            }
             components = entity.getComponents();
             for(cc=0,clen=components.length;cc<clen;cc++){
                 pushComponent( pushable, components[cc], cdefMap, isAnonymous );

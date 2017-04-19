@@ -3,15 +3,16 @@ import BitField from 'odgn-bitfield';
 import Pull from 'pull-stream/pull';
 import Component from '../component';
 import Entity from '../entity';
-// import EntityFilter from '../entity_filter';
+
 import Query from '../query';
 import { clone, hash, isInteger, stringify, isFunction, isObject, isPromise, uniqueId } from '../util';
 import { uuid as createUUID } from '../util/uuid';
 
-// import * as CmdBuffer from '../cmd_buffer/sync';
+
 import CmdBuffer from '../cmd_buffer/sync';
 
 import PullStreamSource from './source';
+import PullStreamSink from './sink';
 
 
 let CollectionPrototype = Collection.prototype;
@@ -131,46 +132,46 @@ export default class EntitySet extends Collection {
      * components have been exhausted, a 'end' event is emitted.
      * 
      */
-    createReadStream(options = {}) {
-        let index = 0;
-        let length = this.length;
-        let entity = null;
-        let components = null;
-        let entityIndex = 0;
-        let stream = Object.assign({}, Events);
+    // createReadStream(options = {}) {
+    //     let index = 0;
+    //     let length = this.length;
+    //     let entity = null;
+    //     let components = null;
+    //     let entityIndex = 0;
+    //     let stream = Object.assign({}, Events);
 
-        const fnIterate = () => {
-            // calls -= 1;
-            if (index == length) {
-                stream.trigger('end');
-                return;
-            }
-            if (!components || entityIndex == components.length) {
-                entity = null;
-            }
+    //     const fnIterate = () => {
+    //         // calls -= 1;
+    //         if (index == length) {
+    //             stream.trigger('end');
+    //             return;
+    //         }
+    //         if (!components || entityIndex == components.length) {
+    //             entity = null;
+    //         }
 
-            if (!entity) {
-                entity = this.at(index++);
-                components = entity.getComponents();
-                entityIndex = 0;
-            }
+    //         if (!entity) {
+    //             entity = this.at(index++);
+    //             components = entity.getComponents();
+    //             entityIndex = 0;
+    //         }
 
-            let component = components[entityIndex++];
+    //         let component = components[entityIndex++];
 
-            stream.trigger('data', component);
+    //         stream.trigger('data', component);
 
-            fnResume();
-        };
+    //         fnResume();
+    //     };
 
-        const fnResume = () => {
-            // calls += 1;
-            setTimeout(fnIterate, 1);
-        };
+    //     const fnResume = () => {
+    //         // calls += 1;
+    //         setTimeout(fnIterate, 1);
+    //     };
 
-        fnResume();
+    //     fnResume();
 
-        return stream;
-    }
+    //     return stream;
+    // }
 
     /**
      * Creates a pull-stream sink which accepts either Entity or 
@@ -180,40 +181,40 @@ export default class EntitySet extends Collection {
      * @param {function} completeCb called when complete
      * @returns {function}
      */
-    createPullStreamSink(options = {}, completeCb) {
-        const self = this;
-        return function(read) {
-            read(null, function next(end, data) {
-                if (end === true) {
-                    return completeCb();
-                }
-                if (end) {
-                    return completeCb(end);
-                }
-                let result = null;
+    // createPullStreamSink(options = {}, completeCb) {
+    //     const self = this;
+    //     return function(read) {
+    //         read(null, function next(end, data) {
+    //             if (end === true) {
+    //                 return completeCb();
+    //             }
+    //             if (end) {
+    //                 return completeCb(end);
+    //             }
+    //             let result = null;
 
-                if (Entity.isEntity(data)) {
-                    result = self.addEntity(data);
-                } else if (Component.isComponent(data)) {
-                    result = self.addComponent(data);
-                } else {
-                    return read(new Error('invalid data', data), completeCb);
-                }
+    //             if (Entity.isEntity(data)) {
+    //                 result = self.addEntity(data);
+    //             } else if (Component.isComponent(data)) {
+    //                 result = self.addComponent(data);
+    //             } else {
+    //                 return read(new Error('invalid data', data), completeCb);
+    //             }
 
-                if (isPromise(result)) {
-                    result
-                        .then(() => {
-                            read(null, next);
-                        })
-                        .catch(err => {
-                            read(err, completeCb);
-                        });
-                } else {
-                    read(null, next);
-                }
-            });
-        };
-    }
+    //             if (isPromise(result)) {
+    //                 result
+    //                     .then(() => {
+    //                         read(null, next);
+    //                     })
+    //                     .catch(err => {
+    //                         read(err, completeCb);
+    //                     });
+    //             } else {
+    //                 read(null, next);
+    //             }
+    //         });
+    //     };
+    // }
 
     /**
      * creates a pullstream of components in the entityset
@@ -222,43 +223,55 @@ export default class EntitySet extends Collection {
      * 
      * @returns {function}
      */
-    createPullStreamSource(options = {}) {
-        let index = 0;
-        const length = this.length;
-        let entity = null;
-        let components = null;
-        let entityIndex = 0;
+    // createPullStreamSource(options = {}) {
+    //     let index = 0;
+    //     const length = this.length;
+    //     let entity = null;
+    //     let components = null;
+    //     let entityIndex = 0;
 
-        return (abort, cb) => {
-            if (abort) {
-                return cb(abort);
-            }
-            if (index >= length) {
-                return cb(true, null);
-            }
-            if (!components || entityIndex == components.length) {
-                entity = null;
-            }
-            if (!entity) {
-                entity = this.at(index++);
-                components = entity.getComponents();
-                entityIndex = 0;
-            }
-            let component = components[entityIndex++];
+    //     return (abort, cb) => {
+    //         if (abort) {
+    //             return cb(abort);
+    //         }
+    //         if (index >= length) {
+    //             return cb(true, null);
+    //         }
+    //         if (!components || entityIndex == components.length) {
+    //             entity = null;
+    //         }
+    //         if (!entity) {
+    //             entity = this.at(index++);
+    //             components = entity.getComponents();
+    //             entityIndex = 0;
+    //         }
+    //         let component = components[entityIndex++];
 
-            return cb(null, component);
-        };
-    }
+    //         return cb(null, component);
+    //     };
+    // }
 
     /**
      * Returns a Pull-Stream source
      * 
+     * see https://pull-stream.github.io/
+     * 
      * @param {*} options 
      */
-    source(options={}){
+    source(options){
         // return Pull( PullStreamSource(this,options));
         return PullStreamSource(this,options);
         // return source;
+    }
+
+    /**
+     * Returns a Pull-Stream sink
+     * 
+     * 
+     * @param {*} options 
+     */
+    sink(options, completeCb){
+        return PullStreamSink( this, options, completeCb);
     }
 
     /**
@@ -282,36 +295,36 @@ export default class EntitySet extends Collection {
         return this.getRegistry().schemaRegistry;
     }
 
-    /**
-    *   TODO: move out of here
-    */
-    attachTo(otherEntitySet, options) {
-        // load the start state from this entity set
-        otherEntitySet.reset(this);
-        this.listenTo(otherEntitySet, 'all', this.onEntitySetEvent);
-    }
+    // /**
+    // *   TODO: move out of here
+    // */
+    // attachTo(otherEntitySet, options) {
+    //     // load the start state from this entity set
+    //     otherEntitySet.reset(this);
+    //     this.listenTo(otherEntitySet, 'all', this.onEntitySetEvent);
+    // }
 
     /**
     *   TODO: move out of here
     */
-    onEntitySetEvent(evt, ...args) {
-        switch (evt) {
-            // case 'entity:add':
-            // return this.add.apply( this, args );
-            case 'component:add':
-                args[1] = { ...args[1], clone: true };
-                return this.addComponent.apply(this, args);
-            case 'component:remove':
-                return this.removeComponent.apply(this, args);
-            // case 'entity:remove':
-            // return this.remove.apply( this, args );
-            case 'reset':
-                return this.reset.apply(this, args);
-            default:
-                break;
-        }
-        return this;
-    }
+    // onEntitySetEvent(evt, ...args) {
+    //     switch (evt) {
+    //         // case 'entity:add':
+    //         // return this.add.apply( this, args );
+    //         case 'component:add':
+    //             args[1] = { ...args[1], clone: true };
+    //             return this.addComponent.apply(this, args);
+    //         case 'component:remove':
+    //             return this.removeComponent.apply(this, args);
+    //         // case 'entity:remove':
+    //         // return this.remove.apply( this, args );
+    //         case 'reset':
+    //             return this.reset.apply(this, args);
+    //         default:
+    //             break;
+    //     }
+    //     return this;
+    // }
 
     /**
     * Adds a component to this set
@@ -701,22 +714,23 @@ export default class EntitySet extends Collection {
         return removed;
     }
 
-    /**
-    *   Transfers entities from src to dst whilst applying the filter
-    *   The query is then set on the dstEntitySet
-    */
-    map(query, dstEntitySet, options = {}) {
-        // let entity;
-        dstEntitySet.reset();
+    // /**
+    // *   Transfers entities from src to dst whilst applying the filter
+    // *   The query is then set on the dstEntitySet
+    // NOTE : map has been replaced by pull-stream operations
+    // */
+    // map(query, dstEntitySet, options = {}) {
+    //     // let entity;
+    //     dstEntitySet.reset();
 
-        if (query) {
-            dstEntitySet.setQuery(query);
-        }
+    //     if (query) {
+    //         dstEntitySet.setQuery(query);
+    //     }
 
-        dstEntitySet.addEntity(this);
+    //     dstEntitySet.addEntity(this);
 
-        return dstEntitySet;
-    }
+    //     return dstEntitySet;
+    // }
 }
 
 EntitySet.prototype.type = 'EntitySet';

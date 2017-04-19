@@ -6,9 +6,13 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 - JSONLoader interprets simple JSON directives to populate an entityset
+- pull-stream entityset source, sink and through queryfilter
 
 ### Removed
 - Registry processor functionality removed in favour of EntityDispatch
+- EntitySet.map removed in favour of pull-stream operations
+- existing entitySet stream functions replaced with source() and sink()
+
 
 ### Changed
 - eslint rules applied to codebase
