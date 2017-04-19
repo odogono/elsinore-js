@@ -1,6 +1,6 @@
 import { Collection, Events } from 'odgn-backbone-model';
 import BitField from 'odgn-bitfield';
-
+import Pull from 'pull-stream/pull';
 import Component from '../component';
 import Entity from '../entity';
 // import EntityFilter from '../entity_filter';
@@ -10,6 +10,9 @@ import { uuid as createUUID } from '../util/uuid';
 
 // import * as CmdBuffer from '../cmd_buffer/sync';
 import CmdBuffer from '../cmd_buffer/sync';
+
+import PullStreamSource from './source';
+
 
 let CollectionPrototype = Collection.prototype;
 
@@ -21,6 +24,8 @@ ComponentCollection.model = Component;
  */
 export default class EntitySet extends Collection {
     initialize(entities, options = {}) {
+        // this.source = this.source.bind(this);
+        // this.source = PullStreamSource(this,options)
         let cmdBuffer = CmdBuffer;
         this._uuid = options.uuid || createUUID();
         this.cid = uniqueId('es');
@@ -102,8 +107,10 @@ export default class EntitySet extends Collection {
     //         }
     //     };
     // },
+
     /**
      * 
+     * @param {*} options 
      */
     iterator(options) {
         let nextIndex = 0;
@@ -241,6 +248,17 @@ export default class EntitySet extends Collection {
 
             return cb(null, component);
         };
+    }
+
+    /**
+     * Returns a Pull-Stream source
+     * 
+     * @param {*} options 
+     */
+    source(options={}){
+        // return Pull( PullStreamSource(this,options));
+        return PullStreamSource(this,options);
+        // return source;
     }
 
     /**
