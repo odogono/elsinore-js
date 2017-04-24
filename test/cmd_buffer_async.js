@@ -6,7 +6,7 @@ import BitField from 'odgn-bitfield';
 
 import {
     toInteger
-} from '../src/util/index';
+} from '../src/util/to';
 
 import {
     Component, 
@@ -254,19 +254,19 @@ test('removing an existing entity', async t => {
 });
 
 test('adding multiple', async t => {
-    const registry = await initialiseRegistry();
-    const cb = new CmdBuffer();
-    const es = createEntitySet(registry,66);
-
-    const data = [
-        {"@e":1, "@c": "/component/channel", '@s':1, "name":"ecs" },
-        {"@e":1, "@c": "/component/topic", '@s':2, "topic": "Entity Component Systems" },
-        {"@e":5, "@c": "/component/username", '@s':3, "username":"aveenendaal"},
-        {"@e":5, "@c": "/component/nickname", '@s':4, "nickname":"alex"},
-        {"@e":12, "@c": "/component/channel_member", '@s':5, "channel": 1, "client": 5 },
-    ];
-
     try {
+        const registry = await initialiseRegistry();
+        const cb = new CmdBuffer();
+        const es = createEntitySet(registry,66);
+
+        const data = [
+            {"@e":1, "@c": "/component/channel", '@s':1, "name":"ecs" },
+            {"@e":1, "@c": "/component/topic", '@s':2, "topic": "Entity Component Systems" },
+            {"@e":5, "@c": "/component/username", '@s':3, "username":"aveenendaal"},
+            {"@e":5, "@c": "/component/nickname", '@s':4, "nickname":"alex"},
+            {"@e":12, "@c": "/component/channel_member", '@s':5, "channel": 1, "client": 5 },
+        ];
+
         const entities = registry.createEntitySet({'@e':data});
         // printE( entities );
         // let entities = loadEntities( registry, data );

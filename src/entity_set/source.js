@@ -1,12 +1,13 @@
 import PullPushable from 'pull-pushable';
 
-import {readProperty} from '../util';
+import readProperty from '../util/read_property';
 
 
 /**
  * pull-stream source - produces a stream of entities/components from the entity set
  */
 export default function source(entitySet, options={}){
+    const sendExisting = readProperty(options,'sendExisting',true);
     const useDefUris = readProperty(options,'useDefUris',false);
     const isAnonymous = readProperty(options,'anonymous',false);
     const emitEntities = readProperty(options,'emitEntities', false);
@@ -30,23 +31,27 @@ export default function source(entitySet, options={}){
     }
 
 
-    const length = entitySet.length;
+    // send all existing components
+    if( sendExisting ){
+        const length = entitySet.length;
 
-    for(ii;ii<length;ii++){
-        entity = entitySet.at(ii);
-        components = entity.getComponents();
-        if( emitEntities ){
-            pushable.push( entity );
-            continue;
+        for(ii;ii<length;ii++){
+            entity = entitySet.at(ii);
+            components = entity.getComponents();
+            if( emitEntities ){
+                pushable.push( entity );
+                continue;
+            }
+            for(cc=0,count=components.length;cc<count;cc++){
+                pushComponent( pushable, components[cc], cdefMap, isAnonymous );
+            }
         }
-        for(cc=0,count=components.length;cc<count;cc++){
-            pushComponent( pushable, components[cc], cdefMap, isAnonymous );
+
+        if( options.closeAfterExisting === true ){
+            pushable.end();
         }
     }
 
-    if( options.closeAfterExisting === true ){
-        pushable.end();
-    }
 
     pushable.onEntityAdd = function(entities){
         let entity,component,cc=0,clen=0,ee=0,elen=entities.length;

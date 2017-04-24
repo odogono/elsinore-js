@@ -17,7 +17,7 @@ import {
     VALUE,
     EQUALS,
 } from './index';
-import { arrayFlatten } from '../util';
+import arrayFlatten from '../util/array/flatten';
 
 function precendence(operator) {
     let result;

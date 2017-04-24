@@ -1,11 +1,6 @@
 import EntitySet from './index';
 import EntitySetListener from './listener';
 
-import {
-    // clearMap,
-    // hash,
-    // stringify
-} from '../util';
 
 
 

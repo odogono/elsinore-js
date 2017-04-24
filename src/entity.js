@@ -1,5 +1,8 @@
 import BitField from 'odgn-bitfield';
-import { hash, isInteger, isFunction, isString, setEntityIdFromId, uniqueId } from './util';
+import { setEntityIdFromId } from './util/id';
+import { isInteger, isString } from './util/is';
+import uniqueId from './util/unique_id';
+import hash from './util/hash';
 
 import Component from './component';
 import Model from './model';
@@ -151,7 +154,7 @@ export default class Entity extends Model {
         this.components[component.getDefId()] = component;
         this.getComponentBitfield().set(component.getDefId(), true);
         component.on('all', this._onComponentEvent, this);
-        if (isFunction(component.onAdded)) {
+        if (typeof component.onAdded === 'function') {
             component.onAdded(this);
         }
         return this;
@@ -192,7 +195,7 @@ export default class Entity extends Model {
         delete this.components[component.getDefId()];
         this.getComponentBitfield().set(component.getDefId(), false);
         component.off('all', this._onComponentEvent, this);
-        if (isFunction(component.onRemoved)) {
+        if (typeof component.onRemoved  === 'function') {
             component.onRemoved(this);
         }
         return this;

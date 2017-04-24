@@ -1,5 +1,5 @@
 import { register, VALUE } from './index';
-import { stringify } from '../util';
+import stringify from '../util/stringify';
 
 const ALIAS = 'AL';
 const ALIAS_GET = 'ALG';

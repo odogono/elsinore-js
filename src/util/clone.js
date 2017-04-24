@@ -1,6 +1,11 @@
 
 
-
+/**
+ * 
+ * @param {*} src 
+ * @param {*} dst 
+ * @param {*} options 
+ */
 export function cloneEntity( src, dst, options={} ){
     const registry = src.getRegistry();
 
@@ -29,6 +34,10 @@ export function cloneEntity( src, dst, options={} ){
 
 /**
  * Produces a copy of a component
+ */
+
+/**
+ * 
  */
 export function cloneComponent( srcComponent, attrs, options ){
     const result = srcComponent.clone();

@@ -1,6 +1,8 @@
 
 import {createLog} from './log';
-import {omit,readProperty,stringify} from './index';
+// import stringify from './stringify';
+import omit from './omit';
+import readProperty from './read_property';
 import {toString as entityToString} from './to_string';
 
 export const CMD_UNKNOWN = "@unk";

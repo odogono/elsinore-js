@@ -1,6 +1,9 @@
 import { Events, Collection } from 'odgn-backbone-model';
 
-import { arrayDifference, arrayWithout, isBoolean, omit } from '../util';
+import arrayDifference from '../util/array/difference';
+import arrayWithout from '../util/array/without';
+import {isBoolean} from '../util/is';
+import omit from '../util/omit';
 import { uuid as createUUID } from '../util/uuid';
 
 import Entity from '../entity';

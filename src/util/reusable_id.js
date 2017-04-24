@@ -1,5 +1,4 @@
-import {arrayWithout} from './index';
-
+import arrayWithout from './array/without';
 
 export default class ReusableId {
 
@@ -65,7 +64,7 @@ export default class ReusableId {
      * Releases an array of ids
      */
     releaseMultiple(ids){
-        return Promise.all( _.map(ids, id => this.release(id) ));
+        return Promise.all( ids.map(id => this.release(id) ));
     }
 
     /**

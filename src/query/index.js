@@ -2,7 +2,9 @@ import BitField from 'odgn-bitfield';
 import Entity from '../entity';
 import EntitySet from '../entity_set';
 import EntityFilter from '../entity_filter';
-import { hash, isFunction, stringify, uniqueId } from '../util';
+import stringify from '../util/stringify';
+import uniqueId from '../util/unique_id';
+import hash from '../util/hash';
 import QueryBuilder from './dsl';
 import { DslContext } from './dsl';
 
@@ -58,7 +60,7 @@ export default class Query {
         this.cid = uniqueId('q');
         this.commands = commands;
 
-        if( isFunction(commands)) {
+        if( typeof commands === 'function' ) {
             // console.log('compiling a command builder');
             const builder = new QueryBuilder(this);
             const built = commands(builder);
@@ -74,7 +76,7 @@ export default class Query {
         } else if (commands instanceof Query) {
             this.commands = commands.toJSON();
         } else if (Array.isArray(commands)) {
-            if (isFunction(commands[0])) {
+            if (typeof commands[0] === 'function' ) {
                 const builder = new QueryBuilder(this);
                 this.commands = commands.map(cmd => {
                     return cmd(builder).toArray(true)[0];
@@ -763,7 +765,7 @@ Query.toQuery = function(query) {
     if (Query.isQuery(query)) {
         return query;
     }
-    if (isFunction(query)) {
+    if (typeof query === 'function') {
         return new Query(query);
     }
     return null;

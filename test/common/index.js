@@ -13,17 +13,12 @@ const varDir = Path.join( rootDir, 'var' );
 
 const ElsinoreDir = Path.join(rootDir, 'src')
 
-import {stringify} from '../../src/util';
+import stringify from '../../src/util/stringify';
+export {stringify};
 
-export {
-    isInteger,
-    printIns,
-    toPascalCase,
-    parseUri,
-    getEntityIdFromId,
-    getEntitySetIdFromId,
-    stringify,
-    setEntityIdFromId} from '../../src/util';
+export * from '../../src/util/id';
+export * from '../../src/util/is';
+export * from '../../src/util/to';
 
 import {createLog} from '../../src/util/log';
 export {createLog};

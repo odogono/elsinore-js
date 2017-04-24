@@ -5,9 +5,13 @@ import Component from '../component';
 import Entity from '../entity';
 
 import Query from '../query';
-import { clone, hash, isInteger, stringify, isFunction, isObject, isPromise, uniqueId } from '../util';
-import { uuid as createUUID } from '../util/uuid';
+import stringify from '../util/stringify';
+import { isInteger, isPromise } from '../util/is';
+import uniqueId from '../util/unique_id';
 
+import {isObject} from '../util/is';
+import { uuid as createUUID } from '../util/uuid';
+import hash from '../util/hash';
 
 import CmdBuffer from '../cmd_buffer/sync';
 
@@ -295,36 +299,6 @@ export default class EntitySet extends Collection {
         return this.getRegistry().schemaRegistry;
     }
 
-    // /**
-    // *   TODO: move out of here
-    // */
-    // attachTo(otherEntitySet, options) {
-    //     // load the start state from this entity set
-    //     otherEntitySet.reset(this);
-    //     this.listenTo(otherEntitySet, 'all', this.onEntitySetEvent);
-    // }
-
-    /**
-    *   TODO: move out of here
-    */
-    // onEntitySetEvent(evt, ...args) {
-    //     switch (evt) {
-    //         // case 'entity:add':
-    //         // return this.add.apply( this, args );
-    //         case 'component:add':
-    //             args[1] = { ...args[1], clone: true };
-    //             return this.addComponent.apply(this, args);
-    //         case 'component:remove':
-    //             return this.removeComponent.apply(this, args);
-    //         // case 'entity:remove':
-    //         // return this.remove.apply( this, args );
-    //         case 'reset':
-    //             return this.reset.apply(this, args);
-    //         default:
-    //             break;
-    //     }
-    //     return this;
-    // }
 
     /**
     * Adds a component to this set
@@ -560,7 +534,7 @@ export default class EntitySet extends Collection {
 
     listenToEntityEvent(entityOrFilter, name, callback, context) {
         if (!this._entityEvents) {
-            this._entityEvents = clone(Events);
+            this._entityEvents = Object.assign({},Events);
             // this._entityEvents.on('all', function(){
             //     log.debug('eevt: ' + JSON.stringify(arguments) );
             // })
@@ -631,7 +605,7 @@ export default class EntitySet extends Collection {
             this._query = new Query(query);
             return;
         }
-        if (isFunction(query)) {
+        if ( typeof query === 'function' ) {
             this._query = new Query(query);
         }
 

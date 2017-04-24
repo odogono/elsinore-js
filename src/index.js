@@ -37,13 +37,10 @@ export {Registry as Registry};
 import SchemaRegistry from './schema';
 export {SchemaRegistry as SchemaRegistry};
 
-export {
-    getEntityIdFromId,
-    getEntitySetIdFromId,
-    setEntityIdFromId,
-    toBoolean, toInteger,
-    stringify, parseJSON
-} from './util';
+export * from './util/id';
+export {parseJSON} from './util/parse_json.js';
+export {stringify} from './util/stringify.js';
+
 
 export {
     uuid as createUUID

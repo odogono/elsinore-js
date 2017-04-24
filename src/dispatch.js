@@ -4,7 +4,9 @@ import EntitySet from './entity_set/view';
 import Query from './query/full';
 import EntityProcessor from './entity_processor';
 import {createLog} from './util/log';
-import {arrayWithout, isFunction, stringify,uniqueId} from './util';
+import stringify from './util/stringify';
+import arrayWithout from './util/array/without';
+import uniqueId from './util/unique_id';
 import {toString as entityToString} from './util/to_string';
 
 const Log = createLog('EntityDispatch');
@@ -55,10 +57,10 @@ export default class EntityDispatch {
 
         if( !EntityProcessor.isEntityProcessor(processor) ){
             // check whether a class
-            // if( false && _.isFunction(processor.create) ){
+            // if( false && typeof processor.create === 'function') ){
                 // processor = processor.create();
             // } else 
-            if( isFunction(processor) ){
+            if( typeof processor === 'function' ){
                 processor = new processor();
             }
             if( !EntityProcessor.isEntityProcessor(processor) ){

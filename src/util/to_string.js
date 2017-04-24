@@ -4,8 +4,9 @@ import Component from '../component';
 import Entity from '../entity';
 import EntitySet from '../entity_set';
 import EntityProcessor from '../entity_processor';
+import stringify from './stringify';
 
-import { stringify, getEntityIdFromId } from './index'
+import { getEntityIdFromId } from './id'
 
 export function entityToString(entity, indent){
     let res = [];
@@ -34,15 +35,14 @@ export function componentToString(component, indent=''){
     }
     
     componentJSON = stringify(component);
-    
-    return indent 
-        + '' + component.cid 
-        + ' (' + (component.id || '0') +') '
-        + component.name 
-        + '(' + component.getDefId() + ')'
-        + ' e:' + getEntityIdFromId(component.getEntityId()) + '' 
-        + ' ' + component.hash(true)
-        + ' ' + componentJSON;
+    const cCid = component.cid;
+    const componentId = component.id || 0;
+    const cDefId = component.getDefId();
+    const cName = component.name;
+    const entityId = getEntityIdFromId(component.getEntityId());
+    const componentHash = component.hash(true);
+
+    return `${indent}${cCid} (${componentId}) ${cName}(${cDefId}) e:${entityId} ${componentHash} ${componentJSON}`;
 }
 
 export function entitySetToString(es, indent){

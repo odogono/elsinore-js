@@ -39,6 +39,10 @@
         "rest-spread-spacing": ["error", "never"]
     },
 
+    "parserOptions": {
+        "sourceType": "module"
+    },
+
     "plugins": [
     ]
 }

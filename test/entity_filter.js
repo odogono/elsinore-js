@@ -6,9 +6,9 @@ import Sinon from 'sinon';
 import EntityFilter from '../src/entity_filter';
 
 import {
-    toInteger,
-    uniqueId
-} from '../src/util';
+    toInteger
+} from '../src/util/to';
+import uniqueId from '../src/util/unique_id';
 
 import {
     ALL, ANY, SOME, NONE, INCLUDE, EXCLUDE

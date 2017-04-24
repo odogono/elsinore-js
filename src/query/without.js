@@ -1,6 +1,6 @@
 
 import { register, VALUE } from './index';
-import {arrayWithout} from '../util';
+import arrayWithout from '../util/array/without';
 
 const WITHOUT = 'WO';
 

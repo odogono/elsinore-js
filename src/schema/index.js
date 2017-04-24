@@ -1,8 +1,12 @@
 import { Collection, Events } from 'odgn-backbone-model';
 
 import Component from '../component';
-import { isObject, result, stringify } from '../util';
+import stringify from '../util/stringify';
+
+import {isObject} from '../util/is';
 import { createLog } from '../util/log';
+
+import propertyResult from '../util/result';
 
 import ComponentDef from '../component_def';
 
@@ -96,15 +100,15 @@ export default class ComponentRegistry {
         } else if (Component.isComponent(def)) {
             const defOptions = { registering: true, registry: this.registry };
             let inst = new def(null, defOptions);
-            const properties = result(inst, 'properties');
+            const properties = propertyResult(inst, 'properties');
             if (properties) {
                 def.properties = properties;
             }
-            const type = result(inst, 'type');
+            const type = propertyResult(inst, 'type');
             this._componentTypes[type] = def;
             this.trigger('type:add', type, def);
 
-            const uri = result(inst, 'uri');
+            const uri = propertyResult(inst, 'uri');
             if (uri) {
                 this.register({ uri, type });
             }

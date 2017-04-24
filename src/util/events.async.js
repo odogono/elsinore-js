@@ -1,5 +1,5 @@
 import {Events} from 'odgn-backbone-model';
-import {stringify} from './index';
+import stringify from './stringify';
 
 /**
 *   An event listener which captures incoming events and

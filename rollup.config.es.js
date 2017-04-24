@@ -1,7 +1,6 @@
 import { readFileSync } from 'fs';
 import Babel from 'rollup-plugin-babel';
 import CommonJS from 'rollup-plugin-commonjs';
-import Flow from 'rollup-plugin-flow';
 import NodeResolve from 'rollup-plugin-node-resolve';
 import Replace from 'rollup-plugin-replace';
 import Uglify from 'rollup-plugin-uglify';
@@ -19,7 +18,6 @@ export default {
     sourceMap: true,
     plugins: [
         Replace({ 'process.env.NODE_ENV': JSON.stringify(environment) }),
-        Flow(),
         Babel({
             babelrc: false,
             sourceMap: true,

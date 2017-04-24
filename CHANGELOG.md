@@ -4,6 +4,18 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased][unreleased]
 
+## [4.4.0] - 2017-04-24
+
+### Changed
+- split out util/index into distinct modules
+
+## [4.3.1] - 2017-04-20
+
+### Added
+- entitySet.source() option sendExisting which defaults to true
+
+## [4.3.0] - 2017-04-19
+
 ### Added
 - JSONLoader interprets simple JSON directives to populate an entityset
 - pull-stream entityset source, sink and through queryfilter

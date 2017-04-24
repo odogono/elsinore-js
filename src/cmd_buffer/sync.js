@@ -1,14 +1,11 @@
+import {Collection} from 'odgn-backbone-model';
 import Component from '../component';
 import Entity from '../entity';
 
-import {
-    arrayDifference,
-    clearCollection,
-    clearMap,
-    toInteger,
-    valueArray
-} from '../util';
-// import {toString as entityToString} from '../util/to_string';
+import {toInteger} from '../util/to';
+import valueArray from '../util/array/value';
+
+import arrayDifference from '../util/array/difference';
 
 
 export const CMD_EX = 42;
@@ -555,7 +552,7 @@ export default class CmdBuffer {
 
 
     reset(){
-        this.cmds = clearMap( this.cmds );
+        this.cmds = {};
         this.entitiesAdded = clearCollection( this.entitiesAdded );
         this.entitiesUpdated = clearCollection( this.entitiesUpdated );
         this.entitiesRemoved = clearCollection( this.entitiesRemoved );
@@ -673,6 +670,17 @@ function triggerEvent(source,name,col){
         // console.log('trigger', name );
         source.trigger(name, col.models );
     }
+}
+
+/**
+ * 
+ */
+function clearCollection(col) {
+    if (!col) {
+        return new Collection();
+    }
+    col.reset();
+    return col;
 }
 
 CmdBuffer.create = function(){

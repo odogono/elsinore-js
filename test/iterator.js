@@ -1,6 +1,6 @@
 import _ from 'underscore';
 import test from 'tape';
-import * as Utils from '../src/util/index';
+
 
 
 // test.skip('iterator', t => {

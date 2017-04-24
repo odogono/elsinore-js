@@ -1,9 +1,9 @@
 import Entity from '../entity';
 import Component from '../component';
-import {readProperty} from '../util';
+// import readProperty from '../util/read_property';
 import { JSONLoader } from '../util/loader';
 import { toString as entityToString } from '../util/to_string';
-import { stringify } from '../util';
+// import stringify from '../util/stringify';
 import {createLog } from '../util/log';
 
 

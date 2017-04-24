@@ -8,12 +8,9 @@ import {
     // loadEntities,
     logEvents,
     entityToString,
-    // stringify,
+    toInteger
 } from '../common';
 
-import {
-    toInteger
-} from '../../src/util';
 
 const Log = createLog('TestIntegrationReaper');
 

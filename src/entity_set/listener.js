@@ -1,9 +1,11 @@
 import Entity from '../entity';
 
-import { clearMap, hash, stringify, uniqueId } from '../util';
+import hash from '../util/hash';
+import uniqueId from '../util/unique_id';
 
 import {createLog} from '../util/log';
 const Log = createLog('EntitySetListener');
+
 /**
  * The EntitySet listener keeps track of one entitySet listening to enother.
  */
@@ -198,9 +200,9 @@ export default class EntitySetListener {
 
         entitiesAdded = null;
         entitiesRemoved = null;
-        this.addedEntities = clearMap(this.addedEntities);
-        this.removedEntities = clearMap(this.removedEntities);
-        this.changedEntityList = clearMap(this.changedEntityList);
+        this.addedEntities = {};
+        this.removedEntities = {};
+        this.changedEntityList = {};
         this.isModified = false;
     }
 

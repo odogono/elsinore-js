@@ -10,7 +10,8 @@ import Entity from '../src/entity';
 import { Registry, entityToString, logEvents, createLog, stringify } from './common';
 import AsyncEntitySet from '../src/entity_set/async';
 
-import { readProperty, isPromise } from '../src/util';
+import readProperty from '../src/util/read_property';
+import { isPromise } from '../src/util/is';
 import { JSONLoader } from '../src/util/loader';
 import { JSONExporter } from '../src/util/exporter';
 
@@ -64,6 +65,27 @@ test('source continues to emit events', async t => {
 
         // add a new entity with two components
         entitySet.addEntity([ { '@c': '/name', name: 'mike' }, { '@c': '/ttl', expires_at: 2018 } ]);
+    } catch (err) {
+        Log.error(err.stack);
+    }
+});
+
+test('source doesnt send existing', async t => {
+    try {
+        const { registry, entitySet } = await initialise({ loadEntities: true });
+
+        Pull(
+            entitySet.source({ sendExisting: false }),
+            Pull.take(2), // neccesary to add this, since the source is un-ending
+            Pull.collect((err, components) => {
+                // Log.debug('[collect]', components, entityToString(components));
+                t.equals(components.length, 2);
+                t.end();
+            }),
+        );
+
+        entitySet.addEntity([ { '@c': '/name', name: 'alice' }, { '@c': '/ttl', expires_at: 2016 } ]);
+
     } catch (err) {
         Log.error(err.stack);
     }
@@ -256,25 +278,25 @@ test('query through', async t => {
 //         Log.error(err.stack);
 //     }
 // });
-function throughLoader(registry) {
-    // a sink function: accept a source
-    return function(read) {
-        // but return another source!
-        return function(abort, outSourceCb) {
-            // read from the in-stream
-            read(abort, function(err, data) {
-                // if the stream has ended, pass that on.
-                if (err) {
-                    return outSourceCb(err);
-                }
+// function throughLoader(registry) {
+//     // a sink function: accept a source
+//     return function(read) {
+//         // but return another source!
+//         return function(abort, outSourceCb) {
+//             // read from the in-stream
+//             read(abort, function(err, data) {
+//                 // if the stream has ended, pass that on.
+//                 if (err) {
+//                     return outSourceCb(err);
+//                 }
 
-                data = registry.createEntity(data);
+//                 data = registry.createEntity(data);
 
-                outSourceCb(null, data);
-            });
-        };
-    };
-}
+//                 outSourceCb(null, data);
+//             });
+//         };
+//     };
+// }
 
 // function exportEntitySetComponents(entitySet,options={}){
 //     const useDefUris = readProperty(options,'useDefUris',false);

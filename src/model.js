@@ -1,6 +1,5 @@
 import {Model as BackboneModel} from 'odgn-backbone-model'
-import {clone,hash} from './util'
-
+import hash from './util/hash';
 
 
 export default class Model extends BackboneModel {
@@ -38,7 +37,7 @@ export default class Model extends BackboneModel {
     }
 
     toJSON( options ){
-        let result = clone(this.attributes);
+        let result = {...this.attributes};
         // remove attributes beginning with '_'
         let copy = {};
         for (let key in result) {
