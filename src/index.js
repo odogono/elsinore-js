@@ -38,8 +38,10 @@ import SchemaRegistry from './schema';
 export {SchemaRegistry as SchemaRegistry};
 
 export * from './util/id';
-export {parseJSON} from './util/parse_json.js';
-export {stringify} from './util/stringify.js';
+import parseJSON from './util/parse_json.js';
+import stringify from './util/stringify.js';
+
+export {parseJSON,stringify};
 
 
 export {

@@ -1,3 +1,5 @@
+import parseJSON from './parse_json';
+
 /**
  * 
  */
