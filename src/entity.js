@@ -2,10 +2,43 @@ import BitField from 'odgn-bitfield';
 import { setEntityIdFromId } from './util/id';
 import { isInteger, isString } from './util/is';
 import uniqueId from './util/unique_id';
+import readProperty from './util/read_property';
 import hash from './util/hash';
 
 import Component from './component';
 import Model from './model';
+
+
+export class EntityNeue {
+    constructor(){
+    }
+}
+
+EntityNeue.prototype.type = 'Entity';
+EntityNeue.prototype.isEntity = true;
+
+EntityNeue.create = function(options={}){
+    let result = new EntityNeue();
+    result.cid = uniqueId('e');
+
+    result.registry = readProperty(options,'registry');
+
+    // entity id
+    result.id = readProperty(options,'@e', 0 );
+
+    // entityset id
+    result.esid = readProperty(options,'@es', 0 );
+
+    // bitfield indexes which components this entity has
+    result.bf = BitField.create();
+
+    // a map of components to their def id
+    result.components = {};
+
+    return result;
+}
+
+
 
 // const ENTITY_ID_MAX = Math.pow(2,31)-1;
 // const ENTITY_SET_ID_MAX = Math.pow(2,21)-1;

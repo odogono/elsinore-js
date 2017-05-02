@@ -1,6 +1,5 @@
 import { Collection, Events } from 'odgn-backbone-model';
 import BitField from 'odgn-bitfield';
-import Pull from 'pull-stream/pull';
 import Component from '../component';
 import Entity from '../entity';
 
