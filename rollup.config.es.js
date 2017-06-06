@@ -13,8 +13,9 @@ const banner = readFileSync('src/banner.js', 'utf-8').replace('${version}', pkg.
 
 export default {
     banner,
+    format: 'es',
     entry: 'src/index.js',
-    dest: isProduction ? 'dist/elsinore.es2015.min.js' : 'dist/elsinore.es2015.js',
+    dest: isProduction ? 'dist/elsinore.module.min.js' : 'dist/elsinore.module.js',
     sourceMap: true,
     plugins: [
         Replace({ 'process.env.NODE_ENV': JSON.stringify(environment) }),
