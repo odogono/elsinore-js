@@ -255,13 +255,15 @@ class QueryContext {
      */
     componentsToBitfield(context, components) {
         let componentIds, result;
-        if( !context.registry ){
-            console.log('[componentsToBitfield]', context, stringify(components));
-        }
+        // if( !context.registry ){
+        //     console.log('[componentsToBitfield]', context, stringify(components));
+        // }
         componentIds = context.registry.getIId(components, {
             forceArray: true,
-            debug: true
+            debug: true,
+            throwOnNotFound: true
         });
+
         result = BitField.create();
         result.setValues(componentIds, true);
         return result;

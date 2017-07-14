@@ -12,15 +12,12 @@ const Log = createLog('ComponentDef', false);
 
 export default class ComponentDef extends Model {
     constructor(attrs, options) {
-        Log.debug('create', attrs);
-
         attrs.attrs = createAttrsFromProperties(attrs.properties);
 
         if (!attrs.name) {
             attrs.name = componentNameFromUri(attrs.uri);
         }
 
-        Log.debug('create', attrs);
         super(attrs, options);
     }
 
