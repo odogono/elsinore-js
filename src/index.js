@@ -42,8 +42,3 @@ import parseJSON from './util/parse_json.js';
 import stringify from './util/stringify.js';
 
 export {parseJSON,stringify};
-
-
-export {
-    uuid as createUUID
-} from './util/uuid.js';

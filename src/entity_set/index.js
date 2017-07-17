@@ -10,7 +10,7 @@ import { isInteger, isPromise } from '../util/is';
 import uniqueId from '../util/unique_id';
 
 import {isObject} from '../util/is';
-import { uuid as createUUID } from '../util/uuid';
+import createUUID from '../util/uuid';
 import hash from '../util/hash';
 
 import CmdBuffer from '../cmd_buffer/sync';

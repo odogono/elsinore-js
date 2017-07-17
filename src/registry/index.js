@@ -4,7 +4,7 @@ import arrayDifference from '../util/array/difference';
 import arrayWithout from '../util/array/without';
 import {isBoolean} from '../util/is';
 import omit from '../util/omit';
-import { uuid as createUUID } from '../util/uuid';
+import createUUID from '../util/uuid';
 
 import Entity from '../entity';
 import EntitySet from '../entity_set';

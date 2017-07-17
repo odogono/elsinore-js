@@ -68,7 +68,7 @@ export default class ComponentRegistry {
                 }
                 return result;
             },
-            [],
+            []
         );
     }
 

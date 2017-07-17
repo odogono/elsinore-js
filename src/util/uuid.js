@@ -45,7 +45,7 @@ function getValue(radix) {
     return 0 | Math.random() * radix;
 }
 
-export function uuid(len, radix) {
+export default function uuid(len, radix) {
     radix = radix || chars.length;
     let out = '';
     let i = -1;
@@ -79,4 +79,3 @@ export function uuid(len, radix) {
 
     return out;
 }
-
