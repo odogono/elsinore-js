@@ -35,9 +35,7 @@ export function toInteger(value, defaultValue = 0) {
 *   Converts a string so that the words are capitalised and concatenated
 */
 export function toPascalCase(str) {
-    return str.match(/[A-Z]?[a-z]+/g).map(function(word) {
-        return word.charAt(0).toUpperCase() + word.substring(1);
-    }).join('');
+    return str.match(/[A-Z]?[a-z]+|([0-9]+)/g).map( word => word.charAt(0).toUpperCase() + word.substring(1) ).join('');
     // return str.replace(/([A-Z]?[a-z]+)/gi, function(m,word){
     // doesn't deal with the delimiters...
     // return word.charAt(0).toUpperCase() + word.substring(1);

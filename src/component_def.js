@@ -4,7 +4,7 @@ import stringify from './util/stringify';
 
 import hash from './util/hash';
 import { isObject } from './util/is';
-import { toPascalCase } from './util/to';
+import componentNameFromUri from './util/name_from_uri';
 
 import { createLog } from './util/log';
 
@@ -53,6 +53,11 @@ export default class ComponentDef extends Model {
 ComponentDef.prototype.type = 'ComponentDef';
 ComponentDef.prototype.isComponentDef = true;
 
+
+/**
+ * 
+ * @param {*} props 
+ */
 function createAttrsFromProperties(props) {
     let name, property, value;
     let result = {};
@@ -87,25 +92,4 @@ function createAttrsFromProperties(props) {
     }
 
     return result;
-}
-
-/**
- * 
- */
-function componentNameFromUri(schemaUri, suffix = '') {
-    let name;
-    // let schema = this.getSchema( schemaUri );
-
-    // if( !schema ){
-    //     throw new Error('unknown schema ' + schemaUri );
-    // }
-
-    // if( schema.obj.name ){
-    //     name = schema.obj.name;
-    // } else {
-    name = schemaUri;
-    name = name.split('/').pop();
-    // }
-
-    return toPascalCase(name + suffix);
 }

@@ -1,35 +1,20 @@
 import _ from 'underscore';
 import test from 'tape';
-// import Url from 'omnibox';
-
-import {
-    toPascalCase,
-    parseUri,
-} from './common';
+import {toPascalCase} from '../src/util/to';
 
 
-
-test('toPascalCase', function(t){
-    var cases = {
+test('toPascalCase', t => {
+    const cases = {
         'good work': 'GoodWork',
         'good-job': 'GoodJob',
         'good    skills': 'GoodSkills',
         'good': 'Good',
         'GoodJobEveryone': 'GoodJobEveryone',
-        'goodJobEveryone': 'GoodJobEveryone'
+        'goodJobEveryone': 'GoodJobEveryone',
+        'spud42u': 'Spud42U',
+        '1999partyOver': '1999PartyOver'
     };
 
-    _.each( cases, (expected,input) => t.equals( toPascalCase(input), expected ));
+    Object.keys(cases).forEach( input => t.equals( toPascalCase(input), cases[input] ));
     t.end();
 });
-
-
-// test('parse uri', t => {
-//     const record = parseUri('/foo/bar?baz=quux#frag');
-
-//     t.deepEqual( record.query, { 'baz': 'quux'} );
-//     t.equals( record.baseUri, '/foo/bar?baz=quux' );
-//     t.equals( record.fragment, 'frag' );
-    
-//     t.end();
-// });
