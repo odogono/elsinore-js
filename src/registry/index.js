@@ -32,7 +32,6 @@ export default class Registry {
 
         // an array of entitysets created and active
         this._entitySets = [];
-        //new Backbone.Collection();
         // a map of entityset uuids to entityset instances
         this._entitySetUUIDs = {};
 
@@ -56,13 +55,7 @@ export default class Registry {
         return ++this.sequenceCount;
     }
 
-    /**
-     * Returns a new component def instance
-     */
-    // createComponentDef( attrs, options ){
-    //     const result = new ComponentDef(attrs,options);
-    //     return result;
-    // }
+
     /**
     *   Creates a new entity
     */
@@ -106,7 +99,6 @@ export default class Registry {
         let result = new this.Entity(attrs, options);
 
         if (components) {
-            // components = this.createComponent(components);
             result.addComponent(components);
         }
 
@@ -209,7 +201,7 @@ export default class Registry {
                             return this._registerComponentDefsWithEntitySet(es, componentDefs, options);
                         });
                     },
-                    Promise.resolve(),
+                    Promise.resolve()
                 )
                 .then(() => componentDefs);
         });
@@ -260,7 +252,6 @@ export default class Registry {
     /**
      * Creates a new component instance
      * 
-     * TODO : determine whether components should ever be created without adding to an entity
      *
      *   There is never really a case where we are creating multiple instances of a single
      *   ComponentDef
@@ -279,8 +270,6 @@ export default class Registry {
         if (Entity.isEntity(attrs)) {
             entityId = Entity.toEntityId(attrs);
             attrs = {};
-            // log.debug('create with entity id ' + entityId );
-            // attrs = null;
         }
 
         if (entityId) {
@@ -309,9 +298,6 @@ export default class Registry {
      */
     cloneComponent(srcComponent, attrs, options) {
         const result = srcComponent.clone();
-        // let result = new srcComponent.constructor(srcComponent.attributes);
-        // result.setId( srcComponent.getId() );
-        // result.id = srcComponent.id;
         result.name = srcComponent.name;
         result.setDefDetails(
             srcComponent.getDefId(),
@@ -367,15 +353,9 @@ export default class Registry {
         result = new entitySetType(null, { ...options, id });
         result.setRegistry(this);
 
-        // if( options.register !== false ){
-        //     // log.debug('options.register was ' + options.register );
-        //     this.addEntitySet( result );
-        //     // TODO: if this is a non-memory ES, then register all existing
-        //     // entity sets with it
-        // }
+        
         // TODO : there has to be a better way of identifying entitysets
         if (result.isMemoryEntitySet) {
-            //} result.isMemoryEntitySet && !result.open ){
             // NOTE: setting the id to 0 means that entity ids would be shifted up
             result.id = 0;
 
@@ -388,19 +368,9 @@ export default class Registry {
             if (options.register === false) {
                 return result;
             }
-            // return result;
         }
 
         return this.addEntitySet(result, options);
-        // opening the ES will cause it to register its existing componentDefs
-        // with the registry
-        // return result.open( options )
-        //     .then( () => {
-        //         const schemas = this.schemaRegistry.getComponentDefs();
-        //         return this._registerComponentDefsWithEntitySet( result, schemas, options )
-        //             .then( () => result )
-        //     });
-        // return result;
     }
 
     removeAllEntitySets(options) {
@@ -491,6 +461,12 @@ export default class Registry {
         this._entitySets = _.without(this._entitySets, entitySet);
     }
 
+    /**
+     * 
+     * @param {*} name 
+     * @param {*} entity 
+     * @param {*} rest 
+     */
     triggerEntityEvent(name, entity, ...rest) {
         let entitySet, ii, len;
 
@@ -540,4 +516,3 @@ Registry.create = function create(options = {}) {
     let result = new Registry(options);
     return result;
 };
-// export default Registry;
