@@ -68,6 +68,26 @@ test('adding an entity with a component returns the added entity', t => {
         .catch(err => Log.error(err.stack));
 });
 
+test.only('adding components in the same call adds them to the same entity', async t => {
+    try{
+        const registry = await initialiseRegistry();
+        const entitySet = registry.createEntitySet();
+
+        Log.debug('[-]')
+        entitySet.addComponent([
+            registry.createComponent('/component/name', { name: 'charmander' }),
+            registry.createComponent('/component/geo_location', { lat: 51.2, lng: -3.65 })
+        ],{debug:true});
+
+        t.equal( entitySet.size(), 1 );
+
+        t.end();
+
+    }catch(err){
+        Log.error(err.stack);
+    }
+})
+
 test('can add a raw component directly', async t => {
     try {
         const registry = await initialiseRegistry();

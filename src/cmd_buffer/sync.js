@@ -91,15 +91,15 @@ export default class CmdBuffer {
             }
         }
 
-        // console.log( '## adding component with entity ' + Entity.toEntityId(entityId), component.getEntityId() );
+        console.log( '## adding component with entity ' + Entity.toEntityId(entityId), component.getEntityId() );
 
         if( !entityId ){
-            
             // do we have a entity add in the queue already?
             entityId = this.findEntityAddId();
+            console.log('entity add id was ', entityId);
             if( entityId === -1 ){
                 entityId = entitySet._createEntity(null, true);
-                // console.log( 'adding component with entity ' + entityId );
+                console.log( 'adding component with entity ' + entityId );
             }
         } else {
             // does this entity exist in our es?
@@ -108,8 +108,13 @@ export default class CmdBuffer {
 
         if( !entity ){
             // if(debug){ console.log('no existing entity found for', entityId); console.log( toString(entitySet)); }
-            this.addCommand( CMD_ENTITY_ADD, entityId, options );
-            this.addCommand( CMD_COMPONENT_ADD, component, options );
+            // this.addCommand( CMD_ENTITY_ADD, entityId, options );
+            // this.addCommandX( CMD_COMPONENT_ADD, 0, component, options );
+
+            this.addCommandX( CMD_ENTITY_ADD, entityId, null, options );
+            this.addCommandX( CMD_COMPONENT_ADD, entityId, component, options );
+
+            if( options.debug){console.log('[addCommandX]', entityId, this.cmds);}
         }
         else {
             existingCom = entitySet.getComponentFromEntity( component, entity );
@@ -532,9 +537,9 @@ export default class CmdBuffer {
             }
         }
         
-        if( debug ){
-            this.debugLog();
-        }
+        // if( debug ){
+        //     this.debugLog();
+        // }
 
         entitySet.update(this.entitiesAdded.models, 
                 this.entitiesUpdated.models, 
@@ -581,6 +586,7 @@ export default class CmdBuffer {
         }
         
         this.cmds[ entityId ] = entityBuffer;
+
         return this;
     }
 
@@ -638,19 +644,19 @@ export default class CmdBuffer {
         return -1;
     }
 
-    debugLog( logFn ){
-        if( !logFn ){
-            return;
-            // logFn = console.log;
-        }
-        logFn('entities added: ' + JSON.stringify( this.entitiesAdded.pluck('id') )); 
-        logFn('entities updated: ' + JSON.stringify( this.entitiesUpdated.pluck('id') )); 
-        logFn('entities removed: ' + JSON.stringify( this.entitiesRemoved.pluck('id') )); 
+    // debugLog( logFn ){
+    //     if( !logFn ){
+    //         return;
+    //         // logFn = console.log;
+    //     }
+    //     logFn('entities added: ' + JSON.stringify( this.entitiesAdded.pluck('id') )); 
+    //     logFn('entities updated: ' + JSON.stringify( this.entitiesUpdated.pluck('id') )); 
+    //     logFn('entities removed: ' + JSON.stringify( this.entitiesRemoved.pluck('id') )); 
 
-        logFn('components added: ' + JSON.stringify( this.componentsAdded.pluck('id') )); 
-        logFn('components updated: ' + JSON.stringify( this.componentsUpdated.pluck('id') )); 
-        logFn('components removed: ' + JSON.stringify( this.componentsRemoved.pluck('id') ));
-    }
+    //     logFn('components added: ' + JSON.stringify( this.componentsAdded.pluck('id') )); 
+    //     logFn('components updated: ' + JSON.stringify( this.componentsUpdated.pluck('id') )); 
+    //     logFn('components removed: ' + JSON.stringify( this.componentsRemoved.pluck('id') ));
+    // }
 
     triggerEvents( source ){
         triggerEvent( source, 'component:change', this.componentsUpdated );
@@ -659,7 +665,6 @@ export default class CmdBuffer {
         triggerEvent( source, 'component:add', this.componentsAdded );
         triggerEvent( source, 'entity:change', this.entitiesUpdated );
         triggerEvent( source, 'entity:add', this.entitiesAdded );
-
     }
 };
 
