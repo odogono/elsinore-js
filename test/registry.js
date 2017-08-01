@@ -16,6 +16,8 @@ import {
     entityToString, setEntityIdFromId,
 } from './common';
 
+import {cloneEntity} from '../src/util/clone';
+
 const Log = createLog('TestRegistry');
 
 import mapComponentEntityRefs from '../src/util/map_entity_refs';
@@ -273,39 +275,7 @@ test('updating a components entity refs', async t => {
 });
 
 
-test('cloning a component', t => {
-    return initialiseRegistry().then( registry => {
-        const component = registry.createComponent( 
-            {"@e":12, "@c": "/component/channel_member", "channel": 1, "client": 5} );
 
-        const cloned = registry.cloneComponent(component);
-
-        t.equals( component.getEntityId(), cloned.getEntityId() );
-        t.equals( component.name, cloned.name );
-        t.equals( component.hash(), cloned.hash() );
-        t.deepEqual( component.attributes, cloned.attributes );
-        
-        // printE( component );
-        // printE( cloned );
-    })
-    .then( () => t.end() )
-    .catch( err => log.error('test error: %s', err.stack) )  
-});
-
-
-test('cloning an entity', t => {
-    return initialiseRegistry().then( registry => {
-        const entity = registry.createEntityWithId(23, 16);
-        const clone = registry.cloneEntity(entity);
-
-        t.equals( entity.getEntityId(), clone.getEntityId() );
-        t.equals( entity.getEntitySetId(), clone.getEntitySetId() );
-        t.equals( clone.getRegistry(), registry );
-        t.notEqual( entity.cid, clone.cid );
-    })
-    .then( () => t.end() )
-    .catch(err => log.error('test error: %s', err.stack))  
-});
 
 test('creating an entity with an id of 0', t => {
     return initialiseRegistry().then( registry => {

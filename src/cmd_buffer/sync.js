@@ -2,6 +2,7 @@ import {Collection} from 'odgn-backbone-model';
 import Component from '../component';
 import Entity from '../entity';
 
+import {cloneComponent, cloneEntity} from '../util/clone';
 import {toInteger} from '../util/to';
 import valueArray from '../util/array/value';
 
@@ -379,7 +380,7 @@ export default class CmdBuffer {
             // console.log('get it', entityId);
             entity = entitySet.getEntity( entityId );
             if( entity ){
-                tEntity = registry.cloneEntity(entity);
+                tEntity = cloneEntity(entity);
                 tEntity.setEntitySetId( entitySet.getEntitySetId() );
             } 
             
@@ -409,7 +410,7 @@ export default class CmdBuffer {
                         // if( cmdOptions && cmdOptions.clone ){
                         // the component is cloned before being added
                         // console.log('$$ cloned component', com.cid, com.getEntityId() );
-                        com = registry.cloneComponent(com);
+                        com = cloneComponent(com);
                         // console.log('$$ cloned component', com.cid, com.getEntityId() );
                         // console.log('cloned component', com.getDefUri(), com.getId() );
                         // }

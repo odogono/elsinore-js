@@ -122,62 +122,6 @@ export default class Registry {
     }
 
     /**
-     * Returns a clone of the srcEntity, or if dstEntity is supplied
-     * copies the components of srcEntity into dstEntity.
-     */
-    cloneEntity(srcEntity, dstEntity, options = {}) {
-        let ii, len, component, srcComponent;
-        const deleteMissing = options.delete;
-        const returnChanged = options.returnChanged;
-        const fullCopy = options.full;
-        let dstHasChanged = false;
-
-        if (!srcEntity) {
-            return returnChanged ? [ false, null ] : null;
-        }
-
-        if (!dstEntity) {
-            dstEntity = srcEntity.clone();
-            dstEntity.setRegistry(this);
-        }
-
-        if (!dstEntity && !fullCopy) {
-            return dstEntity;
-        }
-
-        if (deleteMissing) {
-            const srcBitfield = srcEntity.getComponentBitfield();
-            const dstBitfield = dstEntity.getComponentBitfield();
-            const removeDefIds = arrayDifference(dstBitfield.toJSON(), srcBitfield.toJSON());
-            for (ii = 0, len = removeDefIds.length; ii < len; ii++) {
-                dstEntity.removeComponent(dstEntity.components[removeDefIds[ii]]);
-                dstHasChanged = true;
-            }
-        }
-
-        const srcComponents = srcEntity.getComponents();
-
-        for (ii = 0, len = srcComponents.length; ii < len; ii++) {
-            srcComponent = srcComponents[ii];
-            component = dstEntity.components[srcComponent.getDefId()];
-
-            if (component) {
-                // the dst entity already has this component
-                if (srcComponent.hash() == component.hash()) {
-                    continue;
-                } else {
-                    dstHasChanged = true;
-                }
-            } else {
-                dstHasChanged = true;
-            }
-            dstEntity.addComponent(this.cloneComponent(srcComponents[ii]));
-        }
-
-        return returnChanged ? [ dstEntity, dstHasChanged ] : dstEntity;
-    }
-
-    /**
      * Registers a new Component Def from data
      *
      * @param  {Object|Array} schema [description]
@@ -291,25 +235,6 @@ export default class Registry {
             }
             return this.schemaRegistry.createComponent(componentDef, attrs, options, cb);
         }
-    }
-
-    /**
-     * Produces a copy of a component
-     */
-    cloneComponent(srcComponent, attrs, options) {
-        const result = srcComponent.clone();
-        result.name = srcComponent.name;
-        result.setDefDetails(
-            srcComponent.getDefId(),
-            srcComponent.getUri(),
-            srcComponent.getDefHash(),
-            srcComponent.getDefName(),
-        );
-        result.registry = this;
-        if (attrs) {
-            result.set(attrs, options);
-        }
-        return result;
     }
 
     destroyComponent(component, options) {}

@@ -1,3 +1,5 @@
+import {cloneComponent} from './clone';
+
 
 /**
 *   Updates any entity references on a component instance
@@ -29,7 +31,7 @@ export default function mapComponentEntityRefs( registry, component, entityIdMap
         return component;
     }
 
-    result = registry.cloneComponent(component);
+    result = cloneComponent(component);
     
     updates = {};
 
