@@ -9,7 +9,6 @@ import valueArray from '../util/array/value';
 import arrayDifference from '../util/array/difference';
 
 
-export const CMD_EX = 42;
 export const CMD_ENTITY_ADD = 0;
 export const CMD_ENTITY_REMOVE = 1;
 export const CMD_ENTITY_UPDATE = 2;
@@ -26,7 +25,8 @@ export const OP_CREATE_NEW = 2;
 // an existing entity is being updated
 export const OP_UPDATE_EXISTING = 3;
 
-
+// import {createLog} from '../util/log';
+// const Log = createLog('CmdBufferSync');
 
 export default class CmdBuffer {
     constructor(){
@@ -83,7 +83,7 @@ export default class CmdBuffer {
         // determine whether we have this component registered already
         entityId = Entity.getEntityId( component );
 
-        if( !entityId ){
+        if( entityId === undefined ){
             const existingComponent = entitySet.getComponent(component);
             if( existingComponent ){
                 entityId = existingComponent.getEntityId();
@@ -91,15 +91,15 @@ export default class CmdBuffer {
             }
         }
 
-        console.log( '## adding component with entity ' + Entity.toEntityId(entityId), component.getEntityId() );
+        // console.log( '^^ adding component with entity', entityId, Entity.toEntityId(entityId), component.getEntityId() );
 
-        if( !entityId ){
+        if( entityId === undefined ){
             // do we have a entity add in the queue already?
             entityId = this.findEntityAddId();
-            console.log('entity add id was ', entityId);
+            // console.log('entity add id was ', entityId);
             if( entityId === -1 ){
                 entityId = entitySet._createEntity(null, true);
-                console.log( 'adding component with entity ' + entityId );
+                // console.log( 'adding component with entity ' + entityId );
             }
         } else {
             // does this entity exist in our es?
@@ -108,30 +108,18 @@ export default class CmdBuffer {
 
         if( !entity ){
             // if(debug){ console.log('no existing entity found for', entityId); console.log( toString(entitySet)); }
-            // this.addCommand( CMD_ENTITY_ADD, entityId, options );
-            // this.addCommandX( CMD_COMPONENT_ADD, 0, component, options );
-
-            this.addCommandX( CMD_ENTITY_ADD, entityId, null, options );
-            this.addCommandX( CMD_COMPONENT_ADD, entityId, component, options );
-
-            if( options.debug){console.log('[addCommandX]', entityId, this.cmds);}
+            this.addCommand( CMD_ENTITY_ADD, entityId, undefined, options );
+            this.addCommand( CMD_COMPONENT_ADD, entityId, component, options );
         }
         else {
             existingCom = entitySet.getComponentFromEntity( component, entity );
 
-            // if( debug ){
-            //     console.log('existing ' + existingCom.hash() + ' vs new ' + component.hash() );
-            //     console.log('existing: ' + stringify(existingCom));
-            //     console.log('new: ' + stringify(component));
-            // }
-
             // does the existing entity have this component?
             if( !existingCom ){
-                this.addCommand( CMD_COMPONENT_ADD, component, options );
+                this.addCommand( CMD_COMPONENT_ADD, entityId, component, options );
             } else {
                 // is the existing component different?
-                // if( debug){ console.log('updating existing', stringify(component)); }
-                this.addCommandX( CMD_COMPONENT_UPDATE, entityId, component, options );
+                this.addCommand( CMD_COMPONENT_UPDATE, entityId, component, options );
             }
         }
 
@@ -188,7 +176,9 @@ export default class CmdBuffer {
             }
         }
 
-        this.addCommand( CMD_COMPONENT_REMOVE, component, options );
+        let entityId = component.getEntityId()
+
+        this.addCommand( CMD_COMPONENT_REMOVE, entityId, component, options );
 
         // execute any outstanding commands
         if( execute ){
@@ -263,20 +253,20 @@ export default class CmdBuffer {
 
             let cmdOptions = {...options,eid:entityId};
 
-            this.addCommand( CMD_ENTITY_ADD, entityId, cmdOptions );
+            this.addCommand( CMD_ENTITY_ADD, entityId, undefined, cmdOptions );
 
             // no existing entity - just add all the components
             for( comDefId in entity.components ){
-                this.addCommand( CMD_COMPONENT_ADD, entity.components[comDefId], cmdOptions );
+                this.addCommand( CMD_COMPONENT_ADD, entityId, entity.components[comDefId], cmdOptions );
             }
         }
         else {
             // entity already exists, determine whether components should be updated
             for( comDefId in entity.components ){
                 if( existingEntity.components[comDefId] ){
-                    this.addCommand( CMD_COMPONENT_UPDATE, entity.components[comDefId], options );
+                    this.addCommand( CMD_COMPONENT_UPDATE, entityId, entity.components[comDefId], options );
                 } else {
-                    this.addCommand( CMD_COMPONENT_ADD, entity.components[comDefId], options );
+                    this.addCommand( CMD_COMPONENT_ADD, entityId, entity.components[comDefId], options );
                 }
             }
         }
@@ -342,7 +332,8 @@ export default class CmdBuffer {
         }
 
         for( comDefId in existingEntity.components ){
-            this.addCommand( CMD_COMPONENT_REMOVE, existingEntity.components[comDefId] );
+            this.addCommand( CMD_COMPONENT_REMOVE, entityId, existingEntity.components[comDefId] );
+            
         }
 
         // execute any outstanding commands
@@ -394,13 +385,14 @@ export default class CmdBuffer {
             // go through the incoming commands
             for( ii=0,len=cmds.length;ii<len;ii++ ){
                 cmd = cmds[ii];
-                com = cmd[1];
+                // entityId = cmd[1];
+                com = cmd[2];
                 // cmdOptions = cmd[2];
 
-                if( cmd[0] == CMD_EX ){
-                    cmd = cmd.slice(1);// _.rest(cmd);
-                    com = cmd[2];
-                }
+                // if( cmd[0] == CMD_EX ){
+                //     cmd = cmd.slice(1);// _.rest(cmd);
+                //     com = cmd[2];
+                // }
 
                 switch( cmd[0] ){
                     // add an entity
@@ -414,7 +406,7 @@ export default class CmdBuffer {
                     case CMD_COMPONENT_ADD:
                         // if( cmdOptions && cmdOptions.clone ){
                         // the component is cloned before being added
-                        // console.log('$$ cloned component', com.cid, com.getEntityId() );
+                        // console.log('$$ cloned component', cmd);//com.cid, com.getEntityId() );
                         com = cloneComponent(com);
                         // console.log('$$ cloned component', com.cid, com.getEntityId() );
                         // console.log('cloned component', com.getDefUri(), com.getId() );
@@ -571,18 +563,17 @@ export default class CmdBuffer {
     /**
      * 
      */
-    addCommandX( type=CMD_ENTITY_ADD, entityId=0, componentId=0, options={} ){
+    addCommand( type=CMD_ENTITY_ADD, entityId=0, componentId=0, options={} ){
         const entityBuffer = this.cmds[ entityId ] || [];
         if( type == CMD_ENTITY_ADD ){
             // this command should always be the first in the list - check 
-            if( entityBuffer.length > 0 && (entityBuffer[0][0] == CMD_ENTITY_ADD ||
-                entityBuffer[0][0] == CMD_EX && entityBuffer[0][1] == CMD_ENTITY_ADD) ){
+            if( entityBuffer.length > 0 && (entityBuffer[0][0] == CMD_ENTITY_ADD) ){
                 return;
             }
             // add to top of list
-            entityBuffer.unshift( [CMD_EX,type,entityId,componentId,options] );
+            entityBuffer.unshift( [type,entityId,componentId,options] );
         } else{
-            entityBuffer.push( [CMD_EX,type,entityId,componentId,options] );
+            entityBuffer.push( [type,entityId,componentId,options] );
         }
         
         this.cmds[ entityId ] = entityBuffer;
@@ -590,53 +581,22 @@ export default class CmdBuffer {
         return this;
     }
 
+    
     /**
-    *   Adds a add/remove/update command to a buffer of commands
-    */
-    addCommand( type, arg/*entityId|component*/, options={} ){
-        let entityId;
-        let entityBuffer;
-        switch( type ){
-            case CMD_ENTITY_ADD:
-                entityId = arg;
-                // console.log('addCommand.ENTITY ' + entityId + ' ' + JSON.stringify(options));
-                break;
-            case CMD_COMPONENT_ADD:
-            case CMD_COMPONENT_REMOVE:
-            case CMD_COMPONENT_UPDATE:
-                entityId = options['@e'] || options.eid || arg.getEntityId();
-                // console.log('addCommand.COMPONENT (' + type + ') ' + entityId + ' ' + JSON.stringify(options) );
-                break;
-            default:
-                // NO-OP
-                return;
-        }
-
-        entityBuffer = this.cmds[ entityId ] || [];
-
-        if( type == CMD_ENTITY_ADD ){
-            // this command should always be the first in the list - check 
-            if( entityBuffer.length > 0 && entityBuffer[0][0] == CMD_ENTITY_ADD ){
-                return;
-            }
-            // add to top of list
-            entityBuffer.unshift( [type,arg,options] );
-        } else{
-            entityBuffer.push( [type,arg,options] );
-        }
-        
-        this.cmds[ entityId ] = entityBuffer;
-        
-        return this;
-    }
-
+     * Returns the entityId of an existing add command in the queue
+     */
     findEntityAddId(){
         let cmds;
         let entityId;
 
         for( entityId in this.cmds ){
             cmds = this.cmds[entityId];
-            if( cmds[0][0] == CMD_ENTITY_ADD ){
+            let cmd = cmds[0][0];
+            // if( cmd === CMD_EX ){
+            //     cmd = cmds[0][1];
+            // }
+            // Log.debug('[findEntityAddId]', entityId, cmd, CMD_ENTITY_ADD );
+            if( cmd == CMD_ENTITY_ADD ){
                 return entityId;
             }
         }

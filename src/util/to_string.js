@@ -12,7 +12,7 @@ export function entityToString(entity, indent = '') {
     let res = [];
     let comDefId;
 
-    res.push(`${indent}- ${entity.cid} (${entity.getEntityid()}/${entity.getEntitySetId()}) ${entity.hash(true)}`);
+    res.push(`${indent}- ${entity.cid} (${entity.getEntityId()}/${entity.getEntitySetId()}) ${entity.hash(true)}`);
 
     indent += '  ';
 

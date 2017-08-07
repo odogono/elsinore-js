@@ -51,42 +51,47 @@ test('non existence of an entity', t => {
     });
 });
 
-test('adding an entity with a component returns the added entity', t => {
-    return initialiseRegistry()
-        .then(registry => {
-            let entitySet = registry.createEntitySet();
+test('adding an entity with a component returns the added entity', async t => {
+    try {
+        const registry = await initialiseRegistry();
 
-            let entity = registry.createEntity([{ '@c': '/component/position', x: 2, y: -2 }]);
-            entity = entitySet.addEntity(entity);
+        let entitySet = registry.createEntitySet();
 
-            // printE( entitySet );
-            t.ok(entity.getEntityId() > 0, 'the entity should have an id');
-            t.ok(entitySet.hasEntity(entity.id), 'the entity should exist');
+        let entity = registry.createEntity([{ '@c': '/component/position', x: 2, y: -2 }]);
+        entity = entitySet.addEntity(entity);
 
-            t.end();
-        })
-        .catch(err => Log.error(err.stack));
+        // printE( entitySet );
+        t.ok(entity.getEntityId() > 0, 'the entity should have an id');
+        t.ok(entitySet.hasEntity(entity.id), 'the entity should exist');
+
+        t.end();
+    } catch (err) {
+        Log.error(err.stack);
+    }
 });
 
-test.only('adding components in the same call adds them to the same entity', async t => {
-    try{
+test('adding components in the same call adds them to the same entity', async t => {
+    try {
         const registry = await initialiseRegistry();
         const entitySet = registry.createEntitySet();
 
-        Log.debug('[-]')
-        entitySet.addComponent([
-            registry.createComponent('/component/name', { name: 'charmander' }),
-            registry.createComponent('/component/geo_location', { lat: 51.2, lng: -3.65 })
-        ],{debug:true});
+        // Log.debug('[-]')
 
-        t.equal( entitySet.size(), 1 );
+        entitySet.addComponent(
+            [
+                registry.createComponent('/component/name', { name: 'home' }),
+                registry.createComponent('/component/geo_location', { lat: 51.2, lng: -3.65 })
+            ],
+            { debug: false }
+        );
+
+        t.equal(entitySet.size(), 1);
 
         t.end();
-
-    }catch(err){
+    } catch (err) {
         Log.error(err.stack);
     }
-})
+});
 
 test('can add a raw component directly', async t => {
     try {
@@ -112,7 +117,6 @@ test('can add an array of raw components', async t => {
             { '@c': '/component/radius', radius: 16 }
         ]);
 
-        // Log.debug('haz', entityToString(entitySet) );
         t.equal(entitySet.size(), 1);
         t.end();
     } catch (err) {
@@ -224,26 +228,28 @@ test('updating a component should not replace the instance already in the entity
         .catch(err => Log.error(err.stack));
 });
 
-test('removing a component from an entity with only one component', t => {
-    return initialiseRegistry()
-        .then(registry => {
-            const entitySet = registry.createEntitySet();
-            const eventSpy = Sinon.spy();
+test('removing a component from an entity with only one component', async t => {
+    try {
+        const registry = await initialiseRegistry();
 
-            entitySet.on('all', eventSpy);
+        const entitySet = registry.createEntitySet();
+        const eventSpy = Sinon.spy();
 
-            let component = entitySet.addComponent(registry.createComponent('/component/position', { x: 15, y: 2 }));
+        entitySet.on('all', eventSpy);
 
-            // printE( entitySet );
-            // printE( component );
-            component = entitySet.removeComponent(component);
+        let component = entitySet.addComponent(registry.createComponent('/component/position', { x: 15, y: 2 }));
 
-            t.ok(eventSpy.calledWith('component:remove'), 'component:remove should have been called');
-            t.ok(eventSpy.calledWith('entity:remove'), 'entity:remove should have been called');
-            // t.equals( component.getEntityId(), 0, 'component should not have an entity id');
-            t.end();
-        })
-        .catch(err => Log.error(err.stack));
+        component = entitySet.removeComponent(component);
+
+        // Log.debug('es', entityToString(entitySet) );
+
+        t.ok(eventSpy.calledWith('component:remove'), 'component:remove should have been called');
+        t.ok(eventSpy.calledWith('entity:remove'), 'entity:remove should have been called');
+        // t.equals( component.getEntityId(), 0, 'component should not have an entity id');
+        t.end();
+    } catch (err) {
+        Log.error(err.stack);
+    }
 });
 
 test('removing a component from an entity with multiple components', t => {

@@ -10,7 +10,11 @@ import { getEntitySetIdFromId } from '../util/id';
 import valueArray from '../util/array/value';
 
 import SyncCmdBuffer from './sync';
-import { CMD_EX, CMD_ENTITY_ADD, CMD_COMPONENT_ADD, CMD_COMPONENT_REMOVE } from './sync';
+import { CMD_ENTITY_ADD, CMD_COMPONENT_ADD, CMD_COMPONENT_REMOVE } from './sync';
+
+// import {createLog} from '../util/log';
+// const Log = createLog('CmdBufferSync');
+
 
 export default class AsyncCmdBuffer extends SyncCmdBuffer {
     constructor(...args) {
@@ -68,7 +72,7 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
         // determine whether we have this component registered already
         // entityId = component.getEntityId();
 
-        this.addCommandX(CMD_COMPONENT_ADD, component.getEntityId(), component);
+        this.addCommand(CMD_COMPONENT_ADD, component.getEntityId(), component);
 
         // execute any outstanding commands
         if (execute) {
@@ -117,19 +121,19 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
         entityId = component.getEntityId();
 
         if (!entityId || getEntitySetIdFromId(entityId) !== entitySet.id) {
-            log.debug(
-                'entity ' +
-                    entityId +
-                    ' does not exist in es ' +
-                    entitySet.id +
-                    ' (' +
-                    getEntitySetIdFromId(entityId) +
-                    ')'
-            );
+            // log.debug(
+            //     'entity ' +
+            //         entityId +
+            //         ' does not exist in es ' +
+            //         entitySet.id +
+            //         ' (' +
+            //         getEntitySetIdFromId(entityId) +
+            //         ')'
+            // );
             return Promise.resolve([]);
         }
 
-        this.addCommandX(CMD_COMPONENT_REMOVE, entityId, component);
+        this.addCommand(CMD_COMPONENT_REMOVE, entityId, component);
 
         return !execute ? this : this.execute(entitySet, options).then(() => valueArray(this.componentsRemoved.models));
     }
@@ -263,6 +267,9 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
      * 
      */
     _executeEntityCommand(entity, componentBitfield, cmdType, component, options = {}) {
+        // if( !component.getDefId ){
+        //     Log.debug('[_executeEntityCommand]', component );
+        // }
         const componentDefId = component.getDefId();
         const entityHasComponent = !!componentBitfield.get(componentDefId);
 
@@ -330,8 +337,7 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
         // have their bitfields resolved from the database, so that we
         // can easily test for component membership
         return entitySet.getEntitySignatures(Object.keys(this.cmds)).then(entities => {
-            // console.log('we created entities', toString(entities));
-
+            
             entities.forEach(entity => {
                 const bf = entity.getComponentBitfield();
                 let cmds = this.cmds[entity.id];
@@ -345,19 +351,13 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
                     // if(debug){console.log('entity', entity.id,'exists in es', entitySet.id);}
                 }
 
-                // console.log('executing cmds against new', entity.isNew(), entity.id );
-
                 for ((ii = 0), (len = cmds.length); ii < len; ii++) {
                     let cmd = cmds[ii];
                     let commandType = cmd[0];
-                    let component = cmd[1];
-                    let cmdOptions = cmd[2];
+                    let entityId = cmd[1];
+                    let component = cmd[2];
+                    let cmdOptions = cmd[3];
 
-                    if (commandType == CMD_EX) {
-                        commandType = cmd[1];
-                        component = cmd[3];
-                        cmdOptions = cmd[4];
-                    }
                     this._executeEntityCommand(entity, bf, commandType, component, cmdOptions, options);
                 }
             });
