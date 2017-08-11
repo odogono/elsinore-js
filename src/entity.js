@@ -125,13 +125,15 @@ Object.assign( Entity.prototype, Base.prototype, {
      * @param {*} component 
      */
     addComponent(component) {
-        let existing;
-        if (!component) {
+        const registry = this.getRegistry();
+        if (component === undefined) {
             return this;
         }
 
         // delegate parsing/creation of components to registry
-        component = this.getRegistry().createComponent(component);
+        if( registry !== undefined ){
+            component = this.getRegistry().createComponent(component);
+        }
         
         if (Array.isArray(component)) {
             component.forEach(c => this.addComponent(c));
@@ -146,7 +148,7 @@ Object.assign( Entity.prototype, Base.prototype, {
             throw new Error('attempt to add invalid component', component);
         }
 
-        existing = this.components[defId];
+        let existing = this.components[defId];
 
         if (existing) {
             this.removeComponent(existing);
