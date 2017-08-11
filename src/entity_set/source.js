@@ -33,7 +33,7 @@ export default function source(entitySet, options={}){
 
     // send all existing components
     if( sendExisting ){
-        const length = entitySet.length;
+        const length = entitySet.size();
 
         for(ii;ii<length;ii++){
             entity = entitySet.at(ii);

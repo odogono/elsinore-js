@@ -14,41 +14,48 @@ import {
     loadEntities,
     loadComponents,
     loadFixtureJSON,
+    stringify,
     entityToString,
     logEvents,
-    createLog
+    createLog,
+    captureEntitySetEvent
 } from './common';
 
 import { cloneComponent } from '../src/util/clone';
 
 const Log = createLog('TestEntitySet');
 
-test('type of entityset', t => {
-    return initialiseRegistry()
-        .then(registry => {
-            let entitySet = registry.createEntitySet();
-            t.ok(entitySet.isEntitySet, 'it is an entitySet');
-        })
-        .then(() => t.end())
-        .catch(err => Log.error(err.stack));
+test('type of entityset', async t => {
+    try {
+        const registry = await initialiseRegistry();
+        let entitySet = registry.createEntitySet();
+        t.ok(entitySet.isEntitySet, 'it is an entitySet');
+        t.end();
+    } catch (err) {
+        Log.error(err.stack);
+    }
 });
 
-test('entityset has a uuid assigned', t => {
-    return initialiseRegistry()
-        .then(registry => {
-            let es = registry.createEntitySet();
-            t.equals(es.getUUID().length, 36);
-        })
-        .then(() => t.end())
-        .catch(err => Log.error(err.stack));
+test('entityset has a uuid assigned', async t => {
+    try {
+        const registry = await initialiseRegistry();
+        let es = registry.createEntitySet();
+        t.equals(es.getUUID().length, 36);
+        t.end();
+    } catch (err) {
+        Log.error(err.stack);
+    }
 });
 
-test('non existence of an entity', t => {
-    return initialiseRegistry().then(registry => {
+test('non existence of an entity', async t => {
+    try {
+        const registry = await initialiseRegistry();
         let entitySet = registry.createEntitySet();
         t.ok(!entitySet.hasEntity(1001), 'entity not exist');
         t.end();
-    });
+    } catch (err) {
+        Log.error(err.stack);
+    }
 });
 
 test('adding an entity with a component returns the added entity', async t => {
@@ -59,7 +66,6 @@ test('adding an entity with a component returns the added entity', async t => {
 
         let entity = registry.createEntity([{ '@c': '/component/position', x: 2, y: -2 }]);
         entity = entitySet.addEntity(entity);
-
         // printE( entitySet );
         t.ok(entity.getEntityId() > 0, 'the entity should have an id');
         t.ok(entitySet.hasEntity(entity.id), 'the entity should exist');
@@ -74,8 +80,6 @@ test('adding components in the same call adds them to the same entity', async t 
     try {
         const registry = await initialiseRegistry();
         const entitySet = registry.createEntitySet();
-
-        // Log.debug('[-]')
 
         entitySet.addComponent(
             [
@@ -98,7 +102,8 @@ test('can add a raw component directly', async t => {
         const registry = await initialiseRegistry();
         const entitySet = registry.createEntitySet();
 
-        entitySet.addEntity({ '@c': '/component/position', x: -14, y: 12 });
+        // this action creates an entity to house the component
+        entitySet.addComponent({ '@c': '/component/position', x: -14, y: 12 });
 
         t.equal(entitySet.size(), 1);
         t.end();
@@ -112,7 +117,8 @@ test('can add an array of raw components', async t => {
         const registry = await initialiseRegistry();
         const entitySet = registry.createEntitySet();
 
-        const entity = entitySet.addEntity([
+        // a single entity is created
+        entitySet.addComponent([
             { '@c': '/component/position', x: -14, y: 12 },
             { '@c': '/component/radius', radius: 16 }
         ]);
@@ -124,40 +130,43 @@ test('can add an array of raw components', async t => {
     }
 });
 
-test('adding several components returns an array of added components', t => {
+test('adding several components returns an array of added components', async t => {
     let entities;
-    return initialiseRegistry()
-        .then(registry => {
-            let entitySet = registry.createEntitySet();
+    try {
+        const registry = await initialiseRegistry();
+        let entitySet = registry.createEntitySet();
 
-            // let loadedEntitySet = loadEntities( registry, 'entity_set.entities' );
-            let data = loadFixtureJSON('entity_set.entities.json');
-            let components = _.map(data, line => registry.createComponent(line));
+        // let loadedEntitySet = loadEntities( registry, 'entity_set.entities' );
+        let data = loadFixtureJSON('entity_set.entities.json');
+        let components = _.map(data, line => registry.createComponent(line));
 
-            components = entitySet.addComponent(components);
+        components = entitySet.addComponent(components);
 
-            t.ok(Component.isComponent(components[0]), 'returns an array of components');
-            t.end();
-        })
-        .catch(err => Log.error(err.stack));
+        t.ok(Component.isComponent(components[0]), 'returns an array of components');
+        t.end();
+    } catch (err) {
+        Log.error(err.message, err.stack);
+    }
 });
 
 test('adding a component without an id or an entity id creates a new component and a new entity', async t => {
     try {
         const registry = await initialiseRegistry();
         let entitySet = registry.createEntitySet();
-        let eventSpy = Sinon.spy();
-        let component;
-        // Common.logEvents( entitySet );
-        entitySet.on('all', eventSpy);
-        component = entitySet.addComponent(registry.createComponent('/component/position', { x: 15, y: 2 }));
+        let receivedEntityAdd = false;
 
-        t.ok(eventSpy.calledWith('entity:add'), 'entity:add should have been called');
+        entitySet.on('entity:add', entities => (receivedEntityAdd = true));
+
+        const component = entitySet.addComponent(registry.createComponent('/component/position', { x: 15, y: 2 }));
+
+        t.ok(receivedEntityAdd, 'entity:add should have been called');
+
         t.notStrictEqual(
             entitySet.at(0).Position,
             undefined,
             'the entity should have the Position component as a property'
         );
+
         t.equals(component.get('x'), 15, 'returned value should be a component');
 
         t.end();
@@ -166,38 +175,48 @@ test('adding a component without an id or an entity id creates a new component a
     }
 });
 
-test('adding a component which is already a member', t => {
-    return initialiseRegistry()
-        .then(registry => {
-            const entitySet = registry.createEntitySet();
-            // logEvents(entitySet);
-            const component = registry.createComponent('/component/position', { x: 200, y: 0 });
-            t.equals(component.id, undefined, 'the component should be created without a valid id');
-            // console.log(`new component '${component.id}'`);
-            const inserted = entitySet.addComponent(component);
-            t.ok(isInteger(inserted.id), 'the component will have been assigned an id');
-            t.notEqual(component.id, inserted.id, 'the inserted component is a different copy');
+test('updating a component in the entityset', async t => {
+    try {
+        const registry = await initialiseRegistry();
 
-            // change the fields of the component
-            // note - if we changed the attributes of the inserted component, it would also
-            // change inside the entityset
-            component.set({ x: 200, y: 100, id: inserted.id });
-            entitySet.addComponent(component);
-            // update
-            // the previously inserted component instance no longer has an entity reference because it
-            // has been superceded
-            // t.equal( inserted.getEntityId(), 0 );
-            // change the fields and insert again
-            component.set({ x: 200, y: -200 });
-            entitySet.addComponent(component);
+        const entitySet = registry.createEntitySet();
+        // logEvents(entitySet);
+        const component = registry.createComponent('/component/position', { x: 200, y: 0 });
 
-            entitySet.addComponent(inserted);
+        t.equals(component.id, 0, 'the component should be created without a valid id');
 
-            t.equals(entitySet.size(), 1);
+        const inserted = entitySet.addComponent(component);
 
-            t.end();
-        })
-        .catch(err => Log.error(err.stack));
+        t.ok(inserted.id > 0, 'the component will have been assigned an id of ' + inserted.id);
+
+        t.notEqual(component.id, inserted.id, 'the inserted component is a different copy');
+
+        // change the fields of the component
+        // note - if we changed the attributes of the inserted component, it would also
+        // change inside the entityset
+        component.set({ x: 200, y: 100, id: inserted.id });
+
+        entitySet.addComponent(component);
+
+        // the previously inserted component instance no longer has an entity reference because it
+        // has been superceded
+        // t.equal( inserted.getEntityId(), 0 );
+
+        // change the fields and insert again
+        component.set({ x: 200, y: -200 });
+
+        entitySet.addComponent(component);
+
+        entitySet.addComponent(inserted);
+
+        // Log.debug('[es]', entityToString(entitySet) );
+
+        t.equals(entitySet.size(), 1);
+
+        t.end();
+    } catch (err) {
+        Log.error(err.stack);
+    }
 });
 
 test('updating a component should not replace the instance already in the entityset', t => {
@@ -233,18 +252,18 @@ test('removing a component from an entity with only one component', async t => {
         const registry = await initialiseRegistry();
 
         const entitySet = registry.createEntitySet();
-        const eventSpy = Sinon.spy();
+        let receivedComponentRemove = false;
+        let receivedEntityRemove = false;
 
-        entitySet.on('all', eventSpy);
+        entitySet.on('component:remove', () => (receivedComponentRemove = true));
+        entitySet.on('entity:remove', () => (receivedEntityRemove = true));
 
         let component = entitySet.addComponent(registry.createComponent('/component/position', { x: 15, y: 2 }));
 
         component = entitySet.removeComponent(component);
 
-        // Log.debug('es', entityToString(entitySet) );
-
-        t.ok(eventSpy.calledWith('component:remove'), 'component:remove should have been called');
-        t.ok(eventSpy.calledWith('entity:remove'), 'entity:remove should have been called');
+        t.ok(receivedComponentRemove, 'component:remove should have been called');
+        t.ok(receivedEntityRemove, 'entity:remove should have been called');
         // t.equals( component.getEntityId(), 0, 'component should not have an entity id');
         t.end();
     } catch (err) {
@@ -252,34 +271,65 @@ test('removing a component from an entity with only one component', async t => {
     }
 });
 
-test('removing a component from an entity with multiple components', t => {
-    return initialiseRegistry()
-        .then(registry => {
-            let entitySet = registry.createEntitySet();
-            let eventSpy = Sinon.spy();
-            let entity;
-            let component;
-            let components;
-            // Common.logEvents( entitySet );
-            entitySet.on('all', eventSpy);
+test('adding an identified component in another entity replaces the existing', async t => {
+    try {
+        const registry = await initialiseRegistry();
+        const entitySet = registry.createEntitySet();
 
-            components = registry.createComponent([
-                { '@c': '/component/position', x: -100, y: 20 },
-                { '@c': '/component/radius', radius: 30 }
-            ]);
+        const entity = entitySet.addEntity({ '@c': '/component/position', x: 100, y: 50, id: 22 });
+        const component = entitySet.addComponent({ '@c': '/component/position', x: 22, y: -9, id: 22 });
 
-            entity = entitySet.addEntity(registry.createEntity(components));
-            component = entitySet.removeComponent(components[0]);
+        t.equals(entity.id, component.getEntityId());
+        t.equals(entitySet.size(), 1);
 
-            // printE( component );
-            // log.debug( component.getEntityId() );
-            // printIns( eventSpy.getCall(2).args, 3 );
-            t.ok(eventSpy.calledWith('component:remove'), 'component:remove should have been called');
-            t.equals(entity.Position, undefined, 'the component is removed from the entity');
+        t.end();
+    } catch (err) {
+        Log.error(err.stack);
+    }
+});
 
-            t.end();
-        })
-        .catch(err => Log.error(err.stack));
+test('adding an identified component in another entity replaces the existing', async t => {
+    try {
+        const registry = await initialiseRegistry();
+        const entitySet = registry.createEntitySet();
+        let entityRemovedId = 0;
+
+        entitySet.on('entity:remove', entities => (entityRemovedId = entities[0].id));
+
+        const firstEntity = entitySet.addEntity({ '@c': '/component/position', x: 100, y: 50, id: 22 });
+        const secondEntity = entitySet.addEntity([{ '@c': '/component/position', x: 22, y: -9, id: 22 }]);
+
+        // the first entity will have been removed
+        t.equal(firstEntity.id, entityRemovedId);
+        t.notEqual(firstEntity.id, secondEntity.id);
+        t.equals(entitySet.size(), 1);
+
+        t.end();
+    } catch (err) {
+        Log.error(err.stack);
+    }
+});
+
+test('removing a component from an entity with multiple components', async t => {
+    try {
+        const [registry, entitySet] = await initialise();
+        let componentRemovedId = 0;
+
+        entitySet.on('component:remove', components => (componentRemovedId = components[0].id));
+
+        let entity = entitySet.addEntity([
+            { '@c': '/component/position', x: -100, y: 20, id: 13 },
+            { '@c': '/component/radius', radius: 30 }
+        ]);
+
+        let component = entitySet.removeComponent(13);
+
+        t.equals(componentRemovedId, 13, 'component:remove should have been called');
+
+        t.end();
+    } catch (err) {
+        Log.error(err.stack);
+    }
 });
 
 test('you cant add an empty entity to an entityset', t => {
@@ -302,16 +352,19 @@ test('adding several components without an entity adds them to the same new enti
     try {
         const registry = await initialiseRegistry();
         let entitySet = registry.createEntitySet();
-        let eventSpy = Sinon.spy();
-        // Common.logEvents( entitySet );
-        entitySet.on('all', eventSpy);
+
+        t.plan(3);
+        captureEntitySetEvent(entitySet, 'entity:add', false, ids =>
+            t.ok(ids.length, 'entity:add should have been called')
+        );
+
         entitySet.addComponent([
             registry.createComponent('/component/flower', { colour: 'yellow' }),
             registry.createComponent('/component/radius', { radius: 2 })
         ]);
 
-        t.ok(eventSpy.calledWith('entity:add'), 'entity:add should have been called');
         t.notStrictEqual(entitySet.at(0).Flower, undefined, 'the entity should have a Flower component');
+
         t.notStrictEqual(entitySet.at(0).Radius, undefined, 'the entity should have a Radius component');
 
         return t.end();
@@ -320,118 +373,142 @@ test('adding several components without an entity adds them to the same new enti
     }
 });
 
-test('adding a component generates events', t => {
-    return initialiseRegistry().then(registry => {
+test('adding a component generates events', async t => {
+    try {
+        const registry = await initialiseRegistry();
         let entitySet = registry.createEntitySet();
-        let eventSpy = Sinon.spy();
-        // Common.logEvents( entitySet );
-        entitySet.on('all', eventSpy);
+
+        captureEntitySetEvent(entitySet, 'component:add', false, ids =>
+            t.ok(ids.length, 'component:add should have been called')
+        );
+        captureEntitySetEvent(entitySet, 'entity:add', false, ids =>
+            t.ok(ids.length, 'entity:add should have been called')
+        );
 
         entitySet.addComponent(registry.createComponent('/component/position', { id: 160, '@e': 15, x: 0, y: 20 }));
 
-        t.ok(eventSpy.calledWith('component:add'), 'component:add should have been called');
-        t.ok(eventSpy.calledWith('entity:add'), 'entity:add should have been called');
+        return t.end();
+    } catch (err) {
+        Log.error(err.stack);
+    }
+});
+
+test('adding several components at once generates a single add event', async t => {
+    try {
+        const registry = await initialiseRegistry();
+        const entitySet = registry.createEntitySet();
+        // logEvents( entitySet );
+
+        t.plan(3);
+
+        captureEntitySetEvent(entitySet, 'component:add', false, ids =>
+            t.ok(ids.length, 'component:add should have been called')
+        );
+        captureEntitySetEvent(entitySet, 'entity:add', false, ids =>
+            t.ok(ids.length, 'entity:add should have been called')
+        );
+
+        entitySet.addComponent([
+            { '@c': '/component/position', id: 1, '@e': 2, x: 19, y: -2 },
+            { '@c': '/component/nickname', id: 2, '@e': 2, nick: 'isaac' }
+        ]);
+
+        t.equals(entitySet.size(), 1);
 
         t.end();
-    });
+    } catch (err) {
+        Log.error(err.stack);
+    }
 });
 
-test('adding several components at once generates a single add event', t => {
-    return initialiseRegistry()
-        .then(registry => {
-            let entitySet = registry.createEntitySet();
-            let eventSpy = Sinon.spy();
-            // Common.logEvents( entitySet );
-            entitySet.on('all', eventSpy);
+test('adding an entity with components', async t => {
+    try {
+        const registry = await initialiseRegistry();
+        const entitySet = registry.createEntitySet();
 
-            entitySet.on('add', function() {
-                throw new Error('stop!');
-            });
-
-            entitySet.addComponent([
-                registry.createComponent('/component/position', { id: 1, '@e': 2, x: 19, y: -2 }),
-                registry.createComponent('/component/nickname', { id: 2, '@e': 2, nick: 'isaac' })
-            ]);
-
-            t.equals(eventSpy.callCount, 2, 'two events should have been emitted');
-            // t.ok( eventSpy.calledWith('update'), 'update called' );
-            t.ok(eventSpy.calledWith('component:add'), 'component:add should have been called');
-            t.ok(eventSpy.calledWith('entity:add'), 'entity:add should have been called');
-            t.end();
-        })
-        .catch(err => {
-            Log.debug(err.stack);
-        });
-});
-
-test('adding an entity with components', t => {
-    let com;
-    return initialiseRegistry().then(registry => {
-        let entitySet = registry.createEntitySet();
-        let eventSpy = Sinon.spy();
-        // Common.logEvents( entitySet );
-        entitySet.on('all', eventSpy);
+        t.plan(3);
+        captureEntitySetEvent(entitySet, 'component:add', false, ids =>
+            t.equals(ids.length, 2, 'component:add should have been called')
+        );
+        captureEntitySetEvent(entitySet, 'entity:add', false, ids =>
+            t.equals(ids.length, 1, 'entity:add should have been called')
+        );
 
         let entity = registry.createEntityWithId(16);
-        entity.addComponent((com = registry.createComponent('/component/position', { id: 5, x: 2, y: -2 })));
-        entity.addComponent(registry.createComponent('/component/score', { id: 6, score: 100 }));
+
+        entity.addComponent({ '@c': '/component/position', id: 5, x: 2, y: -2 });
+        entity.addComponent({ '@c': '/component/score', id: 6, score: 100 });
         entitySet.addEntity(entity);
 
-        t.equals(eventSpy.callCount, 2, 'two events should have been emitted');
-        t.ok(eventSpy.calledWith('component:add'), 'component:add should have been called');
-        t.ok(eventSpy.calledWith('entity:add'), 'entity:add should have been called');
+        // t.equals(eventSpy.callCount, 2, 'two events should have been emitted');
+        // t.ok(eventSpy.calledWith('component:add'), 'component:add should have been called');
+        // t.ok(eventSpy.calledWith('entity:add'), 'entity:add should have been called');
         t.equals(entitySet.at(0).Position.get('x'), 2);
 
         t.end();
-    });
+    } catch (err) {
+        Log.error(err.stack);
+    }
 });
 
-test('should return the number of entities contained', t => {
-    return initialiseRegistry()
-        .then(registry => {
-            const entitySet = registry.createEntitySet();
-            const eventSpy = Sinon.spy();
-            //
-            const pos = registry.createComponent('/component/position', { id: 1, '@e': 3 });
-            const nick = registry.createComponent('/component/nickname', { id: 2, '@e': 3 });
-
-            t.ok(pos.getEntityId(), 3);
-            t.ok(nick.getEntityId(), 3);
-
-            entitySet.addComponent(pos);
-            // t.equals( entitySet.size(), 1, 'should only be one entity' );
-            // logEvents( entitySet );
-            entitySet.addComponent(nick);
-            // printE( entitySet );
-            t.equals(entitySet.size(), 1, 'should only be one entity');
-
-            // retrieve an entity by id 3
-            const entity = entitySet.getEntity(3);
-
-            // Log.debug( entitySet.at(0).id + ' is e id ' + entitySet.id );
-            t.ok(entity.Position, 'entity should have position');
-            t.ok(entity.Nickname, 'entity should have nickname');
-            t.end();
-        })
-        .catch(err => Log.error(err.stack));
-});
-
-test('should return an added entity', t => {
-    return initialiseRegistry().then(registry => {
+test('should return the number of entities contained', async t => {
+    try {
+        const registry = await initialiseRegistry();
         const entitySet = registry.createEntitySet();
         const eventSpy = Sinon.spy();
+        //
+        const pos = registry.createComponent('/component/position', { id: 1, '@e': 3 });
+        const nick = registry.createComponent('/component/nickname', { id: 2, '@e': 3 });
 
-        const entities = loadEntities(registry);
+        t.ok(pos.getEntityId(), 3);
+        t.ok(nick.getEntityId(), 3);
 
-        const entity = entities.at(0);
-        entitySet.addComponent(entity.Position);
+        entitySet.addComponent(pos);
+        // t.equals( entitySet.size(), 1, 'should only be one entity' );
+        // logEvents( entitySet );
+        entitySet.addComponent(nick);
+        // printE( entitySet );
+        t.equals(entitySet.size(), 1, 'should only be one entity');
 
-        const addedEntity = entitySet.at(0);
+        // retrieve an entity by id 3
+        const entity = entitySet.getEntity(3);
 
-        t.equals(addedEntity.getEntityId(), entity.getEntityId(), 'the component retains its entity id');
-        t.notEqual(addedEntity.Position.id, entity.Position.id, 'the added component is a clone');
+        // Log.debug( entitySet.at(0).id + ' is e id ' + entitySet.id );
+        t.ok(entity.Position, 'entity should have position');
+        t.ok(entity.Nickname, 'entity should have nickname');
         t.end();
-    });
+    } catch (err) {
+        Log.error(err.stack);
+    }
+});
+
+test('should return an added entity', async t => {
+    try {
+        const registry = await initialiseRegistry();
+        const entitySetA = registry.createEntitySet();
+        const entitySetB = loadEntities(registry);
+
+        // add the component from the B set to the A set
+        const entityB = entitySetB.at(0);
+        entitySetA.addComponent(entityB.Position);
+
+        const entityA = entitySetA.at(0);
+
+        // Log.debug(entityToString(entity));
+        // Log.debug(entityToString(entityA));
+
+        // Log.debug(entity.Position.id, entityA.Position.id );
+
+        t.equals(entityA.getEntityId(), entityB.getEntityId(), 'the component retains its entity id');
+        
+        // components added to 'memory' entitysets retain their id - other types
+        // of entityset (e.g. persistent) may take ownership of the component by changing the id
+        t.equals(entityA.Position.id, entityB.Position.id, 'the added component has the same id');
+
+        t.end();
+    } catch (err) {
+        Log.error(err.stack);
+    }
 });
 
 test('should remove the entities component', t => {
@@ -558,7 +635,7 @@ test('should really remove an entity', t => {
 
         entitySet.removeEntity(entityB);
 
-        t.equals(entitySet.length, 1);
+        t.equals(entitySet.size(), 1);
         t.end();
     });
 });
@@ -625,202 +702,191 @@ test('should not emit an event when a non-existent component is removed', t => {
     });
 });
 
-test('adding an entity with an identical id will replace the existing one', t => {
-    return initialiseRegistry()
-        .then(registry => {
-            let entitySet = registry.createEntitySet();
-            let eventSpy = Sinon.spy();
-            entitySet.on('component:change', eventSpy);
-
-            //    logEvents(entitySet);
-            // let entities = loadEntities( registry );
-            // let entity = entities.at(0);
-            let entityA = registry.createEntity([{ '@c': '/component/position', x: 0, y: 0 }]);
-            // printE( entityA );
-            // printIns( entityA );
-            let entityB = registry.createEntity([
-                { '@c': '/component/position', x: 15, y: -90 },
-                { '@c': '/component/status', status: 'active' }
-            ]);
-
-            entityB.setId(entityA.id);
-
-            entitySet.addEntity(entityA);
-            entitySet.addEntity(entityB);
-
-            const addedEntity = entitySet.at(0);
-            t.equals(entitySet.size(), 1);
-            t.ok(eventSpy.calledOnce, `component:change was called ${eventSpy.callCount} times`);
-            t.equals(addedEntity.Status.get('status'), 'active');
-            t.equals(addedEntity.Position.get('x'), 15);
-            //    printE( entitySet );
-            t.end();
-        })
-        .catch(err => {
-            Log.error(err.stack);
-        });
-});
-
-test('should only add a component of an accepted type', async t => {
+test('adding an entity with an identical id will replace the existing one', async t => {
     try {
-        const [registry, entitySet, entities] = await initialise();
+        const registry = await initialiseRegistry();
 
+        let entitySet = registry.createEntitySet();
         let eventSpy = Sinon.spy();
-        // Common.logEvents( entitySet );
-        // printE( entities );
-        // setting an entity filter means that the entitySet will
-        // only add components that pass through the filter
-        entitySet.setQuery(Q => Q.all('/component/position'));
+        entitySet.on('component:change', eventSpy);
 
-        entitySet.addEntity(entities.at(0));
+        //    logEvents(entitySet);
+        let entityA = registry.createEntity([{ '@c': '/component/position', x: 0, y: 0, '@e': 26 }]);
 
+        let entityB = registry.createEntity([
+            { '@c': '/component/position', x: 15, y: -90, '@e': 26 },
+            { '@c': '/component/status', status: 'active' }
+        ]);
+
+        // Log.debug( 'entityA', entityToString(entityA) );
+        // Log.debug( 'entityB', entityToString(entityB) );
+
+        entitySet.addEntity(entityA);
+        entitySet.addEntity(entityB);
+
+        // Log.debug( entityToString(entitySet) );
+
+        const addedEntity = entitySet.at(0);
         t.equals(entitySet.size(), 1);
-
+        t.ok(eventSpy.calledOnce, `component:change was called ${eventSpy.callCount} times`);
+        t.equals(addedEntity.Status.get('status'), 'active');
+        t.equals(addedEntity.Position.get('x'), 15);
+        //    printE( entitySet );
         t.end();
     } catch (err) {
         Log.error(err.stack);
     }
 });
 
-test('should only retain the included component on entity', async t => {
-    try {
-        const [registry, entitySet, entities] = await initialise();
+// test('should only add a component of an accepted type', async t => {
+//     try {
+//         const [registry, entitySet, entities] = await initialise();
 
-        entitySet.setQuery(Q => Q.include('/component/nickname'));
+//         let eventSpy = Sinon.spy();
+//         // Common.logEvents( entitySet );
+//         // printE( entities );
+//         // setting an entity filter means that the entitySet will
+//         // only add components that pass through the filter
+//         entitySet.setQuery(Q => Q.all('/component/position'));
 
-        entitySet.addEntity(entities.at(0));
+//         entitySet.addEntity(entities.at(0));
 
-        // the entity won't have any of the other components
-        t.equals(entitySet.at(0).getComponentCount(), 1);
+//         t.equals(entitySet.size(), 1);
 
-        t.end();
-    } catch (err) {
-        Log.error(err.stack);
-    }
-});
+//         t.end();
+//     } catch (err) {
+//         Log.error(err.stack);
+//     }
+// });
 
-test('should not add entities that have excluded components', async t => {
-    const [registry, entitySet, entities] = await initialise();
+// test('should only retain the included component on entity', async t => {
+//     try {
+//         const [registry, entitySet, entities] = await initialise();
 
-    entitySet.setQuery(Q => Q.none('/component/score'));
+//         entitySet.setQuery(Q => Q.include('/component/nickname'));
 
-    entitySet.addEntity(entities.at(1));
-    t.equals(entitySet.size(), 0);
-    entitySet.addEntity(entities.at(0));
-    t.equals(entitySet.size(), 1);
+//         entitySet.addEntity(entities.at(0));
 
-    t.end();
-});
+//         // the entity won't have any of the other components
+//         t.equals(entitySet.at(0).getComponentCount(), 1);
 
-test('should not add entities that have multiple excluded components', async t => {
-    try {
-        const [registry, entitySet, entities] = await initialise();
+//         t.end();
+//     } catch (err) {
+//         Log.error(err.stack);
+//     }
+// });
 
-        entitySet.setQuery(Q => Q.none(['/component/score', '/component/nickname']));
-        entitySet.addEntity(entities);
-        t.equals(entitySet.size(), 1);
-        t.end();
-    } catch (err) {
-        Log.error(err.stack);
-    }
-});
+// test('should not add entities that have excluded components', async t => {
+//     const [registry, entitySet, entities] = await initialise();
 
-test('should only add entities that are included', async t => {
-    const [registry, entitySet, entities] = await initialise();
-    // this means that any entity MUST have a Position and Nickname
-    entitySet.setQuery(Q => Q.all(['/component/position', '/component/nickname']));
-    entitySet.addEntity(entities);
-    t.equals(entitySet.size(), 2);
-    t.end();
-});
+//     entitySet.setQuery(Q => Q.none('/component/score'));
 
-test('should only add entities that are optional', async t => {
-    const [registry, entitySet, entities] = await initialise();
-    // this means that the entity MAY have Position and/or Nickname
-    entitySet.setQuery(Q => Q.any(['/component/position', '/component/nickname']));
-    entitySet.addEntity(entities);
-    t.equals(entitySet.size(), 4);
-    t.end();
-});
+//     entitySet.addEntity(entities.at(1));
+//     t.equals(entitySet.size(), 0);
+//     entitySet.addEntity(entities.at(0));
+//     t.equals(entitySet.size(), 1);
 
-test('should only add entities that pass include/exclude', async t => {
-    try {
-        const [registry, entitySet, entities] = await initialise();
+//     t.end();
+// });
 
-        entitySet.setQuery(Q => [Q.all('/component/position'), Q.none('/component/realname')]);
+// test('should not add entities that have multiple excluded components', async t => {
+//     try {
+//         const [registry, entitySet, entities] = await initialise();
 
-        entitySet.addEntity(entities);
-        t.equals(entitySet.size(), 1);
+//         entitySet.setQuery(Q => Q.none(['/component/score', '/component/nickname']));
 
-        t.end();
-    } catch (err) {
-        Log.error(err.stack);
-    }
-});
+//         entitySet.addEntity(entities);
+//         // console.log( entityToString(entitySet) );
+//         t.equals(entitySet.size(), 1);
 
-test('should remove entities that are excluded after their components change', t => {
-    return initialise({ allowEmptyEntities: false }).then(([registry, entitySet, entities]) => {
-        // let registry = initialiseRegistry();
-        // let entitySet = registry.createEntitySet({allowEmptyEntities:false});
-        // let entities = loadEntities( registry );
-        entitySet.setQuery(Q => Q.none('/component/realname'));
+//         t.end();
 
-        entitySet.addEntity(entities);
-        t.equals(entitySet.size(), 2);
+//     } catch (err) {
+//         Log.error(err.stack);
+//     }
+// });
 
-        let entity = entities.at(1);
-        let component = registry.createComponent('/component/realname', {
-            name: 'mike smith',
-            '@e': entity.getEntityId()
-        });
-        // this action should cause the entity to be removed
-        entitySet.addComponent(component);
-        t.equals(entitySet.size(), 1);
+// test('should only add entities that are included', async t => {
+//     const [registry, entitySet, entities] = await initialise();
+//     // this means that any entity MUST have a Position and Nickname
+//     entitySet.setQuery(Q => Q.all(['/component/position', '/component/nickname']));
+//     entitySet.addEntity(entities);
+//     t.equals(entitySet.size(), 2);
+//     t.end();
+// });
 
-        t.end();
-    });
-});
+// test('should only add entities that are optional', async t => {
+//     const [registry, entitySet, entities] = await initialise();
+//     // this means that the entity MAY have Position and/or Nickname
+//     entitySet.setQuery(Q => Q.any(['/component/position', '/component/nickname']));
+//     entitySet.addEntity(entities);
+//     t.equals(entitySet.size(), 4);
+//     t.end();
+// });
 
-test('should remove entities that no longer included after their components change', t => {
-    return initialise().then(([registry, entitySet, entities]) => {
-        entitySet.setQuery(Q => Q.all('/component/nickname'));
-        entitySet.addEntity(entities);
+// test('should only add entities that pass include/exclude', async t => {
+//     try {
+//         const [registry, entitySet, entities] = await initialise();
 
-        t.equals(entitySet.size(), 3, 'two entities which have Nickname');
-        let entity = entities.at(0);
+//         entitySet.setQuery(Q => [Q.all('/component/position'), Q.none('/component/realname')]);
 
-        // removing the Nickname component should mean the entity is also removed
-        entitySet.removeComponent(entity.Nickname);
-        t.equals(entitySet.size(), 2);
-        t.end();
-    });
-});
+//         entitySet.addEntity(entities);
+//         t.equals(entitySet.size(), 1);
 
-test('should remove entities that are no longer allowed when the component mask changes', t => {
-    return initialise().then(([registry, entitySet, entities]) => {
-        entitySet.addEntity(entities);
-        t.equals(entitySet.size(), 5);
+//         t.end();
+//     } catch (err) {
+//         Log.error(err.stack);
+//     }
+// });
 
-        entitySet.setQuery(Q => Q.none('/component/score'));
-        t.equals(entitySet.size(), 2);
-        t.end();
-    });
-});
+// test('should remove entities that are excluded after their components change', t => {
+//     return initialise({ allowEmptyEntities: false }).then(([registry, entitySet, entities]) => {
+//         // let registry = initialiseRegistry();
+//         // let entitySet = registry.createEntitySet({allowEmptyEntities:false});
+//         // let entities = loadEntities( registry );
+//         entitySet.setQuery(Q => Q.none('/component/realname'));
 
-test.skip('should filter', t => {
-    return initialise().then(([registry, entitySet, entities]) => {
-        let positionIId = registry.getIId('/component/position');
+//         entitySet.addEntity(entities);
+//         t.equals(entitySet.size(), 2);
 
-        entitySet.addEntity(entities);
+//         let entity = entities.at(1);
+//         let component = registry.createComponent('/component/realname', {
+//             name: 'mike smith',
+//             '@e': entity.getEntityId()
+//         });
+//         // this action should cause the entity to be removed
+//         entitySet.addComponent(component);
+//         t.equals(entitySet.size(), 1);
 
-        const selected = entitySet.filter(function(e) {
-            return e.getComponentBitfield().get(positionIId);
-        });
+//         t.end();
+//     });
+// });
 
-        t.equals(selected.length, 3);
-        t.end();
-    });
-});
+// test('should remove entities that no longer included after their components change', t => {
+//     return initialise().then(([registry, entitySet, entities]) => {
+//         entitySet.setQuery(Q => Q.all('/component/nickname'));
+//         entitySet.addEntity(entities);
+
+//         t.equals(entitySet.size(), 3, 'two entities which have Nickname');
+//         let entity = entities.at(0);
+
+//         // removing the Nickname component should mean the entity is also removed
+//         entitySet.removeComponent(entity.Nickname);
+//         t.equals(entitySet.size(), 2);
+//         t.end();
+//     });
+// });
+
+// test('should remove entities that are no longer allowed when the component mask changes', t => {
+//     return initialise().then(([registry, entitySet, entities]) => {
+//         entitySet.addEntity(entities);
+//         t.equals(entitySet.size(), 5);
+
+//         entitySet.setQuery(Q => Q.none('/component/score'));
+//         t.equals(entitySet.size(), 2);
+//         t.end();
+//     });
+// });
 
 // test('should remove components for an entity', t => {
 //     return beforeEach(true).then( function(){
@@ -830,76 +896,81 @@ test.skip('should filter', t => {
 //         t.end();
 //     });
 // });
-test('should emit an event when a component is changed', t => {
-    return initialise()
-        .then(([registry, entitySet, entities]) => {
-            let entity = entities.at(0);
-            let cloned,
-                component = entity.Position;
-            const spy = Sinon.spy();
+test('should emit an event when a component is changed', async t => {
+    try {
+        const [registry, entitySet, entities] = await initialise();
+        let entity = entities.at(0);
+        let cloned,
+            component = entity.Position;
+        const spy = Sinon.spy();
 
-            entitySet.on('component:change', spy);
+        entitySet.on('component:change', spy);
 
-            entitySet.addEntity(entity);
+        entitySet.addEntity(entity);
 
-            cloned = cloneComponent(component);
-            cloned.set({ x: 0, y: -2 });
+        cloned = cloneComponent(component);
+        cloned.set({ x: 0, y: -2 });
 
-            entitySet.addComponent(cloned);
+        entitySet.addComponent(cloned);
 
-            t.ok(spy.called, 'component:change should have been called');
-        })
-        .then(() => t.end())
-        .catch(err => Log.error(err.stack));
+        t.ok(spy.called, 'component:change should have been called');
+        t.end();
+    } catch (err) {
+        Log.error(err.stack);
+    }
 });
 
-test('emit event when an entity component is changed', t => {
-    return initialise()
-        .then(([registry, entitySet, entities]) => {
-            const spy = Sinon.spy();
+test('emit event when an entity component is changed', async t => {
+    try {
+        const [registry, entitySet, entities] = await initialise();
 
-            entitySet.on('component:change', spy);
+        const spy = Sinon.spy();
 
-            let entityA = entitySet.addEntity(registry.createEntity([{ '@c': '/component/flower', colour: 'white' }]));
+        entitySet.on('component:change', spy);
 
-            let entityB = registry.createEntity([{ '@c': '/component/flower', colour: 'blue' }], {
-                '@e': entityA.getEntityId()
-            });
+        let entityA = entitySet.addEntity(registry.createEntity([{ '@c': '/component/flower', colour: 'white' }]));
 
-            t.equal(entityA.getEntityId(), entityB.getEntityId(), 'the entity ids should be equal');
-
-            entityB = entitySet.addEntity(entityB);
-
-            t.ok(spy.called, 'component:change should have been called');
-
-            t.end();
-        })
-        .catch(err => {
-            Log.error(err.stack);
+        let entityB = registry.createEntity([{ '@c': '/component/flower', colour: 'blue' }], {
+            '@e': entityA.getEntityId()
         });
+
+        // Log.debug('entityA', entityToString(entityA), entityA.getEntityId() );
+        // Log.debug('entityB', entityToString(entityB), entityB.getEntityId() );
+        // Log.debug( entityToString(entitySet) );
+
+        t.equal(entityA.getEntityId(), entityB.getEntityId(), 'the entity ids should be equal');
+
+        entityB = entitySet.addEntity(entityB);
+
+        t.ok(spy.called, 'component:change should have been called');
+
+        t.end();
+    } catch (err) {
+        Log.error(err.stack);
+    }
 });
 
-test('emit event when a component instance is changed', t => {
-    return initialise()
-        .then(([registry, entitySet, entities]) => {
-            const spy = Sinon.spy();
-            // Common.logEvents( entitySet );
-            entitySet.on('component:change', spy);
+test.skip('emit event when a component instance is changed', async t => {
+    try {
+        const [registry, entitySet, entities] = await initialise();
 
-            let entityA = entitySet.addEntity(registry.createEntity({ '@c': '/component/flower', colour: 'white' }));
-            // registry.createEntity( { '@c':'/component/flower', colour:'white'} ) );
-            let component = entitySet.at(0).getComponentByIId('/component/flower');
+        const spy = Sinon.spy();
+        // Common.logEvents( entitySet );
+        entitySet.on('component:change', spy);
 
-            // calling set triggers an event which is forwarded by the enclosing
-            // entity onto the surrounding entityset
-            component.set({ colour: 'red' }, { debug: true });
+        let entityA = entitySet.addEntity(registry.createEntity({ '@c': '/component/flower', colour: 'white' }));
+        // registry.createEntity( { '@c':'/component/flower', colour:'white'} ) );
+        let component = entitySet.at(0).getComponentByIId('/component/flower');
 
-            t.ok(spy.called, 'component:change should have been called');
-            t.end();
-        })
-        .catch(err => {
-            Log.error(err.stack);
-        });
+        // calling set triggers an event which is forwarded by the enclosing
+        // entity onto the surrounding entityset
+        component.set({ colour: 'red' }, { debug: true });
+
+        t.ok(spy.called, 'component:change should have been called');
+        t.end();
+    } catch (err) {
+        Log.error(err.stack);
+    }
 });
 
 test('mutating a previously added component does not affect the entityset', t => {
@@ -923,20 +994,29 @@ test('mutating a previously added component does not affect the entityset', t =>
         });
 });
 
-test('should clear all contained entities by calling reset', t => {
-    return initialise().then(([registry, entitySet, entities]) => {
-        const spy = Sinon.spy();
+// test('should clear all contained entities by calling reset', async t => {
+//     try {
+//         const [registry, entitySet, entities] = await initialise();
+//         const spy = Sinon.spy();
 
-        entitySet.on('reset', spy);
-        entitySet.addEntity(entities);
-        t.equals(entitySet.size(), entities.size());
+//         entitySet.on('reset', spy);
 
-        entitySet.reset(null);
-        t.equals(entitySet.size(), 0);
-        t.ok(spy.called, 'reset should have been called');
-        t.end();
-    });
-});
+//         entitySet.addEntity(entities);
+
+//         t.equals(entitySet.size(), entities.size());
+
+//         entitySet.reset(null);
+
+//         t.equals(entitySet.size(), 0);
+
+//         t.ok(spy.called, 'reset should have been called');
+
+//         t.end();
+
+//     } catch (err) {
+//         Log.error(err.stack);
+//     }
+// });
 
 // test('attached entitysets', async t => {
 //     const [ registry, entitySet, entities ] = await initialise();

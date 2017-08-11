@@ -45,12 +45,12 @@ test('reaper', async t => {
         // 
         t.ok( eventSpy.calledWith('entity:remove'), 'two entities will have been removed' );
         
-        t.equals( entitySet.length, 4, 'four connection entities remain' );
+        t.equals( entitySet.size(), 4, 'four connection entities remain' );
 
 
         // 800ms of time elapses...
         dispatch.update(1500);
-        t.equals( entitySet.length, 3, 'three connection entities remain' );
+        t.equals( entitySet.size(), 3, 'three connection entities remain' );
 
 
         t.end();

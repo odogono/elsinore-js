@@ -42,10 +42,10 @@ function commandLimit(context, count, offset) {
 
     const result = context.registry.createEntitySet({ register: false });
 
-    // console.log('limit: ', offset, count, entitySet.models.length );
+    // console.log('limit: ', offset, count, entitySet.size() );
 
     if (count > 0) {
-        const entities = entitySet.models.slice(offset, offset + count);
+        const entities = entitySet.getEntities().slice(offset, offset + count);
         // console.log('limit: got ', entities.length);
         result.addEntity(entities);
     }

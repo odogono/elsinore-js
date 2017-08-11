@@ -1,22 +1,285 @@
 import Model from './model';
+import Base from './base';
 import { setEntityIdFromId, getEntityIdFromId, getEntitySetIdFromId } from './util/id';
 import stringify from './util/stringify';
+import extend from './util/extend';
 import omit from './util/omit';
 import hash from './util/hash';
+import uniqueId from './util/unique_id';
 
 /**
  * Components contain data
  * @type {[type]}
  */
-export default class Component extends Model {
+
+export default function Component(attrs, options) {
+    this.id = 0;
+
+    this.cid = uniqueId('c');
+
+    this._entity = null;
+
+    this._entitySet = null;
+
+    this._registry = null;
+
+    this._defId = 0;
+
+    this._defUri = null;
+
+    this.entityId = 0;
+    
+    this.attributes = {};
+
+    this.preinitialize.apply(this, arguments);
+
+    if( attrs !== undefined ){
+        this.set( attrs, options );//this.attributes = attrs || {};
+    } 
+}
+
+
+// function applyFromObject( obj, attrs, name ){
+//     let attr = attrs[name];
+//     if( attr !== undefined ){
+//         obj[name] = attr;
+//         delete attrs[name];
+//     }
+//     return attrs;
+// }
+
+Object.assign(Component.prototype, Base.prototype, {
+
+    preinitialize(attrs,options){
+
+    },
+
+    /**
+     * Set a hash of attributes on this component
+     * 
+     * @param {*} attrs 
+     * @param {*} options 
+     */
+    set(attrs, options={}) {
+        if( attrs == null ){ return this; }
+        const unset = options.unset;
+        const silent = options.silent;
+
+        let esId = undefined;
+        let eId = undefined;
+
+        let existing = this.attributes;
+        // attrs = this.parse(attrs);
+
+        if( attrs['id'] !== undefined ){
+            this.id = attrs['id'];
+            delete attrs['id'];
+        }
+        
+        if( attrs['@i'] !== undefined ){
+            this.id = attrs['@i'];
+            delete attrs['@i'];
+        }
+
+        if( attrs['@s'] !== undefined ){
+            this._defId = attrs['@s'];
+            delete attrs['@s'];
+        }
+
+        if( attrs['@c'] !== undefined ){
+            // this._defId = attrs['@c'];
+            delete attrs['@c'];
+        }
+
+        if( attrs['@e'] !== undefined ){
+            this.entityId = attrs['@e'];
+            delete attrs['@e'];
+        }
+
+        if (attrs['@es']) {
+            esId = attrs['@es'];
+            delete attrs['@es'];
+        }
+
+        if (esId !== undefined) {
+            eId = attrs['@e'] === undefined ? 0 : attrs['@e'];
+            this.entityId = setEntityIdFromId(eId, esId);
+        }
+
+        // let changes = [];
+        // for( let attr in attrs ){
+        //     let value = attrs[attr];
+        //     if( existing[attr] != value ){ changes.push(attr); }
+        // }
+
+        // console.log('[set]', attrs, existing);
+
+        extend(existing, typeof attrs === 'function' ? attrs(existing) : attrs);
+
+        this.emit('component:change');
+
+        return this;
+    },
+
+    /**
+     * 
+     * @param {*} name 
+     */
+    get( name ){
+        return this.attributes[name];
+    },
+
+    /**
+     * Applies the attributes of the first argument to this component
+     */
+    apply(other, options) {
+        let attrs = other;
+        if (Component.isComponent(other)) {
+            attrs = other.attributes;
+        }
+
+        let setting = omit(attrs, '@e', '@es', '@s', '@c');
+        // console.log('[apply]', setting, 'to', this.attributes);
+        this.set(setting, options);
+    },
+
+    /**
+     * 
+     * @param {*} resp 
+     */
+    // parse(resp) {
+    //     let esId = undefined,
+    //         eId = undefined;
+    //     if (!resp || Object.keys(resp).length <= 0) {
+    //         return resp;
+    //     }
+    //     if (resp['@es']) {
+    //         esId = resp['@es'];
+    //         delete resp['@es'];
+    //     }
+
+    //     if (resp['@i']) {
+    //         resp.id = resp['@i'];
+    //         delete resp['@i'];
+    //     }
+
+    //     if (esId !== undefined) {
+    //         eId = resp['@e'] === undefined ? 0 : resp['@e'];
+    //         resp['@e'] = setEntityIdFromId(eId, esId);
+    //     }
+
+    //     return resp;
+    // },
+
+    getEntityId(total = true) {
+        if (total) {
+            return this.entityId;
+        }
+        return getEntityIdFromId(this.entityId);
+    },
+
+    getEntitySetId() {
+        return getEntitySetIdFromId(this.entityId);
+    },
+
+    setEntityId(id, internalId) {
+        this.entityId = id;
+        // this.attributes['@e'] = id;
+    },
+
+    setEntity(entity) {
+        if (!entity || !entity.isEntity) {
+            this._entity = null;
+            this.entityId = 0;
+            // this.attributes['@e'] = undefined;
+            return;
+        }
+
+        this.entityId = entity.id;
+        this._entity = entity;
+    },
+
+    getDefId() {
+        return this._defId;// this.attributes['@s']; // this.get('@s');
+    },
+
+    getDefUri() {
+        return this._defUri;// this.attributes['@c']; // return this.get('@c');
+    },
+
+    getUri() {
+        return this._defUri;//this.attributes['@c']; // return this.get('@c');
+    },
+    // setDefHash: function(hash:string){
+    //     this._defHash = hash;
+    // },
+    getDefHash() {
+        return this._defHash;
+    },
+
+    getDefName() {
+        return this._defName;
+    },
+
+    // setDefName: function(name:string){
+    //     this.name = this._defName = name;
+    // },
+    setDefDetails(defId, uri, hash, name) {
+        this._defId = defId;
+        this._defUri = uri;
+        this._defHash = hash;
+        this.name = this._defName = name;
+
+        // this.set({ '@s': defId, '@c': uri });
+        // this._defHash = hash;
+        // this.name = this._defName = name;
+    },
+
+    /**
+     * 
+     */
+    hash(asString) {
+        let result = stringify(this.attributes);//omit(this.attributes, '@e', '@es', '@s', '@c', 'id'));
+        return hash(result, asString);
+    },
+
+    /**
+     * 
+     */
+    clone(){
+        return new Component( this.toJSON() );
+    },
+
+    /**
+     * 
+     */
+    toJSON(options) {
+        let result = extend({},this.attributes); //omit(this.attributes, '@e', '@es', '@c', 'id');
+        
+        if (this.id !== 0) {
+            result[Component.ID] = this.id;
+        }
+
+        if (this.entityId > 0) {
+            result['@e'] = this.entityId;
+        }
+
+        if (options && options.cdefMap) {
+            result['@c'] = options.cdefMap[ this.getDefId() ];
+        }
+        return result;
+    }
+});
+
+class OldComponent extends Model {
     constructor(attrs, options) {
         attrs = Component.prototype.parse.call(null, attrs);
         super(attrs, options);
     }
 
     parse(resp) {
-        // console.log('Component.parse', resp);
-        let esId = undefined, eId = undefined;
+        let esId = undefined,
+            eId = undefined;
         if (!resp || Object.keys(resp).length <= 0) {
             return resp;
         }
@@ -24,10 +287,7 @@ export default class Component extends Model {
             esId = resp['@es'];
             delete resp['@es'];
         }
-        // if( resp['@e'] ){
-        // eId = resp['@e'];
-        // delete resp['@e'];
-        // }
+
         if (resp['@i']) {
             resp.id = resp['@i'];
             delete resp['@i'];
@@ -37,12 +297,6 @@ export default class Component extends Model {
             eId = resp['@e'] === undefined ? 0 : resp['@e'];
             resp['@e'] = setEntityIdFromId(eId, esId);
         }
-
-        // if( esId || eId ){
-        // log.debug('creating from ' + eId + ' ' + esId );
-        // resp['@e'] = setEntityIdFromId(eId, esId);
-        // resp['@es'] = getEntitySetIdFromId
-        // }
 
         return resp;
     }
@@ -56,17 +310,6 @@ export default class Component extends Model {
             attrs = other.attributes;
         }
 
-        // let copy = {};
-        // for( let key in attrs ){
-        //     switch( key ){
-        //         case '@e': case '@es': case '@s': case '@c':
-        //             break;
-        //         default:
-        //             copy[key] = attrs[key];
-        //             break;
-        //     }
-        // }
-        // // this.set( copy, options );
         this.set(omit(attrs, '@e', '@es', '@s', '@c'), options);
     }
 
@@ -90,6 +333,17 @@ export default class Component extends Model {
 
     setEntityId(id, internalId) {
         this.attributes['@e'] = id;
+    }
+
+    setEntity(entity) {
+        if (!entity || !entity.isEntity) {
+            this._entity = null;
+            this.attributes['@e'] = undefined;
+            return;
+        }
+
+        this.attributes['@e'] = entity.id;
+        this._entity = entity;
     }
 
     getDefId() {

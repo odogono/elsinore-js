@@ -59,17 +59,15 @@ export default class Registry {
     /**
     *   Creates a new entity
     */
-    createEntity(components, options = {}) {
-        options.registry = this;
-        let attrs = {};
+    createEntity(components, options = {}) {        
         let idSet = false;
+        
+        options.registry = this;
 
         if (options['@e']) {
-            attrs['@e'] = options['@e'];
             idSet = true;
         }
         if (options['@es']) {
-            attrs['@es'] = options['@es'];
             idSet = true;
         }
 
@@ -78,25 +76,26 @@ export default class Registry {
 
             // check to see whether the entity id is set on the component.
             const first = Array.isArray(components) ? components[0] : components;
+            
             const reportedEntityId = first.getEntityId();
-            if (reportedEntityId !== void 0) {
+            
+            if ( reportedEntityId !== 0 && reportedEntityId !== undefined) {
+                // if( options.debug ){ console.log('[Registry][createEntity]', 'reportedEntityId', reportedEntityId); }
                 // attrs['@e'] = getEntityIdFromId(reportedEntityId);
                 // attrs['@es'] = getEntitySetIdFromId(reportedEntityId);
                 options.id = reportedEntityId;
+            
                 idSet = false;
             }
-        } else if (options.comBf) {
-            attrs.comBf = options.comBf;
-            delete options.comBf;
         }
 
-        if (options.id === void 0 && !idSet) {
-            attrs.id = this.createId();
-        } else {
-            attrs.id = options.id;
-        }
+        // if( options.debug ){ console.log('[Registry][createEntity]', 'create with', idSet, attrs ); }
 
-        let result = new this.Entity(attrs, options);
+        if (options.id === undefined && !idSet) {
+            options.id = this.createId();
+        }
+        
+        let result = this.Entity.create(options);
 
         if (components) {
             result.addComponent(components);
@@ -109,16 +108,7 @@ export default class Registry {
      * 
      */
     createEntityWithId(entityId = 0, entitySetId = 0, options = {}) {
-        options.registry = this;
-        let attrs = { '@e': entityId, '@es': entitySetId };
-        if (options.comBf) {
-            attrs.comBf = options.comBf;
-            delete options.comBf;
-        }
-        if (options.id) {
-            attrs = { id: options.id };
-        }
-        return new this.Entity(attrs, options);
+        return this.createEntity( null, {...options, '@e':entityId, '@es':entitySetId} );
     }
 
     /**

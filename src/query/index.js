@@ -134,25 +134,25 @@ export default class Query {
         // return true;
     }
 
-    /**
-     * 
-     */
+     /**
+      * 
+      */
     buildEntityContext(entity, options = {}) {
-        let context, rootObject;
-
-        context = QueryContext.create(this, {}, options);
+        let context = QueryContext.create(this, {}, options);
 
         if (EntitySet.isEntitySet(entity)) {
             context.entitySet = entity;
         } else if (Entity.isEntity(entity)) {
             context.entity = entity;
-        } else {
-            context.entitySet = null;
         }
 
-        context.root = rootObject = context.entity || context.entitySet;
+        let rootObject = context.root = context.entity || context.entitySet;
+
+        // console.log('[buildEntityContext]', 'registry', rootObject );
+
         context.registry = options.registry ||
             (rootObject ? rootObject.getRegistry() : null);
+
         context.last = [VALUE, rootObject];
 
         if (options.debug) {
@@ -167,10 +167,19 @@ export default class Query {
     }
 }
 
-class QueryContext {
-    constructor(query) {
-        this.query = query;
-    }
+
+function QueryContext(query){
+    this.query = query;
+    
+    this.entitySet = null;
+
+    this.entity = null;
+
+    this.registry = null;
+}
+
+
+Object.assign( QueryContext.prototype, {
 
     /**
     *   Returns the referenced value of the passed value providing it is a Query.VALUE
@@ -205,7 +214,7 @@ class QueryContext {
             return value;
         }
         return null;
-    }
+    },
 
     /**
     *   Resolves the given entitySet parameter into
@@ -238,7 +247,7 @@ class QueryContext {
         }
 
         return null;
-    }
+    },
 
     /**
      * Resolve a value of component ids
@@ -267,7 +276,7 @@ class QueryContext {
         result = BitField.create();
         result.setValues(componentIds, true);
         return result;
-    }
+    },
 
     /**
     *   Takes an entityset and applies the filter to it resulting
@@ -336,11 +345,11 @@ class QueryContext {
             if (
                 !filterFunction && !entityFilter && offset === 0 && limit === 0
             ) {
-                entities = entitySet.models;
+                entities = entitySet.getEntities();
             } else {
                 // console.log('g', entitySet );
                 // select the subset of the entities which pass through the filter
-                entities = entitySet.models.reduce(
+                entities = entitySet.getEntities().reduce(
                     (result, entity) => {
                         let cmdResult;
 
@@ -395,13 +404,12 @@ class QueryContext {
 
         return context.last = [VALUE, value];
     }
-}
+
+});
 
 QueryContext.create = function(query, props = {}, options = {}) {
-    let context;
-    let type;
-    type = options.context || props.type || QueryContext;
-    context = new type(query);
+    let type = options.context || props.type || QueryContext;
+    let context = new type(query);
     context.type = type;
     context.cid = uniqueId('qc');
     Object.assign(context, props);

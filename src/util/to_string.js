@@ -8,6 +8,11 @@ import stringify from './stringify';
 
 import { getEntityIdFromId } from './id';
 
+/**
+ * 
+ * @param {*} entity 
+ * @param {*} indent 
+ */
 export function entityToString(entity, indent = '') {
     let res = [];
     let comDefId;
@@ -22,6 +27,11 @@ export function entityToString(entity, indent = '') {
     return res;
 }
 
+/**
+ * 
+ * @param {*} component 
+ * @param {*} indent 
+ */
 export function componentToString(component, indent = '') {
     let componentJSON;
 
@@ -40,6 +50,11 @@ export function componentToString(component, indent = '') {
     return `${indent}${cCid} (${componentId}) ${cName}(${cDefId}) e:${entityId} ${componentHash} ${componentJSON}`;
 }
 
+/**
+ * 
+ * @param {*} es 
+ * @param {*} indent 
+ */
 export function entitySetToString(es, indent) {
     let entity;
     let res = [];
@@ -62,27 +77,6 @@ export function entitySetToString(es, indent) {
 }
 
 export function toString(entity, indent = '', join = '\n') {
-    let res = [''];
-
-    if (Array.isArray(entity)) {
-        entity.forEach(e => res = res.concat(toString(e, '  ', ' ')));
-    } else if (Entity.isEntity(entity)) {
-        res = res.concat(entityToString(entity, indent));
-    } else if (Component.isComponent(entity)) {
-        res = res.concat(componentToString(entity, indent));
-    } else if (EntityProcessor.isEntityProcessor(entity)) {
-        res = res.concat(entitySetToString(entity.entitySet, indent));
-    } else if (EntitySet.isEntitySet(entity)) {
-        res = res.concat(entitySetToString(entity, indent));
-    } else if (entity instanceof Collection) {
-        entity.each(item => {
-            res = res.concat(toString(item, '  '));
-        });
-    }
-    return res.join(join);
-}
-
-export function secretToString(entity, indent = '', join = '\n') {
     let res = [''];
 
     if (Array.isArray(entity)) {

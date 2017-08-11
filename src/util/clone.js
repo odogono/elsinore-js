@@ -47,7 +47,6 @@ export function cloneEntity(srcEntity, dstEntity, options = {}) {
 
     if (!dstEntity) {
         dstEntity = srcEntity.clone();
-        dstEntity.setRegistry(registry);
     }
 
     if (!dstEntity && !fullCopy) {

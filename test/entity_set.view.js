@@ -121,7 +121,7 @@ test('adding an entity to the view also adds it to the entityset', async t => {
         // entitySet.addEntity( {'@c':'/component/name', name:'alice'});
         // Log.debug('es is', entityToString(entitySet));
         // Log.debug('view is', entityToString(view));
-        t.equals(entitySet.length, 1, 'only 1 entity added');
+        t.equals(entitySet.size(), 1, 'only 1 entity added');
 
         t.end();
     } catch (err) {

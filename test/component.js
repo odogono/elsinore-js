@@ -1,15 +1,6 @@
-import _ from 'underscore';
-import Sinon from 'sinon';
 import test from 'tape';
 
-import {
-    Component, Entity,
-    Registry,
-    initialiseRegistry, 
-    printE,
-    printIns,
-} from './common';
-
+import Component from '../src/component';
 
 
 test('is a component', t => {
@@ -38,7 +29,16 @@ test('apply copies non-identifying attributes', t => {
 
     src.apply(dst);
 
-    t.deepEqual( src.toJSON(), {'@e': 1000, '@i': 422, age: 32, height: 186, name: 'peter'} );
+    t.deepEqual( src.toJSON(), {'@e': 1000, '@i': 421, age: 32, height: 186, name: 'peter'} );
 
     t.end();
 });
+
+test('clone', t => {
+    const src = new Component({name:'charles', age:15, height:186, 'id':421, '@e':1000});
+    const dst = src.clone();
+
+    t.deepEqual( src.toJSON(), dst.toJSON() );
+
+    t.end();
+})

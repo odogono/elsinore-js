@@ -305,13 +305,13 @@ test('deferred adding of entities', async t => {
         );
 
         // entitySet._echo('>---');
-        t.equals(entitySet.length, 0);
+        t.equals(entitySet.size(), 0);
 
         await entitySet.flush();
 
         // Log.debug(entityToString(entitySet));
 
-        t.equals(entitySet.length, 4);
+        t.equals(entitySet.size(), 4);
         // Log.debug('all good', entityToString(entitySet) );
     } catch (err) {
         Log.error('test error', err.message, err.stack);

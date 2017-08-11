@@ -1,7 +1,5 @@
 'use strict';
 
-import { Collection } from 'odgn-backbone-model';
-
 import Entity from '../entity';
 import { InvalidEntityError } from '../error';
 
@@ -23,8 +21,6 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
 
     reset() {
         super.reset();
-        // store references to entities that exist during operations
-        this._entityCache = new Collection();
     }
 
     /**
@@ -58,7 +54,7 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
                 }
 
                 return this.execute(entitySet, options).then(() =>
-                    valueArray(this.componentsAdded.models.concat(this.componentsUpdated.models))
+                    valueArray(this.componentsAdded.concat(this.componentsUpdated))
                 );
             });
         } else {
@@ -77,7 +73,7 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
         // execute any outstanding commands
         if (execute) {
             return this.execute(entitySet, options).then(() =>
-                valueArray(this.componentsAdded.models.concat(this.componentsUpdated.models))
+                valueArray(this.componentsAdded.concat(this.componentsUpdated))
             );
         }
         return [];
@@ -135,7 +131,7 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
 
         this.addCommand(CMD_COMPONENT_REMOVE, entityId, component);
 
-        return !execute ? this : this.execute(entitySet, options).then(() => valueArray(this.componentsRemoved.models));
+        return !execute ? this : this.execute(entitySet, options).then(() => valueArray(this.componentsRemoved));
     }
 
     /**
@@ -171,7 +167,7 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
                     if (!execute) {
                         return this;
                     }
-                    return this.execute(entitySet, options).then(() => valueArray(this.entitiesAdded.models));
+                    return this.execute(entitySet, options).then(() => valueArray(this.entitiesAdded));
                 });
         } else {
             if (execute) {
@@ -190,7 +186,7 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
 
             // execute any outstanding commands
             return this.execute(entitySet, options).then(() => {
-                return valueArray(this.entitiesAdded.models.concat(this.entitiesUpdated.models));
+                return valueArray(this.entitiesAdded.concat(this.entitiesUpdated));
             });
         });
     }
@@ -257,7 +253,7 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
         return this.removeComponent(entitySet, entity.getComponents(), { ...options, ...removeOptions }).then(() => {
             // execute any outstanding commands
             if (execute) {
-                return this.execute(entitySet, options).then(() => valueArray(this.entitiesRemoved.models));
+                return this.execute(entitySet, options).then(() => valueArray(this.entitiesRemoved));
             }
             return this;
         });
@@ -364,12 +360,12 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
 
             return entitySet
                 .update(
-                    this.entitiesAdded.models,
-                    this.entitiesUpdated.models,
-                    this.entitiesRemoved.models,
-                    this.componentsAdded.models,
-                    this.componentsUpdated.models,
-                    this.componentsRemoved.models,
+                    this.entitiesAdded,
+                    this.entitiesUpdated,
+                    this.entitiesRemoved,
+                    this.componentsAdded,
+                    this.componentsUpdated,
+                    this.componentsRemoved,
                     options
                 )
                 .then(updateResult => {

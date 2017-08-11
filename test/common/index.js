@@ -18,6 +18,7 @@ export * from '../../src/util/is';
 export * from '../../src/util/to';
 
 import {createLog} from '../../src/util/log';
+import {toString as entityToString} from '../../src/util/to_string';
 export {createLog};
 export {toString as entityToString} from '../../src/util/to_string';
 
@@ -149,12 +150,25 @@ export function loadFixtureJSON( fixturePath ){
 }
 
 export function logEvents(obj, prefix='evt'){
-    obj.on('all', function(evt){
-        Log.debug(prefix + ' ' + stringify( _.toArray(arguments) ) );
-    });
+    if( EntitySet.isEntitySet(obj) ){
+        obj.on('entity:add', entities => Log.info('entity:add', stringify(entities)) );
+        obj.on('entity:update', entities => Log.info('entity:update', stringify(entities)) );
+        obj.on('entity:remove', entities => Log.info('entity:remove', stringify(entities)) );
+        obj.on('component:add', components => Log.info('component:add', entityToString(components)) );
+        obj.on('component:update', components => Log.info('component:update', entityToString(components)) );
+        obj.on('component:remove', components => Log.info('component:remove', entityToString(components)) );
+    }
+    // obj.on('all', function(evt){
+    //     Log.debug(prefix + ' ' + stringify( _.toArray(arguments) ) );
+    // });
 }
 
-
+export function captureEntitySetEvent(entitySet, evt, returnEntityIds = false, cb) {
+    entitySet.on(evt, result => {
+        // Log.debug('[captureEntitySetEvent]', evt, stringify(result));
+        cb(result.map(e => (returnEntityIds ? e.getEntityId() : e.id)));
+    });
+}
 
 const toStringPath = Path.join(ElsinoreDir, 'util/to_string');
 

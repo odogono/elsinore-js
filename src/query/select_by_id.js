@@ -46,7 +46,7 @@ function commandSelectById(context, entityIds, selectFromRoot) {
     // console.log('entityIds: ' + JSON.stringify(entityIds) );
     entityIds = context.valueOf(entityIds);
 
-    // console.log('using es ' + stringify(selectFromRoot) + ' ' + entitySet.length );
+    // console.log('using es ' + stringify(selectFromRoot) + ' ' + entitySet.size() );
     // console.log('entityIds: ' + JSON.stringify(entityIds) );
     // printIns( entitySet );
     //
@@ -64,19 +64,23 @@ function commandSelectById(context, entityIds, selectFromRoot) {
     // process.exit();
     value = selectById(context.registry, entitySet, entityIds, true);
 
-    return context.last = [ VALUE, value ];
+    return (context.last = [VALUE, value]);
 }
 
 function selectById(registry, entitySet, entityIds, returnAsEntitySet) {
-    let ii, len, entity, result, entities = [];
+    let ii,
+        len,
+        entity,
+        result,
+        entities = [];
 
-    entityIds = Array.isArray(entityIds) ? entityIds : [ entityIds ];
+    entityIds = Array.isArray(entityIds) ? entityIds : [entityIds];
 
     // remove duplicates
     entityIds = arrayUnique(entityIds);
 
     for (ii = 0, len = entityIds.length; ii < len; ii++) {
-        if (entity = entitySet.getEntity(entityIds[ii])) {
+        if ((entity = entitySet.getEntity(entityIds[ii]))) {
             // console.log('select entity ' + entityIds[ii] );
             entities.push(entity);
         }

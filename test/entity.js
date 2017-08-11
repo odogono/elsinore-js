@@ -20,7 +20,7 @@ import {
 
 
 test('is an entity', t => {
-    let e = new Entity();
+    let e = Entity.create();
     t.equals( e.type, 'Entity' );
     t.equals( Entity.prototype.type, 'Entity' );
     t.ok( Entity.isEntity(e) );
@@ -29,7 +29,7 @@ test('is an entity', t => {
 
 
 test('setting the id', t => {
-    let e = new Entity({'@e':456});
+    let e = Entity.create({'@e':456});
     // let e = Entity.create( 456 );
     
     t.equals( e.getEntityId(), 456 );
@@ -37,11 +37,11 @@ test('setting the id', t => {
     t.equals( e.getEntityId(), 22 );
     t.equals( e.id, 22 );
 
-    e.set({id: 54});
+    e.setEntityId(54);
     t.equals( e.getEntityId(), 54 );
     t.equals( e.getEntitySetId(), 0 );
 
-    e.set({id: 0});
+    e.setEntityId(0);
     e.setEntitySetId( 2000 );
     t.equals( e.getEntitySetId(), 2000 );
     t.equals( e.getEntityId(), 0 );
@@ -57,13 +57,13 @@ test('setting the id', t => {
 });
 
 test('setting the id directly', t => {
-    let e = new Entity({id:2005});
+    let e = Entity.create({id:2005});
     t.equals( e.getEntityId(), 2005 );
     t.end();
 });
 
 test('passing entity id in options', t => {
-    let e = new Entity({'@e': 1622});
+    let e = Entity.create({'@e': 1622});
     t.equals( e.getEntityId(), 1622 );
     t.end();
 });
@@ -81,7 +81,7 @@ test('setting ids', t => {
 });
 
 test('setting entity set', t => {
-    let e = new Entity();
+    let e = Entity.create();
     e.setEntityId( 22 );
     e.setEntitySetId( 103 );
 
@@ -95,7 +95,7 @@ test('setting entity set', t => {
 })
 
 test('hashing', t => {
-    let e = new Entity();
+    let e = Entity.create();
     // because an entity is the sum of its components, without components it is nothing
     t.equals( e.hash(), 0 );
 
@@ -104,7 +104,7 @@ test('hashing', t => {
 
     t.equals( e.hash(true), '7c7ecfd3' );
 
-    let oe = new Entity();
+    let oe = Entity.create();
     let oc = createComponent({name:'douglas'});
     oe.addComponent( oc );
 
@@ -114,13 +114,13 @@ test('hashing', t => {
 });
 
 test('toJSON with full options', t => {
-    let e = new Entity();
+    let e = Entity.create();
     let c = createComponent({name:'douglas'});
     e.addComponent( c );
 
     let json = e.toJSON();
 
-    t.deepEquals( e.toJSON(), [ { '@s':1, name: 'douglas' } ] );
+    t.deepEquals( e.toJSON(), [ { name: 'douglas' } ] );
     t.end();
 });
 

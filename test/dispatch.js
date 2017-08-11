@@ -89,7 +89,7 @@ test('basic execution of a processor', t => {
     dispatch.addProcessor(otherProcessor);
 
     // register a second processor with no query
-    const entity = new Entity();
+    const entity = Entity.create();
 
     dispatch.execute(entity);
 

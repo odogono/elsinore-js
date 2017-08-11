@@ -76,7 +76,7 @@ function pluckEntitySet(registry, entitySet, componentIds, attributes) {
 
     // iterate through each of the entityset models and select the components
     // specified - if they exist, select the attributes required.
-    result = entitySet.models.reduce(
+    result = entitySet.getEntities().reduce(
         (values, entity) => {
             // log.debug('inCOMing ' + stringify(entity), attributes, componentIds );
             if (!componentIds) {

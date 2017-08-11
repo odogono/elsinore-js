@@ -1,4 +1,5 @@
 import { Collection, Events } from 'odgn-backbone-model';
+import Base from '../base';
 import BitField from 'odgn-bitfield';
 import Component from '../component';
 import Entity from '../entity';
@@ -18,60 +19,75 @@ import PullStreamSource from './source';
 import PullStreamSink from './sink';
 
 
-let CollectionPrototype = Collection.prototype;
+// let CollectionPrototype = Collection.prototype;
 
-class ComponentCollection extends Collection {}
-ComponentCollection.model = Component;
+// class ComponentCollection extends Collection {}
+// ComponentCollection.model = Component;
+
+export default function EntitySet(entities, options={}){
+    this.initialize(entities,options);
+}
 
 /**
  * An EntitySet is a container for entities
  */
-export default class EntitySet extends Collection {
+Object.assign( EntitySet.prototype, Base.prototype, {
+
     initialize(entities, options = {}) {
-        // this.source = this.source.bind(this);
-        // this.source = PullStreamSource(this,options)
-        let cmdBuffer = CmdBuffer;
+        this._entitiesMap = {};
+        this._entities = [];
+        this._entitiesById = {};
+
+        let cmdBufferType = CmdBuffer;
         this._uuid = options.uuid || createUUID();
         this.cid = uniqueId('es');
-        this.components = new ComponentCollection();
+        this._componentsById = {};
 
         if (options['id']) {
             this.id = options['id'];
         }
 
         if (options.cmdBuffer) {
-            cmdBuffer = options.cmdBuffer;
+            cmdBufferType = options.cmdBuffer;
         }
-        this._cmdBuffer = new cmdBuffer();
+        this._cmdBuffer = new cmdBufferType();
         this.allowEmptyEntities = options.allowEmptyEntities === void 0 ? true : options.allowEmptyEntities;
-    }
+    },
 
     getEntitySetId() {
         return this.id;
-    }
+    },
 
     getUuid() {
         return this._uuid;
-    }
+    },
 
     getUUID() {
         return this._uuid;
-    }
+    },
 
     hash() {
         return EntitySet.hash(this, this.getQuery());
-    }
+    },
 
     destroy() {
         this.stopListening();
         // this.entities = null;
         this.storage = null;
         this.registry = null;
-    }
+    },
+
+    at(index){
+        return this._entities[index];
+    },
 
     size() {
-        return this.length;
-    }
+        return this._entities.length;// this.length;
+    },
+
+    getEntities(){
+        return this._entities;
+    },
 
     /**
      * 
@@ -95,7 +111,7 @@ export default class EntitySet extends Collection {
         }, []);
 
         return result;
-    }
+    },
 
     // iterator: function(options){
     //     let self = this;
@@ -120,10 +136,10 @@ export default class EntitySet extends Collection {
         let nextIndex = 0;
         return {
             next: () => {
-                return nextIndex < this.length ? { value: this.at(nextIndex++), done: false } : { done: true };
+                return nextIndex < this.size() ? { value: this.at(nextIndex++), done: false } : { done: true };
             },
         };
-    }
+    },
 
     /**
      * Create a 'faux' readStream which returns the entitysets
@@ -265,7 +281,7 @@ export default class EntitySet extends Collection {
         // return Pull( PullStreamSource(this,options));
         return PullStreamSource(this,options);
         // return source;
-    }
+    },
 
     /**
      * Returns a Pull-Stream sink
@@ -275,28 +291,28 @@ export default class EntitySet extends Collection {
      */
     sink(options, completeCb){
         return PullStreamSink( this, options, completeCb);
-    }
+    },
 
     /**
      * 
      */
     setRegistry(registry, options) {
         this._registry = registry;
-    }
+    },
 
     /**
      * 
      */
     getRegistry() {
         return this._registry;
-    }
+    },
 
     /**
      * 
      */
     getSchemaRegistry() {
         return this.getRegistry().schemaRegistry;
-    }
+    },
 
 
     /**
@@ -304,11 +320,11 @@ export default class EntitySet extends Collection {
     */
     addComponent(component, options) {
         // conveniently create a component instance if raw data is passed
-        if (component['@c']) {
+        if (component['@c'] || Array.isArray(component) ) {
             component = this.getRegistry().createComponent(component);
         }
         return this._cmdBuffer.addComponent(this, component, options);
-    }
+    },
 
     /**
      * Returns an existing component instance (if it exists)
@@ -321,40 +337,41 @@ export default class EntitySet extends Collection {
             componentId = component.id;
         }
 
-        return this.components.get(componentId);
-    }
+        // console.log('[EntitySet][getComponent]', componentId, this._componentsById );
+        return this._componentsById[componentId];
+    },
 
     /**
      * Returns a component by its entityid and def id
      */
     getComponentByEntityId(entityId, componentDefId) {
-        const entity = this.get(entityId);
-        if (entity) {
+        const entity = this._entitiesById[ entityId ];// this.get(entityId);
+        if (entity !== undefined ) {
             return entity.components[componentDefId];
         }
         return null;
-    }
+    },
 
     /**
     *
     */
     removeComponent(component, options) {
         return this._cmdBuffer.removeComponent(this, component, options);
-    }
+    },
 
     // add: function( entity, options ){
     //     // 
     // },
-    _addModels(models, options) {
-        return CollectionPrototype.call(this, entity, options);
-    }
+    // _addModels(models, options) {
+    //     return CollectionPrototype.call(this, entity, options);
+    // }
 
     /**
     *   Flushes any outstanding commands in the buffer
     */
     flush(options) {
         return this._cmdBuffer.flush(this, options);
-    }
+    },
 
     /**
     *   Adds an entity with its components to the entityset
@@ -382,8 +399,10 @@ export default class EntitySet extends Collection {
         if (!add) {
             add = this.getRegistry().createEntity(entity);
         }
-        return this._cmdBuffer.addEntity(this, add, options);
-    }
+
+        let result = this._cmdBuffer.addEntity(this, add, options);
+        return result;
+    },
 
     /**
     *
@@ -393,7 +412,7 @@ export default class EntitySet extends Collection {
             entity = entity.models;
         }
         return this._cmdBuffer.removeEntity(this, entity, options);
-    }
+    },
 
     _createEntity(entityId, returnId, options = {}) {
         let result;
@@ -415,33 +434,91 @@ export default class EntitySet extends Collection {
         result.setEntitySet(this, false);
 
         return result;
-    }
+    },
 
     _createComponentId() {
         return this.getRegistry().createId();
-    }
+    },
 
+    /**
+     * 
+     * @param {*} entity 
+     */
     _addEntity(entity) {
         entity.setRegistry(this.getRegistry());
         // no need for us to issue add events as well as entity:add
-        this.add(entity, { silent: true });
-        return entity;
-    }
+        // this.add(entity, { silent: true });
 
+        let existing = this._entitiesMap[ entity.cid ];
+        if( existing ){
+            return entity;
+        }
+
+        this._entitiesMap[ entity.cid ] = entity;
+        this._entities.push( entity );
+        this._entitiesById[ entity.id ] = entity;
+
+        // console.log('add new entity', entity );
+
+        return entity;
+    },
+
+    /**
+     * 
+     * @param {*} entity 
+     */
     _removeEntity(entity) {
+        let existing = this._entitiesMap[ entity.cid ];
+        if( existing ){
+            delete this._entitiesMap[entity.cid];
+            delete this._entitiesById[entity.id];
+
+            let index = this._entities.indexOf(entity);
+            this._entities.splice( index,1 );
+        }
+
         // let entityId = Entity.toEntityId(entity);
         // no need for us to issue remove events as well as entity:remove
-        this.remove(entity, { silent: true });
+        // this.remove(entity, { silent: true });
         return entity;
-    }
+    },
 
+    /**
+     * 
+     * @param {*} component 
+     */
+    _addComponent(component){
+        this._componentsById[ component.id ] = component;
+    },
+
+    /**
+     * 
+     * @param {*} component 
+     */
+    _removeComponent(component){
+        delete this._componentsById[ component.id ];
+    },
+
+
+    /**
+     * 
+     * @param {*} entity 
+     * @param {*} options 
+     */
     getEntity(entity, options) {
-        return this.get(entity, options);
-    }
+        if( isInteger(entity) ){
+            return this._entitiesById[entity];
+        }
+        return this._entities.indexOf(entity);
+        // return this.get(entity, options);
+    },
 
     hasEntity(entity) {
-        return this.get(entity) !== undefined;
-    }
+        if( isInteger(entity) ){
+            return this._entitiesById[entity] !== undefined;
+        }
+        return this._entities.indexOf(entity) !== -1;
+    },
 
     /**
      * TODO: finish
@@ -449,59 +526,74 @@ export default class EntitySet extends Collection {
      */
     update(entitiesAdded, entitiesUpdated, entitiesRemoved, componentsAdded, componentsUpdated, componentsRemoved) {
         let ii, len, component;
+        // console.log('[EntitySet][update]', entitiesAdded.length, entitiesUpdated.length, entitiesRemoved.length, componentsAdded.length, componentsUpdated.length, componentsRemoved.length );
+        
+        // if( entitiesAdded.length ) console.log('[EntitySet][update]','[entitiesAdded]', entitiesAdded.map( e => e.id) );
+        // if( entitiesUpdated.length ) console.log('[EntitySet][update]','[entitiesUpdated]', entitiesUpdated.map( e => e.id) );
+        // if( entitiesRemoved.length ) console.log('[EntitySet][update]','[entitiesRemoved]', entitiesRemoved.map( e => e.id) );
+
+        // if( componentsAdded.length ) console.log('[EntitySet][update]','[componentsAdded]', componentsAdded.map( e => e.id) );
+        // if( componentsUpdated.length ) console.log('[EntitySet][update]','[componentsUpdated]', componentsUpdated.map( e => e.id) );
+        // if( componentsRemoved.length ) console.log('[EntitySet][update]','[componentsRemoved]', componentsRemoved.map( e => e.id) );
 
         for (ii = 0, len = componentsAdded.length; ii < len; ii++) {
-            this.components.add(componentsAdded[ii]);
-            // console.log('UPDATE/ADD', componentsAdded[ii].getEntityId() );
+            this._addComponent(componentsAdded[ii]);
+            // console.log('UPDATE/ADD', componentsAdded[ii].getEntityId(), componentsAdded[ii].id );
         }
         for (ii = 0, len = componentsUpdated.length; ii < len; ii++) {
             component = componentsUpdated[ii];
             // console.log(`!!ES!! updated com ${JSON.stringify(component)} ${component.getEntityId()}`);
             let existing = this.getComponentByEntityId(component.getEntityId(), component.getDefId());
-            // let existing = this.components.get( component );
+            
             if (existing) {
                 // console.log(`!!ES!! EntitySet.update existing ${existing.cid} ${existing.getEntityId()}`);
                 existing.apply(component, { silent: true });
                 // console.log(`!!ES!! EntitySet.update existing ${existing.cid} ${existing.getEntityId()}`);
             } else {
                 // console.log(`!!!ES!!! adding component update ${JSON.stringify(component)}`);
-                this.components.add(component);
+                this._addComponent(component);
             }
         }
         for (ii = 0, len = componentsRemoved.length; ii < len; ii++) {
-            this.components.remove(componentsRemoved[ii]);
-        }
-    }
-
-    /**
-     * Replaces the entitySets entities with the specified entities
-     */
-    reset(entities, options) {
-        let ii, len, entity;
-        if (entities && entities.isEntitySet) {
-            // console.log('reset from',entities.cid,'to',this.cid,'count', entities.models.length);
-            entities = entities.models;
+            this._removeComponent( componentsRemoved[ii] );
+            // console.log('[EntitySet][update]', 'component:remove', componentsRemoved );
         }
 
-        const query = this.getQuery();
-
-        if (!query || query.isEmpty()) {
-            // console.log('reset - no query');
-            return CollectionPrototype.reset.call(this, entities);
+        for (ii = 0, len = entitiesRemoved.length; ii < len; ii++) {
+            let entity = entitiesRemoved[ii];
+            // console.log('[EntitySet][update]', 'entity:remove', entity.id );
         }
+    },
 
-        // console.log('reset - using query', query );
-        CollectionPrototype.reset.call(this, null, { silent: true });
+    // /**
+    //  * Replaces the entitySets entities with the specified entities
+    //  */
+    // reset(entities, options) {
+    //     let ii, len, entity;
+    //     if (entities && entities.isEntitySet) {
+    //         // console.log('reset from',entities.cid,'to',this.cid,'count', entities.models.length);
+    //         entities = entities.models;
+    //     }
 
-        for (ii = 0, len = entities.length; ii < len; ii++) {
-            entity = entities[ii];
-            if (this.isEntityOfInterest(entity, query)) {
-                this.add(entity);
-            }
-        }
+    //     const query = this.getQuery();
 
-        return entities;
-    }
+    //     if (!query || query.isEmpty()) {
+    //         // console.log('reset - no query');
+    //         return CollectionPrototype.reset.call(this, entities);
+    //     }
+
+    //     // console.log('reset - using query', query );
+    //     CollectionPrototype.reset.call(this, null, { silent: true });
+
+    //     for (ii = 0, len = entities.length; ii < len; ii++) {
+    //         entity = entities[ii];
+    //         if (this.isEntityOfInterest(entity, query)) {
+    //             this.add(entity);
+    //         }
+    //     }
+
+    //     return entities;
+    // }
 
     /**
      * 
@@ -529,7 +621,7 @@ export default class EntitySet extends Collection {
 
         // console.log(`[entitySet][triggerEntityEvent]`, JSON.stringify(args));
         return this.trigger.apply(this, [ name, entity, this, ...rest ]);
-    }
+    },
 
     listenToEntityEvent(entityOrFilter, name, callback, context) {
         if (!this._entityEvents) {
@@ -540,7 +632,7 @@ export default class EntitySet extends Collection {
         }
 
         this._entityEvents.listenTo(this._entityEvents, name, callback);
-    }
+    },
 
     // TODO: remove
     doesEntityHaveComponent(entityId, componentId, options) {
@@ -560,7 +652,7 @@ export default class EntitySet extends Collection {
         // let componentDefId = ComponentDef.getId( componentDef );
         return bf.get(componentId);
         // return entity.hasComponent( componentId );
-    }
+    },
 
     // TODO: remove
     removeComponentFromEntity(component, entity, options) {
@@ -569,12 +661,12 @@ export default class EntitySet extends Collection {
         this.getRegistry().destroyComponent(component);
 
         return this;
-    }
+    },
 
     // TODO: remove
     getComponentFromEntity(component, entity, options) {
         return entity.components[component.getDefId()];
-    }
+    },
 
     // TODO: remove
     doesEntityHaveComponents(entity, options) {
@@ -584,39 +676,42 @@ export default class EntitySet extends Collection {
         }
         let size = Object.keys(entity.components).length;
         return size > 0;
-    }
+    },
 
 
     /**
+     * NOTE: this functionality is removed in favour
+     * of external means of filtering entitysets
+     * 
      * Sets a query against this entityset.
      * All entities which are added to the ES are
      * passed through the query for validity
      */
-    setQuery(query, options = {}) {
-        this._query = null;
-        if (!query) {
-            return;
-        }
-        if (query instanceof Query) {
-            if (query.isEmpty()) {
-                return;
-            }
-            this._query = new Query(query);
-            return;
-        }
-        if ( typeof query === 'function' ) {
-            this._query = new Query(query);
-        }
+    // setQuery(query, options = {}) {
+    //     this._query = null;
+    //     if (!query) {
+    //         return;
+    //     }
+    //     if (query instanceof Query) {
+    //         if (query.isEmpty()) {
+    //             return;
+    //         }
+    //         this._query = new Query(query);
+    //         return;
+    //     }
+    //     if ( typeof query === 'function' ) {
+    //         this._query = new Query(query);
+    //     }
 
-        // check that entities are still allowed to belong to this set
-        this.evaluateEntities();
+    //     // check that entities are still allowed to belong to this set
+    //     this.evaluateEntities();
 
-        return this._query;
-    }
+    //     return this._query;
+    // }
 
-    getQuery() {
-        return this._query;
-    }
+    // getQuery() {
+    //     return this._query;
+    // }
 
     /**
      * Executes a query against this entityset
@@ -631,7 +726,7 @@ export default class EntitySet extends Collection {
             return query.execute(this, options);
         }
         return Query.exec(query, this, options);
-    }
+    },
 
     /**
     *   Removes the entities identified by the query
@@ -640,71 +735,57 @@ export default class EntitySet extends Collection {
         options = { ...options, registry: this.getRegistry() };
         const result = Query.exec(query, this, options);
         return this.removeEntity(result);
-    }
+    },
 
-    isEntityOfInterest(entity, options) {
-        if (!this._query) {
-            return true;
-        }
-        const tEntity = this._query.execute(entity);
-        return tEntity ? true : false;
-    }
+    // isEntityOfInterest(entity, options) {
+    //     if (!this._query) {
+    //         return true;
+    //     }
+    //     const tEntity = this._query.execute(entity);
+    //     return tEntity ? true : false;
+    // }
 
     /**
+     * NOTE: this functionality is removed in favour of external
+     * means of filtering entitysets
+     * 
     *   Checks through all contained entities, ensuring that they
     *   are still valid members of this entitySet according to the
     *   query
     */
-    evaluateEntities(entityIdArray, options = {}) {
-        let ii, len, entity;
-        // let entities;
-        let removed = [];
+    // evaluateEntities(entityIdArray, options = {}) {
+    //     let ii, len, entity;
+    //     // let entities;
+    //     let removed = [];
 
-        if (!this._query) {
-            return removed;
-        }
-
-        if (entityIdArray) {
-            for (ii = 0, len = entityIdArray.length; ii < len; ii++) {
-                entity = this.get(entityIdArray[ii]);
-                if (entity && !this._query.execute(entity)) {
-                    removed.push(entity);
-                }
-            }
-        } else {
-            // entities = this.entities || this;
-            for (ii = this.length - 1; ii >= 0; ii--) {
-                entity = this.at(ii);
-                if (entity && !this._query.execute(entity)) {
-                    removed.push(entity);
-                }
-            }
-        }
-
-        if (removed.length > 0) {
-            return this.removeEntity(removed, options);
-        }
-        return removed;
-    }
-
-    // /**
-    // *   Transfers entities from src to dst whilst applying the filter
-    // *   The query is then set on the dstEntitySet
-    // NOTE : map has been replaced by pull-stream operations
-    // */
-    // map(query, dstEntitySet, options = {}) {
-    //     // let entity;
-    //     dstEntitySet.reset();
-
-    //     if (query) {
-    //         dstEntitySet.setQuery(query);
+    //     if (!this._query) {
+    //         return removed;
     //     }
 
-    //     dstEntitySet.addEntity(this);
+    //     if (entityIdArray) {
+    //         for (ii = 0, len = entityIdArray.length; ii < len; ii++) {
+    //             entity = this.get(entityIdArray[ii]);
+    //             if (entity && !this._query.execute(entity)) {
+    //                 removed.push(entity);
+    //             }
+    //         }
+    //     } else {
+    //         // entities = this.entities || this;
+    //         for (ii = this.length - 1; ii >= 0; ii--) {
+    //             entity = this.at(ii);
+    //             if (entity && !this._query.execute(entity)) {
+    //                 removed.push(entity);
+    //             }
+    //         }
+    //     }
 
-    //     return dstEntitySet;
+    //     if (removed.length > 0) {
+    //         return this.removeEntity(removed, options);
+    //     }
+    //     return removed;
     // }
-}
+
+})
 
 EntitySet.prototype.type = 'EntitySet';
 EntitySet.prototype.isMemoryEntitySet = true;
@@ -715,7 +796,7 @@ EntitySet.prototype.views = null;
 
 EntitySet.hash = function(entitySet, query) {
     let str = stringify(entitySet.toJSON());
-    query = query || this._query;
+    // query = query || this._query;
     if (query) {
         str += query.hash();
     }
