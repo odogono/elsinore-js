@@ -13,15 +13,12 @@ import { CMD_ENTITY_ADD, CMD_COMPONENT_ADD, CMD_COMPONENT_REMOVE } from './sync'
 // import {createLog} from '../util/log';
 // const Log = createLog('CmdBufferSync');
 
+export default function AsyncCmdBuffer(){
+    SyncCmdBuffer.call( this );
+}
 
-export default class AsyncCmdBuffer extends SyncCmdBuffer {
-    constructor(...args) {
-        super(args);
-    }
 
-    reset() {
-        super.reset();
-    }
+Object.assign( AsyncCmdBuffer.prototype, SyncCmdBuffer.prototype, {
 
     /**
     * Adds a component to this set
@@ -77,7 +74,7 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
             );
         }
         return [];
-    }
+    },
 
     /**
     *
@@ -132,7 +129,7 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
         this.addCommand(CMD_COMPONENT_REMOVE, entityId, component);
 
         return !execute ? this : this.execute(entitySet, options).then(() => valueArray(this.componentsRemoved));
-    }
+    },
 
     /**
     *   Adds an entity with its components to the entityset
@@ -189,7 +186,7 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
                 return valueArray(this.entitiesAdded.concat(this.entitiesUpdated));
             });
         });
-    }
+    },
 
     /**
      * Executes any outstanding add/remove commands
@@ -199,7 +196,7 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
             this.reset();
             return this;
         });
-    }
+    },
 
     /**
     *
@@ -257,7 +254,7 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
             }
             return this;
         });
-    }
+    },
 
     /**
      * 
@@ -323,7 +320,7 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
             default:
                 break;
         }
-    }
+    },
 
     /**
      * 
@@ -404,13 +401,13 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
                 });
         });
     }
-}
+
+});
 
 AsyncCmdBuffer.prototype.type = 'AsyncCmdBuffer';
 AsyncCmdBuffer.prototype.isAsyncCmdBuffer = true;
 
 AsyncCmdBuffer.create = function() {
     let result = new AsyncCmdBuffer();
-    result.reset();
     return result;
 };

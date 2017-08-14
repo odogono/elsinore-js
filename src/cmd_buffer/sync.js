@@ -29,10 +29,11 @@ export const OP_UPDATE_EXISTING = 3;
 // import {createLog} from '../util/log';
 // const Log = createLog('CmdBufferSync');
 
-export default class CmdBuffer {
-    constructor() {
-        this.reset();
-    }
+export default function CmdBuffer(){
+    this.reset();
+}
+
+Object.assign( CmdBuffer.prototype, {
 
     /**
     * Adds a component to this set
@@ -159,7 +160,7 @@ export default class CmdBuffer {
         }
 
         return result;
-    }
+    },
 
     /**
     *
@@ -240,7 +241,7 @@ export default class CmdBuffer {
         }
 
         return result;
-    }
+    },
 
     /**
     *   Adds an entity with its components to the entityset
@@ -366,7 +367,7 @@ export default class CmdBuffer {
         // }
 
         // return result;
-    }
+    },
 
     /**
     *
@@ -434,7 +435,7 @@ export default class CmdBuffer {
         }
 
         return result;
-    }
+    },
 
     /**
      * 
@@ -636,7 +637,7 @@ export default class CmdBuffer {
             // console.log('trigger ES.sync events');
             this.triggerEvents(entitySet, options);
         }
-    }
+    },
 
     reset() {
         this.cmds = {};
@@ -647,7 +648,7 @@ export default class CmdBuffer {
         this.componentsAdded = []; //clearCollection( this.componentsAdded );
         this.componentsUpdated = []; //clearCollection( this.componentsUpdated );
         this.componentsRemoved = []; //clearCollection( this.componentsRemoved );
-    }
+    },
 
     /**
      * 
@@ -668,7 +669,7 @@ export default class CmdBuffer {
         this.cmds[entityId] = entityBuffer;
 
         return this;
-    }
+    },
 
     /**
      * Returns the entityId of an existing add command in the queue
@@ -690,7 +691,7 @@ export default class CmdBuffer {
         }
 
         return -1;
-    }
+    },
 
     // debugLog( logFn ){
     //     if( !logFn ){
@@ -713,8 +714,8 @@ export default class CmdBuffer {
         triggerEvent(source, 'component:add', this.componentsAdded);
         triggerEvent(source, 'entity:change', this.entitiesUpdated);
         triggerEvent(source, 'entity:add', this.entitiesAdded);
-    }
-}
+    },
+});
 
 CmdBuffer.prototype.type = 'CmdBuffer';
 CmdBuffer.prototype.isCmdBuffer = true;
@@ -739,6 +740,5 @@ function triggerEvent(source, name, collection) {
 
 CmdBuffer.create = function() {
     const result = new CmdBuffer();
-    result.reset();
     return result;
 };
