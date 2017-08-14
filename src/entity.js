@@ -14,7 +14,11 @@ import Base from './base';
 export default function Entity(options={}){
     this.id = 0;
     this._entitySet = null;
+    
     this._registry = null;
+
+    // a map of components to their def id
+    this.components = {};
 
     this.cid = uniqueId('e');
 
@@ -25,12 +29,12 @@ export default function Entity(options={}){
     this.id = readProperty(options,'id', this.id );
 
     // entityset id
-    this.esid = readProperty(options,'@es', 0 );
+    const esid = readProperty(options,'@es', 0 );
+    if( esid !== 0 ){
+        this.setEntitySetId(esid);
+    }
 
     
-
-    // a map of components to their def id
-    this.components = {};
 
     // bitfield indexes which components this entity has
     if (options.comBf) {
@@ -47,13 +51,27 @@ Object.assign( Entity.prototype, Base.prototype, {
      * Sets the id of this entity
      * @param {*} id 
      */
-    setEntityId(id) {
+    setEntityId(id, esId) {
         let eid = this.id;
         // // the entity id is set as the low 30 bits 
         // // eid += (id & 0x3fffffff) - (eid & 0x3fffffff);
         // the entity id is set as the low 32 bits 
         eid += (id & 4294967295) - (eid & 4294967295);
-        this.id = eid;
+        this._setId( eid );
+
+        if( esId !== undefined ){
+            this.setEntitySetId(esId);
+        }
+    },
+
+    /**
+     * internally set the id, making sure referenced components also get updated
+     * 
+     * @param {*} id 
+     */
+    _setId( id ){
+        this.id = id;
+        Object.values(this.components).forEach( c => c.setEntityId(this.id) );
     },
 
     /**
@@ -64,20 +82,32 @@ Object.assign( Entity.prototype, Base.prototype, {
         return this.id & 4294967295;
     },
 
+    /**
+     * 
+     * @param {*} id 
+     */
     setEntitySetId(id) {
         let eid = this.id;
         // the es id is set as the high 21 bits
         // this.set( 'eid', (id & 0x3fffff) * 0x40000000 + (eid & 0x3fffffff) );
         eid = (id & 2097151) * 4294967296 + (eid & 4294967295);
-        this.id = eid;
+        this._setId( eid );
     },
 
+    /**
+     * 
+     */
     getEntitySetId() {
         let id = this.id;
         // return (id - (id & 0x3fffffff))  / 0x40000000;
         return (id - (id & 4294967295)) / 4294967296;
     },
 
+    /**
+     * 
+     * @param {*} es 
+     * @param {*} setId 
+     */
     setEntitySet(es, setId = true) {
         this._entitySet = es;
         this.setRegistry(es.getRegistry());
@@ -86,9 +116,13 @@ Object.assign( Entity.prototype, Base.prototype, {
         }
     },
 
+    /**
+     * 
+     */
     getEntitySet() {
         return this._entitySet;
     },
+
 
 
     /**
@@ -190,7 +224,7 @@ Object.assign( Entity.prototype, Base.prototype, {
                 }
                 return result;
             },
-            [],
+            []
         );
     },
 

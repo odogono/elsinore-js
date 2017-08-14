@@ -449,12 +449,16 @@ Object.assign( EntitySet.prototype, Base.prototype, {
         // no need for us to issue add events as well as entity:add
         // this.add(entity, { silent: true });
 
-        let existing = this._entitiesMap[ entity.cid ];
+        if( entity.id === 0 ){
+            throw new Error('attempting to add invalid entity');
+        }
+
+        let existing = this._entitiesMap[ entity.id ];
         if( existing ){
             return entity;
         }
 
-        this._entitiesMap[ entity.cid ] = entity;
+        this._entitiesMap[ entity.id ] = entity;
         this._entities.push( entity );
         this._entitiesById[ entity.id ] = entity;
 
@@ -468,13 +472,17 @@ Object.assign( EntitySet.prototype, Base.prototype, {
      * @param {*} entity 
      */
     _removeEntity(entity) {
-        let existing = this._entitiesMap[ entity.cid ];
+        // console.log('[_removeEntity]', 'remove entity',entity.id);
+        let existing = this._entitiesMap[ entity.id ];
         if( existing ){
-            delete this._entitiesMap[entity.cid];
+            delete this._entitiesMap[entity.id];
             delete this._entitiesById[entity.id];
 
             let index = this._entities.indexOf(entity);
             this._entities.splice( index,1 );
+        } else {
+            // console.log('could not find', entity.cid, this._entitiesMap );
+            throw new Error('stop');
         }
 
         // let entityId = Entity.toEntityId(entity);

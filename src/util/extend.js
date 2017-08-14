@@ -1,12 +1,14 @@
-
 /**
  * Copy own-properties from `props` onto `obj`.
+ * 
+ * http://2ality.com/2012/01/js-inheritance-by-example.html
+ * 
  * @param {*} obj 
  * @param {*} props 
  */
-export default function extend(obj, props) {
-    for (let i in props) {
-        obj[i] = props[i];
-    }
-    return obj;
+export default function extend(target, source) {
+    Object.getOwnPropertyNames(source).forEach(function(propName) {
+        Object.defineProperty(target, propName, Object.getOwnPropertyDescriptor(source, propName));
+    });
+    return target;
 }

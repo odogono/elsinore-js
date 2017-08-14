@@ -271,7 +271,7 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
 
         switch (cmdType) {
             case CMD_ENTITY_ADD:
-                this.entitiesAdded.add(entity);
+                this.entitiesAdded.push(entity);
                 // console.log('add entity', entity.id );
                 // if( true ){
                 //     console.log('cmd: adding entity ' +
@@ -281,15 +281,17 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
             case CMD_COMPONENT_ADD:
                 // console.log('add component', componentDefId,'to', entity.id, component.getEntityId() );
                 if (entityHasComponent) {
-                    this.componentsUpdated.add(component);
-                    this.entitiesUpdated.add(entity);
+                    this.componentsUpdated.push(component);
+                    this.entitiesUpdated.push(entity);
                 } else {
                     entity.addComponent(component);
-                    if (!this.entitiesAdded.get(entity)) {
-                        this.entitiesUpdated.add(entity);
+
+                    if( this.entitiesAdded.indexOf(entity) === -1 ){
+                    // if (!this.entitiesAdded.get(entity)) {
+                        this.entitiesUpdated.push(entity);
                         // console.log('entity', entity.id,'was not added, updating');
                     }
-                    this.componentsAdded.add(component);
+                    this.componentsAdded.push(component);
                 }
                 break;
 
@@ -299,18 +301,22 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
                     break;
                 }
 
-                this.componentsRemoved.add(component);
+                this.componentsRemoved.push(component);
 
                 // update the bitfield to remove the component
                 componentBitfield.set(componentDefId, false);
 
                 // if the bitfield is now empty, then we can remove the entity
                 if (componentBitfield.count() <= 0) {
-                    this.entitiesRemoved.add(entity, { silent: true });
-                    this.entitiesUpdated.remove(entity, { silent: true });
+                    this.entitiesRemoved.push(entity);
+                    const eIndex = this.entitiesUpdated.indexOf(entity);
+                    if( eIndex !== -1 ){
+                        this.entitiesUpdated.slice(eIndex,1);
+                    }
+                    // this.entitiesUpdated.remove(entity, { silent: true });
                     // console.log('add component to remove', JSON.stringify(component));
                 } else {
-                    this.entitiesUpdated.add(entity);
+                    this.entitiesUpdated.push(entity);
                 }
 
                 break;
@@ -338,10 +344,10 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
                 const bf = entity.getComponentBitfield();
                 let cmds = this.cmds[entity.id];
 
-                if (entity.isNew()) {
-                    this.entitiesAdded.add(entity);
+                if (entity.id === 0 ) {
+                    this.entitiesAdded.push(entity);
                 } else if (entity.getEntitySetId() != entitySet.id) {
-                    this.entitiesAdded.add(entity);
+                    this.entitiesAdded.push(entity);
                     // if(true){console.log('entity', entity.id,'does not exist in es', entitySet.id);}
                 } else {
                     // if(debug){console.log('entity', entity.id,'exists in es', entitySet.id);}
@@ -370,22 +376,22 @@ export default class AsyncCmdBuffer extends SyncCmdBuffer {
                 )
                 .then(updateResult => {
                     if (updateResult.entitiesAdded) {
-                        this.entitiesAdded.set(updateResult.entitiesAdded);
+                        // this.entitiesAdded.set(updateResult.entitiesAdded);
                     }
                     if (updateResult.entitiesUpdated) {
-                        this.entitiesUpdated.set(updateResult.entitiesUpdated);
+                        // this.entitiesUpdated.set(updateResult.entitiesUpdated);
                     }
                     if (updateResult.entitiesRemoved) {
-                        this.entitiesRemoved.set(updateResult.entitiesRemoved);
+                        // this.entitiesRemoved.set(updateResult.entitiesRemoved);
                     }
                     if (updateResult.componentsAdded) {
-                        this.componentsAdded.set(updateResult.componentsAdded);
+                        // this.componentsAdded.set(updateResult.componentsAdded);
                     }
                     if (updateResult.componentsUpdated) {
-                        this.componentsUpdated.set(updateResult.componentsUpdated);
+                        // this.componentsUpdated.set(updateResult.componentsUpdated);
                     }
                     if (updateResult.componentsRemoved) {
-                        this.componentsRemoved.set(updateResult.componentsRemoved);
+                        // this.componentsRemoved.set(updateResult.componentsRemoved);
                     }
                     if (updateResult && updateResult.silent !== void 0) {
                         silent = updateResult.silent;
