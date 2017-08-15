@@ -2,8 +2,11 @@
 /**
  * A collection stores a set of objects keyed by the id attribute
  */
-export default function Collection() {
+export default function Collection(models) {
     this.reset();
+    if( models !== undefined ){
+        this.add(models);
+    }
 }
 
 Object.assign(Collection.prototype, {
@@ -15,6 +18,10 @@ Object.assign(Collection.prototype, {
      * @param {*} obj 
      */
     add(obj) {
+        if( Array.isArray(obj) && obj[0] !== undefined ){
+            obj.forEach( item => this.add(item) );
+            return this;
+        }
         const existing = this._objectsById[obj.id];
 
         this._objectsById[obj.id] = obj;
@@ -52,6 +59,15 @@ Object.assign(Collection.prototype, {
         return this;
     },
 
+    /**
+     * Returns true if the object is contained in this collection
+     * 
+     * @param {*} obj 
+     */
+    has( obj ){
+        return this._objectsById[obj.id] !== undefined;
+    },
+
     _reindex() {
         let ii = 0;
         let len = this.models.length;
@@ -71,3 +87,5 @@ Object.assign(Collection.prototype, {
         this._indexOfObject = [];
     }
 });
+
+Collection.prototype.type = 'Collection';
