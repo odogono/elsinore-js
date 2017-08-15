@@ -62,7 +62,7 @@ test('adding an entity with a component returns the added entity', async t => {
 
 test('adding several components without an entity adds them to the same new entity', async t => {
     try {
-        t.plan(4);
+        t.plan(5);
 
         const [registry, entitySet] = await initialiseAll(createOptions);
 
@@ -72,15 +72,21 @@ test('adding several components without an entity adds them to the same new enti
         );
 
         const components = registry.createComponent([
-            registry.createComponent({ '@c': '/component/flower', colour: 'yellow' }),
-            registry.createComponent('/component/radius', { radius: 2, author: 'alex' })
+            { '@c': '/component/flower', colour: 'yellow' },
+            { '@c': '/component/radius', radius: 2, author: 'alex' }
         ]);
 
         t.equals(components[0].getEntityId(), 0, 'the components do not yet have an entity id');
 
         const addedComponents = await entitySet.addComponent(components);
 
-        const entity = await entitySet.getEntity(addedComponents[0].getEntityId());
+        t.equals( addedComponents.length, 2 );
+
+        // Log.debug( entityToString(entitySet) );
+
+        // // Log.debug('[get]', addedComponents);
+        const entityId = addedComponents[0].getEntityId();
+        const entity = await entitySet.getEntity(entityId);
 
         t.assert(entity.Flower, 'the entity should have a Flower component');
         t.assert(entity.Radius, 'the entity should have a Radius component');

@@ -1,14 +1,15 @@
-import { Collection, Events } from 'odgn-backbone-model';
+// import { Collection, Events } from 'odgn-backbone-model';
 import Base from '../base';
 import BitField from 'odgn-bitfield';
 import Component from '../component';
 import Entity from '../entity';
+import Collection from '../util/collection';
 
 import Query from '../query';
 import stringify from '../util/stringify';
 import { isInteger, isPromise } from '../util/is';
 import uniqueId from '../util/unique_id';
-
+import valueArray from '../util/array/value';
 import {isObject} from '../util/is';
 import createUUID from '../util/uuid';
 import hash from '../util/hash';
@@ -41,7 +42,7 @@ Object.assign( EntitySet.prototype, Base.prototype, {
         let cmdBufferType = CmdBuffer;
         this._uuid = options.uuid || createUUID();
         this.cid = uniqueId('es');
-        this._componentsById = {};
+        this._components = new Collection();
 
         if (options['id']) {
             this.id = options['id'];
@@ -337,8 +338,9 @@ Object.assign( EntitySet.prototype, Base.prototype, {
             componentId = component.id;
         }
 
-        // console.log('[EntitySet][getComponent]', componentId, this._componentsById );
-        return this._componentsById[componentId];
+        // console.log('[EntitySet][getComponent]', componentId, this._components );
+
+        return this._components.get(componentId);
     },
 
     /**
@@ -496,7 +498,7 @@ Object.assign( EntitySet.prototype, Base.prototype, {
      * @param {*} component 
      */
     _addComponent(component){
-        this._componentsById[ component.id ] = component;
+        this._components.add( component );
     },
 
     /**
@@ -504,7 +506,7 @@ Object.assign( EntitySet.prototype, Base.prototype, {
      * @param {*} component 
      */
     _removeComponent(component){
-        delete this._componentsById[ component.id ];
+        this._components.remove(component);
     },
 
 
@@ -534,6 +536,12 @@ Object.assign( EntitySet.prototype, Base.prototype, {
      */
     update(entitiesAdded, entitiesUpdated, entitiesRemoved, componentsAdded, componentsUpdated, componentsRemoved) {
         let ii, len, component;
+        entitiesAdded = entitiesAdded.models;
+        entitiesUpdated = entitiesUpdated.models;
+        entitiesRemoved = entitiesRemoved.models;
+        componentsAdded = componentsAdded.models;
+        componentsUpdated = componentsUpdated.models;
+        componentsRemoved = componentsRemoved.models;
         // console.log('[EntitySet][update]', entitiesAdded.length, entitiesUpdated.length, entitiesRemoved.length, componentsAdded.length, componentsUpdated.length, componentsRemoved.length );
         
         // if( entitiesAdded.length ) console.log('[EntitySet][update]','[entitiesAdded]', entitiesAdded.map( e => e.id) );

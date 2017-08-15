@@ -419,8 +419,8 @@ Component.DEF_ID = '@s';
 Component.ENTITY_SET_ID = '@es';
 
 Component.create = function(attrs, options) {
-    const result = new Component();
-    result.set(result.parse(attrs));
+    const result = new Component(attrs);
+    // result.set(result.parse(attrs));
     // attrs = Component.prototype.parse.apply(null,[attrs]);
     return result;
 };

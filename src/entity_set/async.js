@@ -272,6 +272,13 @@ Object.assign( AsyncEntitySet.prototype, EntitySet.prototype, {
         componentsRemoved,
         options = {}
     ) {
+        entitiesAdded = entitiesAdded.models;
+        entitiesUpdated = entitiesUpdated.models;
+        entitiesRemoved = entitiesRemoved.models;
+        componentsAdded = componentsAdded.models;
+        componentsUpdated = componentsUpdated.models;
+        componentsRemoved = componentsRemoved.models;
+
         // const debug = options.debug;
 
         // extract entities added which need new ids
@@ -286,6 +293,7 @@ Object.assign( AsyncEntitySet.prototype, EntitySet.prototype, {
         }, []);
 
         // console.log('new entities', entityToString(entitiesAdded));
+        // console.log('[AsyncEntitySet][update]', entitiesUpdated );
 
         // retrieve ids for the new entities
         return (
@@ -350,14 +358,14 @@ Object.assign( AsyncEntitySet.prototype, EntitySet.prototype, {
         if (entitiesRemoved) {
             entitiesRemoved.forEach(e => this._removeEntity(e));
         }
-
+        
         for ((ii = 0), (len = componentsAdded.length); ii < len; ii++) {
             component = componentsAdded[ii];
             entity = this.getEntity(component.getEntityId());
             if (entity) {
                 entity.addComponent(component, { silent: true });
                 this._addComponent(componentsAdded[ii]);
-                // if(debug){console.log('componentsAdded', JSON.stringify(component) );}
+                if(debug){console.log('componentsAdded', JSON.stringify(component) );}
             }
         }
         for ((ii = 0), (len = componentsUpdated.length); ii < len; ii++) {

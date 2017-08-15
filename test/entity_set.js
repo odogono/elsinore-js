@@ -175,6 +175,28 @@ test('adding a component without an id or an entity id creates a new component a
     }
 });
 
+test('retrieving a component by id', async t => {
+    try {
+        const registry = await initialiseRegistry();
+
+        const entitySet = registry.createEntitySet();
+
+        entitySet.addEntity( {'@c':'/component/position', x:46, y:12});
+
+        // Log.debug('[es]', entityToString(entitySet));
+
+        const entity = entitySet.at(0);
+        const component = entitySet.getComponent( entity.Position.id );
+
+        t.equals( component.get('x'), 46 );
+
+        t.end();
+
+    } catch (err) {
+        Log.error(err.stack);
+    }
+});
+
 test('updating a component in the entityset', async t => {
     try {
         const registry = await initialiseRegistry();
@@ -198,18 +220,12 @@ test('updating a component in the entityset', async t => {
 
         entitySet.addComponent(component);
 
-        // the previously inserted component instance no longer has an entity reference because it
-        // has been superceded
-        // t.equal( inserted.getEntityId(), 0 );
-
         // change the fields and insert again
         component.set({ x: 200, y: -200 });
 
-        entitySet.addComponent(component);
+        entitySet.addComponent(component, { debug: true });
 
-        entitySet.addComponent(inserted);
-
-        // Log.debug('[es]', entityToString(entitySet) );
+        // Log.debug('[es]', entityToString(entitySet));
 
         t.equals(entitySet.size(), 1);
 
@@ -500,7 +516,7 @@ test('should return an added entity', async t => {
         // Log.debug(entity.Position.id, entityA.Position.id );
 
         t.equals(entityA.getEntityId(), entityB.getEntityId(), 'the component retains its entity id');
-        
+
         // components added to 'memory' entitysets retain their id - other types
         // of entityset (e.g. persistent) may take ownership of the component by changing the id
         t.equals(entityA.Position.id, entityB.Position.id, 'the added component has the same id');
