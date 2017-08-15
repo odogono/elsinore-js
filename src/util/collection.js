@@ -45,6 +45,10 @@ Object.assign(Collection.prototype, {
      * @param {*} obj 
      */
     remove(obj) {
+        if( Array.isArray(obj) && obj[0] !== undefined ){
+            obj.forEach( item => this.remove(item) );
+            return this;
+        }
         if (this._objectsById[obj.id] !== undefined) {
             const index = this._indexOfObject[obj.id];
 

@@ -9,16 +9,15 @@ export default function valueArray(...array) {
         return null;
     }
 
-    if( array.length > 0 ){
-        array = array.reduce( (acc,cur) => {
-            if( cur instanceof Collection ){
+    if (array.length > 0) {
+        array = array.reduce((acc, cur) => {
+            if (cur instanceof Collection) {
                 cur = cur.models;
             }
-            return acc.concat( cur );
-         }, []);
+            return acc.concat(cur);
+        }, []);
     }
-    
- 
+
     if (array.length === 1) {
         array = array[0];
     }
