@@ -1,5 +1,4 @@
 import EventsAsync from './events.async';
-// import {Events} from 'odgn-backbone-model';
 import {createLog} from './log';
 import stringify from './stringify';
 import {toString as entityToString} from './to_string';

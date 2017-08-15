@@ -296,7 +296,7 @@ Object.assign(AsyncCmdBuffer.prototype, SyncCmdBuffer.prototype, {
                 break;
 
             case CMD_COMPONENT_REMOVE:
-                // console.log('component remove', componentDefId,'from',entity.id, entityHasComponent);
+                // console.log('component remove', componentDefId,'from', entity.getEntityId(), entityHasComponent);
                 if (!entityHasComponent) {
                     break;
                 }
@@ -313,7 +313,7 @@ Object.assign(AsyncCmdBuffer.prototype, SyncCmdBuffer.prototype, {
                     // if( eIndex !== -1 ){
                     //     this.entitiesUpdated.slice(eIndex,1);
                     // }
-                    this.entitiesUpdated.add(entity);
+                    this.entitiesUpdated.remove(entity);
                     // this.entitiesUpdated.remove(entity, { silent: true });
                     // console.log('add component to remove', JSON.stringify(component));
                 } else {

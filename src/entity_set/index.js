@@ -1,4 +1,3 @@
-// import { Collection, Events } from 'odgn-backbone-model';
 import Base from '../base';
 import BitField from 'odgn-bitfield';
 import Component from '../component';

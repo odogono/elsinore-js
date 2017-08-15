@@ -62,7 +62,7 @@ test('registering multiple component defs', t => {
 });
 
 class AsyncEntitySet extends EntitySet {
-    constructor(options = {}) {
+    constructor(entities,options = {}) {
         super();
         this.listener = options.listener;
     }
