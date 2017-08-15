@@ -52,13 +52,30 @@ test('remove from a collection', t => {
     t.end();
 });
 
+test('get by id', t => {
+    const collection = new Collection([{ id: 3 }, { id: 56 }]);
+
+    t.notEqual(collection.get(56), undefined);
+
+    t.end();
+});
+
+test('use a different id attribute', t => {
+    const collection = new Collection(null,{idAttribute:'cid'});
+
+    collection.add( [{id:0,cid:'o1'}, {id:0, cid:'o2'}] );
+
+    t.equals( collection.size(), 2 );
+
+    t.end();
+});
+
 test('valueArray returns a single item from an array', t => {
-    
     t.equals(valueArray(['entity']), 'entity', 'returns a single item');
 
     t.deepEquals(valueArray([]), [], 'returns the array');
 
-    t.deepEquals( valueArray(), [] );
+    t.deepEquals(valueArray(), []);
 
     t.end();
 });
@@ -72,31 +89,30 @@ test('valueArray returns multiple items from an array', t => {
 });
 
 test('valueArray concatenates multiple arrays', t => {
-    const array1 = ['entity','component'];
-    
-    const array2 = ['registry','entitySet'];
-    
-    t.deepEquals(valueArray(array1,array2), ['entity','component','registry','entitySet']);
-    
+    const array1 = ['entity', 'component'];
+
+    const array2 = ['registry', 'entitySet'];
+
+    t.deepEquals(valueArray(array1, array2), ['entity', 'component', 'registry', 'entitySet']);
+
     t.end();
-})
+});
 
 test('valueArray converts collections to arrays', t => {
-    
-    t.deepEquals(
-        valueArray( new Collection( [{id:2}, {id:3}] ) ),
-        [{id:2}, {id:3}]
-    );
+    t.deepEquals(valueArray(new Collection([{ id: 2 }, { id: 3 }])), [{ id: 2 }, { id: 3 }]);
 
-    t.deepEquals(
-        valueArray( new Collection( [{id:2}, {id:3}] ), 'component', 'entity' ),
-        [{id:2}, {id:3}, 'component', 'entity']
-    );
+    t.deepEquals(valueArray(new Collection([{ id: 2 }, { id: 3 }]), 'component', 'entity'), [
+        { id: 2 },
+        { id: 3 },
+        'component',
+        'entity'
+    ]);
 
-    t.deepEquals(
-        valueArray( new Collection( [{id:2}, {id:3}] ), new Collection( {id:4} ) ),
-        [{id:2}, {id:3}, {id:4}]
-    );
-    
+    t.deepEquals(valueArray(new Collection([{ id: 2 }, { id: 3 }]), new Collection({ id: 4 })), [
+        { id: 2 },
+        { id: 3 },
+        { id: 4 }
+    ]);
+
     t.end();
-})
+});
