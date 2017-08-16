@@ -1,8 +1,6 @@
-// import _  from 'underscore';
 import test from 'tape';
 
 
-// import Es from 'event-stream';
 import Sinon from 'sinon';
 
 
@@ -15,7 +13,7 @@ import {
     stringify,
 } from './common';
 
-import EventsAsync from '../src/util/events.async';
+import Base from '../src/base';
 import '../src/entity_set/view';
 
 const Log = createLog('TestEntityEvents');

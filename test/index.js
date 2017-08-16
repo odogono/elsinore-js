@@ -9,6 +9,7 @@ import './entity_set';
 import './entity_set.async';
 import './entity_set.query';
 import './entity_set.view';
+import './events';
 import './json';
 import './pull_stream';
 import './query';

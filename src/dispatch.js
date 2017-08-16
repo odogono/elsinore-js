@@ -284,10 +284,7 @@ export default class EntityDispatch {
             const event = processor.events[name];
             // Log.debug(`[_attachProcessorEvents] `, name, entitySet.cid);
 
-            // processor.listenToAsync( entitySet, name, function( pName, pEntity, pEntitySet ){
             processor.listenToAsync( entitySet, name, ( pName, pEntity, pEntitySet, ...rest ) => {
-                // let args = Array.prototype.slice.call( arguments, 2 );
-                // args = [pEntity, entitySet].concat(args);
                 const args = [pEntity, entitySet, ...rest];
                 // Log.debug(`[_attachProcessorEvents] evt `, stringify(args) );
                 return event.apply( processor, args);
