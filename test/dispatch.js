@@ -2,13 +2,18 @@ import _ from 'underscore';
 import Sinon from 'sinon';
 import test from 'tape';
 
-import { Entity, EntityProcessor, Dispatch, initialiseRegistry, // loadEntities, 
+import {
+    Entity,
+    EntityProcessor,
+    Dispatch,
+    initialiseRegistry, // loadEntities,
     // loadFixtureJSON,
     // printE,
     // stringify,
     // logEvents,
     entityToString,
-    createLog } from './common';
+    createLog
+} from './common';
 
 const Log = createLog('TestDispatch');
 
@@ -257,7 +262,7 @@ test('processor priority', async t => {
 
         dispatch.update();
         // Log.debug('bleah', dispatch.processorEntries.map( e => e.get('priority')) );
-        t.deepEqual(result, [ 'b', 'c', 'a' ]);
+        t.deepEqual(result, ['b', 'c', 'a']);
 
         t.end();
     } catch (err) {
@@ -314,11 +319,11 @@ test('processor can affect original entityset', async t => {
                 const component = { '@c': '/component/status', status: 'active' };
                 const position = { '@c': '/component/position' };
 
-                entityArray.forEach(e => this.addComponentToEntity([ component, position ], e));
+                entityArray.forEach(e => this.addComponentToEntity([component, position], e));
                 // Log.debug('[onAdded]')
                 this.createEntity([
                     { '@c': '/component/username', username: `friend of ${username}` },
-                    { '@c': '/component/status', status: 'active' },
+                    { '@c': '/component/status', status: 'active' }
                 ]);
             }
         }
@@ -337,9 +342,9 @@ test('processor can affect original entityset', async t => {
         // Log.debug('[es]', entityToString(entitySet));
 
         t.equals(
-            entitySet.query(Q => Q.all('/component/username').where(Q.attr('username').equals(/friend of/))).length,
+            entitySet.query(Q => Q.all('/component/username').where(Q.attr('username').equals(/friend of/))).size(),
             2,
-            'two new entities added to src entityset',
+            'two new entities added to src entityset'
         );
 
         // Log.debug('friends', entityToString(friends));
@@ -375,5 +380,5 @@ function createEntityProcessor(onUpdate) {
 //     // pass an entity with a particular component pattern
 //     // only one of the processors should have executed
 //     t.ok(false);
-//     t.end(); 
+//     t.end();
 // })

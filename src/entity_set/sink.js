@@ -59,5 +59,4 @@ export default function sink(entitySet, options = {}, completeCb) {
             }
         });
     };
-    // });
 }

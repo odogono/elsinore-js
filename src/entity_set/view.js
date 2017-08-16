@@ -2,41 +2,8 @@ import EntitySet from './index';
 import EntitySetListener from './listener';
 
 
-
-
-/**
- * 
- */
-class EntitySetView extends EntitySet {
-    addEntity(entity, options){
-        return this._parent.addEntity(entity,options);
-    }
-    removeEntity(entity, options){
-        return this._parent.removeEntity(entity,options);
-    }
-    addComponent(component, options ){
-        return this._parent.addComponent(component,options);
-    }
-    removeComponent( component, options ){
-        return this._parent.removeComponent(component,options);
-    }
-
-    /**
-     * 
-     */
-    applyEvents(){
-        if( this.listener ){
-            this.listener.applyEvents();
-        }
-        if( this.listeners ){
-            this.listeners.each(listener => listener.applyEvents() );
-        }
-    }
+export function EntitySetView(){
 }
-
-EntitySetView.prototype.type = 'EntitySetView';
-EntitySetView.prototype.isMemoryEntitySet = true;
-EntitySetView.prototype.isEntitySetView = true;
 
 EntitySet.prototype.view = function( query, options={} ){
     let result;
@@ -52,7 +19,7 @@ EntitySet.prototype.view = function( query, options={} ){
 
     // if a valid query was supplied, it will have been resolved
     // into a query object by now
-    query = result.getQuery();
+    // query = result.getQuery();
 
     // console.log('using view query', query);
     // store the view
@@ -63,8 +30,43 @@ EntitySet.prototype.view = function( query, options={} ){
     return result;
 };
 
+Object.assign( EntitySetView.prototype, EntitySet.prototype, {
+
+    addEntity(entity, options){
+        return this._parent.addEntity(entity,options);
+    },
+
+    removeEntity(entity, options){
+        return this._parent.removeEntity(entity,options);
+    },
+
+    addComponent(component, options ){
+        return this._parent.addComponent(component,options);
+    },
+
+    removeComponent( component, options ){
+        return this._parent.removeComponent(component,options);
+    },
+
+    /**
+     * 
+     */
+    applyEvents(){
+        if( this.listener ){
+            this.listener.applyEvents();
+        }
+        if( this.listeners ){
+            this.listeners.each(listener => listener.applyEvents() );
+        }
+    }
+});
+
+EntitySetView.prototype.type = 'EntitySetView';
+EntitySetView.prototype.isMemoryEntitySet = true;
+EntitySetView.prototype.isEntitySetView = true;
+
+
+
 EntitySet.prototype.applyEvents = function(){}
-
-
 
 export default EntitySet;

@@ -15,8 +15,7 @@ import { isPromise } from '../src/util/is';
 import { JSONLoader } from '../src/util/loader';
 import { JSONExporter } from '../src/util/exporter';
 
-import QueryFilter from '../src/query/through'
-
+import QueryFilter from '../src/query/through';
 
 // import Loader from 'elsinore-io/lib/loader';
 const Log = createLog('TestPullStream');
@@ -30,7 +29,7 @@ test('source close after existing', async t => {
             Pull.collect((err, components) => {
                 t.equals(components.length, 7);
                 t.end();
-            }),
+            })
         );
     } catch (err) {
         Log.error(err.stack);
@@ -49,7 +48,7 @@ test('source continues to emit events', async t => {
             Pull.take(2),
             Pull.collect((err, components) => {
                 t.equals(components.length, 2);
-            }),
+            })
         );
 
         Pull(
@@ -58,13 +57,13 @@ test('source continues to emit events', async t => {
             Pull.collect((err, components) => {
                 t.equals(components.length, 9);
                 t.end();
-            }),
+            })
         );
 
-        es2.addEntity([ { '@c': '/name', name: 'susan' }, { '@c': '/ttl', expires_at: 2019 } ]);
+        es2.addEntity([{ '@c': '/name', name: 'susan' }, { '@c': '/ttl', expires_at: 2019 }]);
 
         // add a new entity with two components
-        entitySet.addEntity([ { '@c': '/name', name: 'mike' }, { '@c': '/ttl', expires_at: 2018 } ]);
+        entitySet.addEntity([{ '@c': '/name', name: 'mike' }, { '@c': '/ttl', expires_at: 2018 }]);
     } catch (err) {
         Log.error(err.stack);
     }
@@ -81,11 +80,10 @@ test('source doesnt send existing', async t => {
                 // Log.debug('[collect]', components, entityToString(components));
                 t.equals(components.length, 2);
                 t.end();
-            }),
+            })
         );
 
-        entitySet.addEntity([ { '@c': '/name', name: 'alice' }, { '@c': '/ttl', expires_at: 2016 } ]);
-
+        entitySet.addEntity([{ '@c': '/name', name: 'alice' }, { '@c': '/ttl', expires_at: 2016 }]);
     } catch (err) {
         Log.error(err.stack);
     }
@@ -104,18 +102,18 @@ test('source emits remove events', async t => {
             Pull.take(9),
             Pull.collect((err, evts) => {
                 t.deepEqual(evts, [
-                    { '@e': 2, '@i': 5, '@s': 1, addr: '192.3.0.1' },
-                    { '@e': 2, '@i': 6, '@s': 2, expires_at: -300 },
-                    { '@e': 7, '@i': 10, '@s': 1, addr: '192.3.0.2' },
-                    { '@e': 11, '@i': 14, '@s': 1, addr: '192.3.0.3' },
-                    { '@e': 15, '@i': 18, '@s': 1, addr: '192.3.0.4' },
-                    { '@e': 15, '@i': 19, '@s': 2, comment: 'b', expires_at: 2000 },
-                    { '@e': 20, '@i': 23, '@s': 1, addr: '192.3.0.5' },
-                    { '@cmd': 'rmc', cid: [ 5, 6 ] },
-                    { '@cmd': 'rme', eid: [ 2 ] },
+                    { '@e': 2, '@i': 3, '@s': 1, addr: '192.3.0.1' },
+                    { '@e': 2, '@i': 4, '@s': 2, expires_at: -300 },
+                    { '@e': 5, '@i': 6, '@s': 1, addr: '192.3.0.2' },
+                    { '@e': 7, '@i': 8, '@s': 1, addr: '192.3.0.3' },
+                    { '@e': 9, '@i': 10, '@s': 1, addr: '192.3.0.4' },
+                    { '@e': 9, '@i': 11, '@s': 2, comment: 'b', expires_at: 2000 },
+                    { '@e': 12, '@i': 13, '@s': 1, addr: '192.3.0.5' },
+                    { '@cmd': 'rmc', cid: [3, 4] },
+                    { '@cmd': 'rme', eid: [2] }
                 ]);
                 t.end();
-            }),
+            })
         );
         entitySet.removeEntity(entitySet.at(0));
     } catch (err) {
@@ -142,10 +140,10 @@ test('source emits components with resolved component uris', async t => {
                     { '@c': '/connection', addr: '192.3.0.3' },
                     { '@c': '/connection', addr: '192.3.0.4' },
                     { '@c': '/ttl', comment: 'b', expires_at: 2000 },
-                    { '@c': '/connection', addr: '192.3.0.5' },
+                    { '@c': '/connection', addr: '192.3.0.5' }
                 ]);
                 t.end();
-            }),
+            })
         );
     } catch (err) {
         Log.error(err.stack);
@@ -157,23 +155,20 @@ test('source emits entities', async t => {
         const { registry, entitySet } = await initialise({ loadEntities: true });
 
         Pull(
-            entitySet.source({ emitEntities: true, closeAfterExisting:true}),
-            
-            PullFilter( val => {
+            entitySet.source({ emitEntities: true, closeAfterExisting: true }),
+            PullFilter(val => {
                 return Entity.isEntity(val);
             }),
-
             Pull.collect((err, entities) => {
                 // Log.debug('[collect]', entityToString(entities));
-                t.equals( entities.length, 5 );
+                t.equals(entities.length, 5);
                 t.end();
-            }),
+            })
         );
     } catch (err) {
         Log.error(err.stack);
     }
-})
-
+});
 
 test('sink', async t => {
     try {
@@ -189,19 +184,18 @@ test('sink', async t => {
                 { '@e': 7, '@i': 10, '@s': 1, addr: '192.3.0.2' },
                 { '@e': 11, '@i': 14, '@s': 1, addr: '192.3.0.3' },
                 { '@e': 15, '@i': 18, '@s': 1, addr: '192.3.0.4' },
-                { '@cmd': 'rme', eid:11 },
+                { '@cmd': 'rme', eid: 11 }
             ]),
-            receivingES.sink({}, (err) => {
+            receivingES.sink({}, err => {
                 // Log.debug('[sink]', entityToString(receivingES));
-                t.equals( receivingES.size(), 3 );
+                t.equals(receivingES.size(), 3);
                 t.end();
-            } ),
+            })
         );
     } catch (err) {
         Log.error(err.stack);
     }
 });
-
 
 test('query through', async t => {
     try {
@@ -209,23 +203,19 @@ test('query through', async t => {
         const receivingES = registry.createEntitySet();
 
         Pull(
-            entitySet.source({ emitEntities:true, closeAfterExisting:true}),
-            
+            entitySet.source({ emitEntities: true, closeAfterExisting: true }),
             // the filter will only allow entities that have the /ttl component through
-            QueryFilter( Q => Q.all('/ttl') ),
-
-            receivingES.sink({debug:false}, (err) => {
+            QueryFilter(Q => Q.all('/ttl')),
+            receivingES.sink({ debug: false }, err => {
                 // Log.debug('[sink]', entityToString(receivingES));
-                t.equals( receivingES.size(), 2 );
+                t.equals(receivingES.size(), 2);
                 t.end();
-            } ),
+            })
         );
     } catch (err) {
         Log.error(err.stack);
     }
 });
-
-
 
 // test('source', async t => {
 //     try {
@@ -337,7 +327,7 @@ const commandsA = [
     { '@c': '/ttl', expires_at: 2000, comment: 'b' },
     { '@cmd': 'entity' },
     { '@c': '/connection', addr: '192.3.0.5' },
-    { '@cmd': 'entity' },
+    { '@cmd': 'entity' }
 ];
 
 const commandsB = [
@@ -347,7 +337,7 @@ const commandsB = [
     {
         '@cmd': 'register',
         uri: '/position',
-        properties: { x: { type: 'number' }, y: { type: 'number' }, z: { type: 'number' } },
+        properties: { x: { type: 'number' }, y: { type: 'number' }, z: { type: 'number' } }
     },
-    { '@cmd': 'register', uri: '/name', properties: { name: { type: 'string' } } },
+    { '@cmd': 'register', uri: '/name', properties: { name: { type: 'string' } } }
 ];

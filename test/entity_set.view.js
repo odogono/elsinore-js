@@ -17,7 +17,7 @@ import {
     entityToString,
     printIns,
     logEvents,
-    createLog,
+    createLog
 } from './common';
 
 import '../src/entity_set/view';
@@ -25,29 +25,29 @@ import '../src/entity_set/view';
 const Log = createLog('TestEntitySetView');
 
 test('.where returns an entityset of entities', t => {
-    initialiseEntitySet().then(([ registry, entitySet ]) => {
+    initialiseEntitySet().then(([registry, entitySet]) => {
         const result = entitySet.query(Q => Q.all('/component/name'));
         t.ok(result.isEntitySet, 'the result is an entityset');
-        t.equals(result.length, 7, '7 entities returned');
+        t.equals(result.size(), 7, '7 entities returned');
 
         t.end();
     });
 });
 
 test('.query returns entities which the attributes', t => {
-    initialiseEntitySet().then(([ registry, entitySet ]) => {
+    initialiseEntitySet().then(([registry, entitySet]) => {
         // let result = entitySet.where('/component/status', {status:'active'} );
         const result = entitySet.query(Q => Q.all('/component/status', Q.attr('status').equals('active')));
 
         t.ok(result.isEntitySet, 'the result is an entityset');
-        t.equals(result.length, 6, '6 entities returned');
+        t.equals(result.size(), 6, '6 entities returned');
 
         t.end();
     });
 });
 
 test('the view should be identified as a view', t => {
-    initialiseEntitySet().then(([ registry, entitySet ]) => {
+    initialiseEntitySet().then(([registry, entitySet]) => {
         const view = entitySet.view();
 
         t.ok(view.isEntitySetView, 'its an entityset view');
@@ -61,22 +61,24 @@ test('the view should be identified as a view', t => {
     });
 });
 
-test('the view should have the same entities', t => {
-    initialiseEntitySet().then(([ registry, entitySet ]) => {
-        let eventSpy = Sinon.spy();
+test.only('the view should have the same entities', async t => {
+    try {
+        const [registry, entitySet] = await initialiseEntitySet();
 
         let view = entitySet.view();
 
-        // printE( entitySet );
+        Log.debug( entityToString(view) );
         t.equals(entitySet.size(), view.size(), 'same number of entities');
 
         t.end();
-    });
+    } catch (err) {
+        Log.error(err.stack);
+    }
 });
 
 test('removing an entity from the entitySet should also remove it from the view', async t => {
     try {
-        const [ registry, entitySet ] = await initialiseEntitySet();
+        const [registry, entitySet] = await initialiseEntitySet();
         // const eventSpy = Sinon.spy();
 
         const view = entitySet.view(null, { updateOnEvent: true });
@@ -96,7 +98,7 @@ test('removing an entity from the entitySet should also remove it from the view'
 });
 
 test('adding an entity to the entityset also adds it to the view', t => {
-    initialiseEntitySet().then(([ registry, entitySet ]) => {
+    initialiseEntitySet().then(([registry, entitySet]) => {
         const view = entitySet.view(null, { updateOnEvent: true });
 
         const component = registry.createComponent('/component/position', { x: -2, y: 5 });
@@ -131,7 +133,7 @@ test('adding an entity to the view also adds it to the entityset', async t => {
 
 test('removing a component from an entity', t => {
     initialiseEntitySet()
-        .then(([ registry, entitySet ]) => {
+        .then(([registry, entitySet]) => {
             let entity;
             entitySet = registry.createEntitySet();
             const view = entitySet.view(null, { updateOnEvent: true });
@@ -141,8 +143,8 @@ test('removing a component from an entity', t => {
             entitySet.addEntity(
                 registry.createEntity([
                     { '@c': '/component/flower', colour: 'red' },
-                    { '@c': '/component/position', x: -2, y: 5 },
-                ]),
+                    { '@c': '/component/position', x: -2, y: 5 }
+                ])
             );
 
             // view.update();
@@ -162,18 +164,18 @@ test('removing a component from an entity', t => {
 
 test('adding a component to an entity', t => {
     initialiseEntitySet()
-        .then(([ registry, entitySet ]) => {
+        .then(([registry, entitySet]) => {
             let component;
             const eventSpy = Sinon.spy();
             entitySet = registry.createEntitySet();
             const view = entitySet.view(null, { updateOnEvent: true });
 
-            entitySet.addEntity(registry.createEntity([ { '@c': '/component/flower', colour: 'white' } ]));
+            entitySet.addEntity(registry.createEntity([{ '@c': '/component/flower', colour: 'white' }]));
 
             t.ok(view.at(0).Flower, 'the entity should have flower');
 
             component = registry.createComponent({ '@c': '/component/position', x: -2, y: 5 }, entitySet.at(0), {
-                debug: true,
+                debug: true
             });
 
             t.equals(component.getEntityId(), entitySet.at(0).getEntityId(), 'the entity ids are identical');
@@ -188,7 +190,7 @@ test('adding a component to an entity', t => {
 });
 
 test('adding a component to an entity triggers an entity:add event', t => {
-    initialiseEntitySet().then(([ registry, entitySet ]) => {
+    initialiseEntitySet().then(([registry, entitySet]) => {
         const eventSpy = Sinon.spy();
         entitySet = registry.createEntitySet();
         const view = entitySet.view(null, { updateOnEvent: true });
@@ -197,7 +199,7 @@ test('adding a component to an entity triggers an entity:add event', t => {
         // Common.logEvents( view, 'vi ' );
         view.on('all', eventSpy);
 
-        entitySet.addEntity(registry.createEntity([ { '@c': '/component/flower', colour: 'magenta' } ]));
+        entitySet.addEntity(registry.createEntity([{ '@c': '/component/flower', colour: 'magenta' }]));
 
         t.ok(eventSpy.calledWith('entity:add'), 'entity:add should have been called');
         t.end();
@@ -208,8 +210,8 @@ test('removing a relevant component from an entity should trigger a entity:remov
     let entity;
     const eventSpy = Sinon.spy();
     try {
-        const [registry,entitySet] = await initialiseEntitySet();
-        
+        const [registry, entitySet] = await initialiseEntitySet();
+
         const query = Q => Q.all('/component/channel');
 
         // Log.debug(entityToString(entitySet));
@@ -234,8 +236,7 @@ test('removing a relevant component from an entity should trigger a entity:remov
         t.ok(eventSpy.calledWith('entity:remove'), 'entity:remove should have been called');
 
         t.end();
-
-    } catch( err ){
+    } catch (err) {
         Log.error(err.stack);
     }
 });
@@ -295,8 +296,8 @@ test('deferred addition of components with a filter', async t => {
 });
 
 test('applying a filter', t => {
-    initialiseEntitySet('entity_set.entities').then(([ registry, entitySet ]) => {
-        const query = Q => Q.all([ '/component/position', '/component/realname' ]);
+    initialiseEntitySet('entity_set.entities').then(([registry, entitySet]) => {
+        const query = Q => Q.all(['/component/position', '/component/realname']);
         const view = entitySet.view(query);
 
         // printE( entitySet );
@@ -313,14 +314,14 @@ test('applying a filter', t => {
 
 test('views created with a filter', t => {
     initialiseEntitySet('entity_set.entities')
-        .then(([ registry, entitySet ]) => {
+        .then(([registry, entitySet]) => {
             const query = Q => Q.none('/component/position');
             const view = entitySet.query(query);
 
             // add another entity to the ES which the view should ignore
             entitySet.addComponent([
                 registry.createComponent('/component/flower', { colour: 'red' }),
-                registry.createComponent('/component/position', { x: -2, y: 5 }),
+                registry.createComponent('/component/position', { x: -2, y: 5 })
             ]);
 
             t.equals(view.length, 2, 'two entities');
@@ -342,7 +343,7 @@ test('views created with a filter', t => {
 //     entity = entitySet.addEntity(
 //         registry.createEntity({ '@c':'/component/flower', colour:'blue'} ));
 //     t.equals( view.size(), 1, 'the view has the new entity');
-//     entitySet.addComponent( 
+//     entitySet.addComponent(
 //         registry.createComponent( {'@c':'/component/position', x:-2,y:5}, entity) );
 //     // printE( view );
 //     t.equals( view.at(0).Position, undefined, 'the component is not added yet');
@@ -353,7 +354,7 @@ test('views created with a filter', t => {
 //     t.end();
 // });
 test('deferred removal of an entity', t => {
-    initialiseEntitySet().then(([ registry, entitySet ]) => {
+    initialiseEntitySet().then(([registry, entitySet]) => {
         entitySet = registry.createEntitySet();
         const view = entitySet.view();
 
@@ -361,15 +362,15 @@ test('deferred removal of an entity', t => {
         entitySet.addEntity(
             registry.createEntity([
                 { '@c': '/component/flower', colour: 'blue' },
-                { '@c': '/component/position', x: 10, y: 60 },
-            ]),
+                { '@c': '/component/position', x: 10, y: 60 }
+            ])
         );
 
         entitySet.addEntity(
             registry.createEntity([
                 { '@c': '/component/vegetable', name: 'cauliflower' },
-                { '@c': '/component/radius', radius: 0.3 },
-            ]),
+                { '@c': '/component/radius', radius: 0.3 }
+            ])
         );
 
         // view.applyEvents();
@@ -377,7 +378,7 @@ test('deferred removal of an entity', t => {
 
         entitySet.removeEntity(entitySet.at(1));
 
-        // t.equals( view.length, 2, 'still two entities' );    
+        // t.equals( view.length, 2, 'still two entities' );
         // view.applyEvents();
         t.equals(view.length, 1, 'now one entity');
 
@@ -386,7 +387,7 @@ test('deferred removal of an entity', t => {
 });
 
 test('deferred removal of an entity triggers correct events', t => {
-    initialiseEntitySet().then(([ registry, entitySet ]) => {
+    initialiseEntitySet().then(([registry, entitySet]) => {
         entitySet = registry.createEntitySet();
         const view = entitySet.view();
         let entityA, entityB;
@@ -397,15 +398,15 @@ test('deferred removal of an entity triggers correct events', t => {
         entityA = entitySet.addEntity(
             registry.createEntity([
                 { '@c': '/component/flower', colour: 'blue' },
-                { '@c': '/component/position', x: 10, y: 60 },
-            ]),
+                { '@c': '/component/position', x: 10, y: 60 }
+            ])
         );
 
         entityB = entitySet.addEntity(
             registry.createEntity([
                 { '@c': '/component/vegetable', name: 'cauliflower' },
-                { '@c': '/component/radius', radius: 0.3 },
-            ]),
+                { '@c': '/component/radius', radius: 0.3 }
+            ])
         );
 
         // view.applyEvents();
@@ -421,7 +422,7 @@ test('deferred removal of an entity triggers correct events', t => {
 });
 
 test('altering a component in the view also changes the component in the entityset', t => {
-    initialiseEntitySet().then(([ registry, entitySet ]) => {
+    initialiseEntitySet().then(([registry, entitySet]) => {
         entitySet = registry.createEntitySet();
         const view = entitySet.view();
 
@@ -429,8 +430,8 @@ test('altering a component in the view also changes the component in the entitys
         entitySet.addEntity(
             registry.createEntity([
                 { '@c': '/component/flower', colour: 'blue' },
-                { '@c': '/component/radius', radius: 0.1 },
-            ]),
+                { '@c': '/component/radius', radius: 0.1 }
+            ])
         );
 
         // view.applyEvents();
@@ -444,11 +445,12 @@ test('altering a component in the view also changes the component in the entitys
 
 test('changing a component in the view triggers a change event', t => {
     initialiseEntitySet()
-        .then(([ registry, entitySet ]) => {
+        .then(([registry, entitySet]) => {
             entitySet = registry.createEntitySet();
             let view = entitySet.view(null, { updateOnEvent: false });
 
-            let viewSpy = Sinon.spy(), esSpy = Sinon.spy();
+            let viewSpy = Sinon.spy(),
+                esSpy = Sinon.spy();
             entitySet.on('all', esSpy);
             view.on('all', viewSpy);
 
@@ -457,8 +459,8 @@ test('changing a component in the view triggers a change event', t => {
             entitySet.addEntity(
                 registry.createEntity([
                     { '@c': '/component/flower', colour: 'yellow', type: 'daisy' },
-                    { '@c': '/component/radius', radius: 0.4 },
-                ]),
+                    { '@c': '/component/radius', radius: 0.4 }
+                ])
             );
 
             // log.debug('from here');
@@ -478,12 +480,12 @@ test('changing a component in the view triggers a change event', t => {
 function initialise(entities) {
     let registry = Common.initialiseRegistry(false);
     let entitySet = Common.loadEntities(registry, entities || 'query.entities');
-    return [ registry, entitySet ];
+    return [registry, entitySet];
 }
 
 function initialiseEntitySet(entityDataName = 'query.entities') {
     return initialiseRegistry(false).then(registry => {
         let entitySet = loadEntities(registry, entityDataName);
-        return [ registry, entitySet ];
+        return [registry, entitySet];
     });
 }

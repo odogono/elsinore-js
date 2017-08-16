@@ -278,14 +278,11 @@ Object.assign( EntitySet.prototype, Base.prototype, {
      * @param {*} options 
      */
     source(options){
-        // return Pull( PullStreamSource(this,options));
         return PullStreamSource(this,options);
-        // return source;
     },
 
     /**
      * Returns a Pull-Stream sink
-     * 
      * 
      * @param {*} options 
      */
@@ -580,35 +577,6 @@ Object.assign( EntitySet.prototype, Base.prototype, {
         }
     },
 
-    // /**
-    //  * Replaces the entitySets entities with the specified entities
-    //  */
-    // reset(entities, options) {
-    //     let ii, len, entity;
-    //     if (entities && entities.isEntitySet) {
-    //         // console.log('reset from',entities.cid,'to',this.cid,'count', entities.models.length);
-    //         entities = entities.models;
-    //     }
-
-    //     const query = this.getQuery();
-
-    //     if (!query || query.isEmpty()) {
-    //         // console.log('reset - no query');
-    //         return CollectionPrototype.reset.call(this, entities);
-    //     }
-
-    //     // console.log('reset - using query', query );
-    //     CollectionPrototype.reset.call(this, null, { silent: true });
-
-    //     for (ii = 0, len = entities.length; ii < len; ii++) {
-    //         entity = entities[ii];
-    //         if (this.isEntityOfInterest(entity, query)) {
-    //             this.add(entity);
-    //         }
-    //     }
-
-    //     return entities;
-    // }
 
     /**
      * 

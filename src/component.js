@@ -28,16 +28,15 @@ export default function Component(attrs, options) {
     this._defUri = null;
 
     this.entityId = 0;
-    
+
     this.attributes = {};
 
     this.preinitialize.apply(this, arguments);
 
-    if( attrs !== undefined ){
-        this.set( attrs, options );//this.attributes = attrs || {};
-    } 
+    if (attrs !== undefined) {
+        this.set(attrs, options); //this.attributes = attrs || {};
+    }
 }
-
 
 // function applyFromObject( obj, attrs, name ){
 //     let attr = attrs[name];
@@ -49,10 +48,7 @@ export default function Component(attrs, options) {
 // }
 
 Object.assign(Component.prototype, Base.prototype, {
-
-    preinitialize(attrs,options){
-
-    },
+    preinitialize(attrs, options) {},
 
     /**
      * Set a hash of attributes on this component
@@ -60,8 +56,10 @@ Object.assign(Component.prototype, Base.prototype, {
      * @param {*} attrs 
      * @param {*} options 
      */
-    set(attrs, options={}) {
-        if( attrs == null ){ return this; }
+    set(attrs, options = {}) {
+        if (attrs == null) {
+            return this;
+        }
         const unset = options.unset;
         const silent = options.silent;
 
@@ -71,27 +69,27 @@ Object.assign(Component.prototype, Base.prototype, {
         let existing = this.attributes;
         // attrs = this.parse(attrs);
 
-        if( attrs['id'] !== undefined ){
+        if (attrs['id'] !== undefined) {
             this.id = attrs['id'];
             delete attrs['id'];
         }
-        
-        if( attrs['@i'] !== undefined ){
+
+        if (attrs['@i'] !== undefined) {
             this.id = attrs['@i'];
             delete attrs['@i'];
         }
 
-        if( attrs['@s'] !== undefined ){
+        if (attrs['@s'] !== undefined) {
             this._defId = attrs['@s'];
             delete attrs['@s'];
         }
 
-        if( attrs['@c'] !== undefined ){
+        if (attrs['@c'] !== undefined) {
             // this._defId = attrs['@c'];
             delete attrs['@c'];
         }
 
-        if( attrs['@e'] !== undefined ){
+        if (attrs['@e'] !== undefined) {
             this.entityId = attrs['@e'];
             delete attrs['@e'];
         }
@@ -125,7 +123,7 @@ Object.assign(Component.prototype, Base.prototype, {
      * 
      * @param {*} name 
      */
-    get( name ){
+    get(name) {
         return this.attributes[name];
     },
 
@@ -200,15 +198,15 @@ Object.assign(Component.prototype, Base.prototype, {
     },
 
     getDefId() {
-        return this._defId;// this.attributes['@s']; // this.get('@s');
+        return this._defId; // this.attributes['@s']; // this.get('@s');
     },
 
     getDefUri() {
-        return this._defUri;// this.attributes['@c']; // return this.get('@c');
+        return this._defUri; // this.attributes['@c']; // return this.get('@c');
     },
 
     getUri() {
-        return this._defUri;//this.attributes['@c']; // return this.get('@c');
+        return this._defUri; //this.attributes['@c']; // return this.get('@c');
     },
     // setDefHash: function(hash:string){
     //     this._defHash = hash;
@@ -239,23 +237,23 @@ Object.assign(Component.prototype, Base.prototype, {
      * 
      */
     hash(asString) {
-        let result = stringify(this.attributes);//omit(this.attributes, '@e', '@es', '@s', '@c', 'id'));
+        let result = stringify(this.attributes); //omit(this.attributes, '@e', '@es', '@s', '@c', 'id'));
         return hash(result, asString);
     },
 
     /**
      * 
      */
-    clone(){
-        return new Component( this.toJSON() );
+    clone() {
+        return new Component(this.toJSON());
     },
 
     /**
      * 
      */
-    toJSON(options) {
-        let result = extend({},this.attributes); //omit(this.attributes, '@e', '@es', '@c', 'id');
-        
+    toJSON(options = {}) {
+        let result = extend({}, this.attributes); //omit(this.attributes, '@e', '@es', '@c', 'id');
+
         if (this.id !== 0) {
             result[Component.ID] = this.id;
         }
@@ -265,8 +263,11 @@ Object.assign(Component.prototype, Base.prototype, {
         }
 
         if (options && options.cdefMap) {
-            result['@c'] = options.cdefMap[ this.getDefId() ];
+            result['@c'] = options.cdefMap[this.getDefId()];
+        } else {
+            result['@s'] = this.getDefId();
         }
+
         return result;
     }
 });

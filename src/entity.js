@@ -364,12 +364,12 @@ Entity.toEntityId = function(entityId) {
     return entityId;
 };
 
-// Entity.getEntityId = function(entity) {
-//     if (entity && entity.getEntityId) {
-//         return entity.getEntityId();
-//     }
-//     return null;
-// };
+Entity.getEntityId = function(entity) {
+    if (entity && entity.getEntityId) {
+        return entity.getEntityId();
+    }
+    return undefined;
+};
 
 // // const ENTITY_ID_MAX = Math.pow(2,31)-1;
 // // const ENTITY_SET_ID_MAX = Math.pow(2,21)-1;

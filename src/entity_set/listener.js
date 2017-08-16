@@ -2,20 +2,40 @@ import Entity from '../entity';
 
 import hash from '../util/hash';
 import uniqueId from '../util/unique_id';
+import Base from '../base';
 
-import {createLog} from '../util/log';
+import { createLog } from '../util/log';
 const Log = createLog('EntitySetListener');
+
+export default function EntitySetListener(srcEntitySet, targetEntitySet, query, options = {}) {
+    this.cid = uniqueId('esl');
+
+    this.updateOnEvent = !!options.updateOnEvent;
+
+    // srcEntitySet.setQuery(query);
+
+    this.listenToEntitySet(srcEntitySet, targetEntitySet, query);
+
+    // reset causes entities to be copied over?
+    srcEntitySet.reset(targetEntitySet);
+}
+
+EntitySetListener.create = function(srcEntitySet, targetEntitySet, query, options) {
+    let listener = new EntitySetListener(srcEntitySet, targetEntitySet, query, options);
+    return listener;
+};
 
 /**
  * The EntitySet listener keeps track of one entitySet listening to enother.
  */
-export default class EntitySetListener {
+Object.assign(EntitySetListener.prototype, Base.prototype, {
     setQuery(q) {
         this._query = q;
-    }
+    },
+
     getQuery() {
         return this._query;
-    }
+    },
 
     /**
     *   srcEntitySet listens to targetEntitySet using the specified query
@@ -38,7 +58,7 @@ export default class EntitySetListener {
         // srcEntitySet.listenTo( targetEntitySet, 'component:change', (...args) => {
         //     log.debug('listen to es change ' + stringify(args) );
         // })
-    }
+    },
 
     /**
      * 
@@ -57,7 +77,7 @@ export default class EntitySetListener {
         if (apply /*this.updateOnEvent*/) {
             this.applyEvents();
         }
-    }
+    },
 
     /**
      * 
@@ -78,8 +98,21 @@ export default class EntitySetListener {
         if (apply /*this.updateOnEvent*/) {
             this.applyEvents();
         }
-    }
+    },
 
+    isEntityOfInterest(entity) {
+        const query = this.getQuery();
+        if (!query) {
+            return true;
+        }
+        const tEntity = query.execute(entity);
+        return tEntity ? true : false;
+    },
+
+    /**
+     * 
+     * @param {*} components 
+     */
     onComponentAdd(components) {
         let entitySet = this.entitySet;
         let entity;
@@ -91,14 +124,14 @@ export default class EntitySetListener {
             if (entitySet.hasEntity(eid)) {
                 this.changedEntityList[eid] = eid;
                 this.isModified = true;
-                // Log.debug(`[onComponentAdd]`, 'hasEntity', eid, stringify(component) ); 
+                // Log.debug(`[onComponentAdd]`, 'hasEntity', eid, stringify(component) );
             } else {
                 // this is the situation where a component is being added
                 // but the containing entity doesn't already exist in the
                 // listening entitySet - in this case the entity has to be
                 // added before the component can
-                entity = this.targetEntitySet.get(eid);
-                if (entity && entitySet.isEntityOfInterest(entity)) {
+                entity = this.targetEntitySet.getEntity(eid);
+                if (entity && this.isEntityOfInterest(entity)) {
                     this.isModified = true;
                     this.addedEntities[eid] = entity;
                 }
@@ -110,8 +143,12 @@ export default class EntitySetListener {
         if (this.updateOnEvent) {
             this.applyEvents();
         }
-    }
+    },
 
+    /**
+     * 
+     * @param {*} components 
+     */
     onComponentRemove(components) {
         let ii, len, eid;
         let entitySet = this.entitySet;
@@ -130,7 +167,7 @@ export default class EntitySetListener {
             this.shit = true;
             this.applyEvents();
         }
-    }
+    },
 
     /**
     *   
@@ -154,20 +191,20 @@ export default class EntitySetListener {
         changeOptions = { silent: true };
 
         // add entities
-        
+
         // Log.debug('[applyEvents]', Object.values(this.addedEntities));
         Object.values(this.addedEntities).forEach((entity, eid) => {
-            if (query && !entitySet.isEntityOfInterest(entity, query)) {
+            if (query && !this.isEntityOfInterest(entity)) {
                 return;
             }
-            entitySet.add(entity, changeOptions);
+            entitySet.addEntity(entity, changeOptions);
             // if( debug ){ Log.debug('addedEntities includes ' + stringify(entity) + ' ' + eid); }
             entitiesAdded.push(entity);
         });
 
         // remove entities
         Object.values(this.removedEntities).forEach(entity => {
-            entitySet.remove(entity, changeOptions);
+            entitySet.removeEntity(entity, changeOptions);
             // Log.debug('[applyEvents][removedEntities]', entity.id);
             // if( debug ){ Log.debug( entitySet.cid + ' removed entity ' + entity.id ); }
             entitiesRemoved.push(entity);
@@ -204,37 +241,18 @@ export default class EntitySetListener {
         this.removedEntities = {};
         this.changedEntityList = {};
         this.isModified = false;
-    }
+    },
 
     hash() {
         let q;
         // start with the entitysets hash
         let str = _.result(this.targetEntitySet, 'hash');
-        if (q = this.getQuery()) {
+        if ((q = this.getQuery())) {
             str += q.hash();
         }
         return hash(str, true);
     }
-}
-
-EntitySetListener.create = function(srcEntitySet, targetEntitySet, query, options) {
-    let listener = new EntitySetListener();
-    listener.cid = uniqueId('esl');
-
-    // srcEntitySet.listeners || (srcEntitySet.listeners={});
-    // are we already listening to this entityset?
-    // srcEntitySet.listeners[ targetEntitySet.cid ] = listener;
-    listener.updateOnEvent = !!options.updateOnEvent;
-
-    srcEntitySet.setQuery(query);
-
-    listener.listenToEntitySet(srcEntitySet, targetEntitySet, query);
-
-    // reset causes entities to be copied over?
-    srcEntitySet.reset(targetEntitySet);
-
-    return listener;
-};
+});
 
 EntitySetListener.prototype.type = 'EntitySetListener';
 EntitySetListener.prototype.isEntitySetListener = true;

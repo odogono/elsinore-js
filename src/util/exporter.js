@@ -1,4 +1,4 @@
-import EventsAsync from './events.async';
+import Base from '../base';
 import {createLog} from './log';
 import stringify from './stringify';
 import {toString as entityToString} from './to_string';
@@ -7,14 +7,11 @@ import readProperty from './read_property';
 const Log = createLog('JSONExporter');
 
 
+export default function JSONExporter(options={}){
+}
 
 
-
-export class JSONExporter {
-    constructor(options={}){
-        Object.assign(this, EventsAsync);
-    }
-
+Object.assign(JSONExporter.prototype, Base.prototype, {
 
     /**
      * anonymous - components will be emitted without an id or entity id (default:false)
@@ -48,7 +45,7 @@ export class JSONExporter {
         // this.listenTo(entitySet, 'component:add', components => {
         //     // components.forEach( com => this.trigger('es:add', com) );
         // })
-    }
+    },
 
     /**
      * 
@@ -63,7 +60,7 @@ export class JSONExporter {
             }
             this.trigger('es:schema', payload );
         });
-    }
+    },
 
     /**
      * https://github.com/Level/levelup#createReadStream
@@ -117,7 +114,7 @@ export class JSONExporter {
                     this.trigger('es:e', {'@cmd':'entity'});
                 }
             });
-    }
+    },
 
     /**
      * Converts a component to JSON representation
@@ -134,13 +131,12 @@ export class JSONExporter {
             delete json['@i'];
         }
         return json;
-    }
-}
+    },
+})
 
 
 
 
 JSONExporter.create = function(options={}){
-    let result = new JSONExporter(options);
-    return result;
+    return new JSONExporter(options);
 }
