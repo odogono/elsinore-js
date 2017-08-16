@@ -27,6 +27,8 @@ test('source close after existing', async t => {
         Pull(
             entitySet.source({ closeAfterExisting: true }),
             Pull.collect((err, components) => {
+                // the stream will send an eoe command as well as components
+                components = components.filter(c => c['@s']);
                 t.equals(components.length, 7);
                 t.end();
             })
@@ -99,22 +101,14 @@ test('source emits remove events', async t => {
             //     Log.debug('[PullMap][<]', stringify(val));
             //     return val;
             // }),
-            Pull.take(9),
+            Pull.take(10),
             Pull.collect((err, evts) => {
-                t.deepEqual(evts, [
-                    { '@e': 2, '@i': 3, '@s': 1, addr: '192.3.0.1' },
-                    { '@e': 2, '@i': 4, '@s': 2, expires_at: -300 },
-                    { '@e': 5, '@i': 6, '@s': 1, addr: '192.3.0.2' },
-                    { '@e': 7, '@i': 8, '@s': 1, addr: '192.3.0.3' },
-                    { '@e': 9, '@i': 10, '@s': 1, addr: '192.3.0.4' },
-                    { '@e': 9, '@i': 11, '@s': 2, comment: 'b', expires_at: 2000 },
-                    { '@e': 12, '@i': 13, '@s': 1, addr: '192.3.0.5' },
-                    { '@cmd': 'rmc', cid: [3, 4] },
-                    { '@cmd': 'rme', eid: [2] }
-                ]);
+                evts = evts.filter(e => e['@cmd'] == 'rmc' || e['@cmd'] == 'rme');
+                t.deepEqual(evts, [{ '@cmd': 'rmc', cid: [3, 4] }, { '@cmd': 'rme', eid: [2] }]);
                 t.end();
             })
         );
+
         entitySet.removeEntity(entitySet.at(0));
     } catch (err) {
         Log.error(err.stack);
@@ -140,7 +134,8 @@ test('source emits components with resolved component uris', async t => {
                     { '@c': '/connection', addr: '192.3.0.3' },
                     { '@c': '/connection', addr: '192.3.0.4' },
                     { '@c': '/ttl', comment: 'b', expires_at: 2000 },
-                    { '@c': '/connection', addr: '192.3.0.5' }
+                    { '@c': '/connection', addr: '192.3.0.5' },
+                    { '@cmd': 'eoe', cc: 7, ec: 5 }
                 ]);
                 t.end();
             })

@@ -11,6 +11,9 @@ export default function queryFilter(query) {
     query = new Query(query);
     
     const test = (val) => {
+        if( !Entity.isEntity(val) ){
+            return false;
+        }
         let outcome = query.execute( val );
         if( Entity.isEntity(outcome) && outcome.hasComponents() ){
             return true;
@@ -20,11 +23,12 @@ export default function queryFilter(query) {
 
     return function(read) {
         return function next(end, cb) {
-            var sync, loop = true;
+            let sync, loop = true;
             while (loop) {
                 loop = false;
                 sync = true;
                 read(end, function(end, data) {
+                    
                     if (!end && !test(data))
                         return sync ? loop = true : next(end, cb);
                     cb(end, data);

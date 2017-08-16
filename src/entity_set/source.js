@@ -33,6 +33,7 @@ export default function source(entitySet, options = {}) {
     // send all existing components
     if (sendExisting) {
         const length = entitySet.size();
+        let componentCount = 0;
 
         for (ii; ii < length; ii++) {
             entity = entitySet.at(ii);
@@ -42,9 +43,13 @@ export default function source(entitySet, options = {}) {
                 continue;
             }
             for (cc = 0, count = components.length; cc < count; cc++) {
+                componentCount++;
                 pushComponent(pushable, components[cc], cdefMap, isAnonymous);
             }
         }
+
+        // send a command confirming End Of Existing components
+        pushable.push({ '@cmd': 'eoe', ec:length, cc:componentCount });
 
         if (options.closeAfterExisting === true) {
             pushable.end();
