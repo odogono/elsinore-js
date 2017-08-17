@@ -34,8 +34,6 @@ export default function Entity(options={}){
         this.setEntitySetId(esid);
     }
 
-    
-
     // bitfield indexes which components this entity has
     if (options.comBf) {
         this._bf = options.comBf;
@@ -229,8 +227,17 @@ Object.assign( Entity.prototype, Base.prototype, {
     },
 
     removeComponent(component) {
+        const registry = this.getRegistry();
+
         if (!component) {
             return this;
+        }
+
+        // remove a given component by its defId or uri
+        if( isString(component) || isInteger(component) ){
+            // convert to a def id
+            component = registry.getIId(component);
+            component = this.components[component];
         }
 
         // NOTE - the below is contentious

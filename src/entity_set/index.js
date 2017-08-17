@@ -512,11 +512,14 @@ Object.assign( EntitySet.prototype, Base.prototype, {
      * @param {*} options 
      */
     getEntity(entity, options) {
+        if( Entity.isEntity(entity) ){
+            entity = entity.getEntityId();
+        }
         if( isInteger(entity) ){
             return this._entitiesById[entity];
         }
-        return this._entities.indexOf(entity);
-        // return this.get(entity, options);
+        return undefined;
+        // let found = this._entities.indexOf(entity);
     },
 
     hasEntity(entity) {

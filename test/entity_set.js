@@ -21,7 +21,7 @@ import {
     captureEntitySetEvent
 } from './common';
 
-import { cloneComponent } from '../src/util/clone';
+import { cloneEntity, cloneComponent } from '../src/util/clone';
 
 const Log = createLog('TestEntitySet');
 
@@ -181,17 +181,16 @@ test('retrieving a component by id', async t => {
 
         const entitySet = registry.createEntitySet();
 
-        entitySet.addEntity( {'@c':'/component/position', x:46, y:12});
+        entitySet.addEntity({ '@c': '/component/position', x: 46, y: 12 });
 
         // Log.debug('[es]', entityToString(entitySet));
 
         const entity = entitySet.at(0);
-        const component = entitySet.getComponent( entity.Position.id );
+        const component = entitySet.getComponent(entity.Position.id);
 
-        t.equals( component.get('x'), 46 );
+        t.equals(component.get('x'), 46);
 
         t.end();
-
     } catch (err) {
         Log.error(err.stack);
     }
@@ -274,7 +273,7 @@ test('removing a component from an entity with only one component', async t => {
         entitySet.on('component:remove', () => (receivedComponentRemove = true));
         entitySet.on('entity:remove', () => (receivedEntityRemove = true));
 
-        let component = entitySet.addComponent(registry.createComponent('/component/position', { x: 15, y: 2 }));
+        let component = entitySet.addComponent({ '@c':'/component/position', x: 15, y: 2 });
 
         component = entitySet.removeComponent(component);
 
@@ -1108,31 +1107,76 @@ test('mutating a previously added component does not affect the entityset', t =>
 //         .catch(err => Log.error(err.stack));
 // });
 
-test('possible to add 2 entities with same entityIds but different entityset ids', t => {
-    return initialise()
-        .then(([registry, entitySet, entities]) => {
-            // logEvents( entitySet );
-            let entityA = entities.at(0);
-            let entityB = entities.at(1);
+test('possible to add 2 entities with same entityIds but different entityset ids', async t => {
+    try {
+        const [registry, entitySet, entities] = await initialise();
 
-            entityA.setEntityId(22);
-            entityA.setEntitySetId(100);
-            entityB.setEntityId(22);
-            entityB.setEntitySetId(101);
+        // logEvents( entitySet );
+        let entityA = entities.at(0);
+        let entityB = entities.at(1);
 
-            entitySet.addEntity(entityA);
-            entitySet.addEntity(entityB);
+        entityA.setEntityId(22);
+        entityA.setEntitySetId(100);
+        entityB.setEntityId(22);
+        entityB.setEntitySetId(101);
 
-            t.equals(entitySet.size(), 2, 'two entities should have been added');
-        })
-        .then(() => t.end())
-        .catch(err => Log.error(err.stack));
+        entitySet.addEntity(entityA);
+        entitySet.addEntity(entityB);
+
+        t.equals(entitySet.size(), 2, 'two entities should have been added');
+
+        t.end();
+    } catch (err) {
+        Log.error(err.stack);
+    }
 });
 
-function initialise() {
-    return initialiseRegistry().then(registry => {
+test('removing a component from an entity', async t => {
+    try {
+        t.plan(2);
+
+        const registry = await initialiseRegistry();
         let entitySet = registry.createEntitySet();
-        let entities = loadEntities(registry);
-        return [registry, entitySet, entities];
-    });
+
+        entitySet.addEntity([
+            {'@c': '/component/name', name:'susanne'},
+            { '@c': '/component/status', status: 'active' },
+        ]);
+
+        // capture the single component:remove event that occurs
+        captureEntitySetEvent(entitySet, 'component:remove', false, ids =>
+            t.equals(ids.length,1, '1 component:remove event should have been called')
+        );
+
+        // entitySet.on('all', (name,components) => Log.debug('es event', name, components.map(c=>c.toJSON()) ));
+
+        // clone the entity so that we can operate on it -
+        const entity = cloneEntity(entitySet.at(0));// registry.createEntity( entity.toJSON() );
+
+        // remove one of the components
+        entity.removeComponent('/component/status');
+
+        // logEvents(entitySet);
+        // Log.debug('ok good', entity.toJSON() );
+        // Log.debug('ok good', entityToString(cloneEntity) );
+        // Log.debug('ok good', entityToString(entitySet) );
+
+        // re-add the entity - this should update the entity in the set
+        // and also fire an event
+        entitySet.addEntity( entity);
+
+        t.ok( entitySet.at(0).Status === undefined );
+
+        t.end();
+
+    } catch (err) {
+        Log.error(err.stack);
+    }
+});
+
+async function initialise() {
+    const registry = await initialiseRegistry();
+    let entitySet = registry.createEntitySet();
+    let entities = loadEntities(registry);
+    return [registry, entitySet, entities];
 }
