@@ -14,6 +14,7 @@ import { getEntityIdFromId } from './id';
  * @param {*} indent 
  */
 export function entityToString(entity, indent = '') {
+    if( !entity ){ return []; }
     let res = [];
     let comDefId;
 

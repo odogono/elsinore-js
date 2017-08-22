@@ -1,6 +1,7 @@
 import { Collection, Events } from 'odgn-backbone-model';
 
 import Component from '../component';
+import Base from '../base';
 import stringify from '../util/stringify';
 
 import {isObject} from '../util/is';
@@ -296,7 +297,7 @@ export default class ComponentRegistry {
 
             if (!cDef) {
                 if (throwOnNotFound) {
-                    throw new Error('could not find componentDef ' + ident);
+                    throw new Error(`could not find componentDef '${ident}'`);
                 }
                 if (len === 1 && !forceArray) {
                     return null;

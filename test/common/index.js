@@ -149,11 +149,11 @@ export function loadFixtureJSON( fixturePath ){
     }
 }
 
-export function logEvents(obj, prefix){
+export function logEvents(obj, prefix='evt'){
     if( EntitySet.isEntitySet(obj) ){
-        obj.on('entity:add', entities => Log.info(prefix,'entity:add', stringify(entities)) );
+        obj.on('entity:add', entities => Log.info(prefix,'entity:add', stringify(entities.map(e => e.id))) );//stringify(entities)) );
         obj.on('entity:update', entities => Log.info(prefix,'entity:update', stringify(entities)) );
-        obj.on('entity:remove', entities => Log.info(prefix,'entity:remove', stringify(entities)) );
+        obj.on('entity:remove', entities => Log.info(prefix,'entity:remove', stringify(entities.map(e => e.id))) );
         obj.on('component:add', components => Log.info(prefix,'component:add', entityToString(components)) );
         obj.on('component:update', components => Log.info(prefix,'component:update', entityToString(components)) );
         obj.on('component:remove', components => Log.info(prefix,'component:remove', entityToString(components)) );

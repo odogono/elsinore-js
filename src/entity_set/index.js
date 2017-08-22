@@ -1,8 +1,8 @@
 import Base from '../base';
+import Collection from '../util/collection';
 import BitField from 'odgn-bitfield';
 import Component from '../component';
 import Entity from '../entity';
-import Collection from '../util/collection';
 
 import Query from '../query';
 import stringify from '../util/stringify';
@@ -12,6 +12,7 @@ import valueArray from '../util/array/value';
 import {isObject} from '../util/is';
 import createUUID from '../util/uuid';
 import hash from '../util/hash';
+import {cloneEntity} from '../util/clone';
 
 import CmdBuffer from '../cmd_buffer/sync';
 
@@ -34,9 +35,11 @@ export default function EntitySet(entities, options={}){
 Object.assign( EntitySet.prototype, Base.prototype, {
 
     initialize(entities, options = {}) {
-        this._entitiesMap = {};
-        this._entities = [];
-        this._entitiesById = {};
+        this._entities = new Collection();
+
+        // this._entitiesMap = {};
+        // this._entities = [];
+        // this._entitiesById = {};
 
         let cmdBufferType = CmdBuffer;
         this._uuid = options.uuid || createUUID();
@@ -77,16 +80,32 @@ Object.assign( EntitySet.prototype, Base.prototype, {
         this.registry = null;
     },
 
-    at(index){
-        return this._entities[index];
+    /**
+     * Returns the entity at index
+     * @param {*} index 
+     * @param {*} clone 
+     */
+    at(index,clone=false){
+        let result = this._entities.at(index);
+        if( clone ){
+            result = cloneEntity(result);
+        }
+        return result;
     },
 
+    /**
+     * Returns the number of entities in this set
+     */
     size() {
-        return this._entities.length;// this.length;
+        return this._entities.size();// this.length;
     },
 
+    /**
+     * Returns an array containing all the entities
+     * in this set
+     */
     getEntities(){
-        return this._entities;
+        return this._entities.models;
     },
 
     /**
@@ -343,7 +362,7 @@ Object.assign( EntitySet.prototype, Base.prototype, {
      * Returns a component by its entityid and def id
      */
     getComponentByEntityId(entityId, componentDefId) {
-        const entity = this._entitiesById[ entityId ];// this.get(entityId);
+        const entity = this._entities.get(entityId);
         if (entity !== undefined ) {
             return entity.components[componentDefId];
         }
@@ -451,14 +470,17 @@ Object.assign( EntitySet.prototype, Base.prototype, {
             throw new Error('attempting to add invalid entity');
         }
 
-        let existing = this._entitiesMap[ entity.id ];
-        if( existing ){
-            return entity;
-        }
+        // let existing = this._entities.get(entity.id);
+        
+        // if( existing ){
+        //     return entity;
+        // }
 
-        this._entitiesMap[ entity.id ] = entity;
-        this._entities.push( entity );
-        this._entitiesById[ entity.id ] = entity;
+        this._entities.add( entity );
+
+        // this._entitiesMap[ entity.id ] = entity;
+        // this._entities.push( entity );
+        // this._entitiesById[ entity.id ] = entity;
 
         // console.log('add new entity', entity );
 
@@ -470,18 +492,20 @@ Object.assign( EntitySet.prototype, Base.prototype, {
      * @param {*} entity 
      */
     _removeEntity(entity) {
+        this._entities.remove( entity );
         // console.log('[_removeEntity]', 'remove entity',entity.id);
-        let existing = this._entitiesMap[ entity.id ];
-        if( existing ){
-            delete this._entitiesMap[entity.id];
-            delete this._entitiesById[entity.id];
+        // let existing = this._entities.get(entity.id);
 
-            let index = this._entities.indexOf(entity);
-            this._entities.splice( index,1 );
-        } else {
-            // console.log('could not find', entity.cid, this._entitiesMap );
-            throw new Error('stop');
-        }
+        // if( existing ){
+        //     delete this._entitiesMap[entity.id];
+        //     delete this._entitiesById[entity.id];
+
+        //     let index = this._entities.indexOf(entity);
+        //     this._entities.splice( index,1 );
+        // } else {
+        //     // console.log('could not find', entity.cid, this._entitiesMap );
+        //     // throw new Error('stop');
+        // }
 
         // let entityId = Entity.toEntityId(entity);
         // no need for us to issue remove events as well as entity:remove
@@ -516,17 +540,14 @@ Object.assign( EntitySet.prototype, Base.prototype, {
             entity = entity.getEntityId();
         }
         if( isInteger(entity) ){
-            return this._entitiesById[entity];
+            return this._entities.get(entity);
         }
         return undefined;
-        // let found = this._entities.indexOf(entity);
     },
 
     hasEntity(entity) {
-        if( isInteger(entity) ){
-            return this._entitiesById[entity] !== undefined;
-        }
-        return this._entities.indexOf(entity) !== -1;
+        // console.log('[hasEntity]', this._entities._objectsById[entity] !== undefined, entity);
+        return this._entities.has(entity);
     },
 
     /**
@@ -573,9 +594,19 @@ Object.assign( EntitySet.prototype, Base.prototype, {
             this._removeComponent( componentsRemoved[ii] );
             // console.log('[EntitySet][update]', 'component:remove', componentsRemoved );
         }
-
+        for (ii = 0, len = entitiesAdded.length; ii < len; ii++) {
+            let entity = entitiesAdded[ii];
+            this._addEntity( entity );
+            // console.log('[EntitySet][update]', 'entity:add', entity.id );
+        }
+        for (ii = 0, len = entitiesUpdated.length; ii < len; ii++) {
+            let entity = entitiesUpdated[ii];
+            this._addEntity( entity );
+            // console.log('[EntitySet][update]', 'entity:update', entity.id );
+        }
         for (ii = 0, len = entitiesRemoved.length; ii < len; ii++) {
             let entity = entitiesRemoved[ii];
+            this._removeEntity(entity);
             // console.log('[EntitySet][update]', 'entity:remove', entity.id );
         }
     },

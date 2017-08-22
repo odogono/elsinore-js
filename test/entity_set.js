@@ -64,9 +64,13 @@ test('adding an entity with a component returns the added entity', async t => {
 
         let entitySet = registry.createEntitySet();
 
-        let entity = registry.createEntity([{ '@c': '/component/position', x: 2, y: -2 }]);
-        entity = entitySet.addEntity(entity);
-        // printE( entitySet );
+        // logEvents( entitySet );
+
+        const entity = entitySet.addEntity([{ '@c': '/component/position', x: 2, y: -2 }], { debug: false });
+
+        // Log.debug( entityToString(entitySet));
+
+        // console.log( entitySet );
         t.ok(entity.getEntityId() > 0, 'the entity should have an id');
         t.ok(entitySet.hasEntity(entity.id), 'the entity should exist');
 
@@ -222,7 +226,7 @@ test('updating a component in the entityset', async t => {
         // change the fields and insert again
         component.set({ x: 200, y: -200 });
 
-        entitySet.addComponent(component, { debug: true });
+        entitySet.addComponent(component, { debug: false });
 
         // Log.debug('[es]', entityToString(entitySet));
 
@@ -234,33 +238,6 @@ test('updating a component in the entityset', async t => {
     }
 });
 
-test('updating a component should not replace the instance already in the entityset', t => {
-    return initialiseRegistry()
-        .then(registry => {
-            const entitySet = registry.createEntitySet();
-            // logEvents(entitySet);
-            // add the component to the registry
-            // what we get back is a copy of the passed component, with an id assigned
-            const component = entitySet.addComponent(registry.createComponent('/component/position', { x: 10, y: -1 }));
-            const componentEntityId = component.getEntityId();
-            const componentCid = component.cid;
-
-            let update = cloneComponent(component, { x: 300, y: 200 });
-            entitySet.addComponent(update);
-
-            // the original component will now have updated attributes
-            t.equal(component.get('x'), 300);
-            t.equal(component.get('y'), 200);
-            t.equal(component.getEntityId(), componentEntityId, 'the component should retain its entity id');
-            t.equal(component.cid, componentCid, 'the internal id remains the same');
-            // printE( component );
-            // printE( update );
-            // console.log(`what the chuff ${componentEntityId} ${component.getEntityId()}`);
-            // printE( component );
-        })
-        .then(() => t.end())
-        .catch(err => Log.error(err.stack));
-});
 
 test('removing a component from an entity with only one component', async t => {
     try {
@@ -273,9 +250,13 @@ test('removing a component from an entity with only one component', async t => {
         entitySet.on('component:remove', () => (receivedComponentRemove = true));
         entitySet.on('entity:remove', () => (receivedEntityRemove = true));
 
-        let component = entitySet.addComponent({ '@c':'/component/position', x: 15, y: 2 });
+        // logEvents(entitySet);
 
-        component = entitySet.removeComponent(component);
+        let component = entitySet.addComponent({ '@c': '/component/position', x: 15, y: 2 });
+
+        component = entitySet.removeComponent(component, {debug:false});
+        
+        // Log.debug( entityToString(entitySet) );
 
         t.ok(receivedComponentRemove, 'component:remove should have been called');
         t.ok(receivedEntityRemove, 'entity:remove should have been called');
@@ -311,13 +292,19 @@ test('adding an identified component in another entity replaces the existing', a
 
         entitySet.on('entity:remove', entities => (entityRemovedId = entities[0].id));
 
+        // logEvents(entitySet);
+
         const firstEntity = entitySet.addEntity({ '@c': '/component/position', x: 100, y: 50, id: 22 });
+
         const secondEntity = entitySet.addEntity([{ '@c': '/component/position', x: 22, y: -9, id: 22 }]);
+
+        // Log.debug( entityToString(entitySet) );
 
         // the first entity will have been removed
         t.equal(firstEntity.id, entityRemovedId);
         t.notEqual(firstEntity.id, secondEntity.id);
         t.equals(entitySet.size(), 1);
+
 
         t.end();
     } catch (err) {
@@ -1139,19 +1126,19 @@ test('removing a component from an entity', async t => {
         let entitySet = registry.createEntitySet();
 
         entitySet.addEntity([
-            {'@c': '/component/name', name:'susanne'},
-            { '@c': '/component/status', status: 'active' },
+            { '@c': '/component/name', name: 'susanne' },
+            { '@c': '/component/status', status: 'active' }
         ]);
 
         // capture the single component:remove event that occurs
         captureEntitySetEvent(entitySet, 'component:remove', false, ids =>
-            t.equals(ids.length,1, '1 component:remove event should have been called')
+            t.equals(ids.length, 1, '1 component:remove event should have been called')
         );
 
         // entitySet.on('all', (name,components) => Log.debug('es event', name, components.map(c=>c.toJSON()) ));
 
         // clone the entity so that we can operate on it -
-        const entity = cloneEntity(entitySet.at(0));// registry.createEntity( entity.toJSON() );
+        const entity = cloneEntity(entitySet.at(0)); // registry.createEntity( entity.toJSON() );
 
         // remove one of the components
         entity.removeComponent('/component/status');
@@ -1163,12 +1150,52 @@ test('removing a component from an entity', async t => {
 
         // re-add the entity - this should update the entity in the set
         // and also fire an event
-        entitySet.addEntity( entity);
+        entitySet.addEntity(entity);
 
-        t.ok( entitySet.at(0).Status === undefined );
+        t.ok(entitySet.at(0).Status === undefined);
 
         t.end();
+    } catch (err) {
+        Log.error(err.stack);
+    }
+});
 
+test.skip('removing a component from an entity again', async t => {
+    try {
+        // t.plan(2);
+
+        const registry = await initialiseRegistry();
+        let entitySet = registry.createEntitySet();
+
+        entitySet.addEntity([{ '@c': '/component/status', status: 'active' }]);
+
+        // capture the single component:remove event that occurs
+        captureEntitySetEvent(entitySet, 'component:remove', false, ids =>
+            t.equals(ids.length, 1, '1 component:remove event should have been called')
+        );
+
+        entitySet.on('all', (name, components) => Log.debug('es event', name, components.map(c => c.toJSON())));
+
+        // clone the entity so that we can operate on it -
+        const entity = entitySet.at(0, true); // registry.createEntity( entity.toJSON() );
+
+        // remove Status and add Name
+        entity.removeComponent('/component/status');
+        entity.addComponent({ '@c': '/component/name', name: 'plaid' });
+
+        // logEvents(entitySet);
+        // Log.debug('ok good', entity.toJSON() );
+        // Log.debug('ok good', entityToString(entity) );
+
+        // re-add the entity - this should update the entity in the set
+        // and also fire an event
+        entitySet.addEntity(entity, { debug: true });
+
+        Log.debug('ok good', entityToString(entitySet));
+
+        t.ok(entitySet.at(0).Status === undefined);
+
+        t.end();
     } catch (err) {
         Log.error(err.stack);
     }

@@ -287,6 +287,10 @@ Object.assign( Entity.prototype, Base.prototype, {
         return this.components[componentIId];
     },
 
+    /**
+     * 
+     * @param {*} componentIId 
+     */
     hasComponent(componentIId) {
         if (Component.isComponent(componentIId)) {
             componentIId = componentIId.getDefId();
@@ -296,10 +300,16 @@ Object.assign( Entity.prototype, Base.prototype, {
         return this.getComponentBitfield().get(componentIId);
     },
 
+    /**
+     * 
+     */
     hasComponents() {
         return Object.keys(this.components).length > 0;
     },
 
+    /**
+     * 
+     */
     getComponentBitfield() {
         // let bf = this._bf;
         // if (bf === undefined) {
