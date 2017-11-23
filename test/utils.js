@@ -124,6 +124,15 @@ test('valueArray concatenates multiple arrays', t => {
     t.end();
 });
 
+test('valueArray flattens arrays', t => {
+    const array1 = [['entity', 'component']];
+    const array2 = [['registry', 'entitySet']];
+
+    t.deepEquals(valueArray(array1, array2), ['entity', 'component', 'registry', 'entitySet']);
+
+    t.end();
+});
+
 test('valueArray converts collections to arrays', t => {
     t.deepEquals(valueArray(new Collection([{ id: 2 }, { id: 3 }])), [{ id: 2 }, { id: 3 }]);
 

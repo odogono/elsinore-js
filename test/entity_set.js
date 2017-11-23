@@ -139,32 +139,37 @@ test('can add an array of raw components', async t => {
     }
 });
 
-test.only('adding several components returns an array of added components', async t => {
+test('adding several components returns an array of added components', async t => {
     let entities;
     try {
         const registry = await initialiseRegistry();
         let entitySet = registry.createEntitySet();
 
-        // let loadedEntitySet = loadEntities( registry, 'entity_set.entities' );
-        // let data = loadFixtureJSON('entity_set.entities.json');
-        // Log.debug(data);
-        // let components = _.map(data, line => registry.createComponent(line));
         let components = [
             { '@c': '/component/position', x:20, y:4}, {'@c':'/component/radius', radius:5}
         ];
 
-        components = entitySet.addComponent(components, {debug:true});
+        components = entitySet.addComponent(components);
 
-        Log.debug('[es]', components );
-        // Log.debug('[es]', entitySet._cmdBuffer);
+        // Log.debug('[es]', entityToString(components) );
+        // Log.debug('[es]', components);
         // Log.debug('[es]', entityToString(entitySet));
 
-        t.ok(Component.isComponent(components[0]), 'returns an array of components');
+        t.ok( Component.isComponent(components[0]), 'returns an array of components');
+
+
+        // direct addition of a component to an entity also works
+        components = entitySet.addComponent( {'@c':'/component/name','name':'oro', '@e':2} );
+
+        t.ok( Component.isComponent(components), 'returns an array of components');
+
+
         t.end();
     } catch (err) {
         Log.error(err.message, err.stack);
     }
 });
+
 
 test('adding a component without an id or an entity id creates a new component and a new entity', async t => {
     try {
@@ -202,7 +207,7 @@ test('when adding a new entity, only the entity add event is emitted, not the co
         const registry = await initialiseRegistry();
         let entitySet = registry.createEntitySet();
 
-        entitySet.on('all', (name,items) => console.log('[all]', name, items.map(i=>i.getEntityId())) );
+        // entitySet.on('all', (name,items) => console.log('[all]', name, items.map(i=>i.getEntityId())) );
         // entitySet.on('component:add', components => components.map(c => c.getEntityId()) )
         // entitySet.on('entity:add', entities => entities.map(e => e.getEntityId()) );
 
@@ -284,10 +289,9 @@ test('adding a component emits an event', async t => {
         const registry = await initialiseRegistry();
         const entitySet = registry.createEntitySet();
 
-        entitySet.on('component:add', components => {
-            // Log.debug('[added]', entityToString(components));
-
-            t.equals( components[0], entitySet.at(0).Position, 'the same component is emitted' );
+        entitySet.on('entity:add', entities => {
+            // Log.debug('[added]', entityToString(entities));
+            t.equals( entities[0].Position, entitySet.at(0).Position, 'the same component is emitted' );
             t.end();
         })
 
@@ -462,11 +466,13 @@ test('adding several components at once generates a single add event', async t =
         const entitySet = registry.createEntitySet();
         // logEvents( entitySet );
 
-        t.plan(3);
+        t.plan(2);
 
-        captureEntitySetEvent(entitySet, 'component:add', false, ids =>
-            t.ok(ids.length, 'component:add should have been called')
-        );
+
+        // only a single entity add event is called
+        // captureEntitySetEvent(entitySet, 'component:add', false, ids =>
+        //     t.ok(ids.length, 'component:add should have been called')
+        // );
         captureEntitySetEvent(entitySet, 'entity:add', false, ids =>
             t.ok(ids.length, 'entity:add should have been called')
         );
@@ -489,10 +495,10 @@ test('adding an entity with components', async t => {
         const registry = await initialiseRegistry();
         const entitySet = registry.createEntitySet();
 
-        t.plan(3);
-        captureEntitySetEvent(entitySet, 'component:add', false, ids =>
-            t.equals(ids.length, 2, 'component:add should have been called')
-        );
+        t.plan(2);
+        // captureEntitySetEvent(entitySet, 'component:add', false, ids =>
+        //     t.equals(ids.length, 2, 'component:add should have been called')
+        // );
         captureEntitySetEvent(entitySet, 'entity:add', false, ids =>
             t.equals(ids.length, 1, 'entity:add should have been called')
         );

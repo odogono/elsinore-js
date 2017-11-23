@@ -6,6 +6,7 @@ import Collection from '../util/collection';
 import { cloneComponent, cloneEntity } from '../util/clone';
 import { isInteger } from '../util/is';
 import { toInteger } from '../util/to';
+import {componentsFromCollections} from '../util/array/value';
 import valueArray from '../util/array/value';
 import { entityToString } from '../util/to_string';
 import stringify from '../util/stringify';
@@ -43,9 +44,14 @@ export default function CmdBuffer() {
 }
 
 Object.assign(CmdBuffer.prototype, {
+    
     /**
-    * Adds a component to this set
-    */
+     * Adds a component to the entityset
+     * 
+     * @param {*} entitySet 
+     * @param {*} component 
+     * @param {*} options 
+     */
     addComponent(entitySet, component, options = {}) {
         let execute, entityId, entity, existingCom;
         let ii;
@@ -80,7 +86,7 @@ Object.assign(CmdBuffer.prototype, {
 
             if (execute) {
                 this.execute(entitySet, options);
-                result = valueArray(this.componentsAdded);
+                result = componentsFromCollections(this.entitiesAdded, this.entitiesUpdated, this.componentsAdded, this.componentsUpdated);
             }
 
             return result;
@@ -166,15 +172,17 @@ Object.assign(CmdBuffer.prototype, {
         // execute any outstanding commands
         if (execute) {
             this.execute(entitySet, options);
-            result = valueArray(this.componentsAdded, this.componentsUpdated);
-            // result = valueArray(this.entitiesAdded, this.entitiesUpdated);
+            result = componentsFromCollections(this.entitiesAdded, this.entitiesUpdated, this.componentsAdded, this.componentsUpdated);
         }
         return result;
     },
 
     /**
-    *
-    */
+     * 
+     * @param {*} entitySet 
+     * @param {*} component 
+     * @param {*} options 
+     */
     removeComponent(entitySet, component, options = {}) {
         let execute;
         let executeOptions;
@@ -265,6 +273,7 @@ Object.assign(CmdBuffer.prototype, {
 
     /**
      * Adds an entity with its components to the entityset
+     * 
      * @param {*} entitySet
      * @param {*} entity
      * @param {*} options
@@ -381,8 +390,11 @@ Object.assign(CmdBuffer.prototype, {
     },
 
     /**
-    *
-    */
+     * 
+     * @param {*} entitySet 
+     * @param {*} entity 
+     * @param {*} options 
+     */
     removeEntity(entitySet, entity, options = {}) {
         let ii, comDefId, execute, existingEntity, entityId;
         let executeOptions;
@@ -508,9 +520,8 @@ Object.assign(CmdBuffer.prototype, {
                             tEntity = entitySet._createEntity(entityId, false, options);
                             // console.log('[CmdBufferSync][execute]', 'adding', tEntity.id, tEntity.cid );
                             this.entitiesAdded.add(tEntity);
-                            if (debug) {
-                                console.log('adding entity', entityToString(tEntity));
-                            } // tEntity.id, entityId); }
+
+                            if (debug) console.log('[CmdBufferSync][execute][CMD_ENTITY_ADD]','adding entity', entityToString(tEntity));
                         }
                         break;
 
@@ -628,6 +639,7 @@ Object.assign(CmdBuffer.prototype, {
      * 
      */
     reset() {
+        // console.log('[CmdBufferSync][reset]', 'clearing');
         this.cmds = {};
         this.entitiesAdded.reset();
         this.entitiesUpdated.reset();

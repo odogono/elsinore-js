@@ -564,6 +564,9 @@ Object.assign( EntitySet.prototype, Base.prototype, {
 
     /**
      * Executes a query against this entityset
+     * 
+     * @param {*} query 
+     * @param {*} options 
      */
     query(query, options = {}) {
         options.registry = this.getRegistry();
@@ -577,9 +580,12 @@ Object.assign( EntitySet.prototype, Base.prototype, {
         return Query.exec(query, this, options);
     },
 
+    
     /**
-    *   Removes the entities identified by the query
-    */
+     * Removes the entities identified by the query
+     * @param {*} query 
+     * @param {*} options 
+     */
     removeByQuery(query, options = {}) {
         options = { ...options, registry: this.getRegistry() };
         const result = Query.exec(query, this, options);
