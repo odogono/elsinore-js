@@ -149,20 +149,24 @@ test('adding several components returns an array of added components', async t =
             { '@c': '/component/position', x:20, y:4}, {'@c':'/component/radius', radius:5}
         ];
 
-        components = entitySet.addComponent(components);
+        entitySet.addComponent(components);
 
         // Log.debug('[es]', entityToString(components) );
         // Log.debug('[es]', components);
         // Log.debug('[es]', entityToString(entitySet));
 
-        t.ok( Component.isComponent(components[0]), 'returns an array of components');
+        let added = entitySet.getUpdatedComponents();
+
+        t.equals( added.length, 2, '2 components added' );
+        t.ok( Component.isComponent(added[0]), 'returns an array of components');
 
 
         // direct addition of a component to an entity also works
         components = entitySet.addComponent( {'@c':'/component/name','name':'oro', '@e':2} );
 
-        t.ok( Component.isComponent(components), 'returns an array of components');
+        added = entitySet.getUpdatedComponents();
 
+        t.ok( Component.isComponent(added), 'returns an array of components');
 
         t.end();
     } catch (err) {
@@ -179,7 +183,9 @@ test('adding a component without an id or an entity id creates a new component a
 
         entitySet.on('entity:add', entities => (receivedEntityAdd = true));
 
-        const component = entitySet.addComponent(registry.createComponent('/component/position', { x: 15, y: 2 }));
+        entitySet.addComponent( {'@c':'/component/position',x: 15, y: 2 } );
+
+        let component = entitySet.getUpdatedComponents();
 
         t.ok(receivedEntityAdd, 'entity:add should have been called');
 
@@ -255,7 +261,9 @@ test('updating a component in the entityset', async t => {
 
         t.equals(component.id, 0, 'the component should be created without a valid id');
 
-        const inserted = entitySet.addComponent(component);
+        entitySet.addComponent(component);
+
+        let inserted = entitySet.getUpdatedComponents();
 
         t.ok(inserted.id > 0, 'the component will have been assigned an id of ' + inserted.id);
 
@@ -317,9 +325,10 @@ test('removing a component from an entity with only one component', async t => {
 
         // logEvents(entitySet);
 
-        let component = entitySet.addComponent({ '@c': '/component/position', x: 15, y: 2 });
+        entitySet.addComponent({ '@c': '/component/position', x: 15, y: 2 });
+        let added = entitySet.getUpdatedComponents();
 
-        component = entitySet.removeComponent(component, {debug:false});
+        entitySet.removeComponent(added, {debug:false});
         
         // Log.debug( entityToString(entitySet) );
 
@@ -337,8 +346,10 @@ test('adding an identified component in another entity replaces the existing', a
         const registry = await initialiseRegistry();
         const entitySet = registry.createEntitySet();
 
-        const entity = entitySet.addEntity({ '@c': '/component/position', x: 100, y: 50, id: 22 });
-        const component = entitySet.addComponent({ '@c': '/component/position', x: 22, y: -9, id: 22 });
+        entitySet.addEntity({ '@c': '/component/position', x: 100, y: 50, id: 22 });
+        let entity = entitySet.getUpdatedEntities();
+        entitySet.addComponent({ '@c': '/component/position', x: 22, y: -9, id: 22 });
+        let component = entitySet.getUpdatedComponents();
 
         t.equals(entity.id, component.getEntityId());
         t.equals(entitySet.size(), 1);

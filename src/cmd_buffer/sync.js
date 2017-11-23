@@ -86,7 +86,7 @@ Object.assign(CmdBuffer.prototype, {
 
             if (execute) {
                 this.execute(entitySet, options);
-                result = componentsFromCollections(this.entitiesAdded, this.entitiesUpdated, this.componentsAdded, this.componentsUpdated);
+                // result = componentsFromCollections(this.entitiesAdded, this.entitiesUpdated, this.componentsAdded, this.componentsUpdated);
             }
 
             return result;
@@ -130,13 +130,13 @@ Object.assign(CmdBuffer.prototype, {
             }
         }
 
-        if (entityId === 0 || entityId === undefined) {
+        // if (entityId === 0 || entityId === undefined) {
             // const existingComponent = entitySet.getComponent(component);
             // if( existingComponent ){
             //     entityId = existingComponent.getEntityId();
             //     // if( debug ){ console.log(`found existing component ${component.id} entityid`, entityId)}
             // }
-        }
+        // }
 
         // console.log( '^^ adding component with entity', entityId, Entity.toEntityId(entityId), component.getEntityId() );
 
@@ -172,10 +172,13 @@ Object.assign(CmdBuffer.prototype, {
         // execute any outstanding commands
         if (execute) {
             this.execute(entitySet, options);
-            result = componentsFromCollections(this.entitiesAdded, this.entitiesUpdated, this.componentsAdded, this.componentsUpdated);
         }
+        
         return result;
     },
+
+
+    
 
     /**
      * 
@@ -194,7 +197,7 @@ Object.assign(CmdBuffer.prototype, {
         executeOptions = { ...options, removeEmptyEntity: true };
 
         if (!component) {
-            return [];
+            return false;
         }
 
         // if we have been passed an array, then batch all those commands together
@@ -218,10 +221,9 @@ Object.assign(CmdBuffer.prototype, {
 
             if (execute) {
                 this.execute(entitySet, executeOptions);
-                result = valueArray(this.componentsRemoved);
             }
 
-            return result;
+            return true;
         } else {
             if (execute) {
                 this.reset();
@@ -265,10 +267,9 @@ Object.assign(CmdBuffer.prototype, {
         // execute any outstanding commands
         if (execute) {
             this.execute(entitySet, executeOptions);
-            result = valueArray(this.componentsRemoved);
         }
 
-        return result;
+        return true;
     },
 
     /**
@@ -287,7 +288,7 @@ Object.assign(CmdBuffer.prototype, {
         let debug = options.debug;
 
         if (!entity) {
-            return null;
+            return false;
         }
 
         // batch = options.batch; // cmds get batched together and then executed
@@ -314,10 +315,9 @@ Object.assign(CmdBuffer.prototype, {
 
             if (execute) {
                 this.execute(entitySet, options);
-                result = valueArray(this.entitiesAdded);
             }
 
-            return result;
+            return false;
         } else {
             if (execute) {
                 this.reset();
@@ -328,12 +328,7 @@ Object.assign(CmdBuffer.prototype, {
             throw new Error('entity instance not passed');
         }
 
-        // const hasComponents = entitySet.doesEntityHaveComponents(entity);
-
-        // if( !entitySet.allowEmptyEntities && !hasComponents ){
-        //     return this;
-        // }
-
+        
         // add components to the entity before removing them - otherwise the entity might
         // get garbage-collected
         if( debug ) console.log('[CmdBufferSync][addEntity]', 'adding components', entity.getComponentBitfield().toValues() ); 
@@ -381,11 +376,7 @@ Object.assign(CmdBuffer.prototype, {
             this.execute(entitySet, options);
         }
 
-        if (removeExecute || execute) {
-            result = valueArray(this.entitiesAdded);
-        }
-
-        return result;
+        return true;
 
     },
 
@@ -401,7 +392,7 @@ Object.assign(CmdBuffer.prototype, {
         let result;
 
         if (!entity) {
-            return null;
+            return false;
         }
 
         // batch = options.batch; // cmds get batched together and then executed
@@ -429,10 +420,9 @@ Object.assign(CmdBuffer.prototype, {
 
             if (execute) {
                 this.execute(entitySet, executeOptions);
-                result = valueArray(this.entitiesRemoved);
             }
 
-            return result;
+            return true;
         } else {
             if (execute) {
                 this.reset();
@@ -444,7 +434,7 @@ Object.assign(CmdBuffer.prototype, {
         existingEntity = entitySet.getEntity(entityId);
 
         if (!existingEntity) {
-            return null;
+            return false;
         }
 
         for (comDefId in existingEntity.components) {
@@ -455,10 +445,9 @@ Object.assign(CmdBuffer.prototype, {
         // execute any outstanding commands
         if (execute) {
             this.execute(entitySet, executeOptions);
-            result = valueArray(this.entitiesRemoved);
         }
 
-        return result;
+        return true;
     },
 
     /**
