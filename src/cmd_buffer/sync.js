@@ -378,55 +378,6 @@ Object.assign(CmdBuffer.prototype, {
 
         return result;
 
-        // // console.log('incoming', entityId, 'existing', existingEntity);
-
-        // if( existingEntity === undefined ){
-        //     // if( options.debug ) { console.log('no existing entity add ' + entityId ); }
-        //     // TODO : determine whether we should allow empty entities within the entity set
-        //     if( !entitySet.allowEmptyEntities && !entitySet.doesEntityHaveComponents( entity ) ){
-        //         return this;
-        //     }
-
-        //     let cmdOptions = {...options,eid:entityId};
-
-        //     this.addCommand( CMD_ENTITY_ADD, entityId, undefined, cmdOptions );
-
-        //     // no existing entity - just add all the components
-        //     for( comDefId in entity.components ){
-        //         this.addCommand( CMD_COMPONENT_ADD, entityId, entity.components[comDefId], cmdOptions );
-        //     }
-        // }
-        // else {
-        //     // entity already exists, determine whether components should be updated
-        //     for( comDefId in entity.components ){
-        //         let component = entity.components[comDefId];
-
-        //         Log.debug('[CmdBufferSync][addEntity]', 'bluh', component.id);
-        //         if( component.id !== 0 ){
-
-        //             let existing = entitySet.getComponent(component.id);
-        //             if( existing !== undefined ){
-        //                 if( existing.getEntityId() !== entityId ){
-        //                     Log.debug('[CmdBufferSync][addEntity]', 'component belongs to other', existing.getEntityId(), entityId );
-        //                 }
-        //             }
-        //         }
-
-        //         if( existingEntity.components[comDefId] ){
-        //             this.addCommand( CMD_COMPONENT_UPDATE, entityId, entity.components[comDefId], options );
-        //         } else {
-        //             this.addCommand( CMD_COMPONENT_ADD, entityId, entity.components[comDefId], options );
-        //         }
-        //     }
-        // }
-
-        // // execute any outstanding commands
-        // if( execute ){
-        //     this.execute( entitySet, options );
-        //     result = valueArray( this.entitiesAdded );
-        // }
-
-        // return result;
     },
 
     /**
@@ -637,7 +588,6 @@ Object.assign(CmdBuffer.prototype, {
                         if (debug) {
                             console.log('!!! cmd: update com ' + JSON.stringify(com));
                         }
-                        // console.log('££ com update', com.getEntityId(), JSON.stringify(com));
 
                         tEntity.addComponent(com);
                         if (componentExists) {
@@ -652,96 +602,7 @@ Object.assign(CmdBuffer.prototype, {
                         break;
                 }
             }
-
-            // if( debug ){ console.log('[CmdBufferSync][execute]', 'entity', entityToString(existingEntity)); }
-            // if( debug ){ console.log('[CmdBufferSync][execute]', 'entity', tEntity.components ); }
-            // if( debug ){ console.log('[CmdBufferSync][execute]', 'tEntity', entityToString(tEntity)); }
-
-            // if (!tEntity) {
-            //     // if the incoming entity did not clear the filter, and there is no existing
-            //     // entity, then just continue to next cmd
-            //     if (!entity) {
-            //         continue;
-            //     }
-
-            //     // if the incoming entity did not clear the filter, we should remove
-            //     // the existing entity
-            //     // remove all the entities components
-            //     for (defId in entity.components) {
-            //         // console.log('[CmdBufferSync][execute]', 'removeComponents', entity.components[defId] );
-
-            //         this.componentsRemoved.add(entity.components[defId]);
-            //     }
-
-            //     this.entitiesRemoved.add(entitySet._removeEntity(entity));
-
-            //     continue;
-            // }
-
-            // isNew = entity != null;
-            // if (!entity) {
-            //     if (entitySet.doesEntityHaveComponents(tEntity)) {
-            //         entitySet._addEntity(tEntity);
-            //         this.entitiesAdded.add(tEntity);
-            //     }
-            // } else {
-
-            //     const changeEntityBF = tEntity.getComponentBitfield();
-            //     const existingEntityBF = entity.getComponentBitfield();
-
-            //     // the difference displays which components will be removed
-            //     const bfDifference = arrayDifference(existingEntityBF.toJSON(), changeEntityBF.toJSON());
-
-            //     // determine which components need to be removed
-            //     // if(debug){console.log('!!! SYNC change entity bf', changeEntityBF.toJSON())}
-            //     // if(debug){console.log('!!! SYNC existing entity bf', existingEntityBF.toJSON())}
-            //     // if(debug){console.log('!!! SYNC diff bf', bfDifference )}
-            //     // if(debug){console.log('!!! entity', entityToString(entity) )}
-            //     if (bfDifference.length > 0) {
-            //         const removed = entity.removeComponents(bfDifference);
-            //         if (removed.length > 0) {
-            //             this.componentsRemoved.add( removed );
-            //             // this.componentsRemoved = [...this.componentsRemoved, ...removed];
-            //         }
-            //     }
-
-            //     // if the entity has no more components, then remove it
-            //     if ((!this.allowEmptyEntities || removeEmptyEntity) && entity.getComponentCount() <= 0) {
-            //         if( debug ){ console.log('[CmdBufferSync][execute]', 'removeEntity', entityToString(entity)); }
-            //         // if( debug ){
-            //         // console.log('removing entity ' + entity.getEntityId() + '/' + entity.cid );
-            //         let removed = entitySet._removeEntity(entity);
-            //         this.entitiesRemoved.add(removed);
-            //     }
-            // }
-
-            // // apply this entity and its components to existing records
-            // for (defId in tEntity.components) {
-            //     com = tEntity.components[defId];
-            //     if (!entity) {
-            //         // because we have added the new entity, we only need to report what components
-            //         // were added
-            //         this.componentsAdded.add(com);
-            //     } else if (!entity.components[defId]) {
-            //         // the existing entity does not have this component - add it
-            //         // console.log('adding component '+ com.id + ' to ' + entity.cid + ' ' + JSON.stringify(com));
-            //         entity.addComponent(com);
-            //         this.componentsAdded.add(com);
-            //     } else if (entity) {
-            //         ocom = entity.components[defId];
-            //         // the entity already has this entity - update it
-            //         if (!com.isEqual(ocom)) {
-            //             // if(debug){console.log('^change com', com.toJSON())}
-            //             // if(debug){console.log('^change ocom', ocom.toJSON())}
-            //             this.componentsUpdated.add(com);
-            //         }
-            //     }
-            // }
         }
-
-        // if( debug ){
-        //     this.debugLog();
-        // }
 
         entitySet.update(
             this.entitiesAdded,
@@ -763,6 +624,9 @@ Object.assign(CmdBuffer.prototype, {
         }
     },
 
+    /**
+     * 
+     */
     reset() {
         this.cmds = {};
         this.entitiesAdded.reset();
@@ -817,20 +681,10 @@ Object.assign(CmdBuffer.prototype, {
         return -1;
     },
 
-    // debugLog( logFn ){
-    //     if( !logFn ){
-    //         return;
-    //         // logFn = console.log;
-    //     }
-    //     logFn('entities added: ' + JSON.stringify( this.entitiesAdded.pluck('id') ));
-    //     logFn('entities updated: ' + JSON.stringify( this.entitiesUpdated.pluck('id') ));
-    //     logFn('entities removed: ' + JSON.stringify( this.entitiesRemoved.pluck('id') ));
-
-    //     logFn('components added: ' + JSON.stringify( this.componentsAdded.pluck('id') ));
-    //     logFn('components updated: ' + JSON.stringify( this.componentsUpdated.pluck('id') ));
-    //     logFn('components removed: ' + JSON.stringify( this.componentsRemoved.pluck('id') ));
-    // }
-
+    /**
+     * 
+     * @param {*} source 
+     */
     triggerEvents(source) {
         triggerEvent(source, 'component:change', this.componentsUpdated);
         triggerEvent(source, 'component:remove', this.componentsRemoved);

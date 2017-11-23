@@ -20,10 +20,6 @@ import PullStreamSource from './source';
 import PullStreamSink from './sink';
 
 
-// let CollectionPrototype = Collection.prototype;
-
-// class ComponentCollection extends Collection {}
-// ComponentCollection.model = Component;
 
 export default function EntitySet(entities, options={}){
     this.initialize(entities,options);
@@ -154,135 +150,6 @@ Object.assign( EntitySet.prototype, Base.prototype, {
     },
 
     /**
-     * Create a 'faux' readStream which returns the entitysets
-     * components in an asynchronous manner.
-     * And by 'faux', it is not compatible with any official
-     * readstream implementation.
-     * 
-     * Each component is emitted with a 'data' event. Once the
-     * components have been exhausted, a 'end' event is emitted.
-     * 
-     */
-    // createReadStream(options = {}) {
-    //     let index = 0;
-    //     let length = this.length;
-    //     let entity = null;
-    //     let components = null;
-    //     let entityIndex = 0;
-    //     let stream = Object.assign({}, Events);
-
-    //     const fnIterate = () => {
-    //         // calls -= 1;
-    //         if (index == length) {
-    //             stream.trigger('end');
-    //             return;
-    //         }
-    //         if (!components || entityIndex == components.length) {
-    //             entity = null;
-    //         }
-
-    //         if (!entity) {
-    //             entity = this.at(index++);
-    //             components = entity.getComponents();
-    //             entityIndex = 0;
-    //         }
-
-    //         let component = components[entityIndex++];
-
-    //         stream.trigger('data', component);
-
-    //         fnResume();
-    //     };
-
-    //     const fnResume = () => {
-    //         // calls += 1;
-    //         setTimeout(fnIterate, 1);
-    //     };
-
-    //     fnResume();
-
-    //     return stream;
-    // }
-
-    /**
-     * Creates a pull-stream sink which accepts either Entity or 
-     * Component instances and adds them to the entityset
-     * 
-     * @param {Object} options
-     * @param {function} completeCb called when complete
-     * @returns {function}
-     */
-    // createPullStreamSink(options = {}, completeCb) {
-    //     const self = this;
-    //     return function(read) {
-    //         read(null, function next(end, data) {
-    //             if (end === true) {
-    //                 return completeCb();
-    //             }
-    //             if (end) {
-    //                 return completeCb(end);
-    //             }
-    //             let result = null;
-
-    //             if (Entity.isEntity(data)) {
-    //                 result = self.addEntity(data);
-    //             } else if (Component.isComponent(data)) {
-    //                 result = self.addComponent(data);
-    //             } else {
-    //                 return read(new Error('invalid data', data), completeCb);
-    //             }
-
-    //             if (isPromise(result)) {
-    //                 result
-    //                     .then(() => {
-    //                         read(null, next);
-    //                     })
-    //                     .catch(err => {
-    //                         read(err, completeCb);
-    //                     });
-    //             } else {
-    //                 read(null, next);
-    //             }
-    //         });
-    //     };
-    // }
-
-    /**
-     * creates a pullstream of components in the entityset
-     * 
-     * see https://pull-stream.github.io/
-     * 
-     * @returns {function}
-     */
-    // createPullStreamSource(options = {}) {
-    //     let index = 0;
-    //     const length = this.length;
-    //     let entity = null;
-    //     let components = null;
-    //     let entityIndex = 0;
-
-    //     return (abort, cb) => {
-    //         if (abort) {
-    //             return cb(abort);
-    //         }
-    //         if (index >= length) {
-    //             return cb(true, null);
-    //         }
-    //         if (!components || entityIndex == components.length) {
-    //             entity = null;
-    //         }
-    //         if (!entity) {
-    //             entity = this.at(index++);
-    //             components = entity.getComponents();
-    //             entityIndex = 0;
-    //         }
-    //         let component = components[entityIndex++];
-
-    //         return cb(null, component);
-    //     };
-    // }
-
-    /**
      * Returns a Pull-Stream source
      * 
      * see https://pull-stream.github.io/
@@ -304,6 +171,8 @@ Object.assign( EntitySet.prototype, Base.prototype, {
 
     /**
      * 
+     * @param {*} registry 
+     * @param {*} options 
      */
     setRegistry(registry, options) {
         this._registry = registry;
@@ -325,9 +194,11 @@ Object.assign( EntitySet.prototype, Base.prototype, {
 
 
     /**
-    * Adds a component to this set
-    * Returns the entities that were added or updated as a result
-    */
+     * Adds a component to this set
+     * Returns the entities that were added or updated as a result
+     * @param {*} component 
+     * @param {*} options 
+     */
     addComponent(component, options) {
         // conveniently create a component instance if raw data is passed
         if (component['@c'] || Array.isArray(component) ) {
@@ -354,8 +225,11 @@ Object.assign( EntitySet.prototype, Base.prototype, {
         return this._components.get(componentId);
     },
 
+
     /**
      * Returns a component by its entityid and def id
+     * @param {*} entityId 
+     * @param {*} componentDefId 
      */
     getComponentByEntityId(entityId, componentDefId) {
         const entity = this._entities.get(entityId);
@@ -366,18 +240,13 @@ Object.assign( EntitySet.prototype, Base.prototype, {
     },
 
     /**
-    *
-    */
+     * 
+     * @param {*} component 
+     * @param {*} options 
+     */
     removeComponent(component, options) {
         return this._cmdBuffer.removeComponent(this, component, options);
     },
-
-    // add: function( entity, options ){
-    //     // 
-    // },
-    // _addModels(models, options) {
-    //     return CollectionPrototype.call(this, entity, options);
-    // }
 
     /**
     *   Flushes any outstanding commands in the buffer
@@ -693,41 +562,6 @@ Object.assign( EntitySet.prototype, Base.prototype, {
         return size > 0;
     },
 
-
-    /**
-     * NOTE: this functionality is removed in favour
-     * of external means of filtering entitysets
-     * 
-     * Sets a query against this entityset.
-     * All entities which are added to the ES are
-     * passed through the query for validity
-     */
-    // setQuery(query, options = {}) {
-    //     this._query = null;
-    //     if (!query) {
-    //         return;
-    //     }
-    //     if (query instanceof Query) {
-    //         if (query.isEmpty()) {
-    //             return;
-    //         }
-    //         this._query = new Query(query);
-    //         return;
-    //     }
-    //     if ( typeof query === 'function' ) {
-    //         this._query = new Query(query);
-    //     }
-
-    //     // check that entities are still allowed to belong to this set
-    //     this.evaluateEntities();
-
-    //     return this._query;
-    // }
-
-    // getQuery() {
-    //     return this._query;
-    // }
-
     /**
      * Executes a query against this entityset
      */
@@ -751,54 +585,6 @@ Object.assign( EntitySet.prototype, Base.prototype, {
         const result = Query.exec(query, this, options);
         return this.removeEntity(result);
     },
-
-    // isEntityOfInterest(entity, options) {
-    //     if (!this._query) {
-    //         return true;
-    //     }
-    //     const tEntity = this._query.execute(entity);
-    //     return tEntity ? true : false;
-    // }
-
-    /**
-     * NOTE: this functionality is removed in favour of external
-     * means of filtering entitysets
-     * 
-    *   Checks through all contained entities, ensuring that they
-    *   are still valid members of this entitySet according to the
-    *   query
-    */
-    // evaluateEntities(entityIdArray, options = {}) {
-    //     let ii, len, entity;
-    //     // let entities;
-    //     let removed = [];
-
-    //     if (!this._query) {
-    //         return removed;
-    //     }
-
-    //     if (entityIdArray) {
-    //         for (ii = 0, len = entityIdArray.length; ii < len; ii++) {
-    //             entity = this.get(entityIdArray[ii]);
-    //             if (entity && !this._query.execute(entity)) {
-    //                 removed.push(entity);
-    //             }
-    //         }
-    //     } else {
-    //         // entities = this.entities || this;
-    //         for (ii = this.length - 1; ii >= 0; ii--) {
-    //             entity = this.at(ii);
-    //             if (entity && !this._query.execute(entity)) {
-    //                 removed.push(entity);
-    //             }
-    //         }
-    //     }
-
-    //     if (removed.length > 0) {
-    //         return this.removeEntity(removed, options);
-    //     }
-    //     return removed;
-    // }
 
 })
 
