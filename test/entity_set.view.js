@@ -20,35 +20,34 @@ import {
     createLog
 } from './common';
 
-import '../src/entity_set/view';
+import { cloneEntity } from '../src/util/clone';
+
+// import '../src/entity_set/view';
+import '../src/entity_set/view2';
 
 const Log = createLog('TestEntitySetView');
 
-test('.where returns an entityset of entities', t => {
-    initialiseEntitySet().then(([registry, entitySet]) => {
-        const result = entitySet.query(Q => Q.all('/component/name'));
-        t.ok(result.isEntitySet, 'the result is an entityset');
-        t.equals(result.size(), 7, '7 entities returned');
+test('the view should have the same entities', async t => {
+    try {
+        const [registry, entitySet] = await initialiseEntitySet();
+
+        let view = await entitySet.createView();
+
+        t.equals(entitySet.size(), view.size(), 'same number of entities');
+
+        // Log.debug( entityToString(view) );
 
         t.end();
-    });
+    } catch (err) {
+        Log.error(err.stack);
+    }
 });
 
-test('.query returns entities which the attributes', t => {
-    initialiseEntitySet().then(([registry, entitySet]) => {
-        // let result = entitySet.where('/component/status', {status:'active'} );
-        const result = entitySet.query(Q => Q.all('/component/status', Q.attr('status').equals('active')));
+test('the view should be identified as a view', async t => {
+    try {
+        const [registry, entitySet] = await initialiseEntitySet();
 
-        t.ok(result.isEntitySet, 'the result is an entityset');
-        t.equals(result.size(), 6, '6 entities returned');
-
-        t.end();
-    });
-});
-
-test('the view should be identified as a view', t => {
-    initialiseEntitySet().then(([registry, entitySet]) => {
-        const view = entitySet.view();
+        const view = await entitySet.createView();
 
         t.ok(view.isEntitySetView, 'its an entityset view');
         t.ok(view.isEntitySet, 'its an entityset');
@@ -58,16 +57,25 @@ test('the view should be identified as a view', t => {
         t.equals(view.getUUID().length, 36);
 
         t.end();
-    });
+    } catch (err) {
+        Log.error(err.stack);
+    }
 });
 
-test.only('the view should have the same entities', async t => {
+test('adding an entity to the entityset also adds it to the view', async t => {
     try {
         const [registry, entitySet] = await initialiseEntitySet();
 
-        let view = entitySet.view();
+        const view = await entitySet.createView();
 
-        Log.debug( entityToString(view) );
+        const component = registry.createComponent('/component/position', { x: -2, y: 5 });
+
+        entitySet.addComponent(component);
+
+        // console.log('view size', view.size());
+
+        // console.log('es size', entitySet.size());
+
         t.equals(entitySet.size(), view.size(), 'same number of entities');
 
         t.end();
@@ -79,36 +87,67 @@ test.only('the view should have the same entities', async t => {
 test('removing an entity from the entitySet should also remove it from the view', async t => {
     try {
         const [registry, entitySet] = await initialiseEntitySet();
-        // const eventSpy = Sinon.spy();
+        const view = await entitySet.createView();
 
-        const view = entitySet.view(null, { updateOnEvent: true });
+        view.on('entity:remove', e => {
+            t.equals(entitySet.size(), view.size(), 'same number of entities');
+            t.end();
+        });
 
+        // Log.debug('es is', entityToString(entitySet));
         // logEvents( entitySet, 'entitySet' );
-        // logEvents( view, 'view' );
+        // logEvents(view, 'view');
 
         entitySet.removeEntity(entitySet.at(0));
-
-        // view.update();
-        t.equals(entitySet.size(), view.length, 'same number of entities');
-
-        t.end();
     } catch (err) {
         Log.error(err.stack);
     }
 });
 
-test('adding an entity to the entityset also adds it to the view', t => {
-    initialiseEntitySet().then(([registry, entitySet]) => {
-        const view = entitySet.view(null, { updateOnEvent: true });
+test('adding selected entities', async t => {
+    try {
+        const registry = await initialiseRegistry();
+        const entitySet = registry.createEntitySet();
 
-        const component = registry.createComponent('/component/position', { x: -2, y: 5 });
-        entitySet.addComponent(component);
+        const view = await entitySet.createView(Q => Q.all('/component/status'));
 
-        console.log('view size', view.size());
-        console.log('es size', entitySet.size());
-        t.equals(entitySet.size(), view.size(), 'same number of entities');
+        entitySet.addEntity([{ '@c': '/component/position', x: 0, y: 2 }, { '@c': '/component/name', name: 'bob' }]);
+        entitySet.addEntity({ '@c': '/component/status', status: 'active' });
+        entitySet.addEntity({ '@c': '/component/name', name: 'alice' });
+
+        // Log.debug('1 es is', entityToString(entitySet));
+        // Log.debug('view is', entityToString(view));
+
+        t.equals(view.size(), 1, 'only 1 entity added'); // because only 1 entity has a /status
+
+        // logEvents(entitySet);
+
+        // grab the entity from the source entityset and remove its /status component, which
+        // should cause the entity to be removed from the view
+        // the second argument means that the entity will be cloned
+        const entity = cloneEntity(entitySet.at(1));
+        // add a replacement component so that the entity isn't completely removed from the es
+        entity.addComponent({ '@c': '/component/name', name: 'clare' });
+        entity.removeComponent('/component/status');
+
+        // Log.debug('altered e', entityToString(entity) );
+
+        // console.log('>--- add new ', entity.id, entitySet.at(1).id );
+        entitySet.addEntity(entity, { debug: false });
+
+        // console.log('>--- .fin');
+        // Log.debug('2 es is', entityToString(entitySet));
+        // Log.debug('2 view is', entityToString(view));
+
+        t.equals(entitySet.size(), 3);
+        t.equals(view.size(), 1);
+
+        // _.delay( () => {
         t.end();
-    });
+        // }, 1000) ;
+    } catch (err) {
+        Log.error(err.stack);
+    }
 });
 
 test('adding an entity to the view also adds it to the entityset', async t => {
@@ -116,7 +155,8 @@ test('adding an entity to the view also adds it to the entityset', async t => {
         const registry = await initialiseRegistry();
         const entitySet = registry.createEntitySet();
 
-        const view = entitySet.view(Q => Q.all('/component/position'));
+        // const view = entitySet.view(Q => Q.all('/component/position'));
+        const view = await entitySet.createView(Q => Q.all('/component/position'));
 
         view.addEntity({ '@c': '/component/position', x: 0, y: 2 });
         // entitySet.addEntity( {'@c':'/component/status', status:'active'});
@@ -131,35 +171,52 @@ test('adding an entity to the view also adds it to the entityset', async t => {
     }
 });
 
-test('removing a component from an entity', t => {
-    initialiseEntitySet()
-        .then(([registry, entitySet]) => {
-            let entity;
-            entitySet = registry.createEntitySet();
-            const view = entitySet.view(null, { updateOnEvent: true });
+test.only('removing a component from an entity', async t => {
+    try {
+        const registry = await initialiseRegistry();
+        const entitySet = registry.createEntitySet();
 
-            // Common.logEvents( view );
-            // Common.logEvents( entitySet );
-            entitySet.addEntity(
-                registry.createEntity([
-                    { '@c': '/component/flower', colour: 'red' },
-                    { '@c': '/component/position', x: -2, y: 5 }
-                ])
-            );
+        let entity;
+        const view = await entitySet.createView();
+        // const view = entitySet.view(null, { updateOnEvent: true });
 
-            // view.update();
-            // printE( view );
-            t.ok(view.at(0).Position, 'the entity should have position');
+        // Common.logEvents( view );
+        // Common.logEvents( entitySet );
+        entitySet.addEntity([
+            { '@c': '/component/flower', colour: 'red' },
+            { '@c': '/component/position', x: -2, y: 5 }
+        ]);
 
-            entity = entitySet.at(0);
-            entitySet.removeComponent(entity.Position);
+        // view.update();
+        // printE( view );
+        t.ok(view.at(0).Position, 'the entity should have position');
 
-            // printE( entitySet );
-            // printE( view );
-            t.ok(view.at(0).Position === void 0, 'the entity should have no position');
-            t.end();
-        })
-        .catch(err => console.log('test error', err, err.stack));
+        Log.debug('es is', entityToString(entitySet));
+
+        // the big problem here is taking an entity from an entityset
+        // and then removing a component from it. the entityset needs
+        // to re-evaluate the entity in some way, but because the entity
+        // is a direct reference, its impossible.
+        // the answer is to either:
+        // - return copies of entities when accessing
+        // - keep a seperate record of components and compare
+        // - only allow removal/addition of components via the entityset
+        // - bubble add/update/remove events from the entity to the entityset
+        entity = entitySet.at(0);
+        console.log('>--');
+        entitySet.removeComponent( entity.Position, {debug:true} );
+        // entitySet.addEntity(entity, {debug:true});
+
+        
+        Log.debug('es is', entityToString(entitySet));
+        Log.debug('view is', entityToString(view));
+        // printE( view );
+        t.ok(view.at(0).Position === void 0, 'the entity should have no position');
+
+        t.end();
+    } catch (err) {
+        Log.error(err.stack);
+    }
 });
 
 test('adding a component to an entity', t => {
@@ -234,27 +291,6 @@ test('removing a relevant component from an entity should trigger a entity:remov
         // printE( view.at(0) );
         // t.ok( eventSpy.calledOnce, 'only one event emitted from the view' );
         t.ok(eventSpy.calledWith('entity:remove'), 'entity:remove should have been called');
-
-        t.end();
-    } catch (err) {
-        Log.error(err.stack);
-    }
-});
-
-test('adding selected entities', async t => {
-    try {
-        const registry = await initialiseRegistry();
-        const entitySet = registry.createEntitySet();
-
-        const view = entitySet.view(Q => Q.all('/component/status'));
-
-        entitySet.addEntity({ '@c': '/component/position', x: 0, y: 2 });
-        entitySet.addEntity({ '@c': '/component/status', status: 'active' });
-        entitySet.addEntity({ '@c': '/component/name', name: 'alice' });
-
-        // Log.debug('es is', entityToString(entitySet));
-        // Log.debug('view is', entityToString(view));
-        t.equals(view.length, 1, 'only 1 entity added');
 
         t.end();
     } catch (err) {
@@ -475,6 +511,28 @@ test('changing a component in the view triggers a change event', t => {
             t.end();
         })
         .catch(err => log.error('test error: %s', err.stack));
+});
+
+test('.where returns an entityset of entities', t => {
+    initialiseEntitySet().then(([registry, entitySet]) => {
+        const result = entitySet.query(Q => Q.all('/component/name'));
+        t.ok(result.isEntitySet, 'the result is an entityset');
+        t.equals(result.size(), 7, '7 entities returned');
+
+        t.end();
+    });
+});
+
+test('.query returns entities which the attributes', t => {
+    initialiseEntitySet().then(([registry, entitySet]) => {
+        // let result = entitySet.where('/component/status', {status:'active'} );
+        const result = entitySet.query(Q => Q.all('/component/status', Q.attr('status').equals('active')));
+
+        t.ok(result.isEntitySet, 'the result is an entityset');
+        t.equals(result.size(), 6, '6 entities returned');
+
+        t.end();
+    });
 });
 
 function initialise(entities) {

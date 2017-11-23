@@ -2,6 +2,14 @@ import PullPushable from 'pull-pushable';
 
 import readProperty from '../util/read_property';
 
+export const CMD_UNKNOWN = '@unk';
+export const CMD_COMMAND = '@cmd';
+export const CMD_ADD_ENTITY = 'entity';
+export const CMD_REGISTER_COMPONENT = 'register';
+export const CMD_REMOVE_ENTITY = 'rme';
+export const CMD_REMOVE_COMPONENT = 'rmc';
+export const CMD_END_OF_EXISTING = 'eoe';
+
 /**
  * pull-stream source - produces a stream of entities/components from the entity set
  */
@@ -10,6 +18,7 @@ export default function source(entitySet, options = {}) {
     const useDefUris = readProperty(options, 'useDefUris', false);
     const isAnonymous = readProperty(options, 'anonymous', false);
     const emitEntities = readProperty(options, 'emitEntities', false);
+    const closeAfterExisting = readProperty(options, 'closeAfterExisting', false);
 
     const cdefMap = useDefUris ? entitySet.getSchemaRegistry().getComponentDefUris() : null;
 
@@ -17,6 +26,7 @@ export default function source(entitySet, options = {}) {
         // if( err ){ console.log('[entitySet][source]', err ); }
         entitySet.off('entity:add', pushable.onEntityAdd, pushable);
         entitySet.off('entity:remove', pushable.onEntityRemove, pushable);
+        entitySet.off('component:add', pushable.onComponentAdd, pushable);
         entitySet.off('component:remove', pushable.onComponentRemove, pushable);
     });
 
@@ -49,9 +59,9 @@ export default function source(entitySet, options = {}) {
         }
 
         // send a command confirming End Of Existing components
-        pushable.push({ '@cmd': 'eoe', ec:length, cc:componentCount });
+        pushable.push({ '@cmd': CMD_END_OF_EXISTING, ec:length, cc:componentCount });
 
-        if (options.closeAfterExisting === true) {
+        if (closeAfterExisting === true) {
             pushable.end();
         }
     }
@@ -66,6 +76,7 @@ export default function source(entitySet, options = {}) {
         for (ee = 0; ee < elen; ee++) {
             entity = entities[ee];
             if (emitEntities) {
+                // console.log('[pushable.onEntityAdd]', Object.values(entity.components).map(c => c.id) );
                 pushable.push(entity);
                 continue;
             }
@@ -76,6 +87,23 @@ export default function source(entitySet, options = {}) {
         }
     };
 
+
+    pushable.onComponentAdd = function(components){
+        // console.log('[pushable.onComponentAdd]', components.map(c => c.id), JSON.stringify(components) );
+        let cc,clen;
+        for( cc=0, clen=components.length;cc<clen;cc++){
+            if (emitEntities) {
+                pushable.push( components[cc] );
+            } else {
+                pushComponent(pushable, components[cc], cdefMap, isAnonymous);
+            }
+        }
+    }
+
+    // pushable.onComponentUpdate = function(components){
+    //     console.log('[pushable.onComponentUpdate]', components.map(c => c.id), JSON.stringify(components) );
+    // }
+
     pushable.onEntityRemove = function(entities) {
         let entity,
             ee = 0,
@@ -85,27 +113,28 @@ export default function source(entitySet, options = {}) {
             eids.push(entities[ee].id);
         }
         if (eids.length > 0) {
-            this.push({ '@cmd': 'rme', eid: eids }); // components[cc] );
+            this.push({ '@cmd': CMD_REMOVE_ENTITY, eid: eids }); // components[cc] );
         }
     };
 
     pushable.onComponentRemove = function(components) {
-        let component,
-            cc,
+        let cc,
             clen,
             cids = [];
 
         for (cc = 0, clen = components.length; cc < clen; cc++) {
-            component = components[cc];
+            let component = components[cc];
             cids.push(components[cc].id);
         }
         if (cids.length > 0) {
-            this.push({ '@cmd': 'rmc', cid: cids }); // components[cc] );
+            this.push({ '@cmd': CMD_REMOVE_COMPONENT, id: cids }); // components[cc] );
         }
     };
 
     entitySet.on('entity:add', pushable.onEntityAdd, pushable);
     entitySet.on('entity:remove', pushable.onEntityRemove, pushable);
+    entitySet.on('component:add', pushable.onComponentAdd, pushable);
+    entitySet.on('component:update', pushable.onComponentAdd, pushable);
     entitySet.on('component:remove', pushable.onComponentRemove, pushable);
 
     return pushable;

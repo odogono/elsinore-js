@@ -87,7 +87,7 @@ test('adding components in the same call adds them to the same entity', async t 
 
         entitySet.addComponent(
             [
-                registry.createComponent('/component/name', { name: 'home' }),
+                { '@c':'/component/name', name: 'home' },
                 registry.createComponent('/component/geo_location', { lat: 51.2, lng: -3.65 })
             ],
             { debug: false }
@@ -128,23 +128,36 @@ test('can add an array of raw components', async t => {
         ]);
 
         t.equal(entitySet.size(), 1);
+        // Log.debug( entitySet.entitiesAdded );
+        t.equal( entitySet.at(0).Position.get('x'), -14 );
+
+        // Log.debug('[es]', entityToString(entitySet));
+
         t.end();
     } catch (err) {
         Log.error(err.message, err.stack);
     }
 });
 
-test('adding several components returns an array of added components', async t => {
+test.only('adding several components returns an array of added components', async t => {
     let entities;
     try {
         const registry = await initialiseRegistry();
         let entitySet = registry.createEntitySet();
 
         // let loadedEntitySet = loadEntities( registry, 'entity_set.entities' );
-        let data = loadFixtureJSON('entity_set.entities.json');
-        let components = _.map(data, line => registry.createComponent(line));
+        // let data = loadFixtureJSON('entity_set.entities.json');
+        // Log.debug(data);
+        // let components = _.map(data, line => registry.createComponent(line));
+        let components = [
+            { '@c': '/component/position', x:20, y:4}, {'@c':'/component/radius', radius:5}
+        ];
 
-        components = entitySet.addComponent(components);
+        components = entitySet.addComponent(components, {debug:true});
+
+        Log.debug('[es]', components );
+        // Log.debug('[es]', entitySet._cmdBuffer);
+        // Log.debug('[es]', entityToString(entitySet));
 
         t.ok(Component.isComponent(components[0]), 'returns an array of components');
         t.end();
@@ -179,6 +192,32 @@ test('adding a component without an id or an entity id creates a new component a
     }
 });
 
+test('when adding a new entity, only the entity add event is emitted, not the component add', async t => {
+    try {
+        // t.plan(1);
+
+        // the trick here is that when an entity is added, it is broken down into components
+        // and each component is added - so the ES has to supress the component events
+
+        const registry = await initialiseRegistry();
+        let entitySet = registry.createEntitySet();
+
+        entitySet.on('all', (name,items) => console.log('[all]', name, items.map(i=>i.getEntityId())) );
+        // entitySet.on('component:add', components => components.map(c => c.getEntityId()) )
+        // entitySet.on('entity:add', entities => entities.map(e => e.getEntityId()) );
+
+        entitySet.on('component:add', () => t.ok(false,'should not have been called'));
+        entitySet.on('entity:add', () => t.ok(true,'should have been called'));
+
+        entitySet.addEntity( {'@c':'/component/name', name:'alice'} );
+
+        t.end();
+
+    }catch( err ){
+        Log.error(err.stack);
+    }
+})
+
 test('retrieving a component by id', async t => {
     try {
         const registry = await initialiseRegistry();
@@ -199,6 +238,7 @@ test('retrieving a component by id', async t => {
         Log.error(err.stack);
     }
 });
+
 
 test('updating a component in the entityset', async t => {
     try {
@@ -233,6 +273,27 @@ test('updating a component in the entityset', async t => {
         t.equals(entitySet.size(), 1);
 
         t.end();
+    } catch (err) {
+        Log.error(err.stack);
+    }
+});
+
+
+test('adding a component emits an event', async t => {
+    try {
+        const registry = await initialiseRegistry();
+        const entitySet = registry.createEntitySet();
+
+        entitySet.on('component:add', components => {
+            // Log.debug('[added]', entityToString(components));
+
+            t.equals( components[0], entitySet.at(0).Position, 'the same component is emitted' );
+            t.end();
+        })
+
+        entitySet.addComponent({ '@c': '/component/position', x: 25, y: -9 });
+        // Log.debug( entityToString(entitySet) );
+        
     } catch (err) {
         Log.error(err.stack);
     }

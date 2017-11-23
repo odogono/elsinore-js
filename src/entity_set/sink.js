@@ -3,7 +3,7 @@ import Component from '../component';
 // import readProperty from '../util/read_property';
 import { JSONLoader } from '../util/loader';
 import { toString as entityToString } from '../util/to_string';
-// import stringify from '../util/stringify';
+import stringify from '../util/stringify';
 import { createLog } from '../util/log';
 
 const Log = createLog('EntitySetSink');
@@ -18,7 +18,7 @@ const Log = createLog('EntitySetSink');
  * 
  * @param {*} entitySet 
  * @param {*} options 
- * @param {*} completeCb 
+ * @param {Function} completeCb 
  */
 export default function sink(entitySet, options = {}, completeCb) {
     let result = [];
@@ -28,7 +28,7 @@ export default function sink(entitySet, options = {}, completeCb) {
 
     return function(read) {
         read(null, function next(end, data) {
-            // console.log('[stringSink]', end, data);
+            // console.log('[stringSink]', end, stringify(data));
 
             if (end === true) {
                 result = [].concat.apply([], result);

@@ -31,10 +31,21 @@ test('add to a collection', t => {
     t.end();
 });
 
+test('add an array of objects to a collection', t => {
+    const collection = new Collection();
+
+    collection.add( [{id:3},{id:4},{id:5}] );
+
+    t.equals( collection.size(), 3);
+    
+    t.end();
+})
+
 test('remove from a collection', t => {
     const collection = new Collection();
 
     collection.add({ id: 5 });
+    collection.add({ id: 7 });
     collection.add({ id: 7 });
 
     collection.remove({ id: 5 });
@@ -61,11 +72,27 @@ test('get by id', t => {
 });
 
 test('use a different id attribute', t => {
-    const collection = new Collection(null,{idAttribute:'cid'});
+    const collection = new Collection(null, { idAttribute: 'cid' });
 
-    collection.add( [{id:0,cid:'o1'}, {id:0, cid:'o2'}] );
+    collection.add([{ id: 0, cid: 'o1' }, { id: 0, cid: 'o2' }]);
 
-    t.equals( collection.size(), 2 );
+    t.equals(collection.size(), 2);
+
+    t.end();
+});
+
+test('find a value in the collection', t => {
+    const collection = new Collection();
+
+    collection.add([
+        { id: 0, cid: 'o1', name: 'alice' },
+        { id: 1, cid: 'o2', name: 'bob' },
+        { id: 2, cid: 'o3', name: 'carla' }
+    ]);
+
+    t.equals(collection.findWhere({ name: 'bob' }).cid, 'o2');
+
+    t.equals(collection.findWhere({ id: 2, cid: 'o3' }).name, 'carla');
 
     t.end();
 });
@@ -90,7 +117,6 @@ test('valueArray returns multiple items from an array', t => {
 
 test('valueArray concatenates multiple arrays', t => {
     const array1 = ['entity', 'component'];
-
     const array2 = ['registry', 'entitySet'];
 
     t.deepEquals(valueArray(array1, array2), ['entity', 'component', 'registry', 'entitySet']);

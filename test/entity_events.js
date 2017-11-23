@@ -14,7 +14,8 @@ import {
 } from './common';
 
 import Base from '../src/base';
-import '../src/entity_set/view';
+// import '../src/entity_set/view';
+import '../src/entity_set/view2';
 
 const Log = createLog('TestEntityEvents');
 
@@ -77,7 +78,7 @@ test('the registry triggers the event on entitysets', async t => {
 });
 
 
-test('the registry triggers the event on a compatible entityset', async t => {
+test.only('the registry triggers the event on a compatible entityset', async t => {
     try{
         const registry = await initialiseRegistry();
         const entitySet = registry.createEntitySet();
@@ -86,19 +87,19 @@ test('the registry triggers the event on a compatible entityset', async t => {
         
         let mineralCalled = false, animalCalled = false, mainCalled = false;
 
-        let mineralEntitySet = entitySet.view( Q => Q.all('/component/mineral'));
-        let animalEntitySet = entitySet.view( Q => Q.all('/component/animal'));
+        let mineralEntitySet = await entitySet.createView( Q => Q.all('/component/mineral'));
+        let animalEntitySet = await entitySet.createView( Q => Q.all('/component/animal'));
 
-
-        registry.addEntitySet( mineralEntitySet );
-        registry.addEntitySet( animalEntitySet );
+        // registry.addEntitySet( mineralEntitySet );
+        // registry.addEntitySet( animalEntitySet );
 
         entitySet.on('msg', () => mainCalled = true );    
         mineralEntitySet.on('msg', () => mineralCalled = true );
         animalEntitySet.on('msg', () => animalCalled = true );
 
-        entity = registry.createEntity( [{'@c':'/component/animal', name:'tiger'}]);
-        entity = entitySet.addEntity(entity);
+        entity = entitySet.addEntity({'@c':'/component/animal', name:'tiger'});
+
+        Log.debug('altered e', entity, entityToString(entity) );
 
         entity.triggerEntityEvent( 'msg', 'welcome' );
 

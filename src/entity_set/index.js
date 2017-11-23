@@ -35,16 +35,13 @@ export default function EntitySet(entities, options={}){
 Object.assign( EntitySet.prototype, Base.prototype, {
 
     initialize(entities, options = {}) {
-        this._entities = new Collection();
 
-        // this._entitiesMap = {};
-        // this._entities = [];
-        // this._entitiesById = {};
+        this._entities = new Collection();
+        this._components = new Collection();
 
         let cmdBufferType = CmdBuffer;
         this._uuid = options.uuid || createUUID();
         this.cid = uniqueId('es');
-        this._components = new Collection();
 
         if (options['id']) {
             this.id = options['id'];
@@ -82,22 +79,18 @@ Object.assign( EntitySet.prototype, Base.prototype, {
 
     /**
      * Returns the entity at index
-     * @param {*} index 
-     * @param {*} clone 
+     * 
+     * @param {number} index
      */
-    at(index,clone=false){
-        let result = this._entities.at(index);
-        if( clone ){
-            result = cloneEntity(result);
-        }
-        return result;
+    at(index){
+        return this._entities.at(index);
     },
 
     /**
      * Returns the number of entities in this set
      */
     size() {
-        return this._entities.size();// this.length;
+        return this._entities.size();
     },
 
     /**
@@ -333,6 +326,7 @@ Object.assign( EntitySet.prototype, Base.prototype, {
 
     /**
     * Adds a component to this set
+    * Returns the entities that were added or updated as a result
     */
     addComponent(component, options) {
         // conveniently create a component instance if raw data is passed
@@ -342,14 +336,16 @@ Object.assign( EntitySet.prototype, Base.prototype, {
         return this._cmdBuffer.addComponent(this, component, options);
     },
 
+
     /**
      * Returns an existing component instance (if it exists)
+     * 
+     * @param {*|integer} component
+     * @returns {*} a component instance
      */
     getComponent(component) {
-        let componentId;
-        if (isInteger(component)) {
-            componentId = component;
-        } else if (Component.isComponent(component)) {
+        let componentId = component;
+        if (Component.isComponent(component)) {
             componentId = component.id;
         }
 
@@ -470,19 +466,10 @@ Object.assign( EntitySet.prototype, Base.prototype, {
             throw new Error('attempting to add invalid entity');
         }
 
-        // let existing = this._entities.get(entity.id);
-        
-        // if( existing ){
-        //     return entity;
-        // }
-
         this._entities.add( entity );
 
-        // this._entitiesMap[ entity.id ] = entity;
-        // this._entities.push( entity );
-        // this._entitiesById[ entity.id ] = entity;
-
-        // console.log('add new entity', entity );
+        // ensure that the entities components are indexed separately 
+        this._addComponent( entity.getComponents() );
 
         return entity;
     },
@@ -493,6 +480,10 @@ Object.assign( EntitySet.prototype, Base.prototype, {
      */
     _removeEntity(entity) {
         this._entities.remove( entity );
+
+        // remove component references
+        this._removeComponent( entity.getComponents() );
+
         // console.log('[_removeEntity]', 'remove entity',entity.id);
         // let existing = this._entities.get(entity.id);
 
@@ -554,28 +545,30 @@ Object.assign( EntitySet.prototype, Base.prototype, {
      * TODO: finish
      * the async based cmd-buffer calls this function once it has resolved a list of entities and components to be added
      */
-    update(entitiesAdded, entitiesUpdated, entitiesRemoved, componentsAdded, componentsUpdated, componentsRemoved) {
+    update(entitiesAdded, entitiesUpdated, entitiesRemoved, componentsAdded, componentsUpdated, componentsRemoved, options) {
         let ii, len, component;
+        let debug = options.debug;
         entitiesAdded = entitiesAdded.models;
         entitiesUpdated = entitiesUpdated.models;
         entitiesRemoved = entitiesRemoved.models;
         componentsAdded = componentsAdded.models;
         componentsUpdated = componentsUpdated.models;
         componentsRemoved = componentsRemoved.models;
-        // console.log('[EntitySet][update]', entitiesAdded.length, entitiesUpdated.length, entitiesRemoved.length, componentsAdded.length, componentsUpdated.length, componentsRemoved.length );
+        if(debug) console.log('[EntitySet][update]', entitiesAdded.length, entitiesUpdated.length, entitiesRemoved.length, componentsAdded.length, componentsUpdated.length, componentsRemoved.length );
         
-        // if( entitiesAdded.length ) console.log('[EntitySet][update]','[entitiesAdded]', entitiesAdded.map( e => e.id) );
-        // if( entitiesUpdated.length ) console.log('[EntitySet][update]','[entitiesUpdated]', entitiesUpdated.map( e => e.id) );
-        // if( entitiesRemoved.length ) console.log('[EntitySet][update]','[entitiesRemoved]', entitiesRemoved.map( e => e.id) );
+        if( debug && entitiesAdded.length ) console.log('[EntitySet][update]','[entitiesAdded]', entitiesAdded.map( e => e.id) );
+        if( debug && entitiesUpdated.length ) console.log('[EntitySet][update]','[entitiesUpdated]', entitiesUpdated.map( e => e.id) );
+        if( debug && entitiesRemoved.length ) console.log('[EntitySet][update]','[entitiesRemoved]', entitiesRemoved.map( e => e.id) );
 
-        // if( componentsAdded.length ) console.log('[EntitySet][update]','[componentsAdded]', componentsAdded.map( e => e.id) );
-        // if( componentsUpdated.length ) console.log('[EntitySet][update]','[componentsUpdated]', componentsUpdated.map( e => e.id) );
-        // if( componentsRemoved.length ) console.log('[EntitySet][update]','[componentsRemoved]', componentsRemoved.map( e => e.id) );
+        if( debug && componentsAdded.length ) console.log('[EntitySet][update]','[componentsAdded]', this.id, componentsAdded.map( e => e.id) );
+        if( debug && componentsUpdated.length ) console.log('[EntitySet][update]','[componentsUpdated]', componentsUpdated.map( e => e.id) );
+        if( debug && componentsRemoved.length ) console.log('[EntitySet][update]','[componentsRemoved]', componentsRemoved.map( e => e.id) );
 
         for (ii = 0, len = componentsAdded.length; ii < len; ii++) {
             this._addComponent(componentsAdded[ii]);
             // console.log('UPDATE/ADD', componentsAdded[ii].getEntityId(), componentsAdded[ii].id );
         }
+        
         for (ii = 0, len = componentsUpdated.length; ii < len; ii++) {
             component = componentsUpdated[ii];
             // console.log(`!!ES!! updated com ${JSON.stringify(component)} ${component.getEntityId()}`);
@@ -590,20 +583,24 @@ Object.assign( EntitySet.prototype, Base.prototype, {
                 this._addComponent(component);
             }
         }
+
         for (ii = 0, len = componentsRemoved.length; ii < len; ii++) {
             this._removeComponent( componentsRemoved[ii] );
             // console.log('[EntitySet][update]', 'component:remove', componentsRemoved );
         }
+        
         for (ii = 0, len = entitiesAdded.length; ii < len; ii++) {
             let entity = entitiesAdded[ii];
             this._addEntity( entity );
             // console.log('[EntitySet][update]', 'entity:add', entity.id );
         }
+        
         for (ii = 0, len = entitiesUpdated.length; ii < len; ii++) {
             let entity = entitiesUpdated[ii];
             this._addEntity( entity );
             // console.log('[EntitySet][update]', 'entity:update', entity.id );
         }
+        
         for (ii = 0, len = entitiesRemoved.length; ii < len; ii++) {
             let entity = entitiesRemoved[ii];
             this._removeEntity(entity);
@@ -619,16 +616,11 @@ Object.assign( EntitySet.prototype, Base.prototype, {
      * @param entity
      */
     triggerEntityEvent(name, entity, ...rest) {
-        // const args = [name,entity,...rest];
-        let q = this.getQuery();
-
-        if (q && !q.execute(entity)) {
-            return false;
-        }
-
+        
         // log.debug('accepting EE on ' + this.cid+'/'+this.id );
-        if (Array.isArray(this.views)) {
-            this.views.forEach(view => {
+        // console.log('[triggerEntityEvent]', 'view', this._views);
+        if (Array.isArray(this._views)) {
+            Object.values(this._views).forEach(view => {
                 if ((q = view.getQuery()) && q.execute(entity)) {
                     // NOTE: wierd, but it seems that arguments gets clobbered by the time it gets here - don't yet know why
                     view.triggerEntityEvent.apply(view, [ name, entity, view, ...rest ]);
@@ -636,10 +628,16 @@ Object.assign( EntitySet.prototype, Base.prototype, {
             });
         }
 
-        // console.log(`[entitySet][triggerEntityEvent]`, JSON.stringify(args));
         return this.trigger.apply(this, [ name, entity, this, ...rest ]);
     },
 
+    /**
+     * 
+     * @param {*} entityOrFilter 
+     * @param {*} name 
+     * @param {*} callback 
+     * @param {*} context 
+     */
     listenToEntityEvent(entityOrFilter, name, callback, context) {
         if (!this._entityEvents) {
             this._entityEvents = Object.assign({},Events);

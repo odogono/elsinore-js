@@ -165,6 +165,51 @@ test('source emits entities', async t => {
     }
 });
 
+test.only('emits entities but also component updates', async t => {
+    try {
+        const { registry, entitySet } = await initialise({ loadEntities: true });
+
+        Pull(
+            entitySet.source({ emitEntities: true, closeAfterExisting: false }),
+            PullMap(val => {
+                Log.debug('[PullMap][<]', stringify(val));
+                return val;
+            }),
+            PullFilter(val => {
+                return Entity.isEntity(val);
+            }),
+            Pull.collect((err, entities) => {
+                // Log.debug('[collect]', entityToString(entities));
+                t.equals(entities.length, 5);
+                t.end();
+            })
+        );
+
+        // Log.debug( entityToString(entitySet) );
+
+        // adding this entity should only trigger an entity:add evt, not a component:add evt
+        entitySet.addComponent([
+            {'@c':'/name', name:'circle3'}
+        ]);
+
+        let entity = entitySet.at(0, true);
+        entity.removeComponent('/ttl');
+        entity.addComponent({'@c':'/name', name:'box1'});
+
+        Log.debug('>--');
+
+        entitySet.addEntity(entity);
+
+        Log.debug( entityToString(entity) );
+        Log.debug( entityToString(entitySet) );
+
+        t.end()
+
+    } catch (err) {
+        Log.error(err.stack);
+    }
+});
+
 test('sink', async t => {
     try {
         const { registry, entitySet } = await initialise({ loadEntities: true });

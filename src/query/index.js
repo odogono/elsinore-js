@@ -52,10 +52,7 @@ export const INCLUDE_FILTER = 'FI';
 // });
 
 export default class Query {
-    // type: 'Query',
-    // isQuery: true,
-    // cidPrefix: 'q',
-
+    
     constructor(commands, options = {}) {
         this.cid = uniqueId('q');
         this.commands = commands;
@@ -772,6 +769,7 @@ Query.exec = function(query, entity, options) {
 };
 
 Query.toQuery = function(query) {
+    if( !query ){ return null; }
     if (Query.isQuery(query)) {
         return query;
     }

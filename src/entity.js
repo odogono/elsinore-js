@@ -226,6 +226,10 @@ Object.assign( Entity.prototype, Base.prototype, {
         );
     },
 
+    /**
+     * 
+     * @param {*} component 
+     */
     removeComponent(component) {
         const registry = this.getRegistry();
 
@@ -253,11 +257,13 @@ Object.assign( Entity.prototype, Base.prototype, {
         if (typeof component.onRemoved  === 'function') {
             component.onRemoved(this);
         }
+
         return this;
     },
 
     /**
      * 
+     * @param {*} componentIds 
      */
     removeComponents(componentIds) {
         componentIds = componentIds || this.getComponentBitfield().toValues();
@@ -328,6 +334,10 @@ Object.assign( Entity.prototype, Base.prototype, {
         // return this.getComponentBitfield().count();
     },
 
+    /**
+     * 
+     * @param {*} args 
+     */
     triggerEntityEvent(...args) {
         let es = this.getRegistry();
         if (es) {
