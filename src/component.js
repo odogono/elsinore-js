@@ -52,9 +52,9 @@ Object.assign(Component.prototype, Base.prototype, {
 
     /**
      * Set a hash of attributes on this component
-     * 
-     * @param {*} attrs 
-     * @param {*} options 
+     *
+     * @param {*} attrs
+     * @param {*} options
      */
     set(attrs, options = {}) {
         if (attrs == null) {
@@ -104,24 +104,29 @@ Object.assign(Component.prototype, Base.prototype, {
             this.entityId = setEntityIdFromId(eId, esId);
         }
 
-        // let changes = [];
-        // for( let attr in attrs ){
-        //     let value = attrs[attr];
-        //     if( existing[attr] != value ){ changes.push(attr); }
-        // }
+        // determine what changes (if any) have occured
+        let changes = [];
+        for (let attr in attrs) {
+            let value = attrs[attr];
+            if (existing[attr] != value) {
+                changes.push(attr);
+            }
+        }
 
-        // console.log('[set]', attrs, existing);
+        // console.log('[set]', attrs, existing, changes);
 
-        extend(existing, typeof attrs === 'function' ? attrs(existing) : attrs);
+        if (changes.length > 0) {
+            extend(existing, attrs); // typeof attrs === 'function' ? attrs(existing) : attrs);
 
-        this.emit('component:change');
+            this.emit('component:update', changes);
+        }
 
         return this;
     },
 
     /**
-     * 
-     * @param {*} name 
+     *
+     * @param {*} name
      */
     get(name) {
         return this.attributes[name];
@@ -142,8 +147,8 @@ Object.assign(Component.prototype, Base.prototype, {
     },
 
     /**
-     * 
-     * @param {*} resp 
+     *
+     * @param {*} resp
      */
     // parse(resp) {
     //     let esId = undefined,
@@ -170,7 +175,7 @@ Object.assign(Component.prototype, Base.prototype, {
     // },
 
     /**
-     * 
+     *
      * @param {boolean} total
      */
     getEntityId(total = true) {
@@ -200,7 +205,7 @@ Object.assign(Component.prototype, Base.prototype, {
 
         this.entityId = entity.id;
         this._entity = entity;
-        if( entity._entitySet ){
+        if (entity._entitySet) {
             this._entitySet = entity._entitySet;
         }
     },
@@ -242,7 +247,7 @@ Object.assign(Component.prototype, Base.prototype, {
     },
 
     /**
-     * 
+     *
      */
     hash(asString) {
         let result = stringify(this.attributes); //omit(this.attributes, '@e', '@es', '@s', '@c', 'id'));
@@ -250,14 +255,14 @@ Object.assign(Component.prototype, Base.prototype, {
     },
 
     /**
-     * 
+     *
      */
     clone() {
         return new Component(this.toJSON());
     },
 
     /**
-     * 
+     *
      */
     toJSON(options = {}) {
         let result = extend({}, this.attributes); //omit(this.attributes, '@e', '@es', '@c', 'id');
@@ -387,7 +392,7 @@ class OldComponent extends Model {
     }
 
     /**
-     * 
+     *
      */
     hash(asString) {
         let result = stringify(omit(this.attributes, '@e', '@es', '@s', '@c', 'id'));
@@ -395,7 +400,7 @@ class OldComponent extends Model {
     }
 
     /**
-     * 
+     *
      */
     toJSON(options) {
         let result = omit(this.attributes, '@e', '@es', '@c', 'id');

@@ -29,7 +29,7 @@ test('apply copies non-identifying attributes', t => {
 
     src.apply(dst);
 
-    t.deepEqual( src.toJSON(), {'@e': 1000, '@i': 421, age: 32, height: 186, name: 'peter'} );
+    t.deepEqual( src.toJSON(), {'@e': 1000, '@i': 421, '@s': 0, age: 32, height: 186, name: 'peter'} );
 
     t.end();
 });
@@ -39,6 +39,21 @@ test('clone', t => {
     const dst = src.clone();
 
     t.deepEqual( src.toJSON(), dst.toJSON() );
+
+    t.end();
+});
+
+test('emits an event when attributes are changed', t => {
+    let component = new Component({name:'clara'});
+    t.plan(2);
+
+    component.on( 'component:update', (...evt) => t.ok(true) );
+
+    component.set({age:23});
+
+    component.set({age:29});
+
+    component.set({age:29});
 
     t.end();
 })
