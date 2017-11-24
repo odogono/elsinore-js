@@ -88,7 +88,8 @@ export class JSONLoader {
             return Promise.resolve(context);
         }
 
-        return Promise.resolve(context.entitySet.removeComponent(componentId))        
+        // console.log('[JSONLoader][_deleteComponent]', componentId);
+        return Promise.resolve(context.entitySet.removeComponent(componentId, {fromLoader:true}));
     }
 
     /**

@@ -169,6 +169,10 @@ Object.assign(Component.prototype, Base.prototype, {
     //     return resp;
     // },
 
+    /**
+     * 
+     * @param {boolean} total
+     */
     getEntityId(total = true) {
         if (total) {
             return this.entityId;
@@ -188,6 +192,7 @@ Object.assign(Component.prototype, Base.prototype, {
     setEntity(entity) {
         if (!entity || !entity.isEntity) {
             this._entity = null;
+            this._entitySet = null;
             this.entityId = 0;
             // this.attributes['@e'] = undefined;
             return;
@@ -195,6 +200,9 @@ Object.assign(Component.prototype, Base.prototype, {
 
         this.entityId = entity.id;
         this._entity = entity;
+        if( entity._entitySet ){
+            this._entitySet = entity._entitySet;
+        }
     },
 
     getDefId() {

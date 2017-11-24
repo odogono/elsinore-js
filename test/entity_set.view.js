@@ -177,7 +177,7 @@ test.only('removing a component from an entity', async t => {
         const entitySet = registry.createEntitySet();
 
         let entity;
-        const view = await entitySet.createView();
+        const view = await entitySet.createView(null,{debug:false});
         // const view = entitySet.view(null, { updateOnEvent: true });
 
         // Common.logEvents( view );
@@ -186,34 +186,32 @@ test.only('removing a component from an entity', async t => {
             { '@c': '/component/flower', colour: 'red' },
             { '@c': '/component/position', x: -2, y: 5 }
         ]);
-
-        // view.update();
-        // printE( view );
-        t.ok(view.at(0).Position, 'the entity should have position');
-
-        Log.debug('es is', entityToString(entitySet));
-
-        // the big problem here is taking an entity from an entityset
-        // and then removing a component from it. the entityset needs
-        // to re-evaluate the entity in some way, but because the entity
-        // is a direct reference, its impossible.
-        // the answer is to either:
-        // - return copies of entities when accessing
-        // - keep a seperate record of components and compare
-        // - only allow removal/addition of components via the entityset
-        // - bubble add/update/remove events from the entity to the entityset
-        entity = entitySet.at(0);
-        console.log('>--');
-        entitySet.removeComponent( entity.Position, {debug:true} );
-        // entitySet.addEntity(entity, {debug:true});
+        // Log.debug('entitySet', entitySet.cid);
+        // Log.debug('view', view.cid);
+        // Log.debug('es is', entityToString(entitySet));
+        // Log.debug('view is', entityToString(view));
 
         
-        Log.debug('es is', entityToString(entitySet));
-        Log.debug('view is', entityToString(view));
-        // printE( view );
-        t.ok(view.at(0).Position === void 0, 'the entity should have no position');
+        t.ok(view.at(0).Position, 'the entity should have position');
 
-        t.end();
+        // logEvents( entitySet );
+        entity = entitySet.at(0);
+        // console.log('>--');
+        // entity.Position.msg = '🐰'
+        entity.removeComponent( '/component/position', {debug:false} );
+        // entity.addComponent( {'@c':'/component/name', name:'kai'});
+        // entitySet.removeComponent( entity.Position, {debug:true} );
+        // entitySet.addEntity(entity, {debug:true});
+
+        // _.delay( () => {
+            t.equals(view.at(0).Position, undefined, 'the entity should have no position');
+            
+            // console.log('>~~~~');
+            // Log.debug('es is', entityToString(entitySet));
+            // Log.debug('view is', entityToString(view));//*/
+            t.end();
+        // }, 1000);
+
     } catch (err) {
         Log.error(err.stack);
     }

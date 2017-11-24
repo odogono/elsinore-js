@@ -10,6 +10,12 @@ export function EntitySetView(entities, options = {}) {
     EntitySet.call(this, entities, options);
 }
 
+
+/**
+ * 
+ * @param {*} query 
+ * @param {*} options 
+ */
 EntitySet.prototype.createView = function(query, options = {}) {
     let registry = this.getRegistry();
 
@@ -36,11 +42,15 @@ EntitySet.prototype.createView = function(query, options = {}) {
             // let sink = view.sink({}, err => {
             // console.log('[EntitySetView]', 'initial pull closed', err);
 
+            // problem: the streamIn is creating events that the streamOut picks up on
+            // and echoes back to the source. how to stop those events going back to source.
+            // and of course we dont want to stop all events from the view
+
             // create the stream which will deliver continuous updates
-            view.streamIn = createUpdateStream(this, view, { query, debug: false, sendExisting: false });
+            view.streamIn = createUpdateStream(this, view, {query, debug: false, sendExisting:false});
 
             // ensure that any updates from the view get back to the entitySet
-            view.streamOut = createUpdateStream( view, this, {sendExisting:false} );
+            view.streamOut = createUpdateStream( view, this, {sendExisting:false,debug:false} );
 
             resolve(view);
         });
@@ -54,6 +64,7 @@ EntitySet.prototype.createView = function(query, options = {}) {
  * @param {*} view 
  */
 function createUpdateStream(origin, target, options, completeCb) {
+    // console.log('[EntitySetView][createUpdateStream]', 'from', origin.cid, 'to', target.cid );
     // let source = origin.source(options);
     // let sink = target.sink({}, completeCb);
     options = {...options, emitEntities: true};
@@ -63,7 +74,8 @@ function createUpdateStream(origin, target, options, completeCb) {
     if (options.debug) {
         args.push(
             PullMap(val => {
-                console.log('[EntitySetView][>]', stringify(val));
+                let [data,dataOptions] = val;
+                console.log('[EntitySetView][>]', origin.cid, target.cid, stringify(data));
                 return val;
             })
         );
@@ -73,7 +85,7 @@ function createUpdateStream(origin, target, options, completeCb) {
         args.push( QueryFilter(options.query) );
     }
 
-    args.push(target.sink({}, completeCb));
+    args.push(target.sink({source:origin}, completeCb));
 
     return Pull.apply(null, args);
 }

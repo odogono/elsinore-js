@@ -25,9 +25,12 @@ export default function valueArray(...array) {
         }, []);
     }
 
+    if( array.length === 0){
+        return null;
+    }
     // if only a single value, then return that
     if (array.length === 1) {
-        array = array[0];
+        return array[0];
     }
 
     return array;
@@ -56,8 +59,12 @@ export function componentsFromCollections(...collections){
     }
 
     // if only a single value, then return that
+    if (result.length === 0) {
+        return null;
+    }
+
     if (result.length === 1) {
-        result = result[0];
+        return result[0];
     }
 
     return result;

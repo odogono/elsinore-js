@@ -1,5 +1,6 @@
 import Entity from '../entity';
 import Component from '../component';
+import {cloneComponent, cloneEntity } from '../util/clone';
 // import readProperty from '../util/read_property';
 import { JSONLoader } from '../util/loader';
 import { toString as entityToString } from '../util/to_string';
@@ -20,7 +21,7 @@ const Log = createLog('EntitySetSink');
  * @param {*} options 
  * @param {Function} completeCb 
  */
-export default function sink(entitySet, options = {}, completeCb) {
+export function PullStreamSink(entitySet, options = {}, completeCb) {
     let result = [];
     const loader = JSONLoader.create();
     let context = { entitySet, registry: entitySet.getRegistry() };
@@ -40,13 +41,36 @@ export default function sink(entitySet, options = {}, completeCb) {
 
             try {
                 let p;
+                let [item,itemOptions] = data; 
 
-                if (Component.isComponent(data)) {
-                    p = entitySet.addComponent(data);
-                } else if (Entity.isEntity(data)) {
-                    p = entitySet.addEntity(data);
+                // check whether the incoming data has an OriginID and whether
+                // that OID matches the entitySet to which we are connected. 
+                // if they do match, then disregard the event, as it originally came
+                // from the entitySet - an echo!
+                if( itemOptions.oid == entitySet.cid ){
+                    // Log.debug('🐸 [sink][Entity]', `looks like origin ${itemOptions.oid} is same as target ${entitySet.cid}`);
+                    return read(null, next);
+                }
+
+                if (Component.isComponent(item)) {
+                    p = entitySet.addComponent( item );
+                } else if (Entity.isEntity(item)) {
+                    
+                    // Log.debug('🦊 [sink][Entity]', source.cid,'>',entitySet.cid, itemOptions, item.getComponents().map(c=>[c.id,c.cid]));
+                    
+                    p = entitySet.addEntity(item, {oid:source.cid, debug:item.cid == 'e99'} ); // '🐰'
+
+                    // Log.debug('🐵 [sink][Entity]',p);
+
+                    // let added = entitySet.getUpdatedEntities();
+                    // if( added ) Log.debug('🐷 [sink][Entity]', added.cid, added.getComponents().map(c=>c.cid) );
+                    // if( added ) Log.debug('🐷 [sink][Entity]', data == added, data.msg, added.msg );
                 } else {
-                    p = loader._processCommand(context, data, options);
+                    // Log.debug('[sink][_processCommand]', entitySet.cid, item);
+                    if( item['@cmd'] == 'rmc' ){
+                        // Log.debug('[sink][_processCommand]', entitySet._components);
+                    }
+                    p = loader._processCommand(context, item, options);
                 }
                 if (p instanceof Promise) {
                     p.then(() => read(null, next));

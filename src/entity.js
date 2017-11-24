@@ -154,43 +154,59 @@ Object.assign( Entity.prototype, Base.prototype, {
 
     /**
      * Adds a component instance to this entity
+     * 
      * @param {*} component 
      */
-    addComponent(component) {
+    addComponent(component,options) {
         const registry = this.getRegistry();
         if (component === undefined) {
             return this;
         }
 
-        // delegate parsing/creation of components to registry
-        if( registry !== undefined ){
-            component = this.getRegistry().createComponent(component);
-        }
-        
-        if (Array.isArray(component)) {
-            component.forEach(c => this.addComponent(c));
+        if( this._entitySet ){
+            this._entitySet.addComponent( component, {...options, '@e':this.getEntityId()} );
             return this;
-        }
+        } else {
+            // delegate parsing/creation of components to registry
+            if( registry !== undefined ){
+                component = registry.createComponent(component);
+            }
 
+            if (Array.isArray(component)) {
+                component.forEach(c => this.addComponent(c));
+                return this;
+            }
+            return this._addComponent(component);
+        }
         // console.log('[addComponent]', component);
 
+        // const defId = component.getDefId();
+
+        // if (!defId) {
+        //     throw new Error('attempt to add invalid component', component);
+        // }
+
+        // return this._addComponent;
+    },
+
+    /**
+     * Internal add of component
+     * 
+     * @param {*} component 
+     */
+    _addComponent( component ){
         const defId = component.getDefId();
-
-        if (!defId) {
-            throw new Error('attempt to add invalid component', component);
-        }
-
         let existing = this.components[defId];
 
         if (existing) {
-            this.removeComponent(existing);
+            this._removeComponent(existing);
         }
-        // console.log('adding', component.getDefId() );
+
         component.setEntity(this);
         
         this[component.name] = component;
-        this.components[component.getDefId()] = component;
-        this.getComponentBitfield().set(component.getDefId(), true);
+        this.components[defId] = component;
+        this.getComponentBitfield().set(defId, true);
         
         // component.on('all', this._onComponentEvent, this);
 
@@ -201,8 +217,11 @@ Object.assign( Entity.prototype, Base.prototype, {
         return this;
     },
 
+
     /**
      * Returns an array of all the components associated with this entity
+     * 
+     * @param {*} componentIds 
      */
     getComponents(componentIds) {
         if (!this.components) {
@@ -227,23 +246,41 @@ Object.assign( Entity.prototype, Base.prototype, {
     },
 
     /**
+     * Removes a component from the entity
      * 
      * @param {*} component 
      */
-    removeComponent(component) {
-        const registry = this.getRegistry();
-
+    removeComponent(component, options) {        
         if (!component) {
             return this;
         }
-
+        
         // remove a given component by its defId or uri
         if( isString(component) || isInteger(component) ){
+            const registry = this.getRegistry();
             // convert to a def id
             component = registry.getIId(component);
             component = this.components[component];
         }
 
+        
+        if( this._entitySet ){
+            this._entitySet.removeComponent(component,options);
+        } else {
+            this._removeComponent(component);
+        }
+
+        return this;
+    },
+
+
+    /**
+     * Non-public means of removing a component from the entity
+     * 
+     * @param {*} component 
+     */
+    _removeComponent( component ){
+        // console.log('[Entity][_removeComponent]', component.cid);
         // NOTE - the below is contentious
         // it was commented out to allow es events to continue to make sense
         // perhaps the old entity id should be retained somewhere else?
@@ -254,7 +291,7 @@ Object.assign( Entity.prototype, Base.prototype, {
         this.getComponentBitfield().set(component.getDefId(), false);
         component.off('all', this._onComponentEvent, this);
 
-        if (typeof component.onRemoved  === 'function') {
+        if (typeof component.onRemoved === 'function') {
             component.onRemoved(this);
         }
 
@@ -276,9 +313,7 @@ Object.assign( Entity.prototype, Base.prototype, {
                     result.push(com);
                 }
                 return result;
-            },
-            [],
-        );
+            }, [] );
     },
 
     /**

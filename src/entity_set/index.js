@@ -17,8 +17,8 @@ import { cloneEntity } from '../util/clone';
 
 import CmdBuffer from '../cmd_buffer/sync';
 
-import PullStreamSource from './source';
-import PullStreamSink from './sink';
+import {PullStreamSource} from './source';
+import {PullStreamSink} from './sink';
 
 export default function EntitySet(entities, options = {}) {
     this.initialize(entities, options);
@@ -249,13 +249,14 @@ Object.assign(EntitySet.prototype, Base.prototype, {
             componentId = component.id;
         }
 
-        // console.log('[EntitySet][getComponent]', componentId, this._components );
+        // console.log('[EntitySet][getComponent]', this.cid, componentId, this._components.get(componentId) );
 
         return this._components.get(componentId);
     },
 
     /**
      * Returns a component by its entityid and def id
+     * 
      * @param {*} entityId 
      * @param {*} componentDefId 
      */
@@ -285,7 +286,7 @@ Object.assign(EntitySet.prototype, Base.prototype, {
 
     /**
     *   Adds an entity with its components to the entityset
-    * @param entity - Entity, array of entities, array of raw components
+    * @param {*} entity - Entity, array of entities, array of raw components
     */
     addEntity(entity, options) {
         let add = null;
@@ -314,9 +315,12 @@ Object.assign(EntitySet.prototype, Base.prototype, {
         return result;
     },
 
+    
     /**
-    *
-    */
+     * 
+     * @param {*} entity 
+     * @param {*} options 
+     */
     removeEntity(entity, options) {
         if (EntitySet.isMemoryEntitySet(entity)) {
             entity = entity.models;
@@ -324,6 +328,12 @@ Object.assign(EntitySet.prototype, Base.prototype, {
         return this._cmdBuffer.removeEntity(this, entity, options);
     },
 
+    /**
+     * 
+     * @param {*} entityId 
+     * @param {*} returnId 
+     * @param {*} options 
+     */
     _createEntity(entityId, returnId, options = {}) {
         let result;
         const registry = this.getRegistry();
@@ -346,6 +356,9 @@ Object.assign(EntitySet.prototype, Base.prototype, {
         return result;
     },
 
+    /**
+     * 
+     */
     _createComponentId() {
         return this.getRegistry().createId();
     },
@@ -406,6 +419,8 @@ Object.assign(EntitySet.prototype, Base.prototype, {
      * @param {*} component 
      */
     _addComponent(component) {
+        // console.log('[EntitySet][_addComponent] exist', this.cid, this._components.map(c=>[c.id,c.cid]));
+        // console.log('[EntitySet][_addComponent]      ', this.cid, component.map(c=>[c.id,c.cid]));
         this._components.add(component);
     },
 
@@ -438,7 +453,6 @@ Object.assign(EntitySet.prototype, Base.prototype, {
     },
 
     /**
-     * TODO: finish
      * the async based cmd-buffer calls this function once it has resolved a list of entities and components to be added
      */
     update(
@@ -460,7 +474,7 @@ Object.assign(EntitySet.prototype, Base.prototype, {
         componentsRemoved = componentsRemoved.models;
         if (debug)
             console.log(
-                '[EntitySet][update]',
+                '[EntitySet][update]', this.cid,
                 entitiesAdded.length,
                 entitiesUpdated.length,
                 entitiesRemoved.length,

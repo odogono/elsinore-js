@@ -1,6 +1,7 @@
 import PullPushable from 'pull-pushable';
 
 import readProperty from '../util/read_property';
+import {cloneComponent, cloneEntity } from '../util/clone';
 
 export const CMD_UNKNOWN = '@unk';
 export const CMD_COMMAND = '@cmd';
@@ -12,8 +13,14 @@ export const CMD_END_OF_EXISTING = 'eoe';
 
 /**
  * pull-stream source - produces a stream of entities/components from the entity set
+ * 
+ * the data that is emitted from this source takes the form of this tuple:
+ * 
+ * [ data, options ]
+ * 
+ * where data is an entity,component or command. options provide surrounding information
  */
-export default function source(entitySet, options = {}) {
+export function PullStreamSource(entitySet, options = {}) {
     const sendExisting = readProperty(options, 'sendExisting', true);
     const useDefUris = readProperty(options, 'useDefUris', false);
     const isAnonymous = readProperty(options, 'anonymous', false);
@@ -44,14 +51,15 @@ export default function source(entitySet, options = {}) {
     if (sendExisting) {
         const length = entitySet.size();
         let componentCount = 0;
+        let sendOptions = {};
 
         for (ii; ii < length; ii++) {
             entity = entitySet.at(ii);
-            components = entity.getComponents();
             if (emitEntities) {
-                pushable.push(entity);
+                pushable.push([entity,sendOptions]);
                 continue;
             }
+            components = entity.getComponents();
             for (cc = 0, count = components.length; cc < count; cc++) {
                 componentCount++;
                 pushComponent(pushable, components[cc], cdefMap, isAnonymous);
@@ -59,43 +67,45 @@ export default function source(entitySet, options = {}) {
         }
 
         // send a command confirming End Of Existing components
-        pushable.push({ '@cmd': CMD_END_OF_EXISTING, ec:length, cc:componentCount });
+        pushable.push([{ '@cmd': CMD_END_OF_EXISTING, ec:length, cc:componentCount },sendOptions]);
 
         if (closeAfterExisting === true) {
             pushable.end();
         }
     }
 
-    pushable.onEntityAdd = function(entities) {
+    pushable.onEntityAdd = function(entities, options) {
         let entity,
             component,
             cc = 0,
             clen = 0,
             ee = 0,
             elen = entities.length;
+        let {cid} = options;
+        
         for (ee = 0; ee < elen; ee++) {
             entity = entities[ee];
             if (emitEntities) {
-                // console.log('[pushable.onEntityAdd]', Object.values(entity.components).map(c => c.id) );
-                pushable.push(entity);
+                // console.log('[pushable.onEntityAdd]', entitySet.cid, options.oid, Object.values(entity.components).map(c => c.id) );
+                pushable.push([entity,options]);
                 continue;
             }
             components = entity.getComponents();
             for (cc = 0, clen = components.length; cc < clen; cc++) {
-                pushComponent(pushable, components[cc], cdefMap, isAnonymous);
+                pushComponent(pushable, components[cc], cdefMap, isAnonymous, options);
             }
         }
     };
 
 
-    pushable.onComponentAdd = function(components){
+    pushable.onComponentAdd = function(components,options){
         // console.log('[pushable.onComponentAdd]', components.map(c => c.id), JSON.stringify(components) );
         let cc,clen;
         for( cc=0, clen=components.length;cc<clen;cc++){
             if (emitEntities) {
-                pushable.push( components[cc] );
+                pushable.push( [cloneComponent(components[cc]),options] );
             } else {
-                pushComponent(pushable, components[cc], cdefMap, isAnonymous);
+                pushComponent(pushable, components[cc], cdefMap, isAnonymous, options);
             }
         }
     }
@@ -104,7 +114,7 @@ export default function source(entitySet, options = {}) {
     //     console.log('[pushable.onComponentUpdate]', components.map(c => c.id), JSON.stringify(components) );
     // }
 
-    pushable.onEntityRemove = function(entities) {
+    pushable.onEntityRemove = function(entities,options) {
         let entity,
             ee = 0,
             elen = entities.length,
@@ -113,7 +123,7 @@ export default function source(entitySet, options = {}) {
             eids.push(entities[ee].id);
         }
         if (eids.length > 0) {
-            this.push({ '@cmd': CMD_REMOVE_ENTITY, eid: eids }); // components[cc] );
+            this.push([{ '@cmd': CMD_REMOVE_ENTITY, eid: eids },options]); // components[cc] );
         }
     };
 
@@ -126,8 +136,9 @@ export default function source(entitySet, options = {}) {
             let component = components[cc];
             cids.push(components[cc].id);
         }
+        // console.log('[pushable.onComponentRemove]', components.map(c => c.id), JSON.stringify(cids) );
         if (cids.length > 0) {
-            this.push({ '@cmd': CMD_REMOVE_COMPONENT, id: cids }); // components[cc] );
+            this.push([{ '@cmd': CMD_REMOVE_COMPONENT, id: cids },options]);
         }
     };
 
@@ -148,14 +159,14 @@ export default function source(entitySet, options = {}) {
  * @param {*} cdefMap 
  * @param {*} isAnonymous 
  */
-function pushComponent(pushable, component, cdefMap, isAnonymous = false) {
+function pushComponent(pushable, component, cdefMap, isAnonymous = false, options) {
     // if( cdefMap ){
     let json = component.toJSON({ cdefMap });
     if (isAnonymous) {
         delete json['@e'];
         delete json['@i'];
     }
-    return pushable.push(json);
+    return pushable.push([json,options]);
     // }
 
     // pushable.push( component );
