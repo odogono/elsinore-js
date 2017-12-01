@@ -6,6 +6,7 @@ import extend from './util/extend';
 import omit from './util/omit';
 import hash from './util/hash';
 import uniqueId from './util/unique_id';
+import {deepEqual} from './util/deep_equal';
 
 /**
  * Components contain data
@@ -35,6 +36,8 @@ export default function Component(attrs, options) {
 
     if (attrs !== undefined) {
         this.set(attrs, options); //this.attributes = attrs || {};
+    } else {
+        this._hash = this.hash();
     }
 }
 
@@ -117,7 +120,7 @@ Object.assign(Component.prototype, Base.prototype, {
 
         if (changes.length > 0) {
             extend(existing, attrs); // typeof attrs === 'function' ? attrs(existing) : attrs);
-
+            this._hash = this.hash();
             this.emit('component:update', changes);
         }
 
@@ -134,6 +137,9 @@ Object.assign(Component.prototype, Base.prototype, {
 
     /**
      * Applies the attributes of the first argument to this component
+     * 
+     * @param {*} other 
+     * @param {*} options 
      */
     apply(other, options) {
         let attrs = other;
@@ -232,6 +238,7 @@ Object.assign(Component.prototype, Base.prototype, {
         return this._defName;
     },
 
+
     // setDefName: function(name:string){
     //     this.name = this._defName = name;
     // },
@@ -259,6 +266,26 @@ Object.assign(Component.prototype, Base.prototype, {
      */
     clone() {
         return new Component(this.toJSON());
+    },
+
+
+    /**
+     * Compares this and another for equality
+     * 
+     * @param {*} other 
+     */
+    compare(other){
+        if( !other || !other.isComponent ){
+            return false;
+        }
+        if( this == other ){
+            return true;
+        }
+        if( this._hash == other._hash ){
+            return true;
+        }
+        
+        return deepEqual(this.attributes, other.attributes);
     },
 
     /**

@@ -294,6 +294,38 @@ test('when adding a new entity, only the entity add event is emitted, not the co
     }
 });
 
+
+test('adding an identical component does not emit an event', async t => {
+    try {
+        const registry = await initialiseRegistry();
+        let entitySet = registry.createEntitySet();
+
+        // logEvents( entitySet );
+
+        entitySet.on('component:update', (...args) => {
+            Log.debug('CADD', stringify(args));
+            t.ok(false, 'no component update should have been called') 
+        });
+
+        entitySet.addEntity({ '@c': '/component/name', name: 'alice' });
+        
+        let component = entitySet.getUpdatedComponents();
+
+        // Log.debug('[OK]', entityToString(component) );
+
+        // the exact same component shouldn't trigger an update
+        entitySet.addComponent( component );
+
+        let duplicate = {'@c': '/component/name', name: 'alice', '@e':component.getEntityId() };
+
+        entitySet.addComponent( duplicate, {debug:false} );
+
+        t.end();
+    } catch (err) {
+        Log.error(err.stack);
+    }
+})
+
 test('retrieving a component by id', async t => {
     try {
         const registry = await initialiseRegistry();
@@ -858,7 +890,7 @@ test('adding an entity with an identical id will replace the existing one', asyn
 
         let entitySet = registry.createEntitySet();
         let eventSpy = Sinon.spy();
-        entitySet.on('component:change', eventSpy);
+        entitySet.on('component:update', eventSpy);
 
         //    logEvents(entitySet);
         let entityA = registry.createEntity([{ '@c': '/component/position', x: 0, y: 0, '@e': 26 }]);
@@ -878,7 +910,7 @@ test('adding an entity with an identical id will replace the existing one', asyn
 
         const addedEntity = entitySet.at(0);
         t.equals(entitySet.size(), 1);
-        t.ok(eventSpy.calledOnce, `component:change was called ${eventSpy.callCount} times`);
+        t.ok(eventSpy.calledOnce, `component:update was called ${eventSpy.callCount} times`);
         t.equals(addedEntity.Status.get('status'), 'active');
         t.equals(addedEntity.Position.get('x'), 15);
         //    printE( entitySet );
@@ -1054,7 +1086,7 @@ test('should emit an event when a component is changed', async t => {
             component = entity.Position;
         const spy = Sinon.spy();
 
-        entitySet.on('component:change', spy);
+        entitySet.on('component:update', spy);
 
         entitySet.addEntity(entity);
 
@@ -1063,7 +1095,7 @@ test('should emit an event when a component is changed', async t => {
 
         entitySet.addComponent(cloned);
 
-        t.ok(spy.called, 'component:change should have been called');
+        t.ok(spy.called, 'component:update should have been called');
         t.end();
     } catch (err) {
         Log.error(err.stack);
@@ -1076,7 +1108,7 @@ test('emit event when an entity component is changed', async t => {
 
         const spy = Sinon.spy();
 
-        entitySet.on('component:change', spy);
+        entitySet.on('component:update', spy);
 
         entitySet.addEntity([{ '@c': '/component/flower', colour: 'white' }]);
         let entityA = entitySet.getUpdatedEntities();
@@ -1094,7 +1126,7 @@ test('emit event when an entity component is changed', async t => {
 
         entityB = entitySet.addEntity(entityB);
 
-        t.ok(spy.called, 'component:change should have been called');
+        t.ok(spy.called, 'component:update should have been called');
 
         t.end();
     } catch (err) {
@@ -1108,7 +1140,7 @@ test.skip('emit event when a component instance is changed', async t => {
 
         const spy = Sinon.spy();
         // Common.logEvents( entitySet );
-        entitySet.on('component:change', spy);
+        entitySet.on('component:update', spy);
 
         let entityA = entitySet.addEntity(registry.createEntity({ '@c': '/component/flower', colour: 'white' }));
         // registry.createEntity( { '@c':'/component/flower', colour:'white'} ) );
@@ -1118,7 +1150,7 @@ test.skip('emit event when a component instance is changed', async t => {
         // entity onto the surrounding entityset
         component.set({ colour: 'red' }, { debug: true });
 
-        t.ok(spy.called, 'component:change should have been called');
+        t.ok(spy.called, 'component:update should have been called');
         t.end();
     } catch (err) {
         Log.error(err.stack);

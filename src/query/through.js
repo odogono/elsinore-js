@@ -1,21 +1,27 @@
 import Component from '../component';
 import Entity from '../entity';
 import Query from './index';
-import {entityToString} from '../util/to_string';
+import {toString as entityToString} from '../util/to_string';
 
 /**
  * passes entities through a queryfilter
  * 
  * @param {*} query 
  */
-export default function queryFilter(query) {
+export default function queryFilter(query, options={}) {
     query = new Query(query);
     
-    const test = (val) => {
+    // the incoming stream will be [(entity|component),options]
+    // the options passed with contain an (es) origin cid
+    const test = ([val,valueOptions]) => {
+
+        // if( Array.isArray(val) ){
+        //     val = val[0];
+        // }
         const isComponent = Component.isComponent(val);
         const isEntity = Entity.isEntity(val);
 
-        // console.log('[QueryFilter] consider', isEntity, isComponent, val );
+        // console.log('[QueryFilter] consider', isEntity, isComponent, (val) );
         
         // components pass right through the queryFilter - queries only apply
         // to entities after all

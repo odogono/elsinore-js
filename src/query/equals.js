@@ -1,4 +1,4 @@
-import deepEqual from '../util/deep_equal';
+import {deepEqual} from '../util/deep_equal';
 
 import {register,
     VALUE} from './index';

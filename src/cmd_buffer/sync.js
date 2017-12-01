@@ -562,7 +562,9 @@ Object.assign(CmdBuffer.prototype, {
 
                         if (componentExists) {
                             if (debug) console.log('[CmdBufferSync][execute][CMD_COMPONENT_ADD]', 'exists', com.id);
-                            this.componentsUpdated.add(com);
+                            if( !existingComponent.compare( com ) ){
+                                this.componentsUpdated.add(com);
+                            }
                         } else {
                             this.componentsAdded.add(com);
                         }
@@ -591,13 +593,15 @@ Object.assign(CmdBuffer.prototype, {
                         break;
 
                     case CMD_COMPONENT_UPDATE:
-                        if (debug) {
-                            console.log('!!! cmd: update com ' + JSON.stringify(com));
-                        }
-
+                    
+                        if (debug) { console.log('[CmdBufferSync][execute][CMD_COMPONENT_UPDATE]','exists?', componentExists, JSON.stringify(com)); }
+                    
                         tEntity._addComponent(com);
+                        
                         if (componentExists) {
-                            this.componentsUpdated.add(com);
+                            if( !existingComponent.compare( com ) ){
+                                this.componentsUpdated.add(com);
+                            }
                         } else {
                             this.componentsAdded.add(com);
                         }
@@ -697,11 +701,11 @@ Object.assign(CmdBuffer.prototype, {
      */
     triggerEvents(source, options) {
         options.cid = source.cid;
-        triggerEvent(source, 'component:change', this.componentsUpdated, options);
+        triggerEvent(source, 'component:update', this.componentsUpdated, options);
         triggerEvent(source, 'component:remove', this.componentsRemoved, options);
         triggerEvent(source, 'entity:remove', this.entitiesRemoved, options);
         triggerEvent(source, 'component:add', this.componentsAdded, options);
-        triggerEvent(source, 'entity:change', this.entitiesUpdated, options);
+        triggerEvent(source, 'entity:update', this.entitiesUpdated, options);
         triggerEvent(source, 'entity:add', this.entitiesAdded, options);
     }
 });

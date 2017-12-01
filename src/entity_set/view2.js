@@ -6,6 +6,11 @@ import Query from '../query';
 import stringify from '../util/stringify';
 import QueryFilter from '../query/through';
 
+/**
+ * 
+ * @param {*} entities 
+ * @param {*} options 
+ */
 export function EntitySetView(entities, options = {}) {
     EntitySet.call(this, entities, options);
 }
@@ -47,10 +52,10 @@ EntitySet.prototype.createView = function(query, options = {}) {
             // and of course we dont want to stop all events from the view
 
             // create the stream which will deliver continuous updates
-            view.streamIn = createUpdateStream(this, view, {query, debug: false, sendExisting:false});
+            view.streamIn = createUpdateStream(this, view, {...options, query, sendExisting:false});
 
             // ensure that any updates from the view get back to the entitySet
-            view.streamOut = createUpdateStream( view, this, {sendExisting:false,debug:false} );
+            view.streamOut = createUpdateStream( view, this, {...options, sendExisting:false} );
 
             resolve(view);
         });
@@ -82,7 +87,7 @@ function createUpdateStream(origin, target, options, completeCb) {
     }
 
     if( options.query ){
-        args.push( QueryFilter(options.query) );
+        args.push( QueryFilter(options.query, options) );
     }
 
     args.push(target.sink({source:origin}, completeCb));

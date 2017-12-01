@@ -37,6 +37,14 @@ export function isDate(object){
     return object && getClass.call(object) == '[object Date]';
 }
 
+/**
+ * 
+ * @param {*} object 
+ * @returns {boolean} if the object is a function
+ */
+export function isFunction(object){
+    return object && getClass.call(object) == '[object Function]';
+}
 
 // taken from underscore-contrib/underscore.function.predicates
 // cannot include directly in node

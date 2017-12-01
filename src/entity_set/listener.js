@@ -55,7 +55,7 @@ Object.assign(EntitySetListener.prototype, Base.prototype, {
         srcEntitySet.listenTo(targetEntitySet, 'entity:remove', this.onEntityRemove.bind(this));
         srcEntitySet.listenTo(targetEntitySet, 'component:add', this.onComponentAdd.bind(this));
         srcEntitySet.listenTo(targetEntitySet, 'component:remove', this.onComponentRemove.bind(this));
-        // srcEntitySet.listenTo( targetEntitySet, 'component:change', (...args) => {
+        // srcEntitySet.listenTo( targetEntitySet, 'component:update', (...args) => {
         //     log.debug('listen to es change ' + stringify(args) );
         // })
     },

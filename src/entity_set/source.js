@@ -86,7 +86,7 @@ export function PullStreamSource(entitySet, options = {}) {
         for (ee = 0; ee < elen; ee++) {
             entity = entities[ee];
             if (emitEntities) {
-                // console.log('[pushable.onEntityAdd]', entitySet.cid, options.oid, Object.values(entity.components).map(c => c.id) );
+                // console.log('[pushable.onEntityAdd]', entitySet.cid, options.oid, Object.values(entity.components).map(c => c.id), options );
                 pushable.push([entity,options]);
                 continue;
             }
@@ -127,16 +127,16 @@ export function PullStreamSource(entitySet, options = {}) {
         }
     };
 
-    pushable.onComponentRemove = function(components) {
+    pushable.onComponentRemove = function(components,options) {
         let cc,
             clen,
             cids = [];
 
         for (cc = 0, clen = components.length; cc < clen; cc++) {
-            let component = components[cc];
+            // let component = components[cc];
             cids.push(components[cc].id);
         }
-        // console.log('[pushable.onComponentRemove]', components.map(c => c.id), JSON.stringify(cids) );
+        console.log('[pushable.onComponentRemove]', entitySet.cid, components.map(c => c.id), JSON.stringify(cids) );
         if (cids.length > 0) {
             this.push([{ '@cmd': CMD_REMOVE_COMPONENT, id: cids },options]);
         }

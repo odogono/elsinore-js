@@ -56,4 +56,27 @@ test('emits an event when attributes are changed', t => {
     component.set({age:29});
 
     t.end();
+});
+
+test('the component hash changes when attributes are changed', t => {
+    let component = new Component({name:'ella'});
+    let value = component._hash;
+
+    component.set({name:'della'});
+    t.notEqual( value, component._hash );
+
+    component.set({name:'ella'});
+    t.equal( value, component._hash );
+
+    t.end();
+});
+
+
+test('comparing components', t => {
+    let a = new Component({name:'dora', age:34});
+    let b = new Component({age:34, name:'dora'});
+
+    t.ok( a.compare(b) );
+
+    t.end();
 })

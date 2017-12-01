@@ -280,19 +280,25 @@ Object.assign( Entity.prototype, Base.prototype, {
      * @param {*} component 
      */
     _removeComponent( component ){
-        // console.log('[Entity][_removeComponent]', component.cid);
+        let defId = component.getDefId();
+        let localComponent = this.components[defId];
+        // console.log('[Entity][_removeComponent]', component.cid, localComponent.cid );
+        if( !localComponent ){
+            // console.log('[Entity][_removeComponent]', component.cid, localComponent.cid, 'not found' );
+            return this;
+        }
         // NOTE - the below is contentious
         // it was commented out to allow es events to continue to make sense
         // perhaps the old entity id should be retained somewhere else?
-        component.setEntity(null);
+        localComponent.setEntity(null);
         
-        delete this[component.name];
-        delete this.components[component.getDefId()];
-        this.getComponentBitfield().set(component.getDefId(), false);
+        delete this[localComponent.name];
+        delete this.components[defId];
+        this.getComponentBitfield().set(defId, false);
         component.off('all', this._onComponentEvent, this);
 
-        if (typeof component.onRemoved === 'function') {
-            component.onRemoved(this);
+        if (typeof localComponent.onRemoved === 'function') {
+            localComponent.onRemoved(this);
         }
 
         return this;
@@ -390,8 +396,8 @@ Object.assign( Entity.prototype, Base.prototype, {
         if (event === 'destroy') {
             this.removeComponent(component, options);
         }
-        if (event === 'change') {
-            event = 'component:change';
+        if (event === 'update') {
+            event = 'component:update';
             // log.debug('_onComponentEvent ' + ' '  + ' ' + JSON.stringify(arguments));
             this.trigger(event, component, options);
         }
@@ -702,8 +708,8 @@ Entity.getEntityId = function(entity) {
 //         if (event === 'destroy') {
 //             this.removeComponent(component, options);
 //         }
-//         if (event === 'change') {
-//             event = 'component:change';
+//         if (event === 'update') {
+//             event = 'component:update';
 //             // log.debug('_onComponentEvent ' + ' '  + ' ' + JSON.stringify(arguments));
 //             this.trigger(event, component, options);
 //         }
