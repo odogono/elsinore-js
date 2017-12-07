@@ -64,6 +64,43 @@ Object.assign(ReadOnlyView.prototype, Base.prototype, {
     },
 
     /**
+     * Adds an entity to the source entitySet
+     * 
+     * @param {*} entity 
+     * @param {*} options 
+     */
+    addEntity(entity, options) {
+        return this.entitySet.addEntity(entity,options);
+    },
+
+    /**
+     * Removes an entity from the source entitySet
+     * @param {*} entity 
+     * @param {*} options 
+     */
+    removeEntity(entity, options) {
+        return this.entitySet.removeEntity(entity,options);
+    },
+
+    /**
+     * Adds a component to the source entitySet
+     * @param {*} component 
+     * @param {*} options 
+     */
+    addComponent(component, options) {
+        return this.entitySet.addComponent(component,options);
+    },
+
+    /**
+     * Removes a component from the source entitySet
+     * @param {*} component 
+     * @param {*} options 
+     */
+    removeComponent(component, options) {
+        return this.entitySet.removeComponent(component,options);
+    },
+
+    /**
      * @private
      */
     _reset() {

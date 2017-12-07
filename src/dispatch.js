@@ -206,6 +206,9 @@ export default class EntityDispatch {
             // after, but this might lead to dependent views/sets getting out of
             // sync
             if( view ){
+                if( !view.applyEvents ){
+                    console.log('[WTF]', view.type, view.cid );
+                }
                 view.applyEvents();
             }
 
@@ -252,7 +255,7 @@ export default class EntityDispatch {
         // const debug = options.debug;
 
         if( !query ){
-            entry.set('view', this._entitySet);
+            entry.set('view', createEntitySetIndex(this._entitySet) );
         } else {
             if( !this._views ){
                 this._views = [];
