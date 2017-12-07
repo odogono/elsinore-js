@@ -3,6 +3,7 @@ import test from 'tape';
 import { toPascalCase } from '../src/util/to';
 import valueArray from '../src/util/array/value';
 import Collection from '../src/util/collection';
+import propertyResult from '../src/util/result';
 
 test('toPascalCase', t => {
     const cases = {
@@ -20,89 +21,12 @@ test('toPascalCase', t => {
     t.end();
 });
 
-test('add to a collection', t => {
-    const collection = new Collection();
-
-    collection.add({ id: 5 });
-    collection.add({ id: 5 });
-
-    t.equals(collection.size(), 1);
-
-    t.end();
-});
-
-test('add an array of objects to a collection', t => {
-    const collection = new Collection();
-
-    collection.add( [{id:3},{id:4},{id:5}] );
-
-    t.equals( collection.size(), 3);
-    
-    t.end();
-})
-
-test('remove from a collection', t => {
-    const collection = new Collection();
-
-    collection.add({ id: 5 });
-    collection.add({ id: 7 });
-    collection.add({ id: 7 });
-
-    collection.remove({ id: 5 });
-
-    t.equals(collection.size(), 1);
-
-    collection.remove({ id: 7 });
-
-    t.equals(collection.size(), 0);
-
-    collection.add({ id: 7 });
-
-    t.equals(collection.size(), 1);
-
-    t.end();
-});
-
-test('get by id', t => {
-    const collection = new Collection([{ id: 3 }, { id: 56 }]);
-
-    t.notEqual(collection.get(56), undefined);
-
-    t.end();
-});
-
-test('use a different id attribute', t => {
-    const collection = new Collection(null, { idAttribute: 'cid' });
-
-    collection.add([{ id: 0, cid: 'o1' }, { id: 0, cid: 'o2' }]);
-
-    t.equals(collection.size(), 2);
-
-    t.end();
-});
-
-test('find a value in the collection', t => {
-    const collection = new Collection();
-
-    collection.add([
-        { id: 0, cid: 'o1', name: 'alice' },
-        { id: 1, cid: 'o2', name: 'bob' },
-        { id: 2, cid: 'o3', name: 'carla' }
-    ]);
-
-    t.equals(collection.findWhere({ name: 'bob' }).cid, 'o2');
-
-    t.equals(collection.findWhere({ id: 2, cid: 'o3' }).name, 'carla');
-
-    t.end();
-});
-
 test('valueArray returns a single item from an array', t => {
     t.equals(valueArray(['entity']), 'entity', 'returns a single item');
 
-    t.deepEquals(valueArray([]), [], 'returns the array');
+    t.deepEquals(valueArray([]), null);
 
-    t.deepEquals(valueArray(), []);
+    t.deepEquals(valueArray(), null);
 
     t.end();
 });
@@ -148,6 +72,23 @@ test('valueArray converts collections to arrays', t => {
         { id: 3 },
         { id: 4 }
     ]);
+
+    t.end();
+});
+
+test('propertyResult', t => {
+    let object = {
+        cheese: 'crumpets',
+        stuff: () => 'nonsense',
+        cake: { sponge: 'moist', carrot: 'nutty' }
+    };
+
+    t.equals(propertyResult(object, 'cheese'), 'crumpets');
+    t.equals(propertyResult(object, 'stuff'), 'nonsense');
+    t.equals(propertyResult(object, 'meat', 'ham'), 'ham');
+
+    t.equals(propertyResult(object, ['cake', 'sponge']), 'moist');
+    t.equals(propertyResult(object, obj => obj.cake.carrot), 'nutty');
 
     t.end();
 });

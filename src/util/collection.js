@@ -1,14 +1,21 @@
+import propertyResult from './result';
+import {isObject} from './is';
+
 /**
  * A collection stores a set of objects keyed by the id attribute
  */
 export default function Collection(models, options = {}) {
     this.idAttribute = options.idAttribute || 'id';
+    // this.debug = propertyResult( options, 'debug', false);
     this.reset();
     if (models !== undefined) {
         this.add(models);
     }
 }
 
+/**
+ * 
+ */
 Object.assign(Collection.prototype, {
     /**
      * Adds an object to the collection. If an object with the same id
@@ -20,13 +27,14 @@ Object.assign(Collection.prototype, {
         if (!obj) {
             return;
         }
-        const idAttr = this.idAttribute;
+        
         if (Array.isArray(obj) && obj[0] !== undefined) {
             obj.forEach(item => this.add(item));
             return this;
         }
-
-        const key = obj[idAttr];
+        
+        const idAttr = this.idAttribute;
+        const key = propertyResult(obj,idAttr);// obj[idAttr];
         const existing = this._objectsById[key];
 
         this._objectsById[key] = obj;
@@ -50,18 +58,20 @@ Object.assign(Collection.prototype, {
      * @param {*} obj 
      */
     remove(obj) {
-        const idAttr = this.idAttribute;
         if (Array.isArray(obj) && obj[0] !== undefined) {
             obj.forEach(item => this.remove(item));
             return this;
         }
-        if (this._objectsById[obj[idAttr]] !== undefined) {
-            const index = this._indexOfObject[obj[idAttr]];
+        
+        const objId = propertyResult(obj,this.idAttribute);
+
+        if (this._objectsById[objId] !== undefined) {
+            const index = this._indexOfObject[objId];
 
             this.models.splice(index, 1);
 
-            delete this._objectsById[obj[idAttr]];
-            delete this._indexOfObject[obj[idAttr]];
+            delete this._objectsById[objId];
+            delete this._indexOfObject[objId];
         }
 
         this._reindex();
@@ -69,6 +79,11 @@ Object.assign(Collection.prototype, {
         return this;
     },
 
+    /**
+     * Returns an object at the given index
+     * 
+     * @param {*} index 
+     */
     at(index) {
         return this.models[index];
     },
@@ -88,11 +103,11 @@ Object.assign(Collection.prototype, {
      * @param {*} obj 
      */
     has(obj) {
-        let id = obj[this.idAttribute];
-        if (id === undefined) {
-            id = obj;
+        let id = obj;
+        if( isObject(obj) ){
+            id = propertyResult(obj,this.idAttribute, obj);
         }
-        return this._objectsById[obj] !== undefined;
+        return this._objectsById[id] !== undefined;
     },
 
     /**
@@ -124,19 +139,29 @@ Object.assign(Collection.prototype, {
         return true;
     },
 
+    /**
+     * 
+     */
     _reindex() {
         let ii = 0;
         let len = this.models.length;
         for (ii = 0; ii < len; ii++) {
             let obj = this.models[ii];
-            this._indexOfObject[obj[this.idAttribute]] = ii;
+            let objId = propertyResult(obj,this.idAttribute);
+            this._indexOfObject[objId] = ii;
         }
     },
 
+    /**
+     * 
+     */
     size() {
         return this.models.length;
     },
 
+    /**
+     * 
+     */
     reset() {
         this.models = [];
         this._objectsById = {};
@@ -151,10 +176,18 @@ Object.assign(Collection.prototype, {
         return this.models.map(fn);
     },
 
+    /**
+     * 
+     * @param {*} fn 
+     * @param {*} initialValue 
+     */
     reduce(fn, initialValue) {
         return this.models.reduce(fn, initialValue);
     },
 
+    /**
+     * 
+     */
     toJSON() {
         return this.models;
     }

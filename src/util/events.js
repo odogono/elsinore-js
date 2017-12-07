@@ -278,8 +278,12 @@ let triggerEvents = function(events, args) {
 
 Events.emit = Events.trigger;
 
+
 /**
  * Listen to another object, but keep the received events until releaseAsync is called
+ * @param {*} obj 
+ * @param {*} name 
+ * @param {*} callback 
  */
 Events.listenToAsync = function(obj, name, callback) {
     let asyncListenQueue = this._asyncListenQueue || (this._asyncListenQueue = []);
@@ -299,8 +303,8 @@ Events.listenToAsync = function(obj, name, callback) {
 };
 
 /**
-    *   Releases all previously received events
-    */
+ * Releases all previously received events
+ */
 Events.releaseAsync = function() {
     let item, ii, len, args;
     if (!this._asyncListenQueue) {

@@ -29,7 +29,9 @@ export default function EntitySet(entities, options = {}) {
  */
 Object.assign(EntitySet.prototype, Base.prototype, {
     initialize(entities, options = {}) {
+        // this collection of entities indexes by the entity ids
         this._entities = new Collection();
+        this._entitiesById = new Collection(null, {debug:true, idAttribute: e => e ? e.getEntityId() : undefined});
         this._components = new Collection();
 
         let cmdBufferType = CmdBuffer;
@@ -47,6 +49,9 @@ Object.assign(EntitySet.prototype, Base.prototype, {
         this.allowEmptyEntities = options.allowEmptyEntities === void 0 ? true : options.allowEmptyEntities;
     },
 
+    /**
+     * Returns the id of the entitySet
+     */
     getEntitySetId() {
         return this.id;
     },
@@ -77,6 +82,15 @@ Object.assign(EntitySet.prototype, Base.prototype, {
      */
     at(index) {
         return this._entities.at(index);
+    },
+
+    /**
+     * Returns an entity by its id
+     * 
+     * @param {number} entityId 
+     */
+    getByEntityId( entityId ){
+        return this._entitiesById.get( entityId );
     },
 
     /**
@@ -377,6 +391,7 @@ Object.assign(EntitySet.prototype, Base.prototype, {
         }
 
         this._entities.add(entity);
+        this._entitiesById.add(entity);
 
         // ensure that the entities components are indexed separately
         this._addComponent(entity.getComponents());
@@ -390,27 +405,11 @@ Object.assign(EntitySet.prototype, Base.prototype, {
      */
     _removeEntity(entity) {
         this._entities.remove(entity);
+        this._entitiesById.remove(entity);
 
         // remove component references
         this._removeComponent(entity.getComponents());
 
-        // console.log('[_removeEntity]', 'remove entity',entity.id);
-        // let existing = this._entities.get(entity.id);
-
-        // if( existing ){
-        //     delete this._entitiesMap[entity.id];
-        //     delete this._entitiesById[entity.id];
-
-        //     let index = this._entities.indexOf(entity);
-        //     this._entities.splice( index,1 );
-        // } else {
-        //     // console.log('could not find', entity.cid, this._entitiesMap );
-        //     // throw new Error('stop');
-        // }
-
-        // let entityId = Entity.toEntityId(entity);
-        // no need for us to issue remove events as well as entity:remove
-        // this.remove(entity, { silent: true });
         return entity;
     },
 
@@ -448,7 +447,7 @@ Object.assign(EntitySet.prototype, Base.prototype, {
     },
 
     hasEntity(entity) {
-        // console.log('[hasEntity]', this._entities._objectsById[entity] !== undefined, entity);
+        console.log('[hasEntity]', entity);// this._entities._objectsById[entity] !== undefined, entity);
         return this._entities.has(entity);
     },
 

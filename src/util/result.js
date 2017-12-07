@@ -16,7 +16,13 @@ export default function result(obj, path, fallback) {
         return typeof fallback === 'function' ? fallback.call(obj) : fallback;
     }
     for (let ii = 0; ii < length; ii++) {
-        let prop = obj == null ? void 0 : obj[path[ii]];
+        let prop;
+        let pathI = path[ii];
+        if( typeof pathI === 'function' ){
+            prop = pathI.call(obj, obj);
+        } else {
+            prop = obj == null ? void 0 : obj[pathI];
+        }
         if (prop === void 0) {
             prop = fallback;
             ii = length; // Ensure we don't continue iterating.

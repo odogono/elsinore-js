@@ -1,6 +1,8 @@
 import {Model as Entry,Collection,Events} from 'odgn-backbone-model';
 
-import EntitySet from './entity_set/view';
+import EntitySet from './entity_set';
+import {create as createEntitySetIndex } from './entity_set/ro_view';
+
 import Query from './query/full';
 import EntityProcessor from './entity_processor';
 import {createLog} from './util/log';
@@ -257,7 +259,9 @@ export default class EntityDispatch {
             }
             let view = this._views[queryId];
             if( !view ){
-                view = this._entitySet.view(query); 
+                // view = 
+                view = createEntitySetIndex( this._entitySet, query );
+                // view = this._entitySet.view(query); 
                 this.trigger('view:create', view);
             }
 

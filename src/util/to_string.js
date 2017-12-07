@@ -63,7 +63,8 @@ export function entitySetToString(es, indent) {
 
     it = es.iterator();
     indent || (indent = '');
-    res.push(indent + '- ' + es.cid + ' (' + es.id + ') ' + es.getUUID());
+
+    res.push(`${indent}- ${es.cid} (${es.id}) ${es.getUUID()}`);
     indent = indent + '  ';
 
     if (es.entityFilters) {
@@ -77,6 +78,7 @@ export function entitySetToString(es, indent) {
     return res;
 }
 
+
 export function toString(entity, indent = '', join = '\n') {
     let res = [''];
 
@@ -88,7 +90,7 @@ export function toString(entity, indent = '', join = '\n') {
         res = res.concat(componentToString(entity, indent));
     } else if (EntityProcessor.isEntityProcessor(entity)) {
         res = res.concat(entitySetToString(entity.entitySet, indent));
-    } else if (EntitySet.isEntitySet(entity)) {
+    } else if (EntitySet.isEntitySet(entity) || entity.type == 'EntitySetReadOnlyView' ) {
         res = res.concat(entitySetToString(entity, indent));
     } else if (entity instanceof Collection) {
         entity.each(item => {

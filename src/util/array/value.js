@@ -15,13 +15,16 @@ export default function valueArray(...array) {
         return null;
     }
     
-    
     if (array.length > 0) {
         array = array.reduce((acc, cur) => {
             if (cur instanceof Collection) {
                 cur = cur.models;
             }
-            return acc.concat(cur);
+            if( Array.isArray(cur) ){
+                return [].concat.apply(acc, cur);
+            } else {
+                return acc.concat(cur);
+            }
         }, []);
     }
 

@@ -232,18 +232,22 @@ Object.assign(CmdBuffer.prototype, {
                 this.reset();
             }
         }
+        
+        // important to resolve the component directly against the entityset
+        // the incoming component can either be an id, or it could be a duplicate
+        // component from another es, so its vital that we get the right reference
+        component = entitySet.getComponent(component);
 
-        if (isInteger(component)) {
+        // if (isInteger(component)) {
             // console.log('[CmdBufferSync][removeComponent]', entitySet.cid, 'com retrieve by int', component);
             // let cid = component;
-            component = entitySet.getComponent(component);
 
             // console.log('[CmdBufferSync][removeComponent]', component);
             // if( !component ){
             // console.log('[CmdBufferSync][removeComponent]', entitySet.cid, 'retrieve by int undefined', cid);
             // console.log('es is', entityToString(entitySet));
             // }
-        }
+        // }
 
 
         if (component) {
@@ -261,7 +265,7 @@ Object.assign(CmdBuffer.prototype, {
             let entityId = component.getEntityId();
 
             if (entityId === 0 || entityId === undefined) {
-                console.log('[CmdBufferSync][removeComponent]', entitySet.cid, 'remove component without an entity', component);
+                console.log('[CmdBufferSync][removeComponent]', entitySet.cid, `remove component ${component.cid} without an entity`, component);
                 // throw new Error('attempting to remove component without an entity');
                 // return [];
             } else {
@@ -564,6 +568,7 @@ Object.assign(CmdBuffer.prototype, {
                             if (debug) console.log('[CmdBufferSync][execute][CMD_COMPONENT_ADD]', 'exists', com.id);
                             if( !existingComponent.compare( com ) ){
                                 this.componentsUpdated.add(com);
+                                
                             }
                         } else {
                             this.componentsAdded.add(com);
@@ -581,12 +586,16 @@ Object.assign(CmdBuffer.prototype, {
                         // }
                         if (componentExists) {
                             if (debug) console.log('[CmdBufferSync][execute][CMD_COMPONENT_REMOVE]', com.id, 'from', entityId);
+                            let existingEntity = existingComponent._entity;
+                            if (debug) console.log('[CmdBufferSync][execute][CMD_COMPONENT_REMOVE]', 'from', existingEntity.cid );
                             tEntity._removeComponent(com);
                             this.componentsRemoved.add(com);
 
                             // check that the entity still has components left
                             if (tEntity.getComponentBitfield().count() <= 0) {
                                 this.entitiesRemoved.add(tEntity);
+                            } else {
+                                this.entitiesUpdated.add( existingEntity );
                             }
                         }
 
@@ -601,6 +610,7 @@ Object.assign(CmdBuffer.prototype, {
                         if (componentExists) {
                             if( !existingComponent.compare( com ) ){
                                 this.componentsUpdated.add(com);
+                                this.entitiesUpdated.add( existingComponent._entity );
                             }
                         } else {
                             this.componentsAdded.add(com);

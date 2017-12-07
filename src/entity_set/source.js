@@ -2,6 +2,7 @@ import PullPushable from 'pull-pushable';
 
 import readProperty from '../util/read_property';
 import {cloneComponent, cloneEntity } from '../util/clone';
+import {applyQueryFilter} from '../query/through';
 
 export const CMD_UNKNOWN = '@unk';
 export const CMD_COMMAND = '@cmd';
@@ -26,6 +27,7 @@ export function PullStreamSource(entitySet, options = {}) {
     const isAnonymous = readProperty(options, 'anonymous', false);
     const emitEntities = readProperty(options, 'emitEntities', false);
     const closeAfterExisting = readProperty(options, 'closeAfterExisting', false);
+    const query = options.query;
 
     const cdefMap = useDefUris ? entitySet.getSchemaRegistry().getComponentDefUris() : null;
 
@@ -97,6 +99,26 @@ export function PullStreamSource(entitySet, options = {}) {
         }
     };
 
+    pushable.onEntityUpdate = function(entities,options){
+        if( !query ){
+            console.log('[pushable.onEntityUpdate]', 'no query');
+            return;
+        }
+
+        let ee = 0, elen = entities.length;
+        let removeEids = [];
+
+        for (ee = 0; ee < elen; ee++) {
+            entity = entities[ee];
+            console.log('[pushable.onEntityUpdate]', entitySet.cid, 'entity', entity.cid);
+            if( !applyQueryFilter(query, entity, options) ){
+                removeEids.push( entity.id );
+            }
+        }
+        if (eids.length > 0) {
+            this.push([{ '@cmd': CMD_REMOVE_ENTITY, eid: eids },options]); // components[cc] );
+        }
+    }
 
     pushable.onComponentAdd = function(components,options){
         // console.log('[pushable.onComponentAdd]', components.map(c => c.id), JSON.stringify(components) );
@@ -143,6 +165,7 @@ export function PullStreamSource(entitySet, options = {}) {
     };
 
     entitySet.on('entity:add', pushable.onEntityAdd, pushable);
+    entitySet.on('entity:update', pushable.onEntityUpdate, pushable);
     entitySet.on('entity:remove', pushable.onEntityRemove, pushable);
     entitySet.on('component:add', pushable.onComponentAdd, pushable);
     entitySet.on('component:update', pushable.onComponentAdd, pushable);

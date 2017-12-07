@@ -15,7 +15,7 @@ import {
 
 import Base from '../src/base';
 // import '../src/entity_set/view';
-import '../src/entity_set/view2';
+import '../src/entity_set/async_view';
 
 const Log = createLog('TestEntityEvents');
 
