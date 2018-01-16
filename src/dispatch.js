@@ -1,4 +1,5 @@
-import {Model as Entry,Collection,Events} from 'odgn-backbone-model';
+import Collection from './util/collection';
+import Events from './util/events';
 
 import EntitySet from './entity_set';
 import {create as createEntitySetIndex } from './entity_set/ro_view';
@@ -21,7 +22,7 @@ export default class EntityDispatch {
     initialize(){
         // this._removeViews();
         this.processorEntries = new Collection();
-        this.processorEntries.comparator = (a,b) => a.get('priority') > b.get('priority');
+        this.processorEntries.comparator = (a,b) => a.priority > b.priority;
         this.executedAt = Date.now;
         this.time = 0;
         return this;
@@ -43,7 +44,7 @@ export default class EntityDispatch {
      * Returns an array of all the processors registered
      */
     getProcessors(){
-        return this.processorEntries.map( e => e.get('processor') );
+        return this.processorEntries.map( e => e.processor );
     }
 
     /**
@@ -73,7 +74,7 @@ export default class EntityDispatch {
 
         query = query || processor.query || processor.entityFilter;
 
-        let entryAttrs = {
+        let entry = {
             id: processor.id || uniqueId('procdisp'),
             processor: processor,
             createdAt: 0,
@@ -82,17 +83,19 @@ export default class EntityDispatch {
             priority: options.priority === void 0 ? 0 : options.priority,
             interval: options.interval === void 0 ? 0 : options.interval
         };
-        processor._priority = entryAttrs.priority;
+        processor._priority = entry.priority;
 
-        let entry = new Entry(entryAttrs);
+        // Log.debug('[addProcessor]', 'added processor', processor.id, processor.constructor.name );
+        
+        // let entry = new Entry(entryAttrs);
 
         if( query ){
             // Log.debug('we have query', query);
             // NOTE: we are not doing anything other than ensuring the query is compiled
             // eventually we should be caching identical queries
             processor.entityFilter = Query.toQuery(query);
-            entry.set('query', processor.entityFilter);
-            entry.set('queryId', processor.entityFilter.hash() );
+            entry.query = processor.entityFilter;
+            entry.queryId = processor.entityFilter.hash();
         }
 
         this.processorEntries.add(entry);
@@ -119,16 +122,17 @@ export default class EntityDispatch {
         // add the updated time to this dispatches idea of what the current time is
         this.time += timeMs;
 
-        this.processorEntries.each(entry => {
-            const interval = entry.get('interval');
-            const query = entry.get('query');
-            const processor = entry.get('processor');
-
+        this.processorEntries.forEach(entry => {
+            const interval = entry.interval;
+            const query = entry.query;
+            const processor = entry.processor;
+            
+            
             // if( entry.get('updatedAt') >= 0 && (entry.get('interval') + entry.get('updatedAt') > timeMs) ){
             //     return;
             // }
             if( interval ){
-                const lastExecutedAt = entry.get('executedAt');
+                const lastExecutedAt = entry.executedAt;
                 // if( debug ) Log.debug(`execute last ${lastExecutedAt} + ${interval} > ${this.time}`);
                 if( lastExecutedAt !== -1 && lastExecutedAt + interval > this.time ){
                     return;
@@ -136,8 +140,8 @@ export default class EntityDispatch {
                 // Log.debug(`execute @ ${this.time}`)
             }
 
-            // const deltaTime = timeMs - entry.get('executedAt');
-            entry.set({executedAt: this.time});
+            // const deltaTime = timeMs - entry.executedAt;
+            entry.executedAt = this.time;
 
             if( query ){
                 let result = query.execute( entity );
@@ -145,8 +149,6 @@ export default class EntityDispatch {
                     return;
                 }
             }
-
-            
 
             processor.update( entityArray, timeMs );
 
@@ -176,16 +178,23 @@ export default class EntityDispatch {
 
         // iterate through each of the entitysets which have processors
         this.processorEntries.forEach( entry => {
-            const processor = entry.get('processor');
-            const view = entry.get('view');
+            const processor = entry.processor;
+            const view = entry.view;
             // const priority = entry.get('priority');
-            const interval = entry.get('interval');
-            
-            let entityArray = view ? view.models : null;
+            const interval = entry.interval;
 
-            // Log.debug('there now', processor.type, entry.get('processor').isEntityProcessor );
+            if( !!entry.isDisabled ){
+                return;
+            }
+            
+            // let entityArray = view ? view.models : null;
+
+            // if( debug ) Log.debug('there now', processor.type, entry.get('processor').isEntityProcessor );
             // dispatch any events that the processor has collected
             // from the last update loop
+            // if( view.deferEvents ){
+            //     view.applyEvents();
+            // }
             if( processor.isListeningAsync ){
                 processor.isReleasingEvents = true;
                 processor.releaseAsync();
@@ -193,12 +202,11 @@ export default class EntityDispatch {
             }
 
             // execute any queued events that the processor has received
-            // if( debug ){ 
-            //     Log.debug('executing processor',processor.type, 
-            //         // priority,
-            //         'with', `${view.cid}/${view.hash()} ${entityArray.length} entities`); 
-            //     Log.debug('[update] view', entityToString(view) );
-            // }
+            if( debug ){ 
+                Log.debug('[Dispatch]', 'executing processor', processor.constructor.name, 
+                    // priority,
+                    'with', `${view.cid}/${view.hash()} ${view.size()} entities`, view._entityIds );
+            }
             
             // if the view needs updating due to entities or components being 
             // added/updated/removed, then do so now
@@ -206,14 +214,11 @@ export default class EntityDispatch {
             // after, but this might lead to dependent views/sets getting out of
             // sync
             if( view ){
-                if( !view.applyEvents ){
-                    console.log('[WTF]', view.type, view.cid );
-                }
                 view.applyEvents();
             }
 
             if( interval ){
-                const lastExecutedAt = entry.get('updatedAt');
+                const lastExecutedAt = entry.updatedAt;
                 if( lastExecutedAt !== -1 && lastExecutedAt + interval > this.time ){
                     return;
                 }
@@ -224,7 +229,7 @@ export default class EntityDispatch {
             //     processor.onUpdate( entityArray, timeMs, options );
             // }
             // Log.debug('our processor', entry);
-            processor.update( entityArray, timeMs );
+            processor.update( view, timeMs );
 
             // apply any changes to the entitySet that the processor may have queued
             // changes involve adding/removing entities and components
@@ -232,8 +237,14 @@ export default class EntityDispatch {
             if( view ){
                 processor.applyChanges();
             }
-
-            entry.set({updatedAt:this.time});
+            
+            if( debug ){ 
+                Log.debug('[Dispatch]', 'finished executing processor', processor.constructor.name, 
+                    // priority,
+                    'with', `${view.cid}/${view.hash()} ${view.size()} entities`, view._entityIds );
+            }
+            // if( debug && view.cid == 'ev38' ) Log.debug('[update]🐲 view', view.cid, this.time, entityToString(view) );
+            entry.updatedAt = this.time;
         });
     }
 
@@ -247,31 +258,34 @@ export default class EntityDispatch {
 
     /**
      * 
+     * @param {*} entry 
+     * @param {*} options 
+     * @private
      */
     _mapEntitySetToProcessor( entry, options={} ){
-        const queryId = entry.get('queryId');
-        const query = entry.get('query');
-        const processor = entry.get('processor');
+        const queryId = entry.queryId;
+        const query = entry.query;
+        const processor = entry.processor;
         // const debug = options.debug;
 
         if( !query ){
-            entry.set('view', createEntitySetIndex(this._entitySet) );
+            // console.log('[Dispatch][_mapEntitySetToProcessor]', 'no query so using es');
+            // console.log( entityToString(this._entitySet) );
+            entry.view = createEntitySetIndex(this._entitySet, null, {deferEvents:false});
         } else {
             if( !this._views ){
                 this._views = [];
             }
             let view = this._views[queryId];
             if( !view ){
-                // view = 
-                view = createEntitySetIndex( this._entitySet, query );
-                // view = this._entitySet.view(query); 
+                view = createEntitySetIndex( this._entitySet, query, {deferEvents:false} );
                 this.trigger('view:create', view);
             }
 
             this._addProcessorToView( queryId, view, entry );
         }
 
-        processor.view = processor.entitySet = entry.get('view');
+        processor.view = processor.entitySet = entry.view;
 
         return entry;
     }
@@ -280,9 +294,12 @@ export default class EntityDispatch {
     /**
      * Connects entity events originating from the entityset to the processors
      * listeners.
+     * @param {*} entry 
+     * @param {*} options 
+     * @private
      */
-    _attachProcessorEvents( entry,options ){
-        const processor = entry.get('processor');
+    _attachProcessorEvents( entry, options ){
+        const processor = entry.processor;
         const entitySet = processor.entitySet;
         if( !processor.events ){ return; }
         let name;
@@ -311,7 +328,7 @@ export default class EntityDispatch {
      */
     _addProcessorToView(queryId,view,entry){
         this._views[queryId] = view;
-        entry.set('view', view);
+        entry.view = view;
         let views = this._viewsToProcessors || {};
         let processors = views[queryId] || [];
         if( processors.indexOf(entry.id) === -1 ){
@@ -319,7 +336,6 @@ export default class EntityDispatch {
         }
         views[queryId] = processors;
         this._viewsToProcessors = views;
-        // console.log('added processor', entry.id, 'to view', queryId);
         return entry;
     }
 
@@ -329,7 +345,7 @@ export default class EntityDispatch {
     _removeProcessorFromView(entry){
         if(!this._viewsToProcessors){ return; }
         entry.unset('view', view);
-        const queryId = entry.get('queryId');
+        const queryId = entry.queryId;
         let entryIds = this._viewsToProcessors[queryId];
         entryIds = arrayWithout(entryIds, entry.id);
         // if the view isn't used by any processors, then remove it

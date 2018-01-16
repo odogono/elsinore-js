@@ -221,11 +221,13 @@ test('adding several components returns an array of added components', async t =
         t.equals(added.length, 2, '2 components added');
         t.ok(Component.isComponent(added[0]), 'returns an array of components');
 
-        // direct addition of a component to an entity also works
-        components = entitySet.addComponent({ '@c': '/component/name', name: 'oro', '@e': 2 });
+        // Log.debug('1 look at that', entityToString(added) );
 
+        // direct addition of a component to an entity also works
+        entitySet.addComponent({ '@c': '/component/name', name: 'oro', '@e': 2 });
         added = entitySet.getUpdatedComponents();
 
+        // Log.debug('2 look at that', entityToString(added) );
         t.ok(Component.isComponent(added), 'returns an array of components');
 
         t.end();

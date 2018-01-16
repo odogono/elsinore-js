@@ -96,7 +96,7 @@ test('basic execution of a processor', t => {
     // register a second processor with no query
     const entity = Entity.create();
 
-    dispatch.execute(entity);
+    dispatch.update(entity);
 
     t.equals(executeCount, 2);
     t.end();
@@ -291,7 +291,7 @@ test('processor should receive an event when entities are added', async t => {
         entitySet.addEntity({ '@c': '/component/position', x: 100, y: 22 });
         t.assert(!isAdded, 'entity not added until update is called');
 
-        dispatch.update(0, { debug: true });
+        dispatch.update(0, { debug: false });
         t.assert(isAdded, 'entity added when update is called');
 
         t.end();
@@ -328,7 +328,7 @@ test('processor can affect original entityset', async t => {
             }
         }
 
-        const processor = dispatch.addProcessor(Proc).get('processor');
+        const processor = dispatch.addProcessor(Proc).processor;
 
         // entitySet.on('all', (name,...evt) => Log.debug('[es][evt]',entitySet.cid, name));
 
@@ -336,7 +336,7 @@ test('processor can affect original entityset', async t => {
         entitySet.addEntity({ '@c': '/component/channel', name: 'channel4' });
         entitySet.addEntity({ '@c': '/component/username', username: 'alice' });
 
-        dispatch.update(0, { debug: true });
+        dispatch.update(0, { debug: false });
         // t.equals( addCount, 2, 'only two applicable entities added' );
         // Log.debug('[proc es]', entityToString(processor.entitySet));
         // Log.debug('[es]', entityToString(entitySet));

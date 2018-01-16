@@ -14,14 +14,17 @@ import {
 } from './common';
 
 import Base from '../src/base';
+import Events from '../src/util/events';
 // import '../src/entity_set/view';
 import '../src/entity_set/async_view';
+import { create as createROView } from '../src/entity_set/ro_view';
 
 const Log = createLog('TestEntityEvents');
 
 
-test('triggering an event on an entity', function(t){
-    return initialiseRegistry().then( registry => {
+test('triggering an event on an entity', async t => {
+    try{
+        const registry = await initialiseRegistry();
         const entitySet = registry.createEntitySet();
         const eventSpy = Sinon.spy();
         let entity;
@@ -36,17 +39,18 @@ test('triggering an event on an entity', function(t){
         //     Log.debug('2!eevt '  + JSON.stringify(arguments));
         // } );
         
-        entity = registry.createEntity( [{'@c':'/component/animal', name:'tiger'}]);
-        entity = entitySet.addEntity( entity );
+        entitySet.addEntity( {'@c':'/component/animal', name:'tiger'} );
 
         // entitySet.addComponent( registry.createComponent( '/component/animal', {id:5,_e:1, name:'tiger'}) );
 
         entitySet.triggerEntityEvent( 'msg', entitySet.at(0), 'hello there' );
 
         t.ok( eventSpy.called, 'msg event should have been called' );
-    })
-    .then( () => t.end() )
-    .catch( err => Log.error('test error: %s', err.stack) )
+
+        t.end();
+    } catch( err ){
+        Log.error( err.stack );
+    }
 });
 
 
@@ -59,26 +63,22 @@ test('the registry triggers the event on entitysets', async t => {
 
         // Common.logEvents( entitySet, 'ese!' );
         entitySet.on('all', eventSpy );
-        entitySet.on('all', (entity,...rest) => {
-            // printIns( arguments );
-            // Log.debug('called msg with ', stringify([entity,...rest]) );
-        });
+        
+        entitySet.addEntity( {'@c':'/component/animal', name:'tiger'} );
+        entity = entitySet.getUpdatedEntities();
 
-        // entity = registry.createEntity(  );
-        entity = entitySet.addEntity( [{'@c':'/component/animal', name:'tiger'}] );
-
-        // Log.debug('ok entity', entityToString(entity) );
-        // registry.triggerEntityEvent( 'msg', entity, 'close the door' );
         entity.triggerEntityEvent( 'msg', 'close the door');
 
         t.ok( eventSpy.calledWith('msg', entity, entitySet, 'close the door'), 'entity was called with event' );
 
         t.end();
-    } catch(err){ Log.error('test error: %s', err.stack); }
+    } catch( err ){
+        Log.error( err.stack );
+    }
 });
 
 
-test.only('the registry triggers the event on a compatible entityset', async t => {
+test('the registry triggers the event on a compatible entityset', async t => {
     try{
         const registry = await initialiseRegistry();
         const entitySet = registry.createEntitySet();
@@ -87,8 +87,8 @@ test.only('the registry triggers the event on a compatible entityset', async t =
         
         let mineralCalled = false, animalCalled = false, mainCalled = false;
 
-        let mineralEntitySet = await entitySet.createView( Q => Q.all('/component/mineral'));
-        let animalEntitySet = await entitySet.createView( Q => Q.all('/component/animal'));
+        let mineralEntitySet = createROView( entitySet, Q => Q.all('/component/mineral'));
+        let animalEntitySet = createROView( entitySet, Q => Q.all('/component/animal'));
 
         // registry.addEntitySet( mineralEntitySet );
         // registry.addEntitySet( animalEntitySet );
@@ -97,73 +97,84 @@ test.only('the registry triggers the event on a compatible entityset', async t =
         mineralEntitySet.on('msg', () => mineralCalled = true );
         animalEntitySet.on('msg', () => animalCalled = true );
 
-        entity = entitySet.addEntity({'@c':'/component/animal', name:'tiger'});
+        entitySet.addEntity({'@c':'/component/animal', name:'tiger'});
+        entity = entitySet.getUpdatedEntities();
 
-        Log.debug('altered e', entity, entityToString(entity) );
+        // Log.debug('altered e', entity, entityToString(entity) );
 
         entity.triggerEntityEvent( 'msg', 'welcome' );
 
         t.notOk( mineralCalled, 'events not triggered on mineral entitySet');
         t.ok( animalCalled, 'events triggered on animal entitySet');
         t.ok( mainCalled, 'events triggered on base entitySet');
+        
         t.end();
-    } catch(err){ Log.error('test error: %s', err.stack); }
+    } catch( err ){
+        Log.error( err.stack );
+    }
     
 });
 
 
 
-test('triggers events which are stored until release', t => {
-    return initialiseRegistry().then( registry => {
+test('triggers events which are stored until release', async t => {
+    try{
+        const registry = await initialiseRegistry();
         const entitySet = registry.createEntitySet();
         const eventSpy = Sinon.spy();
         let entity;
 
         let received = false;
-        let listener = Object.assign({}, EventsAsync);
+        let listener = Object.assign({}, Events);
 
-        listener.listenToAsync( entitySet, 'msg', (evt,msgEntity) => {
+        listener.listenToAsync( entitySet, 'msg', (evt,msgEntity,...args) => {
             received = true;
             t.equals( msgEntity.Animal.get('name'), 'tiger' );
         });
 
-        entity = registry.createEntity( [{'@c':'/component/animal', name:'tiger'}]);
-        entity = entitySet.addEntity(entity);
+        
+        entitySet.addEntity({'@c':'/component/animal', name:'tiger'});
+        entity = entitySet.getUpdatedEntities();
 
         entitySet.triggerEntityEvent( 'msg', entity );
 
         listener.releaseAsync();
 
         t.ok( received, 'the msg was received' );
-    })
-    .then( () => t.end() )
-    .catch( err => Log.error('test error: %s', err.stack) )
+
+        t.end();
+    } catch( err ){
+        Log.error( err.stack );
+    }
 });
 
 
-test('still triggers on normal listeners', function(t){
-    return initialiseRegistry().then( registry => {
-            const entitySet = registry.createEntitySet();
-            const eventSpy = Sinon.spy();
-            let entity;
+test('still triggers on normal listeners', async t => {
+    try{
+        const registry = await initialiseRegistry();
+        const entitySet = registry.createEntitySet();
+        const eventSpy = Sinon.spy();
+        let entity;
 
         let received = false;
-        let listener = Object.assign({}, EventsAsync);
+        let listener = Object.assign({}, Events);
 
-        listener.listenTo( entitySet, 'msg', function(msgEntity){
+        listener.listenTo( entitySet, 'msg', msgEntity => {
             received = true;
             t.equals( msgEntity.Animal.get('name'), 'tiger' );
         });
 
-        entity = registry.createEntity( [{'@c':'/component/animal', name:'tiger'}]);
-        entity = entitySet.addEntity(entity);
+        entitySet.addEntity({'@c':'/component/animal', name:'tiger'});
+        entity = entitySet.getUpdatedEntities();
 
         entitySet.triggerEntityEvent( 'msg', entity );
 
         t.ok( received, 'the msg was received' );
-    })
-    .then( () => t.end() )
-    .catch( err => Log.error('test error: %s', err.stack) )
+        
+        t.end();
+    } catch( err ){
+        Log.error( err.stack );
+    }
 });
 
 // test('listen to events on entities that have certain components');

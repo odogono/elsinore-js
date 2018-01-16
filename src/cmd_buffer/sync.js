@@ -568,22 +568,16 @@ Object.assign(CmdBuffer.prototype, {
                             if (debug) console.log('[CmdBufferSync][execute][CMD_COMPONENT_ADD]', 'exists', com.id);
                             if( !existingComponent.compare( com ) ){
                                 this.componentsUpdated.add(com);
-                                
                             }
                         } else {
+                            // if (debug) console.log('[CmdBufferSync][execute][CMD_COMPONENT_ADD]', 'component not exists', com.id);
                             this.componentsAdded.add(com);
                         }
 
+                        this.entitiesUpdated.add( existingEntity );
+
                         break;
                     case CMD_COMPONENT_REMOVE:
-                        // no entity to remove from?
-                        // if (!entity) {
-                        //     continue;
-                        // }
-                        // if( true || debug ){
-                        // console.log('[CmdBufferSync][execute]', entitySet.cid, 'cmd: rem com ' + com.id + ' ' + JSON.stringify(com) );
-                        // if( true ){ printE(tEntity); }
-                        // }
                         if (componentExists) {
                             if (debug) console.log('[CmdBufferSync][execute][CMD_COMPONENT_REMOVE]', com.id, 'from', entityId);
                             let existingEntity = existingComponent._entity;
@@ -593,8 +587,11 @@ Object.assign(CmdBuffer.prototype, {
 
                             // check that the entity still has components left
                             if (tEntity.getComponentBitfield().count() <= 0) {
+                                // console.log('[CmdBufferSync][execute][CMD_COMPONENT_REMOVE]', 'remove ent', tEntity.id);
                                 this.entitiesRemoved.add(tEntity);
+                                this.entitiesUpdated.remove(tEntity);
                             } else {
+                                // console.log('[CmdBufferSync][execute][CMD_COMPONENT_REMOVE]', 'update ent', existingEntity.id);
                                 this.entitiesUpdated.add( existingEntity );
                             }
                         }

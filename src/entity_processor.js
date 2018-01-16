@@ -3,6 +3,7 @@ import arrayClear from './util/array/clear';
 import Base from './base';
 import uniqueId from './util/unique_id';
 
+import { toString as entityToString } from './util/to_string';
 import * as CmdBuffer from './cmd_buffer/sync';
 
 /**
@@ -92,17 +93,34 @@ Object.assign(EntityProcessor.prototype, Base.prototype, {
             entitiesToRemove = null;
         }
 
+        // console.log('[EntityProcessor][applyChanges]', entityToString(this.entitySet) );
+
         this._cmds = arrayClear(this._cmds);
         return result;
     },
 
     /**
+     * 
+     * @param {*} component 
+     */
+    createComponent(component){
+        return this.registry.createComponent(component);
+    },
+
+    /**
      * Adds the specified component to the entity
+     * @param {*} component 
+     * @param {*} entity 
      */
     addComponentToEntity(component, entity) {
         this._cmds.push([CmdBuffer.CMD_COMPONENT_ADD, entity, component]);
     },
 
+    /**
+     * 
+     * @param {*} component 
+     * @param {*} entity 
+     */
     removeComponentFromEntity(component, entity) {
         this._cmds.push([CmdBuffer.CMD_COMPONENT_REMOVE, entity, component]);
     },
@@ -111,6 +129,10 @@ Object.assign(EntityProcessor.prototype, Base.prototype, {
     //     this._cmds.push( [CmdBuffer.CMD_ENTITY_ADD, entity] );
     // },
 
+    /**
+     * 
+     * @param {*} args 
+     */
     createEntity(...args) {
         let entity = this.registry.createEntity.apply(this.registry, args);
         this._cmds.push([CmdBuffer.CMD_ENTITY_ADD, entity]);
@@ -120,6 +142,11 @@ Object.assign(EntityProcessor.prototype, Base.prototype, {
         return entity;
     },
 
+    /**
+     * 
+     * @param {*} entity 
+     * @param {*} apply 
+     */
     destroyEntity(entity, apply) {
         this._cmds.push([CmdBuffer.CMD_ENTITY_REMOVE, entity]);
         if (apply || this.isReleasingEvents) {
@@ -128,10 +155,17 @@ Object.assign(EntityProcessor.prototype, Base.prototype, {
         return entity;
     },
 
+    /**
+     * 
+     * @param {*} entityId 
+     */
     getEntity(entityId) {
         return this.entitySet.getEntity(entityId);
     },
 
+    /**
+     * 
+     */
     toJSON() {
         let result = {};
         result.name = this.name;

@@ -125,7 +125,10 @@ Object.assign(EntitySet.prototype, Base.prototype, {
         }
         options.flatEntity = true;
 
-        result['@e'] = this.models.reduce((acc, e) => {
+        // if( !this.models ){
+        //     console.log('[toJSON]', 'hey what', this.cid, this );
+        // }
+        result['@e'] = this._entities.reduce((acc, e) => {
             return acc.concat(e.toJSON(options));
         }, []);
 
@@ -224,7 +227,7 @@ Object.assign(EntitySet.prototype, Base.prototype, {
     getUpdatedComponents() {
         return componentsFromCollections(
             this._cmdBuffer.entitiesAdded,
-            this._cmdBuffer.entitiesUpdated,
+            // this._cmdBuffer.entitiesUpdated,
             this._cmdBuffer.componentsAdded,
             this._cmdBuffer.componentsUpdated
         );
@@ -547,18 +550,21 @@ Object.assign(EntitySet.prototype, Base.prototype, {
      * @param entity
      */
     triggerEntityEvent(name, entity, ...rest) {
-        // log.debug('accepting EE on ' + this.cid+'/'+this.id );
+        // console.log('[EntitySet][triggerEntityEvent] accepting EE on ' + this.cid+'/'+this.id );
         // console.log('[triggerEntityEvent]', 'view', this._views);
-        if (Array.isArray(this._views)) {
-            Object.values(this._views).forEach(view => {
-                if ((q = view.getQuery()) && q.execute(entity)) {
-                    // NOTE: wierd, but it seems that arguments gets clobbered by the time it gets here - don't yet know why
-                    view.triggerEntityEvent.apply(view, [name, entity, view, ...rest]);
-                }
-            });
-        }
+        // if (Array.isArray(this._views)) {
+        //     Object.values(this._views).forEach(view => {
+        //         if ((q = view.getQuery()) && q.execute(entity)) {
+        //             view.triggerEntityEvent.apply(view, [name, entity, view, ...rest]);
+        //         }
+        //     });
+        // }
 
-        return this.trigger.apply(this, [name, entity, this, ...rest]);
+        // trigger a entity-event event - which other views can listen to and respond to
+        this.trigger.apply(this, ['entity:event', name, entity, this, ...rest]);
+        this.trigger.apply(this, [name, entity, this, ...rest]);
+
+        return this;
     },
 
     /**

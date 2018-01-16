@@ -45,7 +45,8 @@ test('main', async t => {
         entitySet.addComponent( {'@c':'/door', material: 'wood'} );
 
         // retrieve the first (and only entity) from the set
-        eDoor = entitySet.at(0);
+        eDoor = entitySet.getUpdatedEntities();// entitySet.at(0);
+
 
         // trigger an event on the entity set - this will open all door
         // components
@@ -56,7 +57,8 @@ test('main', async t => {
 
         // an update has to occur for events to be processed
         // registry.updateSync({debug:true});
-        dispatch.update();
+        // console.log('>--');
+        dispatch.update(0, {debug:false});
 
         // as a result of the event, the door should now be open
         t.equals( eDoor.Door.get('open'), true, 'the door should be open' );
@@ -77,6 +79,7 @@ test('main', async t => {
     }
 });
 
+
 class DoorProcessor extends EntityProcessor {
 
     constructor(options={}){
@@ -88,9 +91,9 @@ class DoorProcessor extends EntityProcessor {
         };
         this.events = {
             'doorOpen': (entity, entitySet, msg) => {
-                // throw new Error('heck');
-                // Log.debug(`[doorOpen]`, stringify([msg]));
-                entity.Door.set({'open': true, msg: msg})
+                // args.forEach( a => Log.debug('arg type', a.type))
+                // Log.debug(`[doorOpen]`, stringify(args));
+                entity.Door.set({'open': true, msg })
             },
             'doorClose': (entity, entitySet) => {
                 entity.Door.set('open', false);
@@ -105,16 +108,19 @@ class DoorProcessor extends EntityProcessor {
      * 
      * @override
      */
-    update( entityArray, timeMs ){
-        // let entity, ii, len;
+    update( entities, timeMs ){
+        let entity, ii, len;
         let closeTime;
-        _.each( entityArray, entity => {
+        
+        for( ii=0,len=entities.size();ii<len;ii++){
+            entity = entities.at(ii);
+            
             closeTime = this.closingTime[ entity.Door.get('material') ];
+
             if (timeMs >= entity.Door.get('open') + closeTime ) {
                 entity.Door.set({open:false});
-                // eDoor.triggerEntityEvent( 'doorClose' );
             }
-        });
+        }
     }
 }
 

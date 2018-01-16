@@ -1,7 +1,9 @@
 import { Collection, Events } from 'odgn-backbone-model';
 
-import Component from '../component';
 import Base from '../base';
+import Collection from '../util/collection';
+import Component from '../component';
+import Events from '../util/events';
 import stringify from '../util/stringify';
 
 import {isObject} from '../util/is';
