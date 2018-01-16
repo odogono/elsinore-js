@@ -36,7 +36,7 @@ test('testing an async register component', t => {
     const Listener = Object.assign({}, Events);
 
     Listener.on('register', componentDef => {
-        t.equals(componentDef.get('uri'), '/component/position');
+        t.equals(componentDef.getUri(), '/component/position');
         t.end();
     });
 
@@ -51,7 +51,7 @@ test('registering multiple component defs', t => {
     const Listener = Object.assign({}, Events);
 
     Listener.on('register', componentDef => {
-        t.ok(componentDef.get('uri'));
+        t.ok(componentDef.getUri());
     });
 
     return registry

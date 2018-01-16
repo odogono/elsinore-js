@@ -7,7 +7,7 @@ import hash from './util/hash';
 import extend from './util/extend';
 
 import Component from './component';
-import Model from './model';
+// import Model from './model';
 import Base from './base';
 
 export default function Entity(options = {}) {

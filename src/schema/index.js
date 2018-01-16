@@ -1,5 +1,3 @@
-import { Collection, Events } from 'odgn-backbone-model';
-
 import Base from '../base';
 import Collection from '../util/collection';
 import Component from '../component';
@@ -39,11 +37,11 @@ export class ComponentDefCollection extends Collection {
 }
 ComponentDefCollection.prototype.model = ComponentDef;
 
-class ComponentDefUriCollection extends ComponentDefCollection {
-    modelId(attrs) {
-        return attrs.uri;
-    }
-}
+// class ComponentDefUriCollection extends ComponentDefCollection {
+//     modelId(attrs) {
+//         return attrs.uri;
+//     }
+// }
 
 /**
  * 
@@ -54,7 +52,7 @@ export default class ComponentRegistry {
         this.registry = options.registry;
         this._componentIndex = 1;
         this._componentDefs = new ComponentDefCollection();
-        this._componentDefByUri = new ComponentDefUriCollection();
+        this._componentDefByUri = new ComponentDefCollection(null, { idAttribute: 'uri' });
         this._componentTypes = {};
         if (definitions) {
             definitions.forEach(def => this.register(def));
@@ -76,9 +74,9 @@ export default class ComponentRegistry {
     }
 
     /**
-    * Returns the registered component defs as an array of def ids
-    * to def uris
-    */
+     * Returns the registered component defs as an array of def ids
+     * to def uris
+     */
     getComponentDefUris() {
         return this._componentDefs.reduce(
             (result, def) => {
@@ -91,6 +89,9 @@ export default class ComponentRegistry {
 
     /**
      * Adds a component definition to the registry
+     * 
+     * @param {*} def 
+     * @param {*} options 
      */
     register(def, options={}){
         let componentDef;
@@ -139,10 +140,10 @@ export default class ComponentRegistry {
 
         componentDef.id = this._componentIndex++;
 
-        const type = componentDef.get('type');
+        const type = componentDef.getType();
 
         if (type) {
-            let ComponentType = this._componentTypes[type];
+            let ComponentType = this._componentTypes[type] || Component;
             // ensure we have this type registered
             if (!ComponentType) {
                 if (throwOnExists) {
@@ -166,7 +167,7 @@ export default class ComponentRegistry {
         this._componentDefByUri.remove(componentDef.getUri());
         this._componentDefByUri.add(componentDef);
 
-        this.trigger('def:add', componentDef.get('uri'), componentDef.hash(), componentDef);
+        this.trigger('def:add', componentDef.getUri(), componentDef.hash(), componentDef);
 
         // console.log('def:add', componentDef.get('uri'), componentDef.hash() );
         return componentDef;
@@ -174,6 +175,8 @@ export default class ComponentRegistry {
 
     /**
      * Removes a definition from the registry
+     * 
+     * @param {*} def 
      */
     unregister(def) {
         let componentDef = this.getComponentDef(def);
@@ -181,16 +184,19 @@ export default class ComponentRegistry {
             return null;
         }
 
-        this._componentDefByUri.remove(componentDef.getUri());
+        let removed = this._componentDefByUri.remove(componentDef.getUri(), true);
+
         this._componentDefs.remove(componentDef.id);
 
-        this.trigger('def:remove', componentDef.get('uri'), componentDef.hash(), componentDef);
+        this.trigger('def:remove', componentDef.getUri(), componentDef.hash(), componentDef);
 
         return componentDef;
     }
 
     /**
      * Returns an array of the registered componentdefs
+     * 
+     * @param {*} options 
      */
     getComponentDefs(options = {}) {
         if (options.all) {
@@ -201,6 +207,11 @@ export default class ComponentRegistry {
 
     /**
      * Creates a new component instance
+     * 
+     * @param {*} defUri 
+     * @param {*} attrs 
+     * @param {*} options 
+     * @param {*} cb 
      */
     createComponent(defUri, attrs, options = {}, cb) {
         let throwOnNotFound = options.throwOnNotFound === void 0 ? true : options.throwOnNotFound;
@@ -217,7 +228,7 @@ export default class ComponentRegistry {
             return null;
         }
 
-        const type = def.get('type');
+        const type = def.getType();
         let ComponentType = type ? this._componentTypes[type] : Component;
 
         if (attrs === void 0 && isObject(defUri)) {
@@ -230,7 +241,7 @@ export default class ComponentRegistry {
         attrs = { ...defAttrs, ...attrs };
 
         // NOTE: no longer neccesary to pass parse:true as the component constructor calls component.parse
-        const defOptions = def.get('options') || {};
+        const defOptions = def.options || {};
         const createOptions = { ...defOptions, registry: this.registry };
         let result = new ComponentType(attrs, createOptions);
 
@@ -249,6 +260,11 @@ export default class ComponentRegistry {
         return result;
     }
 
+    /**
+     * 
+     * @param {*} defIdentifiers 
+     * @param {*} options 
+     */
     getIId(defIdentifiers, options = { throwOnNotFound: true }) {
         options.returnIds = true;
         // defIdentifiers.push({ throwOnNotFound:true, returnIds:true });
@@ -257,6 +273,8 @@ export default class ComponentRegistry {
 
     /**
      * 
+     * @param {*} identifiers 
+     * @param {*} options 
      */
     getComponentDef(identifiers, options={}) {
         let ii = 0, len = 0, cDef, ident;

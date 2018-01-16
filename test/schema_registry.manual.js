@@ -31,7 +31,17 @@ const COMPONENT_DEFINITIONS = [
 
 
 
+test('registering a schema without a name', t => {
+    const registry = ComponentRegistry.create();
 
+    registry.register( { uri:'/component/example' } );
+
+    let component = registry.createComponent('/component/example');
+
+    t.equals( component.name, 'Example' );
+
+    t.end();
+});
 
 test('basics', t => {
 
@@ -53,16 +63,7 @@ test('basics', t => {
 test('each component def has an integer id');
 
 
-test('registering a schema without a name', t => {
-    const registry = ComponentRegistry.create();
-    registry.register( { uri:'/component/example' } );
 
-    let component = registry.createComponent('/component/example');
-
-    t.equals( component.name, 'Example' );
-
-    t.end();
-});
 
 test('retrieving all of the registered schemas', t => {
     const registry = ComponentRegistry.create();

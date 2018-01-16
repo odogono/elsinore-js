@@ -1,4 +1,4 @@
-import Model from './model';
+import Base from './base';
 
 import stringify from './util/stringify';
 
@@ -10,53 +10,70 @@ import { createLog } from './util/log';
 
 const Log = createLog('ComponentDef', false);
 
-export default class ComponentDef extends Model {
-    constructor(attrs, options) {
-        attrs.attrs = createAttrsFromProperties(attrs.properties);
+export default function ComponentDef(attrs = {}, options) {
+    // console.log('[ComponentDef]', 'creating with', attrs );
+    this.id = attrs.id;
+    this.properties = attrs.properties;
+    this.attrs = createAttrsFromProperties(this.properties);
+    this.uri = attrs.uri;
+    this.name = attrs.name || componentNameFromUri(this.uri);
+    this.options = options;
+}
 
-        if (!attrs.name) {
-            attrs.name = componentNameFromUri(attrs.uri);
-        }
+Object.assign(ComponentDef.prototype, Base.prototype, {
+    // export default class ComponentDef extends Base {
+    // constructor(attrs, options) {
+    //     attrs.attrs = createAttrsFromProperties(attrs.properties);
 
-        super(attrs, options);
-    }
+    //     if (!attrs.name) {
+    //         attrs.name = componentNameFromUri(attrs.uri);
+    //     }
+
+    //     super(attrs, options);
+    // }
 
     getUri() {
-        return this.get('uri');
-    }
+        return this.uri;
+    },
 
     getName() {
-        return this.get('name');
-    }
+        return this.name;
+    },
+
+    getType() {
+        return this.componentType;
+    },
 
     getAttrs() {
-        return this.get('attrs');
-    }
+        return this.attrs;
+    },
 
     getProperties() {
-        return this.get('properties');
-    }
+        return this.properties;
+    },
 
     toJSON(...args) {
-        let result = Model.prototype.toJSON.apply(this, args);
-        delete result.attrs;
+        let result = { id: this.id, name: this.name, uri: this.uri }; //  //Model.prototype.toJSON.apply(this, args);
+        if( this.properties !== undefined ){
+            result.properties = this.properties;
+        }
+        // delete result.attrs;
         return result;
-    }
+    },
 
     hash(asString = true) {
         let result;
         result = hash(stringify(this.getProperties()) + ':' + this.getName(), asString);
         return result;
     }
-}
+});
 
 ComponentDef.prototype.type = 'ComponentDef';
 ComponentDef.prototype.isComponentDef = true;
 
-
 /**
- * 
- * @param {*} props 
+ *
+ * @param {*} props
  */
 function createAttrsFromProperties(props) {
     let name, property, value;
