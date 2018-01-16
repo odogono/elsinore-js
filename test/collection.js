@@ -68,7 +68,7 @@ test('use a different id attribute', t => {
     t.end();
 });
 
-test.only('use a function for an idAttribute', t => {
+test('use a function for an idAttribute', t => {
     let collection = new Collection(null, {idAttribute: (obj) => `${obj.name}.${obj.id}`});
     
     collection.add([
@@ -96,3 +96,20 @@ test('find a value in the collection', t => {
 
     t.end();
 });
+
+
+test('sort a collection by attribute', t => {
+    const collection = new Collection();
+
+    collection.comparator = (a,b) => a.priority > b.priority;
+
+    collection.add([
+        { id: 0, priority: 200, name: 'alice' },
+        { id: 1, priority: -100, name: 'bob' },
+        { id: 2, priority: 0, name: 'carla' }
+    ]);
+
+    t.deepEquals( collection.map(i=>i.id), [1,2,0] );
+
+    t.end();
+})

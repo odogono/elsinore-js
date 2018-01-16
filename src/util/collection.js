@@ -23,13 +23,20 @@ Object.assign(Collection.prototype, {
      * 
      * @param {*} obj 
      */
-    add(obj) {
+    add(obj, options) {
         if (!obj) {
             return;
         }
+        let doSort = options !== undefined ? options.sort : true;
         
         if (Array.isArray(obj) && obj[0] !== undefined) {
-            obj.forEach(item => this.add(item));
+            obj.forEach(item => this.add(item, {sort:false}));
+            
+            if( this.comparator && doSort ){
+                this.models.sort( this.comparator );
+                this._reindex();
+            }
+            
             return this;
         }
         
@@ -46,7 +53,12 @@ Object.assign(Collection.prototype, {
             return this;
         }
 
-        this._indexOfObject[key] = this.models.length;
+        if( this.comparator && doSort ){
+            this.models.sort( this.comparator );
+            this._reindex();
+        } else {
+            this._indexOfObject[key] = this.models.length;
+        }
 
         this.models.push(obj);
 
@@ -183,6 +195,24 @@ Object.assign(Collection.prototype, {
      */
     reduce(fn, initialValue) {
         return this.models.reduce(fn, initialValue);
+    },
+
+    /**
+     * 
+     * @param {*} fn 
+     */
+    filter( fn ){
+        return this.models.filter(fn);
+    },
+
+    /**
+     * Applies the specified function over each of the contained
+     * models
+     * 
+     * @param {*} fn 
+     */
+    forEach( fn ){
+        return this.models.forEach(fn);
     },
 
     /**
