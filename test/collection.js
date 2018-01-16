@@ -104,12 +104,14 @@ test('sort a collection by attribute', t => {
     collection.comparator = (a,b) => a.priority > b.priority;
 
     collection.add([
-        { id: 0, priority: 200, name: 'alice' },
-        { id: 1, priority: -100, name: 'bob' },
+        { id: 0, priority: 100, name: 'alice' },
+        { id: 1, priority: -10, name: 'bob' },
         { id: 2, priority: 0, name: 'carla' }
     ]);
 
-    t.deepEquals( collection.map(i=>i.id), [1,2,0] );
+    collection.add( {id:3, priority:-20, name:'dina'}, {debug:true} );
+
+    t.deepEquals( collection.map(i=>i.id), [3,1,2,0] );
 
     t.end();
 })

@@ -27,7 +27,8 @@ Object.assign(Collection.prototype, {
         if (!obj) {
             return;
         }
-        let doSort = options !== undefined ? options.sort : true;
+        let debug = options !== undefined ? options.debug : false;
+        let doSort = options !== undefined ? (options.sort !== undefined ? options.sort : true) : true;
         
         if (Array.isArray(obj) && obj[0] !== undefined) {
             obj.forEach(item => this.add(item, {sort:false}));
@@ -53,14 +54,16 @@ Object.assign(Collection.prototype, {
             return this;
         }
 
+        
         if( this.comparator && doSort ){
+            this.models.push(obj);
             this.models.sort( this.comparator );
             this._reindex();
         } else {
             this._indexOfObject[key] = this.models.length;
+            this.models.push(obj);
         }
 
-        this.models.push(obj);
 
         return this;
     },
