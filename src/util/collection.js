@@ -69,29 +69,40 @@ Object.assign(Collection.prototype, {
     },
 
     /**
-     * Removes an object from the collection
+     * Removes an object from the collection either by its id, or
+     * by instance
+     * 
      * @param {*} obj 
      */
-    remove(obj) {
+    remove(obj, debug) {
         if (Array.isArray(obj) && obj[0] !== undefined) {
-            obj.forEach(item => this.remove(item));
-            return this;
+            return obj.map(item => this.remove(item));
+        }
+
+        let result = [];
+
+        let objId = obj;
+        let item = this._objectsById[objId];
+
+        if( item === undefined ){
+            objId = propertyResult(obj,this.idAttribute);
+            item = this._objectsById[objId];
         }
         
-        const objId = propertyResult(obj,this.idAttribute);
-
-        if (this._objectsById[objId] !== undefined) {
+        if (item !== undefined) {
             const index = this._indexOfObject[objId];
-
-            this.models.splice(index, 1);
+            
+            if( debug ) console.log('[remove]', obj, this.idAttribute, objId, index );
+            result = this.models.splice(index, 1);
 
             delete this._objectsById[objId];
             delete this._indexOfObject[objId];
-        }
+        } else
+            if( debug ) console.log('[remove]', 'not found', obj, this._objectsById[objId] );
 
         this._reindex();
 
-        return this;
+        return result[0];
     },
 
     /**
@@ -206,6 +217,10 @@ Object.assign(Collection.prototype, {
      */
     filter( fn ){
         return this.models.filter(fn);
+    },
+
+    find(fn){
+        return this.models.find(fn);
     },
 
     /**

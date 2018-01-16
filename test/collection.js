@@ -21,12 +21,12 @@ test('add to a collection', t => {
 test('add an array of objects to a collection', t => {
     const collection = new Collection();
 
-    collection.add( [{id:3},{id:4},{id:5}] );
+    collection.add([{ id: 3 }, { id: 4 }, { id: 5 }]);
 
-    t.equals( collection.size(), 3);
-    
+    t.equals(collection.size(), 3);
+
     t.end();
-})
+});
 
 test('remove from a collection', t => {
     const collection = new Collection();
@@ -50,6 +50,25 @@ test('remove from a collection', t => {
     t.end();
 });
 
+
+test.only('remove by id', t => {
+    const collection = new Collection();
+
+    collection.add({ id: 5, colour: 'magenta' });
+    collection.add({ id: 7, colour: 'indigo' });
+
+    let removed = collection.remove(7);
+
+    t.deepEqual( removed, {id:7, colour: 'indigo'} );
+
+    t.equals(collection.size(), 1);
+
+    t.equals( collection.remove(7), undefined );
+
+    t.end();
+});
+
+
 test('get by id', t => {
     const collection = new Collection([{ id: 3 }, { id: 56 }]);
 
@@ -69,17 +88,14 @@ test('use a different id attribute', t => {
 });
 
 test('use a function for an idAttribute', t => {
-    let collection = new Collection(null, {idAttribute: (obj) => `${obj.name}.${obj.id}`});
-    
-    collection.add([
-        { id: 100, name: 'alice'},
-        { id: 101, name: 'carla' }
-    ]);
+    let collection = new Collection(null, { idAttribute: obj => `${obj.name}.${obj.id}` });
 
-    t.equals( collection.get('carla.101').id, 101 );
+    collection.add([{ id: 100, name: 'alice' }, { id: 101, name: 'carla' }]);
+
+    t.equals(collection.get('carla.101').id, 101);
 
     t.end();
-})
+});
 
 test('find a value in the collection', t => {
     const collection = new Collection();
@@ -97,11 +113,10 @@ test('find a value in the collection', t => {
     t.end();
 });
 
-
 test('sort a collection by attribute', t => {
     const collection = new Collection();
 
-    collection.comparator = (a,b) => a.priority > b.priority;
+    collection.comparator = (a, b) => a.priority > b.priority;
 
     collection.add([
         { id: 0, priority: 100, name: 'alice' },
@@ -109,9 +124,9 @@ test('sort a collection by attribute', t => {
         { id: 2, priority: 0, name: 'carla' }
     ]);
 
-    collection.add( {id:3, priority:-20, name:'dina'}, {debug:true} );
+    collection.add({ id: 3, priority: -20, name: 'dina' }, { debug: true });
 
-    t.deepEquals( collection.map(i=>i.id), [3,1,2,0] );
+    t.deepEquals(collection.map(i => i.id), [3, 1, 2, 0]);
 
     t.end();
-})
+});
