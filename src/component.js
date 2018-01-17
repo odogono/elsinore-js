@@ -264,7 +264,7 @@ Object.assign(Component.prototype, Base.prototype, {
      *
      */
     clone() {
-        return new Component(this.toJSON());
+        return Object.assign( Object.getPrototypeOf(this), this.toJSON() );
     },
 
 

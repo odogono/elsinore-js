@@ -94,7 +94,8 @@ export function cloneEntity(srcEntity, dstEntity, options = {}) {
  */
 export function cloneComponent(srcComponent, attrs, options) {
     const registry = srcComponent.getRegistry();
-    const result = srcComponent.clone();
+    // const result = srcComponent.clone();
+    let result = Object.assign( Object.getPrototypeOf(srcComponent), srcComponent.toJSON() )
     // let result = new srcComponent.constructor(srcComponent.attributes);
     // result.setId( srcComponent.getId() );
     // result.id = srcComponent.id;

@@ -133,7 +133,6 @@ test('the custom component can supply properties', t => {
 
     const component = componentRegistry.createComponent('/component/example');
 
-    Log.debug(component.toJSON());
     t.equals(component.get('maximum'), 10);
     t.equals(component.get('name'), 'tbd');
 
@@ -167,12 +166,12 @@ test('the registered component class can also include a uri', t => {
         .catch(err => console.error('test error', err, err.stack));
 });
 
-test.only('passing options to the custom component', t => {
+test('passing options to the custom component', t => {
     const componentRegistry = ComponentRegistry.create();
 
     class TestComponent extends Component {
-        constructor(attrs,options){
-            super();
+        constructor(attrs, options) {
+            super(attrs, options);
             this.set({ msg: options.msg });
         }
         type() {
@@ -202,60 +201,64 @@ test.only('passing options to the custom component', t => {
 /**
  * Component is added to entity
  * the component adds a new function to the entity so that it will
- * 
+ *
  */
-test('will be notified when the entity is added to an entityset', t => {
-    createRegistry()
-        .then(registry => {
-            // t.plan(1);
+test('will be notified when the entity is added to an entityset', async t => {
+    try {
+        const registry = await createRegistry();
 
-            let calledOnAdded = false;
-            let calledOnRemoved = false;
+        // t.plan(1);
 
-            class TestComponent extends Component {
-                uri() {
-                    return '/component/test';
-                }
-                type() {
-                    return 'TestComponent';
-                }
+        let calledOnAdded = false;
+        let calledOnRemoved = false;
 
-                properties() {
-                    return { name: 'unknown' };
-                }
-
-                onAdded(es) {
-                    calledOnAdded = true;
-                    this._entity.addChild = function() {
-                        // console.log('adding the child to me,', this.id, 'es', this.collection.getUUID() );
-                    };
-                }
-
-                onRemoved(es) {
-                    calledOnRemoved = true;
-                }
+        class TestComponent extends Component {
+            uri() {
+                return '/component/test';
+            }
+            type() {
+                return 'TestComponent';
             }
 
-            registry.registerComponent(TestComponent);
+            properties() {
+                return { name: 'unknown' };
+            }
 
-            let es = registry.createEntitySet();
-            let es2 = registry.createEntitySet();
+            onAdded(es) {
+                calledOnAdded = true;
+                this._entity.addChild = function() {
+                    // console.log('adding the child to me,', this.id, 'es', this.collection.getUUID() );
+                };
+            }
 
-            let e = registry.createComponent('/component/test');
-            es.addComponent(e);
+            onRemoved(es) {
+                calledOnRemoved = true;
+            }
+        }
 
-            const entity = es.at(0);
-            entity.addChild(2);
+        registry.registerComponent(TestComponent);
 
-            // printE(es);
+        let es = registry.createEntitySet();
+        let es2 = registry.createEntitySet();
 
-            entity.removeComponent(entity.Test);
+        let e = registry.createComponent('/component/test');
 
-            t.ok(calledOnAdded, 'onAdded was called');
-            t.ok(calledOnRemoved, 'onRemoved was called');
-        })
-        .then(() => t.end())
-        .catch(err => console.error('test error', err, err.stack));
+        Log.debug('ok yo', e.cid, typeof e.onAdded );
+
+        es.addComponent(e);
+
+        const entity = es.at(0);
+
+        entity.removeComponent(entity.Test);
+
+        t.ok(calledOnAdded, 'onAdded was called');
+        t.ok(calledOnRemoved, 'onRemoved was called');
+
+        t.end();
+
+    } catch (err) {
+        Log.error(err.stack);
+    }
 });
 
 function createRegistry() {

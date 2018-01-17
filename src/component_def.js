@@ -17,7 +17,8 @@ export default function ComponentDef(attrs = {}, options) {
     this.attrs = createAttrsFromProperties(this.properties);
     this.uri = attrs.uri;
     this.name = attrs.name || componentNameFromUri(this.uri);
-    this.options = options;
+    this.componentType = attrs.type || attrs.componentType;
+    this.options = attrs.options || options;
 }
 
 Object.assign(ComponentDef.prototype, Base.prototype, {

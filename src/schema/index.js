@@ -144,6 +144,7 @@ export default class ComponentRegistry {
 
         if (type) {
             let ComponentType = this._componentTypes[type] || Component;
+            
             // ensure we have this type registered
             if (!ComponentType) {
                 if (throwOnExists) {
@@ -153,10 +154,12 @@ export default class ComponentRegistry {
                 }
             }
 
-            if (ComponentType.properties) {
+            
+            // if (ComponentType.properties) {
                 def.properties = { ...ComponentType.properties, ...def.properties };
+                
                 componentDef = new ComponentDef({ ...def, id: componentDef.id });
-            }
+            // }
         }
 
         // if( !componentDef.getUri() ){
@@ -231,6 +234,8 @@ export default class ComponentRegistry {
         const type = def.getType();
         let ComponentType = type ? this._componentTypes[type] : Component;
 
+        // 
+
         if (attrs === void 0 && isObject(defUri)) {
             attrs = defUri;
         }
@@ -239,12 +244,13 @@ export default class ComponentRegistry {
         // since the properties describe how the attrs should be set
         const defAttrs = def.getAttrs();
         attrs = { ...defAttrs, ...attrs };
-
+        
+        
         // NOTE: no longer neccesary to pass parse:true as the component constructor calls component.parse
         const defOptions = def.options || {};
         const createOptions = { ...defOptions, registry: this.registry };
         let result = new ComponentType(attrs, createOptions);
-
+        
         if (type) {
             result['is' + type] = true;
         }
