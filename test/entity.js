@@ -1,6 +1,5 @@
 import test from 'tape';
 import _ from 'underscore';
-import {Model} from 'odgn-backbone-model';
 
 import {
     Component, Entity, EntitySet,
@@ -15,9 +14,12 @@ import {
     getEntityIdFromId,
     getEntitySetIdFromId,
     setEntityIdFromId,
+    createLog,
+    entityToString,
 } from './common';
 
 
+const Log = createLog('TestEntity');
 
 test('is an entity', t => {
     let e = Entity.create();
@@ -120,9 +122,24 @@ test('toJSON with full options', t => {
 
     let json = e.toJSON();
 
-    t.deepEquals( e.toJSON(), [ { name: 'douglas' } ] );
+    t.deepEquals( e.toJSON(), [ { '@s':1, name: 'douglas' } ] );
     t.end();
 });
+
+test('adding a component of the same type replaces', t => {
+    let e = Entity.create();
+    let c = Component.create({ '@s':1, '@c':'/component/name', name:'douglas'});
+
+    e.addComponent( c );
+
+    e.addComponent( Component.create({ '@s':1, name:'fred'}) );
+
+    t.deepEquals( e.toJSON(), [ { '@s':1, name: 'fred' } ] );
+
+    t.end();
+})
+
+
 
 
 function createComponent( properties ){

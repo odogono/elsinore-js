@@ -93,22 +93,23 @@ export function cloneEntity(srcEntity, dstEntity, options = {}) {
  * 
  */
 export function cloneComponent(srcComponent, attrs, options) {
-    const registry = srcComponent.getRegistry();
-    // const result = srcComponent.clone();
-    let result = Object.assign( Object.getPrototypeOf(srcComponent), srcComponent.toJSON() )
-    // let result = new srcComponent.constructor(srcComponent.attributes);
-    // result.setId( srcComponent.getId() );
-    // result.id = srcComponent.id;
-    result.name = srcComponent.name;
-    result.setDefDetails(
-        srcComponent.getDefId(),
-        srcComponent.getUri(),
-        srcComponent.getDefHash(),
-        srcComponent.getDefName()
-    );
-    result.registry = registry;
+    // const registry = srcComponent.getRegistry();
+    
+    const result = srcComponent.clone();
+    // result.name = srcComponent.name;
+
+    // result.setDefDetails(
+    //     srcComponent.getDefId(),
+    //     srcComponent.getUri(),
+    //     srcComponent.getDefHash(),
+    //     srcComponent.getDefName()
+    // );
+    
+    // result.registry = registry;
+    
     if (attrs) {
         result.set(attrs, options);
     }
+    
     return result;
 }

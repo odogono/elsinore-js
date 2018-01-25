@@ -1,5 +1,3 @@
-import { Events, Collection } from 'odgn-backbone-model';
-
 import arrayDifference from '../util/array/difference';
 import arrayWithout from '../util/array/without';
 import {isBoolean} from '../util/is';
@@ -8,10 +6,13 @@ import createUUID from '../util/uuid';
 
 import Entity from '../entity';
 import EntitySet from '../entity_set';
+import Events from '../util/events';
 import Component from '../component';
 import SchemaRegistry from '../schema';
 
 // const Log = createLog('Registry');
+
+
 export default class Registry {
     constructor(options = {}) {
         Object.assign(this, Events);
@@ -404,22 +405,6 @@ export default class Registry {
 Registry.prototype.type = 'Registry';
 Registry.prototype.isRegistry = true;
 
-class ProcessorCollection extends Collection {}
-
-function createProcessorCollection() {
-    let result = new ProcessorCollection();
-    result.comparator = (recordA, recordB) => {
-        // the entity in the collection might be a record referencing a processor
-        const procA = recordA.get('processor') || recordA;
-        const procB = recordB.get('processor') || recordB;
-        return procA.getPriority() < procB.getPriority();
-    };
-    return result;
-}
-
-// Registry.isRegistry = function( registry ){
-//     return registry && registry.isRegistry;
-// }
 /**
  * creates a new registry instance
  * 

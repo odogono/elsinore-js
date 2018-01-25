@@ -1,4 +1,5 @@
 import './cmd_buffer_async';
+import './collection';
 import './component';
 import './component.extend';
 import './dispatch';
@@ -8,7 +9,7 @@ import './entity_filter';
 import './entity_set';
 import './entity_set.async';
 import './entity_set.query';
-import './entity_set.view';
+import './entity_set.read_only_view';
 import './events';
 import './json';
 import './pull_stream';

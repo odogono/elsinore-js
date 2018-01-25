@@ -37,7 +37,7 @@ test('entityset filter ALL throws error with unknown component', async t => {
 
     t.throws(
         () => entitySet.query(Q => Q.all('/component/missing')),
-        /could not find componentDef \/component\/missing/
+        /could not find componentDef '\/component\/missing'/
     );
 
     t.end();
@@ -103,7 +103,7 @@ test('where filter by string', async t => {
         // const result = entitySet.query( Q => Q.all('/component/channel_member').where( Q.attr('username').equals('aveenendaal')) );
 
         // Log.debug('result was', entityToString(result));
-        t.equals(result.length, 3);
+        t.equals(result.size(), 3);
 
         t.end();
     } catch (err) {
@@ -231,18 +231,30 @@ test('sub-queries', async t => {
     }
 });
 
-test('removing entities from an entityset', t => {
-    initialiseEntitySet()
-        .then(([registry, entitySet]) => {
-            const initialSize = entitySet.size();
+test('removing entities from an entityset', async t => {
+    try {
+        const [registry, entitySet] = await initialiseEntitySet();
+        const initialSize = entitySet.size();
 
-            entitySet.removeByQuery(Q => Q.all('/component/channel_member'));
+        entitySet.removeByQuery(Q => Q.all('/component/channel_member'));
 
-            t.ok(entitySet.query(Q => Q.all('/component/channel_member')).size() === 0, 'no channel members remaining');
-            t.ok(initialSize !== entitySet.size(), 'entities should have been removed');
-        })
-        .then(() => t.end())
-        .catch(err => log.error('test error: %s', err.stack));
+        // let removed = Query.exec( Q => Q.all('/component/channel_member'), entitySet, {registry} );
+
+        // Log.debug( removed.map( e => e.id) );
+
+        // entitySet.removeEntity( removed.map( e => e.id) );
+
+        // Log.debug( entityToString(entitySet) );
+
+        t.ok(entitySet.query(Q => Q.all('/component/channel_member')).size() === 0, 'no channel members remaining');
+
+        t.ok(initialSize !== entitySet.size(), 'entities should have been removed');
+        
+        t.end();
+
+    } catch (err) {
+        Log.error(err.stack);
+    }
 });
 
 async function initialiseEntitySet(entityDataName = 'query.entities') {

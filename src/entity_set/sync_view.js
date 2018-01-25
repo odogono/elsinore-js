@@ -133,7 +133,7 @@ EntitySetSyncView.prototype.onEntityAdd = function(entities, options) {
 };
 
 EntitySetSyncView.prototype.onEntityRemove = function(entities, options) {
-    console.log('[EntitySetSyncView][onEntityRemove]', stringify(entities), options);
+    // console.log('[EntitySetSyncView][onEntityRemove]', stringify(entities), options);
     let ii = 0,
         len = entities.length;
     for (ii; ii < len; ii++) {
@@ -164,7 +164,7 @@ EntitySetSyncView.prototype.onComponentAdd = function(components, options) {
 // }
 
 EntitySetSyncView.prototype.onComponentRemove = function(components, options) {
-    console.log('[EntitySetSyncView][onComponentRemove]', stringify(components), options);
+    // console.log('[EntitySetSyncView][onComponentRemove]', stringify(components), options);
     this.removeComponent(components, options);
 };
 

@@ -29,7 +29,7 @@ test('apply copies non-identifying attributes', t => {
 
     src.apply(dst);
 
-    t.deepEqual( src.toJSON(), {'@e': 1000, '@i': 421, '@s': 0, age: 32, height: 186, name: 'peter'} );
+    t.deepEqual( src.toJSON(), {'@e': 1000, '@s': 0, age: 32, height: 186, name: 'peter'} );
 
     t.end();
 });
@@ -40,11 +40,43 @@ test('clone', t => {
 
     t.deepEqual( src.toJSON(), dst.toJSON() );
 
+    t.equals( src.id, dst.id );
+    t.equals( src.entityId, dst.entityId );
+
+    let src2 = new Component({x:0,y:0,z:0, '@s':2, '@e':1001 });
+    let dst2 = src2.clone();
+
+    t.deepEqual( src.toJSON(), dst.toJSON() );
+    t.deepEqual( src2.toJSON(), dst2.toJSON() );
+
+    t.equals( src2.get('y'), 0);
+
+    dst2.set({y:10});
+
+    t.equals( src2.get('y'), 0);
+
     t.end();
 });
 
+test('clone subclass', t => {
+    class SubComponent extends Component {
+        test(){
+            return true;
+        }
+    }
+
+    let com = new SubComponent({ colour: 'magenta' });
+    let clone = com.clone();
+
+    t.ok( clone.test() );
+    t.equals( clone.get('colour'), 'magenta' );
+
+    t.end();
+})
+
 test('emits an event when attributes are changed', t => {
     let component = new Component({name:'clara'});
+    
     t.plan(2);
 
     component.on( 'component:update', (...evt) => t.ok(true) );

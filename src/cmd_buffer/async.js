@@ -1,6 +1,7 @@
 'use strict';
 
 import Entity from '../entity';
+import Collection from '../util/collection';
 import { InvalidEntityError } from '../error';
 
 import { getEntitySetIdFromId } from '../util/id';
@@ -15,6 +16,14 @@ import { CMD_ENTITY_ADD, CMD_COMPONENT_ADD, CMD_COMPONENT_REMOVE } from './sync'
 
 export default function AsyncCmdBuffer() {
     SyncCmdBuffer.call(this);
+    // these collections are keyed by cid, since entities and components do not
+    // have an id assigned until they hit the entityset
+    this.entitiesAdded = new Collection(null,{idAttribute:'cid'});
+    this.entitiesUpdated = new Collection(null,{idAttribute:'cid'});
+    this.entitiesRemoved = new Collection(null,{idAttribute:'cid'});
+    this.componentsAdded = new Collection(null,{idAttribute:'cid'});
+    this.componentsUpdated = new Collection(null,{idAttribute:'cid'});
+    this.componentsRemoved = new Collection(null,{idAttribute:'cid'});
 }
 
 Object.assign(AsyncCmdBuffer.prototype, SyncCmdBuffer.prototype, {
@@ -278,18 +287,21 @@ Object.assign(AsyncCmdBuffer.prototype, SyncCmdBuffer.prototype, {
                 // }
                 break;
             case CMD_COMPONENT_ADD:
-                // console.log('add component', component.cid, componentDefId,'to', entity.id, component.getEntityId() );
+                // console.log('add component', component.id, component.cid, componentDefId,'to', entity.id, component.toJSON() );
 
                 if (entityHasComponent) {
+                    
                     this.componentsUpdated.add(component);
+                    
                     this.entitiesUpdated.add(entity);
+
                 } else {
                     entity.addComponent(component);
 
                     if (!this.entitiesAdded.has(entity)) {
                         // if (!this.entitiesAdded.get(entity)) {
                         this.entitiesUpdated.add(entity);
-                        // console.log('entity', entity.id,'was not added, updating');
+                        // console.log('entity', entity.id, 'was not added, updating');
                     }
                     this.componentsAdded.add(component);
                 }
@@ -343,6 +355,7 @@ Object.assign(AsyncCmdBuffer.prototype, SyncCmdBuffer.prototype, {
             entities.forEach(entity => {
                 const bf = entity.getComponentBitfield();
                 let cmds = this.cmds[entity.id];
+                // console.log( '[execute] entity coms', entity.cid, bf.toValues(), entity.components );
 
                 if (entity.id === 0) {
                     this.entitiesAdded.add(entity);
@@ -363,6 +376,10 @@ Object.assign(AsyncCmdBuffer.prototype, SyncCmdBuffer.prototype, {
                     this._executeEntityCommand(entity, bf, commandType, component, cmdOptions, options);
                 }
             });
+
+            if( options.debug ){
+                console.log('[components][added]', this.componentsAdded.map(c=>c.toJSON()))
+            }
 
             // console.log('[AsyncCmdBuffer][execute]', this.entitiesUpdated );
 
@@ -400,7 +417,7 @@ Object.assign(AsyncCmdBuffer.prototype, SyncCmdBuffer.prototype, {
                     }
 
                     if (!silent) {
-                        this.triggerEvents(entitySet);
+                        this.triggerEvents(entitySet,options);
                     }
                     return this;
                 });

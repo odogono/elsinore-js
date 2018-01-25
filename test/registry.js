@@ -76,11 +76,15 @@ test('creating an entityset with an identical uuid throws an error', t => {
 test('creating a component with an unknown schema throws an error', t => {
     const registry = new Registry();
 
-    try {
-        registry.createComponent( {'@c':'/component/status', 'status':'active'} );
-    } catch( err ){
-        t.equals( err.message, 'could not find componentDef /component/status');
-    }
+    t.throws( () => registry.createComponent( {'@c':'/component/status', 'status':'active'} ),
+        /could not find componentDef '\/component\/status'/
+    );
+
+    // try {
+    //     registry.createComponent( {'@c':'/component/status', 'status':'active'} );
+    // } catch( err ){
+    //     t.equals( err.message, 'could not find componentDef /component/status');
+    // }
     t.end();
 });
 

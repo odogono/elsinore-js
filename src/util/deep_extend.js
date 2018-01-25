@@ -1,3 +1,4 @@
+import {isString,isDate} from './is';
 
 /**
  * 
@@ -5,7 +6,7 @@
  * @param {*} out 
  * @param {*} others 
  */
-export default function deepExtend(out = {}, ...others) {
+export function deepExtend(out = {}, ...others) {
     let ii, len;
     let obj;
     let key, val;
@@ -39,3 +40,5 @@ export default function deepExtend(out = {}, ...others) {
     }
     return out;
 }
+
+export default deepExtend;

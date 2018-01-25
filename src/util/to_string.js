@@ -1,5 +1,4 @@
-import { Collection } from 'odgn-backbone-model';
-
+import Collection from '../util/collection';
 import Component from '../component';
 import Entity from '../entity';
 import EntitySet from '../entity_set';

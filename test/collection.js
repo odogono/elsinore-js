@@ -51,7 +51,7 @@ test('remove from a collection', t => {
 });
 
 
-test.only('remove by id', t => {
+test('remove by id', t => {
     const collection = new Collection();
 
     collection.add({ id: 5, colour: 'magenta' });

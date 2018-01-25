@@ -243,7 +243,7 @@ test('will be notified when the entity is added to an entityset', async t => {
 
         let e = registry.createComponent('/component/test');
 
-        Log.debug('ok yo', e.cid, typeof e.onAdded );
+        // Log.debug('ok yo', e.cid, typeof e.onAdded );
 
         es.addComponent(e);
 

@@ -101,7 +101,7 @@ export function PullStreamSource(entitySet, options = {}) {
 
     pushable.onEntityUpdate = function(entities,options){
         if( !query ){
-            console.log('[pushable.onEntityUpdate]', 'no query');
+            // console.log('[pushable.onEntityUpdate]', 'no query');
             return;
         }
 
@@ -110,7 +110,7 @@ export function PullStreamSource(entitySet, options = {}) {
 
         for (ee = 0; ee < elen; ee++) {
             entity = entities[ee];
-            console.log('[pushable.onEntityUpdate]', entitySet.cid, 'entity', entity.cid);
+            // console.log('[pushable.onEntityUpdate]', entitySet.cid, 'entity', entity.cid);
             if( !applyQueryFilter(query, entity, options) ){
                 removeEids.push( entity.id );
             }
@@ -158,7 +158,7 @@ export function PullStreamSource(entitySet, options = {}) {
             // let component = components[cc];
             cids.push(components[cc].id);
         }
-        console.log('[pushable.onComponentRemove]', entitySet.cid, components.map(c => c.id), JSON.stringify(cids) );
+        // console.log('[pushable.onComponentRemove]', entitySet.cid, components.map(c => c.id), JSON.stringify(cids) );
         if (cids.length > 0) {
             this.push([{ '@cmd': CMD_REMOVE_COMPONENT, id: cids },options]);
         }

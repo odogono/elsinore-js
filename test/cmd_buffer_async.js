@@ -1,6 +1,5 @@
 import _ from 'underscore';
 import test from 'tape';
-// import {Events} from 'odgn-backbone-model';
 import BitField from 'odgn-bitfield';
 import Base from '../src/base';
 import EntitySet from '../src/entity_set';
@@ -125,12 +124,13 @@ test('adding an entity with multiple components', async t => {
     const e = registry.createEntity();
 
     //add created coms to created entity
-    coms.forEach(com => e.addComponent(com));
+    e.addComponent(coms);
+    // coms.forEach(com => e.addComponent(com));
 
     try {
         await cb.addEntity(es, e);
 
-        reportUpdates(t, es, 1, 0, 0, 2, 0, 0);
+        reportUpdates(t, es, 1, 0, 0, 2, 0, 0 );
 
         t.end();
     } catch (err) {
@@ -154,7 +154,7 @@ test('updating an entity with a new component', async t => {
 
         entity.addComponent(coms);
 
-        Log.debug(`entity ids`, entity.id, entity.getEntityId(), entity.getEntitySetId(), entityToString(entity));
+        // Log.debug(`entity ids`, entity.id, entity.getEntityId(), entity.getEntitySetId(), entityToString(entity));
 
         const added = await cmdBuffer.addEntity(entitySet, entity);
 
@@ -305,6 +305,7 @@ function createEntitySet(registry, entitySetId, entityIds, existingComponents) {
     const existingComponentDefIds = _.compact(_.map(existingComponents, c => c.getDefId()));
 
     entityIds = _.map(entityIds, id => setEntityIdFromId(id, entitySetId));
+
     return Object.assign({}, EntitySet.prototype, {
         id: entitySetId,
         type: 'MockEntitySet',

@@ -184,7 +184,8 @@ Object.assign(Entity.prototype, Base.prototype, {
         const defId = component.getDefId();
         let existing = this.components[defId];
 
-        if (existing) {
+        
+        if (existing !== undefined ) {
             this._removeComponent(existing);
         }
 
@@ -199,6 +200,8 @@ Object.assign(Entity.prototype, Base.prototype, {
         if (typeof component.onAdded === 'function') {
             component.onAdded(this);
         }
+
+        // console.log('[Entity][_addComponent]',defId, !!existing, this.components );
 
         return this;
     },

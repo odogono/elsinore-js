@@ -2,7 +2,6 @@
 
 import test from 'tape';
 import _ from 'underscore';
-// import {Events} from 'odgn-backbone-model';
 // import Common  from './common';
 // import Base from '../src/base';
 import Events from '../src/util/events';

@@ -26,6 +26,7 @@ test('source close after existing', async t => {
 
         Pull(
             entitySet.source({ closeAfterExisting: true }),
+            PullMap(val => Array.isArray(val) ? val[0] : val), // because normally the source output will be a series of tuples [value,options]
             Pull.collect((err, components) => {
                 // the stream will send an eoe command as well as components
                 components = components.filter(c => c['@s']);
@@ -47,17 +48,19 @@ test('source continues to emit events', async t => {
 
         Pull(
             es2.source(),
+            PullMap(val => Array.isArray(val) ? val[0] : val),
             Pull.take(2),
-            Pull.collect((err, components) => {
-                t.equals(components.length, 2);
+            Pull.collect((err, data) => {
+                t.equals( data.length, 2);
             })
         );
 
         Pull(
             entitySet.source(),
+            PullMap(val => Array.isArray(val) ? val[0] : val),
             Pull.take(9),
-            Pull.collect((err, components) => {
-                t.equals(components.length, 9);
+            Pull.collect((err, data) => {
+                t.equals(data.length, 9);
                 t.end();
             })
         );
@@ -77,6 +80,7 @@ test('source doesnt send existing', async t => {
 
         Pull(
             entitySet.source({ sendExisting: false }),
+            PullMap(val => Array.isArray(val) ? val[0] : val),
             Pull.take(2), // neccesary to add this, since the source is un-ending
             Pull.collect((err, components) => {
                 // Log.debug('[collect]', components, entityToString(components));
@@ -97,6 +101,7 @@ test('source emits remove events', async t => {
 
         Pull(
             entitySet.source(),
+            PullMap(val => Array.isArray(val) ? val[0] : val),
             // PullMap(val => {
             //     Log.debug('[PullMap][<]', stringify(val));
             //     return val;
@@ -104,7 +109,7 @@ test('source emits remove events', async t => {
             Pull.take(10),
             Pull.collect((err, evts) => {
                 evts = evts.filter(e => e['@cmd'] == 'rmc' || e['@cmd'] == 'rme');
-                t.deepEqual(evts, [{ '@cmd': 'rmc', cid: [3, 4] }, { '@cmd': 'rme', eid: [2] }]);
+                t.deepEqual(evts, [{ '@cmd': 'rmc', id: [3, 4] }, { '@cmd': 'rme', eid: [2] }]);
                 t.end();
             })
         );
@@ -121,6 +126,7 @@ test('source emits components with resolved component uris', async t => {
 
         Pull(
             entitySet.source({ useDefUris: true, anonymous: true, closeAfterExisting: true }),
+            PullMap(val => Array.isArray(val) ? val[0] : val),
             // PullMap(val => {
             //     Log.debug('[PullMap][<]', stringify(val));
             //     return val;
@@ -151,6 +157,7 @@ test('source emits entities', async t => {
 
         Pull(
             entitySet.source({ emitEntities: true, closeAfterExisting: true }),
+            PullMap(val => Array.isArray(val) ? val[0] : val),
             PullFilter(val => {
                 return Entity.isEntity(val);
             }),
@@ -165,16 +172,18 @@ test('source emits entities', async t => {
     }
 });
 
-test.only('emits entities but also component updates', async t => {
+test('emits entities but also component updates', async t => {
     try {
         const { registry, entitySet } = await initialise({ loadEntities: true });
 
         Pull(
             entitySet.source({ emitEntities: true, closeAfterExisting: false }),
-            PullMap(val => {
-                Log.debug('[PullMap][<]', stringify(val));
-                return val;
-            }),
+            // PullMap(val => Array.isArray(val) ? val[0] : val),
+            PullMap(val => Array.isArray(val) ? val[0] : val),
+            // PullMap(val => {
+            //     Log.debug('[PullMap][<]', stringify(val));
+            //     return val;
+            // }),
             PullFilter(val => {
                 return Entity.isEntity(val);
             }),
@@ -196,12 +205,12 @@ test.only('emits entities but also component updates', async t => {
         entity.removeComponent('/ttl');
         entity.addComponent({'@c':'/name', name:'box1'});
 
-        Log.debug('>--');
+        // Log.debug('>--');
 
         entitySet.addEntity(entity);
 
-        Log.debug( entityToString(entity) );
-        Log.debug( entityToString(entitySet) );
+        // Log.debug( entityToString(entity) );
+        // Log.debug( entityToString(entitySet) );
 
         t.end()
 
@@ -226,6 +235,7 @@ test('sink', async t => {
                 { '@e': 15, '@i': 18, '@s': 1, addr: '192.3.0.4' },
                 { '@cmd': 'rme', eid: 11 }
             ]),
+            PullMap( v => [v,{}]), // because normally the stream provides a tuple of [value,options]
             receivingES.sink({}, err => {
                 // Log.debug('[sink]', entityToString(receivingES));
                 t.equals(receivingES.size(), 3);
@@ -246,6 +256,7 @@ test('query through', async t => {
             entitySet.source({ emitEntities: true, closeAfterExisting: true }),
             // the filter will only allow entities that have the /ttl component through
             QueryFilter(Q => Q.all('/ttl')),
+            // PullMap(val => Array.isArray(val) ? val[0] : val),
             receivingES.sink({ debug: false }, err => {
                 // Log.debug('[sink]', entityToString(receivingES));
                 t.equals(receivingES.size(), 2);

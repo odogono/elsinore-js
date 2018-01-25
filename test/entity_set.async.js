@@ -60,9 +60,27 @@ test('adding an entity with a component returns the added entity', async t => {
     }
 });
 
+// test.only('getUpdatedEntities returns ids of added/updated entities', async t => {
+//     try {
+//         const [registry, entitySet] = await initialiseAll(createOptions);
+
+//         await entitySet.addComponent([
+//             registry.createComponent('/component/flower', { colour: 'violet' })
+//         ]);
+
+//         let added = entitySet.getUpdatedEntities();
+
+//         Log.debug('added', added);
+
+//         t.end();
+//     } catch( err ){
+//         Log.error( err.stack );
+//     }
+// });
+
 test('adding several components without an entity adds them to the same new entity', async t => {
     try {
-        t.plan(5);
+        // t.plan(5);
 
         const [registry, entitySet] = await initialiseAll(createOptions);
 
@@ -71,22 +89,27 @@ test('adding several components without an entity adds them to the same new enti
             t.ok(ids.length, 'entity:add should have been called')
         );
 
-        const components = registry.createComponent([
-            { '@c': '/component/flower', colour: 'yellow' },
-            { '@c': '/component/radius', radius: 2, author: 'alex' }
+        await entitySet.addComponent([
+            registry.createComponent('/component/flower', { colour: 'yellow' }),
+            registry.createComponent('/component/radius', { radius: 2 })
         ]);
 
-        t.equals(components[0].getEntityId(), 0, 'the components do not yet have an entity id');
+        let added = entitySet.getUpdatedEntities();
+        // const addedComponents = await entitySet.addComponent(components);
 
-        const addedComponents = await entitySet.addComponent(components);
+        // t.equals( addedComponents.length, 2 );
 
-        t.equals( addedComponents.length, 2 );
+        // Log.debug( entityToString(added) );
 
-        // Log.debug( entityToString(entitySet) );
+        // Log.debug(entityToString(entitySet));
 
         // // Log.debug('[get]', addedComponents);
-        const entityId = addedComponents[0].getEntityId();
+
+        const entityId = added.getEntityId();
         const entity = await entitySet.getEntity(entityId);
+
+        // Log.debug( entityToString(entity) );
+        // console.log('wtf', entity);
 
         t.assert(entity.Flower, 'the entity should have a Flower component');
         t.assert(entity.Radius, 'the entity should have a Radius component');
@@ -281,27 +304,36 @@ test('adding an existing entity doesnt changes its id if it originated from the 
 });
 
 test('adding an entity with an identical id will replace the existing one', async t => {
-
     try {
         const [registry, entitySet] = await initialiseAll({ '@es': 1, ...createOptions });
 
         const entityA = registry.createEntity({ '@c': '/component/position', x: 0, y: 0 }, { '@e': 45, '@es': 1 });
+
         const entityB = registry.createEntity(
             [{ '@c': '/component/position', x: 15, y: -90 }, { '@c': '/component/status', status: 'active' }],
             { '@e': 45, '@es': 1 }
         );
 
-        // logEvents( entitySet );
+        // logEvents(entitySet);
+
         await entitySet.addEntity(entityA);
 
-        await entitySet.addEntity(entityB);
+        // Log.debug(entityToString(entitySet));
+        let entity = entitySet.at(0);
 
-        const entity = await entitySet.getEntityById(45);
+        // console.log('>===');
 
-        // console.log(' ');
-        // printE( entitySet );
-        // printE( entitySet.components );
+        await entitySet.addEntity(entityB, { debug: false });
+
+        entity = await entitySet.getEntityById(45);
+
+        // console.log( entity );
+        // Log.debug(entityToString(entitySet));
+
+        // Log.debug( entitySet._components.map( c=>[c.id,c.cid,c.getDefId(),c.getEntityId()] ) );
+
         t.equals(entity.Status.get('status'), 'active');
+
         t.equals(entity.Position.get('x'), 15);
 
         // return entitySet.addEntity( entity )
@@ -357,5 +389,8 @@ function initialiseAll(options) {
 }
 
 function finalise(t, registry) {
-    return registry.removeAllEntitySets().catch(err => console.log('finalize error:', err)).then(() => t.end());
+    return registry
+        .removeAllEntitySets()
+        .catch(err => console.log('finalize error:', err))
+        .then(() => t.end());
 }

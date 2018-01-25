@@ -1,6 +1,5 @@
 import _ from 'underscore';
 import test from 'tape';
-import { Events } from 'odgn-backbone-model';
 import Sinon from 'sinon';
 
 import {

@@ -27,6 +27,11 @@ export function PullStreamSink(entitySet, options = {}, completeCb) {
     let context = { entitySet, registry: entitySet.getRegistry() };
     const { source, did } = options;
 
+    let addEntityOptions = {};
+    if( source ){
+        addEntityOptions.oid = source.cid;
+    }
+
     return function(read) {
         read(null, function next(end, data) {
             // console.log('[stringSink]', end, stringify(data));
@@ -53,12 +58,14 @@ export function PullStreamSink(entitySet, options = {}, completeCb) {
                 }
 
                 if (Component.isComponent(item)) {
+                    
                     p = entitySet.addComponent( item );
+
                 } else if (Entity.isEntity(item)) {
                     
                     // Log.debug('🦊 [sink][Entity]', source.cid,'>',entitySet.cid, itemOptions, item.getComponents().map(c=>[c.id,c.cid]));
                     
-                    p = entitySet.addEntity(item, {oid:source.cid, debug:item.cid == 'e99'} ); // '🐰'
+                    p = entitySet.addEntity(item, addEntityOptions ); // '🐰'
 
                     // Log.debug('🐵 [sink][Entity]',p);
 

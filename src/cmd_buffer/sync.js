@@ -1,4 +1,3 @@
-// import {Collection} from 'odgn-backbone-model';
 import Component from '../component';
 import Entity from '../entity';
 import Collection from '../util/collection';
@@ -338,10 +337,10 @@ Object.assign(CmdBuffer.prototype, {
             throw new Error('entity instance not passed');
         }
 
-        
         // add components to the entity before removing them - otherwise the entity might
         // get garbage-collected
-        if( debug ) console.log('[CmdBufferSync][addEntity]', entitySet.cid, 'adding components', entity.getComponentBitfield().toValues() ); 
+        if( debug ) console.log('[CmdBufferSync][addEntity]', entitySet.cid, 'adding components', entity.getComponentBitfield().toValues() );
+
         this.addComponent(entitySet, entity.getComponents(), { ...options, execute });
 
         // if there is an existing entity, then determine the differences between this new version and
@@ -535,7 +534,8 @@ Object.assign(CmdBuffer.prototype, {
                                 stringify(com)
                             );
 
-                        com = cloneComponent(com);
+                            com = cloneComponent(com);
+                            if( debug ) console.log('[CmdBufferSync][execute][CMD_COMPONENT_ADD]', 'clone', com.toJSON() );
 
                         if (com.id === 0) {
                             if (componentExists) {
@@ -555,6 +555,8 @@ Object.assign(CmdBuffer.prototype, {
                         }
 
                         tEntity._addComponent(com);
+
+                        // if( debug ) console.log('[CmdBufferSync][execute][CMD_COMPONENT_ADD]', tEntity );
 
                         // console.log('[CmdBufferSync][execute]', 'checking for', tEntity.id, tEntity.cid, this.entitiesAdded );
                         // console.log('NOT GOING TO WORK BECAUSE THE ENTITIY IS KEYED BY CID NOT ID', this.entitiesAdded.has(tEntity.id) );
@@ -580,16 +582,22 @@ Object.assign(CmdBuffer.prototype, {
                     case CMD_COMPONENT_REMOVE:
                         if (componentExists) {
                             if (debug) console.log('[CmdBufferSync][execute][CMD_COMPONENT_REMOVE]', com.id, 'from', entityId);
+                            
                             let existingEntity = existingComponent._entity;
-                            if (debug) console.log('[CmdBufferSync][execute][CMD_COMPONENT_REMOVE]', 'from', existingEntity.cid );
+                            
+                            
                             tEntity._removeComponent(com);
+                            
+                            if (debug) console.log('[CmdBufferSync][execute][CMD_COMPONENT_REMOVE]', 'from', existingEntity.cid, 'com count', tEntity.getComponentBitfield().count() );
+                            
                             this.componentsRemoved.add(com);
-
                             // check that the entity still has components left
                             if (tEntity.getComponentBitfield().count() <= 0) {
                                 // console.log('[CmdBufferSync][execute][CMD_COMPONENT_REMOVE]', 'remove ent', tEntity.id);
                                 this.entitiesRemoved.add(tEntity);
                                 this.entitiesUpdated.remove(tEntity);
+
+                                // remove all componentsRemoved components belonging to this entity
                             } else {
                                 // console.log('[CmdBufferSync][execute][CMD_COMPONENT_REMOVE]', 'update ent', existingEntity.id);
                                 this.entitiesUpdated.add( existingEntity );
@@ -608,6 +616,8 @@ Object.assign(CmdBuffer.prototype, {
                             if( !existingComponent.compare( com ) ){
                                 this.componentsUpdated.add(com);
                                 this.entitiesUpdated.add( existingComponent._entity );
+                            } else {
+                                if (debug) { console.log('[CmdBufferSync][execute][CMD_COMPONENT_UPDATE]', 'same', JSON.stringify(existingComponent), JSON.stringify(com) ); }
                             }
                         } else {
                             this.componentsAdded.add(com);

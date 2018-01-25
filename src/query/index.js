@@ -266,7 +266,7 @@ Object.assign( QueryContext.prototype, {
         // }
         componentIds = context.registry.getIId(components, {
             forceArray: true,
-            debug: true,
+            // debug: true,
             throwOnNotFound: true
         });
 
