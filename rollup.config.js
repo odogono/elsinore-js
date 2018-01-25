@@ -13,12 +13,14 @@ const isProduction = environment === 'production';
 const banner = readFileSync('src/banner.js', 'utf-8').replace('${version}', pkg.version).replace('${time}', new Date());
 
 export default {
-    banner,
-    entry: 'src/index.js',
-    format: 'cjs',
+    input: 'src/index.js',
+    output: {
+        banner,
+        format: 'cjs',
+        sourcemap: true,
+        file: isProduction ? 'dist/elsinore.min.js' : 'dist/elsinore.js',
+    },
     // moduleName: 'elsinore',
-    dest: isProduction ? 'dist/elsinore.min.js' : 'dist/elsinore.js',
-    sourceMap: true,
     plugins: [
         Replace({ 'process.env.NODE_ENV': JSON.stringify(environment) }),
         Babel({
