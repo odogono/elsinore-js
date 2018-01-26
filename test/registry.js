@@ -252,6 +252,7 @@ test('create an entity with a component bitfield', t => {
         // console.log( entity.getComponentBitfield() );
 
         const reEntity = registry.createEntityWithId( 456, 0, {comBf:entity.getComponentBitfield()} );
+        
         t.deepEqual( entity.getComponentBitfield().toValues(),
                     reEntity.getComponentBitfield().toValues() );
     })

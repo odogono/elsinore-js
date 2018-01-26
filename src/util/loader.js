@@ -3,20 +3,23 @@ import { createLog } from './log';
 import omit from './omit';
 import readProperty from './read_property';
 import { toString as entityToString } from './to_string';
+import {COMMAND} from '../constants';
 
 export const CMD_UNKNOWN = '@unk';
-export const CMD_COMMAND = '@cmd';
+export const CMD_COMMAND = COMMAND;
 export const CMD_ADD_ENTITY = 'entity';
 export const CMD_REGISTER_COMPONENT = 'register';
 export const CMD_REMOVE_ENTITY = 'rme';
 export const CMD_REMOVE_COMPONENT = 'rmc';
 export const CMD_END_OF_EXISTING = 'eoe';
 
+import { COMPONENT_DEF_ID, COMPONENT_URI, ENTITY_ID } from '../constants';
+
 const Log = createLog('JSONLoader');
 
 export class JSONLoader {
     /**
-     * 
+     *
      */
     load(commands, entitySet, options = {}) {
         const registry = (this.registry = entitySet.getRegistry());
@@ -30,7 +33,7 @@ export class JSONLoader {
     }
 
     /**
-     * 
+     *
      */
     _processCommand(context, command, options = {}) {
         const [type, cmd, arg] = findCommand(command);
@@ -48,8 +51,8 @@ export class JSONLoader {
             case CMD_END_OF_EXISTING:
                 return Promise.resolve(context);
             default:
-            // console.log('process', cmd, command );
-                if( command['@s'] || command['@c'] ){
+                // console.log('process', cmd, command );
+                if (command[COMPONENT_DEF_ID] || command[COMPONENT_URI]) {
                     return this._createComponent(context, command, options);
                 }
                 return Promise.resolve(context);
@@ -59,7 +62,7 @@ export class JSONLoader {
     _createEntity(context) {
         if (context.entity) {
             // already have an entity, so add it to the load cache
-            return _processCommand(context, { '@cmd': CMD_ADD_ENTITY }).then(context => this._createEntity(context));
+            return _processCommand(context, { [CMD_COMMAND]: CMD_ADD_ENTITY }).then(context => this._createEntity(context));
         }
 
         context.entity = context.registry.createEntity();
@@ -68,7 +71,7 @@ export class JSONLoader {
     }
 
     _deleteEntity(context, args, options = {}) {
-        const entityId = args ? (args.id || args.eid) : undefined;
+        const entityId = args ? args.id || args.eid : undefined;
         if (entityId === undefined) {
             return Promise.resolve(context);
         }
@@ -77,23 +80,23 @@ export class JSONLoader {
     }
 
     /**
-     * 
-     * @param {*} context 
-     * @param {*} args 
-     * @param {*} options 
+     *
+     * @param {*} context
+     * @param {*} args
+     * @param {*} options
      */
     _deleteComponent(context, args, options = {}) {
-        const componentId = args ? (args.id || args.cid) : undefined;
+        const componentId = args ? args.id || args.cid : undefined;
         if (componentId === undefined) {
             return Promise.resolve(context);
         }
 
         // console.log('[JSONLoader][_deleteComponent]', componentId);
-        return Promise.resolve(context.entitySet.removeComponent(componentId, {fromLoader:true}));
+        return Promise.resolve(context.entitySet.removeComponent(componentId, { fromLoader: true }));
     }
 
     /**
-     * 
+     *
      */
     _addEntityToEntitySet(context, options = {}) {
         const { entity, entitySet } = context;
@@ -104,19 +107,19 @@ export class JSONLoader {
     }
 
     /**
-     * 
+     *
      */
     _createComponent(context, obj, options) {
-        const debug = readProperty(options, 'debug', false);
-        if (debug) {
-            Log.debug(`[createComponent] from`, obj);
-        }
+        // const debug = readProperty(options, 'debug', false);
+        // if (debug) {
+        //     Log.debug(`[createComponent] from`, obj);
+        // }
         const component = context.registry.createComponent(obj);
 
         // if( debug ){ Log.debug(`[createComponent]`, stringify(component) ); }
 
         // if an explicit entityid is set, then add directly to the entityset
-        if (obj['@e']) {
+        if (obj[ENTITY_ID]) {
             return context.entitySet.addComponent(component);
         }
 
@@ -126,7 +129,7 @@ export class JSONLoader {
 
         context.entity.addComponent(component);
 
-        if (debug) Log.debug('[createComponent] add to entity', context.entitySet.cid, entityToString(context.entity));
+        // if (debug) Log.debug('[createComponent] add to entity', context.entitySet.cid, entityToString(context.entity));
 
         return component;
     }

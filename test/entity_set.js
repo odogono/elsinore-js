@@ -122,7 +122,6 @@ test('retrieving the entity that was added', async t => {
     }
 });
 
-
 test('retrieving an entity by its id', async t => {
     try {
         const registry = await initialiseRegistry();
@@ -135,13 +134,13 @@ test('retrieving an entity by its id', async t => {
         // Log.debug('getting', entitySet.getById(2, true) );
         // Log.debug( entitySet._entities );
 
-        t.equals( entitySet.getByEntityId( entity.getEntityId() ).getEntityId(), entity.getEntityId() );
-        
+        t.equals(entitySet.getByEntityId(entity.getEntityId()).getEntityId(), entity.getEntityId());
+
         t.end();
     } catch (err) {
         Log.error(err.stack);
     }
-})
+});
 
 test('adding components in the same call adds them to the same entity', async t => {
     try {
@@ -185,17 +184,16 @@ test('can add an array of raw components', async t => {
         const entitySet = registry.createEntitySet();
 
         // a single entity is created
-        entitySet.addComponent([
-            { '@c': '/component/position', x: -14, y: 12 },
-            { '@c': '/component/radius', radius: 16 }
-        ], {debug:false});
+        entitySet.addComponent(
+            [{ '@c': '/component/position', x: -14, y: 12 }, { '@c': '/component/radius', radius: 16 }],
+            { debug: false }
+        );
 
         t.equal(entitySet.size(), 1);
 
         // Log.debug('[es]', entityToString(entitySet));
-        
-        t.equal(entitySet.at(0).Position.get('x'), -14);
 
+        t.equal(entitySet.at(0).Position.get('x'), -14);
 
         t.end();
     } catch (err) {
@@ -265,29 +263,25 @@ test('adding a component without an id or an entity id creates a new component a
     }
 });
 
-
 test('events contain the internal id of their originator', async t => {
     try {
         const registry = await initialiseRegistry();
         let entitySet = registry.createEntitySet();
 
-        entitySet.on('entity:add', (entities,{cid,oid}) => {
-            t.ok( Array.isArray(entities), 'an array is passed as the first arg' );
-            t.equals( entities.length, 1, 'the array contains one element' );
-            t.ok( Entity.isEntity(entities[0]), 'that first element is an Entity' );
-            t.equals( entitySet.cid, cid );
-            t.equals( oid, 'test1', 'the Originating ID is passed through from the add');
+        entitySet.on('entity:add', (entities, { cid, oid }) => {
+            t.ok(Array.isArray(entities), 'an array is passed as the first arg');
+            t.equals(entities.length, 1, 'the array contains one element');
+            t.ok(Entity.isEntity(entities[0]), 'that first element is an Entity');
+            t.equals(entitySet.cid, cid);
+            t.equals(oid, 'test1', 'the Originating ID is passed through from the add');
             t.end();
         });
 
-        entitySet.addEntity({ '@c': '/component/name', name: 'alice' }, {oid:'test1'} );
-
-        
+        entitySet.addEntity({ '@c': '/component/name', name: 'alice' }, { oid: 'test1' });
     } catch (err) {
         Log.error(err.stack);
     }
 });
-
 
 test('when adding a new entity, only the entity add event is emitted, not the component add', async t => {
     try {
@@ -318,7 +312,6 @@ test('when adding a new entity, only the entity add event is emitted, not the co
     }
 });
 
-
 test('adding an identical component does not emit an event', async t => {
     try {
         const registry = await initialiseRegistry();
@@ -328,27 +321,27 @@ test('adding an identical component does not emit an event', async t => {
 
         entitySet.on('component:update', (...args) => {
             Log.debug('CADD', stringify(args));
-            t.ok(false, 'no component update should have been called') 
+            t.ok(false, 'no component update should have been called');
         });
 
         entitySet.addEntity({ '@c': '/component/name', name: 'alice' });
-        
+
         let component = entitySet.getUpdatedComponents();
 
         // Log.debug('[OK]', entityToString(component) );
 
         // the exact same component shouldn't trigger an update
-        entitySet.addComponent( component );
+        entitySet.addComponent(component);
 
-        let duplicate = {'@c': '/component/name', name: 'alice', '@e':component.getEntityId() };
+        let duplicate = { '@c': '/component/name', name: 'alice', '@e': component.getEntityId() };
 
-        entitySet.addComponent( duplicate, {debug:false} );
+        entitySet.addComponent(duplicate, { debug: false });
 
         t.end();
     } catch (err) {
         Log.error(err.stack);
     }
-})
+});
 
 test('retrieving a component by id', async t => {
     try {
@@ -463,18 +456,18 @@ test('removing a component from an entity triggers entity:update', async t => {
         const registry = await initialiseRegistry();
         const entitySet = registry.createEntitySet();
         t.plan(1);
-        
-        entitySet.on('entity:update', () => t.ok(true,'entity:update received') );
+
+        entitySet.on('entity:update', () => t.ok(true, 'entity:update received'));
 
         // logEvents( entitySet );
 
         entitySet.addComponent([
             { '@c': '/component/position', x: 5, y: 20 },
-            { '@c': '/component/radius', radius:5 },
+            { '@c': '/component/radius', radius: 5 }
         ]);
         let added = entitySet.getUpdatedEntities();
 
-        entitySet.removeComponent( added.Radius, {debug:false} );
+        entitySet.removeComponent(added.Radius, { debug: false });
 
         // Log.debug( entityToString(entitySet) );
 
@@ -482,7 +475,7 @@ test('removing a component from an entity triggers entity:update', async t => {
     } catch (err) {
         Log.error(err.stack);
     }
-})
+});
 
 test('adding an identified component in another entity replaces the existing', async t => {
     try {
@@ -919,7 +912,6 @@ test('should emit an event when an entity is removed', t => {
     });
 });
 
-
 // NOTE - for the time being, a seperate component and entity remove event is fine
 test.skip('should only emit an entity remove event when an entity is removed', async t => {
     try {
@@ -934,21 +926,21 @@ test.skip('should only emit an entity remove event when an entity is removed', a
         ]);
 
         let entity = entitySet.getUpdatedEntities();
-        
+
         // logEvents( entitySet );
 
-        entitySet.on( 'component:remove', () => t.ok(false, 'no component:remove event should be fired') );
-        entitySet.on( 'entity:remove', () => t.ok(true,'a single entity remove event should be fired'));
+        entitySet.on('component:remove', () => t.ok(false, 'no component:remove event should be fired'));
+        entitySet.on('entity:remove', () => t.ok(true, 'a single entity remove event should be fired'));
 
-        entitySet.removeEntity(entity, {debug:true});
+        entitySet.removeEntity(entity, { debug: true });
 
-        Log.debug( entityToString(entitySet) );
+        Log.debug(entityToString(entitySet));
 
         t.end();
-    }catch( err ){
-        Log.error( err.stack );
+    } catch (err) {
+        Log.error(err.stack);
     }
-})
+});
 
 test('should not emit an event when a non-existent component is removed', t => {
     return initialiseRegistry().then(registry => {
@@ -974,7 +966,7 @@ test('adding an entity with an identical id will replace the existing one', asyn
         entitySet.on('component:update', eventSpy);
 
         //    logEvents(entitySet);
-        let entityA = registry.createEntity( { '@c': '/component/position', x: 0, y: 0, '@e': 26 } );
+        let entityA = registry.createEntity({ '@c': '/component/position', x: 0, y: 0, '@e': 26 });
 
         let entityB = registry.createEntity([
             { '@c': '/component/position', x: 15, y: -90, '@e': 26 },
@@ -986,24 +978,24 @@ test('adding an entity with an identical id will replace the existing one', asyn
 
         entitySet.addEntity(entityA);
 
-        entitySet.addEntity(entityB, {debug:false});
+        entitySet.addEntity(entityB, { debug: false });
 
         // Log.debug( entitySet.at(0) );
 
         // Log.debug( entityToString(entitySet) );
 
         const addedEntity = entitySet.at(0);
-        
+
         t.equals(entitySet.size(), 1);
 
         t.ok(eventSpy.calledOnce, `component:update was called ${eventSpy.callCount} times`);
-        
+
         // Log.debug( entityToString(addedEntity) );
 
         t.equals(addedEntity.Status.get('status'), 'active');
         t.equals(addedEntity.Position.get('x'), 15);
         //    printE( entitySet );
-        
+
         t.end();
     } catch (err) {
         Log.error(err.stack);
@@ -1169,7 +1161,6 @@ test('adding an entity with an identical id will replace the existing one', asyn
 //     });
 // });
 
-
 test('should emit an event when a component is changed', async t => {
     try {
         const [registry, entitySet, entities] = await initialise();
@@ -1183,15 +1174,14 @@ test('should emit an event when a component is changed', async t => {
         entitySet.addEntity(entity);
 
         cloned = cloneComponent(component);
-        
+
         cloned.set({ x: 0, y: -2 });
 
-        entitySet.addComponent(cloned, {debug:false});
+        entitySet.addComponent(cloned, { debug: false });
 
         t.ok(spy.called, 'component:update should have been called');
 
         t.end();
-
     } catch (err) {
         Log.error(err.stack);
     }

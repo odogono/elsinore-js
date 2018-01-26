@@ -6,6 +6,7 @@ import { JSONLoader } from '../util/loader';
 import { toString as entityToString } from '../util/to_string';
 import stringify from '../util/stringify';
 import { createLog } from '../util/log';
+import {COMMAND} from '../constants';
 
 const Log = createLog('EntitySetSink');
 
@@ -74,7 +75,7 @@ export function PullStreamSink(entitySet, options = {}, completeCb) {
                     // if( added ) Log.debug('🐷 [sink][Entity]', data == added, data.msg, added.msg );
                 } else {
                     // Log.debug('[sink][_processCommand]', entitySet.cid, item);
-                    if( item['@cmd'] == 'rmc' ){
+                    if( item[COMMAND] == 'rmc' ){
                         // Log.debug('[sink][_processCommand]', entitySet._components);
                     }
                     p = loader._processCommand(context, item, options);

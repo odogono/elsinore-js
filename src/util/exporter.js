@@ -6,6 +6,8 @@ import readProperty from './read_property';
 
 const Log = createLog('JSONExporter');
 
+import {ENTITY_ID,COMPONENT_ID} from '../constants';
+
 
 export default function JSONExporter(options={}){
 }
@@ -127,8 +129,8 @@ Object.assign(JSONExporter.prototype, Base.prototype, {
     componentToJSON(component,cdefMap,anonymous,options={}){
         const json = component.toJSON({cdefMap});
         if( anonymous ){
-            delete json['@e'];
-            delete json['@i'];
+            delete json[ENTITY_ID];
+            delete json[COMPONENT_ID];
         }
         return json;
     },

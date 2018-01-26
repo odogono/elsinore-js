@@ -4,18 +4,25 @@ import Component from '../component';
 import Events from '../util/events';
 import stringify from '../util/stringify';
 
-import {isObject} from '../util/is';
+import { isObject } from '../util/is';
 import { createLog } from '../util/log';
 
 import propertyResult from '../util/result';
 
 import ComponentDef from '../component_def';
 
-
 const Log = createLog('ComponentRegistry', false);
 
+import {
+    COMPONENT_CREATE,
+    COMPONENT_DEF_ID,
+    COMPONENT_DEFINITION_ADD,
+    COMPONENT_DEFINITION_REMOVE,
+    COMPONENT_TYPE_ADD
+} from '../constants';
+
 /**
- * 
+ *
  */
 // export const ComponentDefCollection = Collection.extend({
 //     model: ComponentDef,
@@ -44,7 +51,7 @@ ComponentDefCollection.prototype.model = ComponentDef;
 // }
 
 /**
- * 
+ *
  */
 export default class ComponentRegistry {
     constructor(definitions, options = {}) {
@@ -60,17 +67,14 @@ export default class ComponentRegistry {
     }
 
     toJSON(options = {}) {
-        return this._componentDefs.reduce(
-            (result, def) => {
-                if (options.expanded) {
-                    result[def.id] = def;
-                } else {
-                    result[def.id] = def.getUri();
-                }
-                return result;
-            },
-            []
-        );
+        return this._componentDefs.reduce((result, def) => {
+            if (options.expanded) {
+                result[def.id] = def;
+            } else {
+                result[def.id] = def.getUri();
+            }
+            return result;
+        }, []);
     }
 
     /**
@@ -78,22 +82,19 @@ export default class ComponentRegistry {
      * to def uris
      */
     getComponentDefUris() {
-        return this._componentDefs.reduce(
-            (result, def) => {
-                result[def.id] = def.getUri();
-                return result;
-            },
-            [],
-        );
+        return this._componentDefs.reduce((result, def) => {
+            result[def.id] = def.getUri();
+            return result;
+        }, []);
     }
 
     /**
      * Adds a component definition to the registry
-     * 
-     * @param {*} def 
-     * @param {*} options 
+     *
+     * @param {*} def
+     * @param {*} options
      */
-    register(def, options={}){
+    register(def, options = {}) {
         let componentDef;
         let throwOnExists = options.throwOnExists === void 0 ? true : options.throwOnExists;
 
@@ -110,7 +111,7 @@ export default class ComponentRegistry {
             }
             const type = propertyResult(inst, 'type');
             this._componentTypes[type] = def;
-            this.trigger('type:add', type, def);
+            this.trigger( COMPONENT_TYPE_ADD, type, def);
 
             const uri = propertyResult(inst, 'uri');
             if (uri) {
@@ -144,7 +145,7 @@ export default class ComponentRegistry {
 
         if (type) {
             let ComponentType = this._componentTypes[type] || Component;
-            
+
             // ensure we have this type registered
             if (!ComponentType) {
                 if (throwOnExists) {
@@ -154,11 +155,10 @@ export default class ComponentRegistry {
                 }
             }
 
-            
             // if (ComponentType.properties) {
-                def.properties = { ...ComponentType.properties, ...def.properties };
-                
-                componentDef = new ComponentDef({ ...def, id: componentDef.id });
+            def.properties = { ...ComponentType.properties, ...def.properties };
+
+            componentDef = new ComponentDef({ ...def, id: componentDef.id });
             // }
         }
 
@@ -170,16 +170,15 @@ export default class ComponentRegistry {
         this._componentDefByUri.remove(componentDef.getUri());
         this._componentDefByUri.add(componentDef);
 
-        this.trigger('def:add', componentDef.getUri(), componentDef.hash(), componentDef);
+        this.trigger(COMPONENT_DEFINITION_ADD, componentDef.getUri(), componentDef.hash(), componentDef);
 
-        // console.log('def:add', componentDef.get('uri'), componentDef.hash() );
         return componentDef;
     }
 
     /**
      * Removes a definition from the registry
-     * 
-     * @param {*} def 
+     *
+     * @param {*} def
      */
     unregister(def) {
         let componentDef = this.getComponentDef(def);
@@ -191,15 +190,15 @@ export default class ComponentRegistry {
 
         this._componentDefs.remove(componentDef.id);
 
-        this.trigger('def:remove', componentDef.getUri(), componentDef.hash(), componentDef);
+        this.trigger(COMPONENT_DEFINITION_REMOVE, componentDef.getUri(), componentDef.hash(), componentDef);
 
         return componentDef;
     }
 
     /**
      * Returns an array of the registered componentdefs
-     * 
-     * @param {*} options 
+     *
+     * @param {*} options
      */
     getComponentDefs(options = {}) {
         if (options.all) {
@@ -210,11 +209,11 @@ export default class ComponentRegistry {
 
     /**
      * Creates a new component instance
-     * 
-     * @param {*} defUri 
-     * @param {*} attrs 
-     * @param {*} options 
-     * @param {*} cb 
+     *
+     * @param {*} defUri
+     * @param {*} attrs
+     * @param {*} options
+     * @param {*} cb
      */
     createComponent(defUri, attrs, options = {}, cb) {
         let throwOnNotFound = options.throwOnNotFound === void 0 ? true : options.throwOnNotFound;
@@ -234,7 +233,7 @@ export default class ComponentRegistry {
         const type = def.getType();
         let ComponentType = type ? this._componentTypes[type] : Component;
 
-        // 
+        //
 
         if (attrs === void 0 && isObject(defUri)) {
             attrs = defUri;
@@ -244,20 +243,19 @@ export default class ComponentRegistry {
         // since the properties describe how the attrs should be set
         const defAttrs = def.getAttrs();
         attrs = { ...defAttrs, ...attrs };
-        
-        
+
         // NOTE: no longer neccesary to pass parse:true as the component constructor calls component.parse
         const defOptions = def.options || {};
         const createOptions = { ...defOptions, registry: this.registry };
         let result = new ComponentType(attrs, createOptions);
-        
+
         if (type) {
             result['is' + type] = true;
         }
 
         result.setDefDetails(def.id, def.getUri(), def.hash(), def.getName());
 
-        this.trigger('component:create', result.defUri, result);
+        this.trigger(COMPONENT_CREATE, result.defUri, result);
 
         // console.log('result:', result);
         if (cb) {
@@ -267,9 +265,9 @@ export default class ComponentRegistry {
     }
 
     /**
-     * 
-     * @param {*} defIdentifiers 
-     * @param {*} options 
+     *
+     * @param {*} defIdentifiers
+     * @param {*} options
      */
     getIId(defIdentifiers, options = { throwOnNotFound: true }) {
         options.returnIds = true;
@@ -278,25 +276,28 @@ export default class ComponentRegistry {
     }
 
     /**
-     * 
-     * @param {*} identifiers 
-     * @param {*} options 
+     *
+     * @param {*} identifiers
+     * @param {*} options
      */
-    getComponentDef(identifiers, options={}) {
-        let ii = 0, len = 0, cDef, ident;
+    getComponentDef(identifiers, options = {}) {
+        let ii = 0,
+            len = 0,
+            cDef,
+            ident;
         // const debug = options.debug === void 0 ? false : options.debug;
         const forceArray = options.forceArray === void 0 ? false : options.forceArray;
         const returnIds = options.returnIds === void 0 ? false : options.returnIds;
         const throwOnNotFound = options.throwOnNotFound === void 0 ? false : options.throwOnNotFound;
         let result;
 
-        identifiers = Array.isArray(identifiers) ? identifiers : [ identifiers ];
+        identifiers = Array.isArray(identifiers) ? identifiers : [identifiers];
 
         for (ii = 0, len = identifiers.length; ii < len; ii++) {
             ident = identifiers[ii];
 
             if (isObject(ident)) {
-                ident = ident.id || ident.hash || ident.uri || ident['@s'];
+                ident = ident.id || ident.hash || ident.uri || ident[COMPONENT_DEF_ID];
             }
 
             if (!ident) {
@@ -345,7 +346,7 @@ export default class ComponentRegistry {
             result.push(returnIds ? cDef.id : cDef);
         }
 
-        if (!result || result.length === 0 && !forceArray) {
+        if (!result || (result.length === 0 && !forceArray)) {
             return undefined;
         }
 

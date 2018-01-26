@@ -6,6 +6,9 @@ import uniqueId from './util/unique_id';
 import { toString as entityToString } from './util/to_string';
 import * as CmdBuffer from './cmd_buffer/sync';
 
+import {ENTITY_ID} from './constants';
+
+
 /**
  * Systems process entity components
  * 
@@ -52,7 +55,7 @@ Object.assign(EntityProcessor.prototype, Base.prototype, {
             switch (cmd[0]) {
                 case CmdBuffer.CMD_COMPONENT_ADD:
                     // console.log( this.name + ' adding COMP ' + JSON.stringify(cmd[2]));
-                    component = this.registry.createComponent(cmd[2], { '@e': entity.getEntityId() });
+                    component = this.registry.createComponent(cmd[2], { [ENTITY_ID]: entity.getEntityId() });
                     componentsToAdd = arrayPush(componentsToAdd, component);
                     break;
                 case CmdBuffer.CMD_COMPONENT_REMOVE:

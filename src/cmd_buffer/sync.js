@@ -5,12 +5,14 @@ import Collection from '../util/collection';
 import { cloneComponent, cloneEntity } from '../util/clone';
 import { isInteger } from '../util/is';
 import { toInteger } from '../util/to';
-import {componentsFromCollections} from '../util/array/value';
+import { componentsFromCollections } from '../util/array/value';
 import valueArray from '../util/array/value';
 import { entityToString } from '../util/to_string';
 import stringify from '../util/stringify';
 
 import arrayDifference from '../util/array/difference';
+
+import { ENTITY_ID, COMPONENT_UPDATE, COMPONENT_REMOVE, ENTITY_REMOVE, COMPONENT_ADD, ENTITY_UPDATE, ENTITY_ADD } from '../constants';
 
 export const CMD_ENTITY_ADD = 0;
 export const CMD_ENTITY_REMOVE = 1;
@@ -43,13 +45,12 @@ export default function CmdBuffer() {
 }
 
 Object.assign(CmdBuffer.prototype, {
-    
     /**
      * Adds a component to the entityset
-     * 
-     * @param {*} entitySet 
-     * @param {*} component 
-     * @param {*} options 
+     *
+     * @param {*} entitySet
+     * @param {*} component
+     * @param {*} options
      */
     addComponent(entitySet, component, options = {}) {
         let execute, entityId, entity, existingCom;
@@ -101,14 +102,14 @@ Object.assign(CmdBuffer.prototype, {
         }
 
         // determine whether we have this component registered already
-        if( options['@e'] !== undefined ){
-            entityId = options['@e'];
+        if (options[ENTITY_ID] !== undefined) {
+            entityId = options[ENTITY_ID];
         } else {
             entityId = component.getEntityId();
         }
-        
+
         if (component.id !== 0) {
-            if (options.debug) console.log('[CmdBufferSync][addComponent]', 'component with id', component.id);
+            // if (options.debug) console.log('[CmdBufferSync][addComponent]', 'component with id', component.id);
 
             // check for an existing component
             let existing = entitySet.getComponent(component.id);
@@ -125,7 +126,8 @@ Object.assign(CmdBuffer.prototype, {
                 entityId = component.getEntityId();
 
                 if (existing !== undefined && existing.getEntityId() !== component.getEntityId()) {
-                    if (options.debug) console.log('[CmdBufferSync][addComponent]', 'remove', component.id, 'from', entityId);
+                    // if (options.debug)
+                    //     console.log('[CmdBufferSync][addComponent]', 'remove', component.id, 'from', entityId);
                     // remove existing component
                     this.addCommand(CMD_COMPONENT_REMOVE, existing.getEntityId(), component, options);
                 }
@@ -133,11 +135,11 @@ Object.assign(CmdBuffer.prototype, {
         }
 
         // if (entityId === 0 || entityId === undefined) {
-            // const existingComponent = entitySet.getComponent(component);
-            // if( existingComponent ){
-            //     entityId = existingComponent.getEntityId();
-            //     // if( debug ){ console.log(`found existing component ${component.id} entityid`, entityId)}
-            // }
+        // const existingComponent = entitySet.getComponent(component);
+        // if( existingComponent ){
+        //     entityId = existingComponent.getEntityId();
+        //     // if( debug ){ console.log(`found existing component ${component.id} entityid`, entityId)}
+        // }
         // }
 
         // console.log( '^^ adding component with entity', entityId, Entity.toEntityId(entityId), component.getEntityId() );
@@ -160,7 +162,9 @@ Object.assign(CmdBuffer.prototype, {
             this.addCommand(CMD_ENTITY_ADD, entityId, undefined, options);
             this.addCommand(CMD_COMPONENT_ADD, entityId, component, options);
         } else {
-            existingCom = entitySet.getComponentFromEntity(component, entity);
+            existingCom = entity.components[component.getDefId()];
+
+            // existingCom = entitySet.getComponentFromEntity(component, entity);
 
             // does the existing entity have this component?
             if (!existingCom) {
@@ -175,18 +179,15 @@ Object.assign(CmdBuffer.prototype, {
         if (execute) {
             this.execute(entitySet, options);
         }
-        
+
         return result;
     },
 
-
-    
-
     /**
-     * 
-     * @param {*} entitySet 
-     * @param {*} component 
-     * @param {*} options 
+     *
+     * @param {*} entitySet
+     * @param {*} component
+     * @param {*} options
      */
     removeComponent(entitySet, component, options = {}) {
         let execute;
@@ -217,7 +218,6 @@ Object.assign(CmdBuffer.prototype, {
             }
 
             for (ii in component) {
-                
                 this.removeComponent(entitySet, component[ii], options);
             }
 
@@ -231,23 +231,22 @@ Object.assign(CmdBuffer.prototype, {
                 this.reset();
             }
         }
-        
+
         // important to resolve the component directly against the entityset
         // the incoming component can either be an id, or it could be a duplicate
         // component from another es, so its vital that we get the right reference
         component = entitySet.getComponent(component);
 
         // if (isInteger(component)) {
-            // console.log('[CmdBufferSync][removeComponent]', entitySet.cid, 'com retrieve by int', component);
-            // let cid = component;
+        // console.log('[CmdBufferSync][removeComponent]', entitySet.cid, 'com retrieve by int', component);
+        // let cid = component;
 
-            // console.log('[CmdBufferSync][removeComponent]', component);
-            // if( !component ){
-            // console.log('[CmdBufferSync][removeComponent]', entitySet.cid, 'retrieve by int undefined', cid);
-            // console.log('es is', entityToString(entitySet));
-            // }
+        // console.log('[CmdBufferSync][removeComponent]', component);
+        // if( !component ){
+        // console.log('[CmdBufferSync][removeComponent]', entitySet.cid, 'retrieve by int undefined', cid);
+        // console.log('es is', entityToString(entitySet));
         // }
-
+        // }
 
         if (component) {
             // console.log('[CmdBufferSync][removeComponent]', entitySet.cid, 'but what?', component);
@@ -264,7 +263,12 @@ Object.assign(CmdBuffer.prototype, {
             let entityId = component.getEntityId();
 
             if (entityId === 0 || entityId === undefined) {
-                console.log('[CmdBufferSync][removeComponent]', entitySet.cid, `remove component ${component.cid} without an entity`, component);
+                // console.log(
+                //     '[CmdBufferSync][removeComponent]',
+                //     entitySet.cid,
+                //     `remove component ${component.cid} without an entity`,
+                //     component
+                // );
                 // throw new Error('attempting to remove component without an entity');
                 // return [];
             } else {
@@ -283,7 +287,7 @@ Object.assign(CmdBuffer.prototype, {
 
     /**
      * Adds an entity with its components to the entityset
-     * 
+     *
      * @param {*} entitySet
      * @param {*} entity
      * @param {*} options
@@ -339,7 +343,13 @@ Object.assign(CmdBuffer.prototype, {
 
         // add components to the entity before removing them - otherwise the entity might
         // get garbage-collected
-        if( debug ) console.log('[CmdBufferSync][addEntity]', entitySet.cid, 'adding components', entity.getComponentBitfield().toValues() );
+        // if (debug)
+        //     console.log(
+        //         '[CmdBufferSync][addEntity]',
+        //         entitySet.cid,
+        //         'adding components',
+        //         entity.getComponentBitfield().toValues()
+        //     );
 
         this.addComponent(entitySet, entity.getComponents(), { ...options, execute });
 
@@ -350,9 +360,16 @@ Object.assign(CmdBuffer.prototype, {
             if (existingEntity) {
                 const newComponents = entity.getComponentBitfield().toValues();
                 const existingComponents = existingEntity.getComponentBitfield().toValues();
-                if(debug) console.log('[CmdBufferSync][addEntity]', 'existing entity', existingComponents, 'new', newComponents );
+                // if (debug)
+                //     console.log(
+                //         '[CmdBufferSync][addEntity]',
+                //         'existing entity',
+                //         existingComponents,
+                //         'new',
+                //         newComponents
+                //     );
 
-                if( debug) console.log('[CmdBufferSync][addEntity]', 'adding', newComponents, existingComponents);
+                // if (debug) console.log('[CmdBufferSync][addEntity]', 'adding', newComponents, existingComponents);
 
                 // if the new version has less components, determine which have been removed
                 // if( newComponents.length < existingComponents.length ){
@@ -386,14 +403,13 @@ Object.assign(CmdBuffer.prototype, {
         }
 
         return true;
-
     },
 
     /**
-     * 
-     * @param {*} entitySet 
-     * @param {*} entity 
-     * @param {*} options 
+     *
+     * @param {*} entitySet
+     * @param {*} entity
+     * @param {*} options
      */
     removeEntity(entitySet, entity, options = {}) {
         let ii, comDefId, execute, existingEntity, entityId;
@@ -460,9 +476,9 @@ Object.assign(CmdBuffer.prototype, {
     },
 
     /**
-     * 
-     * @param {*} entitySet 
-     * @param {*} options 
+     *
+     * @param {*} entitySet
+     * @param {*} options
      */
     execute(entitySet, options) {
         let ii, ie, len, cmds, cmd;
@@ -519,32 +535,37 @@ Object.assign(CmdBuffer.prototype, {
                             // console.log('[CmdBufferSync][execute]', 'adding', tEntity.id, tEntity.cid );
                             this.entitiesAdded.add(tEntity);
 
-                            if (debug) console.log('[CmdBufferSync][execute][CMD_ENTITY_ADD]','adding entity', entityToString(tEntity));
+                            // if (debug)
+                            //     console.log(
+                            //         '[CmdBufferSync][execute][CMD_ENTITY_ADD]',
+                            //         'adding entity',
+                            //         entityToString(tEntity)
+                            //     );
                         }
                         break;
 
                     case CMD_COMPONENT_ADD:
-                        if (debug)
-                            console.log(
-                                '[CmdBufferSync][execute][CMD_COMPONENT_ADD]',
-                                entitySet.cid,
-                                entityId,
-                                com.id,
-                                com.getDefId(),
-                                stringify(com)
-                            );
+                        // if (debug)
+                        //     console.log(
+                        //         '[CmdBufferSync][execute][CMD_COMPONENT_ADD]',
+                        //         entitySet.cid,
+                        //         entityId,
+                        //         com.id,
+                        //         com.getDefId(),
+                        //         stringify(com)
+                        //     );
 
-                            com = cloneComponent(com);
-                            if( debug ) console.log('[CmdBufferSync][execute][CMD_COMPONENT_ADD]', 'clone', com.toJSON() );
+                        com = cloneComponent(com);
+                        // if (debug) console.log('[CmdBufferSync][execute][CMD_COMPONENT_ADD]', 'clone', com.toJSON());
 
                         if (com.id === 0) {
                             if (componentExists) {
-                                if (debug)
-                                    console.log(
-                                        '[CmdBufferSync][execute][CMD_COMPONENT_ADD]',
-                                        'new (exists) com id',
-                                        com.id
-                                    );
+                                // if (debug)
+                                //     console.log(
+                                //         '[CmdBufferSync][execute][CMD_COMPONENT_ADD]',
+                                //         'new (exists) com id',
+                                //         com.id
+                                //     );
                                 com.set({ id: existingComponent.id });
                                 // the following is a bit hacky - basically the component is a new instance but didnt get
                                 // created with the existing component id, and so it is an addition not an update
@@ -567,8 +588,8 @@ Object.assign(CmdBuffer.prototype, {
                         }
 
                         if (componentExists) {
-                            if (debug) console.log('[CmdBufferSync][execute][CMD_COMPONENT_ADD]', 'exists', com.id);
-                            if( !existingComponent.compare( com ) ){
+                            // if (debug) console.log('[CmdBufferSync][execute][CMD_COMPONENT_ADD]', 'exists', com.id);
+                            if (!existingComponent.compare(com)) {
                                 this.componentsUpdated.add(com);
                             }
                         } else {
@@ -576,20 +597,27 @@ Object.assign(CmdBuffer.prototype, {
                             this.componentsAdded.add(com);
                         }
 
-                        this.entitiesUpdated.add( existingEntity );
+                        this.entitiesUpdated.add(existingEntity);
 
                         break;
                     case CMD_COMPONENT_REMOVE:
                         if (componentExists) {
-                            if (debug) console.log('[CmdBufferSync][execute][CMD_COMPONENT_REMOVE]', com.id, 'from', entityId);
-                            
+                            // if (debug)
+                            //     console.log('[CmdBufferSync][execute][CMD_COMPONENT_REMOVE]', com.id, 'from', entityId);
+
                             let existingEntity = existingComponent._entity;
-                            
-                            
+
                             tEntity._removeComponent(com);
-                            
-                            if (debug) console.log('[CmdBufferSync][execute][CMD_COMPONENT_REMOVE]', 'from', existingEntity.cid, 'com count', tEntity.getComponentBitfield().count() );
-                            
+
+                            // if (debug)
+                            //     console.log(
+                            //         '[CmdBufferSync][execute][CMD_COMPONENT_REMOVE]',
+                            //         'from',
+                            //         existingEntity.cid,
+                            //         'com count',
+                            //         tEntity.getComponentBitfield().count()
+                            //     );
+
                             this.componentsRemoved.add(com);
                             // check that the entity still has components left
                             if (tEntity.getComponentBitfield().count() <= 0) {
@@ -600,24 +628,37 @@ Object.assign(CmdBuffer.prototype, {
                                 // remove all componentsRemoved components belonging to this entity
                             } else {
                                 // console.log('[CmdBufferSync][execute][CMD_COMPONENT_REMOVE]', 'update ent', existingEntity.id);
-                                this.entitiesUpdated.add( existingEntity );
+                                this.entitiesUpdated.add(existingEntity);
                             }
                         }
 
                         break;
 
                     case CMD_COMPONENT_UPDATE:
-                    
-                        if (debug) { console.log('[CmdBufferSync][execute][CMD_COMPONENT_UPDATE]','exists?', componentExists, JSON.stringify(com)); }
-                    
+                        // if (debug) {
+                        //     console.log(
+                        //         '[CmdBufferSync][execute][CMD_COMPONENT_UPDATE]',
+                        //         'exists?',
+                        //         componentExists,
+                        //         JSON.stringify(com)
+                        //     );
+                        // }
+
                         tEntity._addComponent(com);
-                        
+
                         if (componentExists) {
-                            if( !existingComponent.compare( com ) ){
+                            if (!existingComponent.compare(com)) {
                                 this.componentsUpdated.add(com);
-                                this.entitiesUpdated.add( existingComponent._entity );
+                                this.entitiesUpdated.add(existingComponent._entity);
                             } else {
-                                if (debug) { console.log('[CmdBufferSync][execute][CMD_COMPONENT_UPDATE]', 'same', JSON.stringify(existingComponent), JSON.stringify(com) ); }
+                                // if (debug) {
+                                //     console.log(
+                                //         '[CmdBufferSync][execute][CMD_COMPONENT_UPDATE]',
+                                //         'same',
+                                //         JSON.stringify(existingComponent),
+                                //         JSON.stringify(com)
+                                //     );
+                                // }
                             }
                         } else {
                             this.componentsAdded.add(com);
@@ -651,7 +692,7 @@ Object.assign(CmdBuffer.prototype, {
     },
 
     /**
-     * 
+     *
      */
     reset() {
         // console.log('[CmdBufferSync][reset]', 'clearing');
@@ -666,11 +707,11 @@ Object.assign(CmdBuffer.prototype, {
     },
 
     /**
-     * 
-     * @param {*} type 
-     * @param {*} entityId 
-     * @param {*} componentId 
-     * @param {*} options 
+     *
+     * @param {*} type
+     * @param {*} entityId
+     * @param {*} componentId
+     * @param {*} options
      */
     addCommand(type = CMD_ENTITY_ADD, entityId = 0, componentId = 0, options = {}) {
         const entityBuffer = this.cmds[entityId] || [];
@@ -713,23 +754,22 @@ Object.assign(CmdBuffer.prototype, {
     },
 
     /**
-     * 
-     * @param {*} source 
+     *
+     * @param {*} source
      */
     triggerEvents(source, options) {
         options.cid = source.cid;
-        triggerEvent(source, 'component:update', this.componentsUpdated, options);
-        triggerEvent(source, 'component:remove', this.componentsRemoved, options);
-        triggerEvent(source, 'entity:remove', this.entitiesRemoved, options);
-        triggerEvent(source, 'component:add', this.componentsAdded, options);
-        triggerEvent(source, 'entity:update', this.entitiesUpdated, options);
-        triggerEvent(source, 'entity:add', this.entitiesAdded, options);
+        triggerEvent(source, COMPONENT_UPDATE, this.componentsUpdated, options);
+        triggerEvent(source, COMPONENT_REMOVE, this.componentsRemoved, options);
+        triggerEvent(source, ENTITY_REMOVE, this.entitiesRemoved, options);
+        triggerEvent(source, COMPONENT_ADD, this.componentsAdded, options);
+        triggerEvent(source, ENTITY_UPDATE, this.entitiesUpdated, options);
+        triggerEvent(source, ENTITY_ADD, this.entitiesAdded, options);
     }
 });
 
 CmdBuffer.prototype.type = 'CmdBuffer';
 CmdBuffer.prototype.isCmdBuffer = true;
-
 
 function triggerEvent(source, name, collection, options) {
     if (collection.size() > 0) {
@@ -738,7 +778,7 @@ function triggerEvent(source, name, collection, options) {
 }
 
 /**
- * 
+ *
  */
 // function clearCollection(col) {
 //     if (!col) {

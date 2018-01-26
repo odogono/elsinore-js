@@ -8,10 +8,7 @@ import uniqueId from './util/unique_id';
 import { deepEqual } from './util/deep_equal';
 import { deepExtend } from './util/deep_extend';
 
-// const COMPONENT_ID = '@i';
-// const ENTITY_ID = '@e';
-
-
+import { COMPONENT_ID, COMPONENT_URI, COMPONENT_DEF_ID, ENTITY_ID, ENTITY_SET_ID, COMPONENT_UPDATE } from './constants';
 
 /**
  * Components contain data
@@ -46,7 +43,6 @@ export default function Component(attrs, options) {
     }
 }
 
-
 Object.assign(Component.prototype, Base.prototype, {
     preinitialize(attrs, options) {},
 
@@ -74,33 +70,33 @@ Object.assign(Component.prototype, Base.prototype, {
             delete attrs['id'];
         }
 
-        if (attrs[Component.ID] !== undefined) {
-            this.id = attrs[Component.ID];
-            delete attrs[Component.ID];
+        if (attrs[COMPONENT_ID] !== undefined) {
+            this.id = attrs[COMPONENT_ID];
+            delete attrs[COMPONENT_ID];
         }
 
-        if (attrs[Component.DEF_ID] !== undefined) {
-            this._defId = attrs[Component.DEF_ID];
-            delete attrs[Component.DEF_ID];
+        if (attrs[COMPONENT_DEF_ID] !== undefined) {
+            this._defId = attrs[COMPONENT_DEF_ID];
+            delete attrs[COMPONENT_DEF_ID];
         }
 
-        if (attrs[Component.URI] !== undefined) {
-            // this._defId = attrs[Component.URI];
-            delete attrs[Component.URI];
+        if (attrs[COMPONENT_URI] !== undefined) {
+            // this._defId = attrs[COMPONENT_URI];
+            delete attrs[COMPONENT_URI];
         }
 
-        if (attrs[Component.ENTITY_ID] !== undefined) {
-            this.entityId = attrs[Component.ENTITY_ID];
-            delete attrs[Component.ENTITY_ID];
+        if (attrs[ENTITY_ID] !== undefined) {
+            this.entityId = attrs[ENTITY_ID];
+            delete attrs[ENTITY_ID];
         }
 
-        if (attrs[Component.ENTITY_SET_ID]) {
-            esId = attrs[Component.ENTITY_SET_ID];
-            delete attrs[Component.ENTITY_SET_ID];
+        if (attrs[ENTITY_SET_ID]) {
+            esId = attrs[ENTITY_SET_ID];
+            delete attrs[ENTITY_SET_ID];
         }
 
         if (esId !== undefined) {
-            eId = attrs[Component.ENTITY_ID] === undefined ? 0 : attrs[Component.ENTITY_ID];
+            eId = attrs[ENTITY_ID] === undefined ? 0 : attrs[ENTITY_ID];
             this.entityId = setEntityIdFromId(eId, esId);
         }
 
@@ -118,7 +114,7 @@ Object.assign(Component.prototype, Base.prototype, {
         if (changes.length > 0) {
             extend(existing, attrs); // typeof attrs === 'function' ? attrs(existing) : attrs);
             this._hash = this.hash();
-            this.emit('component:update', changes);
+            this.emit(COMPONENT_UPDATE, changes);
         }
 
         return this;
@@ -144,7 +140,7 @@ Object.assign(Component.prototype, Base.prototype, {
             attrs = other.attributes;
         }
 
-        let setting = omit(attrs, Component.ENTITY_ID, Component.ENTITY_SET_ID, Component.DEF_ID, Component.URI);
+        let setting = omit(attrs, ENTITY_ID, ENTITY_SET_ID, COMPONENT_DEF_ID, COMPONENT_URI);
         this.set(setting, options);
     },
 
@@ -165,7 +161,7 @@ Object.assign(Component.prototype, Base.prototype, {
 
     setEntityId(id, internalId) {
         this.entityId = id;
-        // this.attributes[Component.ENTITY_ID] = id;
+        // this.attributes[ENTITY_ID] = id;
     },
 
     setEntity(entity) {
@@ -173,7 +169,7 @@ Object.assign(Component.prototype, Base.prototype, {
             this._entity = null;
             this._entitySet = null;
             this.entityId = 0;
-            // this.attributes[Component.ENTITY_ID] = undefined;
+            // this.attributes[ENTITY_ID] = undefined;
             return;
         }
 
@@ -184,31 +180,40 @@ Object.assign(Component.prototype, Base.prototype, {
         }
     },
 
+    /**
+     * Returns the identifier of what type of component this is
+     */
     getDefId() {
-        return this._defId; // this.attributes['@s']; // this.get('@s');
+        return this._defId;
     },
 
+    /**
+     * Returns the uri identifier of what type of component this
+     * is
+     */
     getDefUri() {
-        return this._defUri; // this.attributes['@c']; // return this.get('@c');
+        return this._defUri;
     },
 
-    getUri() {
-        return this._defUri; //this.attributes['@c']; // return this.get('@c');
-    },
-    // setDefHash: function(hash:string){
-    //     this._defHash = hash;
-    // },
     getDefHash() {
         return this._defHash;
     },
 
+    /**
+     * Returns the name of this component type
+     */
     getDefName() {
         return this._defName;
     },
 
-    // setDefName: function(name:string){
-    //     this.name = this._defName = name;
-    // },
+    /**
+     * Convenient way of setting various identifiers for this component
+     *
+     * @param {*} defId
+     * @param {*} uri
+     * @param {*} hash
+     * @param {*} name
+     */
     setDefDetails(defId, uri, hash, name) {
         this._defId = defId;
         this._defUri = uri;
@@ -220,7 +225,7 @@ Object.assign(Component.prototype, Base.prototype, {
      *
      */
     hash(asString) {
-        let result = stringify(this.attributes); //omit(this.attributes, Component.ENTITY_ID, Component.ENTITY_SET_ID, '@s', '@c', 'id'));
+        let result = stringify(this.attributes);
         return hash(result, asString);
     },
 
@@ -232,7 +237,7 @@ Object.assign(Component.prototype, Base.prototype, {
         // Object.setPrototypeOf( clone, Object.getPrototypeOf(this) );
         // return clone;
         let clone = Object.assign(Object.create(Object.getPrototypeOf(this)), this);
-        clone.attributes = deepExtend( {}, this.attributes );
+        clone.attributes = deepExtend({}, this.attributes);
         return clone;
         // return Object.assign( Object.getPrototypeOf(this), deepExtend(this) );
     },
@@ -258,26 +263,26 @@ Object.assign(Component.prototype, Base.prototype, {
 
     /**
      * Returns a JSON representation of this component
-     * 
-     * @param {*} options 
+     *
+     * @param {*} options
      */
     toJSON(options = {}) {
-        let result = extend({}, this.attributes); //omit(this.attributes, Component.ENTITY_ID, Component.ENTITY_SET_ID, '@c', 'id');
+        let result = extend({}, this.attributes);
 
         // NOTE - no actual need for a component to reveal its id - its uniqueness
         // comes from its defId and entityId
         // if (this.id !== 0) {
-        //     result[Component.ID] = this.id;
+        //     result[COMPONENT_ID] = this.id;
         // }
 
         if (this.entityId > 0) {
-            result[Component.ENTITY_ID] = this.entityId;
+            result[ENTITY_ID] = this.entityId;
         }
 
         if (options && options.cdefMap) {
-            result[Component.URI] = options.cdefMap[this.getDefId()];
+            result[COMPONENT_URI] = options.cdefMap[this.getDefId()];
         } else {
-            result[Component.DEF_ID] = this.getDefId();
+            result[COMPONENT_DEF_ID] = this.getDefId();
         }
 
         return result;
@@ -291,12 +296,6 @@ Component.prototype.cidPrefix = 'c';
 Component.isComponent = function(obj) {
     return obj && obj.isComponent;
 };
-
-Component.ID = '@i';
-Component.URI = '@c';
-Component.DEF_ID = '@s';
-Component.ENTITY_ID = '@e';
-Component.ENTITY_SET_ID = '@es';
 
 Component.create = function(attrs, options) {
     const result = new Component(attrs);

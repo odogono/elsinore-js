@@ -20,6 +20,9 @@ import CmdBuffer from '../cmd_buffer/sync';
 import {PullStreamSource} from './source';
 import {PullStreamSink} from './sink';
 
+import { COMPONENT_URI, ENTITY_ID, ENTITY_EVENT } from '../constants';
+
+
 export default function EntitySet(entities, options = {}) {
     this.initialize(entities, options);
 }
@@ -133,7 +136,7 @@ Object.assign(EntitySet.prototype, Base.prototype, {
         // if( !this.models ){
         //     console.log('[toJSON]', 'hey what', this.cid, this );
         // }
-        result['@e'] = this._entities.reduce((acc, e) => {
+        result[ENTITY_ID] = this._entities.reduce((acc, e) => {
             return acc.concat(e.toJSON(options));
         }, []);
 
@@ -219,7 +222,7 @@ Object.assign(EntitySet.prototype, Base.prototype, {
      */
     addComponent(component, options) {
         // conveniently create a component instance if raw data is passed
-        if (component['@c'] || Array.isArray(component)) {
+        if (component[COMPONENT_URI] || Array.isArray(component)) {
             component = this.getRegistry().createComponent(component);
         }
         return this._cmdBuffer.addComponent(this, component, options);
@@ -514,30 +517,30 @@ Object.assign(EntitySet.prototype, Base.prototype, {
         componentsAdded = componentsAdded.models;
         componentsUpdated = componentsUpdated.models;
         componentsRemoved = componentsRemoved.models;
-        if (debug)
-            console.log(
-                '[EntitySet][update]', this.cid,
-                entitiesAdded.length,
-                entitiesUpdated.length,
-                entitiesRemoved.length,
-                componentsAdded.length,
-                componentsUpdated.length,
-                componentsRemoved.length
-            );
+        // if (debug)
+        //     console.log(
+        //         '[EntitySet][update]', this.cid,
+        //         entitiesAdded.length,
+        //         entitiesUpdated.length,
+        //         entitiesRemoved.length,
+        //         componentsAdded.length,
+        //         componentsUpdated.length,
+        //         componentsRemoved.length
+        //     );
 
-        if (debug && entitiesAdded.length)
-            console.log('[EntitySet][update]', '[entitiesAdded]', entitiesAdded.map(e => e.id));
-        if (debug && entitiesUpdated.length)
-            console.log('[EntitySet][update]', '[entitiesUpdated]', entitiesUpdated.map(e => e.id));
-        if (debug && entitiesRemoved.length)
-            console.log('[EntitySet][update]', '[entitiesRemoved]', entitiesRemoved.map(e => e.id));
+        // if (debug && entitiesAdded.length)
+        //     console.log('[EntitySet][update]', '[entitiesAdded]', entitiesAdded.map(e => e.id));
+        // if (debug && entitiesUpdated.length)
+        //     console.log('[EntitySet][update]', '[entitiesUpdated]', entitiesUpdated.map(e => e.id));
+        // if (debug && entitiesRemoved.length)
+        //     console.log('[EntitySet][update]', '[entitiesRemoved]', entitiesRemoved.map(e => e.id));
 
-        if (debug && componentsAdded.length)
-            console.log('[EntitySet][update]', '[componentsAdded]', this.id, componentsAdded.map(e => e.id));
-        if (debug && componentsUpdated.length)
-            console.log('[EntitySet][update]', '[componentsUpdated]', componentsUpdated.map(e => e.id));
-        if (debug && componentsRemoved.length)
-            console.log('[EntitySet][update]', '[componentsRemoved]', componentsRemoved.map(e => e.id));
+        // if (debug && componentsAdded.length)
+        //     console.log('[EntitySet][update]', '[componentsAdded]', this.id, componentsAdded.map(e => e.id));
+        // if (debug && componentsUpdated.length)
+        //     console.log('[EntitySet][update]', '[componentsUpdated]', componentsUpdated.map(e => e.id));
+        // if (debug && componentsRemoved.length)
+        //     console.log('[EntitySet][update]', '[componentsRemoved]', componentsRemoved.map(e => e.id));
 
         for (ii = 0, len = componentsAdded.length; ii < len; ii++) {
             this._addComponent(componentsAdded[ii]);
@@ -601,7 +604,7 @@ Object.assign(EntitySet.prototype, Base.prototype, {
         // }
 
         // trigger a entity-event event - which other views can listen to and respond to
-        this.trigger.apply(this, ['entity:event', name, entity, this, ...rest]);
+        this.trigger.apply(this, [ ENTITY_EVENT, name, entity, this, ...rest]);
         this.trigger.apply(this, [name, entity, this, ...rest]);
 
         return this;
@@ -625,49 +628,16 @@ Object.assign(EntitySet.prototype, Base.prototype, {
         this._entityEvents.listenTo(this._entityEvents, name, callback);
     },
 
-    // TODO: remove
-    doesEntityHaveComponent(entityId, componentId, options) {
-        let entity;
-        if (isInteger(entityId)) {
-            entity = this.at(entityId);
-        }
 
-        if (!entity) {
-            throw new Error('entity not found: ' + entityId);
-        }
-
-        let bf = entity.getComponentBitfield();
-        if (BitField.isBitField(componentId)) {
-            return BitField.and(componentDef, bf);
-        }
-        // let componentDefId = ComponentDef.getId( componentDef );
-        return bf.get(componentId);
-        // return entity.hasComponent( componentId );
-    },
-
-    // TODO: remove
-    removeComponentFromEntity(component, entity, options) {
-        entity.removeComponent(component);
-
-        this.getRegistry().destroyComponent(component);
-
-        return this;
-    },
-
-    // TODO: remove
-    getComponentFromEntity(component, entity, options) {
-        return entity.components[component.getDefId()];
-    },
-
-    // TODO: remove
-    doesEntityHaveComponents(entity, options) {
-        let bf = entity.getComponentBitfield();
-        if (bf.count() > 0) {
-            return true;
-        }
-        let size = Object.keys(entity.components).length;
-        return size > 0;
-    },
+    // // TODO: remove
+    // doesEntityHaveComponents(entity, options) {
+    //     let bf = entity.getComponentBitfield();
+    //     if (bf.count() > 0) {
+    //         return true;
+    //     }
+    //     let size = Object.keys(entity.components).length;
+    //     return size > 0;
+    // },
 
     /**
      * Executes a query against this entityset

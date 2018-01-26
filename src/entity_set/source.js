@@ -3,14 +3,26 @@ import PullPushable from 'pull-pushable';
 import readProperty from '../util/read_property';
 import {cloneComponent, cloneEntity } from '../util/clone';
 import {applyQueryFilter} from '../query/through';
+import {COMMAND} from '../constants';
 
 export const CMD_UNKNOWN = '@unk';
-export const CMD_COMMAND = '@cmd';
+export const CMD_COMMAND = COMMAND;
 export const CMD_ADD_ENTITY = 'entity';
 export const CMD_REGISTER_COMPONENT = 'register';
 export const CMD_REMOVE_ENTITY = 'rme';
 export const CMD_REMOVE_COMPONENT = 'rmc';
 export const CMD_END_OF_EXISTING = 'eoe';
+
+import {
+    ENTITY_ID,
+    COMPONENT_ID,
+    ENTITY_ADD,
+    ENTITY_UPDATE,
+    ENTITY_REMOVE,
+    COMPONENT_ADD,
+    COMPONENT_UPDATE,
+    COMPONENT_REMOVE
+} from '../constants';
 
 /**
  * pull-stream source - produces a stream of entities/components from the entity set
@@ -69,7 +81,7 @@ export function PullStreamSource(entitySet, options = {}) {
         }
 
         // send a command confirming End Of Existing components
-        pushable.push([{ '@cmd': CMD_END_OF_EXISTING, ec:length, cc:componentCount },sendOptions]);
+        pushable.push([{ [CMD_COMMAND]: CMD_END_OF_EXISTING, ec:length, cc:componentCount },sendOptions]);
 
         if (closeAfterExisting === true) {
             pushable.end();
@@ -116,7 +128,7 @@ export function PullStreamSource(entitySet, options = {}) {
             }
         }
         if (eids.length > 0) {
-            this.push([{ '@cmd': CMD_REMOVE_ENTITY, eid: eids },options]); // components[cc] );
+            this.push([{ [CMD_COMMAND]: CMD_REMOVE_ENTITY, eid: eids },options]); // components[cc] );
         }
     }
 
@@ -145,7 +157,7 @@ export function PullStreamSource(entitySet, options = {}) {
             eids.push(entities[ee].id);
         }
         if (eids.length > 0) {
-            this.push([{ '@cmd': CMD_REMOVE_ENTITY, eid: eids },options]); // components[cc] );
+            this.push([{ [CMD_COMMAND]: CMD_REMOVE_ENTITY, eid: eids },options]); // components[cc] );
         }
     };
 
@@ -160,16 +172,16 @@ export function PullStreamSource(entitySet, options = {}) {
         }
         // console.log('[pushable.onComponentRemove]', entitySet.cid, components.map(c => c.id), JSON.stringify(cids) );
         if (cids.length > 0) {
-            this.push([{ '@cmd': CMD_REMOVE_COMPONENT, id: cids },options]);
+            this.push([{ [CMD_COMMAND]: CMD_REMOVE_COMPONENT, id: cids },options]);
         }
     };
 
-    entitySet.on('entity:add', pushable.onEntityAdd, pushable);
-    entitySet.on('entity:update', pushable.onEntityUpdate, pushable);
-    entitySet.on('entity:remove', pushable.onEntityRemove, pushable);
-    entitySet.on('component:add', pushable.onComponentAdd, pushable);
-    entitySet.on('component:update', pushable.onComponentAdd, pushable);
-    entitySet.on('component:remove', pushable.onComponentRemove, pushable);
+    entitySet.on( ENTITY_ADD, pushable.onEntityAdd, pushable);
+    entitySet.on( ENTITY_UPDATE, pushable.onEntityUpdate, pushable);
+    entitySet.on( ENTITY_REMOVE, pushable.onEntityRemove, pushable);
+    entitySet.on( COMPONENT_ADD, pushable.onComponentAdd, pushable);
+    entitySet.on( COMPONENT_UPDATE, pushable.onComponentAdd, pushable); // NOTE intentional Add
+    entitySet.on( COMPONENT_REMOVE, pushable.onComponentRemove, pushable);
 
     return pushable;
 }
@@ -186,8 +198,8 @@ function pushComponent(pushable, component, cdefMap, isAnonymous = false, option
     // if( cdefMap ){
     let json = component.toJSON({ cdefMap });
     if (isAnonymous) {
-        delete json['@e'];
-        delete json['@i'];
+        delete json[ENTITY_ID];
+        delete json[COMPONENT_ID];
     }
     return pushable.push([json,options]);
     // }

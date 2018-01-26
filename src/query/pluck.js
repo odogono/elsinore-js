@@ -5,6 +5,8 @@ import arrayUnique from '../util/array/unique';
 
 const PLUCK = 'PL';
 
+import {ENTITY_ID} from '../constants';
+
 /**
  * Adds pluck functionality directory to entityset
  */
@@ -82,7 +84,7 @@ function pluckEntitySet(registry, entitySet, componentIds, attributes) {
             if (!componentIds) {
                 // if there are no componentIds, then the type of attribute we can pluck is limited...
                 attributes.forEach( attr => {
-                    if (attr == '@e') {
+                    if (attr == ENTITY_ID) {
                         values.push(entity.getEntityId());
                     }
                 });
@@ -93,7 +95,7 @@ function pluckEntitySet(registry, entitySet, componentIds, attributes) {
                 components.forEach( component => {
                     // log.debug('inCOMing ' + stringify(component) );
                     attributes.forEach( attr => {
-                        if (attr == '@e') {
+                        if (attr == ENTITY_ID) {
                             values.push(entity.getEntityId());
                         } else {
                             let val = component.get.call(component, attr);
