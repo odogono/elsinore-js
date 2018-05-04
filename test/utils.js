@@ -4,6 +4,7 @@ import { toPascalCase } from '../src/util/to';
 import valueArray from '../src/util/array/value';
 import Collection from '../src/util/collection';
 import propertyResult from '../src/util/result';
+import {hash} from '../src/util/hash';
 
 test('toPascalCase', t => {
     const cases = {
@@ -92,3 +93,9 @@ test('propertyResult', t => {
 
     t.end();
 });
+
+
+// test( 'hash', t => {
+//     console.log( 'result', hash("forty-two", false), hash("forty-two", true) );
+//     t.end();
+// })

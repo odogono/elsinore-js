@@ -69,8 +69,6 @@ test('creating an entityset with an identical uuid throws an error', t => {
 });
 
 
-
-
 // creating components
 
 test('creating a component with an unknown schema throws an error', t => {

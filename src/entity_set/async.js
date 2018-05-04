@@ -247,7 +247,7 @@ Object.assign(AsyncEntitySet.prototype, EntitySet.prototype, {
      * Returns a component by its entityid and def id
      */
     getComponentByEntityId(entityId, componentDefId) {
-        const result = super.getComponentByEntityId(entityId, componentDefId);
+        const result = EntitySet.prototype.getComponentByEntityId.call(this,entityId, componentDefId);
         if (result) {
             return Promise.resolve(result);
         }

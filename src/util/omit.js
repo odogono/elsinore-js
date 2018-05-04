@@ -6,7 +6,7 @@ import {isObject} from './is';
  * @param {*} obj 
  * @param {*} blacklist 
  */
-export default function omit(obj, ...blacklist) {
+export function omit(obj, ...blacklist) {
     if ( !isObject(obj)) {
         return;
     }
@@ -22,3 +22,5 @@ export default function omit(obj, ...blacklist) {
     }
     return result;
 }
+
+export default omit;

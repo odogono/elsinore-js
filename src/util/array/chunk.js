@@ -1,7 +1,7 @@
 // 
 // Returns an array broken into set lengths
 // 
-export default function chunk(array, chunkLength) {
+export function chunk(array, chunkLength) {
     let i, j;
     let result = [];
     for (i = 0, j = array.length; i < j; i += chunkLength) {
@@ -10,3 +10,5 @@ export default function chunk(array, chunkLength) {
 
     return result;
 }
+
+export default chunk;

@@ -3,7 +3,9 @@ import { toPascalCase } from './to';
 /**
  * 
  */
-export default function componentNameFromUri(schemaUri, suffix = '') {
+export function componentNameFromUri(schemaUri, suffix = '') {
     let name = schemaUri.split('/').pop();
     return toPascalCase(name + suffix);
 }
+
+export default componentNameFromUri;

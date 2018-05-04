@@ -4,7 +4,7 @@ import {isObject} from './is';
 /**
  * A collection stores a set of objects keyed by the id attribute
  */
-export default function Collection(models, options = {}) {
+export function Collection(models, options = {}) {
     this.idAttribute = options.idAttribute || 'id';
     // this.debug = propertyResult( options, 'debug', false);
     this.reset();
@@ -242,3 +242,5 @@ Object.assign(Collection.prototype, {
 });
 
 Collection.prototype.type = 'Collection';
+
+export default Collection;

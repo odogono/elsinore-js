@@ -9,7 +9,7 @@
  * @param {integer} [seed] optionally pass the hash of the previous chunk
  * @returns {integer | string}
  */
-export default function hash /*Fnv32a*/(str, asString = false, seed = 2166136261) {
+export function hash /*Fnv32a*/(str, asString = false, seed = 2166136261) {
     /*jshint bitwise:false */
     let ii, len, hval = seed;
     // hval = (seed === undefined) ? 0x811c9dc5 : seed;
@@ -25,3 +25,5 @@ export default function hash /*Fnv32a*/(str, asString = false, seed = 2166136261
     }
     return hval;
 }
+
+export default hash;

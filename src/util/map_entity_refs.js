@@ -12,7 +12,7 @@ import {cloneComponent} from './clone';
 *   TODO: determine whether this belongs here. this could be moved out
 *   to a module by itself, or perhaps become a processor
 */
-export default function mapComponentEntityRefs( registry, component, entityIdMap, options ){
+export function mapComponentEntityRefs( registry, component, entityIdMap, options ){
     let name,property, val, updates;
     let result;
     // let properties;
@@ -50,3 +50,5 @@ export default function mapComponentEntityRefs( registry, component, entityIdMap
 
     return result;
 }
+
+export default mapComponentEntityRefs;

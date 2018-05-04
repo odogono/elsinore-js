@@ -3,7 +3,7 @@
  * @param {*} obj1 
  * @param {*} obj2 
  */
-export default function mergeRecursive(obj1, obj2) {
+export function mergeRecursive(obj1, obj2) {
     for (let p in obj2) {
         if (obj2.hasOwnProperty(p)) {
             if (obj1 === undefined) {
@@ -14,3 +14,5 @@ export default function mergeRecursive(obj1, obj2) {
     }
     return obj1;
 }
+
+export default mergeRecursive;

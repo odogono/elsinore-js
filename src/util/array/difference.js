@@ -5,6 +5,8 @@
  * @param {*} array 
  * @param {*} others 
  */
-export default function arrayDifference(array, other) {
+export function arrayDifference(array, other) {
     return array && array.filter(x => other.indexOf(x) < 0);
 }
+
+export default arrayDifference;

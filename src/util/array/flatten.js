@@ -3,7 +3,7 @@
  * @param {*} ary 
  * @param {*} ret 
  */
-export default function arrayFlatten(ary, shallow = false) {
+export function arrayFlatten(ary, shallow = false) {
     if (shallow) {
         return [].concat.apply([], ary);
     }
@@ -18,3 +18,5 @@ export default function arrayFlatten(ary, shallow = false) {
     }
     return ret;
 }
+
+export default arrayFlatten;

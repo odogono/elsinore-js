@@ -6,9 +6,11 @@
  * @param {*} obj 
  * @param {*} props 
  */
-export default function extend(target, source) {
+export function extend(target, source) {
     Object.getOwnPropertyNames(source).forEach(function(propName) {
         Object.defineProperty(target, propName, Object.getOwnPropertyDescriptor(source, propName));
     });
     return target;
 }
+
+export default extend;

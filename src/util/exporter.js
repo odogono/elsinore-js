@@ -9,7 +9,7 @@ const Log = createLog('JSONExporter');
 import {ENTITY_ID,COMPONENT_ID} from '../constants';
 
 
-export default function JSONExporter(options={}){
+export function JSONExporter(options={}){
 }
 
 
@@ -142,3 +142,5 @@ Object.assign(JSONExporter.prototype, Base.prototype, {
 JSONExporter.create = function(options={}){
     return new JSONExporter(options);
 }
+
+export default JSONExporter;

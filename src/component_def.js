@@ -4,7 +4,7 @@ import stringify from './util/stringify';
 
 import hash from './util/hash';
 import { isObject } from './util/is';
-import componentNameFromUri from './util/name_from_uri';
+import {componentNameFromUri} from './util/name_from_uri';
 
 import { createLog } from './util/log';
 

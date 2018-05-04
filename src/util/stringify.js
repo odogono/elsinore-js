@@ -3,7 +3,7 @@
  * @param {object} obj
  * @param space
  */
-export default function stringify(obj, space) {
+export function stringify(obj, space) {
     let cache = [];
     return JSON.stringify(
         obj,
@@ -21,3 +21,5 @@ export default function stringify(obj, space) {
         space,
     );
 }
+
+export default stringify;
