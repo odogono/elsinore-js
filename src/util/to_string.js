@@ -1,19 +1,21 @@
 import { Collection } from '../util/collection';
-import { Component } from '../component';
+// import { Component } from '../component';
 import { Entity } from '../entity';
-import { EntitySet } from '../entity_set';
-import { EntityProcessor } from '../entity_processor';
-import {stringify} from './stringify';
+// import { EntitySet } from '../entity_set';
+// import { EntityProcessor } from '../entity_processor';
+import { stringify } from './stringify';
 
 import { getEntityIdFromId } from './id';
 
 /**
- * 
- * @param {*} entity 
- * @param {*} indent 
+ *
+ * @param {*} entity
+ * @param {*} indent
  */
 export function entityToString(entity, indent = '') {
-    if( !entity ){ return []; }
+    if (!entity) {
+        return [];
+    }
     let res = [];
     let comDefId;
 
@@ -28,9 +30,9 @@ export function entityToString(entity, indent = '') {
 }
 
 /**
- * 
- * @param {*} component 
- * @param {*} indent 
+ *
+ * @param {*} component
+ * @param {*} indent
  */
 export function componentToString(component, indent = '') {
     let componentJSON;
@@ -51,9 +53,9 @@ export function componentToString(component, indent = '') {
 }
 
 /**
- * 
- * @param {*} es 
- * @param {*} indent 
+ *
+ * @param {*} es
+ * @param {*} indent
  */
 export function entitySetToString(es, indent) {
     let entity;
@@ -77,19 +79,20 @@ export function entitySetToString(es, indent) {
     return res;
 }
 
-
 export function toString(entity, indent = '', join = '\n') {
     let res = [''];
 
     if (Array.isArray(entity)) {
-        entity.forEach(e => res = res.concat(toString(e, '  ', ' ')));
+        entity.forEach(e => (res = res.concat(toString(e, '  ', ' '))));
+    } else if (entity._esToString) {
+        res = res.concat(entity._esToString(indent)); //  entitySetToString(entity.entitySet, indent));
     } else if (Entity.isEntity(entity)) {
         res = res.concat(entityToString(entity, indent));
-    } else if (Component.isComponent(entity)) {
+        // } else if (Component.isComponent(entity)) {
+    } else if (entity.isComponent === true) {
         res = res.concat(componentToString(entity, indent));
-    } else if (EntityProcessor.isEntityProcessor(entity)) {
-        res = res.concat(entitySetToString(entity.entitySet, indent));
-    } else if (EntitySet.isEntitySet(entity) || entity.type == 'EntitySetReadOnlyView' ) {
+    } else if (entity.isEntitySet === true || entity.type == 'EntitySetReadOnlyView') {
+        // } else if (EntitySet.isEntitySet(entity) || entity.type == 'EntitySetReadOnlyView' ) {
         res = res.concat(entitySetToString(entity, indent));
     } else if (entity instanceof Collection) {
         entity.each(item => {

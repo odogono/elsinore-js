@@ -3,7 +3,7 @@ import { arrayClear } from './util/array/clear';
 import { Base } from './base';
 import { uniqueId } from './util/unique_id';
 
-import { toString as entityToString } from './util/to_string';
+import { toString as entityToString, entitySetToString } from './util/to_string';
 import { SyncCmdBuffer as CmdBuffer } from './cmd_buffer/sync';
 
 import { ENTITY_ID, CMD_ENTITY_ADD,
@@ -178,6 +178,16 @@ Object.assign(EntityProcessor.prototype, Base.prototype, {
         let result = {};
         result.name = this.name;
         return result;
+    },
+
+    /**
+     * Returns a string representation of this entity.
+     * Used internally by util/to_string
+     * 
+     * @param {*} indent 
+     */
+    _toEsString( indent ){
+        return entitySetToString(this.entitySet, indent);
     }
 });
 
