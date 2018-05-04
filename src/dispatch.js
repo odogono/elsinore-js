@@ -18,7 +18,21 @@ const Log = createLog('EntityDispatch');
 /**
  * @class EntityDispatch
  */
-export class EntityDispatch {
+export function EntityDispatch( registry, entitySet ){
+    Object.assign(this, Events);
+
+    if (EntitySet.isEntitySet(registry)) {
+        entitySet = registry;
+        registry = entitySet.getRegistry();
+    }
+
+    this.registry = registry;
+    this.setEntitySet(entitySet);
+
+    return this.initialize();
+}
+
+Object.assign( EntityDispatch.prototype, {
     initialize() {
         // this._removeViews();
         this.processorEntries = new Collection();
@@ -26,7 +40,7 @@ export class EntityDispatch {
         this.executedAt = Date.now;
         this.time = 0;
         return this;
-    }
+    },
 
     /**
      * Sets the EntitySet that this dispatcher will use.
@@ -38,14 +52,14 @@ export class EntityDispatch {
             // this._removeViews();
         }
         this._entitySet = entitySet;
-    }
+    },
 
     /**
      * Returns an array of all the processors registered
      */
     getProcessors() {
         return this.processorEntries.map(e => e.processor);
-    }
+    },
 
     /**
      * Adds a processor to the dispatch
@@ -110,7 +124,7 @@ export class EntityDispatch {
         }
 
         return entry;
-    }
+    },
 
     /**
      * Passes the entity to each of the registered processors in turn
@@ -153,7 +167,7 @@ export class EntityDispatch {
 
             processor.update(entityArray, timeMs);
         });
-    }
+    },
 
     /**
      * Calls each of the registered processors to execute against
@@ -258,14 +272,14 @@ export class EntityDispatch {
             // if( debug && view.cid == 'ev38' ) Log.debug('[update]🐲 view', view.cid, this.time, entityToString(view) );
             entry.updatedAt = this.time;
         });
-    }
+    },
 
     /**
      * Async version of above
      */
     updateAsync(timeMs, options = {}) {
         return Promise.resolve(true);
-    }
+    },
 
     /**
      *
@@ -299,7 +313,7 @@ export class EntityDispatch {
         processor.view = processor.entitySet = entry.view;
 
         return entry;
-    }
+    },
 
     /**
      * Connects entity events originating from the entityset to the processors
@@ -326,13 +340,13 @@ export class EntityDispatch {
                 return event.apply(processor, args);
             });
         }
-    }
+    },
 
     _removeEntry(entry) {
         // const query = entry.get('query');
         // const processor = entry.get('processor');
         // const view = entry.get('view');
-    }
+    },
 
     /**
      * Maps the view to the processor
@@ -348,7 +362,7 @@ export class EntityDispatch {
         views[queryId] = processors;
         this._viewsToProcessors = views;
         return entry;
-    }
+    },
 
     /**
      *
@@ -373,7 +387,7 @@ export class EntityDispatch {
         } else {
             this._viewsToProcessors[queryId] = entryIds;
         }
-    }
+    },
 
     /**
      *
@@ -390,18 +404,9 @@ export class EntityDispatch {
         }
         return this.processorEntries.filter(e => entryIds.indexOf(e.id) !== -1);
     }
-}
+});
 
 EntityDispatch.create = function(registry, entitySet) {
-    const result = new EntityDispatch();
-    Object.assign(result, Events);
-
-    if (EntitySet.isEntitySet(registry)) {
-        entitySet = registry;
-        registry = entitySet.getRegistry();
-    }
-    result.registry = registry;
-    result.setEntitySet(entitySet);
-    result.initialize();
+    const result = new EntityDispatch( registry, entitySet);
     return result;
 };

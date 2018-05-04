@@ -1,5 +1,10 @@
 
-import { register, VALUE } from './index';
+import { register } from './register';
+import { ENTITY_FILTER,
+    LEFT_PAREN,
+    RIGHT_PAREN,
+    VALUE } from './constants';
+    
 import { arrayWithout } from '../util/array/without';
 
 const WITHOUT = 'WO';

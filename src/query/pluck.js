@@ -1,4 +1,9 @@
-import { register, LEFT_PAREN, RIGHT_PAREN, VALUE } from './index';
+import { register } from './register';
+import { ENTITY_FILTER,
+    LEFT_PAREN,
+    RIGHT_PAREN,
+    VALUE } from './constants';
+
 import { Query } from './index';
 import { EntitySet } from '../entity_set';
 import { arrayUnique } from '../util/array/unique';

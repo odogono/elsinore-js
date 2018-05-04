@@ -1,10 +1,9 @@
-import {
-    register,
-    ENTITY_FILTER,
+import { register } from './register';
+import { ENTITY_FILTER,
     LEFT_PAREN,
     RIGHT_PAREN,
-    VALUE
-} from './index';
+    VALUE } from './constants';
+
 // import { Query } from './index';
 import { EntitySet } from '../entity_set';
 

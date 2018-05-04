@@ -1,4 +1,5 @@
-import { register, VALUE } from './index';
+import { register } from './register';
+import { VALUE } from './constants';
 import { stringify } from '../util/stringify';
 
 const ALIAS = 'AL';

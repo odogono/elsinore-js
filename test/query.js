@@ -16,14 +16,18 @@ import {
     entityToString
 } from './common';
 
+import {
+    EQUALS, VALUE
+} from '../src/query/constants';
+
 const Log = createLog('TestQuery');
 
 test('EQUALS op', t => {
     // console.log('uhhh EQUALS', EQUALS);
-    const q = new Query([Q.EQUALS, 8, 8]);
+    const q = new Query([EQUALS, 8, 8]);
     t.equal(q.execute(), true);
 
-    const q2 = new Query([Q.EQUALS, 8, [Q.VALUE, [1, 3, 5, 8]]]);
+    const q2 = new Query([EQUALS, 8, [VALUE, [1, 3, 5, 8]]]);
     t.equal(q.execute(), true);
 
     // t.deepEqual(

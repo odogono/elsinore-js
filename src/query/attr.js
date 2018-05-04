@@ -1,9 +1,10 @@
-import { register, VALUE } from './index';
+import { register } from './register';
+import { VALUE } from './constants';
 
 export const ATTR = 'AT';
 
 /**
- * 
+ *
  */
 function dslAttr(attr) {
     const context = this.readContext(this);
@@ -12,10 +13,10 @@ function dslAttr(attr) {
 }
 
 /**
-*   Takes the attribute value of the given component and returns it
-*
-*   This command operates on the single entity within context.
-*/
+ *   Takes the attribute value of the given component and returns it
+ *
+ *   This command operates on the single entity within context.
+ */
 function commandAttr(context, attributes) {
     let ii, jj, len, jlen, result;
     let entity = context.entity;
@@ -31,7 +32,7 @@ function commandAttr(context, attributes) {
 
     if (!entity) {
         // console.log('ATTR> no entity');
-        return context.last = [VALUE, null];
+        return (context.last = [VALUE, null]);
     }
 
     attributes = Array.isArray(attributes) ? attributes : [attributes];
@@ -58,7 +59,7 @@ function commandAttr(context, attributes) {
         result = result[0];
     }
 
-    return context.last = [VALUE, result];
+    return (context.last = [VALUE, result]);
 }
 
 register(ATTR, commandAttr, { attr: dslAttr });

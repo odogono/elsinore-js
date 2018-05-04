@@ -13,9 +13,15 @@ import { ComponentRegistry } from '../schema';
 import { ENTITY_ID, ENTITY_SET_ID, COMPONENT_ID, COMPONENT_URI, ENTITY_SET_ADD } from '../constants';
 
 
-export class Registry {
-    constructor(options = {}) {
-        Object.assign(this, Events);
+export function Registry(options={}){
+    Object.assign(this, Events);
+    this.initialize(options);
+}
+
+
+Object.assign( Registry.prototype, {
+
+    initialize(options = {}) {
 
         this._initialized = true;
 
@@ -44,7 +50,7 @@ export class Registry {
         this.schemaRegistry = options.schemaRegistry || ComponentRegistry.create(null, { registry: this });
 
         this.schemaRegistry.on('all', (...args) => this.trigger.apply(this, args));
-    }
+    },
 
     /**
      *
@@ -54,7 +60,7 @@ export class Registry {
         // let counter = Date.now() % 1e9;
         // return (Math.random() * 1e9 >>> 0) + (counter++ + '__')
         return ++this.sequenceCount;
-    }
+    },
 
     /**
      *   Creates a new entity
@@ -98,7 +104,7 @@ export class Registry {
         }
 
         return result;
-    }
+    },
 
     /**
      *
@@ -106,7 +112,7 @@ export class Registry {
     createEntityWithId(entityId = 0, entitySetId = 0, options = {}) {
         return this.createEntity(null, { ...options, [ENTITY_ID]: entityId, [ENTITY_SET_ID]: entitySetId });
         // return this.createEntity(null, { ...options, ENTITY_ID: entityId, ENTITY_SET_ID: entitySetId });
-    }
+    },
 
     /**
      * Registers a new Component Def from data
@@ -133,21 +139,21 @@ export class Registry {
                 }, Promise.resolve())
                 .then(() => componentDefs);
         });
-    }
+    },
 
     /**
      * Returns an array of all the Component Defs that have been registered
      */
     getComponentDefs() {
         return this.schemaRegistry.getComponentDefs();
-    }
+    },
 
     /**
      * 
      */
     getComponentDef(ident) {
         return this.schemaRegistry.getComponentDef(ident);
-    }
+    },
 
     /**
      *   Registers the array of component def schemas with the given entitySet
@@ -165,7 +171,7 @@ export class Registry {
                 return entitySet.registerComponentDef(cdef, options);
             }));
         }, Promise.resolve());
-    }
+    },
 
     /**
      * TODO: name this something better, like 'getComponentIID'
@@ -175,7 +181,7 @@ export class Registry {
             options = { forceArray: true };
         }
         return this.schemaRegistry.getIId(componentIDs, options);
-    }
+    },
 
     /**
      * Creates a new component instance
@@ -219,9 +225,9 @@ export class Registry {
             }
             return this.schemaRegistry.createComponent(componentDef, attrs, options, cb);
         }
-    }
+    },
 
-    destroyComponent(component, options) {}
+    destroyComponent(component, options) {},
 
     /**
      * Converts an entity id to an entity instance
@@ -235,7 +241,7 @@ export class Registry {
             result.registry = this;
         }
         return result;
-    }
+    },
 
     /**
      * Creates a new EntitySet instance.
@@ -279,11 +285,11 @@ export class Registry {
         }
 
         return this.addEntitySet(result, options);
-    }
+    },
 
     removeAllEntitySets(options) {
         return Promise.all(this._entitySets.map(es => this.removeEntitySet(es, options)));
-    }
+    },
 
     /**
      *   Returns a Promise to removes an entitySet from the registry
@@ -301,7 +307,7 @@ export class Registry {
         }
 
         return entitySet.close(options).then(() => this.removeEntitySet(entitySet, { sync: true }));
-    }
+    },
 
     /**
      *
@@ -344,7 +350,7 @@ export class Registry {
                 return entitySet;
             });
         });
-    }
+    },
 
     /**
      *
@@ -355,7 +361,7 @@ export class Registry {
             return es;
         }
         return null;
-    }
+    },
 
     /**
      *
@@ -367,7 +373,7 @@ export class Registry {
 
         entitySet.setRegistry(null);
         this._entitySets = _.without(this._entitySets, entitySet);
-    }
+    },
 
     /**
      *
@@ -392,7 +398,7 @@ export class Registry {
             entitySet.triggerEntityEvent.apply(entitySet, args);
         }
     }
-}
+});
 
 Registry.prototype.type = 'Registry';
 Registry.prototype.isRegistry = true;

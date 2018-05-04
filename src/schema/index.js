@@ -21,19 +21,12 @@ import {
     COMPONENT_TYPE_ADD
 } from '../constants';
 
-/**
- *
- */
-// export const ComponentDefCollection = Collection.extend({
-//     model: ComponentDef,
-//     getByHash: function(hash:string){
-//         return this.find( cdef => cdef.hash() == hash );
-//     },
-//     getByUri: function(uri:string){
-//         return this.find( cdef => cdef.getUri() == uri );
-//     }
-// });
 
+/**
+ * 
+ * @param {*} models 
+ * @param {*} options 
+ */
 export function ComponentDefCollection( models, options={} ){
     Collection.prototype.initialize.call(this, models, options );
 }
@@ -48,25 +41,16 @@ Object.assign( ComponentDefCollection.prototype, Collection.prototype,{
     }
 });
 
-// export class ComponentDefCollection extends Collection {
-//     getByHash(hash) {
-//         return this.find(cdef => cdef.hash() == hash);
-//     }
 
-//     getByUri(uri) {
-//         return this.find(cdef => cdef.getUri() == uri);
-//     }
-// }
 ComponentDefCollection.prototype.model = ComponentDef;
 
-// class ComponentDefUriCollection extends ComponentDefCollection {
-//     modelId(attrs) {
-//         return attrs.uri;
-//     }
-// }
 
 
-
+/**
+ * 
+ * @param {*} definitions 
+ * @param {*} options 
+ */
 export function ComponentRegistry(definitions, options={}){
     Object.assign(this, Events);
     this.initialize( definitions, options );

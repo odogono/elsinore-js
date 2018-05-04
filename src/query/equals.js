@@ -1,7 +1,7 @@
 import {deepEqual} from '../util/deep_equal';
 
-import {register,
-    VALUE} from './index';
+import { register } from './register';
+import { VALUE } from './constants';
 
 export const EQUALS = '=='; // == 
 export const NOT_EQUAL = '!='; // !=

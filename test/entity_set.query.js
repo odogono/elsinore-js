@@ -70,7 +70,7 @@ test('include will filter an entity', t => {
 
             t.end();
         })
-        .catch(err => log.error('test error: %s', err.stack));
+        .catch(err => Log.error('test error: %s', err.stack));
 });
 
 test('entityset filter by attribute being within a value array', t => {

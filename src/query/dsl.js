@@ -1,6 +1,9 @@
 import {
     argCounts,
     precendenceValues,
+} from './register';
+
+import {
     ALL_FILTER,
     ANY_FILTER,
     NONE_FILTER,
@@ -16,7 +19,8 @@ import {
     ROOT,
     VALUE,
     EQUALS
-} from './index';
+} from './constants';
+
 import { arrayFlatten } from '../util/array/flatten';
 
 function precendence(operator) {
@@ -139,12 +143,16 @@ function findMatchingRightParam(values, startIndex) {
     return result;
 }
 
-export class DslContext {
-    constructor(query) {
+export function DslContext(query) {
+    this.initialize(query);
+}
+
+Object.assign(DslContext.prototype, {
+    initialize(query) {
         this.query = query;
         this.valStack = [];
         this.opStack = [];
-    }
+    },
 
     /**
      * takes the specified context and returns a new instance
@@ -158,7 +166,7 @@ export class DslContext {
             return result;
         }
         return context;
-    }
+    },
 
     /**
      *
@@ -167,7 +175,7 @@ export class DslContext {
         const context = this.readContext(this);
         context.pushVal(val, true);
         return context;
-    }
+    },
 
     /**
      *
@@ -176,20 +184,20 @@ export class DslContext {
         const context = this.readContext(this);
         context.pushOp(ROOT);
         return context;
-    }
+    },
 
     and(val) {
         const context = this.readContext(this);
         context.pushVal(val, true, 'fromAnd');
         context.pushOp(AND);
         return context;
-    }
+    },
 
     or(val) {
         this.pushVal(val, true);
         this.pushOp(OR);
         return this;
-    }
+    },
 
     where(...clauses) {
         const context = this.readContext(this);
@@ -215,37 +223,37 @@ export class DslContext {
             context.valStack = context.valStack.concat(_.flatten(clauses, true));
         }
         return context;
-    }
+    },
 
     equals(val) {
         this.pushVal(val, true);
         this.pushOp(EQUALS);
         return this;
-    }
+    },
 
     lessThan(val) {
         this.pushVal(val, true);
         this.pushOp(LESS_THAN);
         return this;
-    }
+    },
 
     lessThanOrEqual(val) {
         this.pushVal(val, true);
         this.pushOp(LESS_THAN_OR_EQUAL);
         return this;
-    }
+    },
 
     greaterThan(val) {
         this.pushVal(val, true);
         this.pushOp(GREATER_THAN);
         return this;
-    }
+    },
 
     greaterThanOrEqual(val) {
         this.pushVal(val, true);
         this.pushOp(GREATER_THAN_OR_EQUAL);
         return this;
-    }
+    },
 
     //
     // Filter Functions
@@ -262,7 +270,7 @@ export class DslContext {
         }
 
         return context;
-    }
+    },
 
     include(componentIds, filterFn) {
         const context = this.readContext(this);
@@ -273,7 +281,7 @@ export class DslContext {
             context.pushVal(filterFn, true);
         }
         return context;
-    }
+    },
 
     /**
      *   Entities should have at least one of the specified components
@@ -287,7 +295,7 @@ export class DslContext {
             context.pushVal(filterFn, true);
         }
         return context;
-    }
+    },
 
     /**
      *   entities will be excluded if the have any of the componentIds
@@ -300,7 +308,7 @@ export class DslContext {
             context.pushVal(filterFn, true);
         }
         return context;
-    }
+    },
 
     popVal() {
         let val = this.valStack.shift();
@@ -308,19 +316,19 @@ export class DslContext {
             return val.toArray();
         }
         return val;
-    }
+    },
 
     peekVal() {
         return this.valStack[0];
-    }
+    },
 
     lastOp() {
         return this.opStack[this.opStack.length - 1];
-    }
+    },
 
     popOp() {
         return this.opStack.pop();
-    }
+    },
 
     pushOp(op) {
         const lastOp = this.lastOp();
@@ -328,7 +336,7 @@ export class DslContext {
             this.pushVal(this.popOp());
         }
         this.opStack.push(op);
-    }
+    },
 
     pushVal(val, wrapInValueTuple, label = '') {
         const isQuery = val instanceof DslContext;
@@ -346,7 +354,7 @@ export class DslContext {
             this.valStack.push(val);
         }
         return this;
-    }
+    },
 
     /**
      *
@@ -369,7 +377,24 @@ export class DslContext {
 
         return result;
     }
-}
+});
+
+// export function QueryBuilder(query) {
+//     DslContext.call(this,query);
+//     // DslContext.prototype.initialize.call(this, query);
+// }
+
+// Object.assign(QueryBuilder.prototype, DslContext.prototype, {
+//     and() {
+//         throw new Error('invalid function and');
+//     },
+//     or() {
+//         throw new Error('invalid function or');
+//     },
+//     where() {
+//         throw new Error('invalid function where');
+//     }
+// });
 
 export class QueryBuilder extends DslContext {
     constructor(query) {
