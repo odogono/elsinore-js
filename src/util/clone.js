@@ -1,4 +1,4 @@
-import arrayDifference from './array/difference';
+import { arrayDifference } from './array/difference';
 
 /**
  * 

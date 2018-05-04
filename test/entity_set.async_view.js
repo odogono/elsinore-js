@@ -8,7 +8,7 @@ import {
     EntityFilter,
     EntitySet,
     Registry,
-    SchemaRegistry,
+    ComponentRegistry,
     initialiseRegistry,
     loadEntities,
     loadComponents,

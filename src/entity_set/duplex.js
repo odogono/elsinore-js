@@ -4,7 +4,7 @@ import _sink from './sink';
 export const source = _source;
 export const sink = _sink;
 
-export default function duplex( entitySet, options={}){
+export function duplex( entitySet, options={}){
 
     // const did = _.uniqueId('eldup');
 

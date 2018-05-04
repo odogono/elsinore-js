@@ -1,9 +1,9 @@
 import _ from 'underscore';
 import test from 'tape';
 import { toPascalCase } from '../src/util/to';
-import valueArray from '../src/util/array/value';
-import Collection from '../src/util/collection';
-import propertyResult from '../src/util/result';
+import { valueArray } from '../src/util/array/value';
+import { Collection } from '../src/util/collection';
+import { propertyResult } from '../src/util/result';
 import {hash} from '../src/util/hash';
 
 test('toPascalCase', t => {

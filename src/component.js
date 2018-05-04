@@ -1,10 +1,10 @@
-import Base from './base';
+import { Base } from './base';
 import { setEntityIdFromId, getEntityIdFromId, getEntitySetIdFromId } from './util/id';
-import stringify from './util/stringify';
-import extend from './util/extend';
-import omit from './util/omit';
-import hash from './util/hash';
-import uniqueId from './util/unique_id';
+import {stringify} from './util/stringify';
+import { extend } from './util/extend';
+import { omit } from './util/omit';
+import { hash } from './util/hash';
+import { uniqueId } from './util/unique_id';
 import { deepEqual } from './util/deep_equal';
 import { deepExtend } from './util/deep_extend';
 
@@ -15,7 +15,7 @@ import { COMPONENT_ID, COMPONENT_URI, COMPONENT_DEF_ID, ENTITY_ID, ENTITY_SET_ID
  * @type {[type]}
  */
 
-export default function Component(attrs, options) {
+export function Component(attrs, options) {
     this.id = 0;
 
     this.cid = uniqueId('c');

@@ -1,4 +1,4 @@
-import arrayDifference from './difference';
+import { arrayDifference } from './difference';
 
 /**
  * 
@@ -11,5 +11,3 @@ export function arrayWithout(array, other) {
     }
     return arrayDifference(array, other);
 }
-
-export default arrayWithout;

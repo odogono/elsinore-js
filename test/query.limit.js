@@ -1,7 +1,7 @@
 import _ from 'underscore';
 import test from 'tape';
 
-import Query from '../src/query';
+import { Query } from '../src/query';
 import '../src/query/limit';
 
 import {

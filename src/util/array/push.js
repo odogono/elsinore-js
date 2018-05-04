@@ -8,5 +8,3 @@ export function arrayPush(array = [], item) {
     array.push(item);
     return array;
 }
-
-export default arrayPush;

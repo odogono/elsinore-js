@@ -1,6 +1,6 @@
 import test from 'tape';
 
-import Component from '../src/component';
+import { Component } from '../src/component';
 
 test('is a component', t => {
     let c = new Component();

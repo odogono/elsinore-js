@@ -12,5 +12,3 @@ export function extend(target, source) {
     });
     return target;
 }
-
-export default extend;

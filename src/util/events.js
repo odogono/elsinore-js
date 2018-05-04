@@ -1,4 +1,4 @@
-import uniqueId from './unique_id';
+import { uniqueId } from './unique_id';
 
 // Backbone.Events
 // ---------------
@@ -37,8 +37,8 @@ import uniqueId from './unique_id';
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-let Events = {};
-export default Events;
+export let Events = {};
+
 
 // Regular expression used to split event strings.
 let eventSplitter = /\s+/;

@@ -35,5 +35,3 @@ export function uniqueId(prefix) {
     let id = ++idCounter + '';
     return prefix ? prefix + id : id;
 }
-
-export default uniqueId;

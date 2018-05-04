@@ -1,4 +1,4 @@
-import arrayWithout from './array/without';
+import { arrayWithout } from './array/without';
 
 export class ReusableId {
     constructor(defaultValue) {
@@ -87,5 +87,3 @@ export class ReusableId {
         // })
     }
 }
-
-export default ReusableId;

@@ -1,5 +1,5 @@
 import { register, VALUE } from './index';
-import stringify from '../util/stringify';
+import { stringify } from '../util/stringify';
 
 const ALIAS = 'AL';
 const ALIAS_GET = 'ALG';
@@ -23,8 +23,8 @@ function aliasAs(name) {
 }
 
 /**
-*   Stores or retrieves a value with the given name in the context
-*/
+ *   Stores or retrieves a value with the given name in the context
+ */
 function commandAlias(context, name) {
     let value;
     context.alias = context.alias || {};
@@ -39,7 +39,7 @@ function commandAlias(context, name) {
     }
     context.alias[name] = value;
 
-    return context.last = [VALUE, value];
+    return (context.last = [VALUE, value]);
 }
 
 function commandAliasGet(context, name) {
@@ -55,7 +55,7 @@ function commandAliasGet(context, name) {
     if (context.debug) {
         log.debug('cmd aliasGet ' + stringify(name) + ' ' + stringify(value));
     }
-    return context.last = [VALUE, value];
+    return (context.last = [VALUE, value]);
 }
 
 // the additional commands are added to Query as soon as this module is imported

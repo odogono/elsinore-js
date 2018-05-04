@@ -11,5 +11,3 @@ export function arrayUnique(array) {
         return p;
     }, []);
 }
-
-export default arrayUnique;

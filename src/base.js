@@ -1,9 +1,7 @@
-import hash from './util/hash';
-import stringify from './util/stringify';
-import uniqueId from './util/unique_id';
-import Events from './util/events';
+import { hash } from './util/hash';
+import { Events } from './util/events';
 
-export default function Base() {
+export function Base() {
     this.id = 0;
     this._registry = null;
 }

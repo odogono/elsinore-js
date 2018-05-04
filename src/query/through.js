@@ -1,6 +1,6 @@
-import Component from '../component';
-import Entity from '../entity';
-import Query from './index';
+import { Component } from '../component';
+import { Entity } from '../entity';
+import { Query } from './index';
 import { toString as entityToString } from '../util/to_string';
 
 /**
@@ -8,12 +8,12 @@ import { toString as entityToString } from '../util/to_string';
  *
  * @param {*} query
  */
-export default function queryFilter(query, options = {}) {
+export function QueryFilter(query, options = {}) {
     query = new Query(query);
 
     // the incoming stream will be [(entity|component),options]
     // the options passed with contain an (es) origin cid
-    
+
     return function(read) {
         return function next(end, cb) {
             let sync,
@@ -36,13 +36,12 @@ export default function queryFilter(query, options = {}) {
 }
 
 export function applyQueryFilter(query, value, options = {}) {
-    if( !query ){
+    if (!query) {
         return true;
     }
     const isComponent = Component.isComponent(value);
     const isEntity = Entity.isEntity(value);
 
-    
     // components pass right through the queryFilter - queries only apply
     // to entities after all
     // this was readded to cater for views which need to cope with components
@@ -50,19 +49,19 @@ export function applyQueryFilter(query, value, options = {}) {
     if (isComponent) {
         return true;
     }
-    
+
     if (value['@cmd']) {
         return true;
     }
-    
+
     // not an entity either - so reject
     if (!isEntity) {
         // console.log('[QueryFilter] rejecting', isEntity, isComponent, value );
         return true;
     }
-    
+
     let outcome = query.execute(value);
-    
+
     // console.log('[QueryFilter] consider', isEntity, isComponent, JSON.stringify(outcome) );
 
     if (Entity.isEntity(outcome) && outcome.hasComponents()) {
@@ -72,23 +71,23 @@ export function applyQueryFilter(query, value, options = {}) {
     return false;
 }
 
-export function extractValue(options={}){
-    return function(read){
-        return function next(end,cb){
+export function extractValue(options = {}) {
+    return function(read) {
+        return function next(end, cb) {
             // let sync,loop = true;
             // while(loop){
-                // loop = false;
-                // sync = true;
-                read(end, function(end,data){
-                    cb(end, data != null ? (Array.isArray(data) ? data[0] : data) : null)
+            // loop = false;
+            // sync = true;
+            read(end, function(end, data) {
+                cb(end, data != null ? (Array.isArray(data) ? data[0] : data) : null);
 
-                    // if(!end){
-                    //     return sync ? (loop=true) : next(end,cb);
-                    // }
-                    // cb(end, data);//Array.isArray(data) ? data[0] : data );
-                });
-                // sync = false;
+                // if(!end){
+                //     return sync ? (loop=true) : next(end,cb);
+                // }
+                // cb(end, data);//Array.isArray(data) ? data[0] : data );
+            });
+            // sync = false;
             // }
-        }
-    }
+        };
+    };
 }

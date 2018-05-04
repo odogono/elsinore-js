@@ -3,12 +3,12 @@ import test from 'tape';
 import BitField  from 'odgn-bitfield';
 import Sinon from 'sinon';
 
-import EntityFilter from '../src/entity_filter';
+import { EntityFilter } from '../src/entity_filter';
 
 import {
     toInteger
 } from '../src/util/to';
-import uniqueId from '../src/util/unique_id';
+import { uniqueId } from '../src/util/unique_id';
 
 import {
     ALL, ANY, SOME, NONE, INCLUDE, EXCLUDE

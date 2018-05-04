@@ -9,7 +9,7 @@ import {
     EntitySet,
     Registry,
     Query,
-    SchemaRegistry,
+    ComponentRegistry,
     initialiseRegistry,
     loadEntities,
     loadComponents,

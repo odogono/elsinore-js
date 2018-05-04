@@ -50,5 +50,3 @@ export function mapComponentEntityRefs( registry, component, entityIdMap, option
 
     return result;
 }
-
-export default mapComponentEntityRefs;

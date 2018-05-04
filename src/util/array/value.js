@@ -1,6 +1,6 @@
-import Collection from '../collection';
-import Entity from '../../entity';
-import Component from '../../component';
+import { Collection } from '../collection';
+import { Entity } from '../../entity';
+import { Component } from '../../component';
 
 
 /**
@@ -10,7 +10,7 @@ import Component from '../../component';
  * @param {*} array
  * @returns {(*|[])} 
  */
-export default function valueArray(...array) {
+export function valueArray(...array) {
     if (array === undefined) {
         return null;
     }

@@ -7,7 +7,7 @@
  * @param {*} path 
  * @param {*} fallback 
  */
-export default function result(obj, path, fallback) {
+export function propertyResult(obj, path, fallback) {
     if (!Array.isArray(path)) {
         path = [path];
     }

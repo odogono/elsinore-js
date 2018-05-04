@@ -5,7 +5,6 @@ import test from 'tape';
 import {
     Entity,
     EntityProcessor,
-    Dispatch,
     initialiseRegistry, // loadEntities,
     // loadFixtureJSON,
     // printE,
@@ -14,6 +13,10 @@ import {
     entityToString,
     createLog
 } from './common';
+
+import { EntityDispatch } from '../src/dispatch';
+
+import { ENTITY_ADD } from '../src/constants';
 
 const Log = createLog('TestDispatch');
 
@@ -61,7 +64,7 @@ it.
 test('adding a processor', async t => {
     try {
         const registry = await initialiseRegistry();
-        const dispatch = Dispatch.create();
+        const dispatch = EntityDispatch.create();
 
         class Proc extends EntityProcessor {}
         Proc.prototype.type = 'ProcProcessor';
@@ -83,7 +86,7 @@ test('adding a processor', async t => {
 });
 
 test('basic execution of a processor', t => {
-    const dispatch = Dispatch.create();
+    const dispatch = EntityDispatch.create();
     let executeCount = 0;
 
     const processor = createEntityProcessor((entityArray, timeMs, options) => executeCount++);
@@ -105,7 +108,7 @@ test('basic execution of a processor', t => {
 test('will only execute processors which match', async t => {
     try {
         const registry = await initialiseRegistry();
-        const dispatch = Dispatch.create(registry);
+        const dispatch = EntityDispatch.create(registry);
         let executeCount = 0;
 
         const processor = createEntityProcessor((entityArray, timeMs, options) => executeCount++);
@@ -134,7 +137,7 @@ test('will only execute processors which match', async t => {
 test('executing a processor with a time interval', async t => {
     try {
         const registry = await initialiseRegistry();
-        const dispatch = Dispatch.create(registry);
+        const dispatch = EntityDispatch.create(registry);
         let entity = registry.createEntity({ '@c': '/component/username' });
         let executeCount = 0;
 
@@ -165,7 +168,7 @@ test('retrieving all the processors assigned to a query', async t => {
     try {
         const registry = await initialiseRegistry();
         const entitySet = registry.createEntitySet();
-        const dispatch = Dispatch.create(entitySet);
+        const dispatch = EntityDispatch.create(entitySet);
 
         const a = createEntityProcessor();
         const b = createEntityProcessor();
@@ -191,7 +194,7 @@ test('retrieving all the processors assigned to a query', async t => {
 test('processors receive update events', async t => {
     try {
         const registry = await initialiseRegistry();
-        const dispatch = Dispatch.create();
+        const dispatch = EntityDispatch.create();
         let updateCount = 0;
 
         class Processor extends EntityProcessor {
@@ -215,7 +218,7 @@ test('processors receive update events', async t => {
 test('processor update intervals', async t => {
     try {
         const registry = await initialiseRegistry();
-        const dispatch = Dispatch.create();
+        const dispatch = EntityDispatch.create();
         let updateCount = 0;
 
         class Processor extends EntityProcessor {
@@ -242,7 +245,7 @@ test('processor update intervals', async t => {
 test('processor priority', async t => {
     try {
         const registry = await initialiseRegistry();
-        const dispatch = Dispatch.create();
+        const dispatch = EntityDispatch.create();
         let result = [];
 
         const procA = createEntityProcessor(() => {
@@ -274,12 +277,12 @@ test('processor should receive an event when entities are added', async t => {
     try {
         const registry = await initialiseRegistry();
         const entitySet = registry.createEntitySet();
-        const dispatch = Dispatch.create(entitySet);
+        const dispatch = EntityDispatch.create(entitySet);
         let isAdded = false;
         class Proc extends EntityProcessor {
             constructor(...args) {
                 super(...args);
-                this.events = { 'entity:add': this.onAdded };
+                this.events = { [ENTITY_ADD]: this.onAdded };
             }
             onAdded(entityArray) {
                 isAdded = true;
@@ -304,16 +307,21 @@ test('processor can affect original entityset', async t => {
     try {
         const registry = await initialiseRegistry();
         const entitySet = registry.createEntitySet();
-        const dispatch = Dispatch.create(entitySet);
+        const dispatch = EntityDispatch.create(entitySet);
 
         class Proc extends EntityProcessor {
             constructor(...args) {
                 super(...args);
                 this.entityFilter = Q => Q.all('/component/username');
-                this.events = { 'entity:add': this.onAdded };
+                this.events = { [ENTITY_ADD]: this.onAdded };
             }
 
+            /**
+             * 
+             * @param {*} entityArray 
+             */
             onAdded(entityArray) {
+                // Log.debug('[onAdded]',  entityToString(entityArray) ); 
                 const entity = entityArray[0];
                 const username = entity.Username.get('username');
                 const component = { '@c': '/component/status', status: 'active' };
@@ -330,15 +338,13 @@ test('processor can affect original entityset', async t => {
 
         const processor = dispatch.addProcessor(Proc).processor;
 
-        // entitySet.on('all', (name,...evt) => Log.debug('[es][evt]',entitySet.cid, name));
-
         entitySet.addEntity({ '@c': '/component/username', username: 'bob' });
+        // this next entity wont be added, as it doesnt pass the processors filter
         entitySet.addEntity({ '@c': '/component/channel', name: 'channel4' });
         entitySet.addEntity({ '@c': '/component/username', username: 'alice' });
 
         dispatch.update(0, { debug: false });
         // t.equals( addCount, 2, 'only two applicable entities added' );
-        // Log.debug('[proc es]', entityToString(processor.entitySet));
         // Log.debug('[es]', entityToString(entitySet));
 
         t.equals(

@@ -2,8 +2,8 @@ import _ from 'underscore';
 import test from 'tape';
 import { createLog } from './common';
 import { toPascalCase } from '../src/util/to';
-import valueArray from '../src/util/array/value';
-import Collection from '../src/util/collection';
+import { valueArray } from '../src/util/array/value';
+import { Collection } from '../src/util/collection';
 
 const Log = createLog('TestPullStream');
 

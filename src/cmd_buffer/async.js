@@ -1,35 +1,36 @@
 'use strict';
 
-import Entity from '../entity';
-import Collection from '../util/collection';
+import { Entity } from '../entity';
+import { Collection } from '../util/collection';
 import { InvalidEntityError } from '../error';
 
 import { getEntitySetIdFromId } from '../util/id';
 
-import valueArray from '../util/array/value';
+import { valueArray } from '../util/array/value';
 
-import SyncCmdBuffer from './sync';
-import { CMD_ENTITY_ADD, CMD_COMPONENT_ADD, CMD_COMPONENT_REMOVE } from './sync';
+import { SyncCmdBuffer} from './sync';
+
+import { CMD_ENTITY_ADD, CMD_COMPONENT_ADD, CMD_COMPONENT_REMOVE } from '../constants';
 
 // import {createLog} from '../util/log';
 // const Log = createLog('CmdBufferSync');
 
-export default function AsyncCmdBuffer() {
+export function AsyncCmdBuffer() {
     SyncCmdBuffer.call(this);
     // these collections are keyed by cid, since entities and components do not
     // have an id assigned until they hit the entityset
-    this.entitiesAdded = new Collection(null,{idAttribute:'cid'});
-    this.entitiesUpdated = new Collection(null,{idAttribute:'cid'});
-    this.entitiesRemoved = new Collection(null,{idAttribute:'cid'});
-    this.componentsAdded = new Collection(null,{idAttribute:'cid'});
-    this.componentsUpdated = new Collection(null,{idAttribute:'cid'});
-    this.componentsRemoved = new Collection(null,{idAttribute:'cid'});
+    this.entitiesAdded = new Collection(null, { idAttribute: 'cid' });
+    this.entitiesUpdated = new Collection(null, { idAttribute: 'cid' });
+    this.entitiesRemoved = new Collection(null, { idAttribute: 'cid' });
+    this.componentsAdded = new Collection(null, { idAttribute: 'cid' });
+    this.componentsUpdated = new Collection(null, { idAttribute: 'cid' });
+    this.componentsRemoved = new Collection(null, { idAttribute: 'cid' });
 }
 
 Object.assign(AsyncCmdBuffer.prototype, SyncCmdBuffer.prototype, {
     /**
-    * Adds a component to this set
-    */
+     * Adds a component to this set
+     */
     addComponent(entitySet, component, options = {}) {
         let execute;
 
@@ -88,8 +89,8 @@ Object.assign(AsyncCmdBuffer.prototype, SyncCmdBuffer.prototype, {
     },
 
     /**
-    *
-    */
+     *
+     */
     removeComponent(entitySet, component, options = {}) {
         let execute, entityId;
         execute = options.execute === undefined ? true : options.execute;
@@ -210,8 +211,8 @@ Object.assign(AsyncCmdBuffer.prototype, SyncCmdBuffer.prototype, {
     },
 
     /**
-    *
-    */
+     *
+     */
     removeEntity(entitySet, entity, options = {}) {
         let execute;
         let removeOptions = { batch: true, execute: false };
@@ -268,7 +269,7 @@ Object.assign(AsyncCmdBuffer.prototype, SyncCmdBuffer.prototype, {
     },
 
     /**
-     * 
+     *
      */
     _executeEntityCommand(entity, componentBitfield, cmdType, component, options = {}) {
         // if( !component.getDefId ){
@@ -290,11 +291,9 @@ Object.assign(AsyncCmdBuffer.prototype, SyncCmdBuffer.prototype, {
                 // console.log('add component', component.id, component.cid, componentDefId,'to', entity.id, component.toJSON() );
 
                 if (entityHasComponent) {
-                    
                     this.componentsUpdated.add(component);
-                    
-                    this.entitiesUpdated.add(entity);
 
+                    this.entitiesUpdated.add(entity);
                 } else {
                     entity.addComponent(component);
 
@@ -339,9 +338,9 @@ Object.assign(AsyncCmdBuffer.prototype, SyncCmdBuffer.prototype, {
     },
 
     /**
-     * 
+     *
      * execute resolves a list of cmds into more concrete instructions
-     * 
+     *
      */
     execute(entitySet, options) {
         let ii, len;
@@ -377,8 +376,8 @@ Object.assign(AsyncCmdBuffer.prototype, SyncCmdBuffer.prototype, {
                 }
             });
 
-            if( options.debug ){
-                console.log('[components][added]', this.componentsAdded.map(c=>c.toJSON()))
+            if (options.debug) {
+                console.log('[components][added]', this.componentsAdded.map(c => c.toJSON()));
             }
 
             // console.log('[AsyncCmdBuffer][execute]', this.entitiesUpdated );
@@ -417,7 +416,7 @@ Object.assign(AsyncCmdBuffer.prototype, SyncCmdBuffer.prototype, {
                     }
 
                     if (!silent) {
-                        this.triggerEvents(entitySet,options);
+                        this.triggerEvents(entitySet, options);
                     }
                     return this;
                 });

@@ -1,13 +1,23 @@
-import Entity from '../entity';
+import { Entity } from '../entity';
 
-import hash from '../util/hash';
-import uniqueId from '../util/unique_id';
-import Base from '../base';
+import { hash } from '../util/hash';
+import { uniqueId } from '../util/unique_id';
+import { Base } from '../base';
 
 import { createLog } from '../util/log';
+
+import {
+    ENTITY_ADD,
+    ENTITY_REMOVE,
+    COMPONENT_ADD,
+    COMPONENT_REMOVE
+} from '../constants';
+
 const Log = createLog('EntitySetListener');
 
-export default function EntitySetListener(srcEntitySet, targetEntitySet, query, options = {}) {
+
+
+export function EntitySetListener(srcEntitySet, targetEntitySet, query, options = {}) {
     this.cid = uniqueId('esl');
 
     this.updateOnEvent = !!options.updateOnEvent;
@@ -51,10 +61,10 @@ Object.assign(EntitySetListener.prototype, Base.prototype, {
 
         // Log.debug('[listenToEntitySet]', srcEntitySet.cid, targetEntitySet.cid);
         // _.bindAll(this, 'onEntityAdd', 'onEntityRemove', 'onComponentAdd', 'onComponentRemove');
-        srcEntitySet.listenTo(targetEntitySet, 'entity:add', this.onEntityAdd.bind(this));
-        srcEntitySet.listenTo(targetEntitySet, 'entity:remove', this.onEntityRemove.bind(this));
-        srcEntitySet.listenTo(targetEntitySet, 'component:add', this.onComponentAdd.bind(this));
-        srcEntitySet.listenTo(targetEntitySet, 'component:remove', this.onComponentRemove.bind(this));
+        srcEntitySet.listenTo(targetEntitySet, ENTITY_ADD, this.onEntityAdd.bind(this));
+        srcEntitySet.listenTo(targetEntitySet, ENTITY_REMOVE, this.onEntityRemove.bind(this));
+        srcEntitySet.listenTo(targetEntitySet, COMPONENT_ADD, this.onComponentAdd.bind(this));
+        srcEntitySet.listenTo(targetEntitySet, COMPONENT_REMOVE, this.onComponentRemove.bind(this));
         // srcEntitySet.listenTo( targetEntitySet, 'component:update', (...args) => {
         //     log.debug('listen to es change ' + stringify(args) );
         // })

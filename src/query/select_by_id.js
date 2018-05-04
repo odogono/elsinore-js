@@ -1,7 +1,7 @@
 import { register, LEFT_PAREN, RIGHT_PAREN, VALUE } from './index';
-// import Query from './index';
-import EntitySet from '../entity_set';
-import arrayUnique from '../util/array/unique';
+// import { Query } from './index';
+import { EntitySet } from '../entity_set';
+import { arrayUnique } from '../util/array/unique';
 
 const SELECT_BY_ID = 'SBI';
 

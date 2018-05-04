@@ -22,5 +22,3 @@ export function omit(obj, ...blacklist) {
     }
     return result;
 }
-
-export default omit;

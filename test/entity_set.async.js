@@ -2,10 +2,10 @@ import _ from 'underscore';
 import Sinon from 'sinon';
 import test from 'tape';
 
-import AsyncEntitySet from '../src/entity_set/async';
-import Entity from '../src/entity';
-import Component from '../src/component';
-import Registry from '../src/registry';
+import { AsyncEntitySet } from '../src/entity_set/async';
+import { Entity } from '../src/entity';
+import { Component } from '../src/component';
+import { Registry } from '../src/registry';
 import { createLog } from '../src/util/log';
 
 import {

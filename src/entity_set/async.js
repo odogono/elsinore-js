@@ -1,11 +1,11 @@
-import EntitySet from './index';
-import CmdBuffer from '../cmd_buffer/async';
-import ReusableId from '../util/reusable_id';
+import { EntitySet } from './index';
+import { AsyncCmdBuffer as CmdBuffer } from '../cmd_buffer/async';
+import { ReusableId } from '../util/reusable_id';
 import { setEntityIdFromId, getEntityIdFromId, getEntitySetIdFromId } from '../util/id';
 import { toInteger } from '../util/to';
 import { createLog } from '../util/log';
 import { ComponentNotFoundError, EntityNotFoundError, ComponentDefNotFoundError } from '../error';
-import ComponentRegistry from '../schema';
+import { ComponentRegistry } from '../schema';
 import { toString as entityToString } from '../util/to_string';
 
 const Log = createLog('AsyncEntitySet');
@@ -18,7 +18,7 @@ const Log = createLog('AsyncEntitySet');
  * the aim should be to resolve updates into a series of commands which precisely describes what should be
  * added/removed updated
  */
-export default function AsyncEntitySet(entities, options = {}, ...rest) {
+export function AsyncEntitySet(entities, options = {}, ...rest) {
     options.cmdBuffer = CmdBuffer;
 
     options.indexByEntityId = true;

@@ -1,18 +1,17 @@
 import BitField from 'odgn-bitfield';
 import { setEntityIdFromId } from './util/id';
 import { isInteger, isString } from './util/is';
-import uniqueId from './util/unique_id';
-import readProperty from './util/read_property';
-import hash from './util/hash';
-import extend from './util/extend';
+import { uniqueId } from './util/unique_id';
+import { readProperty } from './util/read_property';
+import { hash } from './util/hash';
+import { extend } from './util/extend';
 
-import Component from './component';
-import Base from './base';
+import { Component } from './component';
+import { Base } from './base';
 
 import { ENTITY_ID, ENTITY_SET_ID, COMPONENT_UPDATE } from './constants';
 
-
-export default function Entity(options = {}) {
+export function Entity(options = {}) {
     this.id = 0;
     this._entitySet = null;
 
@@ -164,7 +163,7 @@ Object.assign(Entity.prototype, Base.prototype, {
             this._entitySet.addComponent(component, { ...options, ENTITY_ID: this.getEntityId() });
             return this;
         }
-        
+
         // delegate parsing/creation of components to registry
         if (registry !== undefined) {
             component = registry.createComponent(component);
@@ -186,8 +185,7 @@ Object.assign(Entity.prototype, Base.prototype, {
         const defId = component.getDefId();
         let existing = this.components[defId];
 
-        
-        if (existing !== undefined ) {
+        if (existing !== undefined) {
             this._removeComponent(existing);
         }
 

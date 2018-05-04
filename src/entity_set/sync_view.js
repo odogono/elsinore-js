@@ -1,8 +1,8 @@
-import EntitySet from './index';
-import Query from '../query';
+import { EntitySet } from './index';
+import { Query } from '../query';
 
-import stringify from '../util/stringify';
-import QueryFilter from '../query/through';
+import {stringify} from '../util/stringify';
+import { QueryFilter } from '../query/through';
 import { applyQueryFilter } from '../query/through';
 
 /**

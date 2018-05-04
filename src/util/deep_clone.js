@@ -1,4 +1,4 @@
-import parseJSON from './parse_json';
+import {parseJSON} from './parse_json';
 
 /**
  * 
@@ -7,5 +7,3 @@ export function deepClone(obj) {
     const str = stringify(obj);
     return parseJSON(str);
 }
-
-export default deepClone;

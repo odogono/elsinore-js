@@ -1,5 +1,5 @@
-import propertyResult from './result';
-import {isObject} from './is';
+import { propertyResult } from './result';
+import { isObject } from './is';
 
 /**
  * A collection stores a set of objects keyed by the id attribute
@@ -14,14 +14,14 @@ export function Collection(models, options = {}) {
 }
 
 /**
- * 
+ *
  */
 Object.assign(Collection.prototype, {
     /**
      * Adds an object to the collection. If an object with the same id
      * already exists in the collection, it is replaced.
-     * 
-     * @param {*} obj 
+     *
+     * @param {*} obj
      */
     add(obj, options) {
         if (!obj) {
@@ -29,20 +29,20 @@ Object.assign(Collection.prototype, {
         }
         let debug = options !== undefined ? options.debug : false;
         let doSort = options !== undefined ? (options.sort !== undefined ? options.sort : true) : true;
-        
+
         if (Array.isArray(obj) && obj[0] !== undefined) {
-            obj.forEach(item => this.add(item, {sort:false}));
-            
-            if( this.comparator && doSort ){
-                this.models.sort( this.comparator );
+            obj.forEach(item => this.add(item, { sort: false }));
+
+            if (this.comparator && doSort) {
+                this.models.sort(this.comparator);
                 this._reindex();
             }
-            
+
             return this;
         }
-        
+
         const idAttr = this.idAttribute;
-        const key = propertyResult(obj,idAttr);// obj[idAttr];
+        const key = propertyResult(obj, idAttr); // obj[idAttr];
         const existing = this._objectsById[key];
 
         this._objectsById[key] = obj;
@@ -54,16 +54,14 @@ Object.assign(Collection.prototype, {
             return this;
         }
 
-        
-        if( this.comparator && doSort ){
+        if (this.comparator && doSort) {
             this.models.push(obj);
-            this.models.sort( this.comparator );
+            this.models.sort(this.comparator);
             this._reindex();
         } else {
             this._indexOfObject[key] = this.models.length;
             this.models.push(obj);
         }
-
 
         return this;
     },
@@ -71,8 +69,8 @@ Object.assign(Collection.prototype, {
     /**
      * Removes an object from the collection either by its id, or
      * by instance
-     * 
-     * @param {*} obj 
+     *
+     * @param {*} obj
      */
     remove(obj, debug) {
         if (Array.isArray(obj) && obj[0] !== undefined) {
@@ -84,21 +82,20 @@ Object.assign(Collection.prototype, {
         let objId = obj;
         let item = this._objectsById[objId];
 
-        if( item === undefined ){
-            objId = propertyResult(obj,this.idAttribute);
+        if (item === undefined) {
+            objId = propertyResult(obj, this.idAttribute);
             item = this._objectsById[objId];
         }
-        
+
         if (item !== undefined) {
             const index = this._indexOfObject[objId];
-            
-            if( debug ) console.log('[remove]', obj, this.idAttribute, objId, index );
+
+            if (debug) console.log('[remove]', obj, this.idAttribute, objId, index);
             result = this.models.splice(index, 1);
 
             delete this._objectsById[objId];
             delete this._indexOfObject[objId];
-        } else
-            if( debug ) console.log('[remove]', 'not found', obj, this._objectsById[objId] );
+        } else if (debug) console.log('[remove]', 'not found', obj, this._objectsById[objId]);
 
         this._reindex();
 
@@ -107,8 +104,8 @@ Object.assign(Collection.prototype, {
 
     /**
      * Returns an object at the given index
-     * 
-     * @param {*} index 
+     *
+     * @param {*} index
      */
     at(index) {
         return this.models[index];
@@ -116,8 +113,8 @@ Object.assign(Collection.prototype, {
 
     /**
      * Returns an object by its id
-     *  
-     * @param {*} id 
+     *
+     * @param {*} id
      */
     get(id) {
         return this._objectsById[String(id)];
@@ -125,29 +122,29 @@ Object.assign(Collection.prototype, {
 
     /**
      * Returns true if the object is contained in this collection
-     * 
-     * @param {*} obj 
+     *
+     * @param {*} obj
      */
     has(obj) {
         let id = obj;
-        if( isObject(obj) ){
-            id = propertyResult(obj,this.idAttribute, obj);
+        if (isObject(obj)) {
+            id = propertyResult(obj, this.idAttribute, obj);
         }
         return this._objectsById[id] !== undefined;
     },
 
     /**
      * Returns the first item which matches the specific attributes
-     * @param {*} attrs 
+     * @param {*} attrs
      */
     findWhere(attrs) {
-        return this.models.find( el => this.isMatch(el,attrs) );
+        return this.models.find(el => this.isMatch(el, attrs));
     },
 
     /**
      * Returns true if the given object has the given attributes
-     * @param {*} object 
-     * @param {*} attrs 
+     * @param {*} object
+     * @param {*} attrs
      */
     isMatch(object, attrs) {
         let keys = Object.keys(attrs),
@@ -166,27 +163,27 @@ Object.assign(Collection.prototype, {
     },
 
     /**
-     * 
+     *
      */
     _reindex() {
         let ii = 0;
         let len = this.models.length;
         for (ii = 0; ii < len; ii++) {
             let obj = this.models[ii];
-            let objId = propertyResult(obj,this.idAttribute);
+            let objId = propertyResult(obj, this.idAttribute);
             this._indexOfObject[objId] = ii;
         }
     },
 
     /**
-     * 
+     *
      */
     size() {
         return this.models.length;
     },
 
     /**
-     * 
+     *
      */
     reset() {
         this.models = [];
@@ -195,46 +192,46 @@ Object.assign(Collection.prototype, {
     },
 
     /**
-     * 
-     * @param {*} fn 
+     *
+     * @param {*} fn
      */
     map(fn) {
         return this.models.map(fn);
     },
 
     /**
-     * 
-     * @param {*} fn 
-     * @param {*} initialValue 
+     *
+     * @param {*} fn
+     * @param {*} initialValue
      */
     reduce(fn, initialValue) {
         return this.models.reduce(fn, initialValue);
     },
 
     /**
-     * 
-     * @param {*} fn 
+     *
+     * @param {*} fn
      */
-    filter( fn ){
+    filter(fn) {
         return this.models.filter(fn);
     },
 
-    find(fn){
+    find(fn) {
         return this.models.find(fn);
     },
 
     /**
      * Applies the specified function over each of the contained
      * models
-     * 
-     * @param {*} fn 
+     *
+     * @param {*} fn
      */
-    forEach( fn ){
+    forEach(fn) {
         return this.models.forEach(fn);
     },
 
     /**
-     * 
+     *
      */
     toJSON() {
         return this.models;
@@ -242,5 +239,3 @@ Object.assign(Collection.prototype, {
 });
 
 Collection.prototype.type = 'Collection';
-
-export default Collection;

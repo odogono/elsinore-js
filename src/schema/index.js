@@ -1,15 +1,15 @@
-import Base from '../base';
-import Collection from '../util/collection';
-import Component from '../component';
-import Events from '../util/events';
-import stringify from '../util/stringify';
+import { Base } from '../base';
+import { Collection } from '../util/collection';
+import { Component } from '../component';
+import { Events } from '../util/events';
+import {stringify} from '../util/stringify';
 
 import { isObject } from '../util/is';
 import { createLog } from '../util/log';
 
-import propertyResult from '../util/result';
+import { propertyResult } from '../util/result';
 
-import ComponentDef from '../component_def';
+import {ComponentDef} from '../component_def';
 
 const Log = createLog('ComponentRegistry', false);
 
@@ -53,7 +53,7 @@ ComponentDefCollection.prototype.model = ComponentDef;
 /**
  *
  */
-export default class ComponentRegistry {
+export class ComponentRegistry {
     constructor(definitions, options = {}) {
         Object.assign(this, Events);
         this.registry = options.registry;

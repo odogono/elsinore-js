@@ -1,29 +1,28 @@
-import Base from '../base';
-import Collection from '../util/collection';
+import { Base } from '../base';
+import { Collection } from '../util/collection';
 import BitField from 'odgn-bitfield';
-import Component from '../component';
-import Entity from '../entity';
+import { Component } from '../component';
+import { Entity } from '../entity';
 
-import Query from '../query';
-import stringify from '../util/stringify';
+import { Query } from '../query';
+import { stringify } from '../util/stringify';
 import { isInteger, isPromise } from '../util/is';
-import uniqueId from '../util/unique_id';
-import valueArray from '../util/array/value';
-import {componentsFromCollections} from '../util/array/value';
+import { uniqueId } from '../util/unique_id';
+import { valueArray } from '../util/array/value';
+import { componentsFromCollections } from '../util/array/value';
 import { isObject } from '../util/is';
-import createUUID from '../util/uuid';
-import hash from '../util/hash';
+import { createUUID } from '../util/uuid';
+import { hash } from '../util/hash';
 import { cloneEntity } from '../util/clone';
 
-import CmdBuffer from '../cmd_buffer/sync';
+import { SyncCmdBuffer as CmdBuffer } from '../cmd_buffer/sync';
 
-import {PullStreamSource} from './source';
-import {PullStreamSink} from './sink';
+import { PullStreamSource } from './source';
+import { PullStreamSink } from './sink';
 
 import { COMPONENT_URI, ENTITY_ID, ENTITY_EVENT } from '../constants';
 
-
-export default function EntitySet(entities, options = {}) {
+export function EntitySet(entities, options = {}) {
     this.initialize(entities, options);
 }
 
@@ -34,7 +33,7 @@ Object.assign(EntitySet.prototype, Base.prototype, {
     initialize(entities, options = {}) {
         // this collection of entities indexes by the entity ids
         this._entities = new Collection();
-        this._entitiesById = new Collection(null, {debug:true, idAttribute: e => e ? e.getEntityId() : undefined});
+        this._entitiesById = new Collection(null, { debug: true, idAttribute: e => (e ? e.getEntityId() : undefined) });
         this._components = new Collection();
 
         let cmdBufferType = CmdBuffer;
@@ -48,10 +47,10 @@ Object.assign(EntitySet.prototype, Base.prototype, {
         if (options.cmdBuffer) {
             cmdBufferType = options.cmdBuffer;
         }
-        
+
         // entities can either be indexed by their full id or by the entityId part of
         // the supplied id
-        this.indexByEntityId = !!options.indexByEntityId
+        this.indexByEntityId = !!options.indexByEntityId;
 
         this._cmdBuffer = new cmdBufferType();
         this.allowEmptyEntities = options.allowEmptyEntities === void 0 ? true : options.allowEmptyEntities;
@@ -85,7 +84,7 @@ Object.assign(EntitySet.prototype, Base.prototype, {
 
     /**
      * Returns the entity at index
-     * 
+     *
      * @param {number} index
      */
     at(index) {
@@ -94,11 +93,11 @@ Object.assign(EntitySet.prototype, Base.prototype, {
 
     /**
      * Returns an entity by its id
-     * 
-     * @param {number} entityId 
+     *
+     * @param {number} entityId
      */
-    getByEntityId( entityId ){
-        return this._entitiesById.get( entityId );
+    getByEntityId(entityId) {
+        return this._entitiesById.get(entityId);
     },
 
     /**
@@ -117,7 +116,7 @@ Object.assign(EntitySet.prototype, Base.prototype, {
     },
 
     /**
-     * 
+     *
      */
     toJSON(options = {}) {
         if (!isObject(options)) {
@@ -129,7 +128,7 @@ Object.assign(EntitySet.prototype, Base.prototype, {
         let result = { uuid: this._uuid };
         // { cid:this.cid };
         if (options.mapCdefUri) {
-            options.cdefMap = this.getSchemaRegistry().getComponentDefUris();
+            options.cdefMap = this.getComponentRegistry().getComponentDefUris();
         }
         options.flatEntity = true;
 
@@ -159,8 +158,8 @@ Object.assign(EntitySet.prototype, Base.prototype, {
     // },
 
     /**
-     * 
-     * @param {*} options 
+     *
+     * @param {*} options
      */
     iterator(options) {
         let nextIndex = 0;
@@ -173,10 +172,10 @@ Object.assign(EntitySet.prototype, Base.prototype, {
 
     /**
      * Returns a Pull-Stream source
-     * 
+     *
      * see https://pull-stream.github.io/
-     * 
-     * @param {*} options 
+     *
+     * @param {*} options
      */
     source(options) {
         return PullStreamSource(this, options);
@@ -184,41 +183,41 @@ Object.assign(EntitySet.prototype, Base.prototype, {
 
     /**
      * Returns a Pull-Stream sink
-     * 
-     * @param {*} options 
+     *
+     * @param {*} options
      */
     sink(options, completeCb) {
         return PullStreamSink(this, options, completeCb);
     },
 
     /**
-     * 
-     * @param {*} registry 
-     * @param {*} options 
+     *
+     * @param {*} registry
+     * @param {*} options
      */
     setRegistry(registry, options) {
         this._registry = registry;
     },
 
     /**
-     * 
+     *
      */
     getRegistry() {
         return this._registry;
     },
 
     /**
-     * 
+     *
      */
-    getSchemaRegistry() {
+    getComponentRegistry() {
         return this.getRegistry().schemaRegistry;
     },
 
     /**
      * Adds a component to this set
      * Returns the entities that were added or updated as a result
-     * @param {*} component 
-     * @param {*} options 
+     * @param {*} component
+     * @param {*} options
      */
     addComponent(component, options) {
         // conveniently create a component instance if raw data is passed
@@ -242,29 +241,29 @@ Object.assign(EntitySet.prototype, Base.prototype, {
     },
 
     /**
-     * 
+     *
      */
-    getRemovedComponents(){
-        return componentsFromCollections( this._cmdBuffer.entitiesRemoved, this._cmdBuffer.componentsRemoved );
+    getRemovedComponents() {
+        return componentsFromCollections(this._cmdBuffer.entitiesRemoved, this._cmdBuffer.componentsRemoved);
     },
 
     /**
      * Returns the entities that were added or updated in the last operation
      */
-    getUpdatedEntities(){
-        return valueArray( this._cmdBuffer.entitiesAdded, this._cmdBuffer.entitiesUpdated);
+    getUpdatedEntities() {
+        return valueArray(this._cmdBuffer.entitiesAdded, this._cmdBuffer.entitiesUpdated);
     },
 
     /**
-     * 
+     *
      */
-    getRemovedEntities(){
-        return valueArray( this._cmdBuffer.entitiesRemoved );
+    getRemovedEntities() {
+        return valueArray(this._cmdBuffer.entitiesRemoved);
     },
 
     /**
      * Returns an existing component instance (if it exists)
-     * 
+     *
      * @param {*|integer} component
      * @returns {*} a component instance
      */
@@ -281,9 +280,9 @@ Object.assign(EntitySet.prototype, Base.prototype, {
 
     /**
      * Returns a component by its entityid and def id
-     * 
-     * @param {*} entityId 
-     * @param {*} componentDefId 
+     *
+     * @param {*} entityId
+     * @param {*} componentDefId
      */
     getComponentByEntityId(entityId, componentDefId) {
         // console.log('[getComponentByEntityId]', entityId, componentDefId, this._entities.map(e=>e.id) );
@@ -293,30 +292,30 @@ Object.assign(EntitySet.prototype, Base.prototype, {
             // console.log('[getComponentByEntityId][found]', entityId, componentDefId, Object.keys(entity.components) );
             return entity.components[componentDefId];
         }
-        
+
         return null;
     },
 
     /**
-     * 
-     * @param {*} component 
-     * @param {*} options 
+     *
+     * @param {*} component
+     * @param {*} options
      */
     removeComponent(component, options) {
         return this._cmdBuffer.removeComponent(this, component, options);
     },
 
     /**
-    *   Flushes any outstanding commands in the buffer
-    */
+     *   Flushes any outstanding commands in the buffer
+     */
     flush(options) {
         return this._cmdBuffer.flush(this, options);
     },
 
     /**
-    *   Adds an entity with its components to the entityset
-    * @param {*} entity - Entity, array of entities, array of raw components
-    */
+     *   Adds an entity with its components to the entityset
+     * @param {*} entity - Entity, array of entities, array of raw components
+     */
     addEntity(entity, options) {
         let add = null;
         let isArray = Array.isArray(entity);
@@ -344,11 +343,10 @@ Object.assign(EntitySet.prototype, Base.prototype, {
         return result;
     },
 
-    
     /**
-     * 
-     * @param {*} entity 
-     * @param {*} options 
+     *
+     * @param {*} entity
+     * @param {*} options
      */
     removeEntity(entity, options) {
         if (EntitySet.isMemoryEntitySet(entity)) {
@@ -358,10 +356,10 @@ Object.assign(EntitySet.prototype, Base.prototype, {
     },
 
     /**
-     * 
-     * @param {*} entityId 
-     * @param {*} returnId 
-     * @param {*} options 
+     *
+     * @param {*} entityId
+     * @param {*} returnId
+     * @param {*} options
      */
     _createEntity(entityId, returnId, options = {}) {
         let result;
@@ -386,15 +384,15 @@ Object.assign(EntitySet.prototype, Base.prototype, {
     },
 
     /**
-     * 
+     *
      */
     _createComponentId() {
         return this.getRegistry().createId();
     },
 
     /**
-     * 
-     * @param {*} entity 
+     *
+     * @param {*} entity
      */
     _addEntity(entity) {
         // check whether we are using the entire id or just the entity part of the id to index
@@ -403,47 +401,46 @@ Object.assign(EntitySet.prototype, Base.prototype, {
         // check for an existing
         let existing = this._entitiesById.get(entityId);
 
-        if( existing ){
+        if (existing) {
             // console.log('[_addEntity][existing]', existing !== undefined, this._entitiesById.map(e=>[e.id,e.cid,Object.keys(e.components)]) );
             // console.log('[_addEntity][existing]', Object.keys(this._entitiesById._objectsById) );
 
             let components = entity.getComponents();
-            
+
             // components.forEach( existing._addComponent( existing );
-            components.forEach( c => existing._addComponent(c) );
-            
-            this._addComponent( components );
+            components.forEach(c => existing._addComponent(c));
+
+            this._addComponent(components);
 
             // console.log('[_addEntity]', existing.cid, entityId, Object.keys(existing.components) );
             // console.log('[_addEntity]', existing.cid, entityId, Object.keys(existing.components) );
 
             return existing;
         } else {
-            
             entity.setRegistry(this.getRegistry());
-            
+
             if (entity.id === 0) {
                 throw new Error('attempting to add invalid entity');
             }
-    
+
             this._entities.add(entity);
             this._entitiesById.add(entity);
-    
+
             // console.log('[_addEntity][added]', entityId, Object.keys(this._entities._objectsById), Object.keys(this._entitiesById._objectsById) );
         }
-        
+
         // no need for us to issue add events as well as entity:add
         // this.add(entity, { silent: true });
 
         // ensure that the entities components are indexed separately
-        this._addComponent( entity.getComponents() );
+        this._addComponent(entity.getComponents());
 
         return entity;
     },
 
     /**
-     * 
-     * @param {*} entity 
+     *
+     * @param {*} entity
      */
     _removeEntity(entity) {
         this._entities.remove(entity);
@@ -456,8 +453,8 @@ Object.assign(EntitySet.prototype, Base.prototype, {
     },
 
     /**
-     * 
-     * @param {*} component 
+     *
+     * @param {*} component
      */
     _addComponent(component) {
         // console.log('[EntitySet][_addComponent] exist', this.cid, this._components.map(c=>[c.id,c.cid]));
@@ -466,17 +463,17 @@ Object.assign(EntitySet.prototype, Base.prototype, {
     },
 
     /**
-     * 
-     * @param {*} component 
+     *
+     * @param {*} component
      */
     _removeComponent(component) {
         this._components.remove(component);
     },
 
     /**
-     * 
-     * @param {*} entity 
-     * @param {*} options 
+     *
+     * @param {*} entity
+     * @param {*} options
      */
     getEntity(entity, options) {
         if (Entity.isEntity(entity)) {
@@ -489,8 +486,8 @@ Object.assign(EntitySet.prototype, Base.prototype, {
     },
 
     /**
-     * 
-     * @param {*} entity 
+     *
+     * @param {*} entity
      */
     hasEntity(entity) {
         // console.log('[hasEntity]', entity);// this._entities._objectsById[entity] !== undefined, entity);
@@ -587,8 +584,8 @@ Object.assign(EntitySet.prototype, Base.prototype, {
     },
 
     /**
-     * 
-     * 
+     *
+     *
      * @param {string} name
      * @param entity
      */
@@ -604,18 +601,18 @@ Object.assign(EntitySet.prototype, Base.prototype, {
         // }
 
         // trigger a entity-event event - which other views can listen to and respond to
-        this.trigger.apply(this, [ ENTITY_EVENT, name, entity, this, ...rest]);
+        this.trigger.apply(this, [ENTITY_EVENT, name, entity, this, ...rest]);
         this.trigger.apply(this, [name, entity, this, ...rest]);
 
         return this;
     },
 
     /**
-     * 
-     * @param {*} entityOrFilter 
-     * @param {*} name 
-     * @param {*} callback 
-     * @param {*} context 
+     *
+     * @param {*} entityOrFilter
+     * @param {*} name
+     * @param {*} callback
+     * @param {*} context
      */
     listenToEntityEvent(entityOrFilter, name, callback, context) {
         if (!this._entityEvents) {
@@ -627,7 +624,6 @@ Object.assign(EntitySet.prototype, Base.prototype, {
 
         this._entityEvents.listenTo(this._entityEvents, name, callback);
     },
-
 
     // // TODO: remove
     // doesEntityHaveComponents(entity, options) {
@@ -641,9 +637,9 @@ Object.assign(EntitySet.prototype, Base.prototype, {
 
     /**
      * Executes a query against this entityset
-     * 
-     * @param {*} query 
-     * @param {*} options 
+     *
+     * @param {*} query
+     * @param {*} options
      */
     query(query, options = {}) {
         options.registry = this.getRegistry();
@@ -659,27 +655,26 @@ Object.assign(EntitySet.prototype, Base.prototype, {
 
     /**
      * Removes the entities identified by the query
-     * @param {*} query 
-     * @param {*} options 
+     * @param {*} query
+     * @param {*} options
      */
     removeByQuery(query, options = {}) {
         options = { ...options, registry: this.getRegistry() };
-        
+
         const result = Query.exec(query, this, options);
 
-        return this.removeEntity( result.map(e => e.id) );
+        return this.removeEntity(result.map(e => e.id));
     },
-
 
     /**
      * Applies a map function over the contained entities
      * and returns an array of results
-     * 
-     * @param {*} mapFn 
+     *
+     * @param {*} mapFn
      */
-    map( mapFn ){
-        return this._entities.map( mapFn );
-    },
+    map(mapFn) {
+        return this._entities.map(mapFn);
+    }
 });
 
 EntitySet.prototype.type = 'EntitySet';

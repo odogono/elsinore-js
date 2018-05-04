@@ -1,9 +1,9 @@
-import Collection from '../util/collection';
-import Component from '../component';
-import Entity from '../entity';
-import EntitySet from '../entity_set';
-import EntityProcessor from '../entity_processor';
-import stringify from './stringify';
+import { Collection } from '../util/collection';
+import { Component } from '../component';
+import { Entity } from '../entity';
+import { EntitySet } from '../entity_set';
+import { EntityProcessor } from '../entity_processor';
+import {stringify} from './stringify';
 
 import { getEntityIdFromId } from './id';
 

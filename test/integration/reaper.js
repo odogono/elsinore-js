@@ -13,8 +13,8 @@ import {
 
 const Log = createLog('TestIntegrationReaper');
 
-import EntityProcessor from '../../src/entity_processor';
-import Dispatch from '../../src/dispatch';
+import { EntityProcessor } from '../../src/entity_processor';
+import { EntityDispatch } from '../../src/dispatch';
 import { JSONLoader } from '../../src/util/loader';
 
 let VOI;
@@ -23,7 +23,7 @@ test.skip('processor views are updated', async t => {
     try {
         const registry = await initialiseRegistry();
         const entitySet = registry.createEntitySet();
-        const dispatch = Dispatch.create(entitySet);
+        const dispatch = EntityDispatch.create(entitySet);
 
         await registerTestComponents(entitySet);
 
@@ -58,7 +58,7 @@ test.skip('processor views are updated', async t => {
 test('reaper', async t => {
     const registry = await initialiseRegistry();
     const entitySet = registry.createEntitySet();
-    const dispatch = Dispatch.create(entitySet);
+    const dispatch = EntityDispatch.create(entitySet);
     const eventSpy = Sinon.spy();
 
     try {

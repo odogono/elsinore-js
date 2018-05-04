@@ -1,4 +1,3 @@
-
 /**
  * @param {object} obj
  * @param space
@@ -18,8 +17,6 @@ export function stringify(obj, space) {
             }
             return value;
         },
-        space,
+        space
     );
 }
-
-export default stringify;

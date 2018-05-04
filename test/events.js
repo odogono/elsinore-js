@@ -3,8 +3,8 @@
 import test from 'tape';
 import _ from 'underscore';
 // import Common  from './common';
-// import Base from '../src/base';
-import Events from '../src/util/events';
+// import { Base } from '../src/base';
+import { Events } from '../src/util/events';
 // import EventsAsync from '../src/util/events.async';
 import {createLog} from '../src/util/log';
 

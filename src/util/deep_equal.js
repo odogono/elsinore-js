@@ -142,5 +142,3 @@ function deepEq(a, b, aStack, bStack) {
     bStack.pop();
     return true;
 }
-
-export default deepEqual;

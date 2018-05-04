@@ -7,14 +7,14 @@ import Sinon from 'sinon';
 import {
     createLog,
     // Component, Entity, EntityFilter, EntitySet,
-    // Registry, SchemaRegistry,
+    // Registry, ComponentRegistry,
     entityToString,
     initialiseRegistry, 
     stringify,
 } from './common';
 
-import Base from '../src/base';
-import Events from '../src/util/events';
+import { Base } from '../src/base';
+import { Events } from '../src/util/events';
 // import '../src/entity_set/view';
 import '../src/entity_set/async_view';
 import { create as createROView } from '../src/entity_set/ro_view';

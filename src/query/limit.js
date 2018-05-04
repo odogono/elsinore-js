@@ -5,8 +5,8 @@ import {
     RIGHT_PAREN,
     VALUE
 } from './index';
-// import Query from './index';
-import EntitySet from '../entity_set';
+// import { Query } from './index';
+import { EntitySet } from '../entity_set';
 
 export const LIMIT = 'LM';
 

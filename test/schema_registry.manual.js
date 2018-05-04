@@ -15,7 +15,7 @@ import {
     requireLib,
 } from './common';
 
-import ComponentRegistry from '../src/schema/index';
+import { ComponentRegistry } from '../src/schema/index';
 
 const Log = createLog('TestComponentRegistry');
 

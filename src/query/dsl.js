@@ -15,9 +15,9 @@ import {
     OR,
     ROOT,
     VALUE,
-    EQUALS,
+    EQUALS
 } from './index';
-import arrayFlatten from '../util/array/flatten';
+import { arrayFlatten } from '../util/array/flatten';
 
 function precendence(operator) {
     let result;
@@ -44,7 +44,7 @@ function precendence(operator) {
 }
 
 /**
- * 
+ *
  */
 function argCount(operator) {
     let result;
@@ -66,8 +66,8 @@ function argCount(operator) {
 }
 
 /**
-*   Converts an RPN expression into an AST
-*/
+ *   Converts an RPN expression into an AST
+ */
 function rpnToTree(values) {
     let ii, len, op, stack, slice, count;
 
@@ -107,9 +107,9 @@ function rpnToTree(values) {
                 if (slice[0] === VALUE) {
                     // note only happens with ALIAS_GET
                     // log.debug('overly flat ' + JSON.stringify([op].concat(slice)));
-                    slice = [ slice ];
+                    slice = [slice];
                 }
-                stack.push([ op ].concat(slice));
+                stack.push([op].concat(slice));
             }
         }
     }
@@ -118,7 +118,9 @@ function rpnToTree(values) {
 }
 
 function findMatchingRightParam(values, startIndex) {
-    let ii, len, parenCount = 0;
+    let ii,
+        len,
+        parenCount = 0;
     let result = [];
 
     for (ii = 0, len = values.length; ii < len; ii++) {
@@ -159,7 +161,7 @@ export class DslContext {
     }
 
     /**
-     * 
+     *
      */
     value(val) {
         const context = this.readContext(this);
@@ -168,7 +170,7 @@ export class DslContext {
     }
 
     /**
-     * 
+     *
      */
     root() {
         const context = this.readContext(this);
@@ -198,13 +200,17 @@ export class DslContext {
         if (clauses.length === 1) {
             context.pushVal(clauses[0]);
         } else {
-            clauses = _.reduce(clauses, (res, clause, i) => {
-                res.push(clause.toArray());
-                if (res.length > 1) {
-                    res.push(AND);
-                }
-                return res;
-            }, []);
+            clauses = _.reduce(
+                clauses,
+                (res, clause, i) => {
+                    res.push(clause.toArray());
+                    if (res.length > 1) {
+                        res.push(AND);
+                    }
+                    return res;
+                },
+                []
+            );
 
             context.valStack = context.valStack.concat(_.flatten(clauses, true));
         }
@@ -245,8 +251,8 @@ export class DslContext {
     // Filter Functions
     //
     /**
-    *   The entities must have ALL of the specified components
-    */
+     *   The entities must have ALL of the specified components
+     */
     all(componentIds, filterFn) {
         const context = this.readContext(this);
         context.pushOp(ALL_FILTER);
@@ -270,8 +276,8 @@ export class DslContext {
     }
 
     /**
-    *   Entities should have at least one of the specified components
-    */
+     *   Entities should have at least one of the specified components
+     */
     any(componentIds, filterFn) {
         const context = this.readContext(this);
         // context.pushOp( filterFn ? ANY_FILTER : ANY );
@@ -284,8 +290,8 @@ export class DslContext {
     }
 
     /**
-    *   entities will be excluded if the have any of the componentIds
-    */
+     *   entities will be excluded if the have any of the componentIds
+     */
     none(componentIds, filterFn) {
         const context = this.readContext(this);
         context.pushOp(NONE_FILTER);
@@ -329,7 +335,7 @@ export class DslContext {
 
         if (wrapInValueTuple) {
             if (!isQuery) {
-                val = [ VALUE, val ];
+                val = [VALUE, val];
             }
         }
 
@@ -343,7 +349,7 @@ export class DslContext {
     }
 
     /**
-     * 
+     *
      */
     toArray(toTree = false) {
         let result;
@@ -358,14 +364,14 @@ export class DslContext {
         result = this.valStack;
 
         if (toTree) {
-            return this.commands = rpnToTree(result);
+            return (this.commands = rpnToTree(result));
         }
 
         return result;
     }
 }
 
-export default class QueryBuilder extends DslContext {
+export class QueryBuilder extends DslContext {
     constructor(query) {
         super(query);
     }

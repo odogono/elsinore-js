@@ -1,43 +1,44 @@
 // main file for library
 // this includes everything that you may need to use
 
-export {default as Bitfield} from 'odgn-bitfield';
+export { default as Bitfield } from 'odgn-bitfield';
 
-import Component from './component';
-export {Component as Component};
+import { Component } from './component';
+export { Component };
 
-import ComponentDef from './component_def';
-export {ComponentDef as ComponentDef};
+import { ComponentDef } from './component_def';
+export { ComponentDef };
 
-import EntityDispatch from './dispatch';
-export {EntityDispatch}
+import { EntityDispatch } from './dispatch';
+export { EntityDispatch };
 
-import Entity from './entity';
-export {Entity as Entity};
+import { Entity } from './entity';
+export { Entity };
 
-import * as EntityFilter from './entity_filter';
-export {EntityFilter as EntityFilter};
+import { EntityFilter } from './entity_filter';
+export { EntityFilter };
 
-import EntityProcessor from './entity_processor';
-export {EntityProcessor as EntityProcessor};
+import { EntityProcessor } from './entity_processor';
+export { EntityProcessor };
 
-import EntitySet from './entity_set';
-export {EntitySet as EntitySet};
+import { EntitySet } from './entity_set';
+export { EntitySet };
 
-import AsyncEntitySet from './entity_set/async';
-export {AsyncEntitySet};
+import { AsyncEntitySet } from './entity_set/async';
+export { AsyncEntitySet };
 
-import Query from './query/full';
-export {Query as Query};
+import { Query } from './query/full';
+export { Query };
 
-import Registry from './registry';///processor';
-export {Registry as Registry};
+import { Registry } from './registry'; ///processor';
+export { Registry };
 
-import SchemaRegistry from './schema';
-export {SchemaRegistry as SchemaRegistry};
+import { ComponentRegistry } from './schema';
+export { ComponentRegistry };
 
 export * from './util/id';
-import parseJSON from './util/parse_json.js';
-import stringify from './util/stringify.js';
+import { hash } from './util/hash';
+import { parseJSON } from './util/parse_json';
+import { stringify } from './util/stringify';
 
-export {parseJSON,stringify};
+export { hash, parseJSON, stringify };

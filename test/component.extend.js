@@ -2,7 +2,6 @@ import _ from 'underscore';
 import test from 'tape';
 
 import {
-    Component,
     Entity,
     EntityFilter,
     EntitySet,
@@ -19,8 +18,10 @@ import {
     createLog
 } from './common';
 
+import { Component } from '../src/component';
+import { ComponentRegistry } from '../src/schema';
+
 const Log = createLog('TestComponentExtend', false);
-import ComponentRegistry from '../src/schema/index';
 
 const COMPONENT_DEFINITIONS = [
     { uri: '/component/name', properties: { name: '' } },
@@ -255,7 +256,6 @@ test('will be notified when the entity is added to an entityset', async t => {
         t.ok(calledOnRemoved, 'onRemoved was called');
 
         t.end();
-
     } catch (err) {
         Log.error(err.stack);
     }

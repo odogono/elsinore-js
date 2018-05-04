@@ -5,7 +5,7 @@
  * 
  * @param {*} arr 
  */
-export function clearArray(arr) {
+export function arrayClear(arr) {
     if (!arr) {
         return [];
     }
@@ -14,5 +14,3 @@ export function clearArray(arr) {
     }
     return arr;
 }
-
-export default clearArray;

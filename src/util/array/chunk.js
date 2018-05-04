@@ -10,5 +10,3 @@ export function chunk(array, chunkLength) {
 
     return result;
 }
-
-export default chunk;

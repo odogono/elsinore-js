@@ -1,8 +1,8 @@
 import _ from 'underscore';
 import test from 'tape';
 import BitField from 'odgn-bitfield';
-import Base from '../src/base';
-import EntitySet from '../src/entity_set';
+import { Base } from '../src/base';
+import { EntitySet } from '../src/entity_set';
 
 // import Sinon from 'sinon';
 
@@ -12,7 +12,7 @@ import {
     Component,
     // Entity, EntityFilter, EntitySet,
     // Registry, Query,
-    // SchemaRegistry,
+    // ComponentRegistry,
     initialiseRegistry,
     // loadEntities,
     // loadComponents,
@@ -25,8 +25,8 @@ import {
     setEntityIdFromId
 } from './common';
 
-import CmdBuffer from '../src/cmd_buffer/async';
-// import AsyncEntitySet from '../src/entity_set/async';
+import { AsyncCmdBuffer as CmdBuffer } from '../src/cmd_buffer/async';
+// import { AsyncEntitySet } from '../src/entity_set/async';
 
 const Log = createLog('TestCmdBufferAsync');
 

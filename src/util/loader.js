@@ -1,9 +1,8 @@
 import { createLog } from './log';
-// import stringify from './stringify';
-import omit from './omit';
-import readProperty from './read_property';
+import { omit } from './omit';
+import { readProperty } from './read_property';
 import { toString as entityToString } from './to_string';
-import {COMMAND} from '../constants';
+import { COMMAND } from '../constants';
 
 export const CMD_UNKNOWN = '@unk';
 export const CMD_COMMAND = COMMAND;
@@ -62,7 +61,9 @@ export class JSONLoader {
     _createEntity(context) {
         if (context.entity) {
             // already have an entity, so add it to the load cache
-            return _processCommand(context, { [CMD_COMMAND]: CMD_ADD_ENTITY }).then(context => this._createEntity(context));
+            return _processCommand(context, { [CMD_COMMAND]: CMD_ADD_ENTITY }).then(context =>
+                this._createEntity(context)
+            );
         }
 
         context.entity = context.registry.createEntity();

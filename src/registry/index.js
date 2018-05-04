@@ -1,20 +1,19 @@
-import arrayDifference from '../util/array/difference';
-import arrayWithout from '../util/array/without';
+import { arrayDifference } from '../util/array/difference';
+import { arrayWithout } from '../util/array/without';
 import { isBoolean } from '../util/is';
-import omit from '../util/omit';
-import createUUID from '../util/uuid';
+import { omit } from '../util/omit';
+import { createUUID } from '../util/uuid';
 
-import Entity from '../entity';
-import EntitySet from '../entity_set';
-import Events from '../util/events';
-import Component from '../component';
-import SchemaRegistry from '../schema';
+import { Entity } from '../entity';
+import { EntitySet } from '../entity_set';
+import { Events } from '../util/events';
+import { Component } from '../component';
+import { ComponentRegistry } from '../schema';
 
 import { ENTITY_ID, ENTITY_SET_ID, COMPONENT_ID, COMPONENT_URI, ENTITY_SET_ADD } from '../constants';
 
-// const Log = createLog('Registry');
 
-export default class Registry {
+export class Registry {
     constructor(options = {}) {
         Object.assign(this, Events);
 
@@ -42,7 +41,7 @@ export default class Registry {
 
         this.updateLastTime = Date.now();
 
-        this.schemaRegistry = options.schemaRegistry || SchemaRegistry.create(null, { registry: this });
+        this.schemaRegistry = options.schemaRegistry || ComponentRegistry.create(null, { registry: this });
 
         this.schemaRegistry.on('all', (...args) => this.trigger.apply(this, args));
     }

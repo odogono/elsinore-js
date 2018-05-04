@@ -4,14 +4,16 @@
  * Ref.: http://isthe.com/chongo/tech/comp/fnv/
  *
  * @param {string} str the input value
- * @param {boolean} [asString=false] set to true to return the hash value as 
+ * @param {boolean} [asString=false] set to true to return the hash value as
  *     8-digit hex string instead of an integer
  * @param {integer} [seed] optionally pass the hash of the previous chunk
  * @returns {integer | string}
  */
 export function hash /*Fnv32a*/(str, asString = false, seed = 2166136261) {
     /*jshint bitwise:false */
-    let ii, len, hval = seed;
+    let ii,
+        len,
+        hval = seed;
     // hval = (seed === undefined) ? 0x811c9dc5 : seed;
     for (ii = 0, len = str.length; ii < len; ii++) {
         hval ^= str.charCodeAt(ii);
@@ -25,5 +27,3 @@ export function hash /*Fnv32a*/(str, asString = false, seed = 2166136261) {
     }
     return hval;
 }
-
-export default hash;

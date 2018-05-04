@@ -3,78 +3,82 @@ import test from 'tape';
 import Sinon from 'sinon';
 
 import {
-    Component, Entity, EntityFilter, EntitySet,
-    Registry, Query,
-    initialiseRegistry, 
-    loadEntities, 
+    Component,
+    Entity,
+    EntityFilter,
+    EntitySet,
+    Registry,
+    Query,
+    initialiseRegistry,
+    loadEntities,
     loadComponents,
     loadFixtureJSON,
     printE,
     createLog,
     logEvents,
     stringify,
-    entityToString, setEntityIdFromId,
+    entityToString,
+    setEntityIdFromId
 } from './common';
 
-import {cloneEntity} from '../src/util/clone';
+import { cloneEntity } from '../src/util/clone';
 
 const Log = createLog('TestRegistry');
 
-import mapComponentEntityRefs from '../src/util/map_entity_refs';
-
+import { mapComponentEntityRefs } from '../src/util/map_entity_refs';
 
 test.skip('keeping a map of entitySets and views', t => {
-    return initialiseRegistry().then( registry => {
+    return initialiseRegistry()
+        .then(registry => {
+            let query = Query.all('/component/position');
+            let es = registry.createEntitySet();
+            let view = es.view(query);
+            let oview = es.view(query);
+            let tview = es.view();
 
-        let query = Query.all('/component/position');
-        let es = registry.createEntitySet();
-        let view = es.view( query );
-        let oview = es.view( query);
-        let tview = es.view();
+            log.debug('es hash ' + es.hash());
+            // log.debug( 'eso hash ' + eso.hash() );
+            log.debug('view hash ' + view.hash());
+            log.debug('oview hash ' + oview.hash());
+            log.debug('tview hash ' + tview.hash());
 
-        log.debug( 'es hash ' + es.hash() );
-        // log.debug( 'eso hash ' + eso.hash() );
-        log.debug( 'view hash ' + view.hash());
-        log.debug( 'oview hash ' + oview.hash() );
-        log.debug( 'tview hash ' + tview.hash() );
-
-        t.end();
-    })
-    .catch( err => log.error('test error: %s', err.stack) )
+            t.end();
+        })
+        .catch(err => log.error('test error: %s', err.stack));
 });
-
 
 test('creating an entity with an id', t => {
-    return initialiseRegistry().then( registry => {
-        
-        const e = registry.createEntityWithId(22);
-        t.equals( e.id, 22 );
-
-    })
-    .then( () => t.end() )
-    .catch( err => log.error('test error: %s', err.stack) )
-})
-
-
-test('creating an entityset with an identical uuid throws an error', t => {
-    return initialiseRegistry().then( registry => {
-        const es = registry.createEntitySet({uuid:'50FC7026-C6DB-4FEB-991D-061A07CBD210'});
-        t.equals( es.getUUID(), '50FC7026-C6DB-4FEB-991D-061A07CBD210' );
-
-        t.throws( () => registry.createEntitySet({uuid:'50FC7026-C6DB-4FEB-991D-061A07CBD210'}), 
-            new Error('entityset with uuid 50FC7026-C6DB-4FEB-991D-061A07CBD210 already exists') );
-    })
-    .then( () => t.end() )
-    .catch( err => log.error('test error: %s', err.stack) )
+    return initialiseRegistry()
+        .then(registry => {
+            const e = registry.createEntityWithId(22);
+            t.equals(e.id, 22);
+        })
+        .then(() => t.end())
+        .catch(err => log.error('test error: %s', err.stack));
 });
 
+test('creating an entityset with an identical uuid throws an error', t => {
+    return initialiseRegistry()
+        .then(registry => {
+            const es = registry.createEntitySet({ uuid: '50FC7026-C6DB-4FEB-991D-061A07CBD210' });
+            t.equals(es.getUUID(), '50FC7026-C6DB-4FEB-991D-061A07CBD210');
+
+            t.throws(
+                () => registry.createEntitySet({ uuid: '50FC7026-C6DB-4FEB-991D-061A07CBD210' }),
+                new Error('entityset with uuid 50FC7026-C6DB-4FEB-991D-061A07CBD210 already exists')
+            );
+        })
+        .then(() => t.end())
+        .catch(err => log.error('test error: %s', err.stack));
+});
 
 // creating components
 
 test('creating a component with an unknown schema throws an error', t => {
     const registry = new Registry();
 
-    t.throws( () => registry.createComponent( {'@c':'/component/status', 'status':'active'} ),
+    t.throws(
+        () => registry.createComponent({ '@c': '/component/status', status: 'active' }),
         /could not find componentDef '\/component\/status'/
     );
 
@@ -89,74 +93,78 @@ test('creating a component with an unknown schema throws an error', t => {
 test('creating a component with an unknown schema', t => {
     const registry = new Registry();
 
-    registry.createComponent( {'@c':'/component/status', 'status':'active'}, null, null, (err,result) => {
-        t.equals( err, 'could not find componentDef /component/status');
-        t.end();    
+    registry.createComponent({ '@c': '/component/status', status: 'active' }, null, null, (err, result) => {
+        t.equals(err, 'could not find componentDef /component/status');
+        t.end();
     });
 });
 
 test('create from a schema', t => {
-    return initialiseRegistry({loadComponents:false}).then( registry => {
-        let componentData = loadComponents({returnAsMap:true});
-        // Common.logEvents( registry );
-        // passing a schema as the first argument will cause the component to be
-        // registered at the same time
-        // console.log('create with ', componentData );
-        return registry.registerComponent( componentData['/component/position'] )
-            .then( () => {
-                let component = registry.createComponent( '/component/position', { x:200 } );
+    return initialiseRegistry({ loadComponents: false })
+        .then(registry => {
+            let componentData = loadComponents({ returnAsMap: true });
+            // Common.logEvents( registry );
+            // passing a schema as the first argument will cause the component to be
+            // registered at the same time
+            // console.log('create with ', componentData );
+            return registry.registerComponent(componentData['/component/position']).then(() => {
+                let component = registry.createComponent('/component/position', { x: 200 });
 
-                t.equals( component.getDefUri(), '/component/position' );
-                t.equals( component.getDefHash(), 'b9b3b24e' );
-                t.equals( component.get('x'), 200 );
+                t.equals(component.getDefUri(), '/component/position');
+                t.equals(component.getDefHash(), 'b9b3b24e');
+                t.equals(component.get('x'), 200);
 
                 t.end();
-            })
-    })
-    .catch( err => log.error('test error: %s', err.stack) )
+            });
+        })
+        .catch(err => log.error('test error: %s', err.stack));
 });
 
 test('create from a schema hash', t => {
-    return initialiseRegistry({loadComponents:true}).then( registry => {
+    return initialiseRegistry({ loadComponents: true })
+        .then(registry => {
+            let first = registry.createComponent('/component/score');
+            // console.log('schema hash ', first );
+            let component = registry.createComponent('ec2640a6', { score: 200 });
 
-        let first = registry.createComponent('/component/score');
-        // console.log('schema hash ', first );
-        let component = registry.createComponent( 'ec2640a6', {score:200} );
-        
-        // console.log( component );
-        t.equals( component.get('score'), 200 );
-        t.equals( component.get('lives'), 3 );
+            // console.log( component );
+            t.equals(component.get('score'), 200);
+            t.equals(component.get('lives'), 3);
 
-        t.end();
-    })
-    .catch( err => log.error('test error: %s', err.stack) )
+            t.end();
+        })
+        .catch(err => log.error('test error: %s', err.stack));
 });
 
 test('create from a pre-registered schema', t => {
-    return initialiseRegistry({loadComponents:true}).then( registry => {
-        let component = registry.createComponent( '/component/nickname', {nickname:'peter'} );
+    return initialiseRegistry({ loadComponents: true }).then(registry => {
+        let component = registry.createComponent('/component/nickname', { nickname: 'peter' });
 
-        t.equals( component.get('nickname'), 'peter' );
+        t.equals(component.get('nickname'), 'peter');
 
         t.end();
     });
 });
 
 test('create from a pre-registered schema using data object', t => {
-    return initialiseRegistry({loadComponents:true}).then( registry => {
-        let component = registry.createComponent( {'@c':'/component/nickname', nickname:'susan'} );
-        t.equals( component.get('nickname'), 'susan', 'the component is created with attributes' );
+    return initialiseRegistry({ loadComponents: true }).then(registry => {
+        let component = registry.createComponent({ '@c': '/component/nickname', nickname: 'susan' });
+        t.equals(component.get('nickname'), 'susan', 'the component is created with attributes');
         t.end();
     });
 });
 
 // NOTE: not really sure we need this anymore
 test.skip('create from an array of data', t => {
-    return initialiseRegistry({loadComponents:true}).then( registry => {
-        let components = registry.createComponent( '/component/position', [ {x:0,y:-1}, {x:10,y:0}, {x:15,y:-2} ] );
+    return initialiseRegistry({ loadComponents: true }).then(registry => {
+        let components = registry.createComponent('/component/position', [
+            { x: 0, y: -1 },
+            { x: 10, y: 0 },
+            { x: 15, y: -2 }
+        ]);
 
-        t.equals( components.length, 3, 'three components should have been created' );
-        t.equals( components[1].get('x'), 10, 'the component attributes should be applied' );
+        t.equals(components.length, 3, 'three components should have been created');
+        t.equals(components[1].get('x'), 10, 'the component attributes should be applied');
 
         t.end();
     });
@@ -164,131 +172,131 @@ test.skip('create from an array of data', t => {
 
 test('create with an entity id', async t => {
     const registry = await initialiseRegistry();
-    try{
-    let component = registry.createComponent( {'@c':'/component/nickname', '@e':15} );
-    t.equals( component.getEntityId(false), 15, 'the entity id is retrieved' );
+    try {
+        let component = registry.createComponent({ '@c': '/component/nickname', '@e': 15 });
+        t.equals(component.getEntityId(false), 15, 'the entity id is retrieved');
 
-    component = registry.createComponent( {'@c':'/component/nickname', '@e':42949672975} );
-    t.equals( component.getEntityId(false), 15, 'the entity id is retrieved' );
-    t.equals( component.getEntitySetId(), 10 );
-    
-    }catch(err){ Log.error('test error: %s', err.stack); }
+        component = registry.createComponent({ '@c': '/component/nickname', '@e': 42949672975 });
+        t.equals(component.getEntityId(false), 15, 'the entity id is retrieved');
+        t.equals(component.getEntitySetId(), 10);
+    } catch (err) {
+        Log.error('test error: %s', err.stack);
+    }
     t.end();
 });
 
-
 test('create component from schema id', async t => {
-    const registry = await initialiseRegistry({loadComponents:true}); try {
-
-    const component = registry.createComponent( {'@s':6, x:100,y:200} );
-    // Log.debug('created', entityToString(component) );
-    t.equals( component.get('x'), 100 );
-
-    }catch(err){ Log.error('test error: %s', err.stack); }
+    const registry = await initialiseRegistry({ loadComponents: true });
+    try {
+        const component = registry.createComponent({ '@s': 6, x: 100, y: 200 });
+        // Log.debug('created', entityToString(component) );
+        t.equals(component.get('x'), 100);
+    } catch (err) {
+        Log.error('test error: %s', err.stack);
+    }
     t.end();
 });
 
 test('create component from schema hash', async t => {
-    const registry = await initialiseRegistry({loadComponents:true});
+    const registry = await initialiseRegistry({ loadComponents: true });
     const def = registry.getComponentDef('/component/position');
     try {
-
-    const component = registry.createComponent( {'@s':def.hash(), x:100,y:200} );
-    t.equals( component.get('x'), 100 );
-
-    }catch(err){ Log.error('test error: %s', err.stack); }
+        const component = registry.createComponent({ '@s': def.hash(), x: 100, y: 200 });
+        t.equals(component.get('x'), 100);
+    } catch (err) {
+        Log.error('test error: %s', err.stack);
+    }
     t.end();
 });
 
 test('create two components with the same entity id', async t => {
     try {
-    const registry = await initialiseRegistry({loadComponents:true});
-    // const def = registry.getComponentDef('/component/position');
-    const position = {'@c':'/component/position'}
-    const status = {'@c':'/component/status', status:'active'};
+        const registry = await initialiseRegistry({ loadComponents: true });
+        // const def = registry.getComponentDef('/component/position');
+        const position = { '@c': '/component/position' };
+        const status = { '@c': '/component/status', status: 'active' };
 
-    const components = registry.createComponent( [position,status], {'@e':22} );
+        const components = registry.createComponent([position, status], { '@e': 22 });
 
-    // Log.debug('result', component );
-    _.each( components, c => t.equals(c.getEntityId(),22) );
-    // t.equals( component.get('x'), 100 );
-
-    }catch(err){ Log.error('test error: %s', err.stack); }
+        // Log.debug('result', component );
+        _.each(components, c => t.equals(c.getEntityId(), 22));
+        // t.equals( component.get('x'), 100 );
+    } catch (err) {
+        Log.error('test error: %s', err.stack);
+    }
     t.end();
 });
 
-
 test('creating an entity from a component with an entity id', async t => {
     try {
+        const registry = await initialiseRegistry({ loadComponents: true });
+        const entityId = 301;
+        const entitySetId = 2;
+        const id = setEntityIdFromId(entityId, entitySetId);
 
-    const registry = await initialiseRegistry({loadComponents:true});
-    const entityId = 301;
-    const entitySetId = 2;
-    const id = setEntityIdFromId(entityId,entitySetId);
+        const component = registry.createComponent({ '@s': '/component/nickname', nickname: 'alex', '@e': id });
+        t.equals(component.getEntityId(false), entityId);
 
-    const component = registry.createComponent( {'@s':'/component/nickname', nickname:'alex', '@e':id } );
-    t.equals( component.getEntityId(false), entityId );
-
-    const entity = registry.createEntity(component);
-
-    // Log.debug('entity', entityToString(entity) );
-
-    t.equals( entity.getEntitySetId(), entitySetId );
-    t.equals( entity.getEntityId(), entityId );
-
-    }catch(err){ Log.error('test error: %s', err.stack); }
-    t.end();
-})
-
-
-test('create an entity with a component bitfield', t => {
-    return initialiseRegistry().then( registry => {
-        const component = registry.createComponent( {'@c':'/component/nickname'} );
         const entity = registry.createEntity(component);
 
-        // printE( entity );
-        // console.log( entity.getComponentBitfield() );
+        // Log.debug('entity', entityToString(entity) );
 
-        const reEntity = registry.createEntityWithId( 456, 0, {comBf:entity.getComponentBitfield()} );
-        
-        t.deepEqual( entity.getComponentBitfield().toValues(),
-                    reEntity.getComponentBitfield().toValues() );
-    })
-    .then( () => t.end() )
-    .catch( err => log.error('test error: %s', err.stack) )
-})
+        t.equals(entity.getEntitySetId(), entitySetId);
+        t.equals(entity.getEntityId(), entityId);
+    } catch (err) {
+        Log.error('test error: %s', err.stack);
+    }
+    t.end();
+});
 
+test('create an entity with a component bitfield', t => {
+    return initialiseRegistry()
+        .then(registry => {
+            const component = registry.createComponent({ '@c': '/component/nickname' });
+            const entity = registry.createEntity(component);
+
+            // printE( entity );
+            // console.log( entity.getComponentBitfield() );
+
+            const reEntity = registry.createEntityWithId(456, 0, { comBf: entity.getComponentBitfield() });
+
+            t.deepEqual(entity.getComponentBitfield().toValues(), reEntity.getComponentBitfield().toValues());
+        })
+        .then(() => t.end())
+        .catch(err => log.error('test error: %s', err.stack));
+});
 
 test('updating a components entity refs', async t => {
     try {
         const registry = await initialiseRegistry();
-    
-        const component = registry.createComponent( 
-            {"@e":12, "@c": "/component/channel_member", "channel": 1, "client": 5} );
-        const aComponent = mapComponentEntityRefs( registry, component, { 5: 290, 1: 340} );
 
-        t.equals( aComponent.get('channel'), 340 );
-        t.equals( aComponent.get('client'), 290 );
+        const component = registry.createComponent({
+            '@e': 12,
+            '@c': '/component/channel_member',
+            channel: 1,
+            client: 5
+        });
+        const aComponent = mapComponentEntityRefs(registry, component, { 5: 290, 1: 340 });
+
+        t.equals(aComponent.get('channel'), 340);
+        t.equals(aComponent.get('client'), 290);
 
         t.end();
-    
-    } catch( err ){
+    } catch (err) {
         Log.error(err.stack);
     }
 });
 
-
-
-
 test('creating an entity with an id of 0', t => {
-    return initialiseRegistry().then( registry => {
-        const entity = registry.createEntity(null, {id:0});
-        // console.log(entity);
+    return initialiseRegistry()
+        .then(registry => {
+            const entity = registry.createEntity(null, { id: 0 });
+            // console.log(entity);
 
-        t.equals( entity.id, 0 );
-        t.equals( entity.getEntityId(), 0 );
-        t.equals( entity.getEntitySetId(), 0 );
-    })
-    .then( () => t.end() )
-    .catch(err => log.error('test error: %s', err.stack))
-})
+            t.equals(entity.id, 0);
+            t.equals(entity.getEntityId(), 0);
+            t.equals(entity.getEntitySetId(), 0);
+        })
+        .then(() => t.end())
+        .catch(err => log.error('test error: %s', err.stack));
+});

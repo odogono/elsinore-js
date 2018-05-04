@@ -1,8 +1,8 @@
 import BitField from 'odgn-bitfield';
 
-import arrayDifference from './util/array/difference';
+import { arrayDifference } from './util/array/difference';
 import {isObject} from './util/is';
-import hash from './util/hash';
+import { hash } from './util/hash';
 
 export const ALL = 'AL'; // entities must have all the specified components
 export const ANY = 'AN'; // entities must have one or any of the specified components
@@ -16,7 +16,7 @@ export const ROOT = 'RT'; // kind of a NO-OP
 /**
  * 
  */
-export default class EntityFilter {
+export class EntityFilter {
 
     /**
      * 
@@ -195,5 +195,3 @@ EntityFilter.create = function( type, bitField ){
 
     return result;
 }
-
-// export default EntityFilter;

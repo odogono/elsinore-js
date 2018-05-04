@@ -1,4 +1,4 @@
-import Q from './index';
+import { Query } from './index';
 
 import './dsl';
 import './attr';
@@ -9,4 +9,4 @@ import './pluck';
 import './without';
 import './limit';
 
-export default Q;
+export { Query };

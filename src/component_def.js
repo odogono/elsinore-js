@@ -1,16 +1,13 @@
-import Base from './base';
-
-import stringify from './util/stringify';
-
-import hash from './util/hash';
+import { Base } from './base';
+import { stringify } from './util/stringify';
+import { hash } from './util/hash';
 import { isObject } from './util/is';
-import {componentNameFromUri} from './util/name_from_uri';
+import { componentNameFromUri } from './util/name_from_uri';
+// import { createLog } from './util/log';
 
-import { createLog } from './util/log';
+// const Log = createLog('ComponentDef', false);
 
-const Log = createLog('ComponentDef', false);
-
-export default function ComponentDef(attrs = {}, options) {
+export function ComponentDef(attrs = {}, options) {
     // console.log('[ComponentDef]', 'creating with', attrs );
     this.id = attrs.id;
     this.properties = attrs.properties;
@@ -22,17 +19,7 @@ export default function ComponentDef(attrs = {}, options) {
 }
 
 Object.assign(ComponentDef.prototype, Base.prototype, {
-    // export default class ComponentDef extends Base {
-    // constructor(attrs, options) {
-    //     attrs.attrs = createAttrsFromProperties(attrs.properties);
-
-    //     if (!attrs.name) {
-    //         attrs.name = componentNameFromUri(attrs.uri);
-    //     }
-
-    //     super(attrs, options);
-    // }
-
+    
     getUri() {
         return this.uri;
     },
@@ -55,7 +42,7 @@ Object.assign(ComponentDef.prototype, Base.prototype, {
 
     toJSON(...args) {
         let result = { id: this.id, name: this.name, uri: this.uri }; //  //Model.prototype.toJSON.apply(this, args);
-        if( this.properties !== undefined ){
+        if (this.properties !== undefined) {
             result.properties = this.properties;
         }
         // delete result.attrs;

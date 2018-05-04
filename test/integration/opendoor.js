@@ -10,8 +10,8 @@ import {
 
 const Log = createLog('TestIntegrationOpenDoor');
 
-import EntityProcessor from '../../src/entity_processor';
-import Dispatch from '../../src/dispatch';
+import { EntityProcessor } from '../../src/entity_processor';
+import { EntityDispatch } from '../../src/dispatch';
 
 
 
@@ -31,7 +31,7 @@ test('main', async t => {
             } 
         });
 
-        const dispatch = Dispatch.create(entitySet);
+        const dispatch = EntityDispatch.create(entitySet);
 
         dispatch.addProcessor(DoorProcessor);
         

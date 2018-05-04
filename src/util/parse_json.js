@@ -8,5 +8,3 @@ export function parseJSON(str, defaultValue = null) {
         return defaultValue;
     }
 }
-
-export default parseJSON;

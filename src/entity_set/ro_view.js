@@ -1,13 +1,14 @@
-import Base from '../base';
-import EntitySet from './index';
-import Query from '../query';
-import createUUID from '../util/uuid';
-import propertyResult from '../util/result';
-import uniqueId from '../util/unique_id';
-import stringify from '../util/stringify';
-import QueryFilter from '../query/through';
-import { applyQueryFilter } from '../query/through';
+import { Base } from '../base';
+// import { EntitySet } from './index';
+import { Query } from '../query';
+import { createUUID } from '../util/uuid';
+import { propertyResult } from '../util/result';
+import { uniqueId } from '../util/unique_id';
+// import { stringify } from '../util/stringify';
+import { applyQueryFilter, QueryFilter } from '../query/through';
 import { toString as entityToString } from '../util/to_string';
+
+import { ENTITY_ADD, ENTITY_REMOVE, ENTITY_UPDATE, ENTITY_EVENT } from '../constants';
 
 /**
  * An index into an entityset
@@ -21,8 +22,8 @@ export function ReadOnlyView(entitySet, query, options = {}) {
     this.cid = uniqueId('ev');
     this.entitySet = entitySet;
 
-    this.deferEvents = propertyResult( options, 'deferEvents', false);
-    this.debug = propertyResult( options, 'debug', false);
+    this.deferEvents = propertyResult(options, 'deferEvents', false);
+    this.debug = propertyResult(options, 'debug', false);
 
     query = Query.toQuery(query);
     this.query = query;
@@ -66,39 +67,39 @@ Object.assign(ReadOnlyView.prototype, Base.prototype, {
 
     /**
      * Adds an entity to the source entitySet
-     * 
-     * @param {*} entity 
-     * @param {*} options 
+     *
+     * @param {*} entity
+     * @param {*} options
      */
     addEntity(entity, options) {
-        return this.entitySet.addEntity(entity,options);
+        return this.entitySet.addEntity(entity, options);
     },
 
     /**
      * Removes an entity from the source entitySet
-     * @param {*} entity 
-     * @param {*} options 
+     * @param {*} entity
+     * @param {*} options
      */
     removeEntity(entity, options) {
-        return this.entitySet.removeEntity(entity,options);
+        return this.entitySet.removeEntity(entity, options);
     },
 
     /**
      * Adds a component to the source entitySet
-     * @param {*} component 
-     * @param {*} options 
+     * @param {*} component
+     * @param {*} options
      */
     addComponent(component, options) {
-        return this.entitySet.addComponent(component,options);
+        return this.entitySet.addComponent(component, options);
     },
 
     /**
      * Removes a component from the source entitySet
-     * @param {*} component 
-     * @param {*} options 
+     * @param {*} component
+     * @param {*} options
      */
     removeComponent(component, options) {
-        return this.entitySet.removeComponent(component,options);
+        return this.entitySet.removeComponent(component, options);
     },
 
     /**
@@ -185,20 +186,26 @@ Object.assign(ReadOnlyView.prototype, Base.prototype, {
         };
     },
 
-
     /**
      * Applies any defered add/remove entity events this view might have received
-     * @param {*} options 
+     * @param {*} options
      */
-    applyEvents( options={} ){
+    applyEvents(options = {}) {
         let ii, len;
         let added = [];
         let removed = [];
         const debug = this.debug || options.debug;
 
-        if( debug ) console.log(`[ROView][applyEvents][${this.cid}][add]`, this._deferedAddEntities.length, (this._deferedAddEntities.map(e=>e.id) ), options.debug, this.debug );
+        if (debug)
+            console.log(
+                `[ROView][applyEvents][${this.cid}][add]`,
+                this._deferedAddEntities.length,
+                this._deferedAddEntities.map(e => e.id),
+                options.debug,
+                this.debug
+            );
 
-        for( ii=0, len=this._deferedAddEntities.length; ii<len; ii++ ){
+        for (ii = 0, len = this._deferedAddEntities.length; ii < len; ii++) {
             let entity = this._deferedAddEntities[ii];
             let add = this._add(entity);
             if (add) {
@@ -206,9 +213,14 @@ Object.assign(ReadOnlyView.prototype, Base.prototype, {
             }
         }
 
-        if( debug ) console.log(`[ROView][applyEvents][${this.cid}][remove]`, this._deferedRemoveEntities.length, (this._deferedRemoveEntities.map(e=>e.id)) );
+        if (debug)
+            console.log(
+                `[ROView][applyEvents][${this.cid}][remove]`,
+                this._deferedRemoveEntities.length,
+                this._deferedRemoveEntities.map(e => e.id)
+            );
 
-        for( ii=0, len=this._deferedRemoveEntities.length; ii<len; ii++ ){
+        for (ii = 0, len = this._deferedRemoveEntities.length; ii < len; ii++) {
             let entity = this._deferedRemoveEntities[ii];
             let remove = this._remove(entity);
             if (remove) {
@@ -233,11 +245,11 @@ Object.assign(ReadOnlyView.prototype, Base.prototype, {
      */
     _addListeners() {
         // this.listenTo( this.entitySet, 'all', (name,objs) => console.log('received', name, objs.map(o => o.id) ));
-        this.listenTo(this.entitySet, 'entity:add', this._onEntityAdd.bind(this));
-        this.listenTo(this.entitySet, 'entity:remove', this._onEntityRemove.bind(this));
-        this.listenTo(this.entitySet, 'entity:update', this._onEntityUpdate.bind(this));
+        this.listenTo(this.entitySet, ENTITY_ADD, this._onEntityAdd.bind(this));
+        this.listenTo(this.entitySet, ENTITY_REMOVE, this._onEntityRemove.bind(this));
+        this.listenTo(this.entitySet, ENTITY_UPDATE, this._onEntityUpdate.bind(this));
 
-        this.listenTo(this.entitySet, 'entity:event', this._onEntityEvent.bind(this));
+        this.listenTo(this.entitySet, ENTITY_EVENT, this._onEntityEvent.bind(this));
         // this.listenTo(this.entitySet, 'component:add', this._onComponentAdd.bind(this));
         // this.listenTo(this.entitySet, 'component:remove', this._onComponentUpdate.bind(this));
     },
@@ -246,21 +258,21 @@ Object.assign(ReadOnlyView.prototype, Base.prototype, {
      * @private
      */
     _removeListeners() {
-        this.stopListening(this.entitySet, 'entity:add');
-        this.stopListening(this.entitySet, 'entity:remove');
-        this.stopListening(this.entitySet, 'entity:update');
-        this.stopListening(this.entitySet, 'entity:event');
+        this.stopListening(this.entitySet, ENTITY_ADD);
+        this.stopListening(this.entitySet, ENTITY_REMOVE);
+        this.stopListening(this.entitySet, ENTITY_UPDATE);
+        this.stopListening(this.entitySet, ENTITY_EVENT);
     },
 
     /**
      * Handles entity events received from the EntitySet.
-     *  
-     * @param {*} name 
-     * @param {*} entity 
-     * @param {*} args 
+     *
+     * @param {*} name
+     * @param {*} entity
+     * @param {*} args
      * @private
      */
-    _onEntityEvent(name, entity, entitySet, ...args ){
+    _onEntityEvent(name, entity, entitySet, ...args) {
         if (applyQueryFilter(this.query, entity)) {
             this.trigger.apply(this, [name, entity, this, ...args]);
         }
@@ -279,8 +291,8 @@ Object.assign(ReadOnlyView.prototype, Base.prototype, {
         for (ii = 0; ii < length; ii++) {
             let entity = entities[ii];
             if (applyQueryFilter(this.query, entity)) {
-                if( this.deferEvents ){
-                    this._deferedAddEntities.push( entity );
+                if (this.deferEvents) {
+                    this._deferedAddEntities.push(entity);
                     break;
                 }
                 let add = this._add(entity);
@@ -304,16 +316,24 @@ Object.assign(ReadOnlyView.prototype, Base.prototype, {
         let ii,
             length = entities.length;
         let removed = [];
-        if( this.debug ) console.log(`[ROView][${this.cid}][_onEntityRemove]`, 'entities', length, entities.map(e=>e.id), 'size', this._entityIds );
-        
+        if (this.debug)
+            console.log(
+                `[ROView][${this.cid}][_onEntityRemove]`,
+                'entities',
+                length,
+                entities.map(e => e.id),
+                'size',
+                this._entityIds
+            );
+
         for (ii = 0; ii < length; ii++) {
             let entity = entities[ii];
-            if( this.deferEvents ){
-                this._deferedRemoveEntities.push( entity );
+            if (this.deferEvents) {
+                this._deferedRemoveEntities.push(entity);
                 break;
             }
             let remove = this._remove(entity);
-            
+
             if (remove) {
                 removed.push(remove);
             }
@@ -343,8 +363,8 @@ Object.assign(ReadOnlyView.prototype, Base.prototype, {
 
             if (!applyQueryFilter(this.query, entity)) {
                 // console.log(`[ROView][_onEntityUpdate][${this.cid}]`, 'fail', entity.id );
-                if( this.deferEvents ){
-                    this._deferedRemoveEntities.push( entity );
+                if (this.deferEvents) {
+                    this._deferedRemoveEntities.push(entity);
                     break;
                 }
                 let remove = this._remove(entity);
@@ -354,8 +374,8 @@ Object.assign(ReadOnlyView.prototype, Base.prototype, {
             } else {
                 // console.log(`[ROView][_onEntityUpdate][${this.cid}]`, 'unknown!', entity.id );
 
-                if( this.deferEvents ){
-                    this._deferedAddEntities.push( entity );
+                if (this.deferEvents) {
+                    this._deferedAddEntities.push(entity);
                     break;
                 }
                 let add = this._add(entity);
@@ -363,7 +383,6 @@ Object.assign(ReadOnlyView.prototype, Base.prototype, {
                     added.push(add);
                 }
             }
-
         }
 
         if (removed.length) {
@@ -373,7 +392,7 @@ Object.assign(ReadOnlyView.prototype, Base.prototype, {
         if (added.length) {
             this.trigger('entity:add', added);
         }
-    },
+    }
 
     /**
      *
@@ -419,9 +438,6 @@ Object.assign(ReadOnlyView.prototype, Base.prototype, {
     //         this.trigger('entity:remove', removed);
     //     }
     // },
-
-
-    
 });
 
 ReadOnlyView.prototype.type = 'EntitySetReadOnlyView';

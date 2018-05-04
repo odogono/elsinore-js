@@ -14,5 +14,3 @@ export function mergeRecursive(obj1, obj2) {
     }
     return obj1;
 }
-
-export default mergeRecursive;

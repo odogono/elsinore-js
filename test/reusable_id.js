@@ -1,7 +1,7 @@
 import _ from 'underscore';
 import test from 'tape';
 
-import ReusableId from '../src/util/reusable_id';
+import { ReusableId } from '../src/util/reusable_id';
 import { createLog } from '../src/util/log';
 
 const Log = createLog('TestResuableId');

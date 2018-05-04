@@ -1,10 +1,10 @@
-import EntitySet from './index';
+import { EntitySet } from './index';
 import Pull from 'pull-stream';
 import PullMap from 'pull-stream/throughs/map';
-import Query from '../query';
+import { Query } from '../query';
 
-import stringify from '../util/stringify';
-import QueryFilter from '../query/through';
+import {stringify} from '../util/stringify';
+import { QueryFilter } from '../query/through';
 
 /**
  * An entityset which mirrors another entityset through use of

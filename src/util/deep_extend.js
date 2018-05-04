@@ -40,5 +40,3 @@ export function deepExtend(out = {}, ...others) {
     }
     return out;
 }
-
-export default deepExtend;

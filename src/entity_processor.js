@@ -1,21 +1,25 @@
-import arrayPush from './util/array/push';
-import arrayClear from './util/array/clear';
-import Base from './base';
-import uniqueId from './util/unique_id';
+import { arrayPush } from './util/array/push';
+import { arrayClear } from './util/array/clear';
+import { Base } from './base';
+import { uniqueId } from './util/unique_id';
 
 import { toString as entityToString } from './util/to_string';
-import * as CmdBuffer from './cmd_buffer/sync';
+import { SyncCmdBuffer as CmdBuffer } from './cmd_buffer/sync';
 
-import {ENTITY_ID} from './constants';
-
+import { ENTITY_ID, CMD_ENTITY_ADD,
+    CMD_ENTITY_REMOVE,
+    CMD_ENTITY_UPDATE,
+    CMD_COMPONENT_ADD,
+    CMD_COMPONENT_REMOVE,
+    CMD_COMPONENT_UPDATE } from './constants';
 
 /**
  * Systems process entity components
- * 
+ *
  * Standard design: c.f. http://entity-systems.wikidot.com/rdbms-with-code-in-systems
  */
 
-export default function EntityProcessor(options = {}) {
+export function EntityProcessor(options = {}) {
     options = { id: uniqueId(), priority: 0, updateable: true, ...options };
 
     this._cmds = [];
@@ -38,7 +42,7 @@ Object.assign(EntityProcessor.prototype, Base.prototype, {
     update(entityArray, timeMs, options) {},
 
     /**
-     * 
+     *
      */
     applyChanges() {
         let ii, len, cmd;
@@ -46,30 +50,31 @@ Object.assign(EntityProcessor.prototype, Base.prototype, {
         let componentsToAdd, componentsToRemove, entitiesToAdd, entitiesToRemove;
         let result;
 
-        // log.debug( this.name + ' applying ' + this._cmds.length + ' CMDS' );
+        // console.log( this.id, 'applying', this._cmds.length, 'CMDS' );
+
         for (ii = 0, len = this._cmds.length; ii < len; ii++) {
             cmd = this._cmds[ii];
             entity = cmd[1];
-            // log.debug( this.name + ' CMD ' + JSON.stringify(cmd) );
+            // console.log( this.id, 'CMD', JSON.stringify(cmd) );
 
             switch (cmd[0]) {
-                case CmdBuffer.CMD_COMPONENT_ADD:
-                    // console.log( this.name + ' adding COMP ' + JSON.stringify(cmd[2]));
+                case CMD_COMPONENT_ADD:
+                    // console.log( this.id, 'adding COMP', JSON.stringify(cmd[2]));
                     component = this.registry.createComponent(cmd[2], { [ENTITY_ID]: entity.getEntityId() });
                     componentsToAdd = arrayPush(componentsToAdd, component);
                     break;
-                case CmdBuffer.CMD_COMPONENT_REMOVE:
+                case CMD_COMPONENT_REMOVE:
                     // console.debug( this.name + ' removing COMP ' + stringify(cmd[2]));
                     componentsToRemove = arrayPush(componentsToRemove, cmd[2]);
                     break;
-                case CmdBuffer.CMD_ENTITY_ADD:
+                case CMD_ENTITY_ADD:
                     entitiesToAdd = arrayPush(entitiesToAdd, entity);
                     break;
-                case CmdBuffer.CMD_ENTITY_REMOVE:
+                case CMD_ENTITY_REMOVE:
                     entitiesToRemove = arrayPush(entitiesToRemove, entity);
                     break;
                 default:
-                    // log.debug(this.name + ' unknown cmd ' + cmd[0] );
+                    // console.log(this.name + ' unknown cmd ' + cmd[0] );
                     break;
             }
         }
@@ -79,7 +84,7 @@ Object.assign(EntityProcessor.prototype, Base.prototype, {
             componentsToAdd = null;
         }
         if (componentsToRemove) {
-            // log.debug('processor removing components ' + JSON.stringify(componentsToRemove) );
+            // console.log('processor removing components ' + JSON.stringify(componentsToRemove) );
             result = this.entitySet.removeComponent(componentsToRemove);
             componentsToRemove = null;
         }
@@ -91,7 +96,7 @@ Object.assign(EntityProcessor.prototype, Base.prototype, {
         if (entitiesToRemove) {
             // console.log('removing entities from ' + entitySet.cid + ' ' + stringify(entitiesToRemove) );
             result = this.entitySet.removeEntity(entitiesToRemove);
-            // log.debug(' = removed entities ' + stringify(result) );
+            // console.log(' = removed entities ' + stringify(result) );
             // printE( entitySet );
             entitiesToRemove = null;
         }
@@ -103,42 +108,42 @@ Object.assign(EntityProcessor.prototype, Base.prototype, {
     },
 
     /**
-     * 
-     * @param {*} component 
+     *
+     * @param {*} component
      */
-    createComponent(component){
+    createComponent(component) {
         return this.registry.createComponent(component);
     },
 
     /**
      * Adds the specified component to the entity
-     * @param {*} component 
-     * @param {*} entity 
+     * @param {*} component
+     * @param {*} entity
      */
     addComponentToEntity(component, entity) {
-        this._cmds.push([CmdBuffer.CMD_COMPONENT_ADD, entity, component]);
+        this._cmds.push([CMD_COMPONENT_ADD, entity, component]);
     },
 
     /**
-     * 
-     * @param {*} component 
-     * @param {*} entity 
+     *
+     * @param {*} component
+     * @param {*} entity
      */
     removeComponentFromEntity(component, entity) {
-        this._cmds.push([CmdBuffer.CMD_COMPONENT_REMOVE, entity, component]);
+        this._cmds.push([CMD_COMPONENT_REMOVE, entity, component]);
     },
 
     // addEntity: function( entity ){
-    //     this._cmds.push( [CmdBuffer.CMD_ENTITY_ADD, entity] );
+    //     this._cmds.push( [CMD_ENTITY_ADD, entity] );
     // },
 
     /**
-     * 
-     * @param {*} args 
+     *
+     * @param {*} args
      */
     createEntity(...args) {
         let entity = this.registry.createEntity.apply(this.registry, args);
-        this._cmds.push([CmdBuffer.CMD_ENTITY_ADD, entity]);
+        this._cmds.push([CMD_ENTITY_ADD, entity]);
         if (this.isReleasingEvents) {
             return this.applyChanges();
         }
@@ -146,12 +151,12 @@ Object.assign(EntityProcessor.prototype, Base.prototype, {
     },
 
     /**
-     * 
-     * @param {*} entity 
-     * @param {*} apply 
+     *
+     * @param {*} entity
+     * @param {*} apply
      */
     destroyEntity(entity, apply) {
-        this._cmds.push([CmdBuffer.CMD_ENTITY_REMOVE, entity]);
+        this._cmds.push([CMD_ENTITY_REMOVE, entity]);
         if (apply || this.isReleasingEvents) {
             return this.applyChanges();
         }
@@ -159,15 +164,15 @@ Object.assign(EntityProcessor.prototype, Base.prototype, {
     },
 
     /**
-     * 
-     * @param {*} entityId 
+     *
+     * @param {*} entityId
      */
     getEntity(entityId) {
         return this.entitySet.getEntity(entityId);
     },
 
     /**
-     * 
+     *
      */
     toJSON() {
         let result = {};

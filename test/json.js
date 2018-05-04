@@ -3,7 +3,7 @@ import test from 'tape';
 
 import { Registry } from './common';
 
-// import ComponentRegistry from '../src/schema/index';
+// import { ComponentRegistry } from '../src/schema/index';
 
 const COMPONENT_DEFINITIONS = [
     { uri: '/component/position', properties: { x: 0, y: 0, z: 0, rotation: 0 }, name: 'Position', hash: 'bd12d7de' },

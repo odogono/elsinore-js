@@ -18,5 +18,3 @@ export function arrayFlatten(ary, shallow = false) {
     }
     return ret;
 }
-
-export default arrayFlatten;

@@ -1,39 +1,44 @@
-import Component from '../component';
-import Entity from '../entity';
-import Collection from '../util/collection';
+import { Component } from '../component';
+import { Entity } from '../entity';
+import { Collection } from '../util/collection';
 
 import { cloneComponent, cloneEntity } from '../util/clone';
 import { isInteger } from '../util/is';
 import { toInteger } from '../util/to';
 import { componentsFromCollections } from '../util/array/value';
-import valueArray from '../util/array/value';
+import { valueArray } from '../util/array/value';
 import { entityToString } from '../util/to_string';
-import stringify from '../util/stringify';
+import { stringify } from '../util/stringify';
 
-import arrayDifference from '../util/array/difference';
+import { arrayDifference } from '../util/array/difference';
 
-import { ENTITY_ID, COMPONENT_UPDATE, COMPONENT_REMOVE, ENTITY_REMOVE, COMPONENT_ADD, ENTITY_UPDATE, ENTITY_ADD } from '../constants';
+import {
+    ENTITY_ID,
+    COMPONENT_UPDATE,
+    COMPONENT_REMOVE,
+    ENTITY_REMOVE,
+    COMPONENT_ADD,
+    ENTITY_UPDATE,
+    ENTITY_ADD,
+    CMD_ENTITY_ADD,
+    CMD_ENTITY_REMOVE,
+    CMD_ENTITY_UPDATE,
+    CMD_COMPONENT_ADD,
+    CMD_COMPONENT_REMOVE,
+    CMD_COMPONENT_UPDATE,
+    OP_CREATE_FROM_EXISTING_ID,
+    OP_CREATE_NEW,
+    OP_UPDATE_EXISTING
+} from '../constants';
 
-export const CMD_ENTITY_ADD = 0;
-export const CMD_ENTITY_REMOVE = 1;
-export const CMD_ENTITY_UPDATE = 2;
-export const CMD_COMPONENT_ADD = 3;
-export const CMD_COMPONENT_REMOVE = 4;
-export const CMD_COMPONENT_UPDATE = 5;
 
-// export const OP_ENTITY_NEW = 0;
 
-// the entity id is valid, but the entity does not yet exist
-export const OP_CREATE_FROM_EXISTING_ID = 1;
-// a new entity is being created
-export const OP_CREATE_NEW = 2;
-// an existing entity is being updated
-export const OP_UPDATE_EXISTING = 3;
+
 
 // import {createLog} from '../util/log';
 // const Log = createLog('CmdBufferSync');
 
-export default function CmdBuffer() {
+export function SyncCmdBuffer() {
     this.cmds = {};
     // TODO: explain why specifically we use the cid attribute as the key
     this.entitiesAdded = new Collection(); //null,{idAttribute:'cid'});
@@ -44,7 +49,7 @@ export default function CmdBuffer() {
     this.componentsRemoved = new Collection(); //null,{idAttribute:'cid'});
 }
 
-Object.assign(CmdBuffer.prototype, {
+Object.assign(SyncCmdBuffer.prototype, {
     /**
      * Adds a component to the entityset
      *
@@ -768,8 +773,8 @@ Object.assign(CmdBuffer.prototype, {
     }
 });
 
-CmdBuffer.prototype.type = 'CmdBuffer';
-CmdBuffer.prototype.isCmdBuffer = true;
+SyncCmdBuffer.prototype.type = 'SyncCmdBuffer';
+SyncCmdBuffer.prototype.isCmdBuffer = true;
 
 function triggerEvent(source, name, collection, options) {
     if (collection.size() > 0) {
@@ -777,18 +782,7 @@ function triggerEvent(source, name, collection, options) {
     }
 }
 
-/**
- *
- */
-// function clearCollection(col) {
-//     if (!col) {
-//         return new Collection();
-//     }
-//     col.reset();
-//     return col;
-// }
-
-CmdBuffer.create = function() {
+SyncCmdBuffer.create = function() {
     const result = new CmdBuffer();
     return result;
 };

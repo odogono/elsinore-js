@@ -7,7 +7,7 @@
  * @param defaultTo
  * @return {object}
  */
-export default function readProperty(obj, name, defaultTo = undefined) {
+export function readProperty(obj, name, defaultTo = undefined) {
     let result;
 
     if (Array.isArray(name)) {
