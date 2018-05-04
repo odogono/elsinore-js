@@ -196,14 +196,14 @@ Object.assign(ReadOnlyView.prototype, Base.prototype, {
         let removed = [];
         const debug = this.debug || options.debug;
 
-        if (debug)
-            console.log(
-                `[ROView][applyEvents][${this.cid}][add]`,
-                this._deferedAddEntities.length,
-                this._deferedAddEntities.map(e => e.id),
-                options.debug,
-                this.debug
-            );
+        // if (debug)
+        //     console.log(
+        //         `[ROView][applyEvents][${this.cid}][add]`,
+        //         this._deferedAddEntities.length,
+        //         this._deferedAddEntities.map(e => e.id),
+        //         options.debug,
+        //         this.debug
+        //     );
 
         for (ii = 0, len = this._deferedAddEntities.length; ii < len; ii++) {
             let entity = this._deferedAddEntities[ii];
@@ -213,12 +213,12 @@ Object.assign(ReadOnlyView.prototype, Base.prototype, {
             }
         }
 
-        if (debug)
-            console.log(
-                `[ROView][applyEvents][${this.cid}][remove]`,
-                this._deferedRemoveEntities.length,
-                this._deferedRemoveEntities.map(e => e.id)
-            );
+        // if (debug)
+        //     console.log(
+        //         `[ROView][applyEvents][${this.cid}][remove]`,
+        //         this._deferedRemoveEntities.length,
+        //         this._deferedRemoveEntities.map(e => e.id)
+        //     );
 
         for (ii = 0, len = this._deferedRemoveEntities.length; ii < len; ii++) {
             let entity = this._deferedRemoveEntities[ii];
@@ -232,11 +232,11 @@ Object.assign(ReadOnlyView.prototype, Base.prototype, {
         this._deferedRemoveEntities = [];
 
         if (added.length) {
-            this.trigger('entity:add', added);
+            this.trigger(ENTITY_ADD, added);
         }
 
         if (removed.length) {
-            this.trigger('entity:remove', removed);
+            this.trigger(ENTITY_REMOVE, removed);
         }
     },
 
@@ -303,7 +303,7 @@ Object.assign(ReadOnlyView.prototype, Base.prototype, {
         }
 
         if (added.length) {
-            this.trigger('entity:add', added);
+            this.trigger( ENTITY_ADD, added);
         }
     },
 
@@ -316,15 +316,15 @@ Object.assign(ReadOnlyView.prototype, Base.prototype, {
         let ii,
             length = entities.length;
         let removed = [];
-        if (this.debug)
-            console.log(
-                `[ROView][${this.cid}][_onEntityRemove]`,
-                'entities',
-                length,
-                entities.map(e => e.id),
-                'size',
-                this._entityIds
-            );
+        // if (this.debug)
+        //     console.log(
+        //         `[ROView][${this.cid}][_onEntityRemove]`,
+        //         'entities',
+        //         length,
+        //         entities.map(e => e.id),
+        //         'size',
+        //         this._entityIds
+        //     );
 
         for (ii = 0; ii < length; ii++) {
             let entity = entities[ii];
@@ -340,7 +340,7 @@ Object.assign(ReadOnlyView.prototype, Base.prototype, {
         }
         if (removed.length) {
             // console.log(`[ROView][${this.cid}][_onEntityRemove]`, 'removed', entities.map(e=>e.id), 'size', this._entityIds );
-            this.trigger('entity:remove', removed);
+            this.trigger( ENTITY_REMOVE, removed);
         }
     },
 
@@ -386,58 +386,14 @@ Object.assign(ReadOnlyView.prototype, Base.prototype, {
         }
 
         if (removed.length) {
-            this.trigger('entity:remove', removed);
+            this.trigger( ENTITY_REMOVE, removed);
         }
 
         if (added.length) {
-            this.trigger('entity:add', added);
+            this.trigger( ENTITY_ADD, added);
         }
     }
 
-    /**
-     *
-     * @param {*} components
-     * @private
-     */
-    // _onComponentAdd(components) {},
-
-    /**
-     *
-     * @param {*} components
-     * @private
-     */
-    // _onComponentUpdate(components) {
-    //     let ii, length = components.length;
-    //     let entityIds = {};
-
-    //     console.log('[ROView][_onComponentUpdate]', 'components', (components));
-
-    //     for(ii=0; ii < length; ii++ ){
-    //         let component = components[ii];
-    //         let entityId = component.getEntityId();
-    //         entityIds[entityId] = entityId;
-    //     }
-
-    //     console.log('[ROView][_onComponentUpdate]', 'entityIds', entityIds);
-
-    //     let removed = Object.values(entityIds).reduce( (removed,eid) => {
-    //         let entity = this.getByEntityId(eid);
-    //         if( !entity ){
-    //             return removed;
-    //         }
-    //         if (!applyQueryFilter(this.query, entity)) {
-    //             let remove = this._remove(entity);
-    //             if (remove) {
-    //                 removed.push(remove);
-    //             }
-    //         }
-    //     }, []);
-
-    //     if (removed.length) {
-    //         console.log('[ROView][_onComponentUpdate]', stringify(removed) );
-    //         this.trigger('entity:remove', removed);
-    //     }
-    // },
 });
 
 ReadOnlyView.prototype.type = 'EntitySetReadOnlyView';

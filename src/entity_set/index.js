@@ -561,25 +561,25 @@ Object.assign(EntitySet.prototype, Base.prototype, {
 
         for (ii = 0, len = componentsRemoved.length; ii < len; ii++) {
             this._removeComponent(componentsRemoved[ii]);
-            // console.log('[EntitySet][update]', 'component:remove', componentsRemoved );
+            // console.log('[EntitySet][update]', COMPONENT_REMOVE, componentsRemoved );
         }
 
         for (ii = 0, len = entitiesAdded.length; ii < len; ii++) {
             let entity = entitiesAdded[ii];
             this._addEntity(entity);
-            // console.log('[EntitySet][update]', 'entity:add', entity.id );
+            // console.log('[EntitySet][update]', ENTITY_ADD, entity.id );
         }
 
         for (ii = 0, len = entitiesUpdated.length; ii < len; ii++) {
             let entity = entitiesUpdated[ii];
             this._addEntity(entity);
-            // console.log('[EntitySet][update]', 'entity:update', entity.id );
+            // console.log('[EntitySet][update]', ENTITY_UPDATE, entity.id );
         }
 
         for (ii = 0, len = entitiesRemoved.length; ii < len; ii++) {
             let entity = entitiesRemoved[ii];
             this._removeEntity(entity);
-            // console.log('[EntitySet][update]', 'entity:remove', entity.id );
+            // console.log('[EntitySet][update]', ENTITY_REMOVE, entity.id );
         }
     },
 

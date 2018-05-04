@@ -3,6 +3,9 @@ import { Entity } from '../entity';
 import { Query } from './index';
 import { toString as entityToString } from '../util/to_string';
 
+import { COMMAND } from '../constants';
+
+
 /**
  * passes entities through a queryfilter
  *
@@ -50,7 +53,7 @@ export function applyQueryFilter(query, value, options = {}) {
         return true;
     }
 
-    if (value['@cmd']) {
+    if (value[COMMAND]) {
         return true;
     }
 

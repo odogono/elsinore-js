@@ -238,11 +238,11 @@ Object.assign(EntitySetListener.prototype, Base.prototype, {
 
         if (entitiesAdded.length > 0) {
             // log.debug('+triggering add entities ' + stringify(entitiesAdded) );
-            entitySet.trigger('entity:add', entitiesAdded);
+            entitySet.trigger( ENTITY_ADD, entitiesAdded);
         }
 
         if (entitiesRemoved.length > 0) {
-            entitySet.trigger('entity:remove', entitiesRemoved);
+            entitySet.trigger( ENTITY_REMOVE, entitiesRemoved);
         }
 
         entitiesAdded = null;

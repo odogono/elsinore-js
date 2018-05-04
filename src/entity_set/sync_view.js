@@ -1,9 +1,18 @@
 import { EntitySet } from './index';
 import { Query } from '../query';
 
-import {stringify} from '../util/stringify';
-import { QueryFilter } from '../query/through';
+// import { stringify } from '../util/stringify';
+// import { QueryFilter } from '../query/through';
 import { applyQueryFilter } from '../query/through';
+
+import {
+    ENTITY_ADD,
+    ENTITY_REMOVE,
+    COMPONENT_ADD,
+    COMPONENT_UPDATE,
+    COMPONENT_REMOVE,
+    VIEW_CREATE
+} from '../constants';
 
 /**
  * An entityset which mirrors another entityset through use of
@@ -73,13 +82,13 @@ export function create(entitySet, query, options = {}) {
     //     // }
     // }
 
-    view.listenTo(entitySet, 'entity:add', view.onEntityAdd.bind(view));
-    view.listenTo(entitySet, 'entity:remove', view.onEntityRemove.bind(view));
-    view.listenTo(entitySet, 'component:add', view.onComponentAdd.bind(view));
-    view.listenTo(entitySet, 'component:update', view.onComponentAdd.bind(view));
-    view.listenTo(entitySet, 'component:remove', view.onComponentRemove.bind(view));
+    view.listenTo(entitySet, ENTITY_ADD, view.onEntityAdd.bind(view));
+    view.listenTo(entitySet, ENTITY_REMOVE, view.onEntityRemove.bind(view));
+    view.listenTo(entitySet, COMPONENT_ADD, view.onComponentAdd.bind(view));
+    view.listenTo(entitySet, COMPONENT_UPDATE, view.onComponentAdd.bind(view));
+    view.listenTo(entitySet, COMPONENT_REMOVE, view.onComponentRemove.bind(view));
 
-    // entitySet.on('entity:add', (evt) => {
+    // entitySet.on(ENTITY_ADD, (evt) => {
     //     console.log('ADDING!', evt);
     // })
 
@@ -90,7 +99,7 @@ export function create(entitySet, query, options = {}) {
     //     pushable.end();
     // }
 
-    entitySet.emit('view:create', view);
+    entitySet.emit(VIEW_CREATE, view);
 
     return view;
 }

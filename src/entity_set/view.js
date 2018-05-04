@@ -1,5 +1,6 @@
 import { EntitySet } from './index';
 import { EntitySetListener } from './listener';
+import { VIEW_CREATE } from '../constants';
 
 export function EntitySetView() {}
 
@@ -23,7 +24,7 @@ EntitySet.prototype.view = function(query, options = {}) {
     // store the view
     this.views || (this.views = {});
     this.views[query ? query.hash() : 'all'] = result;
-    this.trigger('view:create', result);
+    this.trigger(VIEW_CREATE, result);
 
     return result;
 };

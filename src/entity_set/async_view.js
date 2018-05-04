@@ -3,8 +3,9 @@ import Pull from 'pull-stream';
 import PullMap from 'pull-stream/throughs/map';
 import { Query } from '../query';
 
-import {stringify} from '../util/stringify';
+import { stringify } from '../util/stringify';
 import { QueryFilter } from '../query/through';
+import { VIEW_CREATE } from '../constants';
 
 /**
  * An entityset which mirrors another entityset through use of
@@ -41,7 +42,7 @@ export function create(entitySet, query, options = {}) {
     view._parent = this;
     entitySet._views[queryId] = view;
 
-    entitySet.emit('view:create', view);
+    entitySet.emit(VIEW_CREATE, view);
 
     return new Promise((resolve, reject) => {
         // the first update stream sends all the existing entities and then closes

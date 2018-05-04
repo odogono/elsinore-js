@@ -45,10 +45,10 @@ export function PullStreamSource(entitySet, options = {}) {
 
     let pushable = PullPushable(err => {
         // if( err ){ console.log('[entitySet][source]', err ); }
-        entitySet.off('entity:add', pushable.onEntityAdd, pushable);
-        entitySet.off('entity:remove', pushable.onEntityRemove, pushable);
-        entitySet.off('component:add', pushable.onComponentAdd, pushable);
-        entitySet.off('component:remove', pushable.onComponentRemove, pushable);
+        entitySet.off(ENTITY_ADD, pushable.onEntityAdd, pushable);
+        entitySet.off(ENTITY_REMOVE, pushable.onEntityRemove, pushable);
+        entitySet.off(COMPONENT_ADD, pushable.onComponentAdd, pushable);
+        entitySet.off(COMPONENT_REMOVE, pushable.onComponentRemove, pushable);
     });
 
     let entity,

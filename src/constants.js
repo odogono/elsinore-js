@@ -18,6 +18,8 @@ export const ENTITY_EVENT = 'entity:event';
 
 export const ENTITY_SET_ADD = 'entityset:add';
 
+export const VIEW_CREATE = 'view:create';
+
 export const COMPONENT_DEFINITION_ADD = 'def:add';
 export const COMPONENT_DEFINITION_REMOVE = 'def:rem';
 

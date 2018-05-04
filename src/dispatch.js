@@ -7,10 +7,11 @@ import { create as createEntitySetIndex } from './entity_set/ro_view';
 import { Query } from './query/full';
 import { EntityProcessor } from './entity_processor';
 import { createLog } from './util/log';
-import { stringify } from './util/stringify';
+// import { stringify } from './util/stringify';
 import { arrayWithout } from './util/array/without';
 import { uniqueId } from './util/unique_id';
 import { toString as entityToString } from './util/to_string';
+import { VIEW_CREATE } from './constants';
 
 const Log = createLog('EntityDispatch');
 
@@ -289,7 +290,7 @@ export class EntityDispatch {
             let view = this._views[queryId];
             if (!view) {
                 view = createEntitySetIndex(this._entitySet, query, { deferEvents: false });
-                this.trigger('view:create', view);
+                this.trigger(VIEW_CREATE, view);
             }
 
             this._addProcessorToView(queryId, view, entry);
