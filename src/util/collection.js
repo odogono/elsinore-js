@@ -5,18 +5,22 @@ import { isObject } from './is';
  * A collection stores a set of objects keyed by the id attribute
  */
 export function Collection(models, options = {}) {
-    this.idAttribute = options.idAttribute || 'id';
-    // this.debug = propertyResult( options, 'debug', false);
-    this.reset();
-    if (models !== undefined) {
-        this.add(models);
-    }
+    this.initialize(models, options);
 }
 
 /**
  *
  */
 Object.assign(Collection.prototype, {
+    initialize(models, options = {}) {
+        this.idAttribute = options.idAttribute || 'id';
+        // this.debug = propertyResult( options, 'debug', false);
+        this.reset();
+        if (models !== undefined) {
+            this.add(models);
+        }
+    },
+
     /**
      * Adds an object to the collection. If an object with the same id
      * already exists in the collection, it is replaced.

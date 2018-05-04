@@ -2,14 +2,14 @@ import { Base } from '../base';
 import { Collection } from '../util/collection';
 import { Component } from '../component';
 import { Events } from '../util/events';
-import {stringify} from '../util/stringify';
+import { stringify } from '../util/stringify';
 
 import { isObject } from '../util/is';
 import { createLog } from '../util/log';
 
 import { propertyResult } from '../util/result';
 
-import {ComponentDef} from '../component_def';
+import { ComponentDef } from '../component_def';
 
 const Log = createLog('ComponentRegistry', false);
 
@@ -33,15 +33,30 @@ import {
 //         return this.find( cdef => cdef.getUri() == uri );
 //     }
 // });
-export class ComponentDefCollection extends Collection {
+
+export function ComponentDefCollection( models, options={} ){
+    Collection.prototype.initialize.call(this, models, options );
+}
+
+Object.assign( ComponentDefCollection.prototype, Collection.prototype,{
     getByHash(hash) {
         return this.find(cdef => cdef.hash() == hash);
-    }
+    },
 
     getByUri(uri) {
         return this.find(cdef => cdef.getUri() == uri);
     }
-}
+});
+
+// export class ComponentDefCollection extends Collection {
+//     getByHash(hash) {
+//         return this.find(cdef => cdef.hash() == hash);
+//     }
+
+//     getByUri(uri) {
+//         return this.find(cdef => cdef.getUri() == uri);
+//     }
+// }
 ComponentDefCollection.prototype.model = ComponentDef;
 
 // class ComponentDefUriCollection extends ComponentDefCollection {
@@ -50,12 +65,20 @@ ComponentDefCollection.prototype.model = ComponentDef;
 //     }
 // }
 
+
+
+export function ComponentRegistry(definitions, options={}){
+    Object.assign(this, Events);
+    this.initialize( definitions, options );
+}
+
+
 /**
  *
  */
-export class ComponentRegistry {
-    constructor(definitions, options = {}) {
-        Object.assign(this, Events);
+Object.assign( ComponentRegistry.prototype, {
+
+    initialize(definitions, options = {}) {
         this.registry = options.registry;
         this._componentIndex = 1;
         this._componentDefs = new ComponentDefCollection();
@@ -64,7 +87,7 @@ export class ComponentRegistry {
         if (definitions) {
             definitions.forEach(def => this.register(def));
         }
-    }
+    },
 
     toJSON(options = {}) {
         return this._componentDefs.reduce((result, def) => {
@@ -75,7 +98,7 @@ export class ComponentRegistry {
             }
             return result;
         }, []);
-    }
+    },
 
     /**
      * Returns the registered component defs as an array of def ids
@@ -86,7 +109,7 @@ export class ComponentRegistry {
             result[def.id] = def.getUri();
             return result;
         }, []);
-    }
+    },
 
     /**
      * Adds a component definition to the registry
@@ -111,7 +134,7 @@ export class ComponentRegistry {
             }
             const type = propertyResult(inst, 'type');
             this._componentTypes[type] = def;
-            this.trigger( COMPONENT_TYPE_ADD, type, def);
+            this.trigger(COMPONENT_TYPE_ADD, type, def);
 
             const uri = propertyResult(inst, 'uri');
             if (uri) {
@@ -173,7 +196,7 @@ export class ComponentRegistry {
         this.trigger(COMPONENT_DEFINITION_ADD, componentDef.getUri(), componentDef.hash(), componentDef);
 
         return componentDef;
-    }
+    },
 
     /**
      * Removes a definition from the registry
@@ -193,7 +216,7 @@ export class ComponentRegistry {
         this.trigger(COMPONENT_DEFINITION_REMOVE, componentDef.getUri(), componentDef.hash(), componentDef);
 
         return componentDef;
-    }
+    },
 
     /**
      * Returns an array of the registered componentdefs
@@ -205,7 +228,7 @@ export class ComponentRegistry {
             return this._componentDefs.models;
         }
         return this._componentDefByUri.models;
-    }
+    },
 
     /**
      * Creates a new component instance
@@ -262,7 +285,7 @@ export class ComponentRegistry {
             return cb(null, result);
         }
         return result;
-    }
+    },
 
     /**
      *
@@ -273,7 +296,7 @@ export class ComponentRegistry {
         options.returnIds = true;
         // defIdentifiers.push({ throwOnNotFound:true, returnIds:true });
         return this.getComponentDef(defIdentifiers, options);
-    }
+    },
 
     /**
      *
@@ -351,11 +374,13 @@ export class ComponentRegistry {
         }
 
         return result;
-    }
+    },
 
-    static create(definitions, options = {}) {
-        let result = new ComponentRegistry(definitions, options);
+    
+});
 
-        return result;
-    }
+ComponentRegistry.create = function(definitions, options = {}) {
+    let result = new ComponentRegistry(definitions, options);
+
+    return result;
 }
