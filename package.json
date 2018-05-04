@@ -1,6 +1,6 @@
 {
   "name": "elsinore",
-  "version": "5.0.1",
+  "version": "5.0.2",
   "description": "a javascript Entity Component System",
   "keywords": [
     "elsinore",
@@ -22,11 +22,11 @@
     "type": "git",
     "url": "https://github.com/odogono/elsinore-js.git"
   },
-  "main": "dist/elsinore.js",
-  "jsnext:main": "dist/elsinore.module.js",
-  "module": "dist/elsinore.module.js",
+  "main": "dist/elsinore.cjs.js",
+  "module": "./lib",
+  "browser": "dist/elsinore.umd.js",
   "dependencies": {
-    "odgn-bitfield": "^0.9.1",
+    "odgn-bitfield": "^0.9.3",
     "pull-pushable": "2.1.2"
   },
   "non-dependencies": {},
@@ -59,17 +59,19 @@
     "underscore": "^1.8.2"
   },
   "directories": {
-    "es2015": "es2015",
     "lib": "lib",
     "dist": "dist"
   },
   "scripts": {
-    "build": "rollup -c rollup.config.js",
+    "build": "rollup -c",
+    "build:old": "rollup -c rollup.config.js",
     "build:es": "rollup -c rollup.config.es.js",
-    "compile": "babel src --out-dir lib --plugins=transform-es2015-shorthand-properties,transform-inline-environment-variables,transform-es2015-modules-commonjs,transform-es2015-destructuring,transform-object-rest-spread",
+    "compile:old": "babel src --out-dir lib --plugins=transform-es2015-shorthand-properties,transform-inline-environment-variables,transform-es2015-modules-commonjs,transform-es2015-destructuring,transform-object-rest-spread",
     "compile:es2015": "babel src --out-dir es2015 --plugins=transform-es2015-shorthand-properties,transform-inline-environment-variables,transform-object-rest-spread",
+    "compile:esm": "BABEL_ENV=build-esm babel src --out-dir lib",
     "clean": "rm -rf node_modules build dist lib; mkdir build; npm install",
-    "dist:noclean": "NODE_ENV=production npm run compile && npm run compile:es2015 && npm run build && npm run build:es",
+    "dist:noclean:old": "NODE_ENV=production npm run compile:esm && npm run compile:es2015 && npm run build && npm run build:es",
+    "dist:noclean": "NODE_ENV=production npm run compile:esm",
     "dist": "npm run dist:noclean",
     "lint": "./node_modules/.bin/eslint ./src --ext .js",
     "lint-fix": "./node_modules/.bin/eslint --fix ./src --ext .js",
