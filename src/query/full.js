@@ -1,7 +1,6 @@
 import { Query } from './index';
 
 import './dsl';
-import './register';
 import './attr';
 import './equals';
 import './select_by_id';

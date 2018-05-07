@@ -1,4 +1,4 @@
-import { register } from './register';
+import { register } from './dsl';
 import { ENTITY_FILTER,
     LEFT_PAREN,
     RIGHT_PAREN,

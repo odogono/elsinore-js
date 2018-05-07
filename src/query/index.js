@@ -29,7 +29,7 @@ import {
     ANY, ALL, NONE, INCLUDE,
 } from './constants';
 
-import { compileCommands, commandFunctions } from './register';
+import { compileCommands, commandFunctions } from './dsl';
 
 export class Query {
     constructor(commands, options = {}) {

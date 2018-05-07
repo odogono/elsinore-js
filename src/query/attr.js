@@ -1,4 +1,4 @@
-import { register } from './register';
+import { register } from './dsl';
 import { VALUE } from './constants';
 
 export const ATTR = 'AT';
