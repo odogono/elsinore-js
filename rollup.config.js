@@ -5,8 +5,6 @@ import NodeResolve from 'rollup-plugin-node-resolve';
 import Replace from 'rollup-plugin-replace';
 import Uglify from 'rollup-plugin-uglify';
 
-// const pkg = JSON.parse(readFileSync('package.json', 'utf-8'));
-
 const environment = process.env.NODE_ENV || 'development';
 const isProduction = environment === 'production';
 
@@ -14,8 +12,6 @@ const banner = readFileSync('src/banner.js', 'utf-8')
     .replace('${version}', pkg.version)
     .replace('${time}', new Date());
 
-// import resolve from 'rollup-plugin-node-resolve';
-// import commonjs from 'rollup-plugin-commonjs';
 import pkg from './package.json';
 
 const babelPlugin = Babel({
@@ -26,7 +22,6 @@ const babelPlugin = Babel({
     plugins: [
         'transform-inline-environment-variables',
         'transform-object-rest-spread',
-        // uglifyjs has been having problems with this
         'transform-es2015-shorthand-properties'
     ]
 });
@@ -44,7 +39,8 @@ export default [
             Replace({ 'process.env.NODE_ENV': JSON.stringify(environment) }),
             babelPlugin,
             NodeResolve(),
-            CommonJS() // so Rollup can convert `ms` to an ES module
+            CommonJS(), // so Rollup can convert `ms` to an ES module
+            isProduction && Uglify()
         ]
     },
 
@@ -74,38 +70,8 @@ export default [
                 namedExports: {
                     'node_modules/odgn-bitfield/index.js': ['BitField']
                 }
-            })
+            }),
+            isProduction && Uglify()
         ]
     }
 ];
-
-// export default {
-//     input: 'src/index.js',
-//     output: {
-//         banner,
-//         format: 'cjs',
-//         sourcemap: true,
-//         file: isProduction ? 'dist/elsinore.min.js' : 'dist/elsinore.js',
-//     },
-//     // moduleName: 'elsinore',
-//     plugins: [
-//         Replace({ 'process.env.NODE_ENV': JSON.stringify(environment) }),
-//         Babel({
-//             babelrc: false,
-//             sourceMap: true,
-//             exclude: 'node_modules/**',
-//             presets: [ 'es2015-rollup' ],
-//             plugins: [
-//                 // "external-helpers",
-//                 // "transform-es2015-destructuring",
-//                 'transform-inline-environment-variables',
-//                 'transform-object-rest-spread',
-//                 // uglifyjs has been having problems with this
-//                 'transform-es2015-shorthand-properties',
-//             ],
-//         }),
-//         NodeResolve({ preferBuiltins: true, jsnext: true, main: true }),
-//         CommonJS({}),
-//         isProduction && Uglify(),
-//     ],
-// }
