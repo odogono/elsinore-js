@@ -3,7 +3,7 @@ import { Entity } from '../entity';
 import { hash } from '../util/hash';
 import { uniqueId } from '../util/unique_id';
 import { Base } from '../base';
-
+import { isEntitySet } from '../util/is';
 import { createLog } from '../util/log';
 
 import {

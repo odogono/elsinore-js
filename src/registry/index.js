@@ -3,7 +3,7 @@ import { arrayWithout } from '../util/array/without';
 import { isBoolean } from '../util/is';
 import { omit } from '../util/omit';
 import { createUUID } from '../util/uuid';
-
+import { isComponent, isEntity, isEntitySet } from '../util/is';
 import { Entity } from '../entity';
 import { EntitySet } from '../entity_set';
 import { Events } from '../util/events';
@@ -201,7 +201,7 @@ Object.assign( Registry.prototype, {
 
         entityId = options.entity || options.entityId || options.eid;
 
-        if (Entity.isEntity(attrs)) {
+        if (isEntity(attrs)) {
             entityId = Entity.toEntityId(attrs);
             attrs = {};
         }
@@ -214,7 +214,7 @@ Object.assign( Registry.prototype, {
         if (Array.isArray(componentDef)) {
             // recurse each entry
             return Array.prototype.concat.apply([], componentDef.map(s => this.createComponent(s, attrs, options)));
-        } else if (Component.isComponent(componentDef)) {
+        } else if (isComponent(componentDef)) {
             // maybe clone instead of just returning?
             return componentDef;
         } else {

@@ -1,9 +1,6 @@
-import { Collection } from '../util/collection';
-// import { Component } from '../component';
-import { Entity } from '../entity';
-// import { EntitySet } from '../entity_set';
 // import { EntityProcessor } from '../entity_processor';
 import { stringify } from './stringify';
+import { isCollection, isComponent, isEntity, isEntitySet } from './is';
 
 import { getEntityIdFromId } from './id';
 
@@ -86,15 +83,13 @@ export function toString(entity, indent = '', join = '\n') {
         entity.forEach(e => (res = res.concat(toString(e, '  ', ' '))));
     } else if (entity._esToString) {
         res = res.concat(entity._esToString(indent)); //  entitySetToString(entity.entitySet, indent));
-    } else if (Entity.isEntity(entity)) {
+    } else if (isEntity(entity)) {
         res = res.concat(entityToString(entity, indent));
-        // } else if (Component.isComponent(entity)) {
-    } else if (entity.isComponent === true) {
+    } else if (isComponent(entity)) {
         res = res.concat(componentToString(entity, indent));
-    } else if (entity.isEntitySet === true || entity.type == 'EntitySetReadOnlyView') {
-        // } else if (EntitySet.isEntitySet(entity) || entity.type == 'EntitySetReadOnlyView' ) {
+    } else if (isEntitySet(entity) || entity.type == 'EntitySetReadOnlyView') {
         res = res.concat(entitySetToString(entity, indent));
-    } else if (entity instanceof Collection) {
+    } else if (isCollection(entity)) {
         entity.each(item => {
             res = res.concat(toString(item, '  '));
         });

@@ -1,6 +1,6 @@
 import BitField from 'odgn-bitfield';
 import { setEntityIdFromId } from './util/id';
-import { isInteger, isString } from './util/is';
+import { isComponent, isEntity, isInteger, isString } from './util/is';
 import { uniqueId } from './util/unique_id';
 import { readProperty } from './util/read_property';
 import { hash } from './util/hash';
@@ -321,7 +321,7 @@ Object.assign(Entity.prototype, Base.prototype, {
      * @param {*} componentIId
      */
     hasComponent(componentIId) {
-        if (Component.isComponent(componentIId)) {
+        if (isComponent(componentIId)) {
             componentIId = componentIId.getDefId();
         } else if (isString(componentIId)) {
             componentIId = this.getRegistry().getIId(componentIId);
@@ -404,10 +404,8 @@ Entity.prototype.clone = function(options = {}) {
     return result;
 };
 
-Entity.isEntity = entity => entity && entity.isEntity;
-
 Entity.toEntityId = function(entityId) {
-    if (Entity.isEntity(entityId)) {
+    if (isEntity(entityId)) {
         return entityId.id;
     }
     return entityId;

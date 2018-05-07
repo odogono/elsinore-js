@@ -14,14 +14,14 @@ import {
     createLog,
     entityToString,
 } from './common';
-
+import { isComponent, isEntity, isEntitySet } from '../src/util/is';
 const Log = createLog('TestQuery');
 
 
 test('return entity by id', t => {
     initialiseEntitySet().then(([registry, entitySet]) => {
         let result = entitySet.selectById(5);
-        t.ok(EntitySet.isEntitySet(result));
+        t.ok(isEntitySet(result));
         t.equals(result.size(), 1);
         t.end();
     });
@@ -30,7 +30,7 @@ test('return entity by id', t => {
 test('return entities by id', t => {
     initialiseEntitySet().then(([registry, entitySet]) => {
         let result = entitySet.selectById([5, 6, 7]);
-        t.ok(EntitySet.isEntitySet(result));
+        t.ok(isEntitySet(result));
         t.equals(result.size(), 3);
         t.end();
     });
@@ -42,7 +42,7 @@ test('return entity by id in an array', async t => {
         
         let result = entitySet.selectById(5, false);
         
-        t.notOk(EntitySet.isEntitySet(result));
+        t.notOk(isEntitySet(result));
 
         t.equals(result.length, 1);
 

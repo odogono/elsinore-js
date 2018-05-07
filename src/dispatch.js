@@ -10,6 +10,7 @@ import { createLog } from './util/log';
 // import { stringify } from './util/stringify';
 import { arrayWithout } from './util/array/without';
 import { uniqueId } from './util/unique_id';
+import { isEntitySet } from './util/is';
 import { toString as entityToString } from './util/to_string';
 import { VIEW_CREATE } from './constants';
 
@@ -18,10 +19,10 @@ const Log = createLog('EntityDispatch');
 /**
  * @class EntityDispatch
  */
-export function EntityDispatch( registry, entitySet ){
+export function EntityDispatch(registry, entitySet) {
     Object.assign(this, Events);
 
-    if (EntitySet.isEntitySet(registry)) {
+    if (isEntitySet(registry)) {
         entitySet = registry;
         registry = entitySet.getRegistry();
     }
@@ -32,7 +33,7 @@ export function EntityDispatch( registry, entitySet ){
     return this.initialize();
 }
 
-Object.assign( EntityDispatch.prototype, {
+Object.assign(EntityDispatch.prototype, {
     initialize() {
         // this._removeViews();
         this.processorEntries = new Collection();
@@ -407,6 +408,6 @@ Object.assign( EntityDispatch.prototype, {
 });
 
 EntityDispatch.create = function(registry, entitySet) {
-    const result = new EntityDispatch( registry, entitySet);
+    const result = new EntityDispatch(registry, entitySet);
     return result;
 };

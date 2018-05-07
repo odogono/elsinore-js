@@ -49,6 +49,9 @@ export { ComponentRegistry };
 import { EntityDispatch } from '../../src/dispatch';
 export { EntityDispatch };
 
+import { isEntitySet, isEntity } from '../../src/util/is';
+
+
 const Log = createLog('Test');
 
 // compile a map of schema id(uri) to schema
@@ -149,7 +152,7 @@ export function loadFixtureJSON(fixturePath) {
 }
 
 export function logEvents(obj, prefix = 'evt') {
-    if (EntitySet.isEntitySet(obj)) {
+    if (isEntitySet(obj)) {
         obj.on('entity:add', entities => Log.info(prefix, 'entity:add', stringify(entities.map(e => e.id)))); //stringify(entities)) );
         obj.on('entity:update', entities => Log.info(prefix, 'entity:update', stringify(entities)));
         obj.on('entity:remove', entities => Log.info(prefix, 'entity:remove', stringify(entities.map(e => e.id))));

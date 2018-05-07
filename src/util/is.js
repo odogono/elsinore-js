@@ -1,9 +1,10 @@
+// import { Collection } from './collection';
 
 const getClass = {}.toString;
 
 /**
  * Returns true if the value is undefined
- * 
+ *
  * @param val
  * @returns {boolean}
  */
@@ -13,36 +14,35 @@ export function isUndefined(val) {
 
 /**
  * Returns true if the passed value is a Boolean
- * 
- * @param {*} object 
+ *
+ * @param {*} object
  */
 export function isBoolean(object) {
     return object && getClass.call(object) == '[object Boolean]';
 }
 
 /**
- * 
- * @param {*} object 
+ *
+ * @param {*} object
  */
-export function isString(object){
+export function isString(object) {
     return object && getClass.call(object) == '[object String]';
 }
 
-
 /**
- * 
- * @param {*} object 
+ *
+ * @param {*} object
  */
-export function isDate(object){
+export function isDate(object) {
     return object && getClass.call(object) == '[object Date]';
 }
 
 /**
- * 
- * @param {*} object 
+ *
+ * @param {*} object
  * @returns {boolean} if the object is a function
  */
-export function isFunction(object){
+export function isFunction(object) {
     return object && getClass.call(object) == '[object Function]';
 }
 
@@ -66,7 +66,7 @@ export function isInteger(i) {
 /**
  * Returns true if the value is a Promise
  * https://github.com/then/is-promise
- * 
+ *
  * @param p the value to be tested
  * @returns {boolean}
  */
@@ -76,13 +76,33 @@ export function isPromise(p) {
 
 /**
  * Checks if the value is an object
- * 
+ *
  * taken from https://github.com/lodash/lodash/blob/master/isObject.js
- * 
+ *
  * @param {*} value The value to check.
  * @returns {boolean} Returns `true` if `value` is an object, else `false`.
  */
 export function isObject(value) {
     const type = typeof value;
     return value != null && (type == 'object' || type == 'function');
+}
+
+export function isEntitySet(value) {
+    return value && value.isEntitySet === true;
+}
+
+export function isMemoryEntitySet(value) {
+    return isEntitySet(value) && value.isMemoryEntitySet === true;
+}
+
+export function isEntity(entity) {
+    return entity && entity.isEntity === true;
+}
+
+export function isComponent(value){
+    return value && value.isComponent === true;
+}
+
+export function isCollection(value){
+    return value && value.isCollection === true;// instanceof Collection;
 }

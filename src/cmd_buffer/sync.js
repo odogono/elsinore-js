@@ -9,7 +9,7 @@ import { componentsFromCollections } from '../util/array/value';
 import { valueArray } from '../util/array/value';
 import { entityToString } from '../util/to_string';
 import { stringify } from '../util/stringify';
-
+import { isComponent, isEntity } from '../util/is';
 import { arrayDifference } from '../util/array/difference';
 
 import {
@@ -101,7 +101,7 @@ Object.assign(SyncCmdBuffer.prototype, {
             }
         }
 
-        if (!Component.isComponent(component)) {
+        if (!isComponent(component)) {
             // console.log('[CmdBufferSync][addComponent]', 'not component instance', component.type);
             throw new Error('argument is not component instance');
         }
@@ -342,7 +342,7 @@ Object.assign(SyncCmdBuffer.prototype, {
             }
         }
 
-        if (!Entity.isEntity(entity)) {
+        if (!isEntity(entity)) {
             throw new Error('entity instance not passed');
         }
 

@@ -4,7 +4,7 @@ import { Component } from '../component';
 import { Events } from '../util/events';
 import { stringify } from '../util/stringify';
 
-import { isObject } from '../util/is';
+import { isComponent, isObject } from '../util/is';
 import { createLog } from '../util/log';
 
 import { propertyResult } from '../util/result';
@@ -109,7 +109,7 @@ Object.assign( ComponentRegistry.prototype, {
             componentDef = def;
         } else if (Array.isArray(def)) {
             return def.map(d => this.register(d, options));
-        } else if (Component.isComponent(def)) {
+        } else if ( def.prototype && def.prototype.isComponent === true ){ // isComponent(def)) {
             const defOptions = { registering: true, registry: this.registry };
             let inst = new def(null, defOptions);
             const properties = propertyResult(inst, 'properties');
@@ -127,7 +127,7 @@ Object.assign( ComponentRegistry.prototype, {
 
             return def;
         } else if (!isObject(def) || !def.uri) {
-            Log.error('def', def);
+            Log.error('def', typeof def, def);
             throw new Error('invalid component def: ' + stringify(def));
         } else {
             // Log.info('register', def, Object.keys(options), throwOnExists );

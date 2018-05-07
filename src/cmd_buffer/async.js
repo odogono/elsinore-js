@@ -5,7 +5,7 @@ import { Collection } from '../util/collection';
 import { InvalidEntityError } from '../error';
 
 import { getEntitySetIdFromId } from '../util/id';
-
+import { isEntity } from '../util/is';
 import { valueArray } from '../util/array/value';
 
 import { SyncCmdBuffer} from './sync';
@@ -184,7 +184,7 @@ Object.assign(AsyncCmdBuffer.prototype, SyncCmdBuffer.prototype, {
             }
         }
 
-        if (!Entity.isEntity(entity)) {
+        if (!isEntity(entity)) {
             throw new InvalidEntityError('entity instance not passed');
         }
 
@@ -255,7 +255,7 @@ Object.assign(AsyncCmdBuffer.prototype, SyncCmdBuffer.prototype, {
             }
         }
 
-        if (!Entity.isEntity(entity)) {
+        if (!isEntity(entity)) {
             throw new InvalidEntityError('entity instance not passed');
         }
 

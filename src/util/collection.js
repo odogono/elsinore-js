@@ -94,12 +94,13 @@ Object.assign(Collection.prototype, {
         if (item !== undefined) {
             const index = this._indexOfObject[objId];
 
-            if (debug) console.log('[remove]', obj, this.idAttribute, objId, index);
+            // if (debug) console.log('[remove]', obj, this.idAttribute, objId, index);
             result = this.models.splice(index, 1);
 
             delete this._objectsById[objId];
             delete this._indexOfObject[objId];
-        } else if (debug) console.log('[remove]', 'not found', obj, this._objectsById[objId]);
+        } 
+        //else if (debug) console.log('[remove]', 'not found', obj, this._objectsById[objId]);
 
         this._reindex();
 
@@ -243,3 +244,4 @@ Object.assign(Collection.prototype, {
 });
 
 Collection.prototype.type = 'Collection';
+Collection.prototype.isCollection = true;

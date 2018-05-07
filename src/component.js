@@ -7,6 +7,7 @@ import { hash } from './util/hash';
 import { uniqueId } from './util/unique_id';
 import { deepEqual } from './util/deep_equal';
 import { deepExtend } from './util/deep_extend';
+import { isComponent } from './util/is';
 
 import { COMPONENT_ID, COMPONENT_URI, COMPONENT_DEF_ID, ENTITY_ID, ENTITY_SET_ID, COMPONENT_UPDATE } from './constants';
 
@@ -136,7 +137,7 @@ Object.assign(Component.prototype, Base.prototype, {
      */
     apply(other, options) {
         let attrs = other;
-        if (Component.isComponent(other)) {
+        if (isComponent(other)) {
             attrs = other.attributes;
         }
 
@@ -293,13 +294,8 @@ Component.prototype.type = 'Component';
 Component.prototype.isComponent = true;
 Component.prototype.cidPrefix = 'c';
 
-Component.isComponent = function(obj) {
-    return obj && obj.isComponent;
-};
 
 Component.create = function(attrs, options) {
     const result = new Component(attrs);
-    // result.set(result.parse(attrs));
-    // attrs = Component.prototype.parse.apply(null,[attrs]);
     return result;
 };

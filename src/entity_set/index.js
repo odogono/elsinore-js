@@ -6,11 +6,10 @@ import { Entity } from '../entity';
 
 import { Query } from '../query';
 import { stringify } from '../util/stringify';
-import { isInteger, isPromise } from '../util/is';
+import { isComponent, isEntity, isMemoryEntitySet, isInteger, isObject, isPromise } from '../util/is';
 import { uniqueId } from '../util/unique_id';
 import { valueArray } from '../util/array/value';
 import { componentsFromCollections } from '../util/array/value';
-import { isObject } from '../util/is';
 import { createUUID } from '../util/uuid';
 import { hash } from '../util/hash';
 import { cloneEntity } from '../util/clone';
@@ -269,7 +268,7 @@ Object.assign(EntitySet.prototype, Base.prototype, {
      */
     getComponent(component) {
         let componentId = component;
-        if (Component.isComponent(component)) {
+        if (isComponent(component)) {
             componentId = component.id;
         }
 
@@ -319,7 +318,7 @@ Object.assign(EntitySet.prototype, Base.prototype, {
     addEntity(entity, options) {
         let add = null;
         let isArray = Array.isArray(entity);
-        if (EntitySet.isMemoryEntitySet(entity)) {
+        if (isMemoryEntitySet(entity)) {
             entity = entity.models;
             isArray = true;
         }
@@ -328,10 +327,10 @@ Object.assign(EntitySet.prototype, Base.prototype, {
             if (entity.length <= 0) {
                 return;
             }
-            if (Entity.isEntity(entity[0])) {
+            if (isEntity(entity[0])) {
                 add = entity;
             }
-        } else if (Entity.isEntity(entity)) {
+        } else if (isEntity(entity)) {
             add = entity;
         }
 
@@ -349,7 +348,7 @@ Object.assign(EntitySet.prototype, Base.prototype, {
      * @param {*} options
      */
     removeEntity(entity, options) {
-        if (EntitySet.isMemoryEntitySet(entity)) {
+        if (isMemoryEntitySet(entity)) {
             entity = entity.models;
         }
         return this._cmdBuffer.removeEntity(this, entity, options);
@@ -476,7 +475,7 @@ Object.assign(EntitySet.prototype, Base.prototype, {
      * @param {*} options
      */
     getEntity(entity, options) {
-        if (Entity.isEntity(entity)) {
+        if (isEntity(entity)) {
             entity = entity.getEntityId();
         }
         if (isInteger(entity)) {
@@ -692,12 +691,4 @@ EntitySet.hash = function(entitySet, query) {
     }
 
     return hash(str, true);
-};
-
-EntitySet.isEntitySet = function(es) {
-    return es && es.isEntitySet;
-};
-
-EntitySet.isMemoryEntitySet = function(es) {
-    return EntitySet.isEntitySet(es) && es.isMemoryEntitySet;
 };

@@ -1,7 +1,4 @@
-import { Collection } from '../collection';
-import { Entity } from '../../entity';
-import { Component } from '../../component';
-
+import { isCollection, isComponent, isEntity } from '../is';
 
 /**
  * If the passed array has only a single value, return
@@ -17,7 +14,7 @@ export function valueArray(...array) {
     
     if (array.length > 0) {
         array = array.reduce((acc, cur) => {
-            if (cur instanceof Collection) {
+            if ( isCollection(cur)) {
                 cur = cur.models;
             }
             if( Array.isArray(cur) ){
@@ -53,9 +50,9 @@ export function componentsFromCollections(...collections){
         let models = collections[ii].models;
         for( let jj=0;jj<models.length;jj++ ){
             let item = models[jj];
-            if( Component.isComponent(item) ){
+            if( isComponent(item) ){
                 result.push(item);
-            } else if( Entity.isEntity(item) ){
+            } else if( isEntity(item) ){
                 result = result.concat( models[jj].getComponents() );
             }
         }

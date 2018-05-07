@@ -1,12 +1,10 @@
 import BitField from 'odgn-bitfield';
-import { Entity } from '../entity';
-import { EntitySet } from '../entity_set';
 import { EntityFilter } from '../entity_filter';
 import { stringify } from '../util/stringify';
 import { uniqueId } from '../util/unique_id';
 import { hash } from '../util/hash';
 import { DslContext, QueryBuilder } from './dsl';
-
+import { isEntity, isEntitySet } from '../util/is';
 
 import {
     ROOT,
@@ -118,9 +116,9 @@ export class Query {
     buildEntityContext(entity, options = {}) {
         let context = QueryContext.create(this, {}, options);
 
-        if (EntitySet.isEntitySet(entity)) {
+        if (isEntitySet(entity)) {
             context.entitySet = entity;
-        } else if (Entity.isEntity(entity)) {
+        } else if (isEntity(entity)) {
             context.entity = entity;
         }
 
@@ -216,7 +214,7 @@ Object.assign(QueryContext.prototype, {
             entitySet = this.valueOf(entitySet);
         }
 
-        if (EntitySet.isEntitySet(entitySet)) {
+        if (isEntitySet(entitySet)) {
             return entitySet;
         }
 
@@ -276,7 +274,7 @@ Object.assign(QueryContext.prototype, {
 
         entitySet = context.valueOf(context.last || context.entitySet, true);
 
-        if (Entity.isEntity(entitySet)) {
+        if (isEntity(entitySet)) {
             entity = entitySet;
         } else {
             // console.log('commandFilter no entityset', entitySet);
@@ -285,7 +283,7 @@ Object.assign(QueryContext.prototype, {
         if (filterFunction) {
             entityContext = QueryContext.create(this.query, context);
 
-            if (Entity.isEntity(entitySet)) {
+            if (isEntity(entitySet)) {
                 entityContext.entity = entity = entitySet;
                 entityContext.entitySet = entitySet = null;
             }

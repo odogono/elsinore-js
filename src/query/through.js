@@ -2,6 +2,7 @@ import { Component } from '../component';
 import { Entity } from '../entity';
 import { Query } from './index';
 import { toString as entityToString } from '../util/to_string';
+import { isComponent, isEntity } from '../util/is';
 
 import { COMMAND } from '../constants';
 
@@ -42,14 +43,14 @@ export function applyQueryFilter(query, value, options = {}) {
     if (!query) {
         return true;
     }
-    const isComponent = Component.isComponent(value);
-    const isEntity = Entity.isEntity(value);
+    const isValueComponent = isComponent(value);
+    const isValueEntity = isEntity(value);
 
     // components pass right through the queryFilter - queries only apply
     // to entities after all
     // this was readded to cater for views which need to cope with components
     // being added/removed from existing entities
-    if (isComponent) {
+    if ( isValueComponent ) {
         return true;
     }
 
@@ -58,16 +59,16 @@ export function applyQueryFilter(query, value, options = {}) {
     }
 
     // not an entity either - so reject
-    if (!isEntity) {
-        // console.log('[QueryFilter] rejecting', isEntity, isComponent, value );
+    if (!isValueEntity) {
+        // console.log('[QueryFilter] rejecting', isValueEntity, isComponent, value );
         return true;
     }
 
     let outcome = query.execute(value);
 
-    // console.log('[QueryFilter] consider', isEntity, isComponent, JSON.stringify(outcome) );
+    // console.log('[QueryFilter] consider', isValueEntity, isComponent, JSON.stringify(outcome) );
 
-    if (Entity.isEntity(outcome) && outcome.hasComponents()) {
+    if ( isEntity(outcome) && outcome.hasComponents()) {
         return true;
     }
 

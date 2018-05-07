@@ -2,7 +2,7 @@ import _ from 'underscore';
 import test from 'tape';
 import BitField  from 'odgn-bitfield';
 import Sinon from 'sinon';
-
+import { isComponent, isEntity, isEntitySet } from '../src/util/is';
 import { EntityFilter } from '../src/entity_filter';
 
 import {
@@ -232,7 +232,7 @@ function toBitField( ...componentIIds ){
         return BitField.create();
     }
     
-    if( Entity.isEntity(componentIIds[0]) ){
+    if( isEntity(componentIIds[0]) ){
         return componentIIds[0].getComponentBitfield();
     }
     

@@ -18,6 +18,7 @@ import {
     logEvents,
     entityToString
 } from './common';
+import { isComponent, isEntity, isEntitySet } from '../src/util/is';
 
 const Log = createLog('TestEntitySetQuery');
 
@@ -25,7 +26,7 @@ test('entityset filter ALL', t => {
     initialiseEntitySet().then(([registry, entitySet]) => {
         let result = entitySet.query(Q => Q.all('/component/mode/invite_only'));
 
-        t.ok(EntitySet.isEntitySet(result), 'the result should be an entityset');
+        t.ok(isEntitySet(result), 'the result should be an entityset');
         t.equals(result.size(), 1, 'there should be a single entity');
 
         t.end();

@@ -21,6 +21,7 @@ import {
     captureEntitySetEvent
 } from './common';
 
+import { isComponent, isEntity, isEntitySet } from '../src/util/is';
 import { cloneEntity, cloneComponent } from '../src/util/clone';
 
 const Log = createLog('TestEntitySet');
@@ -29,7 +30,7 @@ test('type of entityset', async t => {
     try {
         const registry = await initialiseRegistry();
         let entitySet = registry.createEntitySet();
-        t.ok(entitySet.isEntitySet, 'it is an entitySet');
+        t.ok(isEntitySet(entitySet), 'it is an entitySet');
         t.end();
     } catch (err) {
         Log.error(err.stack);
@@ -218,7 +219,7 @@ test('adding several components returns an array of added components', async t =
         let added = entitySet.getUpdatedComponents();
 
         t.equals(added.length, 2, '2 components added');
-        t.ok(Component.isComponent(added[0]), 'returns an array of components');
+        t.ok( isComponent(added[0]), 'returns an array of components');
 
         // Log.debug('1 look at that', entityToString(added) );
 
@@ -227,7 +228,7 @@ test('adding several components returns an array of added components', async t =
         added = entitySet.getUpdatedComponents();
 
         // Log.debug('2 look at that', entityToString(added) );
-        t.ok(Component.isComponent(added), 'returns an array of components');
+        t.ok(isComponent(added), 'returns an array of components');
 
         t.end();
     } catch (err) {
@@ -271,7 +272,7 @@ test('events contain the internal id of their originator', async t => {
         entitySet.on('entity:add', (entities, { cid, oid }) => {
             t.ok(Array.isArray(entities), 'an array is passed as the first arg');
             t.equals(entities.length, 1, 'the array contains one element');
-            t.ok(Entity.isEntity(entities[0]), 'that first element is an Entity');
+            t.ok( isEntity(entities[0]), 'that first element is an Entity');
             t.equals(entitySet.cid, cid);
             t.equals(oid, 'test1', 'the Originating ID is passed through from the add');
             t.end();

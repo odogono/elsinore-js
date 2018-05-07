@@ -3,6 +3,7 @@ import { Component } from '../component';
 import { cloneComponent, cloneEntity } from '../util/clone';
 import { JSONLoader } from '../util/loader';
 import { toString as entityToString } from '../util/to_string';
+import { isComponent, isEntity } from '../util/is';
 import { stringify } from '../util/stringify';
 import { createLog } from '../util/log';
 import { COMMAND } from '../constants';
@@ -57,9 +58,9 @@ export function PullStreamSink(entitySet, options = {}, completeCb) {
                     return read(null, next);
                 }
 
-                if (Component.isComponent(item)) {
+                if (isComponent(item)) {
                     p = entitySet.addComponent(item);
-                } else if (Entity.isEntity(item)) {
+                } else if (isEntity(item)) {
                     // Log.debug('🦊 [sink][Entity]', source.cid,'>',entitySet.cid, itemOptions, item.getComponents().map(c=>[c.id,c.cid]));
 
                     p = entitySet.addEntity(item, addEntityOptions); // '🐰'

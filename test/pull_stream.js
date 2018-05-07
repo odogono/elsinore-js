@@ -11,7 +11,7 @@ import { Registry, entityToString, logEvents, createLog, stringify } from './com
 import { AsyncEntitySet } from '../src/entity_set/async';
 
 import { readProperty } from '../src/util/read_property';
-import { isPromise } from '../src/util/is';
+import { isComponent, isEntity, isEntitySet, isPromise } from '../src/util/is';
 import { JSONLoader } from '../src/util/loader';
 import { JSONExporter } from '../src/util/exporter';
 
@@ -159,7 +159,7 @@ test('source emits entities', async t => {
             entitySet.source({ emitEntities: true, closeAfterExisting: true }),
             PullMap(val => (Array.isArray(val) ? val[0] : val)),
             PullFilter(val => {
-                return Entity.isEntity(val);
+                return isEntity(val);
             }),
             Pull.collect((err, entities) => {
                 // Log.debug('[collect]', entityToString(entities));
@@ -185,7 +185,7 @@ test('emits entities but also component updates', async t => {
             //     return val;
             // }),
             PullFilter(val => {
-                return Entity.isEntity(val);
+                return isEntity(val);
             }),
             Pull.collect((err, entities) => {
                 // Log.debug('[collect]', entityToString(entities));

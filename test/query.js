@@ -19,6 +19,7 @@ import {
 import {
     EQUALS, VALUE
 } from '../src/query/constants';
+import { isComponent, isEntity, isEntitySet } from '../src/util/is';
 
 const Log = createLog('TestQuery');
 
@@ -75,7 +76,7 @@ test('Accepting an entity', async t => {
         // console.log('/component/name iid', registry.getIId(['/component/channel','/component/topic']) );
         // result = Query.all( '/component/channel' ).execute( entity, {debug:false} );
 
-        t.ok(Entity.isEntity(result), 'query should return the entity');
+        t.ok(isEntity(result), 'query should return the entity');
 
         t.end();
     } catch (err) {
@@ -149,8 +150,8 @@ test('compiling an entity filter', async t => {
 
         // printIns( query );
 
-        t.ok(Entity.isEntity(result));
-        // t.ok( Entity.isEntity( filter.execute(entity) ));
+        t.ok(isEntity(result));
+        // t.ok( isEntity( filter.execute(entity) ));
 
         t.end();
     } catch (err) {
@@ -176,7 +177,7 @@ test('a single filter query on an entity', async t => {
         // t.ok( query.isCompiled );
 
         // let result = query.execute( entity );
-        t.ok(Entity.isEntity(result));
+        t.ok( isEntity(result));
 
         t.end();
     } catch (err) {
@@ -206,7 +207,7 @@ test('accepting an entity based on its attributes', async t => {
         // Log.debug('result was', entityToString(result) );
 
         t.ok(
-            Entity.isEntity(
+            isEntity(
                 query.execute(registry.createEntity([{ '@c': '/component/mode/limit', limit: 10 }]), { debug: false })
             ),
             'the query returns the entity with a limit > 10'
@@ -252,7 +253,7 @@ test('a single filter query on an entityset', async t => {
 
         // Log.debug( entityToString(result) );
 
-        t.ok(EntitySet.isEntitySet(result), 'the returned value is an entityset');
+        t.ok(isEntitySet(result), 'the returned value is an entityset');
         
         t.equals(result.size(), 4, 'the entityset contains 4 entities each with a /component/channel');
         
@@ -274,7 +275,7 @@ test('filter query on an entityset', async t => {
 
         const result = query.execute(entitySet);
 
-        t.ok(EntitySet.isEntitySet(result));
+        t.ok(isEntitySet(result));
         t.equals(result.size(), 2);
         t.end();
     } catch (err) {
@@ -346,7 +347,7 @@ test('multiple commands with a single result', async t => {
 
         const result = query.execute(entitySet);
 
-        t.ok(EntitySet.isEntitySet(result));
+        t.ok(isEntitySet(result));
         // printE( result );
         t.equals(result.size(), 4);
         t.end();

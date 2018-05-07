@@ -17,6 +17,7 @@ import {
     createLog,
     entityToString,
 } from './common';
+import { isComponent, isEntity, isEntitySet } from '../src/util/is';
 
 
 const Log = createLog('TestEntity');
@@ -25,7 +26,7 @@ test('is an entity', t => {
     let e = Entity.create();
     t.equals( e.type, 'Entity' );
     t.equals( Entity.prototype.type, 'Entity' );
-    t.ok( Entity.isEntity(e) );
+    t.ok( isEntity(e) );
     t.end();
 });
 

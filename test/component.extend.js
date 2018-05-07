@@ -17,7 +17,7 @@ import {
     requireLib,
     createLog
 } from './common';
-
+import { isComponent } from '../src/util/is';
 import { Component } from '../src/component';
 import { ComponentRegistry } from '../src/schema';
 
@@ -45,6 +45,9 @@ test('registering a custom component type', t => {
 
     const componentRegistry = ComponentRegistry.create();
     componentRegistry.register(COMPONENT_DEFINITIONS);
+
+    Log.debug( TestComponent.prototype.isComponent );
+    // t.ok( isComponent(TestComponent) );
 
     // register the type first
     componentRegistry.register(TestComponent);

@@ -1,12 +1,14 @@
 import test from 'tape';
 
 import { Component } from '../src/component';
+import { isComponent } from '../src/util/is';
+
 
 test('is a component', t => {
     let c = new Component();
     t.equals(c.type, 'Component');
     t.equals(Component.prototype.type, 'Component');
-    t.ok(Component.isComponent(c));
+    t.ok(isComponent(c));
     t.end();
 });
 

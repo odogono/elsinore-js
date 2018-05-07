@@ -3,6 +3,7 @@ import test from 'tape';
 import BitField from 'odgn-bitfield';
 import { Base } from '../src/base';
 import { EntitySet } from '../src/entity_set';
+import { isComponent, isEntity, isEntitySet } from '../src/util/is';
 
 // import Sinon from 'sinon';
 
@@ -75,7 +76,7 @@ test('adding a component with an eid, a non-member of the es', async t => {
         reportUpdates(t, es, 1, 0, 0, 1, 0, 0);
         // t.equal( es.entitiesAdded.length, 1, 'one entity should be added' );
         // t.equal( es.componentsAdded.length, 1, 'one component should be added' );
-        t.ok(Component.isComponent(added));
+        t.ok(isComponent(added));
         t.end();
     } catch (err) {
         Log.error('test error: %s', err.stack);
@@ -93,7 +94,7 @@ test('adding a component with an eid, an existing member of the es', async t => 
         const added = await cb.addComponent(es, com);
 
         reportUpdates(t, es, 0, 1, 0, 1, 0, 0);
-        t.ok(Component.isComponent(added));
+        t.ok(isComponent(added));
 
         t.end();
     } catch (err) {
@@ -111,7 +112,7 @@ test('updating an existing component', async t => {
     reportUpdates(t, es, 0, 1, 0, 0, 1, 0);
     // t.equal( es.entitiesUpdated.length, 1, 'one entity should be updated' );
     // t.equal( es.componentsUpdated.length, 1, 'one component should be updated' );
-    t.ok(Component.isComponent(added));
+    t.ok(isComponent(added));
 
     t.end();
 });

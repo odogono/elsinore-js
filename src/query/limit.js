@@ -4,8 +4,7 @@ import { ENTITY_FILTER,
     RIGHT_PAREN,
     VALUE } from './constants';
 
-// import { Query } from './index';
-import { EntitySet } from '../entity_set';
+import { isEntitySet, isMemoryEntitySet } from '../util/is';
 
 export const LIMIT = 'LM';
 
@@ -24,22 +23,23 @@ function dslLimit(count, offset) {
 }
 
 function commandLimit(context, count, offset) {
-    //     var result, entitySet, entities;
+    const {registry} = context;
 
     count = context.valueOf(count, true) || 0;
     offset = context.valueOf(offset, true) || 0;
+
     const entitySet = context.resolveEntitySet();
     //     // entitySet = Q.valueOf( context, context.last || context.entitySet, true );
 
-    if (!EntitySet.isEntitySet(entitySet)) {
+    if (!isEntitySet(entitySet)) {
         throw new Error('invalid entityset');
     }
 
-    if (!entitySet.isMemoryEntitySet) {
+    if (!isMemoryEntitySet(entitySet)) {
         throw new Error('invalid entityset');
     }
 
-    const result = context.registry.createEntitySet({ register: false });
+    const result = registry.createEntitySet({ register: false });
 
     // console.log('limit: ', offset, count, entitySet.size() );
 
