@@ -8,7 +8,6 @@ import { componentNameFromUri } from './util/name_from_uri';
 // const Log = createLog('ComponentDef', false);
 
 export function ComponentDef(attrs = {}, options) {
-    // console.log('[ComponentDef]', 'creating with', attrs );
     this.id = attrs.id;
     this.properties = attrs.properties;
     this.attrs = createAttrsFromProperties(this.properties);

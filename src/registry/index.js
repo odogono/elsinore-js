@@ -342,8 +342,8 @@ Object.assign( Registry.prototype, {
 
         // Log.debug('opening', entitySet.type,entitySet.getUUID());
         return entitySet.open(options).then(() => {
-            const schemas = this.getComponentDefs();
-            return this._registerComponentDefsWithEntitySet(entitySet, schemas, options).then(() => {
+            const defs = this.getComponentDefs();
+            return this._registerComponentDefsWithEntitySet(entitySet, defs, options).then(() => {
                 // perform the normal sync adding
                 this.addEntitySet(entitySet, { sync: true });
 

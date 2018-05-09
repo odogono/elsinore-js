@@ -2,6 +2,7 @@ import './cmd_buffer_async';
 import './collection';
 import './component';
 import './component.extend';
+import './component_def';
 import './dispatch';
 import './entity';
 import './entity_events';

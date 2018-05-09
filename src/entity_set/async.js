@@ -8,6 +8,8 @@ import { ComponentNotFoundError, EntityNotFoundError, ComponentDefNotFoundError 
 import { ComponentRegistry } from '../schema';
 import { toString as entityToString } from '../util/to_string';
 
+import { STATE_CLOSED, STATE_OPENING, STATE_OPEN, STATE_FAILED } from '../constants';
+
 const Log = createLog('AsyncEntitySet');
 
 /**
@@ -19,6 +21,7 @@ const Log = createLog('AsyncEntitySet');
  * added/removed updated
  */
 export function AsyncEntitySet(entities, options = {}, ...rest) {
+    this._status = STATE_CLOSED;
     options.cmdBuffer = CmdBuffer;
 
     options.indexByEntityId = true;
@@ -42,10 +45,15 @@ Object.assign(AsyncEntitySet.prototype, EntitySet.prototype, {
      * registered with the Registry
      */
     open(options = {}) {
-        this._open = true;
+        const registry = this.getRegistry();
+        this._status = STATE_OPENING;
 
-        return this.getComponentDefs({ notifyRegistry: true }).then(() => {
-            // Log.debug(`finished ${this.type} open`);
+        // get existing defs and give them to the registry
+        return this.getComponentDefs().then(defs =>
+            registry.registerComponent(defs, { notifyRegistry: true, fromES: this })
+        )
+        .then( () => {
+            this._status = STATE_OPEN;
             return this;
         });
     },
@@ -54,14 +62,14 @@ Object.assign(AsyncEntitySet.prototype, EntitySet.prototype, {
      *
      */
     isOpen() {
-        return this._open;
+        return this._status === STATE_OPEN;
     },
 
     /**
      *
      */
     close() {
-        this._open = false;
+        this._status = STATE_CLOSED;
         return Promise.resolve(this);
     },
 
@@ -156,18 +164,7 @@ Object.assign(AsyncEntitySet.prototype, EntitySet.prototype, {
      *   Returns a promise for an array of registered schemas
      */
     getComponentDefs(options = {}) {
-        const componentDefs = this.componentDefs.getComponentDefs(); // this.componentDefs.models;
-
-        if (!options.notifyRegistry) {
-            return Promise.resolve(componentDefs);
-        }
-
-        // if this hasn't been called from the registry, then we forward the request
-        // on to the registry, which takes care of decomposing the incoming schemas
-        // and then notifying each of the entitySets about the new component defs
-        return this.getRegistry()
-            .registerComponent(componentDefs, { notifyRegistry: true, fromES: this })
-            .then(() => componentDefs);
+        return Promise.resolve(this.componentDefs.getComponentDefs());
     },
 
     /**
@@ -182,7 +179,7 @@ Object.assign(AsyncEntitySet.prototype, EntitySet.prototype, {
         }
         // console.log('[AsyncEntitySet][getEntity]', entityId, setEntityIdFromId(entityId, this.id), this._entities);
 
-        return Promise.resolve( this._entities.get(setEntityIdFromId(entityId, this.id)) );
+        return Promise.resolve(this._entities.get(setEntityIdFromId(entityId, this.id)));
     },
 
     /**
@@ -207,7 +204,6 @@ Object.assign(AsyncEntitySet.prototype, EntitySet.prototype, {
         const eId = getEntityIdFromId(entityId);
         let e = this._entities.get(entityId);
 
-        
         if (!e) {
             // attempt to retrieve the entity using a composite id
             e = this._entities.get(setEntityIdFromId(entityId, this.id));
@@ -247,7 +243,7 @@ Object.assign(AsyncEntitySet.prototype, EntitySet.prototype, {
      * Returns a component by its entityid and def id
      */
     getComponentByEntityId(entityId, componentDefId) {
-        const result = EntitySet.prototype.getComponentByEntityId.call(this,entityId, componentDefId);
+        const result = EntitySet.prototype.getComponentByEntityId.call(this, entityId, componentDefId);
         if (result) {
             return Promise.resolve(result);
         }
@@ -298,7 +294,9 @@ Object.assign(AsyncEntitySet.prototype, EntitySet.prototype, {
 
         if (debug)
             console.log(
-                '[AsyncEntitySet][update]', this.cid, '-',
+                '[AsyncEntitySet][update]',
+                this.cid,
+                '-',
                 entitiesAdded.length,
                 entitiesUpdated.length,
                 entitiesRemoved.length,
@@ -391,47 +389,58 @@ Object.assign(AsyncEntitySet.prototype, EntitySet.prototype, {
             }
             entitiesAdded.forEach(e => this._addEntity(e));
         }
-        
+
         if (entitiesUpdated && entitiesUpdated.length > 0) {
             if (debug) {
                 Log.debug('entitiesUpdated', entityToString(entitiesUpdated));
             }
             entitiesUpdated.forEach(e => this._addEntity(e));
         }
-        
+
         if (entitiesRemoved && entitiesRemoved.length > 0) {
             entitiesRemoved.forEach(e => this._removeEntity(e));
         }
 
         for (ii = 0, len = componentsAdded.length; ii < len; ii++) {
-            
             component = componentsAdded[ii];
-            
+
             entity = this._entities.get(component.getEntityId());
-            
+
             if (entity) {
-                
-                if (debug) console.log( '[AsyncEntitySet][_applyUpdate]🦊 A entity coms', entity.cid, entity.getComponentBitfield().toValues() );
+                if (debug)
+                    console.log(
+                        '[AsyncEntitySet][_applyUpdate]🦊 A entity coms',
+                        entity.cid,
+                        entity.getComponentBitfield().toValues()
+                    );
 
                 // entity.addComponent(component, { silent: true });
-                
+
                 // if (debug) console.log( '[AsyncEntitySet][_applyUpdate]🦊 B entity coms', entity.cid, entity.getComponentBitfield().toValues(), entity.components );
                 this._addComponent(component);
 
                 // if(debug) console.log('[AsyncEntitySet][_addComponent] existing', this._components.map(c=>[c.id,c.cid,c.getDefId()]));
 
-                if (debug) console.log(`[AsyncEntitySet][_applyUpdate]🦊 added com ${component.cid} ${JSON.stringify(component)} ${component.getEntityId()}`);
+                if (debug)
+                    console.log(
+                        `[AsyncEntitySet][_applyUpdate]🦊 added com ${component.cid} ${JSON.stringify(
+                            component
+                        )} ${component.getEntityId()}`
+                    );
             }
         }
-        
+
         for (ii = 0, len = componentsUpdated.length; ii < len; ii++) {
-            
             component = componentsUpdated[ii];
 
             entity = this._entities.get(component.getEntityId());
-            
-            if (debug) console.log(`[AsyncEntitySet][_applyUpdate]🦊 updated com ${component.cid} ${JSON.stringify(component)} ${component.getEntityId()}`);
 
+            if (debug)
+                console.log(
+                    `[AsyncEntitySet][_applyUpdate]🦊 updated com ${component.cid} ${JSON.stringify(
+                        component
+                    )} ${component.getEntityId()}`
+                );
 
             const existing = EntitySet.prototype.getComponentByEntityId.call(
                 this,
@@ -445,7 +454,7 @@ Object.assign(AsyncEntitySet.prototype, EntitySet.prototype, {
                 existing.apply(component, { silent: true });
                 // console.log(`!!ES!! EntitySet.update existing ${existing.cid} ${existing.getEntityId()}`);
             } else {
-                if( debug ) console.log(`!!!ES!!! adding new component ${component.cid} ${JSON.stringify(component)}`);
+                if (debug) console.log(`!!!ES!!! adding new component ${component.cid} ${JSON.stringify(component)}`);
                 this._addComponent(component);
             }
         }
@@ -460,8 +469,7 @@ Object.assign(AsyncEntitySet.prototype, EntitySet.prototype, {
             }
         }
 
-        if (debug) console.log('[AsyncEntitySet][_applyUpdate]🦊 entitiesUpdated', entityToString(entitiesUpdated) );
-        
+        if (debug) console.log('[AsyncEntitySet][_applyUpdate]🦊 entitiesUpdated', entityToString(entitiesUpdated));
 
         return Promise.resolve({
             entitiesAdded,

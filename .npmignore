@@ -16,6 +16,9 @@ results
 
 bin/
 doc/
+error_log/
+old/
+packages/
 src/
 temp/
 test/
@@ -32,4 +35,6 @@ NOTES.md
 yarn.lock
 jsconfig.json
 test.html
-rollup.config*
+rollup*
+.babelrc
+.eslintrc

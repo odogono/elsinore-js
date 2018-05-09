@@ -45,3 +45,9 @@ export const OP_CREATE_FROM_EXISTING_ID = 1;
 export const OP_CREATE_NEW = 2;
 // an existing entity is being updated
 export const OP_UPDATE_EXISTING = 3;
+
+
+export const STATE_CLOSED = 0;
+export const STATE_OPENING = 1;
+export const STATE_OPEN = 2;
+export const STATE_FAILED = 3;

@@ -5,6 +5,7 @@ import NodeResolve from 'rollup-plugin-node-resolve';
 import Replace from 'rollup-plugin-replace';
 import Uglify from 'rollup-plugin-uglify';
 
+import pkg from './package.json';
 const environment = process.env.NODE_ENV || 'development';
 const isProduction = environment === 'production';
 
@@ -12,7 +13,6 @@ const banner = readFileSync('src/banner.js', 'utf-8')
     .replace('${version}', pkg.version)
     .replace('${time}', new Date());
 
-import pkg from './package.json';
 
 const babelPlugin = Babel({
     babelrc: false,
@@ -55,16 +55,8 @@ export default [
         // external: ['ms'],
         output: [{ file: pkg.main, format: 'cjs' }, { file: pkg.module, format: 'es' }],
         plugins: [
-            Babel({
-                babelrc: false,
-                sourceMap: true,
-                plugins: [
-                    'transform-inline-environment-variables',
-                    'transform-object-rest-spread',
-                    // uglifyjs has been having problems with this
-                    'transform-es2015-shorthand-properties'
-                ]
-            }),
+            Replace({ 'process.env.NODE_ENV': JSON.stringify(environment) }),
+            babelPlugin,
             NodeResolve(),
             CommonJS({
                 namedExports: {
