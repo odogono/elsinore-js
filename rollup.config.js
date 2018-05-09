@@ -13,7 +13,6 @@ const banner = readFileSync('src/banner.js', 'utf-8')
     .replace('${version}', pkg.version)
     .replace('${time}', new Date());
 
-
 const babelPlugin = Babel({
     babelrc: false,
     sourceMap: true,
@@ -26,6 +25,8 @@ const babelPlugin = Babel({
     ]
 });
 
+const sourcemap = isProduction;
+
 export default [
     // browser-friendly UMD build
     {
@@ -33,7 +34,8 @@ export default [
         output: {
             name: 'elsinore',
             file: pkg.browser,
-            format: 'umd'
+            format: 'umd',
+            sourcemap
         },
         plugins: [
             Replace({ 'process.env.NODE_ENV': JSON.stringify(environment) }),
@@ -53,7 +55,7 @@ export default [
     {
         input: 'src/index.js',
         // external: ['ms'],
-        output: [{ file: pkg.main, format: 'cjs' }, { file: pkg.module, format: 'es' }],
+        output: [{ file: pkg.main, format: 'cjs', sourcemap }, { file: pkg.module, format: 'es', sourcemap }],
         plugins: [
             Replace({ 'process.env.NODE_ENV': JSON.stringify(environment) }),
             babelPlugin,
