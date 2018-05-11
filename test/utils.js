@@ -1,10 +1,11 @@
-import _ from 'underscore';
 import test from 'tape';
 import { toPascalCase } from '../src/util/to';
 import { valueArray } from '../src/util/array/value';
 import { Collection } from '../src/util/collection';
 import { propertyResult } from '../src/util/result';
-import {hash} from '../src/util/hash';
+import { hash } from '../src/util/hash';
+import { omit } from '../src/util/omit';
+import { pick } from '../src/util/pick';
 
 test('toPascalCase', t => {
     const cases = {
@@ -94,6 +95,35 @@ test('propertyResult', t => {
     t.end();
 });
 
+test('omit', t => {
+    // from https://github.com/jashkenas/underscore/blob/master/test/objects.js
+    let result = omit({ a: 1, b: 2, c: 3 }, 'b');
+    t.deepEqual(result, { a: 1, c: 3 }, 'can omit a single named property');
+    result = omit({ a: 1, b: 2, c: 3 }, 'a', 'c');
+    t.deepEqual(result, { b: 2 }, 'can omit several named properties');
+    result = omit({ a: 1, b: 2, c: 3 });
+    t.deepEqual(result, { a: 1, b: 2, c: 3 }, 'without a blacklist returns a clone');
+    // result =  omit({a: 1, b: 2, c: 3}, ['b', 'c']);
+    // t.deepEqual(result, {a: 1}, 'can omit properties named in an array');
+    // result =  omit(['a', 'b'], 0);
+    // t.deepEqual(result, {1: 'b'}, 'can omit numeric properties');
+
+    // t.deepEqual( omit(null, 'a', 'b'), {}, 'non objects return empty object');
+    // t.deepEqual( omit(void 0, 'toString'), {}, 'null/undefined return empty object');
+    t.deepEqual(omit(5, 'toString', 'b'), {}, 'returns empty object for primitives');
+
+    t.end();
+});
+
+test('pick', t => {
+    let result = pick({a: 1, b: 2, c: 3}, 'a', 'c');
+    t.deepEqual(result, {a: 1, c: 3}, 'can restrict properties to those named');
+
+    result = pick({a: 1, b: 2, c: 3} );
+    t.deepEqual(result, {}, 'without a blacklist returns empty');
+
+    t.end();
+})
 
 // test( 'hash', t => {
 //     console.log( 'result', hash("forty-two", false), hash("forty-two", true) );

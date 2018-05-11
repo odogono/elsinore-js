@@ -291,9 +291,13 @@ Object.assign( Registry.prototype, {
         return Promise.all(this._entitySets.map(es => this.removeEntitySet(es, options)));
     },
 
+    
+
     /**
-     *   Returns a Promise to removes an entitySet from the registry
-     *
+     * Returns a Promise to removes an entitySet from the registry
+     * 
+     * @param {*} entitySet 
+     * @param {*} options 
      */
     removeEntitySet(entitySet, options = {}) {
         if (!entitySet) {

@@ -1,4 +1,3 @@
-import {isObject} from './is';
 
 /**
  * Returns a clone of the object without the blacklisted keys
@@ -6,19 +5,8 @@ import {isObject} from './is';
  * @param {*} obj 
  * @param {*} blacklist 
  */
-export function omit(obj, ...blacklist) {
-    if ( !isObject(obj)) {
-        return;
-    }
-    if (blacklist.length === 0) {
-        return clone(obj);
-    }
-    let result = {};
-    for (let key in obj) {
-        if (blacklist.includes(key)) {
-            continue;
-        }
-        result[key] = obj[key];
-    }
-    return result;
+export function omit( obj, ...blacklist) {
+    return Object.keys(obj)
+        .filter((key) => blacklist.indexOf(key) < 0)
+        .reduce((newObj, key) => Object.assign(newObj, { [key]: obj[key] }), {})
 }

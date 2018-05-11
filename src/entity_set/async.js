@@ -4,6 +4,7 @@ import { ReusableId } from '../util/reusable_id';
 import { setEntityIdFromId, getEntityIdFromId, getEntitySetIdFromId } from '../util/id';
 import { toInteger } from '../util/to';
 import { createLog } from '../util/log';
+import { propertyResult } from '../util/result';
 import { ComponentNotFoundError, EntityNotFoundError, ComponentDefNotFoundError } from '../error';
 import { ComponentRegistry } from '../schema';
 import { toString as entityToString } from '../util/to_string';
@@ -74,18 +75,13 @@ Object.assign(AsyncEntitySet.prototype, EntitySet.prototype, {
     },
 
     /**
-     *
+     * Removes all data associated with this entityset
+     * 
+     * @param {*} options 
      */
     destroy(options = {}) {
         return Promise.resolve(this);
     },
-
-    // /**
-    //  * Returns the entities that were added or updated in the last operation
-    //  */
-    // getUpdatedEntities(){
-    //     return valueArray( this._cmdBuffer.entitiesAdded, this._cmdBuffer.entitiesUpdated);
-    // },
 
     /**
      * Registers a component def with this entityset.
@@ -103,9 +99,11 @@ Object.assign(AsyncEntitySet.prototype, EntitySet.prototype, {
                 .then(() => this);
         }
 
-        return this.getComponentDefByHash(data.hash)
+        const hash = propertyResult(data, 'hash');
+
+        return this.getComponentDefByHash(hash)
             .then(existing => {
-                this.log('already have existing cdef for', data.hash, existing.esid);
+                // this.log('already have existing cdef for', hash, existing.esid);
                 // this._cacheComponentDef( data, existing.esid );
                 return existing;
             })
@@ -134,7 +132,7 @@ Object.assign(AsyncEntitySet.prototype, EntitySet.prototype, {
     /**
      *   Returns a component def by its id/uri
      */
-    getComponentDef(cdefId, cached) {
+    getComponentDef(cdefId, isCached=true) {
         return new Promise((resolve, reject) => {
             const def = this.componentDefs.getComponentDef(cdefId);
 
