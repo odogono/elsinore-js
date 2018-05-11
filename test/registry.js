@@ -300,3 +300,22 @@ test('creating an entity with an id of 0', t => {
         .then(() => t.end())
         .catch(err => log.error('test error: %s', err.stack));
 });
+
+
+test('ensuring an entity has component reference set', async t => {
+    try {
+        const registry = await initialiseRegistry();
+
+        const componentData = { '@e':13, '@s':2, username:'alice' };
+
+        const entity = registry.createEntity( componentData );
+
+        t.equals( entity.id, 13 );
+        t.equals( entity.Username.get('username'), 'alice' );
+
+        t.end();
+    }
+    catch( err ){
+        Log.error(err.stack);
+    }
+})

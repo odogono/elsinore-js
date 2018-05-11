@@ -178,6 +178,7 @@ Object.assign(Component.prototype, Base.prototype, {
         this._entity = entity;
         if (entity._entitySet) {
             this._entitySet = entity._entitySet;
+            this._registry = entity._registry;
         }
     },
 
@@ -200,8 +201,10 @@ Object.assign(Component.prototype, Base.prototype, {
         return this._defHash;
     },
 
+    
     /**
      * Returns the name of this component type
+     * 
      */
     getDefName() {
         return this._defName;

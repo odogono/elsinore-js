@@ -84,15 +84,34 @@ test('setting ids', t => {
 });
 
 test('setting entity set', t => {
-    let e = Entity.create();
+    const registry = new Registry();
+    registry.registerComponent({uri: '/component/name', properties:{ name: { type: 'string'}}} );
+
+    let e = registry.createEntity();// Entity.create();
     e.setEntityId( 22 );
     e.setEntitySetId( 103 );
 
-    let es = { id:0, getRegistry:() => new Registry() };
+    let c = registry.createComponent({ '@c':'/component/name', name:'douglas' });// createComponent({name:'douglas'});
+    c._defName = undefined; // block out the component name for testing purposes
+    t.equals( c.getDefName(), undefined );
+    e.addComponent( c );
+    
+    let es = { id:4, getRegistry:() => registry };
     e.setEntitySet( es );
+    
 
     t.equals( e.getEntityId(), 22 );
-    t.equals( e.getEntitySetId(), 0 );
+    t.equals( e.getEntitySetId(), 4, 'the entitySet id will have been taken from the reference' );
+
+    t.ok( e.getRegistry(), 'should return the registry reference' );
+    t.ok( e.getEntitySet(), 'should return the entitySet reference' );
+
+    t.equals( e.Name.get('name'), 'douglas' );
+
+    t.ok( e.Name.getRegistry(), 'registry reference set on component' );
+    t.equals( e.Name.getEntitySetId(), 4, 'entitySet reference set on component' );
+
+    // console.log( e );
 
     t.end();
 })
@@ -144,6 +163,8 @@ test('adding a component of the same type replaces', t => {
 
 
 function createComponent( properties ){
-    properties = {'@s':1,'@c':'/component/name', ...properties};
-    return new Component(properties);
+    // properties = {...properties};
+    let result = new Component(properties);
+    result.setDefDetails( 1, '/component/name', 'abc', 'Name');
+    return result;
 }

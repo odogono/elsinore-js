@@ -106,8 +106,12 @@ Object.assign(Entity.prototype, Base.prototype, {
      * @param {*} setId
      */
     setEntitySet(es, setId = true) {
+        const registry = es.getRegistry();
         this._entitySet = es;
-        this.setRegistry(es.getRegistry());
+        this.setRegistry( registry );
+        for (let sid in this.components) {
+            this.components[sid].setEntity(this);
+        }
         if (setId) {
             this.setEntitySetId(es.id);
         }
@@ -163,16 +167,18 @@ Object.assign(Entity.prototype, Base.prototype, {
             this._entitySet.addComponent(component, { ...options, ENTITY_ID: this.getEntityId() });
             return this;
         }
-
+        
         // delegate parsing/creation of components to registry
         if (registry !== undefined) {
             component = registry.createComponent(component);
         }
-
+        
         if (Array.isArray(component)) {
             component.forEach(c => this.addComponent(c));
             return this;
         }
+        
+
         return this._addComponent(component);
     },
 
@@ -182,6 +188,7 @@ Object.assign(Entity.prototype, Base.prototype, {
      * @param {*} component
      */
     _addComponent(component) {
+        const registry = this.getRegistry();
         const defId = component.getDefId();
         let existing = this.components[defId];
 
@@ -191,8 +198,16 @@ Object.assign(Entity.prototype, Base.prototype, {
 
         component.setEntity(this);
 
-        this[component.name] = component;
+        let name = component.getDefName();
+        if( isString(name) ){
+            this[name] = component;
+        } else if( registry ){
+            const def = registry.getComponentDef( defId );
+            this[def.getName()] = component;
+        }
+
         this.components[defId] = component;
+        
         this.getComponentBitfield().set(defId, true);
 
         // component.on('all', this._onComponentEvent, this);
