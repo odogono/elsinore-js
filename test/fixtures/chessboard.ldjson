@@ -10,7 +10,7 @@
 
 # the colour of the entity, only white or black - or maybe a third colour?
 {
-    "@cmd": "register,
+    "@cmd": "register",
     "uri": "/component/colour",
     "properties":{
         # enum [ "white", "black" ]
