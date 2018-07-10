@@ -3,15 +3,6 @@ import PullPushable from 'pull-pushable';
 import { readProperty } from '../util/read_property';
 import { cloneComponent, cloneEntity } from '../util/clone';
 import { applyQueryFilter } from '../query/through';
-import { COMMAND } from '../constants';
-
-export const CMD_UNKNOWN = '@unk';
-export const CMD_COMMAND = COMMAND;
-export const CMD_ADD_ENTITY = 'entity';
-export const CMD_REGISTER_COMPONENT = 'register';
-export const CMD_REMOVE_ENTITY = 'rme';
-export const CMD_REMOVE_COMPONENT = 'rmc';
-export const CMD_END_OF_EXISTING = 'eoe';
 
 import {
     ENTITY_ID,
@@ -21,7 +12,14 @@ import {
     ENTITY_REMOVE,
     COMPONENT_ADD,
     COMPONENT_UPDATE,
-    COMPONENT_REMOVE
+    COMPONENT_REMOVE,
+    LCMD_UNKNOWN,
+    LCMD_COMMAND,
+    LCMD_ADD_ENTITY,
+    LCMD_REGISTER_COMPONENT,
+    LCMD_REMOVE_ENTITY,
+    LCMD_REMOVE_COMPONENT,
+    LCMD_END_OF_EXISTING
 } from '../constants';
 
 /**
@@ -81,7 +79,7 @@ export function PullStreamSource(entitySet, options = {}) {
         }
 
         // send a command confirming End Of Existing components
-        pushable.push([{ [CMD_COMMAND]: CMD_END_OF_EXISTING, ec: length, cc: componentCount }, sendOptions]);
+        pushable.push([{ [LCMD_COMMAND]: LCMD_END_OF_EXISTING, ec: length, cc: componentCount }, sendOptions]);
 
         if (closeAfterExisting === true) {
             pushable.end();
@@ -129,7 +127,7 @@ export function PullStreamSource(entitySet, options = {}) {
             }
         }
         if (eids.length > 0) {
-            this.push([{ [CMD_COMMAND]: CMD_REMOVE_ENTITY, eid: eids }, options]); // components[cc] );
+            this.push([{ [LCMD_COMMAND]: LCMD_REMOVE_ENTITY, eid: eids }, options]); // components[cc] );
         }
     };
 
@@ -158,7 +156,7 @@ export function PullStreamSource(entitySet, options = {}) {
             eids.push(entities[ee].id);
         }
         if (eids.length > 0) {
-            this.push([{ [CMD_COMMAND]: CMD_REMOVE_ENTITY, eid: eids }, options]); // components[cc] );
+            this.push([{ [LCMD_COMMAND]: LCMD_REMOVE_ENTITY, eid: eids }, options]); // components[cc] );
         }
     };
 
@@ -173,7 +171,7 @@ export function PullStreamSource(entitySet, options = {}) {
         }
         // console.log('[pushable.onComponentRemove]', entitySet.cid, components.map(c => c.id), JSON.stringify(cids) );
         if (cids.length > 0) {
-            this.push([{ [CMD_COMMAND]: CMD_REMOVE_COMPONENT, id: cids }, options]);
+            this.push([{ [LCMD_COMMAND]: LCMD_REMOVE_COMPONENT, id: cids }, options]);
         }
     };
 

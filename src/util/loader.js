@@ -2,17 +2,16 @@ import { createLog } from './log';
 import { omit } from './omit';
 import { readProperty } from './read_property';
 import { toString as entityToString } from './to_string';
-import { COMMAND } from '../constants';
 
-export const CMD_UNKNOWN = '@unk';
-export const CMD_COMMAND = COMMAND;
-export const CMD_ADD_ENTITY = 'entity';
-export const CMD_REGISTER_COMPONENT = 'register';
-export const CMD_REMOVE_ENTITY = 'rme';
-export const CMD_REMOVE_COMPONENT = 'rmc';
-export const CMD_END_OF_EXISTING = 'eoe';
-
-import { COMPONENT_DEF_ID, COMPONENT_URI, ENTITY_ID } from '../constants';
+import { COMPONENT_DEF_ID, COMPONENT_URI, ENTITY_ID, 
+    LCMD_UNKNOWN,
+    LCMD_COMMAND,
+    LCMD_ADD_ENTITY,
+    LCMD_REGISTER_COMPONENT,
+    LCMD_REMOVE_ENTITY,
+    LCMD_REMOVE_COMPONENT,
+    LCMD_END_OF_EXISTING
+ } from '../constants';
 
 const Log = createLog('JSONLoader');
 
@@ -38,16 +37,16 @@ export class JSONLoader {
         const [type, cmd, arg] = findCommand(command);
 
         switch (cmd) {
-            case CMD_ADD_ENTITY:
+            case LCMD_ADD_ENTITY:
                 return this._addEntityToEntitySet(context, options);
             // return addEntity(registry, entitySet, loader.entity)
-            case CMD_REGISTER_COMPONENT:
+            case LCMD_REGISTER_COMPONENT:
                 return this._registerComponent(context, arg);
-            case CMD_REMOVE_ENTITY:
+            case LCMD_REMOVE_ENTITY:
                 return this._deleteEntity(context, arg, options);
-            case CMD_REMOVE_COMPONENT:
+            case LCMD_REMOVE_COMPONENT:
                 return this._deleteComponent(context, arg, options);
-            case CMD_END_OF_EXISTING:
+            case LCMD_END_OF_EXISTING:
                 return Promise.resolve(context);
             default:
                 // console.log('process', cmd, command );
@@ -61,7 +60,7 @@ export class JSONLoader {
     _createEntity(context) {
         if (context.entity) {
             // already have an entity, so add it to the load cache
-            return _processCommand(context, { [CMD_COMMAND]: CMD_ADD_ENTITY }).then(context =>
+            return _processCommand(context, { [LCMD_COMMAND]: LCMD_ADD_ENTITY }).then(context =>
                 this._createEntity(context)
             );
         }
@@ -143,10 +142,10 @@ export class JSONLoader {
 }
 
 function findCommand(obj) {
-    if (obj[CMD_COMMAND]) {
-        return [CMD_COMMAND, obj[CMD_COMMAND], omit(obj, CMD_COMMAND)];
+    if (obj[LCMD_COMMAND]) {
+        return [LCMD_COMMAND, obj[LCMD_COMMAND], omit(obj, LCMD_COMMAND)];
     }
-    return [CMD_UNKNOWN, null];
+    return [LCMD_UNKNOWN, null];
 }
 
 JSONLoader.create = function() {

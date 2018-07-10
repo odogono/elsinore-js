@@ -6,7 +6,7 @@ import { toString as entityToString } from '../util/to_string';
 import { isComponent, isEntity } from '../util/is';
 import { stringify } from '../util/stringify';
 import { createLog } from '../util/log';
-import { COMMAND } from '../constants';
+import { LCMD_COMMAND, LCMD_REMOVE_COMPONENT } from '../constants';
 
 const Log = createLog('EntitySetSink');
 
@@ -72,7 +72,7 @@ export function PullStreamSink(entitySet, options = {}, completeCb) {
                     // if( added ) Log.debug('🐷 [sink][Entity]', data == added, data.msg, added.msg );
                 } else {
                     // Log.debug('[sink][_processCommand]', entitySet.cid, item);
-                    if (item[COMMAND] == 'rmc') {
+                    if (item[LCMD_COMMAND] == LCMD_REMOVE_COMPONENT) {
                         // Log.debug('[sink][_processCommand]', entitySet._components);
                     }
                     p = loader._processCommand(context, item, options);

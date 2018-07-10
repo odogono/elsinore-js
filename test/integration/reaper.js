@@ -123,12 +123,9 @@ test('reaper', async t => {
  *   deletes them from the entitySet
  */
 class ReaperProcessor extends EntityProcessor {
-    constructor(options) {
-        super(options);
 
-        // the processor will receive entities which have the /dead component
-        this.entityFilter = Q => Q.all('/dead');
-    }
+    // the processor will receive entities which have the /dead component
+    entityFilter = (Q) => Q.all('/dead')
 
     /**
      * @override
@@ -149,10 +146,12 @@ class ReaperProcessor extends EntityProcessor {
 }
 
 class ConnectionProcessor extends EntityProcessor {
+
+    entityFilter = (Q) => Q.all('/ttl')
+
     constructor(options = {}) {
         super(options);
         this.currentTime = toInteger(options.currentTime, 0);
-        this.entityFilter = Q => Q.all('/ttl');
     }
 
     /**

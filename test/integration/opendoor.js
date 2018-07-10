@@ -35,12 +35,6 @@ test('main', async t => {
 
         dispatch.addProcessor(DoorProcessor);
         
-        // attach the processor to the entityset. the priority will
-        // be normal
-        // registry.addProcessor( DoorProcessor, entitySet );
-        
-        // door = registry.createComponent(  );
-        
         // adding the component to the entityset will create an entity
         entitySet.addComponent( {'@c':'/door', material: 'wood'} );
 
@@ -57,7 +51,6 @@ test('main', async t => {
 
         // an update has to occur for events to be processed
         // registry.updateSync({debug:true});
-        // console.log('>--');
         dispatch.update(0, {debug:false});
 
         // as a result of the event, the door should now be open
@@ -82,26 +75,23 @@ test('main', async t => {
 
 class DoorProcessor extends EntityProcessor {
 
-    constructor(options={}){
-        super(options);
-        this.closingTime = {
-            'wood': 200,
-            'metal': 300,
-            'stone': 500
-        };
-        this.events = {
-            'doorOpen': (entity, entitySet, msg) => {
-                // args.forEach( a => Log.debug('arg type', a.type))
-                // Log.debug(`[doorOpen]`, stringify(args));
-                entity.Door.set({'open': true, msg })
-            },
-            'doorClose': (entity, entitySet) => {
-                entity.Door.set('open', false);
-            },
-            // 'all': function(entity, es){
-            //     log.debug('!all ' + JSON.stringify(arguments));
-            // }
-        }
+    handleDoorOpen = (entity,entitySet, msg) => {
+        entity.Door.set({open: true, msg});
+    }
+
+    handleDoorClose = (entity, entitySet) => {
+        entity.Door.set({open:false});
+    }
+
+    events = {
+        'doorOpen': this.handleDoorOpen,
+        'doorClose': this.handleDoorClose
+    }
+
+    closingTime = {
+        'wood': 200,
+        'metal': 300,
+        'stone': 500
     }
 
     /**
@@ -118,7 +108,7 @@ class DoorProcessor extends EntityProcessor {
             closeTime = this.closingTime[ entity.Door.get('material') ];
 
             if (timeMs >= entity.Door.get('open') + closeTime ) {
-                entity.Door.set({open:false});
+                this.handleDoorClose(entity);
             }
         }
     }

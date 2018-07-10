@@ -21,7 +21,8 @@ const babelPlugin = Babel({
     plugins: [
         'transform-inline-environment-variables',
         'transform-object-rest-spread',
-        'transform-es2015-shorthand-properties'
+        'transform-es2015-shorthand-properties',
+        'transform-class-properties'
     ]
 });
 

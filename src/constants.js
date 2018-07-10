@@ -4,7 +4,6 @@ export const COMPONENT_DEF_ID = '@s';
 export const ENTITY_ID = '@e';
 export const ENTITY_SET_ID = '@es';
 
-
 export const COMPONENT_ADD = 'component:add';
 export const COMPONENT_UPDATE = 'component:update';
 export const COMPONENT_REMOVE = 'component:remove';
@@ -27,9 +26,6 @@ export const ENTITY_SET_COMPONENT = 'es:com';
 export const ENTITY_SET_ENTITY = 'es:e';
 export const ENTITY_SET_SCHEMA = 'es:schema';
 
-export const COMMAND = '@cmd';
-
-
 export const CMD_ENTITY_ADD = 0;
 export const CMD_ENTITY_REMOVE = 1;
 export const CMD_ENTITY_UPDATE = 2;
@@ -46,8 +42,17 @@ export const OP_CREATE_NEW = 2;
 // an existing entity is being updated
 export const OP_UPDATE_EXISTING = 3;
 
-
 export const STATE_CLOSED = 0;
 export const STATE_OPENING = 1;
 export const STATE_OPEN = 2;
 export const STATE_FAILED = 3;
+
+// JSONLoader commands
+
+export const LCMD_COMMAND = '@cmd';
+export const LCMD_UNKNOWN = '@unk';
+export const LCMD_ADD_ENTITY = 'entity';
+export const LCMD_REGISTER_COMPONENT = 'register';
+export const LCMD_REMOVE_ENTITY = 'rme';
+export const LCMD_REMOVE_COMPONENT = 'rmc';
+export const LCMD_END_OF_EXISTING = 'eoe';
