@@ -23,12 +23,12 @@
 # make sense. But since we are experimenting, lets let pieces
 # have the ability to have multiple capabilities
 
-{ "@cmd": "register, "uri": "/component/piece/king" }
-{ "@cmd": "register, "uri": "/component/piece/queen" }
-{ "@cmd": "register, "uri": "/component/piece/rook" }
-{ "@cmd": "register, "uri": "/component/piece/bishop" }
-{ "@cmd": "register, "uri": "/component/piece/knight" }
-{ "@cmd": "register, "uri": "/component/piece/pawn" }
+{ "@cmd": "register", "uri": "/component/piece/king" }
+{ "@cmd": "register", "uri": "/component/piece/queen" }
+{ "@cmd": "register", "uri": "/component/piece/rook" }
+{ "@cmd": "register", "uri": "/component/piece/bishop" }
+{ "@cmd": "register", "uri": "/component/piece/knight" }
+{ "@cmd": "register", "uri": "/component/piece/pawn" }
 
 # the appearance component determines how the entity should appear
 { 
