@@ -163,10 +163,7 @@ Object.assign(Entity.prototype, Base.prototype, {
             return this;
         }
 
-        if (this._entitySet) {
-            this._entitySet.addComponent(component, { ...options, ENTITY_ID: this.getEntityId() });
-            return this;
-        }
+        // DONT BE TEMPTED TO ADD DIRECTLY TO REFERENCED ENTITYSET
         
         // delegate parsing/creation of components to registry
         if (registry !== undefined) {
@@ -263,11 +260,11 @@ Object.assign(Entity.prototype, Base.prototype, {
             component = this.components[component];
         }
 
-        if (this._entitySet) {
-            this._entitySet.removeComponent(component, options);
-        } else {
+        // if (this._entitySet) {
+        //     this._entitySet.removeComponent(component, options);
+        // } else {
             this._removeComponent(component);
-        }
+        // }
 
         return this;
     },
