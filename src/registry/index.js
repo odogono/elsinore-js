@@ -267,6 +267,7 @@ Object.assign( Registry.prototype, {
         id = options[ENTITY_SET_ID] || options['id'] || this.createId();
         result = new entitySetType(null, { ...options, id });
         result.setRegistry(this);
+        
 
         // TODO : there has to be a better way of identifying entitysets
         if (result.isMemoryEntitySet) {
@@ -283,10 +284,14 @@ Object.assign( Registry.prototype, {
                 return result;
             }
         }
-
+        
         return this.addEntitySet(result, options);
     },
 
+    /**
+     * 
+     * @param {*} options 
+     */
     removeAllEntitySets(options) {
         return Promise.all(this._entitySets.map(es => this.removeEntitySet(es, options)));
     },
@@ -313,8 +318,11 @@ Object.assign( Registry.prototype, {
         return entitySet.close(options).then(() => this.removeEntitySet(entitySet, { sync: true }));
     },
 
+    
     /**
-     *
+     * adds an entity set to the registry
+     * @param {*} entitySet 
+     * @param {*} options 
      */
     addEntitySet(entitySet, options = {}) {
         if (!entitySet) {
@@ -324,6 +332,8 @@ Object.assign( Registry.prototype, {
         entitySet.setRegistry(this);
 
         if (options.sync || !entitySet.isAsync) {
+            
+
             // do we already have this entitySet
             if (this._entitySets.indexOf(entitySet) !== -1) {
                 return null;

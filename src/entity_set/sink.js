@@ -1,10 +1,9 @@
-import { Entity } from '../entity';
-import { Component } from '../component';
-import { cloneComponent, cloneEntity } from '../util/clone';
+// import { Entity } from '../entity';
+// import { Component } from '../component';
+// import { cloneComponent, cloneEntity } from '../util/clone';
 import { JSONLoader } from '../util/loader';
 import { toString as entityToString } from '../util/to_string';
 import { isComponent, isEntity } from '../util/is';
-import { stringify } from '../util/stringify';
 import { createLog } from '../util/log';
 import { LCMD_COMMAND, LCMD_REMOVE_COMPONENT } from '../constants';
 
@@ -23,7 +22,7 @@ const Log = createLog('EntitySetSink');
  * @param {Function} completeCb
  */
 export function PullStreamSink(entitySet, options = {}, completeCb) {
-    let result = [];
+    // let result = [];
     const loader = JSONLoader.create();
     let context = { entitySet, registry: entitySet.getRegistry() };
     const { source, did } = options;
@@ -38,8 +37,8 @@ export function PullStreamSink(entitySet, options = {}, completeCb) {
             // console.log('[stringSink]', end, stringify(data));
 
             if (end === true) {
-                result = [].concat.apply([], result);
-                return completeCb ? completeCb(result.length === 1 ? result[0] : result) : null;
+                // result = [].concat.apply([], result);
+                return completeCb ? completeCb() : null;
             }
             if (end) {
                 throw end;

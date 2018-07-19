@@ -1,11 +1,6 @@
 import { arrayDifference } from './array/difference';
 
-/**
- * 
- * @param {*} src 
- * @param {*} dst 
- * @param {*} options 
- */
+
 // export function cloneEntity( src, dst, options={} ){
 //     const registry = src.getRegistry();
 
@@ -32,13 +27,19 @@ import { arrayDifference } from './array/difference';
 // }
 
 
-
+/**
+ * 
+ * @param {*} srcEntity 
+ * @param {*} dstEntity 
+ * @param {*} options 
+ */
 export function cloneEntity(srcEntity, dstEntity, options = {}) {
-    const registry = srcEntity.getRegistry();
+    // const registry = srcEntity.getRegistry();
     let ii, len, component, srcComponent;
     const deleteMissing = options.delete;
     const returnChanged = options.returnChanged;
     const fullCopy = options.full;
+    const debug = !!options.debug;
     let dstHasChanged = false;
 
     if (!srcEntity) {
@@ -53,10 +54,15 @@ export function cloneEntity(srcEntity, dstEntity, options = {}) {
         return dstEntity;
     }
 
+    
+
     if (deleteMissing) {
         const srcBitfield = srcEntity.getComponentBitfield();
         const dstBitfield = dstEntity.getComponentBitfield();
         const removeDefIds = arrayDifference(dstBitfield.toJSON(), srcBitfield.toJSON());
+
+        // if( debug ) console.log('[cloneEntity]', 'removeDefIds', removeDefIds, dstBitfield.toJSON(), srcBitfield.toJSON() );
+
         for (ii = 0, len = removeDefIds.length; ii < len; ii++) {
             dstEntity.removeComponent(dstEntity.components[removeDefIds[ii]]);
             dstHasChanged = true;
@@ -69,17 +75,19 @@ export function cloneEntity(srcEntity, dstEntity, options = {}) {
         srcComponent = srcComponents[ii];
         component = dstEntity.components[srcComponent.getDefId()];
 
+        // if( debug ) console.log('[cloneEntity]', srcComponent.toJSON(), component.toJSON(), srcComponent.hash(),component.hash() );
         if (component) {
             // the dst entity already has this component
             if (srcComponent.hash() == component.hash()) {
                 continue;
-            } else {
-                dstHasChanged = true;
             }
-        } else {
-            dstHasChanged = true;
         }
-        dstEntity.addComponent( cloneComponent(srcComponents[ii]) );
+
+        dstHasChanged = true;
+        const cloned = cloneComponent(srcComponent);
+        // if( debug ) console.log('[cloneEntity]', 'add comp', cloned.toJSON() );
+        dstEntity.addComponent( cloned, {debug:true} );
+        // if( debug ) console.log('[cloneEntity]', 'dst', dstEntity.toJSON() );
     }
 
     return returnChanged ? [dstEntity, dstHasChanged] : dstEntity;
@@ -92,20 +100,8 @@ export function cloneEntity(srcEntity, dstEntity, options = {}) {
 /**
  * 
  */
-export function cloneComponent(srcComponent, attrs, options) {
-    // const registry = srcComponent.getRegistry();
-    
+export function cloneComponent(srcComponent, attrs, options) {    
     const result = srcComponent.clone();
-    // result.name = srcComponent.name;
-
-    // result.setDefDetails(
-    //     srcComponent.getDefId(),
-    //     srcComponent.getUri(),
-    //     srcComponent.getDefHash(),
-    //     srcComponent.getDefName()
-    // );
-    
-    // result.registry = registry;
     
     if (attrs) {
         result.set(attrs, options);

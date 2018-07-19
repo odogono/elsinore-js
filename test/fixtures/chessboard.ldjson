@@ -32,11 +32,11 @@
 
 # the appearance component determines how the entity should appear
 { 
-    "@cmd": "register, "uri": "/component/appearance", 
+    "@cmd": "register", "uri": "/component/appearance", 
     "properties":{
         # enum [ "king", "queen", "rook", "bishop", "knight", "pawn" ]
         "type": "string",
-    } 
+    }
 }
 
 # Create the entities
