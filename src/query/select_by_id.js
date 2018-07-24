@@ -9,19 +9,19 @@ import { arrayUnique } from '../util/array/unique';
 
 const SELECT_BY_ID = 'SBI';
 
-EntitySet.prototype.selectById = function(entityIds, returnAsEntitySet) {
+EntitySet.prototype.selectByID = function(entityIDs, returnAsEntitySet) {
     let result;
     returnAsEntitySet = returnAsEntitySet === undefined ? true : returnAsEntitySet;
-    result = selectById(this.getRegistry(), this, entityIds, returnAsEntitySet);
+    result = selectByID(this.getRegistry(), this, entityIDs, returnAsEntitySet);
     return result;
 };
 
-function dslSelectById(entityIds, selectFromRoot = false) {
+function dslSelectByID(entityIDs, selectFromRoot = false) {
     const context = this.readContext(this);
 
     context.pushVal(LEFT_PAREN);
 
-    context.pushVal(entityIds, true);
+    context.pushVal(entityIDs, true);
     context.pushVal(selectFromRoot, true);
 
     context.pushVal(RIGHT_PAREN);
@@ -31,11 +31,11 @@ function dslSelectById(entityIds, selectFromRoot = false) {
     return context;
 }
 
-function commandSelectById(context, entityIds, selectFromRoot) {
+function commandSelectByID(context, entityIDs, selectFromRoot) {
     let value;
     let entitySet;
 
-    // console.log('>entityIds: ' + stringify(entityIds) );
+    // console.log('>entityIDs: ' + stringify(entityIDs) );
     // console.log('>selectFromRoot: ' + stringify(selectFromRoot) );
     selectFromRoot = context.valueOf(selectFromRoot);
     // console.log('<<<');
@@ -47,45 +47,45 @@ function commandSelectById(context, entityIds, selectFromRoot) {
         entitySet = context.root;
     }
 
-    // console.log('entityIds: ' + JSON.stringify(entityIds) );
-    entityIds = context.valueOf(entityIds);
+    // console.log('entityIDs: ' + JSON.stringify(entityIDs) );
+    entityIDs = context.valueOf(entityIDs);
 
     // console.log('using es ' + stringify(selectFromRoot) + ' ' + entitySet.size() );
-    // console.log('entityIds: ' + JSON.stringify(entityIds) );
+    // console.log('entityIDs: ' + JSON.stringify(entityIDs) );
     // printIns( entitySet );
     //
-    if (!entityIds) {
-        entityIds = context.valueOf(context.last);
-        // console.log('entityIds: ' + JSON.stringify(entityIds) );
+    if (!entityIDs) {
+        entityIDs = context.valueOf(context.last);
+        // console.log('entityIDs: ' + JSON.stringify(entityIDs) );
     }
 
-    if (!entityIds) {
+    if (!entityIDs) {
         throw new Error('no entity ids supplied');
     }
 
     // printE( context.last );
     // console.log('selectFromRoot ' + selectFromRoot + ' ' + entitySet.cid + ' ' + context.last.cid );
     // process.exit();
-    value = selectById(context.registry, entitySet, entityIds, true);
+    value = selectByID(context.registry, entitySet, entityIDs, true);
 
     return (context.last = [VALUE, value]);
 }
 
-function selectById(registry, entitySet, entityIds, returnAsEntitySet) {
+function selectByID(registry, entitySet, entityIDs, returnAsEntitySet) {
     let ii,
         len,
         entity,
         result,
         entities = [];
 
-    entityIds = Array.isArray(entityIds) ? entityIds : [entityIds];
+    entityIDs = Array.isArray(entityIDs) ? entityIDs : [entityIDs];
 
     // remove duplicates
-    entityIds = arrayUnique(entityIds);
+    entityIDs = arrayUnique(entityIDs);
 
-    for (ii = 0, len = entityIds.length; ii < len; ii++) {
-        if ((entity = entitySet.getEntity(entityIds[ii]))) {
-            // console.log('select entity ' + entityIds[ii] );
+    for (ii = 0, len = entityIDs.length; ii < len; ii++) {
+        if ((entity = entitySet.getEntity(entityIDs[ii]))) {
+            // console.log('select entity ' + entityIDs[ii] );
             entities.push(entity);
         }
     }
@@ -99,4 +99,4 @@ function selectById(registry, entitySet, entityIds, returnAsEntitySet) {
     return entities;
 }
 
-register(SELECT_BY_ID, commandSelectById, { selectById: dslSelectById });
+register(SELECT_BY_ID, commandSelectByID, { selectByID: dslSelectByID });

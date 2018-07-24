@@ -2,7 +2,7 @@
  * Returns the entity id portion of an id 
  * @param {*} id 
  */
-export function getEntityIdFromId(id) {
+export function getEntityIDFromID(id) {
     return id & 4294967295;
 }
 
@@ -10,7 +10,7 @@ export function getEntityIdFromId(id) {
  * Returns the EntitySet portion of an id
  * @param {*} id 
  */
-export function getEntitySetIdFromId(id) {
+export function getEntitySetIDFromID(id) {
     return (id - (id & 4294967295)) / 4294967296;
 }
 
@@ -20,7 +20,7 @@ export function getEntitySetIdFromId(id) {
  * @param {*} eid 
  * @param {*} esid 
  */
-export function setEntityIdFromId(eid, esid) {
+export function setEntityIDFromID(eid, esid) {
     return (esid & 2097151) * 4294967296 + (eid & 4294967295);
 }
 

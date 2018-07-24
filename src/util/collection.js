@@ -47,9 +47,9 @@ Object.assign(Collection.prototype, {
 
         const idAttr = this.idAttribute;
         const key = propertyResult(obj, idAttr); // obj[idAttr];
-        const existing = this._objectsById[key];
+        const existing = this._objectsByID[key];
 
-        this._objectsById[key] = obj;
+        this._objectsByID[key] = obj;
 
         if (existing !== undefined) {
             // replace the existing object
@@ -83,24 +83,24 @@ Object.assign(Collection.prototype, {
 
         let result = [];
 
-        let objId = obj;
-        let item = this._objectsById[objId];
+        let objID = obj;
+        let item = this._objectsByID[objID];
 
         if (item === undefined) {
-            objId = propertyResult(obj, this.idAttribute);
-            item = this._objectsById[objId];
+            objID = propertyResult(obj, this.idAttribute);
+            item = this._objectsByID[objID];
         }
 
         if (item !== undefined) {
-            const index = this._indexOfObject[objId];
+            const index = this._indexOfObject[objID];
 
-            // if (debug) console.log('[remove]', obj, this.idAttribute, objId, index);
+            // if (debug) console.log('[remove]', obj, this.idAttribute, objID, index);
             result = this.models.splice(index, 1);
 
-            delete this._objectsById[objId];
-            delete this._indexOfObject[objId];
+            delete this._objectsByID[objID];
+            delete this._indexOfObject[objID];
         } 
-        //else if (debug) console.log('[remove]', 'not found', obj, this._objectsById[objId]);
+        //else if (debug) console.log('[remove]', 'not found', obj, this._objectsByID[objID]);
 
         this._reindex();
 
@@ -122,7 +122,7 @@ Object.assign(Collection.prototype, {
      * @param {*} id
      */
     get(id) {
-        return this._objectsById[String(id)];
+        return this._objectsByID[String(id)];
     },
 
     /**
@@ -135,7 +135,7 @@ Object.assign(Collection.prototype, {
         if (isObject(obj)) {
             id = propertyResult(obj, this.idAttribute, obj);
         }
-        return this._objectsById[id] !== undefined;
+        return this._objectsByID[id] !== undefined;
     },
 
     /**
@@ -175,8 +175,8 @@ Object.assign(Collection.prototype, {
         let len = this.models.length;
         for (ii = 0; ii < len; ii++) {
             let obj = this.models[ii];
-            let objId = propertyResult(obj, this.idAttribute);
-            this._indexOfObject[objId] = ii;
+            let objID = propertyResult(obj, this.idAttribute);
+            this._indexOfObject[objID] = ii;
         }
     },
 
@@ -192,7 +192,7 @@ Object.assign(Collection.prototype, {
      */
     reset() {
         this.models = [];
-        this._objectsById = {};
+        this._objectsByID = {};
         this._indexOfObject = [];
     },
 

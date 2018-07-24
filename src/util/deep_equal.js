@@ -39,7 +39,7 @@ export function deepEqual(a, b) {
 
 // Internal recursive comparison function for `isEqual`.
 function eq(a, b, aStack, bStack) {
-    // Identical objects are equal. `0 === -0`, but they aren't identical.
+    // IDentical objects are equal. `0 === -0`, but they aren't identical.
     // See the [Harmony `egal` proposal](http://wiki.ecmascript.org/doku.php?id=harmony:egal).
     if (a === b) return a !== 0 || 1 / a === 1 / b;
     // `null` or `undefined` only equal to itself (strict comparison).

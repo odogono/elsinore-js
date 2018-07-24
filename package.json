@@ -1,6 +1,6 @@
 {
   "name": "elsinore",
-  "version": "5.1.10",
+  "version": "5.2.0",
   "description": "a javascript Entity Component System",
   "keywords": [
     "elsinore",
@@ -23,14 +23,11 @@
     "url": "https://github.com/odogono/elsinore-js.git"
   },
   "main": "dist/elsinore.cjs.js",
-  "module-old": "./lib",
   "module": "dist/elsinore.esm.js",
   "browser": "dist/elsinore.umd.js",
   "dependencies": {
-    "fast-url-parser": "^1.1.3",
     "odgn-bitfield": "^0.9.3",
-    "pull-pushable": "2.2.0",
-    "pull-through": "^1.0.18"
+    "pull-pushable": "2.2.0"
   },
   "non-dependencies": {},
   "devDependencies": {
@@ -72,11 +69,11 @@
     "build:old": "rollup -c rollup.config.js",
     "build:es": "rollup -c rollup.config.es.js",
     "compile:old": "babel src --out-dir lib --plugins=transform-es2015-shorthand-properties,transform-inline-environment-variables,transform-es2015-modules-commonjs,transform-es2015-destructuring,transform-object-rest-spread",
-    "compile:es2015": "babel src --out-dir es2015 --plugins=transform-es2015-shorthand-properties,transform-inline-environment-variables,transform-object-rest-spread",
+    "compile:cjs": "BABEL_ENV=build-cjs babel src --out-dir lib",
     "compile:esm": "BABEL_ENV=build-esm babel src --out-dir lib",
     "clean": "rm -rf node_modules build dist lib; mkdir build; npm install",
-    "dist:noclean:old": "NODE_ENV=production npm run compile:esm && npm run compile:es2015 && npm run build && npm run build:es",
-    "dist:noclean": "NODE_ENV=production npm run compile:esm && npm run build",
+    "dist:noclean:old": "NODE_ENV=production npm run compile:cjs && npm run compile:es2015 && npm run build && npm run build:es",
+    "dist:noclean": "NODE_ENV=production npm run compile:cjs && npm run build",
     "dist": "npm run dist:noclean",
     "lint": "./node_modules/.bin/eslint ./src --ext .js",
     "lint-fix": "./node_modules/.bin/eslint --fix ./src --ext .js",

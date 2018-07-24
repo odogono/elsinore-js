@@ -119,7 +119,7 @@ test('registering a schema with typed default properties', t => {
 test('attempting to retrieve an unknown schema throws an error', t => {
     const registry = ComponentRegistry.create(COMPONENT_DEFINITIONS);
 
-    t.throws(() => registry.getIId('/component/missing'), new Error('could not find schema /component/missing'));
+    t.throws(() => registry.getIID('/component/missing'), new Error('could not find schema /component/missing'));
 
     t.end();
 });
@@ -129,7 +129,7 @@ test('returns an array of schema internal ids from a series of identifiers', t =
 
     // Log.debug( registry._componentDefs.map( c => c.id + ':' + c.getUri() + ':' + c.hash() ) )
 
-    t.deepEqual(registry.getIId(['/component/position', 'cc425723', 2, '/component/geo_location', '67667d21']), [
+    t.deepEqual(registry.getIID(['/component/position', 'cc425723', 2, '/component/geo_location', '67667d21']), [
         1,
         4,
         2,

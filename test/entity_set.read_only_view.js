@@ -237,8 +237,8 @@ test('adding a component to an entity', async t => {
         );
 
         t.equals(
-            component.getEntityId(),
-            entitySet.at(0).getEntityId(),
+            component.getEntityID(),
+            entitySet.at(0).getEntityID(),
             'the entity ids are identical'
         );
 

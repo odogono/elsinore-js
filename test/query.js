@@ -73,7 +73,7 @@ test('Accepting an entity', async t => {
         const result = query.execute(entity, { debug: false });
 
         // console.log('array', query.toJSON());
-        // console.log('/component/name iid', registry.getIId(['/component/channel','/component/topic']) );
+        // console.log('/component/name iid', registry.getIID(['/component/channel','/component/topic']) );
         // result = Query.all( '/component/channel' ).execute( entity, {debug:false} );
 
         t.ok(isEntity(result), 'query should return the entity');
@@ -198,7 +198,7 @@ test('accepting an entity based on its attributes', async t => {
 
         const query = new Query(Q => Q.all('/component/mode/limit', Q.attr('limit').greaterThan(9)));
 
-        // Log.debug('/component/mode/limit is', registry.getIId('/component/mode/limit') )
+        // Log.debug('/component/mode/limit is', registry.getIID('/component/mode/limit') )
 
         // const result = query.execute(
         //     registry.createEntity([{ '@c':'/component/mode/limit', limit:10}] ),
@@ -286,8 +286,8 @@ test('filter query on an entityset', async t => {
 test('ALIAS op', t => {
     const query = new Query(Q => [
         Q.value([9, 10, 11]),
-        Q.aliasAs('channelIds'),
-        Q.value([9, 10, 11]).equals(Q.alias('channelIds'))
+        Q.aliasAs('channelIDs'),
+        Q.value([9, 10, 11]).equals(Q.alias('channelIDs'))
     ]);
 
     t.deepEqual(query.execute(), true);
@@ -300,12 +300,12 @@ test('passing an alias into a query', async t => {
         const [registry, entitySet] = await initialiseEntitySet();
         // select all entities which have the /channel_member.channel set to 2
         const query = new Query(Q =>
-            Q.all('/component/channel_member', Q.attr('channel').equals(Q.alias('channelIds')))
+            Q.all('/component/channel_member', Q.attr('channel').equals(Q.alias('channelIDs')))
         );
 
-        // execute the query by passing a value for the channelIds alias
+        // execute the query by passing a value for the channelIDs alias
         const result = query.execute(entitySet, {
-            alias: { channelIds: 2 }
+            alias: { channelIDs: 2 }
         });
 
         // Log.debug( entityToString(result) );
@@ -324,25 +324,25 @@ test('passing an alias into a query', async t => {
 test('multiple commands with a single result', async t => {
     try {
         const [registry, entitySet] = await initialiseEntitySet();
-        const clientId = 5;
+        const clientID = 5;
 
         const query = new Query(Q => [
-            // 1. select channel ids which client `clientId` belongs to and store as alias `channelIds`
-            Q.all('/component/channel_member').where(Q.attr('client').equals(clientId)),
+            // 1. select channel ids which client `clientID` belongs to and store as alias `channelIDs`
+            Q.all('/component/channel_member').where(Q.attr('client').equals(clientID)),
             Q.pluck('/component/channel_member', 'channel'), // get all the values for 'channel'
-            Q.aliasAs('channelIds'), // save the pluck result (array of channelIds) in the context for later
-            // 2. select channel members which belong to the channel ids stored in the alias `channelIds`
+            Q.aliasAs('channelIDs'), // save the pluck result (array of channelIDs) in the context for later
+            // 2. select channel members which belong to the channel ids stored in the alias `channelIDs`
             Q.root(), // this resets the context back to the original entitySet
-            // select all channel members which have a channel value equal to one of the channelIds
-            Q.all('/component/channel_member').where(Q.attr('channel').equals(Q.alias('channelIds'))),
+            // select all channel members which have a channel value equal to one of the channelIDs
+            Q.all('/component/channel_member').where(Q.attr('channel').equals(Q.alias('channelIDs'))),
             Q.pluck('/component/channel_member', 'client', {
                 unique: true
             }),
-            Q.without(clientId), // remove the clientId from the result of the pluck
-            Q.aliasAs('clientIds'),
+            Q.without(clientID), // remove the clientID from the result of the pluck
+            Q.aliasAs('clientIDs'),
             // 3. using the channel_member client ids, select an entityset of client entities by entity ids
             Q.root(),
-            Q.selectById(Q.alias('clientIds')) // creates a new ES from selected ids
+            Q.selectByID(Q.alias('clientIDs')) // creates a new ES from selected ids
         ]);
 
         const result = query.execute(entitySet);

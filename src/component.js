@@ -1,10 +1,10 @@
 import { Base } from './base';
-import { setEntityIdFromId, getEntityIdFromId, getEntitySetIdFromId } from './util/id';
+import { setEntityIDFromID, getEntityIDFromID, getEntitySetIDFromID } from './util/id';
 import {stringify} from './util/stringify';
 import { extend } from './util/extend';
 import { omit } from './util/omit';
 import { hash } from './util/hash';
-import { uniqueId } from './util/unique_id';
+import { uniqueID } from './util/unique_id';
 import { deepEqual } from './util/deep_equal';
 import { deepExtend } from './util/deep_extend';
 import { isComponent } from './util/is';
@@ -19,7 +19,7 @@ import { COMPONENT_ID, COMPONENT_URI, COMPONENT_DEF_ID, ENTITY_ID, ENTITY_SET_ID
 export function Component(attrs, options) {
     this.id = 0;
 
-    this.cid = uniqueId('c');
+    this.cid = uniqueID('c');
 
     this._entity = null;
 
@@ -27,11 +27,11 @@ export function Component(attrs, options) {
 
     this._registry = null;
 
-    this._defId = 0;
+    this._defID = 0;
 
     this._defUri = null;
 
-    this.entityId = 0;
+    this.entityID = 0;
 
     this.attributes = {};
 
@@ -60,8 +60,8 @@ Object.assign(Component.prototype, Base.prototype, {
         const unset = options.unset;
         const silent = options.silent;
 
-        let esId = undefined;
-        let eId = undefined;
+        let esID = undefined;
+        let eID = undefined;
 
         let existing = this.attributes;
         // attrs = this.parse(attrs);
@@ -77,28 +77,28 @@ Object.assign(Component.prototype, Base.prototype, {
         }
 
         if (attrs[COMPONENT_DEF_ID] !== undefined) {
-            this._defId = attrs[COMPONENT_DEF_ID];
+            this._defID = attrs[COMPONENT_DEF_ID];
             delete attrs[COMPONENT_DEF_ID];
         }
 
         if (attrs[COMPONENT_URI] !== undefined) {
-            // this._defId = attrs[COMPONENT_URI];
+            // this._defID = attrs[COMPONENT_URI];
             delete attrs[COMPONENT_URI];
         }
 
         if (attrs[ENTITY_ID] !== undefined) {
-            this.entityId = attrs[ENTITY_ID];
+            this.entityID = attrs[ENTITY_ID];
             delete attrs[ENTITY_ID];
         }
 
         if (attrs[ENTITY_SET_ID]) {
-            esId = attrs[ENTITY_SET_ID];
+            esID = attrs[ENTITY_SET_ID];
             delete attrs[ENTITY_SET_ID];
         }
 
-        if (esId !== undefined) {
-            eId = attrs[ENTITY_ID] === undefined ? 0 : attrs[ENTITY_ID];
-            this.entityId = setEntityIdFromId(eId, esId);
+        if (esID !== undefined) {
+            eID = attrs[ENTITY_ID] === undefined ? 0 : attrs[ENTITY_ID];
+            this.entityID = setEntityIDFromID(eID, esID);
         }
 
         // determine what changes (if any) have occured
@@ -149,19 +149,19 @@ Object.assign(Component.prototype, Base.prototype, {
      *
      * @param {boolean} total
      */
-    getEntityId(total = true) {
+    getEntityID(total = true) {
         if (total) {
-            return this.entityId;
+            return this.entityID;
         }
-        return getEntityIdFromId(this.entityId);
+        return getEntityIDFromID(this.entityID);
     },
 
-    getEntitySetId() {
-        return getEntitySetIdFromId(this.entityId);
+    getEntitySetID() {
+        return getEntitySetIDFromID(this.entityID);
     },
 
-    setEntityId(id, internalId) {
-        this.entityId = id;
+    setEntityID(id, internalID) {
+        this.entityID = id;
         // this.attributes[ENTITY_ID] = id;
     },
 
@@ -169,12 +169,12 @@ Object.assign(Component.prototype, Base.prototype, {
         if (!entity || !entity.isEntity) {
             this._entity = null;
             this._entitySet = null;
-            this.entityId = 0;
+            this.entityID = 0;
             // this.attributes[ENTITY_ID] = undefined;
             return;
         }
 
-        this.entityId = entity.id;
+        this.entityID = entity.id;
         this._entity = entity;
         if (entity._entitySet) {
             this._entitySet = entity._entitySet;
@@ -185,8 +185,8 @@ Object.assign(Component.prototype, Base.prototype, {
     /**
      * Returns the identifier of what type of component this is
      */
-    getDefId() {
-        return this._defId;
+    getDefID() {
+        return this._defID;
     },
 
     /**
@@ -213,13 +213,13 @@ Object.assign(Component.prototype, Base.prototype, {
     /**
      * Convenient way of setting various identifiers for this component
      *
-     * @param {*} defId
+     * @param {*} defID
      * @param {*} uri
      * @param {*} hash
      * @param {*} name
      */
-    setDefDetails(defId, uri, hash, name) {
-        this._defId = defId;
+    setDefDetails(defID, uri, hash, name) {
+        this._defID = defID;
         this._defUri = uri;
         this._defHash = hash;
         this.name = this._defName = name;
@@ -274,19 +274,19 @@ Object.assign(Component.prototype, Base.prototype, {
         let result = extend({}, this.attributes);
 
         // NOTE - no actual need for a component to reveal its id - its uniqueness
-        // comes from its defId and entityId
+        // comes from its defID and entityID
         // if (this.id !== 0) {
         //     result[COMPONENT_ID] = this.id;
         // }
 
-        if (this.entityId > 0) {
-            result[ENTITY_ID] = this.entityId;
+        if (this.entityID > 0) {
+            result[ENTITY_ID] = this.entityID;
         }
 
         if (options && options.cdefMap) {
-            result[COMPONENT_URI] = options.cdefMap[this.getDefId()];
+            result[COMPONENT_URI] = options.cdefMap[this.getDefID()];
         } else {
-            result[COMPONENT_DEF_ID] = this.getDefId();
+            result[COMPONENT_DEF_ID] = this.getDefID();
         }
 
         return result;

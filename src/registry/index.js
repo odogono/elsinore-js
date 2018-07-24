@@ -41,6 +41,7 @@ Object.assign( Registry.prototype, {
         this._entitySets = [];
         // a map of entityset uuids to entityset instances
         this._entitySetUUIDs = {};
+        // this._entitySetIDs = [];
 
         // a map of hashes to entity views
         this._entityViews = {};
@@ -55,7 +56,7 @@ Object.assign( Registry.prototype, {
     /**
      *
      */
-    createId() {
+    createID() {
         // https://github.com/dfcreative/get-uid
         // let counter = Date.now() % 1e9;
         // return (Math.random() * 1e9 >>> 0) + (counter++ + '__')
@@ -83,10 +84,10 @@ Object.assign( Registry.prototype, {
             // check to see whether the entity id is set on the component.
             const first = Array.isArray(components) ? components[0] : components;
 
-            const reportedEntityId = first.getEntityId();
+            const reportedEntityID = first.getEntityID();
 
-            if (reportedEntityId !== 0 && reportedEntityId !== undefined) {
-                options.id = reportedEntityId;
+            if (reportedEntityID !== 0 && reportedEntityID !== undefined) {
+                options.id = reportedEntityID;
                 idSet = false;
             }
         }
@@ -94,7 +95,7 @@ Object.assign( Registry.prototype, {
         // if( options.debug ){ console.log('[Registry][createEntity]', 'create with', idSet, attrs ); }
 
         if (options.id === undefined && !idSet) {
-            options.id = this.createId();
+            options.id = this.createID();
         }
 
         let result = this.Entity.create(options);
@@ -109,9 +110,9 @@ Object.assign( Registry.prototype, {
     /**
      *
      */
-    createEntityWithId(entityId = 0, entitySetId = 0, options = {}) {
-        return this.createEntity(null, { ...options, [ENTITY_ID]: entityId, [ENTITY_SET_ID]: entitySetId });
-        // return this.createEntity(null, { ...options, ENTITY_ID: entityId, ENTITY_SET_ID: entitySetId });
+    createEntityWithID(entityID = 0, entitySetID = 0, options = {}) {
+        return this.createEntity(null, { ...options, [ENTITY_ID]: entityID, [ENTITY_SET_ID]: entitySetID });
+        // return this.createEntity(null, { ...options, ENTITY_ID: entityID, ENTITY_SET_ID: entitySetID });
     },
 
     /**
@@ -176,11 +177,11 @@ Object.assign( Registry.prototype, {
     /**
      * TODO: name this something better, like 'getComponentIID'
      */
-    getIId(componentIDs, options) {
+    getIID(componentIDs, options) {
         if (options && isBoolean(options)) {
             options = { forceArray: true };
         }
-        return this.schemaRegistry.getIId(componentIDs, options);
+        return this.schemaRegistry.getIID(componentIDs, options);
     },
 
     /**
@@ -194,20 +195,20 @@ Object.assign( Registry.prototype, {
      * @return {[type]}          [description]
      */
     createComponent(componentDef, attrs, options, cb) {
-        let entityId, defKey;
+        let entityID, defKey;
 
         options || (options = {});
         defKey = options.defKey || COMPONENT_URI;
 
-        entityId = options.entity || options.entityId || options.eid;
+        entityID = options.entity || options.entityID || options.eid;
 
         if (isEntity(attrs)) {
-            entityId = Entity.toEntityId(attrs);
+            entityID = Entity.toEntityID(attrs);
             attrs = {};
         }
 
-        if (entityId) {
-            attrs[ENTITY_ID] = entityId;
+        if (entityID) {
+            attrs[ENTITY_ID] = entityID;
         }
 
         // Obtain a component schema
@@ -232,11 +233,11 @@ Object.assign( Registry.prototype, {
     /**
      * Converts an entity id to an entity instance
      *
-     * @param  {[type]} entityId [description]
+     * @param  {[type]} entityID [description]
      * @return {[type]}          [description]
      */
-    toEntity(entityId) {
-        let result = Entity.toEntity(entityId);
+    toEntity(entityID) {
+        let result = Entity.toEntity(entityID);
         if (result) {
             result.registry = this;
         }
@@ -256,27 +257,24 @@ Object.assign( Registry.prototype, {
         let entitySetType = EntitySet;
 
         options.uuid = options.uuid || createUUID();
+
         if (options.type) {
             entitySetType = options.type;
         }
-        if (options.instanceClass) {
-            entitySetType = options.instanceClass;
-        }
 
         // create a 20 bit
-        id = options[ENTITY_SET_ID] || options['id'] || this.createId();
+        id = options[ENTITY_SET_ID] || options['id'] || this.createID();
         result = new entitySetType(null, { ...options, id });
         result.setRegistry(this);
         
-
         // TODO : there has to be a better way of identifying entitysets
         if (result.isMemoryEntitySet) {
             // NOTE: setting the id to 0 means that entity ids would be shifted up
             result.id = 0;
 
-            let eIds = options[ENTITY_ID];
-            if (Array.isArray(eIds)) {
-                let components = eIds.map(com => this.createComponent(com));
+            let eIDs = options[ENTITY_ID];
+            if (Array.isArray(eIDs)) {
+                let components = eIDs.map(com => this.createComponent(com));
                 result.addComponent(components);
             }
 
@@ -312,6 +310,7 @@ Object.assign( Registry.prototype, {
             entitySet.setRegistry(null);
             this._entitySets = arrayWithout(this._entitySets, entitySet);
             delete this._entitySetUUIDs[entitySet.getUUID()];
+            // delete this._entitySetIDs[entitySet.getEntitySetID()];
             return entitySet;
         }
 
@@ -332,7 +331,6 @@ Object.assign( Registry.prototype, {
         entitySet.setRegistry(this);
 
         if (options.sync || !entitySet.isAsync) {
-            
 
             // do we already have this entitySet
             if (this._entitySets.indexOf(entitySet) !== -1) {
@@ -346,6 +344,7 @@ Object.assign( Registry.prototype, {
             // store the entityset against its id
             this._entitySets.push(entitySet);
             this._entitySetUUIDs[entitySet.getUUID()] = entitySet;
+            // this._entitySetIDs[entitySet.getEntitySetID()] = entitySet;
 
             entitySet.setRegistry(this);
 
@@ -366,16 +365,34 @@ Object.assign( Registry.prototype, {
         });
     },
 
+   
     /**
-     *
+     * 
+     * @param {*} uuid 
      */
-    getEntitySet(uuid) {
-        let es;
-        if ((es = this._entitySetUUIDs[uuid])) {
-            return es;
-        }
-        return null;
+    getEntitySet(id) {
+        return /*this.getEntitySetByID(id) ||*/ this.getEntitySetByUUID(id);
     },
+
+    /**
+     * Returns a registered entity set by its UUID
+     * 
+     * @param {String} uuid 
+     */
+    getEntitySetByUUID( uuid ){
+        return this._entitySetUUIDs[uuid];
+    },
+
+    // /**
+    //  * Returns a registered entity set by its id
+    //  * 
+    //  * @param {Number} id 
+    //  */
+    // getEntitySetByID( id ){
+    //     return this._entitySetIDs[id];
+    // },
+
+
 
     /**
      *

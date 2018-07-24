@@ -1,4 +1,4 @@
-import { uniqueId } from './unique_id';
+import { uniqueID } from './unique_id';
 
 // Backbone.Events
 // ---------------
@@ -94,15 +94,15 @@ let internalOn = function(obj, name, callback, context, listening) {
 // for easier unbinding later.
 Events.listenTo = function(obj, name, callback) {
     if (!obj) return this;
-    let id = obj._listenId || (obj._listenId = uniqueId('l'));
+    let id = obj._listenID || (obj._listenID = uniqueID('l'));
     let listeningTo = this._listeningTo || (this._listeningTo = {});
     let listening = listeningTo[id];
 
     // This object is not listening to any other events on `obj` yet.
     // Setup the necessary references to track the listening callbacks.
     if (!listening) {
-        let thisId = this._listenId || (this._listenId = uniqueId('l'));
-        listening = listeningTo[id] = { obj: obj, objId: id, id: thisId, listeningTo: listeningTo, count: 0 };
+        let thisID = this._listenID || (this._listenID = uniqueID('l'));
+        listening = listeningTo[id] = { obj: obj, objID: id, id: thisID, listeningTo: listeningTo, count: 0 };
     }
 
     // Bind callbacks on obj, and keep track of them on listening.
@@ -149,7 +149,7 @@ Events.stopListening = function(obj, name, callback) {
         this.isListeningAsync = false;
     }
 
-    let ids = obj ? [obj._listenId] : Object.keys(listeningTo);
+    let ids = obj ? [obj._listenID] : Object.keys(listeningTo);
 
     for (let i = 0; i < ids.length; i++) {
         let listening = listeningTo[ids[i]];
@@ -179,7 +179,7 @@ let offApi = function(events, name, callback, options) {
         for (; i < ids.length; i++) {
             listening = listeners[ids[i]];
             delete listeners[listening.id];
-            delete listening.listeningTo[listening.objId];
+            delete listening.listeningTo[listening.objID];
         }
         return;
     }
@@ -205,7 +205,7 @@ let offApi = function(events, name, callback, options) {
                 listening = handler.listening;
                 if (listening && --listening.count === 0) {
                     delete listeners[listening.id];
-                    delete listening.listeningTo[listening.objId];
+                    delete listening.listeningTo[listening.objID];
                 }
             }
         }
@@ -290,8 +290,7 @@ Events.listenToAsync = function(obj, name, callback) {
     this.isListeningAsync = true;
     // console.log('[EventsAsync][listenToAsync] registered listenToAsync', name, 'to', obj.cid, stringify(obj)  );
 
-    // NOTE: because we use the arguments object, we can't use es6 fat arrows here
-    let listenFn = function(...args) {
+    let listenFn = (...args) => {
         // console.log('[EventsAsync][listenToAsync] recv ' + stringify(arguments) + ' for name '+ name);
         asyncListenQueue.push({ c: callback, a: args, name });
     };

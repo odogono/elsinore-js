@@ -18,7 +18,7 @@ import {
     logEvents,
     stringify,
     entityToString,
-    setEntityIdFromId
+    setEntityIDFromID
 } from './common';
 
 import { cloneEntity } from '../src/util/clone';
@@ -50,7 +50,7 @@ test.skip('keeping a map of entitySets and views', t => {
 test('creating an entity with an id', t => {
     return initialiseRegistry()
         .then(registry => {
-            const e = registry.createEntityWithId(22);
+            const e = registry.createEntityWithID(22);
             t.equals(e.id, 22);
         })
         .then(() => t.end())
@@ -174,11 +174,11 @@ test('create with an entity id', async t => {
     const registry = await initialiseRegistry();
     try {
         let component = registry.createComponent({ '@c': '/component/nickname', '@e': 15 });
-        t.equals(component.getEntityId(false), 15, 'the entity id is retrieved');
+        t.equals(component.getEntityID(false), 15, 'the entity id is retrieved');
 
         component = registry.createComponent({ '@c': '/component/nickname', '@e': 42949672975 });
-        t.equals(component.getEntityId(false), 15, 'the entity id is retrieved');
-        t.equals(component.getEntitySetId(), 10);
+        t.equals(component.getEntityID(false), 15, 'the entity id is retrieved');
+        t.equals(component.getEntitySetID(), 10);
     } catch (err) {
         Log.error('test error: %s', err.stack);
     }
@@ -219,7 +219,7 @@ test('create two components with the same entity id', async t => {
         const components = registry.createComponent([position, status], { '@e': 22 });
 
         // Log.debug('result', component );
-        _.each(components, c => t.equals(c.getEntityId(), 22));
+        _.each(components, c => t.equals(c.getEntityID(), 22));
         // t.equals( component.get('x'), 100 );
     } catch (err) {
         Log.error('test error: %s', err.stack);
@@ -230,19 +230,19 @@ test('create two components with the same entity id', async t => {
 test('creating an entity from a component with an entity id', async t => {
     try {
         const registry = await initialiseRegistry({ loadComponents: true });
-        const entityId = 301;
-        const entitySetId = 2;
-        const id = setEntityIdFromId(entityId, entitySetId);
+        const entityID = 301;
+        const entitySetID = 2;
+        const id = setEntityIDFromID(entityID, entitySetID);
 
         const component = registry.createComponent({ '@s': '/component/nickname', nickname: 'alex', '@e': id });
-        t.equals(component.getEntityId(false), entityId);
+        t.equals(component.getEntityID(false), entityID);
 
         const entity = registry.createEntity(component);
 
         // Log.debug('entity', entityToString(entity) );
 
-        t.equals(entity.getEntitySetId(), entitySetId);
-        t.equals(entity.getEntityId(), entityId);
+        t.equals(entity.getEntitySetID(), entitySetID);
+        t.equals(entity.getEntityID(), entityID);
     } catch (err) {
         Log.error('test error: %s', err.stack);
     }
@@ -258,7 +258,7 @@ test('create an entity with a component bitfield', t => {
             // printE( entity );
             // console.log( entity.getComponentBitfield() );
 
-            const reEntity = registry.createEntityWithId(456, 0, { comBf: entity.getComponentBitfield() });
+            const reEntity = registry.createEntityWithID(456, 0, { comBf: entity.getComponentBitfield() });
 
             t.deepEqual(entity.getComponentBitfield().toValues(), reEntity.getComponentBitfield().toValues());
         })
@@ -294,8 +294,8 @@ test('creating an entity with an id of 0', t => {
             // console.log(entity);
 
             t.equals(entity.id, 0);
-            t.equals(entity.getEntityId(), 0);
-            t.equals(entity.getEntitySetId(), 0);
+            t.equals(entity.getEntityID(), 0);
+            t.equals(entity.getEntitySetID(), 0);
         })
         .then(() => t.end())
         .catch(err => log.error('test error: %s', err.stack));

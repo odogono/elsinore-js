@@ -273,13 +273,13 @@ Object.assign( ComponentRegistry.prototype, {
 
     /**
      *
-     * @param {*} defIdentifiers
+     * @param {*} defIDentifiers
      * @param {*} options
      */
-    getIId(defIdentifiers, options = { throwOnNotFound: true }) {
-        options.returnIds = true;
-        // defIdentifiers.push({ throwOnNotFound:true, returnIds:true });
-        return this.getComponentDef(defIdentifiers, options);
+    getIID(defIDentifiers, options = { throwOnNotFound: true }) {
+        options.returnIDs = true;
+        // defIDentifiers.push({ throwOnNotFound:true, returnIDs:true });
+        return this.getComponentDef(defIDentifiers, options);
     },
 
     /**
@@ -294,7 +294,7 @@ Object.assign( ComponentRegistry.prototype, {
             ident;
         // const debug = options.debug === void 0 ? false : options.debug;
         const forceArray = options.forceArray === void 0 ? false : options.forceArray;
-        const returnIds = options.returnIds === void 0 ? false : options.returnIds;
+        const returnIDs = options.returnIDs === void 0 ? false : options.returnIDs;
         const throwOnNotFound = options.throwOnNotFound === void 0 ? false : options.throwOnNotFound;
         let result;
 
@@ -340,7 +340,7 @@ Object.assign( ComponentRegistry.prototype, {
             }
 
             if (len === 1 && !forceArray) {
-                if (returnIds) {
+                if (returnIDs) {
                     return cDef.id;
                 }
                 return cDef;
@@ -350,7 +350,7 @@ Object.assign( ComponentRegistry.prototype, {
                 result = [];
             }
 
-            result.push(returnIds ? cDef.id : cDef);
+            result.push(returnIDs ? cDef.id : cDef);
         }
 
         if (!result || (result.length === 0 && !forceArray)) {

@@ -71,12 +71,12 @@ export class JSONLoader {
     }
 
     _deleteEntity(context, args, options = {}) {
-        const entityId = args ? args.id || args.eid : undefined;
-        if (entityId === undefined) {
+        const entityID = args ? args.id || args.eid : undefined;
+        if (entityID === undefined) {
             return Promise.resolve(context);
         }
 
-        return Promise.resolve(context.entitySet.removeEntity(entityId)).then(() => context);
+        return Promise.resolve(context.entitySet.removeEntity(entityID)).then(() => context);
     }
 
     /**
@@ -86,13 +86,13 @@ export class JSONLoader {
      * @param {*} options
      */
     _deleteComponent(context, args, options = {}) {
-        const componentId = args ? args.id || args.cid : undefined;
-        if (componentId === undefined) {
+        const componentID = args ? args.id || args.cid : undefined;
+        if (componentID === undefined) {
             return Promise.resolve(context);
         }
 
-        // console.log('[JSONLoader][_deleteComponent]', componentId);
-        return Promise.resolve(context.entitySet.removeComponent(componentId, { fromLoader: true }));
+        // console.log('[JSONLoader][_deleteComponent]', componentID);
+        return Promise.resolve(context.entitySet.removeComponent(componentID, { fromLoader: true }));
     }
 
     /**

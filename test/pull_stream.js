@@ -296,7 +296,7 @@ test('query through', async t => {
 // });
 // test('entity sink', async t => {
 //     try {
-//         const { registry, entitySet } = await initialise({ loadEntities: false, instanceClass: AsyncEntitySet });
+//         const { registry, entitySet } = await initialise({ loadEntities: false, type: AsyncEntitySet });
 //         const values = Pull.values([
 //             { '@c': '/position', x: 2, y: -2 },
 //             [ { '@c': '/name', name: 'outlier' }, { '@c': '/position', x: 100, y: 0 } ],
@@ -339,7 +339,7 @@ test('query through', async t => {
 // function exportEntitySetComponents(entitySet,options={}){
 //     const useDefUris = readProperty(options,'useDefUris',false);
 //     const anonymous = readProperty(options,'anonymous',false);
-//     let currentEntityId = -1;
+//     let currentEntityID = -1;
 //     const cdefMap = useDefUris ? entitySet.getComponentRegistry().getComponentDefUris() : null;
 //     const stream = entitySet.createPullStreamSource();
 // }

@@ -22,7 +22,7 @@ import {
 
 const Log = createLog('TestEntitySetListener');
 
-function example({id=_.uniqueId('d'),size=20,width=4,enabled=true,...rest}){
+function example({id=_.uniqueID('d'),size=20,width=4,enabled=true,...rest}){
     Log.debug('size',id);
     Log.debug('size',size);
     Log.debug('width',width);

@@ -39,8 +39,8 @@ export function create(entitySet, query, options = {}) {
     query = Query.toQuery(query);
     entitySet._views || (entitySet._views = {});
 
-    let queryId = query ? query.hash() : 'all';
-    let existing = entitySet._views[queryId];
+    let queryID = query ? query.hash() : 'all';
+    let existing = entitySet._views[queryID];
 
     if (existing) {
         return existing;
@@ -50,11 +50,11 @@ export function create(entitySet, query, options = {}) {
 
     let view = registry.createEntitySet({ type: EntitySetSyncView, register: false });
     view._parent = entitySet;
-    entitySet._views[queryId] = view;
+    entitySet._views[queryID] = view;
     view.query = query;
-    view.queryId = queryId;
+    view.queryID = queryID;
 
-    if (entitySet.queryId == 'all') {
+    if (entitySet.queryID == 'all') {
         view.addEntity(entitySet.getEntities());
     } else {
         let ii,
@@ -124,7 +124,7 @@ EntitySetSyncView.prototype.onEntityAdd = function(entities, options) {
     let cid = options.cid;
     let addOptions = { cid };
 
-    if (this.queryId == 'all') {
+    if (this.queryID == 'all') {
         this.addEntity(entities, addOptions);
     } else {
         let ii,

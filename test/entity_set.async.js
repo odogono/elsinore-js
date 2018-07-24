@@ -22,7 +22,7 @@ import {
 
 const Log = createLog('TestEntitySetAsync');
 
-const createOptions = { instanceClass: AsyncEntitySet, entityIdStart: 100, componentIdStart: 10 };
+const createOptions = { type: AsyncEntitySet, entityIDStart: 100, componentIDStart: 10 };
 const createOptionsNothingRegistered = { ...createOptions, loadComponents: false };
 
 test('type of entityset', async t => {
@@ -39,6 +39,9 @@ test('type of entityset', async t => {
     }
 });
 
+
+
+
 test('adding an entity with a component returns the added entity', async t => {
     try {
         const [registry, entitySet] = await initialiseAll(createOptions);
@@ -50,7 +53,7 @@ test('adding an entity with a component returns the added entity', async t => {
 
         // Log.debug(entityToString(entitySet));
 
-        t.equals(addedEntity.getEntitySetId(), entitySet.getEntitySetId(), 'entityset ids should be equal');
+        t.equals(addedEntity.getEntitySetID(), entitySet.getEntitySetID(), 'entityset ids should be equal');
 
         t.equals(addedEntity.Position.get('y'), -2);
 
@@ -105,8 +108,8 @@ test('adding several components without an entity adds them to the same new enti
 
         // // Log.debug('[get]', addedComponents);
 
-        const entityId = added.getEntityId();
-        const entity = await entitySet.getEntity(entityId);
+        const entityID = added.getEntityID();
+        const entity = await entitySet.getEntity(entityID);
 
         // Log.debug( entityToString(entity) );
         // console.log('wtf', entity);
@@ -140,7 +143,7 @@ test('removing a component from an entity with only one component', async t => {
         const component = registry.createComponent('/component/position', { x: 15, y: 2 });
 
         const addedComponent = await entitySet.addComponent(component);
-        const addedEntityId = addedComponent.getEntityId();
+        const addedEntityID = addedComponent.getEntityID();
 
         // Log.debug('and remove');
         await entitySet.removeComponent(addedComponent);
@@ -148,7 +151,7 @@ test('removing a component from an entity with only one component', async t => {
         // Log.debug( 'remove', entityToString(addedComponent) );
         // Log.debug( entityToString(entitySet) );
 
-        const entity = await entitySet.getEntityById(addedEntityId, false);
+        const entity = await entitySet.getEntityByID(addedEntityID, false);
 
         t.ok(_.isNull(entity), 'no entity should be returned');
 
@@ -254,8 +257,8 @@ test('adding an existing entity changes its id if it didnt originate from the en
 
     let added = await entitySet.addEntity( entity );
 
-    t.notEqual(added.getEntityId(), 12, 'the entity id will have been changed');
-    t.equal(added.getEntitySetId(), 205, 'the entityset id will have been set');
+    t.notEqual(added.getEntityID(), 12, 'the entity id will have been changed');
+    t.equal(added.getEntitySetID(), 205, 'the entityset id will have been set');
 
     t.end();
 });
@@ -268,15 +271,15 @@ test('adding an existing entity doesnt changes its id if it originated from the 
 
         // Log.debug('es', entityToString(entity));
 
-        t.equal(entity.getEntitySetId(), 205, 'the entityset id will have been set');
+        t.equal(entity.getEntitySetID(), 205, 'the entityset id will have been set');
 
         const added = await entitySet.addEntity(entity);
 
         t.equal(entitySet.id, 205);
 
-        t.equal(added.getEntitySetId(), 205, 'the entityset id will have been set');
+        t.equal(added.getEntitySetID(), 205, 'the entityset id will have been set');
 
-        t.equal(added.getEntityId(), 12, 'the entity id will have been changed');
+        t.equal(added.getEntityID(), 12, 'the entity id will have been changed');
 
         // Log.debug('es', entityToString(entitySet));
 
@@ -308,12 +311,12 @@ test('adding an entity with an identical id will replace the existing one', asyn
 
         await entitySet.addEntity(entityB, { debug: false });
 
-        entity = await entitySet.getEntityById(45);
+        entity = await entitySet.getEntityByID(45);
 
         // console.log( entity );
         // Log.debug(entityToString(entitySet));
 
-        // Log.debug( entitySet._components.map( c=>[c.id,c.cid,c.getDefId(),c.getEntityId()] ) );
+        // Log.debug( entitySet._components.map( c=>[c.id,c.cid,c.getDefID(),c.getEntityID()] ) );
 
         t.equals(entity.Status.get('status'), 'active');
 
@@ -321,8 +324,8 @@ test('adding an entity with an identical id will replace the existing one', asyn
 
         // return entitySet.addEntity( entity )
         //     .then( entity => {
-        //         t.equal( entity.getEntitySetId(), 205, 'the entityset id will have been set' );
-        //         t.equal( entity.getEntityId(), 12, 'the entity id will have been changed' );
+        //         t.equal( entity.getEntitySetID(), 205, 'the entityset id will have been set' );
+        //         t.equal( entity.getEntityID(), 12, 'the entity id will have been changed' );
         //     })
 
         t.end();

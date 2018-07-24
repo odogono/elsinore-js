@@ -40,7 +40,7 @@ test('testing an async register component', t => {
     });
 
     return registry
-        .createEntitySet({ instanceClass: AsyncEntitySet, listener: Listener })
+        .createEntitySet({ type: AsyncEntitySet, listener: Listener })
         .then(es => registry.registerComponent(COMPONENT_DEFINITIONS[0]))
         .catch(err => Log.error(err.stack));
 });
@@ -54,7 +54,7 @@ test('registering multiple component defs', t => {
     });
 
     return registry
-        .createEntitySet({ instanceClass: AsyncEntitySet, listener: Listener })
+        .createEntitySet({ type: AsyncEntitySet, listener: Listener })
         .then(es => registry.registerComponent([COMPONENT_DEFINITIONS[0], COMPONENT_DEFINITIONS[1]]))
         .catch(err => Log.error(err.stack))
         .then(() => t.end());

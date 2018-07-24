@@ -183,10 +183,10 @@ test('resetting the context entitySet', async t => {
 //             // [ Query.VALUE, Query.ROOT ],
 //             // [ Query.PLUCK, null, 'eid', {unique:true} ]
 //             [Query.VALUE, [ 1,2,5 ] ],
-//             [Query.ALIAS, [Query.VALUE, 'entityIds'] ],
+//             [Query.ALIAS, [Query.VALUE, 'entityIDs'] ],
 
 //             [Query.VALUE, Query.ROOT],
-//             [ Query.SELECT_BY_ID, [Query.ALIAS_GET, [Query.VALUE,'entityIds']] ]
+//             [ Query.SELECT_BY_ID, [Query.ALIAS_GET, [Query.VALUE,'entityIDs']] ]
 
 //             ], entitySet, {debug:false});
 
@@ -201,26 +201,26 @@ test('sub-queries', async t => {
 
         // this query selects the other entities which are members of the same channel
         // as entity id 5
-        const clientId = 5;
+        const clientID = 5;
 
         const result = entitySet.query(Q => [
-            // 1. select channel ids which client `clientId` belongs to and store as alias `channelIds`
-            Q.all('/component/channel_member').where(Q.attr('client').equals(clientId)),
+            // 1. select channel ids which client `clientID` belongs to and store as alias `channelIDs`
+            Q.all('/component/channel_member').where(Q.attr('client').equals(clientID)),
             Q.pluck('/component/channel_member', 'channel'), // get all the values for 'channel'
-            Q.aliasAs('channelIds'), // save the pluck result (array) in the context for later
+            Q.aliasAs('channelIDs'), // save the pluck result (array) in the context for later
 
-            // 2. select channel members which belong to the channel ids stored in the alias `channelIds`
+            // 2. select channel members which belong to the channel ids stored in the alias `channelIDs`
             Q.root(), // this resets the context back to the original entitySet
-            Q.all('/component/channel_member').where(Q.attr('channel').equals(Q.alias('channelIds'))),
+            Q.all('/component/channel_member').where(Q.attr('channel').equals(Q.alias('channelIDs'))),
 
             // pluck returns an array of the specified attribute from the components
             Q.pluck('/component/channel_member', 'client', { unique: true }),
-            Q.without(clientId), // remove the clientId from the result of the pluck
+            Q.without(clientID), // remove the clientID from the result of the pluck
 
             // 3. using the channel_member client ids, select an entityset of client entities by entity ids
             // creates a new ES from selected ids - note that the function uses the result of the last
             // query option
-            Q.selectById()
+            Q.selectByID()
         ]);
 
         // the result should have 3 entities - channel_member, channel and client

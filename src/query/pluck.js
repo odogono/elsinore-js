@@ -15,19 +15,19 @@ import {ENTITY_ID} from '../constants';
 /**
  * Adds pluck functionality directory to entityset
  */
-EntitySet.prototype.pluck = function(componentIds, attr) {
-    const query = new Query(Q => Q.pluck(componentIds, attr));
+EntitySet.prototype.pluck = function(componentIDs, attr) {
+    const query = new Query(Q => Q.pluck(componentIDs, attr));
     return query.execute(this);
 };
 
-function dslPluck(componentIds, property, options) {
+function dslPluck(componentIDs, property, options) {
     const context = this.readContext(this);
 
     context.pushOp(PLUCK);
 
     context.pushVal(LEFT_PAREN);
 
-    context.pushVal(componentIds, true);
+    context.pushVal(componentIDs, true);
 
     context.pushVal(property, true);
 
@@ -45,7 +45,7 @@ function dslPluck(componentIds, property, options) {
 *   Returns the attribute values of specified components in the specified
 *   entitySet 
 */
-function commandPluck(context, componentIds, attributes, options) {
+function commandPluck(context, componentIDs, attributes, options) {
     // resolve the components to ids
     let result;
     let entitySet;
@@ -59,15 +59,15 @@ function commandPluck(context, componentIds, attributes, options) {
     entitySet = context.resolveEntitySet();
 
     // resolve the component ids
-    // componentIds = context.valueOf(componentIds,true);
-    // if( componentIds ){
-    //     componentIds = context.registry.getIId( componentIds, true );
+    // componentIDs = context.valueOf(componentIDs,true);
+    // if( componentIDs ){
+    //     componentIDs = context.registry.getIID( componentIDs, true );
     // }
 
     result = pluckEntitySet(
         context.registry,
         entitySet,
-        componentIds,
+        componentIDs,
         attributes
     );
 
@@ -78,30 +78,30 @@ function commandPluck(context, componentIds, attributes, options) {
     return context.last = [VALUE, result];
 }
 
-function pluckEntitySet(registry, entitySet, componentIds, attributes) {
+function pluckEntitySet(registry, entitySet, componentIDs, attributes) {
     let result;
 
     // iterate through each of the entityset models and select the components
     // specified - if they exist, select the attributes required.
     result = entitySet.getEntities().reduce(
         (values, entity) => {
-            // log.debug('inCOMing ' + stringify(entity), attributes, componentIds );
-            if (!componentIds) {
-                // if there are no componentIds, then the type of attribute we can pluck is limited...
+            // log.debug('inCOMing ' + stringify(entity), attributes, componentIDs );
+            if (!componentIDs) {
+                // if there are no componentIDs, then the type of attribute we can pluck is limited...
                 attributes.forEach( attr => {
                     if (attr == ENTITY_ID) {
-                        values.push(entity.getEntityId());
+                        values.push(entity.getEntityID());
                     }
                 });
             } else {
-                // const components = entity.getComponents(componentIds);
-                const components = entity.getComponents(componentIds);
+                // const components = entity.getComponents(componentIDs);
+                const components = entity.getComponents(componentIDs);
 
                 components.forEach( component => {
                     // log.debug('inCOMing ' + stringify(component) );
                     attributes.forEach( attr => {
                         if (attr == ENTITY_ID) {
-                            values.push(entity.getEntityId());
+                            values.push(entity.getEntityID());
                         } else {
                             let val = component.get.call(component, attr);
                             if (val) {
@@ -127,12 +127,12 @@ function compile(context, command) {
     if (command[1]) {
         const resolved = context.valueOf(command[1], true);
         if (resolved) {
-            command[1] = context.registry.getIId(resolved, true);
+            command[1] = context.registry.getIID(resolved, true);
         } else {
             command[1] = null;
         }
 
-        // command[1] = context.resolveComponentIIds( command[1] );
+        // command[1] = context.resolveComponentIIDs( command[1] );
         // console.log('pluck> resolve', command, resolved);
     }
 

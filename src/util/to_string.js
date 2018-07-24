@@ -2,7 +2,7 @@
 import { stringify } from './stringify';
 import { isCollection, isComponent, isEntity, isEntitySet } from './is';
 
-import { getEntityIdFromId } from './id';
+import { getEntityIDFromID } from './id';
 
 /**
  *
@@ -14,14 +14,14 @@ export function entityToString(entity, indent = '') {
         return [];
     }
     let res = [];
-    let comDefId;
+    let comDefID;
 
-    res.push(`${indent}- ${entity.cid} (${entity.getEntityId()}/${entity.getEntitySetId()}) ${entity.hash(true)}`);
+    res.push(`${indent}- ${entity.cid} (${entity.getEntityID()}/${entity.getEntitySetID()}) ${entity.hash(true)}`);
 
     indent += '  ';
 
-    for (comDefId in entity.components) {
-        res.push(componentToString(entity.components[comDefId], indent));
+    for (comDefID in entity.components) {
+        res.push(componentToString(entity.components[comDefID], indent));
     }
     return res;
 }
@@ -40,13 +40,13 @@ export function componentToString(component, indent = '') {
 
     componentJSON = stringify(component);
     const cCid = component.cid;
-    const componentId = component.id || 0;
-    const cDefId = component.getDefId();
+    const componentID = component.id || 0;
+    const cDefID = component.getDefID();
     const cName = component.name;
-    const entityId = getEntityIdFromId(component.getEntityId());
+    const entityID = getEntityIDFromID(component.getEntityID());
     const componentHash = component.hash(true);
 
-    return `${indent}${cCid} (${componentId}) ${cName}(${cDefId}) e:${entityId} ${componentHash} ${componentJSON}`;
+    return `${indent}${cCid} (${componentID}) ${cName}(${cDefID}) e:${entityID} ${componentHash} ${componentJSON}`;
 }
 
 /**

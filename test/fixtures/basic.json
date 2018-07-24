@@ -1,5 +1,5 @@
 {
-    "entityId":"child",
+    "entityID":"child",
     "extends":{ "$ref":"entity://odgn/parent" },
 
     "properties": {

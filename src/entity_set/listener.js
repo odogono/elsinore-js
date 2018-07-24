@@ -1,7 +1,7 @@
 import { Entity } from '../entity';
 
 import { hash } from '../util/hash';
-import { uniqueId } from '../util/unique_id';
+import { uniqueID } from '../util/unique_id';
 import { Base } from '../base';
 import { isEntitySet } from '../util/is';
 import { createLog } from '../util/log';
@@ -18,7 +18,7 @@ const Log = createLog('EntitySetListener');
 
 
 export function EntitySetListener(srcEntitySet, targetEntitySet, query, options = {}) {
-    this.cid = uniqueId('esl');
+    this.cid = uniqueID('esl');
 
     this.updateOnEvent = !!options.updateOnEvent;
 
@@ -77,7 +77,7 @@ Object.assign(EntitySetListener.prototype, Base.prototype, {
         this.entitySet.isModified = true;
 
         entities.forEach(e => {
-            const eid = Entity.toEntityId(e);
+            const eid = Entity.toEntityID(e);
             this.addedEntities[eid] = e;
             this.isModified = true;
         });
@@ -94,7 +94,7 @@ Object.assign(EntitySetListener.prototype, Base.prototype, {
      */
     onEntityRemove(entities, apply = true) {
         entities.forEach(e => {
-            const eid = Entity.toEntityId(e);
+            const eid = Entity.toEntityID(e);
             if (!this.entitySet.get(eid)) {
                 return;
             }
@@ -129,7 +129,7 @@ Object.assign(EntitySetListener.prototype, Base.prototype, {
 
         // Log.debug( entitySet.cid + '_oCA ' + stringify(components) );
         components.forEach(component => {
-            const eid = Entity.getEntityId(component);
+            const eid = Entity.getEntityID(component);
 
             if (entitySet.hasEntity(eid)) {
                 this.changedEntityList[eid] = eid;
@@ -165,9 +165,9 @@ Object.assign(EntitySetListener.prototype, Base.prototype, {
 
         // reduce down to components we are interested in
         for (ii = 0, len = components.length; ii < len; ii++) {
-            eid = components[ii].getEntityId();
+            eid = components[ii].getEntityID();
             // log.debug('onComponentRemove', eid, stringify(components[ii]));
-            // eid = Entity.getEntityId( components[ii] );
+            // eid = Entity.getEntityID( components[ii] );
             if (entitySet.hasEntity(eid)) {
                 this.changedEntityList[eid] = eid;
                 this.isModified = true;
@@ -185,7 +185,7 @@ Object.assign(EntitySetListener.prototype, Base.prototype, {
     applyEvents(options = {}) {
         let entitySet;
         let query;
-        let changedEntityIdList;
+        let changedEntityIDList;
         let entitiesAdded;
         let entitiesRemoved;
         let changeOptions;
@@ -222,12 +222,12 @@ Object.assign(EntitySetListener.prototype, Base.prototype, {
 
         // entities that have changed due to component movement - remove if no longer valid
         // Log.debug(`[applyEvents]`, this.cid, stringify(this.changedEntityList));
-        changedEntityIdList = Object.values(this.changedEntityList);
+        changedEntityIDList = Object.values(this.changedEntityList);
 
-        if (changedEntityIdList.length > 0) {
-            entitiesRemoved = entitiesRemoved.concat(entitySet.evaluateEntities(changedEntityIdList, changeOptions));
-            // for( i=0,len=changedEntityIdList.length;i<len;i++ ){
-            //     entity = entitySet.get( changedEntityIdList[i] );
+        if (changedEntityIDList.length > 0) {
+            entitiesRemoved = entitiesRemoved.concat(entitySet.evaluateEntities(changedEntityIDList, changeOptions));
+            // for( i=0,len=changedEntityIDList.length;i<len;i++ ){
+            //     entity = entitySet.get( changedEntityIDList[i] );
             //     if( !EntitySet.isEntityOfInterest( entitySet, entity, query ) ){
             //         entitySet.remove( entity, changeOptions );
             //         entitiesRemoved.push( entity );

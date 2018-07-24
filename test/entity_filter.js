@@ -8,7 +8,7 @@ import { EntityFilter } from '../src/entity_filter';
 import {
     toInteger
 } from '../src/util/to';
-import { uniqueId } from '../src/util/unique_id';
+import { uniqueID } from '../src/util/unique_id';
 
 import {
     ALL, ANY, SOME, NONE, INCLUDE, EXCLUDE
@@ -202,49 +202,49 @@ test('to/from JSON', t => {
 
 let MockComponent = function( attrs ){
     return Object.assign({}, attrs,{
-        setEntityId: eid => this['_e'] = eid
+        setEntityID: eid => this['_e'] = eid
     });
 }
 
 let ComponentDefs = {
-    '/animal': { schemaIId:1, name:'Animal', schemaHash:'001' },
-    '/mineral': { schemaIId:2, name:'Mineral', schemaHash:'002' },
-    '/vegetable': { schemaIId:3, name:'Vegetable', schemaHash:'003' },
-    '/doctor': { schemaIId:4, name:'Doctor', schemaHash:'004' },
-    '/robot': { schemaIId:5, name:'Robot', schemaHash:'005' },
-    '/flower': { schemaIId:6, name:'Flower', schemaHash:'006' }
+    '/animal': { schemaIID:1, name:'Animal', schemaHash:'001' },
+    '/mineral': { schemaIID:2, name:'Mineral', schemaHash:'002' },
+    '/vegetable': { schemaIID:3, name:'Vegetable', schemaHash:'003' },
+    '/doctor': { schemaIID:4, name:'Doctor', schemaHash:'004' },
+    '/robot': { schemaIID:5, name:'Robot', schemaHash:'005' },
+    '/flower': { schemaIID:6, name:'Flower', schemaHash:'006' }
 };
 
 let Components = _.reduce( ComponentDefs, (memo,val,key) => {
-    memo[ val.name ] = val.schemaIId;
+    memo[ val.name ] = val.schemaIID;
     return memo;
 },{});
 
-let ComponentIIdToObject = _.reduce( ComponentDefs, (memo,val,key) => {
-    memo[ toInteger(val.schemaIId) ] = val;
-    val['@s'] = val.schemaIId;
+let ComponentIIDToObject = _.reduce( ComponentDefs, (memo,val,key) => {
+    memo[ toInteger(val.schemaIID) ] = val;
+    val['@s'] = val.schemaIID;
     return memo;
 },[]);
 
 
-function toBitField( ...componentIIds ){
-    if( componentIIds.length <= 0 ){
+function toBitField( ...componentIIDs ){
+    if( componentIIDs.length <= 0 ){
         return BitField.create();
     }
     
-    if( isEntity(componentIIds[0]) ){
-        return componentIIds[0].getComponentBitfield();
+    if( isEntity(componentIIDs[0]) ){
+        return componentIIDs[0].getComponentBitfield();
     }
     
-    return BitField.create( componentIIds );
+    return BitField.create( componentIIDs );
 }
 
-function createEntity( componentIIds ){
+function createEntity( componentIIDs ){
     let ii,len,com;
     let args = Array.prototype.slice.call( arguments );
 
     let entity = Entity.create();
-    entity.setEntityId( uniqueId() );
+    entity.setEntityID( uniqueID() );
     
     for(ii=0,len=args.length;ii<len;i++){
         com = createComponent( args[ii] );
@@ -254,16 +254,16 @@ function createEntity( componentIIds ){
     return entity;
 }
 
-function createComponent( componentIId ){
+function createComponent( componentIID ){
     let attrs;
     let result;
     let data;
-    if( _.isObject(componentIId) ){
-        attrs = _.omit( componentIId, '@c' );
-        componentIId = componentIId['@c'];
+    if( _.isObject(componentIID) ){
+        attrs = _.omit( componentIID, '@c' );
+        componentIID = componentIID['@c'];
     }
-    result = new Component( {...attrs, '@c': uniqueId() } );
-    data = ComponentIIdToObject[ componentIId ];
+    result = new Component( {...attrs, '@c': uniqueID() } );
+    data = ComponentIIDToObject[ componentIID ];
     _.each( data, (val,key) => result[ key ] = val );
     result.set( {'@s':data['@s']} );
     return result;
@@ -271,6 +271,6 @@ function createComponent( componentIId ){
 
 function createEntitySet(){
     let result = EntitySet.create();
-    result._createComponentId = () => _.uniqueId();
+    result._createComponentID = () => _.uniqueID();
     return result;
 }

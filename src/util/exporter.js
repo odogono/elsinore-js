@@ -81,7 +81,7 @@ Object.assign(JSONExporter.prototype, Base.prototype, {
         const useDefUris = readProperty(options, 'useDefUris', false);
         const anonymous = readProperty(options, 'anonymous', false);
 
-        let currentEntityId = -1;
+        let currentEntityID = -1;
         const cdefMap = useDefUris ? entitySet.getComponentRegistry().getComponentDefUris() : null;
 
         const stream = entitySet.createPullStream();
@@ -96,13 +96,13 @@ Object.assign(JSONExporter.prototype, Base.prototype, {
         entitySet
             .createReadStream()
             .on('data', component => {
-                if (currentEntityId === -1) {
-                    currentEntityId = component.getEntityId();
-                } else if (currentEntityId !== component.getEntityId()) {
+                if (currentEntityID === -1) {
+                    currentEntityID = component.getEntityID();
+                } else if (currentEntityID !== component.getEntityID()) {
                     if (anonymous) {
                         this.trigger(ENTITY_SET_ENTITY, { [COMMAND]: 'entity' });
                     }
-                    currentEntityId = component.getEntityId();
+                    currentEntityID = component.getEntityID();
                 }
 
                 const payload = {
@@ -118,7 +118,7 @@ Object.assign(JSONExporter.prototype, Base.prototype, {
             // })
             .on('end', () => {
                 // flush final entity
-                if (anonymous && currentEntityId !== -1) {
+                if (anonymous && currentEntityID !== -1) {
                     this.trigger(ENTITY_SET_ENTITY, { [COMMAND]: 'entity' });
                 }
             });

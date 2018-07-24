@@ -4,7 +4,7 @@ import {cloneComponent} from './clone';
 /**
 *   Updates any entity references on a component instance
 *
-*   Takes the supplied entityIdMap and converts any component
+*   Takes the supplied entityIDMap and converts any component
 *   properties that have been marked as entity refs.
 *
 *   The returned component is a clone of the original
@@ -12,12 +12,12 @@ import {cloneComponent} from './clone';
 *   TODO: determine whether this belongs here. this could be moved out
 *   to a module by itself, or perhaps become a processor
 */
-export function mapComponentEntityRefs( registry, component, entityIdMap, options ){
+export function mapComponentEntityRefs( registry, component, entityIDMap, options ){
     let name,property, val, updates;
     let result;
     // let properties;
 
-    if( !entityIdMap || Object.keys(entityIdMap).length === 0 ){
+    if( !entityIDMap || Object.keys(entityIDMap).length === 0 ){
         return component;
     }
 
@@ -39,8 +39,8 @@ export function mapComponentEntityRefs( registry, component, entityIdMap, option
         property = componentProperties[name];
         if( property.type == 'eref' || (property.type == 'integer' && property.format == 'entity') ){
             if( (val = component.get(name)) !== undefined ){
-                if( entityIdMap.hasOwnProperty(val.toString()) ){
-                    updates[ name ] = entityIdMap[ val ];
+                if( entityIDMap.hasOwnProperty(val.toString()) ){
+                    updates[ name ] = entityIDMap[ val ];
                 }
             }
         }

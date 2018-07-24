@@ -6,7 +6,7 @@ export const sink = _sink;
 
 export function duplex( entitySet, options={}){
 
-    // const did = _.uniqueId('eldup');
+    // const did = _.uniqueID('eldup');
 
     // the source sends
     const source = _source(entitySet, options );

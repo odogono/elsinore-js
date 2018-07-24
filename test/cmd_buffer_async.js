@@ -21,9 +21,9 @@ import {
     entityToString,
     logEvents,
     createLog,
-    // getEntityIdFromId,
-    // getEntitySetIdFromId,
-    setEntityIdFromId
+    // getEntityIDFromID,
+    // getEntitySetIDFromID,
+    setEntityIDFromID
 } from './common';
 
 import { AsyncCmdBuffer as CmdBuffer } from '../src/cmd_buffer/async';
@@ -88,7 +88,7 @@ test('adding a component with an eid, an existing member of the es', async t => 
         const registry = await initialiseRegistry();
         const cb = new CmdBuffer();
         const com = createComponent({ '@e': 11, '@es': 50 });
-        // Log.debug('com', com.attributes, com.getEntitySetId() );
+        // Log.debug('com', com.attributes, com.getEntitySetID() );
         const es = createEntitySet(registry, 50, [11]);
 
         const added = await cb.addComponent(es, com);
@@ -151,11 +151,11 @@ test('updating an entity with a new component', async t => {
 
         // logEvents(entitySet);
 
-        const entity = registry.createEntityWithId(10, 62);
+        const entity = registry.createEntityWithID(10, 62);
 
         entity.addComponent(coms);
 
-        // Log.debug(`entity ids`, entity.id, entity.getEntityId(), entity.getEntitySetId(), entityToString(entity));
+        // Log.debug(`entity ids`, entity.id, entity.getEntityID(), entity.getEntitySetID(), entityToString(entity));
 
         const added = await cmdBuffer.addEntity(entitySet, entity);
 
@@ -173,7 +173,7 @@ test('removing a component from an entity', async t => {
     const coms = createComponent({ tag: 'soft', '@s': 4 }, { tag: 'hard', '@s': 10 }, { tag: 'kik', '@s': 13 });
 
     const es = createEntitySet(registry, 63, [12], coms);
-    const e = registry.createEntityWithId(12, 63);
+    const e = registry.createEntityWithID(12, 63);
 
     coms.forEach(com => e.addComponent(com));
 
@@ -196,12 +196,12 @@ test('removing the last component from an entity', async t => {
 
     const entitySet = createEntitySet(registry, 63, [12], [component]);
 
-    const entity = registry.createEntityWithId(12, 63);
+    const entity = registry.createEntityWithID(12, 63);
 
     entity.addComponent(component);
 
-    entitySet.getEntity = function(entityId) {
-        entity.hasComponent = cIId => true;
+    entitySet.getEntity = function(entityID) {
+        entity.hasComponent = cIID => true;
         return Promise.resolve(entity);
     };
 
@@ -218,7 +218,7 @@ test('removing all components from an entity', async t => {
     const coms = createComponent({ tag: 'soft', '@s': 4 }, { tag: 'hard', '@s': 10 }, { tag: 'kik', '@s': 13 });
 
     const es = createEntitySet(registry, 63, [12], coms);
-    const e = registry.createEntityWithId(12, 63);
+    const e = registry.createEntityWithID(12, 63);
 
     coms.forEach(com => e.addComponent(com));
 
@@ -235,7 +235,7 @@ test('removing an existing entity', async t => {
     const components = createComponent({ tag: 'soft', '@s': 4 }, { tag: 'hard', '@s': 10 }, { tag: 'kik', '@s': 13 });
 
     const entitySet = createEntitySet(registry, 64, [13], components);
-    const entity = registry.createEntityWithId(13, 64);
+    const entity = registry.createEntityWithID(13, 64);
 
     entity.addComponent(components);
 
@@ -301,14 +301,14 @@ function reportUpdates(t, es, eAdded, eUpdated, eRemoved, cAdded, cUpdated, cRem
 /**
 *   Creates a Mock ES that we can assert against
 */
-function createEntitySet(registry, entitySetId, entityIds, existingComponents) {
+function createEntitySet(registry, entitySetID, entityIDs, existingComponents) {
     // return result;
-    const existingComponentDefIds = _.compact(_.map(existingComponents, c => c.getDefId()));
+    const existingComponentDefIDs = _.compact(_.map(existingComponents, c => c.getDefID()));
 
-    entityIds = _.map(entityIds, id => setEntityIdFromId(id, entitySetId));
+    entityIDs = _.map(entityIDs, id => setEntityIDFromID(id, entitySetID));
 
     return Object.assign({}, EntitySet.prototype, {
-        id: entitySetId,
+        id: entitySetID,
         type: 'MockEntitySet',
         update: function(eAdd, eUp, eRem, cAdd, cUp, cRem) {
             // printIns( arguments, 1 );
@@ -322,17 +322,17 @@ function createEntitySet(registry, entitySetId, entityIds, existingComponents) {
             ] = arguments;
             return Promise.resolve(true);
         },
-        getEntity: function(entityId, options) {
-            if (entityIds.indexOf(entityId) !== -1) {
-                return Promise.resolve(registry.createEntityWithId(entityId));
+        getEntity: function(entityID, options) {
+            if (entityIDs.indexOf(entityID) !== -1) {
+                return Promise.resolve(registry.createEntityWithID(entityID));
             }
             return Promise.resolve({});
         },
-        getEntitySignatures: function(entityIds, options) {
+        getEntitySignatures: function(entityIDs, options) {
             return new Promise((resolve, reject) => {
-                const result = _.map(entityIds, eid => {
+                const result = _.map(entityIDs, eid => {
                     eid = toInteger(eid);
-                    const comBf = BitField.create(existingComponentDefIds);
+                    const comBf = BitField.create(existingComponentDefIDs);
                     // console.log('YO', comBf.toJSON());
                     return registry.createEntity(null, { id: eid, comBf });
                 });

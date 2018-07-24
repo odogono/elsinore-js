@@ -20,7 +20,7 @@ const Log = createLog('TestQuery');
 
 test('return entity by id', t => {
     initialiseEntitySet().then(([registry, entitySet]) => {
-        let result = entitySet.selectById(5);
+        let result = entitySet.selectByID(5);
         t.ok(isEntitySet(result));
         t.equals(result.size(), 1);
         t.end();
@@ -29,7 +29,7 @@ test('return entity by id', t => {
 
 test('return entities by id', t => {
     initialiseEntitySet().then(([registry, entitySet]) => {
-        let result = entitySet.selectById([5, 6, 7]);
+        let result = entitySet.selectByID([5, 6, 7]);
         t.ok(isEntitySet(result));
         t.equals(result.size(), 3);
         t.end();
@@ -40,7 +40,7 @@ test('return entity by id in an array', async t => {
     try {
         const [registry, entitySet] = await initialiseEntitySet();
         
-        let result = entitySet.selectById(5, false);
+        let result = entitySet.selectByID(5, false);
         
         t.notOk(isEntitySet(result));
 
@@ -56,7 +56,7 @@ test('query returns an entityset of entities', async t => {
     try {
         const [registry, entitySet] = await initialiseEntitySet();
 
-        const result = entitySet.query(Q => Q.selectById([3, 4]));
+        const result = entitySet.query(Q => Q.selectByID([3, 4]));
         
         t.ok(result.isEntitySet, 'the result is an entityset');
         
@@ -75,7 +75,7 @@ test('returns entities from the root entitySet', t => {
             subset = entitySet.query(Q => [
                 Q.all('/component/channel'),
                 // set the 2nd arg to true means that the root entityset will be selected
-                Q.selectById([16, 17, 18], true)
+                Q.selectByID([16, 17, 18], true)
             ]);
             t.equals(subset.size(), 3, 'three entities selected');
 
@@ -83,7 +83,7 @@ test('returns entities from the root entitySet', t => {
                 Q.all('/component/channel'),
                 // this time, select works from the current selected context, which means
                 // the supplied argument will be invalid
-                Q.selectById([15, 16, 17])
+                Q.selectByID([15, 16, 17])
             ]);
             // printE( subset );
             t.equals(subset.size(), 0, 'no entities selected');
@@ -98,7 +98,7 @@ test('will use the previous result if an argument isnt supplied', t => {
             let result = entitySet.query(Q => [
                 Q.all('/component/channel_member'),
                 Q.pluck('/component/channel_member', 'channel'),
-                Q.selectById()
+                Q.selectByID()
             ]);
             // printE( result );
             t.equals(result.size(), 3);

@@ -22,12 +22,12 @@ export function InvalidEntityError(msg) {
 InvalidEntityError.prototype = Object.create(ElsinoreError.prototype);
 InvalidEntityError.prototype.constructor = InvalidEntityError;
 
-export function EntityNotFoundError(entityId, message) {
+export function EntityNotFoundError(entityID, message) {
     this.name = 'EntityNotFoundError';
-    this.entityId = entityId;
+    this.entityID = entityID;
 
     captureStackTrace(this, this.constructor);
-    this.message = message || `entity ${entityId} not found`;
+    this.message = message || `entity ${entityID} not found`;
 }
 EntityNotFoundError.prototype = Object.create(ElsinoreError.prototype);
 EntityNotFoundError.prototype.constructor = EntityNotFoundError;
@@ -42,13 +42,13 @@ export function ComponentDefNotFoundError(id, message) {
 ComponentDefNotFoundError.prototype = Object.create(ElsinoreError.prototype);
 ComponentDefNotFoundError.prototype.constructor = ComponentDefNotFoundError;
 
-export function ComponentNotFoundError(entityId, componentDefId, message) {
+export function ComponentNotFoundError(entityID, componentDefID, message) {
     this.name = 'ComponentNotFoundError';
-    this.entityId = entityId;
-    this.componentDefId = componentDefId;
+    this.entityID = entityID;
+    this.componentDefID = componentDefID;
     captureStackTrace(this, this.constructor);
     this.message =
-        message || `component ${entityId}/${componentDefId} not found`;
+        message || `component ${entityID}/${componentDefID} not found`;
 }
 ComponentNotFoundError.prototype = Object.create(ElsinoreError.prototype);
 ComponentNotFoundError.prototype.constructor = ComponentNotFoundError;

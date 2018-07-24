@@ -1,7 +1,7 @@
 import BitField from 'odgn-bitfield';
-import { setEntityIdFromId } from './util/id';
+import { setEntityIDFromID } from './util/id';
 import { isComponent, isEntity, isInteger, isString } from './util/is';
-import { uniqueId } from './util/unique_id';
+import { uniqueID } from './util/unique_id';
 import { readProperty } from './util/read_property';
 import { hash } from './util/hash';
 import { extend } from './util/extend';
@@ -20,7 +20,7 @@ export function Entity(options = {}) {
     // a map of components to their def id
     this.components = {};
 
-    this.cid = uniqueId('e');
+    this.cid = uniqueID('e');
 
     this._registry = readProperty(options, 'registry');
 
@@ -31,7 +31,7 @@ export function Entity(options = {}) {
     // entityset id
     const esid = readProperty(options, ENTITY_SET_ID, 0);
     if (esid !== 0) {
-        this.setEntitySetId(esid);
+        this.setEntitySetID(esid);
     }
 
     // bitfield indexes which components this entity has
@@ -48,16 +48,16 @@ Object.assign(Entity.prototype, Base.prototype, {
      * Sets the id of this entity
      * @param {*} id
      */
-    setEntityId(id, esId) {
+    setEntityID(id, esID) {
         let eid = this.id;
         // // the entity id is set as the low 30 bits
         // // eid += (id & 0x3fffffff) - (eid & 0x3fffffff);
         // the entity id is set as the low 32 bits
         eid += (id & 4294967295) - (eid & 4294967295);
-        this._setId(eid);
+        this._setID(eid);
 
-        if (esId !== undefined) {
-            this.setEntitySetId(esId);
+        if (esID !== undefined) {
+            this.setEntitySetID(esID);
         }
     },
 
@@ -66,15 +66,15 @@ Object.assign(Entity.prototype, Base.prototype, {
      *
      * @param {*} id
      */
-    _setId(id) {
+    _setID(id) {
         this.id = id;
-        Object.values(this.components).forEach(c => c.setEntityId(this.id));
+        Object.values(this.components).forEach(c => c.setEntityID(this.id));
     },
 
     /**
      * Returns the id of this entity
      */
-    getEntityId() {
+    getEntityID() {
         // return this.get('eid') & 0x3fffffff;
         return this.id & 4294967295;
     },
@@ -83,18 +83,18 @@ Object.assign(Entity.prototype, Base.prototype, {
      *
      * @param {*} id
      */
-    setEntitySetId(id) {
+    setEntitySetID(id) {
         let eid = this.id;
         // the es id is set as the high 21 bits
         // this.set( 'eid', (id & 0x3fffff) * 0x40000000 + (eid & 0x3fffffff) );
         eid = (id & 2097151) * 4294967296 + (eid & 4294967295);
-        this._setId(eid);
+        this._setID(eid);
     },
 
     /**
      *
      */
-    getEntitySetId() {
+    getEntitySetID() {
         let id = this.id;
         // return (id - (id & 0x3fffffff))  / 0x40000000;
         return (id - (id & 4294967295)) / 4294967296;
@@ -103,17 +103,17 @@ Object.assign(Entity.prototype, Base.prototype, {
     /**
      *
      * @param {*} es
-     * @param {*} setId
+     * @param {*} setID
      */
-    setEntitySet(es, setId = true) {
+    setEntitySet(es, setID = true) {
         const registry = es.getRegistry();
         this._entitySet = es;
         this.setRegistry( registry );
         for (let sid in this.components) {
             this.components[sid].setEntity(this);
         }
-        if (setId) {
-            this.setEntitySetId(es.id);
+        if (setID) {
+            this.setEntitySetID(es.id);
         }
     },
 
@@ -186,8 +186,8 @@ Object.assign(Entity.prototype, Base.prototype, {
      */
     _addComponent(component) {
         const registry = this.getRegistry();
-        const defId = component.getDefId();
-        let existing = this.components[defId];
+        const defID = component.getDefID();
+        let existing = this.components[defID];
 
         if (existing !== undefined) {
             this._removeComponent(existing);
@@ -199,13 +199,13 @@ Object.assign(Entity.prototype, Base.prototype, {
         if( isString(name) ){
             this[name] = component;
         } else if( registry ){
-            const def = registry.getComponentDef( defId );
+            const def = registry.getComponentDef( defID );
             this[def.getName()] = component;
         }
 
-        this.components[defId] = component;
+        this.components[defID] = component;
         
-        this.getComponentBitfield().set(defId, true);
+        this.getComponentBitfield().set(defID, true);
 
         // component.on('all', this._onComponentEvent, this);
 
@@ -213,7 +213,7 @@ Object.assign(Entity.prototype, Base.prototype, {
             component.onAdded(this);
         }
 
-        // console.log('[Entity][_addComponent]',defId, !!existing, this.components );
+        // console.log('[Entity][_addComponent]',defID, !!existing, this.components );
 
         return this;
     },
@@ -221,19 +221,19 @@ Object.assign(Entity.prototype, Base.prototype, {
     /**
      * Returns an array of all the components associated with this entity
      *
-     * @param {*} componentIds
+     * @param {*} componentIDs
      */
-    getComponents(componentIds) {
+    getComponents(componentIDs) {
         if (!this.components) {
             return [];
         }
 
-        if (componentIds === undefined) {
+        if (componentIDs === undefined) {
             return Object.values(this.components);
         }
-        // componentIds = componentIds || this.getComponentBitfield().toValues();
+        // componentIDs = componentIDs || this.getComponentBitfield().toValues();
 
-        return componentIds.reduce((result, id) => {
+        return componentIDs.reduce((result, id) => {
             const com = this.components[id];
             if (com) {
                 result.push(com);
@@ -252,11 +252,11 @@ Object.assign(Entity.prototype, Base.prototype, {
             return this;
         }
 
-        // remove a given component by its defId or uri
+        // remove a given component by its defID or uri
         if (isString(component) || isInteger(component)) {
             const registry = this.getRegistry();
             // convert to a def id
-            component = registry.getIId(component);
+            component = registry.getIID(component);
             component = this.components[component];
         }
 
@@ -275,8 +275,8 @@ Object.assign(Entity.prototype, Base.prototype, {
      * @param {*} component
      */
     _removeComponent(component) {
-        let defId = component.getDefId();
-        let localComponent = this.components[defId];
+        let defID = component.getDefID();
+        let localComponent = this.components[defID];
         // console.log('[Entity][_removeComponent]', component.cid, localComponent.cid );
         if (!localComponent) {
             // console.log('[Entity][_removeComponent]', component.cid, localComponent.cid, 'not found' );
@@ -288,8 +288,8 @@ Object.assign(Entity.prototype, Base.prototype, {
         localComponent.setEntity(null);
 
         delete this[localComponent.name];
-        delete this.components[defId];
-        this.getComponentBitfield().set(defId, false);
+        delete this.components[defID];
+        this.getComponentBitfield().set(defID, false);
         component.off('all', this._onComponentEvent, this);
 
         if (typeof localComponent.onRemoved === 'function') {
@@ -301,12 +301,12 @@ Object.assign(Entity.prototype, Base.prototype, {
 
     /**
      *
-     * @param {*} componentIds
+     * @param {*} componentIDs
      */
-    removeComponents(componentIds) {
-        componentIds = componentIds || this.getComponentBitfield().toValues();
+    removeComponents(componentIDs) {
+        componentIDs = componentIDs || this.getComponentBitfield().toValues();
 
-        return componentIds.reduce((result, id) => {
+        return componentIDs.reduce((result, id) => {
             const com = this.components[id];
             if (com) {
                 this.removeComponent(com);
@@ -318,27 +318,27 @@ Object.assign(Entity.prototype, Base.prototype, {
 
     /**
      * Returns a component by its id
-     * @param {*} componentIId
+     * @param {*} componentIID
      */
-    getComponentByIId(componentIId) {
-        componentIId = this.getRegistry().getIId(componentIId);
-        if (Array.isArray(componentIId)) {
-            return componentIId.map(id => this.components[id]);
+    getComponentByIID(componentIID) {
+        componentIID = this.getRegistry().getIID(componentIID);
+        if (Array.isArray(componentIID)) {
+            return componentIID.map(id => this.components[id]);
         }
-        return this.components[componentIId];
+        return this.components[componentIID];
     },
 
     /**
      *
-     * @param {*} componentIId
+     * @param {*} componentIID
      */
-    hasComponent(componentIId) {
-        if (isComponent(componentIId)) {
-            componentIId = componentIId.getDefId();
-        } else if (isString(componentIId)) {
-            componentIId = this.getRegistry().getIId(componentIId);
+    hasComponent(componentIID) {
+        if (isComponent(componentIID)) {
+            componentIID = componentIID.getDefID();
+        } else if (isString(componentIID)) {
+            componentIID = this.getRegistry().getIID(componentIID);
         }
-        return this.getComponentBitfield().get(componentIId);
+        return this.getComponentBitfield().get(componentIID);
     },
 
     /**
@@ -416,16 +416,16 @@ Entity.prototype.clone = function(options = {}) {
     return result;
 };
 
-Entity.toEntityId = function(entityId) {
-    if (isEntity(entityId)) {
-        return entityId.id;
+Entity.toEntityID = function(entityID) {
+    if (isEntity(entityID)) {
+        return entityID.id;
     }
-    return entityId;
+    return entityID;
 };
 
-Entity.getEntityId = function(entity) {
-    if (entity && entity.getEntityId) {
-        return entity.getEntityId();
+Entity.getEntityID = function(entity) {
+    if (entity && entity.getEntityID) {
+        return entity.getEntityID();
     }
     return undefined;
 };

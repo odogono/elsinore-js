@@ -1,13 +1,13 @@
 import _ from 'underscore';
 import test from 'tape';
 
-import { ReusableId } from '../src/util/reusable_id';
+import { ReusableID } from '../src/util/reusable_id';
 import { createLog } from '../src/util/log';
 
-const Log = createLog('TestResuableId');
+const Log = createLog('TestResuableID');
 
 test('get', async t => {
-    const rid = new ReusableId();
+    const rid = new ReusableID();
     const id = await rid.get();
 
     t.equals(id, 1);
@@ -16,7 +16,7 @@ test('get', async t => {
 
 test('get multiple', async t => {
     try {
-        const rid = new ReusableId();
+        const rid = new ReusableID();
 
         const ids = await rid.getMultiple(5);
 
@@ -29,7 +29,7 @@ test('get multiple', async t => {
 
 test('get queued', async t => {
     try {
-        const rid = new ReusableId();
+        const rid = new ReusableID();
 
         const result = await Promise.all([rid.getMultiple(3), rid.getMultiple(3), rid.getMultiple(3)]);
 
@@ -42,7 +42,7 @@ test('get queued', async t => {
 
 test('release', async t => {
     try {
-        const rid = new ReusableId();
+        const rid = new ReusableID();
         const id = await rid.get();
         await rid.release(id);
         const id2 = await rid.get();
@@ -57,7 +57,7 @@ test('release', async t => {
 
 test('release multiple', async t => {
     try {
-        const rid = new ReusableId();
+        const rid = new ReusableID();
 
         const ids = await rid.getMultiple(4);
 
@@ -75,7 +75,7 @@ test('release multiple', async t => {
 
 test('releasing a non-valid id', async t => {
     try {
-        const rid = new ReusableId();
+        const rid = new ReusableID();
         await rid.release(22);
     } catch (err) {
         t.equal(err.message, '22 is not a member');

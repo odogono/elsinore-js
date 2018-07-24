@@ -80,7 +80,7 @@ export function loadEntities(registry, fixtureName, entitySet, options = {}) {
 
     fixtureName = fixtureName || 'entity_set.entities.json';
     registry = registry || initialiseRegistry(options);
-    result = registry.createEntitySet({ instanceClass: entitySet, ...options });
+    result = registry.createEntitySet({ type: entitySet, ...options });
 
     if (_.isString(fixtureName)) {
         if (fixtureName.indexOf('.json') === -1) {
@@ -165,10 +165,10 @@ export function logEvents(obj, prefix = 'evt') {
     // });
 }
 
-export function captureEntitySetEvent(entitySet, evt, returnEntityIds = false, cb) {
+export function captureEntitySetEvent(entitySet, evt, returnEntityIDs = false, cb) {
     entitySet.on(evt, result => {
         // Log.debug('[captureEntitySetEvent]', evt, stringify(result));
-        cb(result.map(e => (returnEntityIds ? e.getEntityId() : e.id)));
+        cb(result.map(e => (returnEntityIDs ? e.getEntityID() : e.id)));
     });
 }
 

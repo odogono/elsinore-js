@@ -31,8 +31,8 @@ export function create(entitySet, query, options = {}) {
     query = Query.toQuery(query);
     entitySet._views || (entitySet._views = {});
 
-    let queryId = query ? query.hash() : 'all';
-    let existing = entitySet._views[queryId];
+    let queryID = query ? query.hash() : 'all';
+    let existing = entitySet._views[queryID];
 
     if (existing) {
         return existing;
@@ -40,7 +40,7 @@ export function create(entitySet, query, options = {}) {
 
     let view = registry.createEntitySet({ type: EntitySetAsyncView, register: false });
     view._parent = this;
-    entitySet._views[queryId] = view;
+    entitySet._views[queryID] = view;
 
     entitySet.emit(VIEW_CREATE, view);
 

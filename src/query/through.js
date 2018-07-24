@@ -4,7 +4,7 @@ import { Query } from './index';
 import { toString as entityToString } from '../util/to_string';
 import { isComponent, isEntity } from '../util/is';
 
-import { COMMAND } from '../constants';
+import { LCMD_COMMAND } from '../constants';
 
 
 /**
@@ -54,7 +54,7 @@ export function applyQueryFilter(query, value, options = {}) {
         return true;
     }
 
-    if (value[COMMAND]) {
+    if (value[LCMD_COMMAND]) {
         return true;
     }
 

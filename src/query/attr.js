@@ -21,13 +21,13 @@ function commandAttr(context, attributes) {
     let ii, jj, len, jlen, result;
     let entity = context.entity;
     // let debug = context.debug;
-    const componentIds = context.componentIds;
+    const componentIDs = context.componentIDs;
 
     // printIns( context,1 );
-    // if( debug ){ console.log('ATTR> ' + stringify(componentIds) + ' ' + stringify( _.rest(arguments))  ); }
+    // if( debug ){ console.log('ATTR> ' + stringify(componentIDs) + ' ' + stringify( _.rest(arguments))  ); }
 
-    // if( !componentIds ){
-    //     throw new Error('no componentIds in context');
+    // if( !componentIDs ){
+    //     throw new Error('no componentIDs in context');
     // }
 
     if (!entity) {
@@ -39,7 +39,7 @@ function commandAttr(context, attributes) {
     // components = entity.components;
     result = [];
 
-    const components = entity.getComponents(componentIds);
+    const components = entity.getComponents(componentIDs);
 
     // console.log('commandComponentAttribute', attributes);
     for (ii = 0, len = components.length; ii < len; ii++) {

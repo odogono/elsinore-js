@@ -1,7 +1,7 @@
 import BitField from 'odgn-bitfield';
 import { EntityFilter } from '../entity_filter';
 import { stringify } from '../util/stringify';
-import { uniqueId } from '../util/unique_id';
+import { uniqueID } from '../util/unique_id';
 import { hash } from '../util/hash';
 import { DslContext, QueryBuilder } from './dsl';
 import { isEntity, isEntitySet } from '../util/is';
@@ -33,7 +33,7 @@ import { compileCommands, commandFunctions } from './dsl';
 
 export class Query {
     constructor(commands, options = {}) {
-        this.cid = uniqueId('q');
+        this.cid = uniqueID('q');
         this.commands = commands;
 
         if (typeof commands === 'function') {
@@ -224,29 +224,29 @@ Object.assign(QueryContext.prototype, {
     /**
      * Resolve a value of component ids
      */
-    // resolveComponentIIds(components ){
+    // resolveComponentIIDs(components ){
     //     const resolved = this.valueOf( components, true );
-    //     return resolved ? this.registry.getIId( resolved, true ) : null;
+    //     return resolved ? this.registry.getIID( resolved, true ) : null;
     // }
 
-    // Query.resolveComponentIIds = resolveComponentIIds;
+    // Query.resolveComponentIIDs = resolveComponentIIDs;
 
     /**
      *
      */
     componentsToBitfield(context, components) {
-        let componentIds, result;
+        let componentIDs, result;
         // if( !context.registry ){
         //     console.log('[componentsToBitfield]', context, stringify(components));
         // }
-        componentIds = context.registry.getIId(components, {
+        componentIDs = context.registry.getIID(components, {
             forceArray: true,
             // debug: true,
             throwOnNotFound: true
         });
 
         result = BitField.create();
-        result.setValues(componentIds, true);
+        result.setValues(componentIDs, true);
         return result;
     },
 
@@ -291,7 +291,7 @@ Object.assign(QueryContext.prototype, {
             entityContext.entityFilter = entityFilter;
 
             if (entityFilter) {
-                entityContext.componentIds = entityFilter.getValues(0);
+                entityContext.componentIDs = entityFilter.getValues(0);
             }
         }
 
@@ -374,7 +374,7 @@ QueryContext.create = function(query, props = {}, options = {}) {
     let type = options.context || props.type || QueryContext;
     let context = new type(query);
     context.type = type;
-    context.cid = uniqueId('qc');
+    context.cid = uniqueID('qc');
     Object.assign(context, props);
     return context;
 };

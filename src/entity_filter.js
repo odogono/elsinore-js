@@ -101,17 +101,17 @@ Object.assign(EntityFilter.prototype, {
 });
 
 EntityFilter.Transform = function(type, registry, entity, entityBitField, filterBitField) {
-    let ii, len, defId, vals, result;
+    let ii, len, defID, vals, result;
     const isInclude = type == INCLUDE;
     const isExclude = type == EXCLUDE;
 
     // result = registry.cloneEntity(entity);
 
     if (isInclude) {
-        const removeDefIds = arrayDifference(entityBitField.toJSON(), filterBitField.toJSON());
-        // log.debug('EFT ',type,isInclude, entityBitField.toJSON(), filterBitField.toJSON(), removeDefIds );
+        const removeDefIDs = arrayDifference(entityBitField.toJSON(), filterBitField.toJSON());
+        // log.debug('EFT ',type,isInclude, entityBitField.toJSON(), filterBitField.toJSON(), removeDefIDs );
 
-        entity.removeComponents(removeDefIds);
+        entity.removeComponents(removeDefIDs);
 
         return entity;
 
@@ -119,10 +119,10 @@ EntityFilter.Transform = function(type, registry, entity, entityBitField, filter
     } else {
         vals = entityBitField.toValues();
         for (ii = 0, len = vals.length; ii < len; ii++) {
-            defId = vals[ii];
-            if (!isExclude || !bitField.get(defId)) {
-                // printE( srcEntity.components[defId] );
-                result.addComponent(entity.components[defId]);
+            defID = vals[ii];
+            if (!isExclude || !bitField.get(defID)) {
+                // printE( srcEntity.components[defID] );
+                result.addComponent(entity.components[defID]);
             }
         }
     }

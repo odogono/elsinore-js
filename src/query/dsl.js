@@ -267,10 +267,10 @@ Object.assign(DslContext.prototype, {
     /**
      *   The entities must have ALL of the specified components
      */
-    all(componentIds, filterFn) {
+    all(componentIDs, filterFn) {
         const context = this.readContext(this);
         context.pushOp(ALL_FILTER);
-        context.pushVal(componentIds, true);
+        context.pushVal(componentIDs, true);
         if (filterFn) {
             context.pushVal(filterFn, true);
         }
@@ -278,11 +278,11 @@ Object.assign(DslContext.prototype, {
         return context;
     },
 
-    include(componentIds, filterFn) {
+    include(componentIDs, filterFn) {
         const context = this.readContext(this);
         // context.pushOp( filterFn ? INCLUDE_FILTER : INCLUDE );
         context.pushOp(INCLUDE_FILTER);
-        context.pushVal(componentIds, true);
+        context.pushVal(componentIDs, true);
         if (filterFn) {
             context.pushVal(filterFn, true);
         }
@@ -292,11 +292,11 @@ Object.assign(DslContext.prototype, {
     /**
      *   Entities should have at least one of the specified components
      */
-    any(componentIds, filterFn) {
+    any(componentIDs, filterFn) {
         const context = this.readContext(this);
         // context.pushOp( filterFn ? ANY_FILTER : ANY );
         context.pushOp(ANY_FILTER);
-        context.pushVal(componentIds, true);
+        context.pushVal(componentIDs, true);
         if (filterFn) {
             context.pushVal(filterFn, true);
         }
@@ -304,12 +304,12 @@ Object.assign(DslContext.prototype, {
     },
 
     /**
-     *   entities will be excluded if the have any of the componentIds
+     *   entities will be excluded if the have any of the componentIDs
      */
-    none(componentIds, filterFn) {
+    none(componentIDs, filterFn) {
         const context = this.readContext(this);
         context.pushOp(NONE_FILTER);
-        context.pushVal(componentIds, true);
+        context.pushVal(componentIDs, true);
         if (filterFn) {
             context.pushVal(filterFn, true);
         }

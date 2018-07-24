@@ -9,9 +9,9 @@ import { stringify } from './stringify';
 import { cloneEntity } from './clone';
 
 import {
-    getEntityIdFromId,
-    getEntitySetIdFromId,
-    setEntityIdFromId
+    getEntityIDFromID,
+    getEntitySetIDFromID,
+    setEntityIDFromID
 } from './id';
 import { toString as entityToString } from './to_string';
 
@@ -209,7 +209,7 @@ function _resolveCondition(loader, condition) {
  * @param {*} options 
  */
 function process(loader, incomingObj, options = {}) {
-    let entity, component, markId;
+    let entity, component, markID;
     const { debug } = options;
     const entitySet = loader.entitySet;
     const registry = loader.registry;
@@ -272,7 +272,7 @@ function process(loader, incomingObj, options = {}) {
         // return new Promise(r => r(loader.entitySet));
 
         case CMD_ADD_ENTITY:
-            markId = loader.entity._markId;
+            markID = loader.entity._markID;
             // Log.debug(`[CMD_ADD_ENTITY]`, loader.entity.id, loader.entity.cid );
 
             if (obj[CMD_PRIMARY_KEY]) {
@@ -288,21 +288,21 @@ function process(loader, incomingObj, options = {}) {
                         // the entity was not added for some reason
                         return null;
                     }
-                    loader.lastEntityId = entity.id;
+                    loader.lastEntityID = entity.id;
 
-                    let [markId] = loader._findMark(obj);
+                    let [markID] = loader._findMark(obj);
 
-                    if (markId) {
-                        // this.entity._markId = markId;
+                    if (markID) {
+                        // this.entity._markID = markID;
                         loader.markedEntities || (loader.markedEntities = {});
-                        loader.markedEntities[markId] = entity;
-                        // Log.debug(`[CMD_ADD_ENTITY] created`, markId, entity.id, incomingObj);
+                        loader.markedEntities[markID] = entity;
+                        // Log.debug(`[CMD_ADD_ENTITY] created`, markID, entity.id, incomingObj);
                     }
 
-                    // if( markId ){
-                    //     Log.debug(`[CMD_ADD_ENTITY] marking`, entity.id, markId);
+                    // if( markID ){
+                    //     Log.debug(`[CMD_ADD_ENTITY] marking`, entity.id, markID);
                     //     loader.markedEntities || (loader.markedEntities={});
-                    //     loader.markedEntities[ markId ] = entity;
+                    //     loader.markedEntities[ markID ] = entity;
                     // }
                     return entity;
                 }
@@ -403,7 +403,7 @@ function resolveMarkReferences(loader, obj) {
         if (!component) {
             obj[key] = markedEntity.id;
         } else if (component) {
-            component = markedEntity.getComponentByIId(component.substr(1));
+            component = markedEntity.getComponentByIID(component.substr(1));
             // console.log('have schema', component);
 
             if (!componentAttr) {
@@ -463,7 +463,7 @@ function upsertEntityByPrimaryKey(registry, entitySet, entity, primaryKey) {
         componentUri,
         componentAttr
     );
-    // Log.debug('[upsertEntityByPrimaryKey] looking for existing val', componentUri, componentAttr, componentValue, entity.getComponentByIId(componentUri).hash(true) );
+    // Log.debug('[upsertEntityByPrimaryKey] looking for existing val', componentUri, componentAttr, componentValue, entity.getComponentByIID(componentUri).hash(true) );
 
     if (!componentValue) {
         return Promise.resolve().then(() => entitySet.addEntity(entity));
@@ -483,14 +483,14 @@ function upsertEntityByPrimaryKey(registry, entitySet, entity, primaryKey) {
             .then(existing => {
                 if (!existing) {
                     // Log.debug('[upsertEntityByPrimaryKey] no existing entity has ', componentUri, componentAttr, '=', componentValue);
-                    // console.log('new: ', entity.Poi.getId(), entityToString(entity));
+                    // console.log('new: ', entity.Poi.getID(), entityToString(entity));
                     // printIns( entity.Poi );
                     return entitySet.addEntity(entity);
                 }
 
                 // Log.debug('[upsertEntityByPrimaryKey] existing: ', entityToString(existing));
                 // Log.debug('[upsertEntityByPrimaryKey] new: ', entityToString(entity));
-                // Log.debug('[upsertEntityByPrimaryKey] existing: ', entityToString(existing), existing.getComponentByIId(componentUri).hash(true) );
+                // Log.debug('[upsertEntityByPrimaryKey] existing: ', entityToString(existing), existing.getComponentByIID(componentUri).hash(true) );
 
                 let [copy, hasChanged] = cloneEntity(
                     entity,
@@ -500,7 +500,7 @@ function upsertEntityByPrimaryKey(registry, entitySet, entity, primaryKey) {
 
 
                 if (hasChanged) {
-                    copy._setId(existing.id);
+                    copy._setID(existing.id);
                     // Log.debug('[upsertEntityByPrimaryKey] existing entity has changed ', componentUri, componentAttr, '=', componentValue);
                     // Log.debug('[upsertEntityByPrimaryKey] existing: ', entity.id );
                     // Log.debug('[upsertEntityByPrimaryKey] copy: ', copy.id );
@@ -532,13 +532,13 @@ function transferEntityComponents(srcEntity, dstEntity) {
 */
 async function retrieveEntityByAttribute(
     entitySet,
-    componentId,
+    componentID,
     attribute,
     value
 ) {
-    // Log.debug('[retrieveEntityByAttribute]', componentId, 'where', attribute, 'equals', value);
+    // Log.debug('[retrieveEntityByAttribute]', componentID, 'where', attribute, 'equals', value);
     const query = Q => [
-        Q.all(componentId).where(Q.attr(attribute).equals(value)),
+        Q.all(componentID).where(Q.attr(attribute).equals(value)),
         Q.limit(1)
     ];
 
@@ -554,7 +554,7 @@ async function retrieveEntityByAttribute(
     } else {
         return Promise.resolve(true).then(() => {
             const existing = entitySet.query(query);
-            // Log.debug('[retrieveEntityByAttribute]', 'query result', existing.size(), entityToString(existing), componentId, attribute, value );
+            // Log.debug('[retrieveEntityByAttribute]', 'query result', existing.size(), entityToString(existing), componentID, attribute, value );
             if (existing.size() === 1) {
                 return existing.at(0);
             }
@@ -563,8 +563,8 @@ async function retrieveEntityByAttribute(
     }
 }
 
-function selectComponentAttr(entity, componentId, attr) {
-    const component = entity.getComponentByIId(componentId);
+function selectComponentAttr(entity, componentID, attr) {
+    const component = entity.getComponentByIID(componentID);
     if (!component) {
         return null;
     }

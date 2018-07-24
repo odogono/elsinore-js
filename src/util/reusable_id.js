@@ -1,12 +1,12 @@
 import { arrayWithout } from './array/without';
 
-export class ReusableId {
+export class ReusableID {
     constructor(defaultValue) {
         this.defaultValue = defaultValue === void 0 ? 1 : defaultValue;
-        this.activeIds = [];
-        this.availableIds = [];
+        this.activeIDs = [];
+        this.availableIDs = [];
         // this.promiseQ = new PromiseQ(1);
-        this.currentId = this.defaultValue;
+        this.currentID = this.defaultValue;
     }
 
     /**
@@ -20,9 +20,9 @@ export class ReusableId {
             }
 
             // increment a new id
-            const result = this.currentId;
-            this.activeIds.push(result);
-            this.currentId = this.currentId + 1;
+            const result = this.currentID;
+            this.activeIDs.push(result);
+            this.currentID = this.currentID + 1;
             return result;
         });
         // })
@@ -46,11 +46,11 @@ export class ReusableId {
         // return this.promiseQ.add( () => {
         return new Promise((resolve, reject) => {
             // determine that this belongs to us
-            if (this.activeIds.indexOf(id) === -1) {
+            if (this.activeIDs.indexOf(id) === -1) {
                 return reject(new Error(`${id} is not a member`));
             }
-            this.activeIds = arrayWithout(this.activeIds, id);
-            this.availableIds.push(id);
+            this.activeIDs = arrayWithout(this.activeIDs, id);
+            this.availableIDs.push(id);
             return resolve(id);
         });
         // });
@@ -68,11 +68,11 @@ export class ReusableId {
      */
     nextFree() {
         return new Promise(resolve => {
-            let free = this.availableIds.pop();
+            let free = this.availableIDs.pop();
             if (free === void 0) {
                 return resolve(undefined);
             }
-            this.activeIds.push(free);
+            this.activeIDs.push(free);
             return resolve(free);
         });
     }
@@ -80,9 +80,9 @@ export class ReusableId {
     clear() {
         // return this.promiseQ.add( () => {
         return new Promise(resolve => {
-            this.availableIds = [];
-            this.activeIds = [];
-            this.currentId = this.defaultValue;
+            this.availableIDs = [];
+            this.activeIDs = [];
+            this.currentID = this.defaultValue;
         });
         // })
     }

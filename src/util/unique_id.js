@@ -31,7 +31,7 @@ let idCounter = 0;
  * 
  * @param {*} prefix 
  */
-export function uniqueId(prefix) {
+export function uniqueID(prefix) {
     let id = ++idCounter + '';
     return prefix ? prefix + id : id;
 }

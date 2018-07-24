@@ -59,12 +59,12 @@ export function cloneEntity(srcEntity, dstEntity, options = {}) {
     if (deleteMissing) {
         const srcBitfield = srcEntity.getComponentBitfield();
         const dstBitfield = dstEntity.getComponentBitfield();
-        const removeDefIds = arrayDifference(dstBitfield.toJSON(), srcBitfield.toJSON());
+        const removeDefIDs = arrayDifference(dstBitfield.toJSON(), srcBitfield.toJSON());
 
-        // if( debug ) console.log('[cloneEntity]', 'removeDefIds', removeDefIds, dstBitfield.toJSON(), srcBitfield.toJSON() );
+        // if( debug ) console.log('[cloneEntity]', 'removeDefIDs', removeDefIDs, dstBitfield.toJSON(), srcBitfield.toJSON() );
 
-        for (ii = 0, len = removeDefIds.length; ii < len; ii++) {
-            dstEntity.removeComponent(dstEntity.components[removeDefIds[ii]]);
+        for (ii = 0, len = removeDefIDs.length; ii < len; ii++) {
+            dstEntity.removeComponent(dstEntity.components[removeDefIDs[ii]]);
             dstHasChanged = true;
         }
     }
@@ -73,7 +73,7 @@ export function cloneEntity(srcEntity, dstEntity, options = {}) {
 
     for (ii = 0, len = srcComponents.length; ii < len; ii++) {
         srcComponent = srcComponents[ii];
-        component = dstEntity.components[srcComponent.getDefId()];
+        component = dstEntity.components[srcComponent.getDefID()];
 
         // if( debug ) console.log('[cloneEntity]', srcComponent.toJSON(), component.toJSON(), srcComponent.hash(),component.hash() );
         if (component) {

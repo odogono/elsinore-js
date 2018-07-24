@@ -11,9 +11,9 @@ import {
     printIns,
     logEvents,
     requireLib,
-    getEntityIdFromId,
-    getEntitySetIdFromId,
-    setEntityIdFromId,
+    getEntityIDFromID,
+    getEntitySetIDFromID,
+    setEntityIDFromID,
     createLog,
     entityToString,
 } from './common';
@@ -35,50 +35,50 @@ test('setting the id', t => {
     let e = Entity.create({'@e':456});
     // let e = Entity.create( 456 );
     
-    t.equals( e.getEntityId(), 456 );
-    e.setEntityId( 22 );
-    t.equals( e.getEntityId(), 22 );
+    t.equals( e.getEntityID(), 456 );
+    e.setEntityID( 22 );
+    t.equals( e.getEntityID(), 22 );
     t.equals( e.id, 22 );
 
-    e.setEntityId(54);
-    t.equals( e.getEntityId(), 54 );
-    t.equals( e.getEntitySetId(), 0 );
+    e.setEntityID(54);
+    t.equals( e.getEntityID(), 54 );
+    t.equals( e.getEntitySetID(), 0 );
 
-    e.setEntityId(0);
-    e.setEntitySetId( 2000 );
-    t.equals( e.getEntitySetId(), 2000 );
-    t.equals( e.getEntityId(), 0 );
+    e.setEntityID(0);
+    e.setEntitySetID( 2000 );
+    t.equals( e.getEntitySetID(), 2000 );
+    t.equals( e.getEntityID(), 0 );
 
-    e.setEntityId( 2147483647 );
-    t.equals( e.getEntityId(), 2147483647 );
+    e.setEntityID( 2147483647 );
+    t.equals( e.getEntityID(), 2147483647 );
 
-    e.setEntitySetId( 2097151 );
-    t.equals( e.getEntitySetId(), 2097151 );
-    t.equals( e.getEntityId(), 2147483647 );
+    e.setEntitySetID( 2097151 );
+    t.equals( e.getEntitySetID(), 2097151 );
+    t.equals( e.getEntityID(), 2147483647 );
 
     t.end();
 });
 
 test('setting the id directly', t => {
     let e = Entity.create({id:2005});
-    t.equals( e.getEntityId(), 2005 );
+    t.equals( e.getEntityID(), 2005 );
     t.end();
 });
 
 test('passing entity id in options', t => {
     let e = Entity.create({'@e': 1622});
-    t.equals( e.getEntityId(), 1622 );
+    t.equals( e.getEntityID(), 1622 );
     t.end();
 });
 
 test('setting ids', t => {
     let id = 0;
-    t.equals( getEntityIdFromId( id ), 0 );
-    t.equals( getEntitySetIdFromId( id ), 0 );
+    t.equals( getEntityIDFromID( id ), 0 );
+    t.equals( getEntitySetIDFromID( id ), 0 );
 
-    id = setEntityIdFromId( 872510, 3467 );
-    t.equals( getEntityIdFromId( id ), 872510 );
-    t.equals( getEntitySetIdFromId( id ), 3467 );        
+    id = setEntityIDFromID( 872510, 3467 );
+    t.equals( getEntityIDFromID( id ), 872510 );
+    t.equals( getEntitySetIDFromID( id ), 3467 );        
 
     t.end();
 });
@@ -88,8 +88,8 @@ test('setting entity set', t => {
     registry.registerComponent({uri: '/component/name', properties:{ name: { type: 'string'}}} );
 
     let e = registry.createEntity();// Entity.create();
-    e.setEntityId( 22 );
-    e.setEntitySetId( 103 );
+    e.setEntityID( 22 );
+    e.setEntitySetID( 103 );
 
     let c = registry.createComponent({ '@c':'/component/name', name:'douglas' });// createComponent({name:'douglas'});
     c._defName = undefined; // block out the component name for testing purposes
@@ -100,8 +100,8 @@ test('setting entity set', t => {
     e.setEntitySet( es );
     
 
-    t.equals( e.getEntityId(), 22 );
-    t.equals( e.getEntitySetId(), 4, 'the entitySet id will have been taken from the reference' );
+    t.equals( e.getEntityID(), 22 );
+    t.equals( e.getEntitySetID(), 4, 'the entitySet id will have been taken from the reference' );
 
     t.ok( e.getRegistry(), 'should return the registry reference' );
     t.ok( e.getEntitySet(), 'should return the entitySet reference' );
@@ -109,7 +109,7 @@ test('setting entity set', t => {
     t.equals( e.Name.get('name'), 'douglas' );
 
     t.ok( e.Name.getRegistry(), 'registry reference set on component' );
-    t.equals( e.Name.getEntitySetId(), 4, 'entitySet reference set on component' );
+    t.equals( e.Name.getEntitySetID(), 4, 'entitySet reference set on component' );
 
     // console.log( e );
 

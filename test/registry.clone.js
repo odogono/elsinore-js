@@ -128,7 +128,7 @@ test('cloning a component', async t => {
 
         const cloned = cloneComponent(component);
 
-        t.equals(component.getEntityId(), cloned.getEntityId());
+        t.equals(component.getEntityID(), cloned.getEntityID());
         t.equals(component.name, cloned.name);
         t.equals(component.hash(), cloned.hash());
         t.deepEqual(component.attributes, cloned.attributes);
@@ -143,11 +143,11 @@ test('cloning an entity', async t => {
     try {
         const registry = await initialiseRegistry();
 
-        const entity = registry.createEntityWithId(23, 16);
+        const entity = registry.createEntityWithID(23, 16);
         const clone = cloneEntity(entity);
 
-        t.equals(entity.getEntityId(), clone.getEntityId());
-        t.equals(entity.getEntitySetId(), clone.getEntitySetId());
+        t.equals(entity.getEntityID(), clone.getEntityID());
+        t.equals(entity.getEntitySetID(), clone.getEntitySetID());
         t.equals(clone.getRegistry(), registry);
         t.notEqual(entity.cid, clone.cid);
         t.end();

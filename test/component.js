@@ -41,7 +41,7 @@ test('clone', t => {
     t.deepEqual(src.toJSON(), dst.toJSON());
 
     t.equals(src.id, dst.id);
-    t.equals(src.entityId, dst.entityId);
+    t.equals(src.entityID, dst.entityID);
 
     let src2 = new Component({ x: 0, y: 0, z: 0, '@s': 2, '@e': 1001 });
     let dst2 = src2.clone();

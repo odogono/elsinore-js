@@ -10,14 +10,14 @@ import { arrayWithout } from '../util/array/without';
 const WITHOUT = 'WO';
 
 /**
-*   Returns a value with componentsIds with all of values excluded
+*   Returns a value with componentsIDs with all of values excluded
 */
-function without(componentIds) {
+function without(componentIDs) {
     const context = this.readContext(this);
 
     context.pushOp(WITHOUT);
     // the preceeding command is used as the first argument
-    context.pushVal(componentIds, true);
+    context.pushVal(componentIDs, true);
 
     return context;
 }

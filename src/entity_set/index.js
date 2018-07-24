@@ -7,7 +7,7 @@ import { Entity } from '../entity';
 import { Query } from '../query';
 import { stringify } from '../util/stringify';
 import { isComponent, isEntity, isMemoryEntitySet, isInteger, isObject, isPromise } from '../util/is';
-import { uniqueId } from '../util/unique_id';
+import { uniqueID } from '../util/unique_id';
 import { valueArray } from '../util/array/value';
 import { componentsFromCollections } from '../util/array/value';
 import { createUUID } from '../util/uuid';
@@ -32,12 +32,12 @@ Object.assign(EntitySet.prototype, Base.prototype, {
     initialize(entities, options = {}) {
         // this collection of entities indexes by the entity ids
         this._entities = new Collection();
-        this._entitiesById = new Collection(null, { debug: true, idAttribute: e => (e ? e.getEntityId() : undefined) });
+        this._entitiesByID = new Collection(null, { debug: true, idAttribute: e => (e ? e.getEntityID() : undefined) });
         this._components = new Collection();
 
         let cmdBufferType = CmdBuffer;
         this._uuid = options.uuid || createUUID();
-        this.cid = uniqueId('es');
+        this.cid = uniqueID('es');
 
         if (options['id']) {
             this.id = options['id'];
@@ -47,9 +47,9 @@ Object.assign(EntitySet.prototype, Base.prototype, {
             cmdBufferType = options.cmdBuffer;
         }
 
-        // entities can either be indexed by their full id or by the entityId part of
+        // entities can either be indexed by their full id or by the entityID part of
         // the supplied id
-        this.indexByEntityId = !!options.indexByEntityId;
+        this.indexByEntityID = !!options.indexByEntityID;
 
         this._cmdBuffer = new cmdBufferType();
         this.allowEmptyEntities = options.allowEmptyEntities === void 0 ? true : options.allowEmptyEntities;
@@ -58,12 +58,8 @@ Object.assign(EntitySet.prototype, Base.prototype, {
     /**
      * Returns the id of the entitySet
      */
-    getEntitySetId() {
+    getEntitySetID() {
         return this.id;
-    },
-
-    getUuid() {
-        return this._uuid;
     },
 
     getUUID() {
@@ -93,10 +89,10 @@ Object.assign(EntitySet.prototype, Base.prototype, {
     /**
      * Returns an entity by its id
      *
-     * @param {number} entityId
+     * @param {number} entityID
      */
-    getByEntityId(entityId) {
-        return this._entitiesById.get(entityId);
+    getByEntityID(entityID) {
+        return this._entitiesByID.get(entityID);
     },
 
     /**
@@ -267,29 +263,29 @@ Object.assign(EntitySet.prototype, Base.prototype, {
      * @returns {*} a component instance
      */
     getComponent(component) {
-        let componentId = component;
+        let componentID = component;
         if (isComponent(component)) {
-            componentId = component.id;
+            componentID = component.id;
         }
 
-        // console.log('[EntitySet][getComponent]', this.cid, componentId, this._components.get(componentId) );
+        // console.log('[EntitySet][getComponent]', this.cid, componentID, this._components.get(componentID) );
 
-        return this._components.get(componentId);
+        return this._components.get(componentID);
     },
 
     /**
      * Returns a component by its entityid and def id
      *
-     * @param {*} entityId
-     * @param {*} componentDefId
+     * @param {*} entityID
+     * @param {*} componentDefID
      */
-    getComponentByEntityId(entityId, componentDefId) {
-        // console.log('[getComponentByEntityId]', entityId, componentDefId, this._entities.map(e=>e.id) );
-        const entity = this._entities.get(entityId);
+    getComponentByEntityID(entityID, componentDefID) {
+        // console.log('[getComponentByEntityID]', entityID, componentDefID, this._entities.map(e=>e.id) );
+        const entity = this._entities.get(entityID);
 
         if (entity !== undefined) {
-            // console.log('[getComponentByEntityId][found]', entityId, componentDefId, Object.keys(entity.components) );
-            return entity.components[componentDefId];
+            // console.log('[getComponentByEntityID][found]', entityID, componentDefID, Object.keys(entity.components) );
+            return entity.components[componentDefID];
         }
 
         return null;
@@ -356,25 +352,25 @@ Object.assign(EntitySet.prototype, Base.prototype, {
 
     /**
      *
-     * @param {*} entityId
-     * @param {*} returnId
+     * @param {*} entityID
+     * @param {*} returnID
      * @param {*} options
      */
-    _createEntity(entityId, returnId, options = {}) {
+    _createEntity(entityID, returnID, options = {}) {
         let result;
         const registry = this.getRegistry();
 
-        entityId = parseInt(entityId, 10) || 0;
+        entityID = parseInt(entityID, 10) || 0;
 
-        if (entityId <= 0) {
-            entityId = registry.createId();
+        if (entityID <= 0) {
+            entityID = registry.createID();
         }
 
-        if (returnId) {
-            return entityId;
+        if (returnID) {
+            return entityID;
         }
 
-        result = registry.createEntity(null, { id: entityId });
+        result = registry.createEntity(null, { id: entityID });
         // make sure we don't set the entityset id - memory entitysets retain
         // the original entityset id
         result.setEntitySet(this, false);
@@ -385,8 +381,8 @@ Object.assign(EntitySet.prototype, Base.prototype, {
     /**
      *
      */
-    _createComponentId() {
-        return this.getRegistry().createId();
+    _createComponentID() {
+        return this.getRegistry().createID();
     },
 
     /**
@@ -395,14 +391,14 @@ Object.assign(EntitySet.prototype, Base.prototype, {
      */
     _addEntity(entity) {
         // check whether we are using the entire id or just the entity part of the id to index
-        const entityId = this.indexByEntityId ? entity.getEntityId() : entity.id;
+        const entityID = this.indexByEntityID ? entity.getEntityID() : entity.id;
 
         // check for an existing
-        let existing = this._entitiesById.get(entityId);
+        let existing = this._entitiesByID.get(entityID);
 
         if (existing) {
-            // console.log('[_addEntity][existing]', existing !== undefined, this._entitiesById.map(e=>[e.id,e.cid,Object.keys(e.components)]) );
-            // console.log('[_addEntity][existing]', Object.keys(this._entitiesById._objectsById) );
+            // console.log('[_addEntity][existing]', existing !== undefined, this._entitiesByID.map(e=>[e.id,e.cid,Object.keys(e.components)]) );
+            // console.log('[_addEntity][existing]', Object.keys(this._entitiesByID._objectsByID) );
 
             let components = entity.getComponents();
 
@@ -411,8 +407,8 @@ Object.assign(EntitySet.prototype, Base.prototype, {
 
             this._addComponent(components);
 
-            // console.log('[_addEntity]', existing.cid, entityId, Object.keys(existing.components) );
-            // console.log('[_addEntity]', existing.cid, entityId, Object.keys(existing.components) );
+            // console.log('[_addEntity]', existing.cid, entityID, Object.keys(existing.components) );
+            // console.log('[_addEntity]', existing.cid, entityID, Object.keys(existing.components) );
 
             return existing;
         } else {
@@ -423,9 +419,9 @@ Object.assign(EntitySet.prototype, Base.prototype, {
             }
 
             this._entities.add(entity);
-            this._entitiesById.add(entity);
+            this._entitiesByID.add(entity);
 
-            // console.log('[_addEntity][added]', entityId, Object.keys(this._entities._objectsById), Object.keys(this._entitiesById._objectsById) );
+            // console.log('[_addEntity][added]', entityID, Object.keys(this._entities._objectsByID), Object.keys(this._entitiesByID._objectsByID) );
         }
 
         // no need for us to issue add events as well as entity:add
@@ -443,7 +439,7 @@ Object.assign(EntitySet.prototype, Base.prototype, {
      */
     _removeEntity(entity) {
         this._entities.remove(entity);
-        this._entitiesById.remove(entity);
+        this._entitiesByID.remove(entity);
 
         // remove component references
         this._removeComponent(entity.getComponents());
@@ -476,7 +472,7 @@ Object.assign(EntitySet.prototype, Base.prototype, {
      */
     getEntity(entity, options) {
         if (isEntity(entity)) {
-            entity = entity.getEntityId();
+            entity = entity.getEntityID();
         }
         if (isInteger(entity)) {
             return this._entities.get(entity);
@@ -489,7 +485,7 @@ Object.assign(EntitySet.prototype, Base.prototype, {
      * @param {*} entity
      */
     hasEntity(entity) {
-        // console.log('[hasEntity]', entity);// this._entities._objectsById[entity] !== undefined, entity);
+        // console.log('[hasEntity]', entity);// this._entities._objectsByID[entity] !== undefined, entity);
         return this._entities.has(entity);
     },
 
@@ -540,18 +536,18 @@ Object.assign(EntitySet.prototype, Base.prototype, {
 
         for (ii = 0, len = componentsAdded.length; ii < len; ii++) {
             this._addComponent(componentsAdded[ii]);
-            // if( debug ) console.log('UPDATE/ADD', componentsAdded[ii].getEntityId(), componentsAdded[ii] );
+            // if( debug ) console.log('UPDATE/ADD', componentsAdded[ii].getEntityID(), componentsAdded[ii] );
         }
 
         for (ii = 0, len = componentsUpdated.length; ii < len; ii++) {
             component = componentsUpdated[ii];
-            // console.log(`!!ES!! updated com ${JSON.stringify(component)} ${component.getEntityId()}`);
-            let existing = this.getComponentByEntityId(component.getEntityId(), component.getDefId());
+            // console.log(`!!ES!! updated com ${JSON.stringify(component)} ${component.getEntityID()}`);
+            let existing = this.getComponentByEntityID(component.getEntityID(), component.getDefID());
 
             if (existing) {
-                // console.log(`!!ES!! EntitySet.update existing ${existing.cid} ${existing.getEntityId()}`);
+                // console.log(`!!ES!! EntitySet.update existing ${existing.cid} ${existing.getEntityID()}`);
                 existing.apply(component, { silent: true });
-                // console.log(`!!ES!! EntitySet.update existing ${existing.cid} ${existing.getEntityId()}`);
+                // console.log(`!!ES!! EntitySet.update existing ${existing.cid} ${existing.getEntityID()}`);
             } else {
                 // console.log(`!!!ES!!! adding component update ${JSON.stringify(component)}`);
                 this._addComponent(component);

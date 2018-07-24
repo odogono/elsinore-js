@@ -1,7 +1,7 @@
 import { arrayPush } from './util/array/push';
 import { arrayClear } from './util/array/clear';
 import { Base } from './base';
-import { uniqueId } from './util/unique_id';
+import { uniqueID } from './util/unique_id';
 
 import { toString as entityToString, entitySetToString } from './util/to_string';
 import { SyncCmdBuffer as CmdBuffer } from './cmd_buffer/sync';
@@ -20,7 +20,7 @@ import { ENTITY_ID, CMD_ENTITY_ADD,
  */
 
 export function EntityProcessor(options = {}) {
-    options = { id: uniqueId(), priority: 0, updateable: true, ...options };
+    options = { id: uniqueID(), priority: 0, updateable: true, ...options };
 
     this._cmds = [];
     this.id = options.id;
@@ -60,7 +60,7 @@ Object.assign(EntityProcessor.prototype, Base.prototype, {
             switch (cmd[0]) {
                 case CMD_COMPONENT_ADD:
                     // console.log( this.id, 'adding COMP', JSON.stringify(cmd[2]));
-                    component = this.registry.createComponent(cmd[2], { [ENTITY_ID]: entity.getEntityId() });
+                    component = this.registry.createComponent(cmd[2], { [ENTITY_ID]: entity.getEntityID() });
                     componentsToAdd = arrayPush(componentsToAdd, component);
                     break;
                 case CMD_COMPONENT_REMOVE:
@@ -165,10 +165,10 @@ Object.assign(EntityProcessor.prototype, Base.prototype, {
 
     /**
      *
-     * @param {*} entityId
+     * @param {*} entityID
      */
-    getEntity(entityId) {
-        return this.entitySet.getEntity(entityId);
+    getEntity(entityID) {
+        return this.entitySet.getEntity(entityID);
     },
 
     /**

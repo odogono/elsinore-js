@@ -234,7 +234,7 @@ test('adding a component to an entity', async t => {
 
         component = registry.createComponent({ '@c': '/component/position', x: -2, y: 5 }, entitySet.at(0));
 
-        t.equals(component.getEntityId(), entitySet.at(0).getEntityId(), 'the entity ids are identical');
+        t.equals(component.getEntityID(), entitySet.at(0).getEntityID(), 'the entity ids are identical');
 
         // console.log( "component is", entityToString(component) );
         entitySet.addComponent(component);
