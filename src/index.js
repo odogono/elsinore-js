@@ -1,44 +1,31 @@
 // main file for library
 // this includes everything that you may need to use
 
-export { default as Bitfield } from 'odgn-bitfield';
+export { BitField } from 'odgn-bitfield';
 
-import { Component } from './component';
-export { Component };
+export { Component } from './component';
 
-import { ComponentDef } from './component_def';
-export { ComponentDef };
+export { ComponentDef } from './component_def';
 
-import { EntityDispatch } from './dispatch';
-export { EntityDispatch };
+export { EntityDispatch } from './dispatch';
 
-import { Entity } from './entity';
-export { Entity };
+export { Entity } from './entity';
 
-import { EntityFilter } from './entity_filter';
-export { EntityFilter };
+export { EntityFilter } from './entity_filter';
 
-import { EntityProcessor } from './entity_processor';
-export { EntityProcessor };
+export { EntityProcessor } from './entity_processor';
 
-import { EntitySet } from './entity_set';
-export { EntitySet };
+export { EntitySet } from './entity_set';
 
-import { AsyncEntitySet } from './entity_set/async';
-export { AsyncEntitySet };
+export { AsyncEntitySet } from './entity_set/async';
 
-import { Query } from './query/full';
-export { Query };
+export { Query } from './query/full';
 
-import { Registry } from './registry'; ///processor';
-export { Registry };
+export { Registry } from './registry'; ///processor';
 
-import { ComponentRegistry } from './schema';
-export { ComponentRegistry };
+export { ComponentRegistry } from './schema';
 
 export * from './util/id';
-import { hash } from './util/hash';
-import { parseJSON } from './util/parse_json';
-import { stringify } from './util/stringify';
-
-export { hash, parseJSON, stringify };
+export { hash } from './util/hash';
+export { parseJSON } from './util/parse_json';
+export { stringify } from './util/stringify';
