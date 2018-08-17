@@ -3,7 +3,8 @@ import Babel from 'rollup-plugin-babel';
 import CommonJS from 'rollup-plugin-commonjs';
 import NodeResolve from 'rollup-plugin-node-resolve';
 import Replace from 'rollup-plugin-replace';
-import Uglify from 'rollup-plugin-uglify';
+// import {uglify as  Uglify} from 'rollup-plugin-uglify';
+import { terser as Uglify } from "rollup-plugin-terser";
 
 import pkg from './package.json';
 const environment = process.env.NODE_ENV || 'development';
