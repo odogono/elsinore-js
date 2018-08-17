@@ -1,8 +1,8 @@
 import { Base } from '../base';
 import { Collection } from '../util/collection';
-import BitField from 'odgn-bitfield';
-import { Component } from '../component';
-import { Entity } from '../entity';
+// import BitField from 'odgn-bitfield';
+// import { Component } from '../component';
+// import { Entity } from '../entity';
 
 import { Query } from '../query';
 import { stringify } from '../util/stringify';

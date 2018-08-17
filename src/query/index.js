@@ -1,9 +1,9 @@
-import BitField from 'odgn-bitfield';
+import {BitField} from 'odgn-bitfield';
 import { EntityFilter } from '../entity_filter';
 import { stringify } from '../util/stringify';
 import { uniqueID } from '../util/unique_id';
 import { hash } from '../util/hash';
-import { DslContext, QueryBuilder } from './dsl';
+import { QueryBuilder } from './dsl';
 import { isEntity, isEntitySet } from '../util/is';
 
 import {

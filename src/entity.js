@@ -1,12 +1,12 @@
-import BitField from 'odgn-bitfield';
-import { setEntityIDFromID } from './util/id';
+import {BitField} from 'odgn-bitfield';
+// import { setEntityIDFromID } from './util/id';
 import { isComponent, isEntity, isInteger, isString } from './util/is';
 import { uniqueID } from './util/unique_id';
 import { readProperty } from './util/read_property';
 import { hash } from './util/hash';
-import { extend } from './util/extend';
+// import { extend } from './util/extend';
 
-import { Component } from './component';
+// import { Component } from './component';
 import { Base } from './base';
 
 import { ENTITY_ID, ENTITY_SET_ID, COMPONENT_UPDATE } from './constants';

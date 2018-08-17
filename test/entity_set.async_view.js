@@ -26,6 +26,12 @@ import '../src/entity_set/async_view';
 
 const Log = createLog('TestEntitySetView');
 
+
+// ---------------------------
+console.log('DEPRECATED : Not in use');
+// ---------------------------
+
+
 test('the view should have the same entities', async t => {
     try {
         const [registry, entitySet] = await initialiseEntitySet();

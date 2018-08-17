@@ -1,4 +1,4 @@
-import BitField from 'odgn-bitfield';
+import {BitField} from 'odgn-bitfield';
 
 import { arrayDifference } from './util/array/difference';
 import { isObject } from './util/is';
@@ -163,7 +163,7 @@ EntityFilter.accept = function(type, srcBitField, bitField, debug) {
             if (bfCount === 0 || srcBitFieldCount === 0) {
                 return true;
             }
-            if (BitField.aand(bitField, srcBitField)) {
+            if (BitField.or(bitField, srcBitField)) {
                 return false;
             }
             break;
@@ -175,7 +175,7 @@ EntityFilter.accept = function(type, srcBitField, bitField, debug) {
             if (srcBitFieldCount === 0) {
                 return false;
             }
-            if (!BitField.aand(bitField, srcBitField)) {
+            if (!BitField.or(bitField, srcBitField)) {
                 return false;
             }
             break;
@@ -183,10 +183,18 @@ EntityFilter.accept = function(type, srcBitField, bitField, debug) {
             if (bfCount === 0) {
                 return true;
             }
-            // if( debug ){
-            //     log.debug( bitField.toValues() );
-            //     log.debug( srcBitField.toValues() );
+            if (srcBitFieldCount === 0) {
+                return false;
+            }
+            // // if( debug ){
+            //     console.log( 'a', bitField.toValues() );
+            //     console.log( 'b', srcBitField.toValues() );
+            // // }
+
+            // if (!BitField.or(bitField, srcBitField)) {
+            //     return false;
             // }
+
             if (!BitField.and(bitField, srcBitField)) {
                 return false;
             }

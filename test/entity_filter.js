@@ -1,6 +1,6 @@
 import _ from 'underscore';
 import test from 'tape';
-import BitField  from 'odgn-bitfield';
+import {BitField}  from 'odgn-bitfield';
 import Sinon from 'sinon';
 import { isComponent, isEntity, isEntitySet } from '../src/util/is';
 import { EntityFilter } from '../src/entity_filter';

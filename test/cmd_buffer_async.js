@@ -1,9 +1,9 @@
 import _ from 'underscore';
 import test from 'tape';
-import BitField from 'odgn-bitfield';
-import { Base } from '../src/base';
+import {BitField} from 'odgn-bitfield';
+// import { Base } from '../src/base';
 import { EntitySet } from '../src/entity_set';
-import { isComponent, isEntity, isEntitySet } from '../src/util/is';
+import { isComponent } from '../src/util/is';
 
 // import Sinon from 'sinon';
 
