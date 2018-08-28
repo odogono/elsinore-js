@@ -26,6 +26,7 @@ var/
 
 lib/fs_entity_set
 lib/purgatory
+packages
 
 gulpfile.js
 TODO.md
@@ -33,6 +34,7 @@ NOTES.md
 
 .vscode
 yarn.lock
+tsconfig.json
 jsconfig.json
 test.html
 rollup*
