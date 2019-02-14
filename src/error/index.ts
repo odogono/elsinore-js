@@ -22,7 +22,7 @@ export function InvalidEntityError(msg) {
 InvalidEntityError.prototype = Object.create(ElsinoreError.prototype);
 InvalidEntityError.prototype.constructor = InvalidEntityError;
 
-export function EntityNotFoundError(entityID, message) {
+export function EntityNotFoundError(entityID, message?:string) {
     this.name = 'EntityNotFoundError';
     this.entityID = entityID;
 
@@ -32,7 +32,7 @@ export function EntityNotFoundError(entityID, message) {
 EntityNotFoundError.prototype = Object.create(ElsinoreError.prototype);
 EntityNotFoundError.prototype.constructor = EntityNotFoundError;
 
-export function ComponentDefNotFoundError(id, message) {
+export function ComponentDefNotFoundError(id, message?:string) {
     this.name = 'ComponentDefNotFoundError';
     this.id = id;
     // this.stack = (new Error()).stack;
@@ -42,7 +42,7 @@ export function ComponentDefNotFoundError(id, message) {
 ComponentDefNotFoundError.prototype = Object.create(ElsinoreError.prototype);
 ComponentDefNotFoundError.prototype.constructor = ComponentDefNotFoundError;
 
-export function ComponentNotFoundError(entityID, componentDefID, message) {
+export function ComponentNotFoundError(entityID, componentDefID, message?:string) {
     this.name = 'ComponentNotFoundError';
     this.entityID = entityID;
     this.componentDefID = componentDefID;

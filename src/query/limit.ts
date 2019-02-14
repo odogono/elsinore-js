@@ -1,10 +1,7 @@
-import { register } from './dsl';
-import { ENTITY_FILTER,
-    LEFT_PAREN,
-    RIGHT_PAREN,
-    VALUE } from './constants';
-
 import { isEntitySet, isMemoryEntitySet } from '../util/is';
+
+import { QueryOp } from '../types';
+import { register } from './dsl';
 
 export const LIMIT = 'LM';
 
@@ -12,12 +9,12 @@ function dslLimit(count, offset) {
     const context = this.readContext(this);
 
     context.pushOp(LIMIT);
-    context.pushVal(LEFT_PAREN);
+    context.pushVal(QueryOp.LeftParen);
     context.pushVal(count, true);
     if (offset) {
         context.pushVal(offset, true);
     }
-    context.pushVal(RIGHT_PAREN);
+    context.pushVal(QueryOp.RightParen);
 
     return context;
 }
@@ -49,7 +46,7 @@ function commandLimit(context, count, offset) {
         result.addEntity(entities);
     }
 
-    return context.last = [VALUE, result];
+    return context.last = [QueryOp.Value, result];
 }
 
 /**
@@ -71,7 +68,7 @@ function compile(context, commands) {
                 limit: context.valueOf(cmd[1])
             };
             commands.splice(ii, 1);
-        } else if (limitOptions && cmd[0] === ENTITY_FILTER) {
+        } else if (limitOptions && cmd[0] === QueryOp.EntityFilter) {
             // set the options object of the entityFilter command
             if (limitOptions) {
                 cmd[3] = { ...cmd[3], ...limitOptions };
@@ -82,7 +79,7 @@ function compile(context, commands) {
 
     // if we still have an open limit and no entity filter was found, add one
     if (limitOptions) {
-        commands.unshift([ENTITY_FILTER, null, null, limitOptions]);
+        commands.unshift([QueryOp.EntityFilter, null, null, limitOptions]);
     }
 
     return commands;

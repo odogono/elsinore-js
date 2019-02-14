@@ -1,12 +1,11 @@
 /**
- * @param {object} obj
- * @param space
+ * Converts the value to a JSON string
  */
-export function stringify(obj, space) {
-    let cache = [];
+export function stringify(obj:any, space?:(number|string)) : string {
+    let cache:Array<any> = [];
     return JSON.stringify(
         obj,
-        function(key, value) {
+        (key, value:any) => {
             if (typeof value === 'object' && value !== null) {
                 if (cache.indexOf(value) !== -1) {
                     // Circular reference found, discard key

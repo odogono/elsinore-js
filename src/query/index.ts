@@ -1,39 +1,114 @@
-import {BitField} from 'odgn-bitfield';
-import { EntityFilter } from '../entity_filter';
-import { stringify } from '../util/stringify';
-import { uniqueID } from '../util/unique_id';
-import { hash } from '../util/hash';
-import { QueryBuilder } from './dsl';
+import { DslContext, commandFunctions, compileCommands } from './dsl';
+import {
+    EntityFilterType,
+    QueryOp,
+} from '../types';
 import { isEntity, isEntitySet } from '../util/is';
 
-import {
-    ROOT,
-    EQUALS,
-    NOT_EQUAL,
-    LESS_THAN,
-    LESS_THAN_OR_EQUAL,
-    GREATER_THAN,
-    GREATER_THAN_OR_EQUAL,
-    AND,
-    OR,
-    NOT,
-    VALUE,
-    LEFT_PAREN,
-    RIGHT_PAREN,
-    ENTITY_FILTER,
-    ALL_FILTER,
-    NONE_FILTER,
-    FILTER_FUNC,
-    ANY_FILTER,
-    INCLUDE_FILTER,
-    ANY, ALL, NONE, INCLUDE,
-} from './constants';
+import { Base } from '../base';
+import {BitField} from 'odgn-bitfield';
+import { Entity } from '../entity';
+import { EntityFilter } from '../entity_filter';
+import { EntitySet } from '../entity_set';
+import { QueryBuilder } from './dsl';
+import { Registry } from '../registry';
+import { hash } from '../util/hash';
+import { stringify } from '../util/stringify';
+import { uniqueID } from '../util/unique_id';
 
-import { compileCommands, commandFunctions } from './dsl';
+export interface QueryExecuteOptions {
+    registry?: Registry;
+    debug?:boolean;
+    alias?:object;
+    context?;
+}
 
-export class Query {
-    constructor(commands, options = {}) {
-        this.cid = uniqueID('q');
+function processOptions( options = {} ){
+    return options;
+}
+
+
+interface CommandFilterOptions {
+    limit?:number;
+    offset?:number;
+}
+
+
+export type Builder = (builder:QueryBuilder) => DslContext;
+
+export class Query extends Base {
+
+    commands;
+
+    compiled:Array<any>;
+
+    ast:[];
+    
+
+        /**
+     *
+     */
+    static commands(...commands) {
+        let result;
+
+        result = new Query();
+        result.src = commands.map(command => command.toArray(true)[0]);
+
+        return result;
+    };
+
+    // Query.commandBuilder(query,options={}){
+
+    // }
+
+
+
+    static isQuery(query) {
+        return query && query instanceof Query;
+    };
+
+    /**
+     * Adhoc execution of a query
+     */
+    static exec(query, entity, options?) {
+        const q = new Query(query);
+        return q.execute(entity, options);
+    };
+
+
+    static toQuery(query) {
+        if (!query) {
+            return null;
+        }
+        if (Query.isQuery(query)) {
+            return query;
+        }
+        if (typeof query === 'function') {
+            return new Query(query);
+        }
+        return null;
+    };
+
+
+    static build( commands:Builder ){
+        let query = new Query();
+        let builder = new QueryBuilder(query);
+        let result = commands( builder );
+        
+        query.commands = result.toArray(true);
+
+        return query;
+    }
+
+    static fromAST( ast:Array<any> ){
+        let query = new Query();
+        query.commands = ast;
+        return query;
+    }
+
+    constructor(commands?, options = {}) {
+        super( processOptions(options) );
+
         this.commands = commands;
 
         if (typeof commands === 'function') {
@@ -61,6 +136,10 @@ export class Query {
         }
     }
 
+    getCIDPrefix() : string {
+        return 'q';
+    }
+
     isEmpty() {
         return !this.commands || this.commands.length == 0;
     }
@@ -74,15 +153,10 @@ export class Query {
         return rep;
     }
 
-    hash() {
-        const rep = this.toJSON(); // (( this.isCompiled ) ? this.src : this.toArray(true));
-        return hash(stringify(rep), true);
-    }
-
     /**
      *
      */
-    execute(entity, options = {}) {
+    execute(entity?, options:QueryExecuteOptions = {}) {
         let ii, len, command, context, result;
 
         // build the initial context object from the incoming arguments
@@ -113,13 +187,13 @@ export class Query {
     /**
      *
      */
-    buildEntityContext(entity, options = {}) {
-        let context = QueryContext.create(this, {}, options);
+    buildEntityContext(entity:Entity|EntitySet, options:QueryExecuteOptions = {}) {
+        let context = new QueryContext(this);
 
         if (isEntitySet(entity)) {
-            context.entitySet = entity;
+            context.entitySet = <EntitySet>entity;
         } else if (isEntity(entity)) {
-            context.entity = entity;
+            context.entity = <Entity>entity;
         }
 
         let rootObject = (context.root = context.entity || context.entitySet);
@@ -128,7 +202,7 @@ export class Query {
 
         context.registry = options.registry || (rootObject ? rootObject.getRegistry() : null);
 
-        context.last = [VALUE, rootObject];
+        context.last = [QueryOp.Value, rootObject];
 
         if (options.debug) {
             context.debug = true;
@@ -142,51 +216,85 @@ export class Query {
     }
 }
 
-function QueryContext(query) {
-    this.query = query;
 
-    this.entitySet = null;
 
-    this.entity = null;
 
-    this.registry = null;
-}
+class QueryContext {
 
-Object.assign(QueryContext.prototype, {
+    readonly query:Query;
+
+    entitySet?: EntitySet;
+
+    entity?: Entity;
+
+    registry: Registry;
+
+    root;
+
+    last;
+
+    debug;
+
+    alias:object;
+
+    // cid:string;
+
+    // static create(query, props = {}, options:QueryExecuteOptions = {}) {
+    //     // let type = options.context || props.type || QueryContext;
+    //     let context = new QueryContext(query);
+    //     // context.type = type;
+    //     // context.cid = uniqueID('qc');
+    //     Object.assign(context, props);
+    //     return context;
+    // };
+
+
+    constructor(query, context?:QueryContext){
+        this.query = query;
+        if( context ){
+            this.entitySet = context.entitySet;
+            this.entity = context.entity;
+            this.registry = context.registry;
+            this.root = context.root;
+            // Object.assign(this, context);
+        }
+    }
+
     /**
      *   Returns the referenced value of the passed value providing it is a Query.VALUE
      */
-    valueOf(value, shouldReturnValue) {
+    valueOf(value:any, shouldReturnValue:boolean = false) {
         let command;
         if (!value) {
             return value;
         }
-        // if(true ){ console.log('valueOf: ' + stringify(value) ); }
-        // console.log('valueOf: ' + stringify(value) );
+        
         if (Array.isArray(value)) {
             command = value[0];
-            if (command === VALUE) {
-                if (value[1] === ROOT) {
+            if (command === QueryOp.Value) {
+                if (value[1] === QueryOp.Root) {
                     return this.root;
                 }
                 return value[1];
-            } else if (command === ROOT) {
+            } else if (command === QueryOp.Root) {
                 return this.root;
             }
-            // if( true ){ console.log('valueOf: cmd ' + command + ' ' + stringify(value) )}
+            if( true ){ console.log('valueOf: cmd ' + command + ' ' + stringify(value) )}
             value = executeCommand(this, value);
 
             // if( this.debug ){ console.log('valueOf exec: ' + stringify(value) )}
 
-            if (value[0] === VALUE) {
+            if (value[0] === QueryOp.Value) {
                 return value[1];
             }
         }
+
         if (shouldReturnValue) {
             return value;
         }
+
         return null;
-    },
+    }
 
     /**
      *   Resolves the given entitySet parameter into
@@ -203,7 +311,7 @@ Object.assign(QueryContext.prototype, {
             entitySet = this.last;
         }
 
-        if (entitySet === ROOT) {
+        if (entitySet === QueryOp.Root) {
             return this.entitySet;
         }
 
@@ -219,7 +327,7 @@ Object.assign(QueryContext.prototype, {
         }
 
         return null;
-    },
+    }
 
     /**
      * Resolve a value of component ids
@@ -248,13 +356,13 @@ Object.assign(QueryContext.prototype, {
         result = BitField.create();
         result.setValues(componentIDs, true);
         return result;
-    },
+    }
 
     /**
      *   Takes an entityset and applies the filter to it resulting
      *   in a new entityset which is returned as a value.
      */
-    commandFilter(context, entityFilter, filterFunction, options = {}) {
+    commandFilter(context, entityFilter, filterFunction, options:CommandFilterOptions = {}) {
         let entities, entityContext, value;
         let entity, entitySet;
         let esCount;
@@ -281,7 +389,7 @@ Object.assign(QueryContext.prototype, {
         }
 
         if (filterFunction) {
-            entityContext = QueryContext.create(this.query, context);
+            entityContext = new QueryContext(this.query, context);
 
             if (isEntity(entitySet)) {
                 entityContext.entity = entity = entitySet;
@@ -306,7 +414,7 @@ Object.assign(QueryContext.prototype, {
             if (value && filterFunction) {
                 entityContext.entity = value;
                 value = executeCommand(entityContext, filterFunction);
-                if (value[0] === VALUE) {
+                if (value[0] === QueryOp.Value) {
                     value = value[1] ? context.entity : null;
                 }
             }
@@ -366,18 +474,10 @@ Object.assign(QueryContext.prototype, {
         // console.log('well final value was ' + JSON.stringify(value) );
         // printE( value );
 
-        return (context.last = [VALUE, value]);
+        return (context.last = [QueryOp.Value, value]);
     }
-});
+}
 
-QueryContext.create = function(query, props = {}, options = {}) {
-    let type = options.context || props.type || QueryContext;
-    let context = new type(query);
-    context.type = type;
-    context.cid = uniqueID('qc');
-    Object.assign(context, props);
-    return context;
-};
 
 
 /**
@@ -390,25 +490,21 @@ function gatherEntityFilters(context, expression) {
     let ii, len, bf, result, obj;
 
     let filter = expression[0];
-    result = EntityFilter.create();
+    result = new EntityFilter();
 
     switch (filter) {
-        case ANY:
-        case ANY_FILTER:
-        case ALL:
-        case ALL_FILTER:
-        case NONE:
-        case NONE_FILTER:
-        case INCLUDE:
-        case INCLUDE_FILTER:
-            if (expression[1] === ROOT) {
-                result.add(ROOT);
+        case EntityFilterType.Any:
+        case EntityFilterType.All:
+        case EntityFilterType.None:
+        case EntityFilterType.Include:
+            if (expression[1] === QueryOp.Root) {
+                result.add(QueryOp.Root);
             } else {
                 obj = context.valueOf(expression[1], true);
 
                 if (!obj) {
-                    if (filter == ALL_FILTER) {
-                        result.add(ROOT);
+                    if (filter == EntityFilterType.All) {
+                        result.add(QueryOp.Root);
                         return;
                     }
                     return null;
@@ -416,27 +512,27 @@ function gatherEntityFilters(context, expression) {
                 bf = context.componentsToBitfield(context, obj);
 
                 // filter = expression[0];
-                switch (filter) {
-                    case ALL_FILTER:
-                        filter = ALL;
-                        break;
-                    case ANY_FILTER:
-                        filter = ANY;
-                        break;
-                    case NONE_FILTER:
-                        filter = NONE;
-                        break;
-                    case INCLUDE_FILTER:
-                        filter = INCLUDE;
-                        break;
-                    default:
-                        break;
-                }
+                // switch (filter) {
+                //     case ALL_FILTER:
+                //         filter = ALL;
+                //         break;
+                //     case ANY_FILTER:
+                //         filter = ANY;
+                //         break;
+                //     case NONE_FILTER:
+                //         filter = NONE;
+                //         break;
+                //     case INCLUDE_FILTER:
+                //         filter = INCLUDE;
+                //         break;
+                //     default:
+                //         break;
+                // }
                 // console.log('CONVERTED TO BF', filter, bf.toString(), bf.toJSON() );
                 result.add(filter, bf);
             }
             break;
-        case AND:
+        case QueryOp.And:
             expression = expression.slice(1); // _.rest(expression);
 
             for (ii = 0, len = expression.length; ii < len; ii++) {
@@ -467,7 +563,7 @@ function commandAnd(context, ...ops) {
         }
     }
 
-    return (context.last = [VALUE, value]);
+    return (context.last = [QueryOp.Value, value]);
 }
 
 function commandOr(context, ...ops) {
@@ -480,7 +576,7 @@ function commandOr(context, ...ops) {
         }
     }
 
-    return (context.last = [VALUE, value]);
+    return (context.last = [QueryOp.Value, value]);
 }
 
 function commandFunction(op) {
@@ -493,10 +589,10 @@ function commandFunction(op) {
     }
 
     switch (op) {
-        case AND:
+        case QueryOp.And:
             result = commandAnd;
             break;
-        case OR:
+        case QueryOp.Or:
             result = commandOr;
             break;
         default:
@@ -505,7 +601,7 @@ function commandFunction(op) {
     return result;
 }
 
-function executeCommand(context, op, args, ...rest) {
+function executeCommand(context, op:any|QueryOp|EntityFilterType, args?, ...rest) {
     let result, cmdFunction, cmdArgs, value;
 
     if (context.debug) {
@@ -528,24 +624,24 @@ function executeCommand(context, op, args, ...rest) {
     context.op = op;
 
     switch (op) {
-        case ROOT:
+        case QueryOp.Root:
             // console.log('query root', cmdArgs);
-            result = context.last = [VALUE, context.root];
+            result = context.last = [QueryOp.Value, context.root];
             break;
-        case VALUE:
+        case QueryOp.Value:
             value = args[0];
-            if (value === ROOT) {
+            if (value === QueryOp.Root) {
                 value = context.root;
             }
-            result = context.last = [VALUE, value];
+            result = context.last = [QueryOp.Value, value];
             // if(true){ console.log('value> ' + stringify(context.last)) }
             break;
-        case ENTITY_FILTER:
-        case FILTER_FUNC:
-        case ALL_FILTER:
-        case INCLUDE_FILTER:
-        case ANY_FILTER:
-        case NONE_FILTER:
+        case QueryOp.EntityFilter:
+        // case QueryOp.Filter FILTER_FUNC:
+        case EntityFilterType.All:
+        case EntityFilterType.Include:
+        case EntityFilterType.Any:
+        case EntityFilterType.None:
             result = context.commandFilter(...cmdArgs);
             break;
         default:
@@ -600,15 +696,15 @@ export function compile(context, commands, options) {
         }
 
         switch (op) {
-            case NONE_FILTER:
-            case ALL_FILTER:
-            case ANY_FILTER:
-            case INCLUDE_FILTER:
+            case EntityFilterType.None:
+            case EntityFilterType.All:
+            case EntityFilterType.Any:
+            case EntityFilterType.Include:
                 entityFilter = gatherEntityFilters(context, command);
                 // insert a basic entity_filter command here
-                result.push([ENTITY_FILTER, entityFilter, command[2]]);
+                result.push([QueryOp.EntityFilter, entityFilter, command[2]]);
                 break;
-            case AND:
+            case QueryOp.And:
                 result.push(context.resolveEntitySet(command, true) || command);
                 break;
             default:
@@ -624,7 +720,7 @@ export function compile(context, commands, options) {
     // combine contiguous entity filters
     for (ii = 0, len = firstStageCompiled.length; ii < len; ii++) {
         // console.log('>combine', firstStageCompiled[ii] );
-        while (ii < len && firstStageCompiled[ii][0] === ENTITY_FILTER && !firstStageCompiled[ii][2]) {
+        while (ii < len && firstStageCompiled[ii][0] === QueryOp.EntityFilter && !firstStageCompiled[ii][2]) {
             if (!entityFilter) {
                 entityFilter = EntityFilter.create(firstStageCompiled[ii][1]);
             } else {
@@ -634,7 +730,7 @@ export function compile(context, commands, options) {
         }
         if (entityFilter) {
             // console.log('>combine adding', entityFilter );
-            compiled.push([ENTITY_FILTER, entityFilter]);
+            compiled.push([QueryOp.EntityFilter, entityFilter]);
             entityFilter = null;
         }
         if (ii < len) {
@@ -649,45 +745,3 @@ export function compile(context, commands, options) {
     return compiled;
 }
 
-/**
- *
- */
-Query.commands = function(...commands) {
-    let result;
-
-    result = new Query();
-    result.src = commands.map(command => command.toArray(true)[0]);
-
-    return result;
-};
-
-// Query.commandBuilder(query,options={}){
-
-// }
-
-
-
-Query.isQuery = function(query) {
-    return query && query instanceof Query;
-};
-
-/**
- * Adhoc execution of a query
- */
-Query.exec = function(query, entity, options) {
-    const q = new Query(query);
-    return q.execute(entity, options);
-};
-
-Query.toQuery = function(query) {
-    if (!query) {
-        return null;
-    }
-    if (Query.isQuery(query)) {
-        return query;
-    }
-    if (typeof query === 'function') {
-        return new Query(query);
-    }
-    return null;
-};

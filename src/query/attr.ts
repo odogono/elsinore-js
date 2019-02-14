@@ -1,6 +1,6 @@
+import { Entity } from '../entity';
+import { QueryOp } from '../types';
 import { register } from './dsl';
-import { VALUE } from './constants';
-
 export const ATTR = 'AT';
 
 /**
@@ -19,7 +19,7 @@ function dslAttr(attr) {
  */
 function commandAttr(context, attributes) {
     let ii, jj, len, jlen, result;
-    let entity = context.entity;
+    let entity:Entity = context.entity;
     // let debug = context.debug;
     const componentIDs = context.componentIDs;
 
@@ -32,7 +32,7 @@ function commandAttr(context, attributes) {
 
     if (!entity) {
         // console.log('ATTR> no entity');
-        return (context.last = [VALUE, null]);
+        return (context.last = [QueryOp.Value, null]);
     }
 
     attributes = Array.isArray(attributes) ? attributes : [attributes];
@@ -59,7 +59,25 @@ function commandAttr(context, attributes) {
         result = result[0];
     }
 
-    return (context.last = [VALUE, result]);
+    return (context.last = [QueryOp.Value, result]);
 }
 
 register(ATTR, commandAttr, { attr: dslAttr });
+
+
+// interface CommandSpec {
+//     token: string;
+//     command( context:object, attributes:Array<string>|string ): any;
+// }
+
+/**
+ * TODO : convert query commands to this single
+ */
+// export function command(){
+
+//     return [ ATTR, commandAttr, { attr, dslAttr } ];
+
+//     // return (context, attributes) => {
+
+//     // }
+// }

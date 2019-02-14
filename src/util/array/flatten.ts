@@ -1,17 +1,16 @@
 /**
  * 
- * @param {*} ary 
- * @param {*} ret 
  */
-export function arrayFlatten(ary, shallow = false) {
+export function arrayFlatten(ary:Array<any>, shallow:boolean = false) : Array<any> {
     if (shallow) {
         return [].concat.apply([], ary);
     }
+
     let ret = [];
-    //ret = ret === undefined ? [] : ret;
+    
     for (let ii = 0; ii < ary.length; ii++) {
         if (Array.isArray(ary[ii])) {
-            arrayFlatten(ary[ii], ret);
+            ret = ret.concat( arrayFlatten( ary[ii] ) );
         } else {
             ret.push(ary[ii]);
         }

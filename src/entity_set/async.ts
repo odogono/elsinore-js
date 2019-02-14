@@ -1,17 +1,57 @@
-import { EntitySet } from './index';
+import { EntitySet, EntitySetOptions } from './index';
 import { AsyncCmdBuffer as CmdBuffer } from '../cmd_buffer/async';
 import { ReusableID } from '../util/reusable_id';
-import { setEntityIDFromID, getEntityIDFromID, getEntitySetIDFromID } from '../util/id';
+import { Component } from '../component';
+import { Collection } from '../util/collection';
+import { Entity, cloneEntity } from '../entity';
+import {
+    setEntityIDFromID,
+    getEntityIDFromID,
+    getEntitySetIDFromID
+} from '../util/id';
 import { toInteger } from '../util/to';
 import { createLog } from '../util/log';
 import { propertyResult } from '../util/result';
-import { ComponentNotFoundError, EntityNotFoundError, ComponentDefNotFoundError } from '../error';
+import {
+    ComponentNotFoundError,
+    EntityNotFoundError,
+    ComponentDefNotFoundError
+} from '../error';
 import { ComponentRegistry } from '../schema';
 import { toString as entityToString } from '../util/to_string';
 
-import { STATE_CLOSED, STATE_OPENING, STATE_OPEN, STATE_FAILED } from '../constants';
+import {
+    ENTITY_ID,
+    ENTITY_SET_ID,
+    EntityID,
+    ComponentDefID,
+    State
+} from '../types';
+import { BitField } from 'odgn-bitfield';
+import { Registry } from 'src/registry';
 
 const Log = createLog('AsyncEntitySet');
+
+interface AsyncEntitySetOptions extends EntitySetOptions {
+    entityIDStart?: number;
+    componentIDStart?: number;
+}
+
+function processOptions(options: AsyncEntitySetOptions = {}): EntitySetOptions {
+    options.cmdBuffer = CmdBuffer;
+    options.indexByEntityID = true;
+    return options;
+}
+
+// AsyncEntitySet.prototype.type = 'AsyncEntitySet';
+// AsyncEntitySet.prototype.isAsyncEntitySet = true;
+// AsyncEntitySet.prototype.isMemoryEntitySet = false;
+// AsyncEntitySet.prototype.isAsync = true;
+// AsyncEntitySet.prototype.cidPrefix = 'aes';
+
+// AsyncEntitySet.isAsyncEntitySet = function(obj) {
+//     return obj && obj.isAsyncEntitySet;
+// };
 
 /**
  * An In-memory Async (Promise-based) entityset
@@ -21,72 +61,89 @@ const Log = createLog('AsyncEntitySet');
  * the aim should be to resolve updates into a series of commands which precisely describes what should be
  * added/removed updated
  */
-export function AsyncEntitySet(entities, options = {}, ...rest) {
-    this._status = STATE_CLOSED;
-    options.cmdBuffer = CmdBuffer;
+export class AsyncEntitySet extends EntitySet {
+    readonly type: string = 'AsyncEntitySet';
+    readonly isAsyncEntitySet: boolean = true;
+    readonly isMemoryEntitySet: boolean = false;
+    readonly isAsync: boolean = true;
 
-    options.indexByEntityID = true;
-    EntitySet.call(this, entities, options);
+    _status: State = State.Closed;
+
     // maps external and internal component def ids
-    this._componentDefInternalToExternal = [];
-    this._componentDefExternalToInternal = [];
+    _componentDefInternalToExternal = [];
+    _componentDefExternalToInternal = [];
 
-    this.componentDefs = new ComponentRegistry();
-    // this.componentDefs = new ComponentDefCollection();
+    componentDefs: ComponentRegistry = new ComponentRegistry();
 
-    // in a persistent es, these ids would be initialised from a backing store
-    this.entityID = new ReusableID(options.entityIDStart || 1);
-    this.componentID = new ReusableID(options.componentIDStart || 1);
-}
+    entityID: ReusableID;
+    componentID: ReusableID;
 
-Object.assign(AsyncEntitySet.prototype, EntitySet.prototype, {
+    constructor(entities, options: AsyncEntitySetOptions = {}, ...rest) {
+        super(entities, processOptions(options));
+
+        // in a persistent es, these ids would be initialised from a backing store
+        this.entityID = new ReusableID(options.entityIDStart || 1);
+        this.componentID = new ReusableID(options.componentIDStart || 1);
+    }
+
+    getCIDPrefix(): string {
+        return 'aes';
+    }
+
     /**
      * Opens the entity set so that it is ready to be used.
      * During the open process, any component defs registered with this entityset are
      * registered with the Registry
      */
-    open(options = {}) {
+    open(options = {}) : Promise<EntitySet> {
         const registry = this.getRegistry();
-        this._status = STATE_OPENING;
+        this._status = State.Opening;
 
         // get existing defs and give them to the registry
-        return this.getComponentDefs().then(defs =>
-            registry.registerComponent(defs, { notifyRegistry: true, fromES: this })
-        )
-        .then( () => {
-            this._status = STATE_OPEN;
-            return this;
-        });
-    },
+        return this.getComponentDefs()
+            .then(defs =>
+                registry.registerComponent(defs, {
+                    notifyRegistry: true,
+                    fromES: this
+                })
+            )
+            .then(() => {
+                this._status = State.Open;
+                return this;
+            });
+    }
 
     /**
      *
      */
-    isOpen() {
-        return this._status === STATE_OPEN;
-    },
+    isOpen() : boolean {
+        return this._status === State.Open;
+    }
 
     /**
      *
      */
-    close() {
-        this._status = STATE_CLOSED;
+    close() : Promise<EntitySet> {
+        this._status = State.Closed;
         return Promise.resolve(this);
-    },
+    }
 
     /**
      * Removes all data associated with this entityset
-     * 
-     * @param {*} options 
+     *
+     * @param {*} options
      */
-    destroy(options = {}) {
+    destroy(options = {}) : Promise<EntitySet> {
         return Promise.resolve(this);
-    },
+    }
 
     /**
      * Registers a component def with this entityset.
      */
-    registerComponentDef(data, options = {}) {
+    registerComponentDef(
+        data,
+        options: { fromRegistry?: boolean; debug?: boolean } = {}
+    ) {
         // if this hasn't been called from the registry, then we forward the request
         // on to the registry, which takes care of decomposing the incoming schemas
         // and then notifying each of the entitySets about the new component defs
@@ -113,12 +170,12 @@ Object.assign(AsyncEntitySet.prototype, EntitySet.prototype, {
                 }
                 return Promise.reject(err);
             });
-    },
+    }
 
     /**
      *
      */
-    _registerComponentDef(cdef, options) {
+    _registerComponentDef(cdef) {
         return new Promise((resolve, reject) => {
             // Log.debug('_registerComponentDef adding', cdef.getUri(), cdef.id, cdef.cid, cdef.hash(), options );
             // const clonedDef = cdef.clone();
@@ -127,12 +184,12 @@ Object.assign(AsyncEntitySet.prototype, EntitySet.prototype, {
             // console.log('_registerComponentDef added', clonedDef.getUri(), clonedDef.id, clonedDef.cid, clonedDef.hash() );
             return resolve(this);
         });
-    },
+    }
 
     /**
      *   Returns a component def by its id/uri
      */
-    getComponentDef(cdefID, isCached=true) {
+    getComponentDef(cdefID, isCached = true) {
         return new Promise((resolve, reject) => {
             const def = this.componentDefs.getComponentDef(cdefID);
 
@@ -141,7 +198,7 @@ Object.assign(AsyncEntitySet.prototype, EntitySet.prototype, {
             }
             return resolve(def);
         });
-    },
+    }
 
     /**
      *   Returns a registered component def by its hash
@@ -155,7 +212,7 @@ Object.assign(AsyncEntitySet.prototype, EntitySet.prototype, {
             }
             return reject(new ComponentDefNotFoundError(hash));
         });
-    },
+    }
 
     /**
      *   Reads component defs into local structures
@@ -163,28 +220,38 @@ Object.assign(AsyncEntitySet.prototype, EntitySet.prototype, {
      */
     getComponentDefs(options = {}) {
         return Promise.resolve(this.componentDefs.getComponentDefs());
-    },
+    }
 
     /**
      * Returns an entity
      * @param {*} entityID
      * @param {*} options
      */
-    getEntity(entityID, options = {}) {
+    getEntityAsync(
+        entityID,
+        options: {
+            componentBitFieldOnly?: boolean;
+            throwsOnError?: boolean;
+        } = {}
+    ) {
         // const throwsOnError = options.throwsOnError === undefined ? true : options.throwsOnError;
         if (options.componentBitFieldOnly) {
-            return this.getEntityBitField(entityID, throwsOnError);
+            return this.getEntityBitField(entityID);
         }
+
         // console.log('[AsyncEntitySet][getEntity]', entityID, setEntityIDFromID(entityID, this.id), this._entities);
 
-        return Promise.resolve(this._entities.get(setEntityIDFromID(entityID, this.id)));
-    },
+        return Promise.resolve(
+            this._entities.get(setEntityIDFromID(entityID, this.id))
+        );
+    }
 
     /**
      * Returns a bitfield for the specified entityid
      */
-    getEntityBitField(entityID, throwsOnError = true) {
-        let e = this.get(entityID);
+    getEntityBitField(entityID, throwsOnError = true): Promise<BitField> {
+        let e = this._entities.get(entityID);
+
         if (e) {
             return Promise.resolve(e.getComponentBitfield());
         }
@@ -192,7 +259,7 @@ Object.assign(AsyncEntitySet.prototype, EntitySet.prototype, {
             return Promise.resolve(null);
         }
         return Promise.reject(new EntityNotFoundError(entityID));
-    },
+    }
 
     /**
      * Returns an entity specified by its id
@@ -217,7 +284,10 @@ Object.assign(AsyncEntitySet.prototype, EntitySet.prototype, {
                 return Promise.resolve(null);
             }
             return Promise.reject(
-                new EntityNotFoundError(entityID, `entity ${eID} does not belong to this entityset (${esID})`)
+                new EntityNotFoundError(
+                    entityID,
+                    `entity ${eID} does not belong to this entityset (${esID})`
+                )
             );
         }
         // console.log(`looking for eid ${eID} / ${esID}`);
@@ -235,18 +305,27 @@ Object.assign(AsyncEntitySet.prototype, EntitySet.prototype, {
         }
 
         return Promise.reject(new EntityNotFoundError(entityID));
-    },
+    }
 
     /**
      * Returns a component by its entityid and def id
      */
-    getComponentByEntityID(entityID, componentDefID) {
-        const result = EntitySet.prototype.getComponentByEntityID.call(this, entityID, componentDefID);
+    getComponentByEntityIDAsync(
+        entityID: EntityID,
+        componentDefID: ComponentDefID
+    ): Promise<Component> {
+        const result = EntitySet.prototype.getComponentByEntityID.call(
+            this,
+            entityID,
+            componentDefID
+        );
         if (result) {
             return Promise.resolve(result);
         }
-        return Promise.reject(new ComponentNotFoundError(entityID, componentDefID));
-    },
+        return Promise.reject(
+            new ComponentNotFoundError(entityID, componentDefID)
+        );
+    }
 
     /**
      * Takes an (array) of entityIDs and returns entity instances with
@@ -261,74 +340,99 @@ Object.assign(AsyncEntitySet.prototype, EntitySet.prototype, {
                 let entity = this._entities.get(eID);
                 if (entity) {
                     // return a copy of the entity bf
-                    return registry.createEntity(null, { id: eID, comBf: entity.getComponentBitfield() });
+                    return registry.createEntity(null, {
+                        id: eID,
+                        comBf: entity.getComponentBitfield()
+                    });
                 }
                 return registry.createEntity(null, { id: eID });
             });
             return resolve(result);
         });
-    },
+    }
 
     /**
      *
      * the async based cmd-buffer calls this function once it has resolved a list of entities and components to be added
      */
     update(
-        entitiesAdded,
-        entitiesUpdated,
-        entitiesRemoved,
-        componentsAdded,
-        componentsUpdated,
-        componentsRemoved,
-        options = {}
+        entitiesAdded: Collection<Entity>,
+        entitiesUpdated: Collection<Entity>,
+        entitiesRemoved: Collection<Entity>,
+        componentsAdded: Collection<Component>,
+        componentsUpdated: Collection<Component>,
+        componentsRemoved: Collection<Component>,
+        options: { debug?: boolean } = {}
     ) {
         let debug = options.debug;
-        entitiesAdded = entitiesAdded.models;
-        entitiesUpdated = entitiesUpdated.models;
-        entitiesRemoved = entitiesRemoved.models;
-        componentsAdded = componentsAdded.models;
-        componentsUpdated = componentsUpdated.models;
-        componentsRemoved = componentsRemoved.models;
 
         if (debug)
             console.log(
                 '[AsyncEntitySet][update]',
                 this.cid,
                 '-',
-                entitiesAdded.length,
-                entitiesUpdated.length,
-                entitiesRemoved.length,
-                componentsAdded.length,
-                componentsUpdated.length,
-                componentsRemoved.length
+                entitiesAdded.models.length,
+                entitiesUpdated.models.length,
+                entitiesRemoved.models.length,
+                componentsAdded.models.length,
+                componentsUpdated.models.length,
+                componentsRemoved.models.length
             );
 
-        if (debug && entitiesAdded.length)
-            console.log('[AsyncEntitySet][update]', '[entitiesAdded]', entitiesAdded.map(e => e.id));
-        if (debug && entitiesUpdated.length)
-            console.log('[AsyncEntitySet][update]', '[entitiesUpdated]', entitiesUpdated.map(e => e.id));
-        if (debug && entitiesRemoved.length)
-            console.log('[AsyncEntitySet][update]', '[entitiesRemoved]', entitiesRemoved.map(e => e.id));
+        if (debug && entitiesAdded.models.length)
+            console.log(
+                '[AsyncEntitySet][update]',
+                '[entitiesAdded]',
+                entitiesAdded.map(e => e.id)
+            );
+        if (debug && entitiesUpdated.models.length)
+            console.log(
+                '[AsyncEntitySet][update]',
+                '[entitiesUpdated]',
+                entitiesUpdated.map(e => e.id)
+            );
+        if (debug && entitiesRemoved.models.length)
+            console.log(
+                '[AsyncEntitySet][update]',
+                '[entitiesRemoved]',
+                entitiesRemoved.map(e => e.id)
+            );
 
-        if (debug && componentsAdded.length)
-            console.log('[AsyncEntitySet][update]', '[componentsAdded]', this.id, componentsAdded.map(e => e.toJSON()));
-        if (debug && componentsUpdated.length)
-            console.log('[AsyncEntitySet][update]', '[componentsUpdated]', componentsUpdated.map(e => e.toJSON()));
-        if (debug && componentsRemoved.length)
-            console.log('[AsyncEntitySet][update]', '[componentsRemoved]', componentsRemoved.map(e => e.id));
+        if (debug && componentsAdded.models.length)
+            console.log(
+                '[AsyncEntitySet][update]',
+                '[componentsAdded]',
+                this.id,
+                componentsAdded.map(e => e.toJSON())
+            );
+        if (debug && componentsUpdated.models.length)
+            console.log(
+                '[AsyncEntitySet][update]',
+                '[componentsUpdated]',
+                componentsUpdated.map(e => e.toJSON())
+            );
+        if (debug && componentsRemoved.models.length)
+            console.log(
+                '[AsyncEntitySet][update]',
+                '[componentsRemoved]',
+                componentsRemoved.map(e => e.id)
+            );
 
         // const debug = options.debug;
 
         // extract entities added which need new ids
-        entitiesAdded = entitiesAdded.reduce((result, e) => {
-            // console.log('[async][update] we got,', this.id, this.getUuid(), e.getEntitySetID(), 'for', this.id );
-            if (e.getEntitySetID() !== this.id) {
-                result.push(e);
-            } else {
-                // console.log('ALERT! entitiesAdded contains already added entity', e.toJSON() );
-            }
-            return result;
-        }, []);
+        let unknownEntities = entitiesAdded.models.reduce(
+            (result, e) => {
+                // console.log('[async][update] we got,', this.id, this.getUuid(), e.getEntitySetID(), 'for', this.id );
+                if (e.getEntitySetID() !== this.id) {
+                    result.push(e);
+                } else {
+                    // console.log('ALERT! entitiesAdded contains already added entity', e.toJSON() );
+                }
+                return result;
+            },
+            <Entity[]>[]
+        );
 
         // console.log('new entities', entityToString(entitiesAdded));
         // console.log('[AsyncEntitySet][update]', entitiesUpdated );
@@ -336,54 +440,67 @@ Object.assign(AsyncEntitySet.prototype, EntitySet.prototype, {
         // retrieve ids for the new entities
         return (
             this.entityID
-                .getMultiple(entitiesAdded.length)
+                .getMultiple(unknownEntities.length)
                 .then(newIDs => {
                     // console.log('new entity ids', newIDs);
 
                     // apply the new ids to the entities. this will
                     // also update the components entity ids
-                    entitiesAdded.forEach((e, ii) => e.setEntityID(newIDs[ii], this.getEntitySetID()));
+                    unknownEntities.forEach((e, ii) =>
+                        e.clone({
+                            [ENTITY_ID]: newIDs[ii],
+                            [ENTITY_SET_ID]: this.getEntitySetID()
+                        })
+                    );
                 })
                 // retrieve ids for the new components
-                .then(() => this.componentID.getMultiple(componentsAdded.length))
+                .then(() =>
+                    this.componentID.getMultiple(componentsAdded.models.length)
+                )
                 .then(componentIDs => {
                     // console.log('new component ids', componentIDs);
-                    componentsAdded.forEach((com, ii) => com.set({ id: componentIDs[ii] }));
+                    componentsAdded.forEach((com, ii) =>
+                        com.set({ id: componentIDs[ii] })
+                    );
                     // console.log('new components', entityToString(componentsAdded));
                 })
                 .then(() =>
                     this._applyUpdate(
-                        entitiesAdded,
-                        entitiesUpdated,
-                        entitiesRemoved,
-                        componentsAdded,
-                        componentsUpdated,
-                        componentsRemoved,
+                        unknownEntities,
+                        entitiesUpdated.models,
+                        entitiesRemoved.models,
+                        componentsAdded.models,
+                        componentsUpdated.models,
+                        componentsRemoved.models,
                         options
                     )
                 )
         );
-    },
+    }
 
     /**
      *
      */
     _applyUpdate(
-        entitiesAdded,
-        entitiesUpdated,
-        entitiesRemoved,
-        componentsAdded,
-        componentsUpdated,
-        componentsRemoved,
-        options = {}
+        entitiesAdded:Array<Entity>,
+        entitiesUpdated:Array<Entity>,
+        entitiesRemoved:Array<Entity>,
+        componentsAdded:Array<Component>,
+        componentsUpdated:Array<Component>,
+        componentsRemoved:Array<Component>,
+        options: { debug?: boolean } = {}
     ) {
         const debug = options.debug;
-        let ii, len, component, entity;
+        let ii:number, len:number, component:Component, entity:Entity;
 
         const addOptions = { silent: true };
         if (entitiesAdded && entitiesAdded.length > 0) {
             if (debug) {
-                Log.debug('entitiesAdded', entitiesAdded.length, entityToString(entitiesAdded));
+                Log.debug(
+                    'entitiesAdded',
+                    entitiesAdded.length,
+                    entityToString(entitiesAdded)
+                );
             }
             entitiesAdded.forEach(e => this._addEntity(e));
         }
@@ -421,7 +538,9 @@ Object.assign(AsyncEntitySet.prototype, EntitySet.prototype, {
 
                 if (debug)
                     console.log(
-                        `[AsyncEntitySet][_applyUpdate]🦊 added com ${component.cid} ${JSON.stringify(
+                        `[AsyncEntitySet][_applyUpdate]🦊 added com ${
+                            component.cid
+                        } ${JSON.stringify(
                             component
                         )} ${component.getEntityID()}`
                     );
@@ -435,9 +554,9 @@ Object.assign(AsyncEntitySet.prototype, EntitySet.prototype, {
 
             if (debug)
                 console.log(
-                    `[AsyncEntitySet][_applyUpdate]🦊 updated com ${component.cid} ${JSON.stringify(
-                        component
-                    )} ${component.getEntityID()}`
+                    `[AsyncEntitySet][_applyUpdate]🦊 updated com ${
+                        component.cid
+                    } ${JSON.stringify(component)} ${component.getEntityID()}`
                 );
 
             const existing = EntitySet.prototype.getComponentByEntityID.call(
@@ -452,7 +571,12 @@ Object.assign(AsyncEntitySet.prototype, EntitySet.prototype, {
                 existing.apply(component, { silent: true });
                 // console.log(`!!ES!! EntitySet.update existing ${existing.cid} ${existing.getEntityID()}`);
             } else {
-                if (debug) console.log(`!!!ES!!! adding new component ${component.cid} ${JSON.stringify(component)}`);
+                if (debug)
+                    console.log(
+                        `!!!ES!!! adding new component ${
+                            component.cid
+                        } ${JSON.stringify(component)}`
+                    );
                 this._addComponent(component);
             }
         }
@@ -467,7 +591,11 @@ Object.assign(AsyncEntitySet.prototype, EntitySet.prototype, {
             }
         }
 
-        if (debug) console.log('[AsyncEntitySet][_applyUpdate]🦊 entitiesUpdated', entityToString(entitiesUpdated));
+        if (debug)
+            console.log(
+                '[AsyncEntitySet][_applyUpdate]🦊 entitiesUpdated',
+                entityToString(entitiesUpdated)
+            );
 
         return Promise.resolve({
             entitiesAdded,
@@ -478,14 +606,4 @@ Object.assign(AsyncEntitySet.prototype, EntitySet.prototype, {
             componentsRemoved
         });
     }
-});
-
-AsyncEntitySet.prototype.type = 'AsyncEntitySet';
-AsyncEntitySet.prototype.isAsyncEntitySet = true;
-AsyncEntitySet.prototype.isMemoryEntitySet = false;
-AsyncEntitySet.prototype.isAsync = true;
-AsyncEntitySet.prototype.cidPrefix = 'aes';
-
-AsyncEntitySet.isAsyncEntitySet = function(obj) {
-    return obj && obj.isAsyncEntitySet;
-};
+}

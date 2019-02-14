@@ -1,17 +1,30 @@
+import { LCMD_COMMAND, LCMD_REMOVE_COMPONENT } from '../types';
+import { isComponent, isEntity } from '../util/is';
+
+import { Entity } from '../entity';
+import { EntitySet } from '../entity_set';
 // import { Entity } from '../entity';
 // import { Component } from '../component';
 // import { cloneComponent, cloneEntity } from '../util/clone';
 import { JSONLoader } from '../util/loader';
-import { toString as entityToString } from '../util/to_string';
-import { isComponent, isEntity } from '../util/is';
 import { createLog } from '../util/log';
-import { LCMD_COMMAND, LCMD_REMOVE_COMPONENT } from '../constants';
+import { toString as entityToString } from '../util/to_string';
 
 const Log = createLog('EntitySetSink');
 
 /**
  * pull-stream sink - takes incoming components and adds to the entity set
  */
+
+interface PullStreamSinkOptions {
+    source?:EntitySet;
+    did?:string;
+}
+
+interface AddEntityOptions {
+    // original id
+    oid?:string;
+}
 
 /**
  * A pull-stream sink which interprets incoming objects into
@@ -21,13 +34,13 @@ const Log = createLog('EntitySetSink');
  * @param {*} options
  * @param {Function} completeCb
  */
-export function PullStreamSink(entitySet, options = {}, completeCb) {
+export function PullStreamSink(entitySet:EntitySet, options:PullStreamSinkOptions = {}, completeCb?:Function) {
     // let result = [];
-    const loader = JSONLoader.create();
+    const loader = new JSONLoader();
     let context = { entitySet, registry: entitySet.getRegistry() };
     const { source, did } = options;
 
-    let addEntityOptions = {};
+    let addEntityOptions:AddEntityOptions = {};
     if (source) {
         addEntityOptions.oid = source.cid;
     }

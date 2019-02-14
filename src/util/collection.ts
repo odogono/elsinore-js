@@ -1,25 +1,49 @@
 import { propertyResult } from './result';
 import { isObject } from './is';
 
+
+interface CollectionOptions {
+    idAttribute?:string | Function;
+    debug?:boolean;
+    sort?:boolean;
+}
+
+
 /**
  * A collection stores a set of objects keyed by the id attribute
  */
-export function Collection(models, options = {}) {
-    this.initialize(models, options);
-}
+export class Collection<T> {
 
-/**
- *
- */
-Object.assign(Collection.prototype, {
-    initialize(models, options = {}) {
+    readonly type:string = 'Collection';
+    readonly isCollection:boolean = true;
+
+
+    idAttribute: string | Function;
+
+    models:Array<T> = [];
+
+    _objectsByID:{ [id:number]: T } = {};
+
+    _indexOfObject:Array<number> = [];
+
+    comparator:(a:T, b:T) => any;
+
+    
+    /**
+     *  
+     */
+    constructor(models?, options:CollectionOptions = {}) {
+        this.initialize(models, options);
+    }
+
+    initialize(models, options:CollectionOptions = {}) {
         this.idAttribute = options.idAttribute || 'id';
         // this.debug = propertyResult( options, 'debug', false);
         this.reset();
         if (models !== undefined) {
             this.add(models);
         }
-    },
+    }
 
     /**
      * Adds an object to the collection. If an object with the same id
@@ -27,7 +51,7 @@ Object.assign(Collection.prototype, {
      *
      * @param {*} obj
      */
-    add(obj, options) {
+    add(obj:T, options?:CollectionOptions) {
         if (!obj) {
             return;
         }
@@ -68,7 +92,7 @@ Object.assign(Collection.prototype, {
         }
 
         return this;
-    },
+    }
 
     /**
      * Removes an object from the collection either by its id, or
@@ -76,14 +100,14 @@ Object.assign(Collection.prototype, {
      *
      * @param {*} obj
      */
-    remove(obj, debug) {
+    remove(obj:number|string|T, debug?:boolean) {
         if (Array.isArray(obj) && obj[0] !== undefined) {
             return obj.map(item => this.remove(item));
         }
 
         let result = [];
 
-        let objID = obj;
+        let objID = <number>obj;
         let item = this._objectsByID[objID];
 
         if (item === undefined) {
@@ -105,53 +129,51 @@ Object.assign(Collection.prototype, {
         this._reindex();
 
         return result[0];
-    },
+    }
 
     /**
      * Returns an object at the given index
      *
      * @param {*} index
      */
-    at(index) {
+    at(index:number):T {
         return this.models[index];
-    },
+    }
 
     /**
      * Returns an object by its id
      *
      * @param {*} id
      */
-    get(id) {
+    get(id:number|string) : T {
         return this._objectsByID[String(id)];
-    },
+    }
 
     /**
      * Returns true if the object is contained in this collection
      *
      * @param {*} obj
      */
-    has(obj) {
+    has(obj:number|T):boolean {
         let id = obj;
         if (isObject(obj)) {
             id = propertyResult(obj, this.idAttribute, obj);
         }
-        return this._objectsByID[id] !== undefined;
-    },
+        return this._objectsByID[<number>id] !== undefined;
+    }
 
     /**
      * Returns the first item which matches the specific attributes
      * @param {*} attrs
      */
-    findWhere(attrs) {
-        return this.models.find(el => this.isMatch(el, attrs));
-    },
+    findWhere(attrs) : T {
+        return <T>this.models.find(el => this.isMatch(el, attrs));
+    }
 
     /**
      * Returns true if the given object has the given attributes
-     * @param {*} object
-     * @param {*} attrs
      */
-    isMatch(object, attrs) {
+    isMatch(object, attrs) : boolean {
         let keys = Object.keys(attrs),
             length = keys.length;
         if (object == null) {
@@ -165,7 +187,7 @@ Object.assign(Collection.prototype, {
             }
         }
         return true;
-    },
+    }
 
     /**
      *
@@ -178,14 +200,14 @@ Object.assign(Collection.prototype, {
             let objID = propertyResult(obj, this.idAttribute);
             this._indexOfObject[objID] = ii;
         }
-    },
+    }
 
     /**
      *
      */
     size() {
         return this.models.length;
-    },
+    }
 
     /**
      *
@@ -194,24 +216,21 @@ Object.assign(Collection.prototype, {
         this.models = [];
         this._objectsByID = {};
         this._indexOfObject = [];
-    },
+    }
 
     /**
      *
-     * @param {*} fn
      */
     map(fn) {
         return this.models.map(fn);
-    },
+    }
 
     /**
      *
-     * @param {*} fn
-     * @param {*} initialValue
      */
     reduce(fn, initialValue) {
         return this.models.reduce(fn, initialValue);
-    },
+    }
 
     /**
      *
@@ -219,11 +238,11 @@ Object.assign(Collection.prototype, {
      */
     filter(fn) {
         return this.models.filter(fn);
-    },
+    }
 
     find(fn) {
         return this.models.find(fn);
-    },
+    }
 
     /**
      * Applies the specified function over each of the contained
@@ -233,7 +252,7 @@ Object.assign(Collection.prototype, {
      */
     forEach(fn) {
         return this.models.forEach(fn);
-    },
+    }
 
     /**
      *
@@ -241,7 +260,4 @@ Object.assign(Collection.prototype, {
     toJSON() {
         return this.models;
     }
-});
-
-Collection.prototype.type = 'Collection';
-Collection.prototype.isCollection = true;
+}

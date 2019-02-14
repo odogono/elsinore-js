@@ -1,44 +1,43 @@
+import { QueryOp } from '../types';
 import {deepEqual} from '../util/deep_equal';
-
 import { register } from './dsl';
-import { VALUE } from './constants';
 
-export const EQUALS = '=='; // == 
-export const NOT_EQUAL = '!='; // !=
-export const LESS_THAN = '<'; // <
-export const LESS_THAN_OR_EQUAL = '<=';
-export const GREATER_THAN = '>'; // >
-export const GREATER_THAN_OR_EQUAL = '>=';
+// export const EQUALS = '=='; // == 
+// export const NOT_EQUAL = '!='; // !=
+// export const LESS_THAN = '<'; // <
+// export const LESS_THAN_OR_EQUAL = '<=';
+// export const GREATER_THAN = '>'; // >
+// export const GREATER_THAN_OR_EQUAL = '>=';
 
 
 
 function dslEquals( val ){
     this.pushVal( val, true );
-    this.pushOp( EQUALS );
+    this.pushOp( QueryOp.Equals );
     return this;
 }
 
 function dslLessThan( val ){
     this.pushVal( val, true );
-    this.pushOp( LESS_THAN );
+    this.pushOp( QueryOp.LessThan );
     return this;  
 }
 
 function dslLessThanOrEqual( val ){
     this.pushVal( val, true );
-    this.pushOp( LESS_THAN_OR_EQUAL );
+    this.pushOp( QueryOp.LessThanOrEqual );
     return this;  
 }
 
 function dslGreaterThan( val ){
     this.pushVal( val, true );
-    this.pushOp( GREATER_THAN );
+    this.pushOp( QueryOp.GreaterThan );
     return this;  
 }
 
 function dslGreaterThanOrEqual( val ){
     this.pushVal( val, true );
-    this.pushOp( GREATER_THAN_OR_EQUAL );
+    this.pushOp( QueryOp.GreaterThanOrEqual );
     return this;  
 }
 
@@ -67,27 +66,27 @@ export function commandEquals( context, op1, op2 ){
     // if( true ){ console.log('commandEquals', stringify(value1), op, stringify(value2) ); }
 
     if( isValue1Array && !isValue2Array ){
-        if( op == EQUALS ){
+        if( op == QueryOp.Equals ){
             result = value1.indexOf(value2) !== -1;
         }
     }
     else if( !isValue1Array && isValue2Array ){
-        if( op == EQUALS ){
+        if( op == QueryOp.Equals ){
             result = (value2.indexOf(value1) !== -1);
         }
     }
     else if( !isValue1Array && !isValue2Array ){
         switch( op ){
-            case LESS_THAN:
+            case QueryOp.LessThan:
                 result = (value1 < value2);
                 break;
-            case LESS_THAN_OR_EQUAL:
+            case QueryOp.LessThanOrEqual:
                 result = (value1 <= value2);
                 break;
-            case GREATER_THAN:
+            case QueryOp.GreaterThan:
                 result = (value1 > value2);
                 break;
-            case GREATER_THAN_OR_EQUAL:
+            case QueryOp.GreaterThanOrEqual:
                 result = (value1 >= value2);
                 break;
             default:
@@ -99,20 +98,20 @@ export function commandEquals( context, op1, op2 ){
                 break;
         }
     } else {
-        if( op == EQUALS ){
+        if( op == QueryOp.Equals ){
             result = deepEqual( value1, value2 );
         }
     }
     
-    return (context.last = [VALUE, result]);
+    return (context.last = [QueryOp.Value, result]);
 }
 
 
-const tokens = [EQUALS,
-    LESS_THAN,
-    LESS_THAN_OR_EQUAL,
-    GREATER_THAN,
-    GREATER_THAN_OR_EQUAL];
+const tokens = [QueryOp.Equals,
+    QueryOp.LessThan,
+    QueryOp.LessThanOrEqual,
+    QueryOp.GreaterThan,
+    QueryOp.GreaterThanOrEqual];
 
 const dslFunctions = {
     'equals': dslEquals,

@@ -1,47 +1,59 @@
+import { Base } from './base';
 import { Collection } from './util/collection';
-import { Events } from './util/events';
-
-import { EntitySet } from './entity_set';
-import { create as createEntitySetIndex } from './entity_set/ro_view';
-
-import { Query } from './query/full';
+import { EntityEvent } from 'src/types';
 import { EntityProcessor } from './entity_processor';
-import { createLog } from './util/log';
-// import { stringify } from './util/stringify';
+import { EntitySet } from './entity_set';
+import { Events } from './util/events';
+import { Query } from './query/full';
+import { Registry } from './registry/index';
 import { arrayWithout } from './util/array/without';
-import { uniqueID } from './util/unique_id';
-import { isEntitySet } from './util/is';
+import { create as createEntitySetIndex } from './entity_set/ro_view';
+import { createLog } from './util/log';
 import { toString as entityToString } from './util/to_string';
-import { VIEW_CREATE } from './constants';
+import { isEntitySet } from './util/is';
+import { isEntitySetView } from './entity_set/view';
+import { uniqueID } from './util/unique_id';
 
 const Log = createLog('EntityDispatch');
+
+export interface EntityProcessorEntry {
+    id: number | string;
+    processor: EntityProcessor,
+    createdAt: number;
+    updatedAt: number;
+    executedAt: number;
+    priority: number;
+    interval: number;
+    query?: Query;
+    queryID?: string;
+}
+
+
 
 /**
  * @class EntityDispatch
  */
-export function EntityDispatch(registry, entitySet) {
-    Object.assign(this, Events);
 
-    if (isEntitySet(registry)) {
-        entitySet = registry;
-        registry = entitySet.getRegistry();
-    }
+export class EntityDispatch extends Base {
 
-    this.registry = registry;
-    this.setEntitySet(entitySet);
+    registry: Registry;
+    entitySet: EntitySet;
+    processorEntries: Collection<EntityProcessorEntry>;
+    executedAt: number;
+    time: number;
+    _views: EntitySet[];
+    _viewsToProcessors: any;
 
-    return this.initialize();
-}
-
-Object.assign(EntityDispatch.prototype, {
-    initialize() {
-        // this._removeViews();
+    constructor(registry:Registry, entitySet:EntitySet){
+        super();
+        this.registry = registry;
+        this.entitySet = entitySet;
         this.processorEntries = new Collection();
         this.processorEntries.comparator = (a, b) => a.priority > b.priority;
-        this.executedAt = Date.now;
+        this.executedAt = Date.now();
         this.time = 0;
-        return this;
-    },
+    }
+
 
     /**
      * Sets the EntitySet that this dispatcher will use.
@@ -52,15 +64,15 @@ Object.assign(EntityDispatch.prototype, {
             // remove all views created from the entityset
             // this._removeViews();
         }
-        this._entitySet = entitySet;
-    },
+        this.entitySet = entitySet;
+    }
 
     /**
      * Returns an array of all the processors registered
      */
     getProcessors() {
         return this.processorEntries.map(e => e.processor);
-    },
+    }
 
     /**
      * Adds a processor to the dispatch
@@ -69,7 +81,7 @@ Object.assign(EntityDispatch.prototype, {
      * @param {function} query - the query that will filter the entityset to the processors liking
      * @returns {object} returns the record describing the processor
      */
-    addProcessor(processor, query, options = {}) {
+    addProcessor(processor, query:Query, options:any = {}) {
         // let filter;
         if (!processor) {
             return null;
@@ -91,15 +103,18 @@ Object.assign(EntityDispatch.prototype, {
 
         query = query || processor.query || processor.entityFilter;
 
-        let entry = {
+        let entry:EntityProcessorEntry = {
             id: processor.id || uniqueID('procdisp'),
             processor: processor,
             createdAt: 0,
             updatedAt: -1,
-            executedAt: Date.now,
+            executedAt: Date.now(),
             priority: options.priority === void 0 ? 0 : options.priority,
-            interval: options.interval === void 0 ? 0 : options.interval
+            interval: options.interval === void 0 ? 0 : options.interval,
+            query: null,
+            queryID: null
         };
+        
         processor._priority = entry.priority;
 
         // Log.debug('[addProcessor]', 'added processor', processor.id, processor.constructor.name );
@@ -117,7 +132,7 @@ Object.assign(EntityDispatch.prototype, {
 
         this.processorEntries.add(entry);
 
-        if (this._entitySet) {
+        if (this.entitySet) {
             this._mapEntitySetToProcessor(entry, options);
 
             // if the processor has event listeners defined, connect those to the entityset
@@ -125,7 +140,7 @@ Object.assign(EntityDispatch.prototype, {
         }
 
         return entry;
-    },
+    }
 
     /**
      * Passes the entity to each of the registered processors in turn
@@ -168,7 +183,7 @@ Object.assign(EntityDispatch.prototype, {
 
             processor.update(entityArray, timeMs);
         });
-    },
+    }
 
     /**
      * Calls each of the registered processors to execute against
@@ -177,7 +192,7 @@ Object.assign(EntityDispatch.prototype, {
      * @param {number} timeMs - the delta of time that should be updated
      * @param {object} options
      */
-    update(timeMs = 0, options = {}) {
+    update(timeMs = 0, options:any = {}) {
         // let entitySet;
         // let entitySetID;
         // let entitySetProcessors;
@@ -273,14 +288,14 @@ Object.assign(EntityDispatch.prototype, {
             // if( debug && view.cid == 'ev38' ) Log.debug('[update]🐲 view', view.cid, this.time, entityToString(view) );
             entry.updatedAt = this.time;
         });
-    },
+    }
 
     /**
      * Async version of above
      */
     updateAsync(timeMs, options = {}) {
         return Promise.resolve(true);
-    },
+    }
 
     /**
      *
@@ -297,15 +312,16 @@ Object.assign(EntityDispatch.prototype, {
         if (!query) {
             // console.log('[Dispatch][_mapEntitySetToProcessor]', 'no query so using es');
             // console.log( entityToString(this._entitySet) );
-            entry.view = createEntitySetIndex(this._entitySet, null, { deferEvents: false });
+            entry.view = createEntitySetIndex(this.entitySet, null, { deferEvents: false });
         } else {
             if (!this._views) {
                 this._views = [];
             }
             let view = this._views[queryID];
             if (!view) {
-                view = createEntitySetIndex(this._entitySet, query, { deferEvents: false });
-                this.trigger(VIEW_CREATE, view);
+                throw new Error('not yet implemented - uncomment line below');
+                // view = createEntitySetIndex(this.entitySet, query, { deferEvents: false });
+                this.trigger(EntityEvent.ViewCreate, view);
             }
 
             this._addProcessorToView(queryID, view, entry);
@@ -314,7 +330,7 @@ Object.assign(EntityDispatch.prototype, {
         processor.view = processor.entitySet = entry.view;
 
         return entry;
-    },
+    }
 
     /**
      * Connects entity events originating from the entityset to the processors
@@ -341,13 +357,13 @@ Object.assign(EntityDispatch.prototype, {
                 return event.apply(processor, args);
             });
         }
-    },
+    }
 
     _removeEntry(entry) {
         // const query = entry.get('query');
         // const processor = entry.get('processor');
         // const view = entry.get('view');
-    },
+    }
 
     /**
      * Maps the view to the processor
@@ -363,7 +379,7 @@ Object.assign(EntityDispatch.prototype, {
         views[queryID] = processors;
         this._viewsToProcessors = views;
         return entry;
-    },
+    }
 
     /**
      *
@@ -372,7 +388,7 @@ Object.assign(EntityDispatch.prototype, {
         if (!this._viewsToProcessors) {
             return;
         }
-        entry.unset('view', view);
+        // entry.unset('view', view);
         const queryID = entry.queryID;
         let entryIDs = this._viewsToProcessors[queryID];
         entryIDs = arrayWithout(entryIDs, entry.id);
@@ -380,7 +396,7 @@ Object.assign(EntityDispatch.prototype, {
         if (entryIDs.length === 0) {
             const view = this._views[queryID];
             // we no longer need the view - remove the view
-            if (view.isEntitySetView) {
+            if (isEntitySetView(view)) {
                 this.registry.destroyEntitySet(this._views[queryID]);
             }
             delete this._views[queryID];
@@ -388,7 +404,7 @@ Object.assign(EntityDispatch.prototype, {
         } else {
             this._viewsToProcessors[queryID] = entryIDs;
         }
-    },
+    }
 
     /**
      *
@@ -405,9 +421,5 @@ Object.assign(EntityDispatch.prototype, {
         }
         return this.processorEntries.filter(e => entryIDs.indexOf(e.id) !== -1);
     }
-});
+}
 
-EntityDispatch.create = function(registry, entitySet) {
-    const result = new EntityDispatch(registry, entitySet);
-    return result;
-};

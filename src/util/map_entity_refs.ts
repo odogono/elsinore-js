@@ -1,5 +1,4 @@
-import {cloneComponent} from './clone';
-
+import { cloneComponent } from '../component';
 
 /**
 *   Updates any entity references on a component instance

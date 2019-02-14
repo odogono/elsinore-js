@@ -1,30 +1,26 @@
-import { register } from './dsl';
-import { ENTITY_FILTER,
-    LEFT_PAREN,
-    RIGHT_PAREN,
-    VALUE } from './constants';
-
 import { EntitySet } from '../entity_set';
+import { QueryOp } from '../types';
 import { arrayUnique } from '../util/array/unique';
+import { register } from './dsl';
 
 const SELECT_BY_ID = 'SBI';
 
-EntitySet.prototype.selectByID = function(entityIDs, returnAsEntitySet) {
-    let result;
-    returnAsEntitySet = returnAsEntitySet === undefined ? true : returnAsEntitySet;
-    result = selectByID(this.getRegistry(), this, entityIDs, returnAsEntitySet);
-    return result;
-};
+// EntitySet.prototype.selectByID = function(entityIDs, returnAsEntitySet) {
+//     let result;
+//     returnAsEntitySet = returnAsEntitySet === undefined ? true : returnAsEntitySet;
+//     result = selectByID(this.getRegistry(), this, entityIDs, returnAsEntitySet);
+//     return result;
+// };
 
 function dslSelectByID(entityIDs, selectFromRoot = false) {
     const context = this.readContext(this);
 
-    context.pushVal(LEFT_PAREN);
+    context.pushVal(QueryOp.LeftParen);
 
     context.pushVal(entityIDs, true);
     context.pushVal(selectFromRoot, true);
 
-    context.pushVal(RIGHT_PAREN);
+    context.pushVal(QueryOp.RightParen);
 
     context.pushOp(SELECT_BY_ID);
 
@@ -68,7 +64,7 @@ function commandSelectByID(context, entityIDs, selectFromRoot) {
     // process.exit();
     value = selectByID(context.registry, entitySet, entityIDs, true);
 
-    return (context.last = [VALUE, value]);
+    return (context.last = [QueryOp.Value, value]);
 }
 
 function selectByID(registry, entitySet, entityIDs, returnAsEntitySet) {

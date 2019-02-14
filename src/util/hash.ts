@@ -9,7 +9,7 @@
  * @param {integer} [seed] optionally pass the hash of the previous chunk
  * @returns {integer | string}
  */
-export function hash /*Fnv32a*/(str, asString = false, seed = 2166136261) {
+export function hash /*Fnv32a*/(str:string, asString:boolean = false, seed:number = 2166136261) : string | number {
     /*jshint bitwise:false */
     let ii,
         len,

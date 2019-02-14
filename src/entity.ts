@@ -1,75 +1,145 @@
-import {BitField} from 'odgn-bitfield';
+import { Base, BaseOptions } from './base';
+import { Component, cloneComponent } from './component';
+import { ComponentDefID, ComponentID, ENTITY_ID, ENTITY_SET_ID, EntityEvent, EntityID, EntitySetID } from './types';
 // import { setEntityIDFromID } from './util/id';
-import { isComponent, isEntity, isInteger, isString } from './util/is';
-import { uniqueID } from './util/unique_id';
-import { readProperty } from './util/read_property';
+import { isComponent, isEntity, isEntityID, isInteger, isString } from './util/is';
+
+import { BitField } from 'odgn-bitfield';
+import { ComponentDef } from './component_def';
+import { EntitySet } from './entity_set';
+import { Registry } from './registry';
+import { arrayDifference } from './util/array/difference';
 import { hash } from './util/hash';
-// import { extend } from './util/extend';
+import { readProperty } from './util/read_property';
+import { uniqueID } from './util/unique_id';
 
-// import { Component } from './component';
-import { Base } from './base';
+export interface EntityOptions extends BaseOptions {
+    [ENTITY_ID]?: EntityID;
+    [ENTITY_SET_ID]?: EntitySetID;
+    comBf?: BitField;
+    registry?: Registry;
+}
 
-import { ENTITY_ID, ENTITY_SET_ID, COMPONENT_UPDATE } from './constants';
+export interface ComponentMap {
+    [id: number]: Component;
+}
 
-export function Entity(options = {}) {
-    this.id = 0;
-    this._entitySet = null;
+export interface ComponentNameMap {
+    [name: string]: Component;
+}
 
-    this._registry = null;
-
-    // a map of components to their def id
-    this.components = {};
-
-    this.cid = uniqueID('e');
-
-    this._registry = readProperty(options, 'registry');
-
-    // entity id
-    this.id = readProperty(options, ENTITY_ID, 0);
-    this.id = readProperty(options, 'id', this.id);
-
+/**
+ * processing of incoming options prior to construction
+ */
+function convertOptions(options:EntityOptions = {}){
+    if( options[ENTITY_ID] ){
+        options.id = options[ENTITY_ID];
+    }
     // entityset id
     const esid = readProperty(options, ENTITY_SET_ID, 0);
+
     if (esid !== 0) {
         this.setEntitySetID(esid);
     }
 
-    // bitfield indexes which components this entity has
-    if (options.comBf) {
-        this._bf = options.comBf;
-        delete options.comBf;
-    } else {
-        this._bf = BitField.create();
-    }
+    return options;
 }
 
-Object.assign(Entity.prototype, Base.prototype, {
+
+export class Entity extends Base {
+    
+    readonly type:string = 'Entity';
+    
+    readonly isEntity:boolean = true;
+
+    _entitySet:EntitySet;
+    
+    components:ComponentMap;
+    
+    _bf: BitField;
+
+    component: ComponentNameMap = {};
+
+    // [key: string]: Component;
+
+    // [key: string]: Component;
+
+    static create( options:EntityID | EntityOptions = {} ){
+        if( isEntityID(options) ){
+            return new Entity({ [ENTITY_ID]:<EntityID>options } );
+        }
+        return new Entity(<EntityOptions>options);
+    }
+
+
+    static toEntityID( entityID:Entity|EntityID ) : EntityID {
+        if( isEntity(entityID) ){
+            return (<Entity>entityID).id;
+        }
+        return <EntityID>entityID;
+    }
+
+    static getEntityID( entity:any ) : EntityID {
+        if( entity && entity.getEntityID ){
+            return entity.getEntityID();
+        }
+        return undefined;
+    }
+
+
+    /**
+     * 
+     */
+    constructor( options:EntityOptions = {} ){
+        super( convertOptions(options) );
+        
+        this._entitySet = null;
+
+        // a map of components to their def id
+        this.components = {};
+
+        // bitfield indexes which components this entity has
+        if (options.comBf) {
+            this._bf = options.comBf;
+            delete options.comBf;
+        } else {
+            this._bf = BitField.create();
+        }
+    }
+
+    /**
+     * Returns a prefix which is attached to the instances cid
+     */
+    getCIDPrefix() : string {
+        return 'e';
+    }
+    
     /**
      * Sets the id of this entity
      * @param {*} id
      */
-    setEntityID(id, esID) {
-        let eid = this.id;
-        // // the entity id is set as the low 30 bits
-        // // eid += (id & 0x3fffffff) - (eid & 0x3fffffff);
-        // the entity id is set as the low 32 bits
-        eid += (id & 4294967295) - (eid & 4294967295);
-        this._setID(eid);
+    // setEntityID(id:number, esID?:number) {
+    //     let eid = this.id;
+    //     // // the entity id is set as the low 30 bits
+    //     // // eid += (id & 0x3fffffff) - (eid & 0x3fffffff);
+    //     // the entity id is set as the low 32 bits
+    //     eid += (id & 4294967295) - (eid & 4294967295);
+    //     this._setID(eid);
 
-        if (esID !== undefined) {
-            this.setEntitySetID(esID);
-        }
-    },
+    //     if (esID !== undefined) {
+    //         this.setEntitySetID(esID);
+    //     }
+    // }
 
     /**
      * internally set the id, making sure referenced components also get updated
      *
      * @param {*} id
      */
-    _setID(id) {
-        this.id = id;
-        Object.values(this.components).forEach(c => c.setEntityID(this.id));
-    },
+    // _setID(id) {
+    //     this.id = id;
+    //     Object.values(this.components).forEach(c => c.setEntityID(this.id));
+    // }
 
     /**
      * Returns the id of this entity
@@ -77,19 +147,19 @@ Object.assign(Entity.prototype, Base.prototype, {
     getEntityID() {
         // return this.get('eid') & 0x3fffffff;
         return this.id & 4294967295;
-    },
+    }
 
     /**
      *
      * @param {*} id
      */
-    setEntitySetID(id) {
-        let eid = this.id;
-        // the es id is set as the high 21 bits
-        // this.set( 'eid', (id & 0x3fffff) * 0x40000000 + (eid & 0x3fffffff) );
-        eid = (id & 2097151) * 4294967296 + (eid & 4294967295);
-        this._setID(eid);
-    },
+    // setEntitySetID(id) {
+    //     let eid = this.id;
+    //     // the es id is set as the high 21 bits
+    //     // this.set( 'eid', (id & 0x3fffff) * 0x40000000 + (eid & 0x3fffffff) );
+    //     eid = (id & 2097151) * 4294967296 + (eid & 4294967295);
+    //     this._setID(eid);
+    // }
 
     /**
      *
@@ -98,46 +168,45 @@ Object.assign(Entity.prototype, Base.prototype, {
         let id = this.id;
         // return (id - (id & 0x3fffffff))  / 0x40000000;
         return (id - (id & 4294967295)) / 4294967296;
-    },
+    }
 
     /**
      *
      * @param {*} es
      * @param {*} setID
      */
-    setEntitySet(es, setID = true) {
-        const registry = es.getRegistry();
-        this._entitySet = es;
-        this.setRegistry( registry );
-        for (let sid in this.components) {
-            this.components[sid].setEntity(this);
-        }
-        if (setID) {
-            this.setEntitySetID(es.id);
-        }
-    },
+    // setEntitySet(es, setID = true) {
+    //     const registry = es.getRegistry();
+    //     this._entitySet = es;
+    //     this.setRegistry( registry );
+    //     for (let sid in this.components) {
+    //         this.components[sid].setEntity(this);
+    //     }
+    //     if (setID) {
+    //         this.setEntitySetID(es.id);
+    //     }
+    // }
 
     /**
      *
      */
     getEntitySet() {
         return this._entitySet;
-    },
+    }
 
     /**
      * Returns a hash value for this entity
-     * @param {*} asString
      */
-    hash(asString) {
-        let result = 0;
+    hash() : number {
+        let result:string = '';
         for (let sid in this.components) {
-            result += this.components[sid].hash(true);
+            result += this.components[sid].toJSON();
         }
-        if (result === 0) {
+        if (result === '') {
             return 0;
         }
-        return hash(result, asString);
-    },
+        return <number>hash(result, false);
+    }
 
     /**
      * Returns a JSON representation of the entity
@@ -150,14 +219,14 @@ Object.assign(Entity.prototype, Base.prototype, {
             components = components.map(c => c.toJSON(options));
         }
         return components;
-    },
+    }
 
     /**
      * Adds a component instance to this entity
      *
      * @param {*} component
      */
-    addComponent(component, options) {
+    addComponent(component, options = {}) {
         const registry = this.getRegistry();
         if (component === undefined) {
             return this;
@@ -177,14 +246,14 @@ Object.assign(Entity.prototype, Base.prototype, {
         
 
         return this._addComponent(component);
-    },
+    }
 
     /**
      * Internal add of component
      *
      * @param {*} component
      */
-    _addComponent(component) {
+    _addComponent(component:Component) {
         const registry = this.getRegistry();
         const defID = component.getDefID();
         let existing = this.components[defID];
@@ -197,33 +266,29 @@ Object.assign(Entity.prototype, Base.prototype, {
 
         let name = component.getDefName();
         if( isString(name) ){
-            this[name] = component;
+            this.component[name] = component;
         } else if( registry ){
-            const def = registry.getComponentDef( defID );
-            this[def.getName()] = component;
+            const def = <ComponentDef>registry.getComponentDef( defID );
+            this.component[def.getName()] = component;
         }
 
         this.components[defID] = component;
         
         this.getComponentBitfield().set(defID, true);
 
-        // component.on('all', this._onComponentEvent, this);
-
-        if (typeof component.onAdded === 'function') {
-            component.onAdded(this);
+        if (typeof component['onAdded'] === 'function') {
+            component['onAdded'](this);
         }
 
-        // console.log('[Entity][_addComponent]',defID, !!existing, this.components );
-
         return this;
-    },
+    }
 
     /**
      * Returns an array of all the components associated with this entity
      *
      * @param {*} componentIDs
      */
-    getComponents(componentIDs) {
+    getComponents(componentIDs?:Array<string>) : Array<Component> {
         if (!this.components) {
             return [];
         }
@@ -231,8 +296,7 @@ Object.assign(Entity.prototype, Base.prototype, {
         if (componentIDs === undefined) {
             return Object.values(this.components);
         }
-        // componentIDs = componentIDs || this.getComponentBitfield().toValues();
-
+        
         return componentIDs.reduce((result, id) => {
             const com = this.components[id];
             if (com) {
@@ -240,14 +304,18 @@ Object.assign(Entity.prototype, Base.prototype, {
             }
             return result;
         }, []);
-    },
+    }
+
+    // getComponent( componentID ) : Component {
+    //     return this.getRegistry().getIID(componentID);
+    // }
 
     /**
      * Removes a component from the entity
      *
      * @param {*} component
      */
-    removeComponent(component, options) {
+    removeComponent(component:(string|ComponentDefID|Component)) {
         if (!component) {
             return this;
         }
@@ -256,18 +324,14 @@ Object.assign(Entity.prototype, Base.prototype, {
         if (isString(component) || isInteger(component)) {
             const registry = this.getRegistry();
             // convert to a def id
-            component = registry.getIID(component);
-            component = this.components[component];
+            let defID = <number>registry.getIID( <string>component);
+            component = this.components[defID];
         }
 
-        // if (this._entitySet) {
-        //     this._entitySet.removeComponent(component, options);
-        // } else {
             this._removeComponent(component);
-        // }
 
         return this;
-    },
+    }
 
     /**
      * Non-public means of removing a component from the entity
@@ -287,17 +351,20 @@ Object.assign(Entity.prototype, Base.prototype, {
         // perhaps the old entity id should be retained somewhere else?
         localComponent.setEntity(null);
 
-        delete this[localComponent.name];
+        delete this.component[localComponent.getDefName()];
+
         delete this.components[defID];
+        
         this.getComponentBitfield().set(defID, false);
+        
         component.off('all', this._onComponentEvent, this);
 
-        if (typeof localComponent.onRemoved === 'function') {
-            localComponent.onRemoved(this);
+        if (typeof localComponent['onRemoved'] === 'function') {
+            localComponent['onRemoved'](this);
         }
 
         return this;
-    },
+    }
 
     /**
      *
@@ -314,19 +381,25 @@ Object.assign(Entity.prototype, Base.prototype, {
             }
             return result;
         }, []);
-    },
+    }
 
     /**
      * Returns a component by its id
      * @param {*} componentIID
      */
-    getComponentByIID(componentIID) {
-        componentIID = this.getRegistry().getIID(componentIID);
-        if (Array.isArray(componentIID)) {
-            return componentIID.map(id => this.components[id]);
-        }
-        return this.components[componentIID];
-    },
+    getComponentByIID(componentIID:(string|number)) : Component {
+        let defID = this.getRegistry().getIID(componentIID);
+        return this.components[<number>defID];
+    }
+
+    /**
+     * 
+     */
+    getComponentsByIID( componentIIDs:(Array<string>|Array<number>) ) : Array<Component> {
+        let defID = this.getRegistry().getIID(componentIIDs);
+        let iidArray = <Array<number>>defID;
+        return iidArray.map(id => this.components[id]);
+    }
 
     /**
      *
@@ -339,19 +412,19 @@ Object.assign(Entity.prototype, Base.prototype, {
             componentIID = this.getRegistry().getIID(componentIID);
         }
         return this.getComponentBitfield().get(componentIID);
-    },
+    }
 
     /**
      *
      */
     hasComponents() {
         return Object.keys(this.components).length > 0;
-    },
+    }
 
     /**
      *
      */
-    getComponentBitfield() {
+    getComponentBitfield():BitField {
         // let bf = this._bf;
         // if (bf === undefined) {
         //     // TODO: the size must be configured from somewhere - otherwise will run out of space
@@ -359,7 +432,7 @@ Object.assign(Entity.prototype, Base.prototype, {
         //     this.set('comBf', bf);
         // }
         return this._bf;
-    },
+    }
 
     /**
      *   The number of components on this entity
@@ -367,7 +440,7 @@ Object.assign(Entity.prototype, Base.prototype, {
     getComponentCount() {
         return Object.keys(this.components).length;
         // return this.getComponentBitfield().count();
-    },
+    }
 
     /**
      *
@@ -381,51 +454,114 @@ Object.assign(Entity.prototype, Base.prototype, {
             // so we end up passing evtName, recipientEntity, ...
             es.triggerEntityEvent.apply(es, args);
         }
-    },
+    }
 
     /**
      *   Reacts to events triggered by contained components
      */
     _onComponentEvent(event, component, options) {
         if (event === 'destroy') {
-            this.removeComponent(component, options);
+            this.removeComponent(component);
         }
         if (event === 'update') {
-            event = COMPONENT_UPDATE;
-            // log.debug('_onComponentEvent ' + ' '  + ' ' + JSON.stringify(arguments));
+            event = EntityEvent.ComponentUpdate;
             this.trigger(event, component, options);
         }
     }
-});
 
-Entity.prototype.type = 'Entity';
-Entity.prototype.isEntity = true;
+    clone( options:CloneOptions = {}) {
+        let result = Entity.create( this.getEntityID() );
 
-Entity.create = function(options = {}) {
-    let result = new Entity(options);
-    return result;
-};
-
-Entity.prototype.clone = function(options = {}) {
-    let result = Entity.create({
-        [ENTITY_ID]: this.id,
-        [ENTITY_SET_ID]: this.esid,
-        registry: this._registry
-    });
-
-    return result;
-};
-
-Entity.toEntityID = function(entityID) {
-    if (isEntity(entityID)) {
-        return entityID.id;
+        // let result = Entity.create({
+        //     [ENTITY_ID]: this.getEntityID(),
+        //     [ENTITY_SET_ID]: this.getEntitySetID(),
+        //     registry: this.getRegistry(),
+        //     ...options
+        // });
+    
+        return result;
     }
-    return entityID;
-};
 
-Entity.getEntityID = function(entity) {
-    if (entity && entity.getEntityID) {
-        return entity.getEntityID();
+    
+}
+
+
+export interface CloneOptions extends EntityOptions {
+    
+    // remove components from dstEntity which are not present on the srcEntity
+    delete?:boolean;
+
+    returnChanged?:boolean;
+
+    full?:boolean,
+
+    debug?:boolean
+}
+
+
+/**
+ * 
+ * @param {*} srcEntity 
+ * @param {*} dstEntity 
+ * @param {*} options 
+ */
+export function cloneEntity(srcEntity:Entity, dstEntity?:Entity, options:CloneOptions = {}) : Entity | [Entity,boolean] {
+    // const registry = srcEntity.getRegistry();
+    let ii, len, component, srcComponent;
+    const deleteMissing = options.delete;
+    const returnChanged = options.returnChanged;
+    const fullCopy = options.full;
+    const debug = !!options.debug;
+    let dstHasChanged = false;
+
+    if (!srcEntity) {
+        return returnChanged ? [null, false] : null;
     }
-    return undefined;
-};
+
+    if (!dstEntity) {
+        dstEntity = srcEntity.clone();
+    }
+
+    if (!dstEntity && !fullCopy) {
+        return dstEntity;
+    }
+
+    if (deleteMissing) {
+        // removes components from dstEntity which are not present on the srcEntity
+
+        const srcBitfield:BitField = srcEntity.getComponentBitfield();
+        const dstBitfield:BitField = dstEntity.getComponentBitfield();
+        const removeDefIDs = arrayDifference( <number[]>dstBitfield.toJSON(), <number[]>srcBitfield.toJSON() );
+
+        // if( debug ) console.log('[cloneEntity]', 'removeDefIDs', removeDefIDs, dstBitfield.toJSON(), srcBitfield.toJSON() );
+
+        for (ii = 0, len = removeDefIDs.length; ii < len; ii++) {
+            dstEntity.removeComponent(dstEntity.components[ removeDefIDs[ii] ]);
+            dstHasChanged = true;
+        }
+    }
+
+    const srcComponents = srcEntity.getComponents();
+
+    for (ii = 0, len = srcComponents.length; ii < len; ii++) {
+        srcComponent = srcComponents[ii];
+        component = dstEntity.components[srcComponent.getDefID()];
+
+        // if( debug ) console.log('[cloneEntity]', srcComponent.toJSON(), component.toJSON(), srcComponent.hash(),component.hash() );
+        if (component) {
+            // the dst entity already has this component
+            if (srcComponent.hash() == component.hash()) {
+                continue;
+            }
+        }
+
+        dstHasChanged = true;
+        const cloned = cloneComponent(srcComponent);
+        // if( debug ) console.log('[cloneEntity]', 'add comp', cloned.toJSON() );
+        dstEntity.addComponent( cloned, {debug:true} );
+        // if( debug ) console.log('[cloneEntity]', 'dst', dstEntity.toJSON() );
+    }
+
+    return returnChanged ? [dstEntity, dstHasChanged] : dstEntity;
+}
+

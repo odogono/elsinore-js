@@ -1,20 +1,21 @@
-import { Base } from '../base';
-import { createLog } from './log';
-import { stringify } from './stringify';
-import { toString as entityToString } from './to_string';
-import { readProperty } from './read_property';
-
-const Log = createLog('JSONExporter');
-
 import {
-    COMMAND,
-    ENTITY_ADD,
-    ENTITY_ID,
     COMPONENT_ID,
+    ENTITY_ID,
     ENTITY_SET_COMPONENT,
     ENTITY_SET_ENTITY,
     ENTITY_SET_SCHEMA
-} from '../constants';
+} from '../types';
+
+import { Base } from '../base';
+import { EntityEvent } from 'src/types';
+import { LCMD_COMMAND } from '../types';
+import { createLog } from './log';
+import { toString as entityToString } from './to_string';
+import { readProperty } from './read_property';
+import { stringify } from './stringify';
+
+const Log = createLog('JSONExporter');
+
 
 export function JSONExporter(options = {}) {}
 
@@ -29,7 +30,7 @@ Object.assign(JSONExporter.prototype, Base.prototype, {
         const useDefUris = readProperty(options, 'useDefUris', false);
 
         // emit an initial event which will identify the current entityset
-        this.trigger('es', { [COMMAND]: 'es', uuid: entitySet.getUUID(), id: entitySet.id });
+        this.trigger('es', { [LCMD_COMMAND]: 'es', uuid: entitySet.getUUID(), id: entitySet.id });
 
         if (triggerDefs) {
             this._triggerComponentDefs(entitySet);
@@ -39,14 +40,14 @@ Object.assign(JSONExporter.prototype, Base.prototype, {
             this._triggerExistingComponents(entitySet, options);
         }
 
-        this.listenTo(entitySet, ENTITY_ADD, entities => {
+        this.listenTo(entitySet, EntityEvent.EntityAdd, entities => {
             const cdefMap = useDefUris ? entitySet.getComponentRegistry().getComponentDefUris() : null;
             entities.forEach(e => {
                 let components = e.getComponents();
                 components.forEach(com =>
                     this.trigger(ENTITY_SET_COMPONENT, this.componentToJSON(com, cdefMap, anonymous))
                 );
-                this.trigger(ENTITY_SET_ENTITY, { [COMMAND]: 'entity' });
+                this.trigger( ENTITY_SET_ENTITY, { [LCMD_COMMAND]: 'entity' });
             });
         });
 
@@ -63,7 +64,7 @@ Object.assign(JSONExporter.prototype, Base.prototype, {
 
         schemas.forEach(schema => {
             let payload = {
-                [COMMAND]: 'register',
+                [LCMD_COMMAND]: 'register',
                 ...schema.toJSON()
             };
             this.trigger(ENTITY_SET_SCHEMA, payload);
@@ -100,7 +101,7 @@ Object.assign(JSONExporter.prototype, Base.prototype, {
                     currentEntityID = component.getEntityID();
                 } else if (currentEntityID !== component.getEntityID()) {
                     if (anonymous) {
-                        this.trigger(ENTITY_SET_ENTITY, { [COMMAND]: 'entity' });
+                        this.trigger(ENTITY_SET_ENTITY, { [LCMD_COMMAND]: 'entity' });
                     }
                     currentEntityID = component.getEntityID();
                 }
@@ -119,7 +120,7 @@ Object.assign(JSONExporter.prototype, Base.prototype, {
             .on('end', () => {
                 // flush final entity
                 if (anonymous && currentEntityID !== -1) {
-                    this.trigger(ENTITY_SET_ENTITY, { [COMMAND]: 'entity' });
+                    this.trigger(ENTITY_SET_ENTITY, { [LCMD_COMMAND]: 'entity' });
                 }
             });
     },

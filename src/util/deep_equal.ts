@@ -26,6 +26,8 @@
 
 import { isFunction } from './is';
 
+const SymbolProto = typeof Symbol !== 'undefined' ? Symbol.prototype : null;
+
 let toString = Object.prototype.toString;
 
 /**
@@ -33,8 +35,8 @@ let toString = Object.prototype.toString;
  * @param {*} val1
  * @param {*} val2
  */
-export function deepEqual(a, b) {
-    return eq(a, b);
+export function deepEqual(a:any, b:any) {
+    return eq(a, b, undefined, undefined);
 }
 
 // Internal recursive comparison function for `isEqual`.

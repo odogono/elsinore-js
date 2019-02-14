@@ -1,62 +1,102 @@
-import { Base } from './base';
-import { stringify } from './util/stringify';
+import { Base, BaseOptions } from './base';
+
+import { componentNameFromUri } from './util/name_from_uri';
 import { hash } from './util/hash';
 import { isObject } from './util/is';
-import { componentNameFromUri } from './util/name_from_uri';
+import { stringify } from './util/stringify';
 // import { createLog } from './util/log';
 
 // const Log = createLog('ComponentDef', false);
 
-export function ComponentDef(attrs = {}, options) {
-    this.id = attrs.id;
-    this.properties = attrs.properties;
-    this.attrs = createAttrsFromProperties(this.properties);
-    this.uri = attrs.uri;
-    this.name = attrs.name || componentNameFromUri(this.uri);
-    this.componentType = attrs.type || attrs.componentType;
-    this.options = attrs.options || options;
+
+interface ComponentDefOptions extends BaseOptions {
+
 }
 
-Object.assign(ComponentDef.prototype, Base.prototype, {
-    
-    getUri() {
-        return this.uri;
-    },
+export interface ComponentDefAttrs {
+    id?: number;
+    uri?: string;
+    name?: string;
+    type? : string;
+    componentType? : string;
+    properties?: any;
+    options?: any;
+}
 
-    getName() {
+
+function processOptions( attrs:ComponentDefAttrs={}, options:ComponentDefOptions={} ) : ComponentDefOptions {
+    if( attrs.id !== undefined ){
+        options.id = attrs.id;
+    }
+
+    return options;
+}
+
+
+export class ComponentDef extends Base {
+    
+    readonly type:string = 'ComponentDef';
+
+    readonly isComponentDef:boolean = true;
+
+    uri: string;
+
+    name: string;
+
+    properties;
+
+    attrs;
+
+    options:ComponentDefOptions;
+
+    componentType;
+
+    
+    constructor(attrs:ComponentDefAttrs = {}, options:ComponentDefOptions = {}) {
+        super( processOptions(attrs,options) );
+        
+        this.properties = attrs.properties;
+        this.attrs = createAttrsFromProperties(this.properties);
+        this.uri = attrs.uri;
+        this.name = attrs.name || componentNameFromUri(this.uri);
+        this.componentType = attrs.type || attrs.componentType;
+        this.options = attrs.options || options;
+    }
+
+    getUri() : string {
+        return this.uri;
+    }
+
+    getName() : string {
         return this.name;
-    },
+    }
 
     getType() {
         return this.componentType;
-    },
+    }
 
-    getAttrs() {
+    getAttrs() : ComponentDefAttrs {
         return this.attrs;
-    },
+    }
 
-    getProperties() {
+    getProperties() : any {
         return this.properties;
-    },
+    }
 
-    toJSON(...args) {
-        let result = { id: this.id, name: this.name, uri: this.uri }; //  //Model.prototype.toJSON.apply(this, args);
+    toJSON(...args) : ComponentDefAttrs {
+        let result:ComponentDefAttrs = { id: this.id, name: this.name, uri: this.uri }; //  //Model.prototype.toJSON.apply(this, args);
         if (this.properties !== undefined) {
             result.properties = this.properties;
         }
         // delete result.attrs;
         return result;
-    },
-
-    hash(asString = true) {
-        let result;
-        result = hash(stringify(this.getProperties()) + ':' + this.getName(), asString);
-        return result;
     }
-});
 
-ComponentDef.prototype.type = 'ComponentDef';
-ComponentDef.prototype.isComponentDef = true;
+    hash() : number {
+        return <number>hash(stringify(this.getProperties()) + ':' + this.getName(), false);
+    }
+}
+
 
 /**
  *

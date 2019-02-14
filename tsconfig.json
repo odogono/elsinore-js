@@ -1,12 +1,21 @@
 {
     "compilerOptions": {
         "allowSyntheticDefaultImports": true,
+        "esModuleInterop": true,
+        "downlevelIteration": true,
         "baseUrl": ".",
-        "module": "es2015",
+        "module": "commonjs",
         "moduleResolution": "node",
-        "target": "es5",
+
+        "lib": ["es2018", "dom"],
+        "inlineSourceMap": true,
+        "target": "es2018",
         "declaration": true,
         "outDir": "lib",
     },
-    "include": [ "./src/**/*" ]
+    "include": [ "./src/**/*" ],
+    "exclude":[
+        "node_modules",
+        "test-old"
+    ]
 }

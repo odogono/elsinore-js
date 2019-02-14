@@ -1,69 +1,77 @@
+// import { stringify } from '../util/stringify';
+import { QueryFilter, applyQueryFilter } from '../query/through';
+
 import { Base } from '../base';
+import { Entity } from 'src/entity';
+import { EntityEvent } from 'src/types';
+import { EntitySet } from './index'
 // import { EntitySet } from './index';
 import { Query } from '../query';
 import { createUUID } from '../util/uuid';
+import { toString as entityToString } from '../util/to_string';
 import { propertyResult } from '../util/result';
 import { uniqueID } from '../util/unique_id';
-// import { stringify } from '../util/stringify';
-import { applyQueryFilter, QueryFilter } from '../query/through';
-import { toString as entityToString } from '../util/to_string';
 
-import { ENTITY_ADD, ENTITY_REMOVE, ENTITY_UPDATE, ENTITY_EVENT } from '../constants';
-
-/**
- * An index into an entityset
- *
- * @param {*} entities
- * @param {*} options
- */
-export function ReadOnlyView(entitySet, query, options = {}) {
-    this.id = options.id || 0;
-    this._uuid = options.uuid || createUUID();
-    this.cid = uniqueID('ev');
-    this.entitySet = entitySet;
-
-    this.deferEvents = propertyResult(options, 'deferEvents', false);
-    this.debug = propertyResult(options, 'debug', false);
-
-    query = Query.toQuery(query);
-    this.query = query;
-    this.queryID = query ? query.hash() : 'all';
-
-    this._entityIDs = [];
-    this._entityIDMap = {};
-
-    this._deferedAddEntities = [];
-    this._deferedRemoveEntities = [];
-
-    this._reset();
-    this._addListeners();
-}
-
-export function create(entitySet, query, options = {}) {
+export function create( entitySet:EntitySet, query?:Query, options:any = {} ){
     return new ReadOnlyView(entitySet, query, options);
 }
 
-Object.assign(ReadOnlyView.prototype, Base.prototype, {
+export class ReadOnlyView extends Base {
+
+    readonly type:string = 'EntitySetReadOnlyView';
+    
+    readonly isMemoryEntitySet:boolean = true;
+    
+    readonly isEntitySet:boolean = true;
+
+    readonly isReadOnlyView:boolean = true;
+    
+    readonly isAsync:boolean = false;
+    
+    entitySet: EntitySet;
+
+    deferEvents: boolean;
+    debug: false;
+
+    query?:Query;
+    queryID:string|number = 'all';
+
+    _entityIDs:number[] = [];
+    _entityIDMap:{} = {};
+
+    _deferedAddEntities:Entity[] = [];
+    _deferedRemoveEntities:Entity[] = [];
+
+    constructor( entitySet:EntitySet, query?:Query, options:any = {} ){
+        super(options);
+        
+        this.entitySet = entitySet;
+    
+        this.deferEvents = propertyResult(options, 'deferEvents', false);
+        this.debug = propertyResult(options, 'debug', false);
+    
+        query = Query.toQuery(query);
+        this.query = query;
+        this.queryID = query ? query.hash() : 'all';
+    
+    
+        this._reset();
+        this._addListeners();
+    }
+
+    /**
+     * Returns a prefix which is attached to the instances cid
+     */
+    getCIDPrefix() : string {
+        return 'ev';
+    }
+
     /**
      * Returns the id of the entitySet
      */
     getEntitySetID() {
         return this.entitySet.getEntitySetID();
-    },
-
-    /**
-     *
-     */
-    getUuid() {
-        return this._uuid;
-    },
-
-    /**
-     *
-     */
-    getUUID() {
-        return this._uuid;
-    },
+    }
 
     /**
      * Adds an entity to the source entitySet
@@ -73,7 +81,7 @@ Object.assign(ReadOnlyView.prototype, Base.prototype, {
      */
     addEntity(entity, options) {
         return this.entitySet.addEntity(entity, options);
-    },
+    }
 
     /**
      * Removes an entity from the source entitySet
@@ -82,7 +90,7 @@ Object.assign(ReadOnlyView.prototype, Base.prototype, {
      */
     removeEntity(entity, options) {
         return this.entitySet.removeEntity(entity, options);
-    },
+    }
 
     /**
      * Adds a component to the source entitySet
@@ -91,7 +99,7 @@ Object.assign(ReadOnlyView.prototype, Base.prototype, {
      */
     addComponent(component, options) {
         return this.entitySet.addComponent(component, options);
-    },
+    }
 
     /**
      * Removes a component from the source entitySet
@@ -100,7 +108,7 @@ Object.assign(ReadOnlyView.prototype, Base.prototype, {
      */
     removeComponent(component, options) {
         return this.entitySet.removeComponent(component, options);
-    },
+    }
 
     /**
      * @private
@@ -115,7 +123,7 @@ Object.assign(ReadOnlyView.prototype, Base.prototype, {
                 this._add(entity);
             }
         }
-    },
+    }
 
     /**
      *
@@ -131,7 +139,7 @@ Object.assign(ReadOnlyView.prototype, Base.prototype, {
         this._entityIDs.push(entity.id);
         this._entityIDMap[entity.id] = entity.id;
         return entity;
-    },
+    }
 
     /**
      *
@@ -148,21 +156,21 @@ Object.assign(ReadOnlyView.prototype, Base.prototype, {
         this._entityIDs.splice(index, 1);
         delete this._entityIDMap[id];
         return entity;
-    },
+    }
 
     /**
      * Returns the number of entities in this view
      */
     size() {
         return this._entityIDs.length;
-    },
+    }
 
     /**
      * Returns the entity at the specified index
      */
     at(index) {
         return this.entitySet._entities.get(this._entityIDs[index]);
-    },
+    }
 
     /**
      * Returns the entity by an id
@@ -171,7 +179,7 @@ Object.assign(ReadOnlyView.prototype, Base.prototype, {
      */
     getByEntityID(entityID) {
         return this.entitySet.getByEntityID(entityID);
-    },
+    }
 
     /**
      *
@@ -184,13 +192,13 @@ Object.assign(ReadOnlyView.prototype, Base.prototype, {
                 return nextIndex < this.size() ? { value: this.at(nextIndex++), done: false } : { done: true };
             }
         };
-    },
+    }
 
     /**
      * Applies any defered add/remove entity events this view might have received
      * @param {*} options
      */
-    applyEvents(options = {}) {
+    applyEvents(options:any = {}) {
         let ii, len;
         let added = [];
         let removed = [];
@@ -232,37 +240,37 @@ Object.assign(ReadOnlyView.prototype, Base.prototype, {
         this._deferedRemoveEntities = [];
 
         if (added.length) {
-            this.trigger(ENTITY_ADD, added);
+            this.trigger( EntityEvent.EntityAdd, added);
         }
 
         if (removed.length) {
-            this.trigger(ENTITY_REMOVE, removed);
+            this.trigger(EntityEvent.EntityRemove, removed);
         }
-    },
+    }
 
     /**
      * @private
      */
     _addListeners() {
         // this.listenTo( this.entitySet, 'all', (name,objs) => console.log('received', name, objs.map(o => o.id) ));
-        this.listenTo(this.entitySet, ENTITY_ADD, this._onEntityAdd.bind(this));
-        this.listenTo(this.entitySet, ENTITY_REMOVE, this._onEntityRemove.bind(this));
-        this.listenTo(this.entitySet, ENTITY_UPDATE, this._onEntityUpdate.bind(this));
+        this.listenTo(this.entitySet, EntityEvent.EntityAdd, this._onEntityAdd.bind(this));
+        this.listenTo(this.entitySet, EntityEvent.EntityRemove, this._onEntityRemove.bind(this));
+        this.listenTo(this.entitySet, EntityEvent.EntityUpdate, this._onEntityUpdate.bind(this));
 
-        this.listenTo(this.entitySet, ENTITY_EVENT, this._onEntityEvent.bind(this));
+        this.listenTo(this.entitySet, EntityEvent.EntityEvent, this._onEntityEvent.bind(this));
         // this.listenTo(this.entitySet, 'component:add', this._onComponentAdd.bind(this));
         // this.listenTo(this.entitySet, 'component:remove', this._onComponentUpdate.bind(this));
-    },
+    }
 
     /**
      * @private
      */
     _removeListeners() {
-        this.stopListening(this.entitySet, ENTITY_ADD);
-        this.stopListening(this.entitySet, ENTITY_REMOVE);
-        this.stopListening(this.entitySet, ENTITY_UPDATE);
-        this.stopListening(this.entitySet, ENTITY_EVENT);
-    },
+        this.stopListening(this.entitySet, EntityEvent.EntityAdd);
+        this.stopListening(this.entitySet, EntityEvent.EntityRemove);
+        this.stopListening(this.entitySet, EntityEvent.EntityUpdate);
+        this.stopListening(this.entitySet, EntityEvent.EntityEvent);
+    }
 
     /**
      * Handles entity events received from the EntitySet.
@@ -276,7 +284,7 @@ Object.assign(ReadOnlyView.prototype, Base.prototype, {
         if (applyQueryFilter(this.query, entity)) {
             this.trigger.apply(this, [name, entity, this, ...args]);
         }
-    },
+    }
 
     /**
      *
@@ -303,9 +311,9 @@ Object.assign(ReadOnlyView.prototype, Base.prototype, {
         }
 
         if (added.length) {
-            this.trigger( ENTITY_ADD, added);
+            this.trigger( EntityEvent.EntityAdd, added);
         }
-    },
+    }
 
     /**
      *
@@ -340,9 +348,9 @@ Object.assign(ReadOnlyView.prototype, Base.prototype, {
         }
         if (removed.length) {
             // console.log(`[ROView][${this.cid}][_onEntityRemove]`, 'removed', entities.map(e=>e.id), 'size', this._entityIDs );
-            this.trigger( ENTITY_REMOVE, removed);
+            this.trigger( EntityEvent.EntityRemove, removed);
         }
-    },
+    }
 
     /**
      *
@@ -386,17 +394,12 @@ Object.assign(ReadOnlyView.prototype, Base.prototype, {
         }
 
         if (removed.length) {
-            this.trigger( ENTITY_REMOVE, removed);
+            this.trigger( EntityEvent.EntityRemove, removed);
         }
 
         if (added.length) {
-            this.trigger( ENTITY_ADD, added);
+            this.trigger( EntityEvent.EntityAdd, added);
         }
     }
 
-});
-
-ReadOnlyView.prototype.type = 'EntitySetReadOnlyView';
-ReadOnlyView.prototype.isMemoryEntitySet = true;
-ReadOnlyView.prototype.isReadOnlyView = true;
-ReadOnlyView.prototype.isEntitySetView = true;
+}

@@ -1,31 +1,27 @@
-import { register } from './dsl';
-import { ENTITY_FILTER,
-    LEFT_PAREN,
-    RIGHT_PAREN,
-    VALUE } from './constants';
-
-import { Query } from './index';
+import {ENTITY_ID} from '../types';
 import { EntitySet } from '../entity_set';
+import { Query } from './index';
+import { QueryOp } from '../types';
 import { arrayUnique } from '../util/array/unique';
+import { register } from './dsl';
 
 const PLUCK = 'PL';
 
-import {ENTITY_ID} from '../constants';
 
 /**
  * Adds pluck functionality directory to entityset
  */
-EntitySet.prototype.pluck = function(componentIDs, attr) {
-    const query = new Query(Q => Q.pluck(componentIDs, attr));
-    return query.execute(this);
-};
+// EntitySet.prototype.pluck = function(componentIDs, attr) {
+//     const query = new Query(Q => Q.pluck(componentIDs, attr));
+//     return query.execute(this);
+// };
 
 function dslPluck(componentIDs, property, options) {
     const context = this.readContext(this);
 
     context.pushOp(PLUCK);
 
-    context.pushVal(LEFT_PAREN);
+    context.pushVal(QueryOp.LeftParen);
 
     context.pushVal(componentIDs, true);
 
@@ -36,7 +32,7 @@ function dslPluck(componentIDs, property, options) {
         context.pushVal(options, true);
     }
 
-    context.pushVal(RIGHT_PAREN);
+    context.pushVal(QueryOp.RightParen);
 
     return context;
 }
@@ -75,7 +71,7 @@ function commandPluck(context, componentIDs, attributes, options) {
         result = arrayUnique(result);
     }
 
-    return context.last = [VALUE, result];
+    return context.last = [QueryOp.Value, result];
 }
 
 function pluckEntitySet(registry, entitySet, componentIDs, attributes) {

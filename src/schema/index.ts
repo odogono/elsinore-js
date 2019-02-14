@@ -1,48 +1,65 @@
-import { Base } from '../base';
+import { Base, BaseOptions } from '../base';
+import { COMPONENT_DEF_ID, EntityEvent } from '../types';
+import { isComponent, isObject } from '../util/is';
+
 import { Collection } from '../util/collection';
 import { Component } from '../component';
+import { ComponentDef } from '../component_def';
 import { Events } from '../util/events';
+import { Registry } from '../registry';
+import { createLog } from '../util/log';
+import { propertyResult } from '../util/result';
 import { stringify } from '../util/stringify';
 
-import { isComponent, isObject } from '../util/is';
-import { createLog } from '../util/log';
+const Log = createLog('ComponentRegistry');
 
-import { propertyResult } from '../util/result';
 
-import { ComponentDef } from '../component_def';
 
-const Log = createLog('ComponentRegistry', false);
+export type ComponentDefSearch = (Array<number> | number | Array<ComponentDef> | ComponentDef);
 
-import {
-    COMPONENT_CREATE,
-    COMPONENT_DEF_ID,
-    COMPONENT_DEFINITION_ADD,
-    COMPONENT_DEFINITION_REMOVE,
-    COMPONENT_TYPE_ADD
-} from '../constants';
+export type ComponentDefIDs = (string|number|Array<string>|Array<number>);
 
+export interface ComponentRegistryOptions extends BaseOptions {
+
+}
+
+
+interface GetComponentDefOptions {
+    // if true, any non null results will be returned in an array
+    forceArray?:boolean;
+
+    // // return only IDs not instances
+    // returnIDs?:boolean;
+
+    // if a componentDef is not found, throw an error
+    throwOnNotFound?:boolean;
+}
 
 /**
  * 
  * @param {*} models 
  * @param {*} options 
  */
-export function ComponentDefCollection( models, options={} ){
-    Collection.prototype.initialize.call(this, models, options );
+export class ComponentDefCollection extends Collection<ComponentDef> {
+
+    model = ComponentDef;
+
+    constructor(models?, options={}){
+        super(models,options);
+        // Collection.prototype.initialize.call(this, models, options );
+    }
+
+    getByHash(hash:number) : ComponentDef {
+        return <ComponentDef>this.find(cdef => cdef.hash() == hash);
+    }
+
+    getByUri(uri:string) : ComponentDef {
+        return <ComponentDef>this.find(cdef => cdef.getUri() == uri);
+    }
 }
 
-Object.assign( ComponentDefCollection.prototype, Collection.prototype,{
-    getByHash(hash) {
-        return this.find(cdef => cdef.hash() == hash);
-    },
 
-    getByUri(uri) {
-        return this.find(cdef => cdef.getUri() == uri);
-    }
-});
-
-
-ComponentDefCollection.prototype.model = ComponentDef;
+// ComponentDefCollection.prototype.model = ComponentDef;
 
 
 
@@ -51,19 +68,23 @@ ComponentDefCollection.prototype.model = ComponentDef;
  * @param {*} definitions 
  * @param {*} options 
  */
-export function ComponentRegistry(definitions, options={}){
-    Object.assign(this, Events);
-    this.initialize( definitions, options );
-}
+export class ComponentRegistry extends Base {
+
+    _componentIndex:number = 1;
+
+    _componentDefs:ComponentDefCollection;
+
+    _componentDefByUri:ComponentDefCollection;
+
+    _componentTypes:object;
 
 
-/**
- *
- */
-Object.assign( ComponentRegistry.prototype, {
+    constructor(definitions?, options:ComponentRegistryOptions={}){
+        super(options);
+        this.initialize( definitions, options );
+    }
 
-    initialize(definitions, options = {}) {
-        this.registry = options.registry;
+    initialize(definitions, options:ComponentRegistryOptions = {}) {
         this._componentIndex = 1;
         this._componentDefs = new ComponentDefCollection();
         this._componentDefByUri = new ComponentDefCollection(null, { idAttribute: 'uri' });
@@ -71,9 +92,9 @@ Object.assign( ComponentRegistry.prototype, {
         if (definitions) {
             definitions.forEach(def => this.register(def));
         }
-    },
+    }
 
-    toJSON(options = {}) {
+    toJSON(options:any = {}) {
         return this._componentDefs.reduce((result, def) => {
             if (options.expanded) {
                 result[def.id] = def;
@@ -82,18 +103,18 @@ Object.assign( ComponentRegistry.prototype, {
             }
             return result;
         }, []);
-    },
+    }
 
     /**
      * Returns the registered component defs as an array of def ids
      * to def uris
      */
-    getComponentDefUris() {
-        return this._componentDefs.reduce((result, def) => {
+    getComponentDefUris() : Map<number,string> {
+        return this._componentDefs.models.reduce((result, def) => {
             result[def.id] = def.getUri();
             return result;
-        }, []);
-    },
+        }, new Map<number,string>() );
+    }
 
     /**
      * Adds a component definition to the registry
@@ -101,7 +122,7 @@ Object.assign( ComponentRegistry.prototype, {
      * @param {*} def
      * @param {*} options
      */
-    register(def, options = {}) {
+    register(def, options:any = {}) {
         let componentDef;
         let throwOnExists = options.throwOnExists === void 0 ? true : options.throwOnExists;
 
@@ -110,7 +131,7 @@ Object.assign( ComponentRegistry.prototype, {
         } else if (Array.isArray(def)) {
             return def.map(d => this.register(d, options));
         } else if ( def.prototype && def.prototype.isComponent === true ){ // isComponent(def)) {
-            const defOptions = { registering: true, registry: this.registry };
+            const defOptions = { registering: true, registry: this.getRegistry() };
             let inst = new def(null, defOptions);
             const properties = propertyResult(inst, 'properties');
             if (properties) {
@@ -118,7 +139,7 @@ Object.assign( ComponentRegistry.prototype, {
             }
             const type = propertyResult(inst, 'type');
             this._componentTypes[type] = def;
-            this.trigger(COMPONENT_TYPE_ADD, type, def);
+            this.trigger(EntityEvent.ComponentAdd, type, def);
 
             const uri = propertyResult(inst, 'uri');
             if (uri) {
@@ -134,7 +155,7 @@ Object.assign( ComponentRegistry.prototype, {
             componentDef = new ComponentDef({ ...def });
         }
 
-        const existing = this.getComponentDef(componentDef.hash());
+        const existing = <ComponentDef>this.getComponentDef(componentDef.hash());
 
         if (existing) {
             if (throwOnExists) {
@@ -177,10 +198,10 @@ Object.assign( ComponentRegistry.prototype, {
         this._componentDefByUri.remove(componentDef.getUri());
         this._componentDefByUri.add(componentDef);
 
-        this.trigger(COMPONENT_DEFINITION_ADD, componentDef.getUri(), componentDef.hash(), componentDef);
+        this.trigger(EntityEvent.ComponentDefAdd, componentDef.getUri(), componentDef.hash(), componentDef);
 
         return componentDef;
-    },
+    }
 
     /**
      * Removes a definition from the registry
@@ -188,7 +209,7 @@ Object.assign( ComponentRegistry.prototype, {
      * @param {*} def
      */
     unregister(def) {
-        let componentDef = this.getComponentDef(def);
+        let componentDef = <ComponentDef>this.getComponentDef(def);
         if (!componentDef) {
             return null;
         }
@@ -197,22 +218,22 @@ Object.assign( ComponentRegistry.prototype, {
 
         this._componentDefs.remove(componentDef.id);
 
-        this.trigger(COMPONENT_DEFINITION_REMOVE, componentDef.getUri(), componentDef.hash(), componentDef);
+        this.trigger(EntityEvent.ComponentDefRemove, componentDef.getUri(), componentDef.hash(), componentDef);
 
         return componentDef;
-    },
+    }
 
     /**
      * Returns an array of the registered componentdefs
      *
      * @param {*} options
      */
-    getComponentDefs(options = {}) {
+    getComponentDefs(options:{all?:boolean} = {}) {
         if (options.all) {
             return this._componentDefs.models;
         }
         return this._componentDefByUri.models;
-    },
+    }
 
     /**
      * Creates a new component instance
@@ -222,18 +243,15 @@ Object.assign( ComponentRegistry.prototype, {
      * @param {*} options
      * @param {*} cb
      */
-    createComponent(defUri, attrs, options = {}, cb) {
+    createComponent(defUri:string|number, attrs?, options:{throwOnNotFound?:boolean} = {}) {
         let throwOnNotFound = options.throwOnNotFound === void 0 ? true : options.throwOnNotFound;
-        if (cb) {
-            throwOnNotFound = false;
-        }
-        // Log.debug('createComponent', defUri, attrs, options);
-        let def = this.getComponentDef(defUri, { throwOnNotFound });
+        
+        let def = <ComponentDef>this.getComponentDef(defUri, { throwOnNotFound });
 
         if (!def) {
-            if (cb) {
-                return cb('could not find componentDef ' + defUri);
-            }
+            // if (cb) {
+            //     return cb('could not find componentDef ' + defUri);
+            // }
             return null;
         }
 
@@ -253,7 +271,7 @@ Object.assign( ComponentRegistry.prototype, {
 
         // NOTE: no longer neccesary to pass parse:true as the component constructor calls component.parse
         const defOptions = def.options || {};
-        const createOptions = { ...defOptions, registry: this.registry };
+        const createOptions = { ...defOptions, registry: this.getRegistry() };
         let result = new ComponentType(attrs, createOptions);
 
         if (type) {
@@ -262,46 +280,42 @@ Object.assign( ComponentRegistry.prototype, {
 
         result.setDefDetails(def.id, def.getUri(), def.hash(), def.getName());
 
-        this.trigger(COMPONENT_CREATE, result.defUri, result);
+        this.trigger(EntityEvent.ComponentCreate, result.defUri, result);
 
         // console.log('result:', result);
-        if (cb) {
-            return cb(null, result);
-        }
+        // if (cb) {
+        //     return cb(null, result);
+        // }
         return result;
-    },
+    }
 
     /**
-     *
-     * @param {*} defIDentifiers
-     * @param {*} options
+     * Returns Def IDs of the given component defs
+     * Most commonly used for converting string uris into number ids
      */
-    getIID(defIDentifiers, options = { throwOnNotFound: true }) {
-        options.returnIDs = true;
-        // defIDentifiers.push({ throwOnNotFound:true, returnIDs:true });
-        return this.getComponentDef(defIDentifiers, options);
-    },
+    getIID(defIDentifiers:ComponentDefIDs, options:GetComponentDefOptions = { throwOnNotFound: true }) : number| Array<number> {
+        return this.getComponentDefIDs(defIDentifiers, options);
+    }
 
+    
     /**
      *
-     * @param {*} identifiers
-     * @param {*} options
      */
-    getComponentDef(identifiers, options = {}) {
+    getComponentDef(identifiers:ComponentDefIDs, options:GetComponentDefOptions = {}) : Array<ComponentDef> | ComponentDef {
         let ii = 0,
             len = 0,
             cDef,
             ident;
         // const debug = options.debug === void 0 ? false : options.debug;
         const forceArray = options.forceArray === void 0 ? false : options.forceArray;
-        const returnIDs = options.returnIDs === void 0 ? false : options.returnIDs;
+        // const returnIDs = options.returnIDs === void 0 ? false : options.returnIDs;
         const throwOnNotFound = options.throwOnNotFound === void 0 ? false : options.throwOnNotFound;
         let result;
 
-        identifiers = Array.isArray(identifiers) ? identifiers : [identifiers];
+        let identifiersArray:[] = <[]>(Array.isArray(identifiers) ? identifiers : [identifiers]);
 
-        for (ii = 0, len = identifiers.length; ii < len; ii++) {
-            ident = identifiers[ii];
+        for (ii = 0, len = identifiersArray.length; ii < len; ii++) {
+            ident = identifiersArray[ii];
 
             if (isObject(ident)) {
                 ident = ident.id || ident.hash || ident.uri || ident[COMPONENT_DEF_ID];
@@ -340,9 +354,9 @@ Object.assign( ComponentRegistry.prototype, {
             }
 
             if (len === 1 && !forceArray) {
-                if (returnIDs) {
-                    return cDef.id;
-                }
+                // if (returnIDs) {
+                //     return cDef.id;
+                // }
                 return cDef;
             }
 
@@ -350,7 +364,7 @@ Object.assign( ComponentRegistry.prototype, {
                 result = [];
             }
 
-            result.push(returnIDs ? cDef.id : cDef);
+            result.push(cDef);
         }
 
         if (!result || (result.length === 0 && !forceArray)) {
@@ -358,13 +372,23 @@ Object.assign( ComponentRegistry.prototype, {
         }
 
         return result;
-    },
+    }
+
+    getComponentDefIDs(identifiers:ComponentDefIDs, options:GetComponentDefOptions = {}) : number| Array<number> {
+        let result = this.getComponentDef( identifiers, options );
+
+        if( Array.isArray(result) ){
+            return result.map( c => c.id );
+        }
+
+        return result.id;
+    }
 
     
-});
-
-ComponentRegistry.create = function(definitions, options = {}) {
-    let result = new ComponentRegistry(definitions, options);
-
-    return result;
 }
+
+// ComponentRegistry.create = function(definitions, options = {}) {
+//     let result = new ComponentRegistry(definitions, options);
+
+//     return result;
+// }

@@ -1,25 +1,12 @@
-// import { argCounts, precendenceValues } from './dsl';
-
 import {
-    ALL_FILTER,
-    ANY_FILTER,
-    NONE_FILTER,
-    INCLUDE_FILTER,
-    LEFT_PAREN,
-    RIGHT_PAREN,
-    AND,
-    ALL,
-    ANY,
-    NONE,
-    NOT,
-    OR,
-    ROOT,
-    VALUE,
-    EQUALS
-} from './constants';
+    EntityFilterType,
+    QueryOp,
+} from '../types';
 
+import { EntityFilter } from '../entity_filter';
+// import { argCounts, precendenceValues } from './dsl';
+import { Query } from './index';
 import { arrayFlatten } from '../util/array/flatten';
-
 
 export let argCounts = {};
 export let precendenceValues = {};
@@ -39,15 +26,15 @@ function precendence(operator) {
     }
 
     switch (operator) {
-        case AND:
-        case ALL:
-        case ANY:
-        case NOT:
-        case OR:
+        case QueryOp.And:
+        case EntityFilterType.All:
+        case EntityFilterType.Any:
+        case QueryOp.Not:
+        case QueryOp.Or:
             return 1;
-        case VALUE:
+        case QueryOp.Value:
             return 2;
-        case EQUALS:
+        case QueryOp.Equals:
         default:
             return -1;
     }
@@ -65,11 +52,11 @@ function argCount(operator) {
     }
 
     switch (operator) {
-        case ALL:
-        case ANY:
-        case NONE:
+        case EntityFilterType.All:
+        case EntityFilterType.Any:
+        case EntityFilterType.None:
             return 1;
-        case ROOT:
+        case QueryOp.Root:
         default:
             return 2;
     }
@@ -86,7 +73,7 @@ function rpnToTree(values) {
     for (ii = 0, len = values.length; ii < len; ii++) {
         op = values[ii];
 
-        if (op === LEFT_PAREN) {
+        if (op === QueryOp.LeftParen) {
             // cut out this sub and convert it to a tree
             slice = findMatchingRightParam(values, ii);
 
@@ -114,7 +101,7 @@ function rpnToTree(values) {
                 }
 
                 // TODO: ugh, occasionally args will get flattened too much
-                if (slice[0] === VALUE) {
+                if (slice[0] === QueryOp.Value) {
                     // note only happens with ALIAS_GET
                     // log.debug('overly flat ' + JSON.stringify([op].concat(slice)));
                     slice = [slice];
@@ -134,9 +121,9 @@ function findMatchingRightParam(values, startIndex) {
     let result = [];
 
     for (ii = 0, len = values.length; ii < len; ii++) {
-        if (values[ii] === LEFT_PAREN) {
+        if (values[ii] === QueryOp.LeftParen) {
             parenCount++;
-        } else if (values[ii] === RIGHT_PAREN) {
+        } else if (values[ii] === QueryOp.RightParen) {
             parenCount--;
             if (parenCount === 0) {
                 return result;
@@ -149,63 +136,70 @@ function findMatchingRightParam(values, startIndex) {
     return result;
 }
 
-export function DslContext(query) {
-    this.initialize(query);
-}
 
-Object.assign(DslContext.prototype, {
-    initialize(query) {
-        this.query = query;
-        this.valStack = [];
-        this.opStack = [];
-    },
+export class DslContext {
+
+    // query:Query;
+    valStack: Array<any> = [];
+    opStack: Array<any> = [];
+    commands;
+
+    constructor(query?){
+        // this.query = query;
+    }
 
     /**
      * takes the specified context and returns a new instance
      * of a DslContext if the passed context is not already a DslContext.
      */
-    readContext(context) {
+    readContext(context: any) : DslContext{
         // the context has to be a new instance of a DslContext,
         // so that it is possible to compose a query using subqueries
         if (context instanceof QueryBuilder) {
-            let result = new DslContext(context.query);
+            let result = new DslContext();
             return result;
         }
         return context;
-    },
+    }
 
     /**
      *
      */
-    value(val) {
+    value(val) : DslContext {
         const context = this.readContext(this);
         context.pushVal(val, true);
         return context;
-    },
+    }
+
+    attr(attr) {
+        const context = this.readContext(this);
+        context.pushVal(['AT', attr]);
+        return context;
+    }
 
     /**
      *
      */
-    root() {
+    root() : DslContext {
         const context = this.readContext(this);
-        context.pushOp(ROOT);
+        context.pushOp(QueryOp.Root);
         return context;
-    },
+    }
 
-    and(val) {
+    and(val) : DslContext {
         const context = this.readContext(this);
         context.pushVal(val, true, 'fromAnd');
-        context.pushOp(AND);
+        context.pushOp(QueryOp.And);
         return context;
-    },
+    }
 
-    or(val) {
+    or(val) : DslContext {
         this.pushVal(val, true);
-        this.pushOp(OR);
+        this.pushOp(QueryOp.Or);
         return this;
-    },
+    }
 
-    where(...clauses) {
+    where(...clauses) : DslContext {
         const context = this.readContext(this);
 
         if (clauses.length <= 0) {
@@ -214,52 +208,52 @@ Object.assign(DslContext.prototype, {
         if (clauses.length === 1) {
             context.pushVal(clauses[0]);
         } else {
-            clauses = _.reduce(
-                clauses,
+            clauses = clauses.reduce(
                 (res, clause, i) => {
                     res.push(clause.toArray());
                     if (res.length > 1) {
-                        res.push(AND);
+                        res.push(QueryOp.And);
                     }
                     return res;
                 },
                 []
             );
 
-            context.valStack = context.valStack.concat(_.flatten(clauses, true));
+            
+            context.valStack = context.valStack.concat( arrayFlatten(clauses, true) );
         }
         return context;
-    },
+    }
 
-    equals(val) {
+    equals(val) : DslContext {
         this.pushVal(val, true);
-        this.pushOp(EQUALS);
+        this.pushOp(QueryOp.Equals);
         return this;
-    },
+    }
 
-    lessThan(val) {
+    lessThan(val)  : DslContext {
         this.pushVal(val, true);
-        this.pushOp(LESS_THAN);
+        this.pushOp( QueryOp.LessThan);
         return this;
-    },
+    }
 
-    lessThanOrEqual(val) {
+    lessThanOrEqual(val) : DslContext {
         this.pushVal(val, true);
-        this.pushOp(LESS_THAN_OR_EQUAL);
+        this.pushOp( QueryOp.LessThanOrEqual);
         return this;
-    },
+    }
 
-    greaterThan(val) {
+    greaterThan(val) : DslContext {
         this.pushVal(val, true);
-        this.pushOp(GREATER_THAN);
+        this.pushOp( QueryOp.GreaterThan );
         return this;
-    },
+    }
 
-    greaterThanOrEqual(val) {
+    greaterThanOrEqual(val) : DslContext {
         this.pushVal(val, true);
-        this.pushOp(GREATER_THAN_OR_EQUAL);
+        this.pushOp( QueryOp.GreaterThanOrEqual);
         return this;
-    },
+    }
 
     //
     // Filter Functions
@@ -267,27 +261,27 @@ Object.assign(DslContext.prototype, {
     /**
      *   The entities must have ALL of the specified components
      */
-    all(componentIDs, filterFn) {
+    all(componentIDs, filterFn?) {
         const context = this.readContext(this);
-        context.pushOp(ALL_FILTER);
+        context.pushOp(EntityFilterType.All);
         context.pushVal(componentIDs, true);
         if (filterFn) {
             context.pushVal(filterFn, true);
         }
 
         return context;
-    },
+    }
 
     include(componentIDs, filterFn) {
         const context = this.readContext(this);
         // context.pushOp( filterFn ? INCLUDE_FILTER : INCLUDE );
-        context.pushOp(INCLUDE_FILTER);
+        context.pushOp(EntityFilterType.Include);
         context.pushVal(componentIDs, true);
         if (filterFn) {
             context.pushVal(filterFn, true);
         }
         return context;
-    },
+    }
 
     /**
      *   Entities should have at least one of the specified components
@@ -295,26 +289,26 @@ Object.assign(DslContext.prototype, {
     any(componentIDs, filterFn) {
         const context = this.readContext(this);
         // context.pushOp( filterFn ? ANY_FILTER : ANY );
-        context.pushOp(ANY_FILTER);
+        context.pushOp(EntityFilterType.Any);
         context.pushVal(componentIDs, true);
         if (filterFn) {
             context.pushVal(filterFn, true);
         }
         return context;
-    },
+    }
 
     /**
      *   entities will be excluded if the have any of the componentIDs
      */
     none(componentIDs, filterFn) {
         const context = this.readContext(this);
-        context.pushOp(NONE_FILTER);
+        context.pushOp(EntityFilterType.None);
         context.pushVal(componentIDs, true);
         if (filterFn) {
             context.pushVal(filterFn, true);
         }
         return context;
-    },
+    }
 
     popVal() {
         let val = this.valStack.shift();
@@ -322,19 +316,19 @@ Object.assign(DslContext.prototype, {
             return val.toArray();
         }
         return val;
-    },
+    }
 
     peekVal() {
         return this.valStack[0];
-    },
+    }
 
     lastOp() {
         return this.opStack[this.opStack.length - 1];
-    },
+    }
 
     popOp() {
         return this.opStack.pop();
-    },
+    }
 
     pushOp(op) {
         const lastOp = this.lastOp();
@@ -342,14 +336,15 @@ Object.assign(DslContext.prototype, {
             this.pushVal(this.popOp());
         }
         this.opStack.push(op);
-    },
+    }
 
-    pushVal(val, wrapInValueTuple, label = '') {
+
+    pushVal(val, wrapInValueTuple?:boolean, label:string = '') {
         const isQuery = val instanceof DslContext;
 
         if (wrapInValueTuple) {
             if (!isQuery) {
-                val = [VALUE, val];
+                val = [QueryOp.Value, val];
             }
         }
 
@@ -360,7 +355,7 @@ Object.assign(DslContext.prototype, {
             this.valStack.push(val);
         }
         return this;
-    },
+    }
 
     /**
      *
@@ -383,7 +378,7 @@ Object.assign(DslContext.prototype, {
 
         return result;
     }
-});
+}
 
 // export function QueryBuilder(query) {
 //     DslContext.call(this,query);
@@ -403,17 +398,19 @@ Object.assign(DslContext.prototype, {
 // });
 
 export class QueryBuilder extends DslContext {
-    constructor(query) {
-        super(query);
+    constructor(query?) {
+        super();
     }
 
-    and() {
+    and(val:any) : QueryBuilder {
         throw new Error('invalid function and');
     }
-    or() {
+
+    or() : QueryBuilder {
         throw new Error('invalid function or');
     }
-    where() {
+    
+    where() : QueryBuilder {
         throw new Error('invalid function where');
     }
 }
@@ -423,7 +420,7 @@ export class QueryBuilder extends DslContext {
 /**
  * Registers a query command extension
  */
-export function register(token, command, dslObj, options = {}) {
+export function register(token, command, dslObj, options:any = {}) {
     // if( commandFunctions[ name ] !== undefined ){
     //     throw new Error('already registered cmd ' + name );
     // }

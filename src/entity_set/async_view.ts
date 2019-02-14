@@ -1,11 +1,10 @@
+import { EntityEvent } from 'src/types';
 import { EntitySet } from './index';
 import Pull from 'pull-stream';
 import PullMap from 'pull-stream/throughs/map';
 import { Query } from '../query';
-
-import { stringify } from '../util/stringify';
 import { QueryFilter } from '../query/through';
-import { VIEW_CREATE } from '../constants';
+import { stringify } from '../util/stringify';
 
 /**
  * An entityset which mirrors another entityset through use of
@@ -42,7 +41,7 @@ export function create(entitySet, query, options = {}) {
     view._parent = this;
     entitySet._views[queryID] = view;
 
-    entitySet.emit(VIEW_CREATE, view);
+    entitySet.emit(EntityEvent.ViewCreate, view);
 
     return new Promise((resolve, reject) => {
         // the first update stream sends all the existing entities and then closes
@@ -71,9 +70,9 @@ export function create(entitySet, query, options = {}) {
  * @param {*} query
  * @param {*} options
  */
-EntitySet.prototype.createView = function(query, options = {}) {
-    return create(this, query, options);
-};
+// EntitySet.prototype.createView = function(query, options = {}) {
+//     return create(this, query, options);
+// };
 
 /**
  *
@@ -86,7 +85,7 @@ EntitySetAsyncView.prototype.applyEvents = function() {};
  * @param {*} entitySet
  * @param {*} view
  */
-function createUpdateStream(origin, target, options, completeCb) {
+function createUpdateStream(origin, target, options, completeCb?:Function) {
     // console.log('[EntitySetAsyncView][createUpdateStream]', 'from', origin.cid, 'to', target.cid );
     // let source = origin.source(options);
     // let sink = target.sink({}, completeCb);

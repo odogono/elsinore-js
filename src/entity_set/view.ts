@@ -1,50 +1,45 @@
+import { Base } from '../base';
 import { EntitySet } from './index';
 import { EntitySetListener } from './listener';
-import { VIEW_CREATE } from '../constants';
 
-export function EntitySetView() {}
+export class EntitySetView extends Base {
 
-EntitySet.prototype.view = function(query, options = {}) {
-    let result;
-    let registry = this.getRegistry();
+    readonly type:string = 'EntitySetView';
+    
+    readonly isMemoryEntitySet:boolean = true;
+    
+    readonly isEntitySetView:boolean = true;
 
-    result = registry.createEntitySet({ type: EntitySetView, register: false });
-    result._parent = this;
-    // console.log('EntitySetView created view', result.id, result.cid, result.getUUID(), 'from', this.cid );
+    listener: any;
+    listeners: any;
+    _parent: EntitySet;
 
-    // make <result> listenTo <entitySet> using <entityFilter>
-    result.listener = EntitySetListener.create(result, this, query, options);
-    // EntitySet.listenToEntitySet( result, this, query, options );
+    constructor(options:any = {} ){
+        super(options);
+    }
 
-    // if a valid query was supplied, it will have been resolved
-    // into a query object by now
-    // query = result.getQuery();
+    /**
+     * Returns a prefix which is attached to the instances cid
+     */
+    getCIDPrefix() : string {
+        return 'esv';
+    }
 
-    // console.log('using view query', query);
-    // store the view
-    this.views || (this.views = {});
-    this.views[query ? query.hash() : 'all'] = result;
-    this.trigger(VIEW_CREATE, result);
-
-    return result;
-};
-
-Object.assign(EntitySetView.prototype, EntitySet.prototype, {
     addEntity(entity, options) {
         return this._parent.addEntity(entity, options);
-    },
+    }
 
     removeEntity(entity, options) {
         return this._parent.removeEntity(entity, options);
-    },
+    }
 
     addComponent(component, options) {
         return this._parent.addComponent(component, options);
-    },
+    }
 
     removeComponent(component, options) {
         return this._parent.removeComponent(component, options);
-    },
+    }
 
     /**
      *
@@ -57,10 +52,37 @@ Object.assign(EntitySetView.prototype, EntitySet.prototype, {
             this.listeners.each(listener => listener.applyEvents());
         }
     }
-});
+}
+// EntitySet.prototype.view = function(query, options = {}) {
+//     let result;
+//     let registry = this.getRegistry();
 
-EntitySetView.prototype.type = 'EntitySetView';
-EntitySetView.prototype.isMemoryEntitySet = true;
-EntitySetView.prototype.isEntitySetView = true;
+//     result = registry.createEntitySet({ type: EntitySetView, register: false });
+//     result._parent = this;
+//     // console.log('EntitySetView created view', result.id, result.cid, result.getUUID(), 'from', this.cid );
 
-EntitySet.prototype.applyEvents = function() {};
+//     // make <result> listenTo <entitySet> using <entityFilter>
+//     result.listener = EntitySetListener.create(result, this, query, options);
+//     // EntitySet.listenToEntitySet( result, this, query, options );
+
+//     // if a valid query was supplied, it will have been resolved
+//     // into a query object by now
+//     // query = result.getQuery();
+
+//     // console.log('using view query', query);
+//     // store the view
+//     this.views || (this.views = {});
+//     this.views[query ? query.hash() : 'all'] = result;
+//     this.trigger(EntityEvent.ViewCreate, result);
+
+//     return result;
+// };
+
+
+export function isEntitySetView( view:any ) : boolean {
+    return view && view.isEntitySetView;
+}
+
+
+
+// EntitySet.prototype.applyEvents = function() {};

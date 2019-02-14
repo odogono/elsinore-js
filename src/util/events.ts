@@ -37,11 +37,158 @@ import { uniqueID } from './unique_id';
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-export let Events = {};
+// export let Events = {};
+
 
 
 // Regular expression used to split event strings.
-let eventSplitter = /\s+/;
+let eventSplitter:RegExp = /\s+/;
+
+export class Events {
+
+    _listeningTo:object;
+    _listenID:string;
+
+    _events;
+
+    _listeners;
+
+    _asyncListenQueue;
+
+    _isListeningAsync:boolean;
+
+
+    _isReleasingEvents: boolean = false;
+
+    // Bind an event to a `callback` function. Passing `"all"` will bind
+    // the callback to all events fired.
+    on(name:string, callback:Function, context?) {
+        return internalOn(this, name, callback, context);
+    }
+
+    // Remove one or many callbacks. If `context` is null, removes all
+    // callbacks with that function. If `callback` is null, removes all
+    // callbacks for the event. If `name` is null, removes all bound
+    // callbacks for all events.
+    off(name:string, callback:Function, context?) {
+        if (!this._events) return this;
+        this._events = eventsApi(offApi, this._events, name, callback, {
+            context: context,
+            listeners: this._listeners
+        });
+        return this;
+    }
+
+    // Trigger one or many events, firing all bound callbacks. Callbacks are
+    // passed the same arguments as `trigger` is, apart from the event name
+    // (unless you're listening on `"all"`, which will cause your callback to
+    // receive the true name of the event as the first argument).
+    trigger(name, ...params) {
+        if (!this._events) return this;
+
+        let length = Math.max(0, params.length - 1);
+        let args = Array(length);
+        for (let i = 0; i < length; i++) args[i] = params[i + 1];
+
+        eventsApi(triggerApi, this._events, name, void 0, args);
+        return this;
+    }
+
+    // Inversion-of-control versions of `on`. Tell *this* object to listen to
+    // an event in another object... keeping track of what it's listening to
+    // for easier unbinding later.
+    listenTo(obj, name:string, callback) {
+        if (!obj) return this;
+        let id = obj._listenID || (obj._listenID = <string>uniqueID('l'));
+        let listeningTo = this._listeningTo || (this._listeningTo = {});
+        let listening = listeningTo[id];
+
+        // This object is not listening to any other events on `obj` yet.
+        // Setup the necessary references to track the listening callbacks.
+        if (!listening) {
+            let thisID = this._listenID || (this._listenID = <string>uniqueID('l'));
+            listening = listeningTo[id] = { obj: obj, objID: id, id: thisID, listeningTo: listeningTo, count: 0 };
+        }
+
+        // Bind callbacks on obj, and keep track of them on listening.
+        internalOn(obj, name, callback, this, listening);
+        return this;
+    }
+
+    // Tell this object to stop listening to either specific events ... or
+    // to every object it's currently listening to.
+    stopListening(obj?, name?:string, callback?) {
+        let listeningTo = this._listeningTo;
+        if (!listeningTo) return this;
+
+        if( !obj ){
+            // TODO: improve this simplistic implementation
+            delete this._asyncListenQueue;
+            this._isListeningAsync = false;
+        }
+
+        let ids = obj ? [obj._listenID] : Object.keys(listeningTo);
+
+        for (let i = 0; i < ids.length; i++) {
+            let listening = listeningTo[ids[i]];
+
+            // If listening doesn't exist, this object is not currently
+            // listening to obj. Break out early.
+            if (!listening) break;
+
+            listening.obj.off(name, callback, this);
+        }
+
+        return this;
+    }
+
+    /**
+     * Listen to another object, but keep the received events until releaseAsync is called
+     * @param {*} obj 
+     * @param {*} name 
+     * @param {*} callback 
+     */
+    listenToAsync(obj, name, callback) {
+        let asyncListenQueue = this._asyncListenQueue || (this._asyncListenQueue = []);
+        this._isListeningAsync = true;
+        // console.log('[EventsAsync][listenToAsync] registered listenToAsync', name, 'to', obj.cid, stringify(obj)  );
+
+        let listenFn = (...args) => {
+            // console.log('[EventsAsync][listenToAsync] recv ' + stringify(arguments) + ' for name '+ name);
+            asyncListenQueue.push({ c: callback, a: args, name });
+        };
+
+        // this._asyncListeneners = this._asyncListeneners || (this._asyncListeneners={});
+        // this._asyncListeneners[name] = listenFn;
+
+        return this.listenTo(obj, name, listenFn);
+    }
+
+    /**
+     * Releases all previously received events
+     */
+    releaseAsync() {
+        let item, ii, len, args;
+        if (!this._asyncListenQueue) {
+            return this;
+        }
+        this._isReleasingEvents = true;
+        for (ii = 0, len = this._asyncListenQueue.length; ii < len; ii++) {
+            item = this._asyncListenQueue[ii];
+            args = [item.name].concat(item.a);
+            // console.log('[EventsAsync][releaseAsync] releasing', item.name, JSON.stringify(args) );
+            item.c.apply(item.c, args);
+        }
+        this._asyncListenQueue.length = 0;
+        this._isReleasingEvents = false;
+        return this;
+    }
+
+    isReleasingEvents() : boolean {
+        return this._isReleasingEvents;
+    }
+}
+
 
 // Iterates over the standard `event, callback` (as well as the fancy multiple
 // space-separated events `"change blur", callback` and jQuery-style event
@@ -67,14 +214,10 @@ let eventsApi = function(iteratee, events, name, callback, opts) {
     return events;
 };
 
-// Bind an event to a `callback` function. Passing `"all"` will bind
-// the callback to all events fired.
-Events.on = function(name, callback, context) {
-    return internalOn(this, name, callback, context);
-};
+
 
 // Guard the `listening` argument from the public API.
-let internalOn = function(obj, name, callback, context, listening) {
+let internalOn = function(obj, name, callback, context, listening?) {
     obj._events = eventsApi(onApi, obj._events || {}, name, callback, {
         context: context,
         ctx: obj,
@@ -89,26 +232,7 @@ let internalOn = function(obj, name, callback, context, listening) {
     return obj;
 };
 
-// Inversion-of-control versions of `on`. Tell *this* object to listen to
-// an event in another object... keeping track of what it's listening to
-// for easier unbinding later.
-Events.listenTo = function(obj, name, callback) {
-    if (!obj) return this;
-    let id = obj._listenID || (obj._listenID = uniqueID('l'));
-    let listeningTo = this._listeningTo || (this._listeningTo = {});
-    let listening = listeningTo[id];
-
-    // This object is not listening to any other events on `obj` yet.
-    // Setup the necessary references to track the listening callbacks.
-    if (!listening) {
-        let thisID = this._listenID || (this._listenID = uniqueID('l'));
-        listening = listeningTo[id] = { obj: obj, objID: id, id: thisID, listeningTo: listeningTo, count: 0 };
-    }
-
-    // Bind callbacks on obj, and keep track of them on listening.
-    internalOn(obj, name, callback, this, listening);
-    return this;
-};
+;
 
 // The reducing API that adds a callback to the `events` object.
 let onApi = function(events, name, callback, options) {
@@ -124,45 +248,9 @@ let onApi = function(events, name, callback, options) {
     return events;
 };
 
-// Remove one or many callbacks. If `context` is null, removes all
-// callbacks with that function. If `callback` is null, removes all
-// callbacks for the event. If `name` is null, removes all bound
-// callbacks for all events.
-Events.off = function(name, callback, context) {
-    if (!this._events) return this;
-    this._events = eventsApi(offApi, this._events, name, callback, {
-        context: context,
-        listeners: this._listeners
-    });
-    return this;
-};
 
-// Tell this object to stop listening to either specific events ... or
-// to every object it's currently listening to.
-Events.stopListening = function(obj, name, callback) {
-    let listeningTo = this._listeningTo;
-    if (!listeningTo) return this;
 
-    if( !obj ){
-        // TODO: improve this simplistic implementation
-        delete this._asyncListenQueue;
-        this.isListeningAsync = false;
-    }
 
-    let ids = obj ? [obj._listenID] : Object.keys(listeningTo);
-
-    for (let i = 0; i < ids.length; i++) {
-        let listening = listeningTo[ids[i]];
-
-        // If listening doesn't exist, this object is not currently
-        // listening to obj. Break out early.
-        if (!listening) break;
-
-        listening.obj.off(name, callback, this);
-    }
-
-    return this;
-};
 
 // The reducing API that removes a callback from the `events` object.
 let offApi = function(events, name, callback, options) {
@@ -220,20 +308,7 @@ let offApi = function(events, name, callback, options) {
     return events;
 };
 
-// Trigger one or many events, firing all bound callbacks. Callbacks are
-// passed the same arguments as `trigger` is, apart from the event name
-// (unless you're listening on `"all"`, which will cause your callback to
-// receive the true name of the event as the first argument).
-Events.trigger = function(name) {
-    if (!this._events) return this;
 
-    let length = Math.max(0, arguments.length - 1);
-    let args = Array(length);
-    for (let i = 0; i < length; i++) args[i] = arguments[i + 1];
-
-    eventsApi(triggerApi, this._events, name, void 0, args);
-    return this;
-};
 
 // Handles triggering the appropriate event callbacks.
 let triggerApi = function(objEvents, name, callback, args) {
@@ -250,7 +325,7 @@ let triggerApi = function(objEvents, name, callback, args) {
 // A difficult-to-believe, but optimized internal dispatch function for
 // triggering events. Tries to keep the usual cases speedy (most internal
 // Backbone events have 3 arguments).
-let triggerEvents = function(events, args) {
+let triggerEvents = function(events, args) : void {
     let ev,
         i = -1,
         l = events.length,
@@ -274,47 +349,4 @@ let triggerEvents = function(events, args) {
             while (++i < l) (ev = events[i]).callback.apply(ev.ctx, args);
             return;
     }
-};
-
-Events.emit = Events.trigger;
-
-
-/**
- * Listen to another object, but keep the received events until releaseAsync is called
- * @param {*} obj 
- * @param {*} name 
- * @param {*} callback 
- */
-Events.listenToAsync = function(obj, name, callback) {
-    let asyncListenQueue = this._asyncListenQueue || (this._asyncListenQueue = []);
-    this.isListeningAsync = true;
-    // console.log('[EventsAsync][listenToAsync] registered listenToAsync', name, 'to', obj.cid, stringify(obj)  );
-
-    let listenFn = (...args) => {
-        // console.log('[EventsAsync][listenToAsync] recv ' + stringify(arguments) + ' for name '+ name);
-        asyncListenQueue.push({ c: callback, a: args, name });
-    };
-
-    // this._asyncListeneners = this._asyncListeneners || (this._asyncListeneners={});
-    // this._asyncListeneners[name] = listenFn;
-
-    return this.listenTo(obj, name, listenFn);
-};
-
-/**
- * Releases all previously received events
- */
-Events.releaseAsync = function() {
-    let item, ii, len, args;
-    if (!this._asyncListenQueue) {
-        return this;
-    }
-    for (ii = 0, len = this._asyncListenQueue.length; ii < len; ii++) {
-        item = this._asyncListenQueue[ii];
-        args = [item.name].concat(item.a);
-        // console.log('[EventsAsync][releaseAsync] releasing', item.name, JSON.stringify(args) );
-        item.c.apply(item.c, args);
-    }
-    this._asyncListenQueue.length = 0;
-    return this;
 };

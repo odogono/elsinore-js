@@ -1,11 +1,6 @@
-
-import { register } from './dsl';
-import { ENTITY_FILTER,
-    LEFT_PAREN,
-    RIGHT_PAREN,
-    VALUE } from './constants';
-    
+import { QueryOp } from '../types';
 import { arrayWithout } from '../util/array/without';
+import { register } from './dsl';
 
 const WITHOUT = 'WO';
 
@@ -37,7 +32,7 @@ function commandWithout(context, values) {
         value = arrayWithout(array, values);
     }
 
-    return context.last = [VALUE, value];
+    return context.last = [QueryOp.Value, value];
 }
 
 // registerCommand(  {

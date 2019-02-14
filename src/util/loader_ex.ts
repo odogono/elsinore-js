@@ -1,21 +1,21 @@
 // import Url from 'fast-url-parser';
-import Registry from '../registry';
 import '../query/limit';
-import { omit } from './omit';
-import { parseUrl } from './url';
-import { createLog } from './log';
-import { toPascalCase } from './to';
-import { stringify } from './stringify';
-import { cloneEntity } from './clone';
 
+// import parseEJSON from './ejson.parser';
+import { Entity, cloneEntity } from '../entity';
 import {
     getEntityIDFromID,
     getEntitySetIDFromID,
     setEntityIDFromID
 } from './id';
-import { toString as entityToString } from './to_string';
 
-// import parseEJSON from './ejson.parser';
+import { EntitySet } from '../entity_set/index';
+import { createLog } from './log';
+import { toString as entityToString } from './to_string';
+import { omit } from './omit';
+import { parseUrl } from './url';
+import { stringify } from './stringify';
+import { toPascalCase } from './to';
 
 export const CMD_UNKNOWN = '@unk';
 export const CMD_COMMAND = '@cmd';
@@ -89,7 +89,7 @@ export function sink( entitySet, options={}, completeCb ){
     }
 }
 
-function Loader(registry, entitySet) {
+function Loader(registry, entitySet?:EntitySet) {
     this.registry = registry; // entitySet.getRegistry();
     this.entitySet = entitySet ? entitySet : registry.createEntitySet();
     this.allowCmdProcess = true;
@@ -102,7 +102,7 @@ Object.assign(Loader.prototype, {
      */
     load(cmds, options) {
         if (!Array.isArray(cmds)) {
-            return new Promise();
+            return Promise.resolve();
         }
 
         return cmds
@@ -208,7 +208,7 @@ function _resolveCondition(loader, condition) {
  * @param {*} incomingObj 
  * @param {*} options 
  */
-function process(loader, incomingObj, options = {}) {
+function process(loader, incomingObj, options:any = {}) {
     let entity, component, markID;
     const { debug } = options;
     const entitySet = loader.entitySet;
@@ -394,7 +394,7 @@ function resolveMarkReferences(loader, obj) {
 
         component = match[1];
         componentAttr = match[2];
-        markedEntity = markedEntities[true];
+        markedEntity = markedEntities['true'];
 
         // console.log('[resolveMarkReferences]', component,markedEntity, markedEntities);
         if (!markedEntity) {
@@ -492,7 +492,9 @@ function upsertEntityByPrimaryKey(registry, entitySet, entity, primaryKey) {
                 // Log.debug('[upsertEntityByPrimaryKey] new: ', entityToString(entity));
                 // Log.debug('[upsertEntityByPrimaryKey] existing: ', entityToString(existing), existing.getComponentByIID(componentUri).hash(true) );
 
-                let [copy, hasChanged] = cloneEntity(
+                // let cloneID:number = hasChanged ? existing.id : entity.id;
+
+                let [copy, hasChanged] = <[Entity,boolean]>cloneEntity(
                     entity,
                     existing,
                     { delete: true, returnChanged: true, debug:true }
@@ -500,7 +502,7 @@ function upsertEntityByPrimaryKey(registry, entitySet, entity, primaryKey) {
 
 
                 if (hasChanged) {
-                    copy._setID(existing.id);
+                    // copy._setID(existing.id);
                     // Log.debug('[upsertEntityByPrimaryKey] existing entity has changed ', componentUri, componentAttr, '=', componentValue);
                     // Log.debug('[upsertEntityByPrimaryKey] existing: ', entity.id );
                     // Log.debug('[upsertEntityByPrimaryKey] copy: ', copy.id );
@@ -591,9 +593,8 @@ function findCommand(obj) {
 }
 
 Loader.create = function(registry) {
-    let loader = new Loader();
+    let loader = new Loader(registry);
     loader.allowCmdProcess = true;
-    loader.registry = registry;
 
     return loader;
 };

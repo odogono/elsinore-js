@@ -1,5 +1,3 @@
-"use strict";
-
 // BEGIN Math.uuid.js
 
 /*!
@@ -36,24 +34,23 @@ Dual licensed under the MIT and GPL licenses.
  *   >>> Math.uuid(8, 16) // 8 character ID (base=16)
  *   "098F4D35"
  */
-const chars = (
+const CHARS = (
   '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ' +
   'abcdefghijklmnopqrstuvwxyz'
 ).split('');
 
-function getValue(radix) {
+function getValue(radix:number) :number {
     return 0 | Math.random() * radix;
 }
 
-export function createUUID(len, radix) {
-    radix = radix || chars.length;
+export function createUUID(len:number=undefined, radix:number=CHARS.length) : string {
     let out = '';
     let i = -1;
 
-    if (len) {
+    if (len !== undefined ) {
       // Compact form
         while (++i < len) {
-            out += chars[getValue(radix)];
+            out += CHARS[getValue(radix)];
         }
         return out;
     }
@@ -70,10 +67,10 @@ export function createUUID(len, radix) {
                 out += '-';
                 break;
             case 19:
-                out += chars[(getValue(16) & 0x3) | 0x8];
+                out += CHARS[(getValue(16) & 0x3) | 0x8];
                 break;
             default:
-                out += chars[getValue(16)];
+                out += CHARS[getValue(16)];
         }
     }
 

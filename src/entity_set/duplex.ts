@@ -1,18 +1,18 @@
-import _source from './source';
-import _sink from './sink';
+import { PullStreamSink } from './sink';
+import { PullStreamSource } from './source';
 
-export const source = _source;
-export const sink = _sink;
+export const source = PullStreamSource;
+export const sink = PullStreamSink;
 
 export function duplex( entitySet, options={}){
 
     // const did = _.uniqueID('eldup');
 
     // the source sends
-    const source = _source(entitySet, options );
+    const source = PullStreamSource(entitySet, options );
     // the sink receives - it needs a reference so that it can
     // send back replies
-    const sink = _sink(entitySet, {...options, source, did} );
+    const sink = PullStreamSink(entitySet, {...options, source/*, did*/} );
 
     return {
         source,

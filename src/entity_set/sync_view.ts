@@ -1,18 +1,9 @@
+import { EntityEvent } from 'src/types';
 import { EntitySet } from './index';
 import { Query } from '../query';
-
 // import { stringify } from '../util/stringify';
 // import { QueryFilter } from '../query/through';
 import { applyQueryFilter } from '../query/through';
-
-import {
-    ENTITY_ADD,
-    ENTITY_REMOVE,
-    COMPONENT_ADD,
-    COMPONENT_UPDATE,
-    COMPONENT_REMOVE,
-    VIEW_CREATE
-} from '../constants';
 
 /**
  * An entityset which mirrors another entityset through use of
@@ -82,13 +73,13 @@ export function create(entitySet, query, options = {}) {
     //     // }
     // }
 
-    view.listenTo(entitySet, ENTITY_ADD, view.onEntityAdd.bind(view));
-    view.listenTo(entitySet, ENTITY_REMOVE, view.onEntityRemove.bind(view));
-    view.listenTo(entitySet, COMPONENT_ADD, view.onComponentAdd.bind(view));
-    view.listenTo(entitySet, COMPONENT_UPDATE, view.onComponentAdd.bind(view));
-    view.listenTo(entitySet, COMPONENT_REMOVE, view.onComponentRemove.bind(view));
+    view.listenTo(entitySet, EntityEvent.EntityAdd, view.onEntityAdd.bind(view));
+    view.listenTo(entitySet, EntityEvent.EntityRemove, view.onEntityRemove.bind(view));
+    view.listenTo(entitySet, EntityEvent.ComponentAdd, view.onComponentAdd.bind(view));
+    view.listenTo(entitySet, EntityEvent.ComponentUpdate, view.onComponentAdd.bind(view));
+    view.listenTo(entitySet, EntityEvent.ComponentRemove, view.onComponentRemove.bind(view));
 
-    // entitySet.on(ENTITY_ADD, (evt) => {
+    // entitySet.on(EntityEvent.EntityAdd, (evt) => {
     //     console.log('ADDING!', evt);
     // })
 
@@ -99,7 +90,7 @@ export function create(entitySet, query, options = {}) {
     //     pushable.end();
     // }
 
-    entitySet.emit(VIEW_CREATE, view);
+    entitySet.emit( EntityEvent.ViewCreate, view);
 
     return view;
 }
@@ -109,9 +100,9 @@ export function create(entitySet, query, options = {}) {
  * @param {*} query
  * @param {*} options
  */
-EntitySet.prototype.createView = function(query, options = {}) {
-    return create(this, query, options);
-};
+// EntitySet.prototype.createView = function(query, options = {}) {
+//     return create(this, query, options);
+// };
 
 // EntitySetSyncView.prototype.onEntityAdd = function(entities, options){
 //     let ii=0,len=entities.length;

@@ -1,11 +1,14 @@
 import { arrayWithout } from './array/without';
 
 export class ReusableID {
+
+    defaultValue:number = 1;
+    activeIDs:number[] = [];
+    availableIDs:number[] = [];
+    currentID:number;
+
     constructor(defaultValue) {
         this.defaultValue = defaultValue === void 0 ? 1 : defaultValue;
-        this.activeIDs = [];
-        this.availableIDs = [];
-        // this.promiseQ = new PromiseQ(1);
         this.currentID = this.defaultValue;
     }
 

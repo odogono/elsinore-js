@@ -1,26 +1,27 @@
-import PullPushable from 'pull-pushable';
-
-import { readProperty } from '../util/read_property';
-import { cloneComponent, cloneEntity } from '../util/clone';
-import { applyQueryFilter } from '../query/through';
-
 import {
-    ENTITY_ID,
     COMPONENT_ID,
-    ENTITY_ADD,
-    ENTITY_UPDATE,
-    ENTITY_REMOVE,
-    COMPONENT_ADD,
-    COMPONENT_UPDATE,
-    COMPONENT_REMOVE,
-    LCMD_UNKNOWN,
-    LCMD_COMMAND,
+    ENTITY_ID,
+    EntityEvent,
     LCMD_ADD_ENTITY,
+    LCMD_COMMAND,
+    LCMD_END_OF_EXISTING,
     LCMD_REGISTER_COMPONENT,
-    LCMD_REMOVE_ENTITY,
     LCMD_REMOVE_COMPONENT,
-    LCMD_END_OF_EXISTING
-} from '../constants';
+    LCMD_REMOVE_ENTITY,
+    LCMD_UNKNOWN
+} from '../types';
+import { Component, cloneComponent } from '../component';
+import { Entity, cloneEntity } from '../entity';
+
+import { EntitySet } from '../entity_set';
+import PullPushable from 'pull-pushable';
+import { Query } from '../query';
+import { applyQueryFilter } from '../query/through';
+import { readProperty } from '../util/read_property';
+
+interface PullStreamSourceOptions {
+    query?: Query;
+}
 
 /**
  * pull-stream source - produces a stream of entities/components from the entity set
@@ -31,7 +32,7 @@ import {
  *
  * where data is an entity,component or command. options provide surrounding information
  */
-export function PullStreamSource(entitySet, options = {}) {
+export function PullStreamSource(entitySet:EntitySet, options:PullStreamSourceOptions = {}) {
     const sendExisting = readProperty(options, 'sendExisting', true);
     const useDefUris = readProperty(options, 'useDefUris', false);
     const isAnonymous = readProperty(options, 'anonymous', false);
@@ -39,14 +40,14 @@ export function PullStreamSource(entitySet, options = {}) {
     const closeAfterExisting = readProperty(options, 'closeAfterExisting', false);
     const query = options.query;
 
-    const cdefMap = useDefUris ? entitySet.getComponentRegistry().getComponentDefUris() : null;
+    const cdefMap = useDefUris ? entitySet.getRegistry().componentRegistry.getComponentDefUris() : null;
 
     let pushable = PullPushable(err => {
         // if( err ){ console.log('[entitySet][source]', err ); }
-        entitySet.off(ENTITY_ADD, pushable.onEntityAdd, pushable);
-        entitySet.off(ENTITY_REMOVE, pushable.onEntityRemove, pushable);
-        entitySet.off(COMPONENT_ADD, pushable.onComponentAdd, pushable);
-        entitySet.off(COMPONENT_REMOVE, pushable.onComponentRemove, pushable);
+        entitySet.off(EntityEvent.EntityAdd, pushable.onEntityAdd, pushable);
+        entitySet.off(EntityEvent.EntityRemove, pushable.onEntityRemove, pushable);
+        entitySet.off(EntityEvent.ComponentAdd, pushable.onComponentAdd, pushable);
+        entitySet.off(EntityEvent.ComponentRemove, pushable.onComponentRemove, pushable);
     });
 
     let entity,
@@ -126,8 +127,8 @@ export function PullStreamSource(entitySet, options = {}) {
                 removeEids.push(entity.id);
             }
         }
-        if (eids.length > 0) {
-            this.push([{ [LCMD_COMMAND]: LCMD_REMOVE_ENTITY, eid: eids }, options]); // components[cc] );
+        if (removeEids.length > 0) {
+            this.push([{ [LCMD_COMMAND]: LCMD_REMOVE_ENTITY, eid: removeEids }, options]); // components[cc] );
         }
     };
 
@@ -175,12 +176,12 @@ export function PullStreamSource(entitySet, options = {}) {
         }
     };
 
-    entitySet.on(ENTITY_ADD, pushable.onEntityAdd, pushable);
-    entitySet.on(ENTITY_UPDATE, pushable.onEntityUpdate, pushable);
-    entitySet.on(ENTITY_REMOVE, pushable.onEntityRemove, pushable);
-    entitySet.on(COMPONENT_ADD, pushable.onComponentAdd, pushable);
-    entitySet.on(COMPONENT_UPDATE, pushable.onComponentAdd, pushable); // NOTE intentional Add
-    entitySet.on(COMPONENT_REMOVE, pushable.onComponentRemove, pushable);
+    entitySet.on( EntityEvent.EntityAdd, pushable.onEntityAdd, pushable);
+    entitySet.on( EntityEvent.EntityUpdate, pushable.onEntityUpdate, pushable);
+    entitySet.on( EntityEvent.EntityRemove, pushable.onEntityRemove, pushable);
+    entitySet.on( EntityEvent.ComponentAdd, pushable.onComponentAdd, pushable);
+    entitySet.on( EntityEvent.ComponentUpdate, pushable.onComponentAdd, pushable); // NOTE intentional Add
+    entitySet.on( EntityEvent.ComponentRemove, pushable.onComponentRemove, pushable);
 
     return pushable;
 }
@@ -193,7 +194,7 @@ export function PullStreamSource(entitySet, options = {}) {
  * @param {*} cdefMap
  * @param {*} isAnonymous
  */
-function pushComponent(pushable, component, cdefMap, isAnonymous = false, options) {
+function pushComponent(pushable, component, cdefMap, isAnonymous:boolean = false, options:object = {}) {
     // if( cdefMap ){
     let json = component.toJSON({ cdefMap });
     if (isAnonymous) {

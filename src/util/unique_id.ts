@@ -23,15 +23,14 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 
-let idCounter = 0;
+let idCounter:number = 0;
 
 /**
  * Generate a unique integer id (unique within the entire client session).
  * from underscorejs
  * 
- * @param {*} prefix 
  */
-export function uniqueID(prefix) {
-    let id = ++idCounter + '';
-    return prefix ? prefix + id : id;
+export function uniqueID(prefix?:string) : (string|number) {
+    let id = ++idCounter;
+    return prefix === undefined ? id : prefix + id;
 }

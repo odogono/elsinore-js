@@ -2,39 +2,58 @@
 
 let logActive = true;
 
-export function createLog(name, options = {}) {
-    let fn = {};
+export interface Log {
+    debug: Function;
+    info: Function;
+    log: Function;
+    warn: Function;
+    error: Function;
+}
+
+interface LogOptions {
+    time?: boolean;
+}
+
+export function createLog(name, options: LogOptions = {}) {
+    let fn: Log = {
+        debug: () => {},
+        info: () => {},
+        log: () => {},
+        warn: () => {},
+        error: () => {}
+    };
 
     if (!logActive) {
-        ['debug', 'info', 'log', 'warn', 'error'].forEach(l => (fn[l] = () => {}));
-    } else {
-        for (let m in console) {
-            if (typeof console[m] == 'function') {
-                fn[m] = (...args) => {
-                    let format = '';
-
-                    if (options.time) {
-                        format += formatNow();
-                    }
-
-                    format += '[' + name + '] ';
-                    console[m](`${format}[${m}]`, ...args);
-                };
-            }
-        }
-        // if (!fn.debug) {
-        fn.debug = (...args) => {
-            let format = '';
-
-            if (options.time) {
-                format += formatNow();
-            }
-
-            format += '[' + name + '] ';
-            console.log(`${format}[debug]`, ...args);
-        };
-        // }
+        return fn;
+        // ['debug', 'info', 'log', 'warn', 'error'].forEach(l => (fn[l] = () => {}));
     }
+    for (let m in console) {
+        if (typeof console[m] == 'function') {
+            fn[m] = (...args) => {
+                let format = '';
+
+                if (options.time) {
+                    format += formatNow();
+                }
+
+                format += '[' + name + '] ';
+                console[m](`${format}[${m}]`, ...args);
+            };
+        }
+    }
+    // if (!fn.debug) {
+    fn.debug = (...args) => {
+        let format = '';
+
+        if (options.time) {
+            format += formatNow();
+        }
+
+        format += '[' + name + '] ';
+        console.log(`${format}[debug]`, ...args);
+    };
+    // }
+    // }
 
     return fn;
 }

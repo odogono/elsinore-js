@@ -1,9 +1,9 @@
+import { QueryOp } from '../types';
 import { register } from './dsl';
-import { VALUE } from './constants';
 import { stringify } from '../util/stringify';
 
-const ALIAS = 'AL';
-const ALIAS_GET = 'ALG';
+const ALIAS = 'ALI';
+const ALIAS_GET = 'ALIG';
 
 function alias(name) {
     const context = this.readContext(this);
@@ -35,12 +35,12 @@ function commandAlias(context, name) {
     name = context.valueOf(name, true);
     value = context.valueOf(value, true);
 
-    if (context.debug) {
-        log.debug('cmd alias ' + stringify(name) + ' ' + stringify(value));
-    }
+    // if (context.debug) {
+    //     log.debug('cmd alias ' + stringify(name) + ' ' + stringify(value));
+    // }
     context.alias[name] = value;
 
-    return (context.last = [VALUE, value]);
+    return (context.last = [QueryOp.Value, value]);
 }
 
 function commandAliasGet(context, name) {
@@ -53,10 +53,10 @@ function commandAliasGet(context, name) {
     if (!value) {
         throw new Error('no value found for alias ' + name);
     }
-    if (context.debug) {
-        log.debug('cmd aliasGet ' + stringify(name) + ' ' + stringify(value));
-    }
-    return (context.last = [VALUE, value]);
+    // if (context.debug) {
+    //     log.debug('cmd aliasGet ' + stringify(name) + ' ' + stringify(value));
+    // }
+    return (context.last = [QueryOp.Value, value]);
 }
 
 // the additional commands are added to Query as soon as this module is imported

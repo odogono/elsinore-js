@@ -1,6 +1,4 @@
-// import { Collection } from './collection';
-
-const getClass = {}.toString;
+const getClass:Function = {}.toString;
 
 /**
  * Returns true if the value is undefined
@@ -25,7 +23,7 @@ export function isBoolean(object) {
  *
  * @param {*} object
  */
-export function isString(object) {
+export function isString(object:any): boolean {
     return object && getClass.call(object) == '[object String]';
 }
 
@@ -33,7 +31,7 @@ export function isString(object) {
  *
  * @param {*} object
  */
-export function isDate(object) {
+export function isDate(object:any): boolean {
     return object && getClass.call(object) == '[object Date]';
 }
 
@@ -82,7 +80,7 @@ export function isPromise(p) {
  * @param {*} value The value to check.
  * @returns {boolean} Returns `true` if `value` is an object, else `false`.
  */
-export function isObject(value) {
+export function isObject(value:any): boolean {
     const type = typeof value;
     return value != null && (type == 'object' || type == 'function');
 }
@@ -97,6 +95,10 @@ export function isMemoryEntitySet(value) {
 
 export function isEntity(entity) {
     return entity && entity.isEntity === true;
+}
+
+export function isEntityID(entity:any) : boolean {
+    return typeof entity === 'number';
 }
 
 export function isComponent(value){

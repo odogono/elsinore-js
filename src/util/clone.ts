@@ -27,85 +27,19 @@ import { arrayDifference } from './array/difference';
 // }
 
 
-/**
- * 
- * @param {*} srcEntity 
- * @param {*} dstEntity 
- * @param {*} options 
- */
-export function cloneEntity(srcEntity, dstEntity, options = {}) {
-    // const registry = srcEntity.getRegistry();
-    let ii, len, component, srcComponent;
-    const deleteMissing = options.delete;
-    const returnChanged = options.returnChanged;
-    const fullCopy = options.full;
-    const debug = !!options.debug;
-    let dstHasChanged = false;
-
-    if (!srcEntity) {
-        return returnChanged ? [false, null] : null;
-    }
-
-    if (!dstEntity) {
-        dstEntity = srcEntity.clone();
-    }
-
-    if (!dstEntity && !fullCopy) {
-        return dstEntity;
-    }
-
+export interface Options {
     
+    // remove components from dstEntity which are not present on the srcEntity
+    delete?:boolean;
 
-    if (deleteMissing) {
-        const srcBitfield = srcEntity.getComponentBitfield();
-        const dstBitfield = dstEntity.getComponentBitfield();
-        const removeDefIDs = arrayDifference(dstBitfield.toJSON(), srcBitfield.toJSON());
+    returnChanged?:boolean;
 
-        // if( debug ) console.log('[cloneEntity]', 'removeDefIDs', removeDefIDs, dstBitfield.toJSON(), srcBitfield.toJSON() );
+    full?:boolean,
 
-        for (ii = 0, len = removeDefIDs.length; ii < len; ii++) {
-            dstEntity.removeComponent(dstEntity.components[removeDefIDs[ii]]);
-            dstHasChanged = true;
-        }
-    }
-
-    const srcComponents = srcEntity.getComponents();
-
-    for (ii = 0, len = srcComponents.length; ii < len; ii++) {
-        srcComponent = srcComponents[ii];
-        component = dstEntity.components[srcComponent.getDefID()];
-
-        // if( debug ) console.log('[cloneEntity]', srcComponent.toJSON(), component.toJSON(), srcComponent.hash(),component.hash() );
-        if (component) {
-            // the dst entity already has this component
-            if (srcComponent.hash() == component.hash()) {
-                continue;
-            }
-        }
-
-        dstHasChanged = true;
-        const cloned = cloneComponent(srcComponent);
-        // if( debug ) console.log('[cloneEntity]', 'add comp', cloned.toJSON() );
-        dstEntity.addComponent( cloned, {debug:true} );
-        // if( debug ) console.log('[cloneEntity]', 'dst', dstEntity.toJSON() );
-    }
-
-    return returnChanged ? [dstEntity, dstHasChanged] : dstEntity;
+    debug?:boolean
 }
 
-/**
- * Produces a copy of a component
- */
+export function copyEntity( srcEntity, dstEntity, options:Options = {}){
 
-/**
- * 
- */
-export function cloneComponent(srcComponent, attrs, options) {    
-    const result = srcComponent.clone();
-    
-    if (attrs) {
-        result.set(attrs, options);
-    }
-    
-    return result;
 }
+

@@ -1,23 +1,16 @@
-import { Entity } from '../entity';
-
-import { hash } from '../util/hash';
-import { uniqueID } from '../util/unique_id';
 import { Base } from '../base';
-import { isEntitySet } from '../util/is';
+import { Entity } from '../entity';
+import { EntityEvent } from 'src/types';
 import { createLog } from '../util/log';
-
-import {
-    ENTITY_ADD,
-    ENTITY_REMOVE,
-    COMPONENT_ADD,
-    COMPONENT_REMOVE
-} from '../constants';
+import { hash } from '../util/hash';
+import { isEntitySet } from '../util/is';
+import { uniqueID } from '../util/unique_id';
 
 const Log = createLog('EntitySetListener');
 
 
 
-export function EntitySetListener(srcEntitySet, targetEntitySet, query, options = {}) {
+export function EntitySetListener(srcEntitySet, targetEntitySet, query, options:any = {}) {
     this.cid = uniqueID('esl');
 
     this.updateOnEvent = !!options.updateOnEvent;
@@ -61,10 +54,10 @@ Object.assign(EntitySetListener.prototype, Base.prototype, {
 
         // Log.debug('[listenToEntitySet]', srcEntitySet.cid, targetEntitySet.cid);
         // _.bindAll(this, 'onEntityAdd', 'onEntityRemove', 'onComponentAdd', 'onComponentRemove');
-        srcEntitySet.listenTo(targetEntitySet, ENTITY_ADD, this.onEntityAdd.bind(this));
-        srcEntitySet.listenTo(targetEntitySet, ENTITY_REMOVE, this.onEntityRemove.bind(this));
-        srcEntitySet.listenTo(targetEntitySet, COMPONENT_ADD, this.onComponentAdd.bind(this));
-        srcEntitySet.listenTo(targetEntitySet, COMPONENT_REMOVE, this.onComponentRemove.bind(this));
+        srcEntitySet.listenTo(targetEntitySet, EntityEvent.EntityAdd, this.onEntityAdd.bind(this));
+        srcEntitySet.listenTo(targetEntitySet, EntityEvent.EntityRemove, this.onEntityRemove.bind(this));
+        srcEntitySet.listenTo(targetEntitySet, EntityEvent.ComponentAdd, this.onComponentAdd.bind(this));
+        srcEntitySet.listenTo(targetEntitySet, EntityEvent.ComponentRemove, this.onComponentRemove.bind(this));
         // srcEntitySet.listenTo( targetEntitySet, 'component:update', (...args) => {
         //     log.debug('listen to es change ' + stringify(args) );
         // })
@@ -238,11 +231,11 @@ Object.assign(EntitySetListener.prototype, Base.prototype, {
 
         if (entitiesAdded.length > 0) {
             // log.debug('+triggering add entities ' + stringify(entitiesAdded) );
-            entitySet.trigger( ENTITY_ADD, entitiesAdded);
+            entitySet.trigger( EntityEvent.EntityAdd, entitiesAdded);
         }
 
         if (entitiesRemoved.length > 0) {
-            entitySet.trigger( ENTITY_REMOVE, entitiesRemoved);
+            entitySet.trigger( EntityEvent.EntityRemove, entitiesRemoved);
         }
 
         entitiesAdded = null;
@@ -256,7 +249,7 @@ Object.assign(EntitySetListener.prototype, Base.prototype, {
     hash() {
         let q;
         // start with the entitysets hash
-        let str = _.result(this.targetEntitySet, 'hash');
+        let str = this.targetEntitySet.hash();
         if ((q = this.getQuery())) {
             str += q.hash();
         }

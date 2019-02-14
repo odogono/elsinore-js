@@ -7,17 +7,16 @@
  * @param {*} path 
  * @param {*} fallback 
  */
-export function propertyResult(obj, path, fallback) {
-    if (!Array.isArray(path)) {
-        path = [path];
-    }
-    const length = path.length;
+export function propertyResult(obj:{}, path:(string|Function|Array<string>), fallback?:any) : any {
+    let pathArray = Array.isArray(path) ? path : [path];
+    
+    const length = pathArray.length;
     if (!length) {
         return typeof fallback === 'function' ? fallback.call(obj) : fallback;
     }
     for (let ii = 0; ii < length; ii++) {
         let prop;
-        let pathI = path[ii];
+        let pathI = pathArray[ii];
         if( typeof pathI === 'function' ){
             prop = pathI.call(obj, obj);
         } else {

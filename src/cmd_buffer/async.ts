@@ -1,6 +1,5 @@
-'use strict';
-
 import { Entity } from '../entity';
+import { Component } from '../component';
 import { Collection } from '../util/collection';
 import { InvalidEntityError } from '../error';
 
@@ -8,30 +7,40 @@ import { getEntitySetIDFromID } from '../util/id';
 import { isEntity } from '../util/is';
 import { valueArray } from '../util/array/value';
 
-import { SyncCmdBuffer} from './sync';
+import { SyncCmdBuffer, CommandBufferOptions} from './sync';
 
-import { CMD_ENTITY_ADD, CMD_COMPONENT_ADD, CMD_COMPONENT_REMOVE } from '../constants';
+import { Command } from '../types';
+import { BitField } from 'odgn-bitfield';
 
 // import {createLog} from '../util/log';
 // const Log = createLog('CmdBufferSync');
 
-export function AsyncCmdBuffer() {
-    SyncCmdBuffer.call(this);
-    // these collections are keyed by cid, since entities and components do not
-    // have an id assigned until they hit the entityset
-    this.entitiesAdded = new Collection(null, { idAttribute: 'cid' });
-    this.entitiesUpdated = new Collection(null, { idAttribute: 'cid' });
-    this.entitiesRemoved = new Collection(null, { idAttribute: 'cid' });
-    this.componentsAdded = new Collection(null, { idAttribute: 'cid' });
-    this.componentsUpdated = new Collection(null, { idAttribute: 'cid' });
-    this.componentsRemoved = new Collection(null, { idAttribute: 'cid' });
-}
 
-Object.assign(AsyncCmdBuffer.prototype, SyncCmdBuffer.prototype, {
+
+export class AsyncCmdBuffer extends SyncCmdBuffer {
+
+    readonly type:string = 'AsyncCmdBuffer';
+    readonly isAsyncCmdBuffer:boolean = true;
+
+
+    constructor(){
+        super();
+        
+        // these collections are keyed by cid, since entities and components do not
+        // have an id assigned until they hit the entityset
+        this.entitiesAdded = new Collection(null, { idAttribute: 'cid' });
+        this.entitiesUpdated = new Collection(null, { idAttribute: 'cid' });
+        this.entitiesRemoved = new Collection(null, { idAttribute: 'cid' });
+        this.componentsAdded = new Collection(null, { idAttribute: 'cid' });
+        this.componentsUpdated = new Collection(null, { idAttribute: 'cid' });
+        this.componentsRemoved = new Collection(null, { idAttribute: 'cid' });
+    }
+
+
     /**
      * Adds a component to this set
      */
-    addComponent(entitySet, component, options = {}) {
+    addComponent(entitySet, component, options:CommandBufferOptions = {}) {
         let execute;
 
         // silent = options.silent;
@@ -76,7 +85,7 @@ Object.assign(AsyncCmdBuffer.prototype, SyncCmdBuffer.prototype, {
         // determine whether we have this component registered already
         // entityID = component.getEntityID();
 
-        this.addCommand(CMD_COMPONENT_ADD, component.getEntityID(), component);
+        this.addCommand(Command.ComponentAdd, component.getEntityID(), component);
 
         // execute any outstanding commands
 
@@ -86,12 +95,12 @@ Object.assign(AsyncCmdBuffer.prototype, SyncCmdBuffer.prototype, {
             });
         }
         return [];
-    },
+    }
 
     /**
      *
      */
-    removeComponent(entitySet, component, options = {}) {
+    removeComponent(entitySet, component, options:CommandBufferOptions = {}) {
         let execute, entityID;
         execute = options.execute === undefined ? true : options.execute;
 
@@ -138,17 +147,17 @@ Object.assign(AsyncCmdBuffer.prototype, SyncCmdBuffer.prototype, {
             return Promise.resolve([]);
         }
 
-        this.addCommand(CMD_COMPONENT_REMOVE, entityID, component);
+        this.addCommand(Command.ComponentRemove, entityID, component);
 
         return !execute ? this : this.execute(entitySet, options).then(() => valueArray(this.componentsRemoved));
-    },
+    }
 
     /**
     *   Adds an entity with its components to the entityset
     - reject if filters do not pass
     - 
     */
-    addEntity(entitySet, entity, options = {}) {
+    addEntity(entitySet, entity, options:CommandBufferOptions = {}) {
         let execute;
         let addOptions = { batch: true, execute: false };
 
@@ -198,7 +207,7 @@ Object.assign(AsyncCmdBuffer.prototype, SyncCmdBuffer.prototype, {
                 return valueArray(this.entitiesAdded, this.entitiesUpdated);
             });
         });
-    },
+    }
 
     /**
      * Executes any outstanding add/remove commands
@@ -208,12 +217,12 @@ Object.assign(AsyncCmdBuffer.prototype, SyncCmdBuffer.prototype, {
             this.reset();
             return this;
         });
-    },
+    }
 
     /**
      *
      */
-    removeEntity(entitySet, entity, options = {}) {
+    removeEntity(entitySet, entity, options:CommandBufferOptions = {}) {
         let execute;
         let removeOptions = { batch: true, execute: false };
 
@@ -241,7 +250,7 @@ Object.assign(AsyncCmdBuffer.prototype, SyncCmdBuffer.prototype, {
 
             return entity
                 .reduce((current, ine) => {
-                    return current.then(() => self.removeEntity(entitySet, ine));
+                    return current.then(() => this.removeEntity(entitySet, ine));
                 }, Promise.resolve())
                 .then(() => {
                     if (execute) {
@@ -266,12 +275,12 @@ Object.assign(AsyncCmdBuffer.prototype, SyncCmdBuffer.prototype, {
             }
             return this;
         });
-    },
+    }
 
     /**
      *
      */
-    _executeEntityCommand(entity, componentBitfield, cmdType, component, options = {}) {
+    _executeEntityCommand(entity:Entity, componentBitfield:BitField, cmdType, component:Component, options = {}) {
         // if( !component.getDefID ){
         //     Log.debug('[_executeEntityCommand]', component );
         // }
@@ -279,7 +288,7 @@ Object.assign(AsyncCmdBuffer.prototype, SyncCmdBuffer.prototype, {
         const entityHasComponent = !!componentBitfield.get(componentDefID);
 
         switch (cmdType) {
-            case CMD_ENTITY_ADD:
+            case Command.EntityAdd:
                 this.entitiesAdded.add(entity);
                 // console.log('add entity', entity.id );
                 // if( true ){
@@ -287,7 +296,7 @@ Object.assign(AsyncCmdBuffer.prototype, SyncCmdBuffer.prototype, {
                 //         entity.getEntityID() + '/' + entity.cid + '/' + entity.getEntitySetID() );
                 // }
                 break;
-            case CMD_COMPONENT_ADD:
+            case Command.ComponentAdd:
                 // console.log('add component', component.id, component.cid, componentDefID,'to', entity.id, component.toJSON() );
 
                 if (entityHasComponent) {
@@ -306,7 +315,7 @@ Object.assign(AsyncCmdBuffer.prototype, SyncCmdBuffer.prototype, {
                 }
                 break;
 
-            case CMD_COMPONENT_REMOVE:
+            case Command.ComponentRemove:
                 // console.log('component remove', componentDefID,'from', entity.getEntityID(), entityHasComponent);
                 if (!entityHasComponent) {
                     break;
@@ -335,7 +344,7 @@ Object.assign(AsyncCmdBuffer.prototype, SyncCmdBuffer.prototype, {
             default:
                 break;
         }
-    },
+    }
 
     /**
      *
@@ -366,13 +375,14 @@ Object.assign(AsyncCmdBuffer.prototype, SyncCmdBuffer.prototype, {
                 }
 
                 for (ii = 0, len = cmds.length; ii < len; ii++) {
-                    let cmd = cmds[ii];
-                    let commandType = cmd[0];
-                    let entityID = cmd[1];
-                    let component = cmd[2];
-                    let cmdOptions = cmd[3];
+                    let [commandType, entityID, component, cmdOptions ] = cmds[ii];
+                    // let cmd = cmds[ii];
+                    // let commandType = cmd[0];
+                    // let entityID = cmd[1];
+                    // let component = cmd[2];
+                    // let cmdOptions = cmd[3];
 
-                    this._executeEntityCommand(entity, bf, commandType, component, cmdOptions, options);
+                    this._executeEntityCommand(entity, bf, commandType, component, cmdOptions);
                 }
             });
 
@@ -422,12 +432,4 @@ Object.assign(AsyncCmdBuffer.prototype, SyncCmdBuffer.prototype, {
                 });
         });
     }
-});
-
-AsyncCmdBuffer.prototype.type = 'AsyncCmdBuffer';
-AsyncCmdBuffer.prototype.isAsyncCmdBuffer = true;
-
-AsyncCmdBuffer.create = function() {
-    let result = new AsyncCmdBuffer();
-    return result;
-};
+}

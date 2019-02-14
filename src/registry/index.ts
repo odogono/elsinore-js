@@ -4,54 +4,89 @@ import { isBoolean } from '../util/is';
 import { omit } from '../util/omit';
 import { createUUID } from '../util/uuid';
 import { isComponent, isEntity, isEntitySet } from '../util/is';
-import { Entity } from '../entity';
+import { Entity, EntityOptions } from '../entity';
 import { EntitySet } from '../entity_set';
-import { Events } from '../util/events';
+import { Base, BaseOptions } from '../base';
 import { Component } from '../component';
-import { ComponentRegistry } from '../schema';
+import { ComponentRegistry, ComponentDefIDs } from '../schema';
 
-import { ENTITY_ID, ENTITY_SET_ID, COMPONENT_ID, COMPONENT_URI, ENTITY_SET_ADD } from '../constants';
+import { ENTITY_ID, ENTITY_SET_ID, COMPONENT_ID, COMPONENT_URI, EntityEvent } from '../types';
 
 
-export function Registry(options={}){
-    Object.assign(this, Events);
-    this.initialize(options);
+
+export interface RegistryOptions extends BaseOptions {
+    sequenceCount?:number;
+    componentRegistry?:ComponentRegistry;
 }
 
+interface CreateEntityOptions extends EntityOptions {
+    id?:number;
+    [ENTITY_ID]?:number;
+    [ENTITY_SET_ID]?:number;
+}
 
-Object.assign( Registry.prototype, {
+interface CreateEntitySetOptions extends CreateEntityOptions {
+    type?:any;
+    register?:boolean;
+    allowEmptyEntities?:boolean;
+}
 
-    initialize(options = {}) {
+export class Registry extends Base {
+
+    readonly type:string = 'Registry';
+
+    readonly isRegistry:boolean = true;
+
+
+    _initialized:boolean = false;
+
+    _entityViews:object;
+
+    updateLastTime: number;
+
+    componentRegistry: ComponentRegistry;
+
+    sequenceCount: number;
+
+    _entitySets:Array<EntitySet>;
+
+    _entitySetUUIDs:object;
+
+
+    constructor(options:RegistryOptions={}){
+        super( options );
+
+        this.initialize(options);
+    }
+
+    initialize(options:RegistryOptions = {}) {
 
         this._initialized = true;
 
-        // used to instantiate new entities
-        this.Entity = Entity;
-
         // a number used to assign id numbers to things - entities, components, entitysets
         this.sequenceCount = options.sequenceCount || 0;
-
-        this.entitySetCount = options.entitySetCount || 0;
-
-        // number of entity sets added - this also serves as
-        // a way of assigning ids to entitysets
-        this.entitySetCount = 0;
 
         // an array of entitysets created and active
         this._entitySets = [];
         // a map of entityset uuids to entityset instances
         this._entitySetUUIDs = {};
-        // this._entitySetIDs = [];
 
         // a map of hashes to entity views
         this._entityViews = {};
 
         this.updateLastTime = Date.now();
 
-        this.schemaRegistry = options.schemaRegistry || ComponentRegistry.create(null, { registry: this });
+        this.componentRegistry = options.componentRegistry || new ComponentRegistry(null, { registry: this });
 
-        this.schemaRegistry.on('all', (...args) => this.trigger.apply(this, args));
-    },
+        this.componentRegistry.on('all', (...args) => this.trigger.apply(this, args));
+    }
+
+    /**
+     * Returns a prefix which is attached to the instances cid
+     */
+    getCIDPrefix() : string {
+        return 'r';
+    }
 
     /**
      *
@@ -61,12 +96,14 @@ Object.assign( Registry.prototype, {
         // let counter = Date.now() % 1e9;
         // return (Math.random() * 1e9 >>> 0) + (counter++ + '__')
         return ++this.sequenceCount;
-    },
+    }
+
+    
 
     /**
      *   Creates a new entity
      */
-    createEntity(components, options = {}) {
+    createEntity(components?, options:CreateEntityOptions = {}) : Entity {
         let idSet = false;
 
         options.registry = this;
@@ -98,14 +135,14 @@ Object.assign( Registry.prototype, {
             options.id = this.createID();
         }
 
-        let result = this.Entity.create(options);
+        let result = new Entity(options); //this.Entity.create(options);
 
         if (components) {
             result.addComponent(components);
         }
 
         return result;
-    },
+    }
 
     /**
      *
@@ -113,7 +150,7 @@ Object.assign( Registry.prototype, {
     createEntityWithID(entityID = 0, entitySetID = 0, options = {}) {
         return this.createEntity(null, { ...options, [ENTITY_ID]: entityID, [ENTITY_SET_ID]: entitySetID });
         // return this.createEntity(null, { ...options, ENTITY_ID: entityID, ENTITY_SET_ID: entitySetID });
-    },
+    }
 
     /**
      * Registers a new Component Def from data
@@ -121,12 +158,12 @@ Object.assign( Registry.prototype, {
      * @param  {Object|Array} schema [description]
      * @return {[type]}        [description]
      */
-    registerComponent(data, options = {}) {
+    registerComponent(data, options:{fromES?:EntitySet, notifyRegistry?:boolean, throwOnExists?:boolean} = {}) {
         if (options.notifyRegistry) {
             options.throwOnExists = false;
         }
 
-        return Promise.resolve(this.schemaRegistry.register(data, options)).then(componentDefs => {
+        return Promise.resolve(this.componentRegistry.register(data, options)).then(componentDefs => {
             if (!Array.isArray(componentDefs)) {
                 componentDefs = [componentDefs];
             }
@@ -140,21 +177,21 @@ Object.assign( Registry.prototype, {
                 }, Promise.resolve())
                 .then(() => componentDefs);
         });
-    },
+    }
 
     /**
      * Returns an array of all the Component Defs that have been registered
      */
     getComponentDefs() {
-        return this.schemaRegistry.getComponentDefs();
-    },
+        return this.componentRegistry.getComponentDefs();
+    }
 
     /**
      * 
      */
     getComponentDef(ident) {
-        return this.schemaRegistry.getComponentDef(ident);
-    },
+        return this.componentRegistry.getComponentDef(ident);
+    }
 
     /**
      *   Registers the array of component def schemas with the given entitySet
@@ -163,7 +200,7 @@ Object.assign( Registry.prototype, {
         options = { ...options, fromRegistry: true, fromES: false };
 
         // memory based entitysets do not need to register component defs,
-        // as they are tied directly to the registry/schemaRegistry
+        // as they are tied directly to the registry/componentRegistry
         if (entitySet.isMemoryEntitySet) {
             return Promise.resolve();
         }
@@ -172,17 +209,16 @@ Object.assign( Registry.prototype, {
                 return entitySet.registerComponentDef(cdef, options);
             }));
         }, Promise.resolve());
-    },
+    }
 
     /**
      * TODO: name this something better, like 'getComponentIID'
      */
-    getIID(componentIDs, options) {
-        if (options && isBoolean(options)) {
-            options = { forceArray: true };
-        }
-        return this.schemaRegistry.getIID(componentIDs, options);
-    },
+    getIID(componentIDs:ComponentDefIDs, options?:(boolean|{}) ) : number| Array<number> {
+        let iidOptions = (options && isBoolean(options)) ? {forceArray:true} : options;
+        
+        return this.componentRegistry.getIID(componentIDs, iidOptions );
+    }
 
     /**
      * Creates a new component instance
@@ -194,7 +230,7 @@ Object.assign( Registry.prototype, {
      * @param  {[type]} schemaUri [description]
      * @return {[type]}          [description]
      */
-    createComponent(componentDef, attrs, options, cb) {
+    createComponent(componentDef, attrs?, options?) {
         let entityID, defKey;
 
         options || (options = {});
@@ -224,11 +260,11 @@ Object.assign( Registry.prototype, {
                 attrs = Object.assign({}, omit(componentDef, defKey), attrs);
                 componentDef = componentDef[defKey];
             }
-            return this.schemaRegistry.createComponent(componentDef, attrs, options, cb);
+            return this.componentRegistry.createComponent(componentDef, attrs, options);
         }
-    },
+    }
 
-    destroyComponent(component, options) {},
+    destroyComponent(component, options) {}
 
     /**
      * Converts an entity id to an entity instance
@@ -236,13 +272,9 @@ Object.assign( Registry.prototype, {
      * @param  {[type]} entityID [description]
      * @return {[type]}          [description]
      */
-    toEntity(entityID) {
-        let result = Entity.toEntity(entityID);
-        if (result) {
-            result.registry = this;
-        }
-        return result;
-    },
+    toEntity(entityID:number) : Entity {
+        return new Entity({ [ENTITY_ID]: entityID, registry:this });
+    }
 
     /**
      * Creates a new EntitySet instance.
@@ -251,12 +283,10 @@ Object.assign( Registry.prototype, {
      * @param  {Function} callback   [description]
      * @return {[type]}              [description]
      */
-    createEntitySet(options = {}) {
-        let id;
+    createEntitySet(options:CreateEntitySetOptions = {}) {
+        let id:number;
         let result;
         let entitySetType = EntitySet;
-
-        options.uuid = options.uuid || createUUID();
 
         if (options.type) {
             entitySetType = options.type;
@@ -264,7 +294,9 @@ Object.assign( Registry.prototype, {
 
         // create a 20 bit
         id = options[ENTITY_SET_ID] || options['id'] || this.createID();
-        result = new entitySetType(null, { ...options, id });
+        
+        result = new entitySetType(null, { id });
+
         result.setRegistry(this);
         
         // TODO : there has to be a better way of identifying entitysets
@@ -283,8 +315,8 @@ Object.assign( Registry.prototype, {
             }
         }
         
-        return this.addEntitySet(result, options);
-    },
+        return this.addEntitySet(result);
+    }
 
     /**
      * 
@@ -292,7 +324,7 @@ Object.assign( Registry.prototype, {
      */
     removeAllEntitySets(options) {
         return Promise.all(this._entitySets.map(es => this.removeEntitySet(es, options)));
-    },
+    }
 
     
 
@@ -302,7 +334,7 @@ Object.assign( Registry.prototype, {
      * @param {*} entitySet 
      * @param {*} options 
      */
-    removeEntitySet(entitySet, options = {}) {
+    removeEntitySet(entitySet, options:{sync?:boolean} = {}) {
         if (!entitySet) {
             return null;
         }
@@ -315,7 +347,7 @@ Object.assign( Registry.prototype, {
         }
 
         return entitySet.close(options).then(() => this.removeEntitySet(entitySet, { sync: true }));
-    },
+    }
 
     
     /**
@@ -323,7 +355,7 @@ Object.assign( Registry.prototype, {
      * @param {*} entitySet 
      * @param {*} options 
      */
-    addEntitySet(entitySet, options = {}) {
+    addEntitySet(entitySet, options:{sync?:boolean} = {}) {
         if (!entitySet) {
             return null;
         }
@@ -348,7 +380,7 @@ Object.assign( Registry.prototype, {
 
             entitySet.setRegistry(this);
 
-            this.trigger(ENTITY_SET_ADD, entitySet);
+            this.trigger( EntityEvent.EntitySetAdd, entitySet);
 
             return entitySet;
         }
@@ -363,7 +395,7 @@ Object.assign( Registry.prototype, {
                 return entitySet;
             });
         });
-    },
+    }
 
    
     /**
@@ -372,7 +404,7 @@ Object.assign( Registry.prototype, {
      */
     getEntitySet(id) {
         return /*this.getEntitySetByID(id) ||*/ this.getEntitySetByUUID(id);
-    },
+    }
 
     /**
      * Returns a registered entity set by its UUID
@@ -381,16 +413,7 @@ Object.assign( Registry.prototype, {
      */
     getEntitySetByUUID( uuid ){
         return this._entitySetUUIDs[uuid];
-    },
-
-    // /**
-    //  * Returns a registered entity set by its id
-    //  * 
-    //  * @param {Number} id 
-    //  */
-    // getEntitySetByID( id ){
-    //     return this._entitySetIDs[id];
-    // },
+    }
 
 
 
@@ -403,8 +426,8 @@ Object.assign( Registry.prototype, {
         }
 
         entitySet.setRegistry(null);
-        this._entitySets = _.without(this._entitySets, entitySet);
-    },
+        this._entitySets = arrayWithout(this._entitySets, entitySet);
+    }
 
     /**
      *
@@ -429,19 +452,4 @@ Object.assign( Registry.prototype, {
             entitySet.triggerEntityEvent.apply(entitySet, args);
         }
     }
-});
-
-Registry.prototype.type = 'Registry';
-Registry.prototype.isRegistry = true;
-
-/**
- * creates a new registry instance
- *
- * @param  {[type]}   options  [description]
- * @param  {Function} callback [description]
- * @return {[type]}            [description]
- */
-Registry.create = function create(options = {}) {
-    let result = new Registry(options);
-    return result;
-};
+}

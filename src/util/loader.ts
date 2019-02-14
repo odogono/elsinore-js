@@ -2,6 +2,7 @@ import { createLog } from './log';
 import { omit } from './omit';
 import { readProperty } from './read_property';
 import { toString as entityToString } from './to_string';
+import { Registry } from '../registry';
 
 import { COMPONENT_DEF_ID, COMPONENT_URI, ENTITY_ID, 
     LCMD_UNKNOWN,
@@ -11,11 +12,14 @@ import { COMPONENT_DEF_ID, COMPONENT_URI, ENTITY_ID,
     LCMD_REMOVE_ENTITY,
     LCMD_REMOVE_COMPONENT,
     LCMD_END_OF_EXISTING
- } from '../constants';
+ } from '../types';
 
 const Log = createLog('JSONLoader');
 
 export class JSONLoader {
+
+    registry: Registry;
+
     /**
      *
      */
@@ -60,7 +64,7 @@ export class JSONLoader {
     _createEntity(context) {
         if (context.entity) {
             // already have an entity, so add it to the load cache
-            return _processCommand(context, { [LCMD_COMMAND]: LCMD_ADD_ENTITY }).then(context =>
+            return this._processCommand(context, { [LCMD_COMMAND]: LCMD_ADD_ENTITY }).then(context =>
                 this._createEntity(context)
             );
         }
@@ -147,8 +151,3 @@ function findCommand(obj) {
     }
     return [LCMD_UNKNOWN, null];
 }
-
-JSONLoader.create = function() {
-    let result = new JSONLoader();
-    return result;
-};
