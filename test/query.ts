@@ -9,7 +9,6 @@ import { QueryOp } from '../src/types';
 import { Registry } from '../src/registry/index';
 import { isEntity } from '../src/util/is';
 import { parseJSON } from '../src/util/parse_json';
-import { stringify } from 'querystring';
 
 describe('Query', () => {
     it('should create an AST', () => {

@@ -11,7 +11,7 @@
         "inlineSourceMap": true,
         "target": "es2018",
         "declaration": true,
-        "outDir": "lib",
+        "outDir": "lib"
     },
     "include": [ "./src/**/*" ],
     "exclude":[

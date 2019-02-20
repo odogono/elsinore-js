@@ -1,30 +1,17 @@
-import { readFileSync } from 'fs';
 import CommonJS from 'rollup-plugin-commonjs';
-// import NodeResolve from 'rollup-plugin-node-resolve';
+import { terser as Minify } from 'rollup-plugin-terser';
+import NodeResolve from 'rollup-plugin-node-resolve';
 import Replace from 'rollup-plugin-replace';
 import Typescript from 'rollup-plugin-typescript';
-import { terser as Uglify } from "rollup-plugin-terser";
-
 import pkg from './package.json';
+import { readFileSync } from 'fs';
+
 const environment = process.env.NODE_ENV || 'development';
 const isProduction = environment === 'production';
 
 const banner = readFileSync('./banner.txt', 'utf-8')
     .replace('${version}', pkg.version)
     .replace('${time}', new Date());
-
-// const babelPlugin = Babel({
-//     babelrc: false,
-//     sourceMap: true,
-//     exclude: 'node_modules/**',
-//     presets: ['es2015-rollup'],
-//     plugins: [
-//         'transform-inline-environment-variables',
-//         'transform-object-rest-spread',
-//         'transform-es2015-shorthand-properties',
-//         'transform-class-properties'
-//     ]
-// });
 
 const typescriptPlugin = Typescript({
     typescript: require('typescript')
@@ -45,10 +32,9 @@ export default [
         plugins: [
             Replace({ 'process.env.NODE_ENV': JSON.stringify(environment) }),
             typescriptPlugin,
-            // babelPlugin,
-            // NodeResolve(),
+            NodeResolve(),
             CommonJS(), // so Rollup can convert `ms` to an ES module
-            isProduction && Uglify()
+            isProduction && Minify()
         ]
     },
 
@@ -61,19 +47,21 @@ export default [
     {
         input: 'src/index.ts',
         // external: ['ms'],
-        output: [{ file: pkg.main, format: 'cjs', sourcemap }, { file: pkg.module, format: 'es', sourcemap }],
+        output: [
+            { file: pkg.main, format: 'cjs', sourcemap },
+            { file: pkg.module, format: 'es', sourcemap }
+        ],
         plugins: [
             Replace({ 'process.env.NODE_ENV': JSON.stringify(environment) }),
             typescriptPlugin,
-            // babelPlugin,
-            // NodeResolve(),
+            NodeResolve(),
             CommonJS(),
             // CommonJS({
             //     namedExports: {
             //         'node_modules/odgn-bitfield/index.js': ['BitField']
             //     }
             // }),
-            isProduction && Uglify()
+            isProduction && Minify()
         ]
     }
 ];
