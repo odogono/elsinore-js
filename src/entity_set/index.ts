@@ -58,7 +58,7 @@ export class EntitySet extends Base {
     
 
     constructor(entities, options:EntitySetOptions = {}){
-        super();
+        super(options);
 
         if (options.cmdBuffer) {
             this._cmdBufferType = options.cmdBuffer;
@@ -115,7 +115,7 @@ export class EntitySet extends Base {
      *
      * @param {number} index
      */
-    at(index) {
+    at(index:number):Entity {
         return this._entities.at(index);
     }
 
@@ -190,14 +190,14 @@ export class EntitySet extends Base {
      *
      * @param {*} options
      */
-    // iterator(options) {
-    //     let nextIndex = 0;
-    //     return {
-    //         next: () => {
-    //             return nextIndex < this.size() ? { value: this.at(nextIndex++), done: false } : { done: true };
-    //         }
-    //     };
-    // }
+    iterator() {
+        let nextIndex = 0;
+        return {
+            next: () => {
+                return nextIndex < this.size() ? { value: this.at(nextIndex++), done: false } : { done: true };
+            }
+        };
+    }
 
     /**
      * Returns a Pull-Stream source
@@ -370,7 +370,7 @@ export class EntitySet extends Base {
      * @param {*} options
      */
     _createEntity(entityID, returnID, options = {}) {
-        let result;
+        
         const registry = this.getRegistry();
 
         entityID = parseInt(entityID, 10) || 0;
@@ -383,10 +383,10 @@ export class EntitySet extends Base {
             return entityID;
         }
 
-        result = registry.createEntity(null, { id: entityID });
+        const result = registry.createEntity(null, { id: entityID });
         // make sure we don't set the entityset id - memory entitysets retain
         // the original entityset id
-        result.setEntitySet(this, false);
+        // result.setEntitySet(this, false);
 
         return result;
     }
@@ -425,7 +425,7 @@ export class EntitySet extends Base {
 
             return existing;
         } else {
-            entity.setRegistry(this.getRegistry());
+            // entity.setRegistry(this.getRegistry());
 
             if (entity.id === 0) {
                 throw new Error('attempting to add invalid entity');

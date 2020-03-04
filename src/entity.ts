@@ -269,6 +269,7 @@ export class Entity extends Base {
             this.component[name] = component;
         } else if( registry ){
             const def = <ComponentDef>registry.getComponentDef( defID );
+            console.log('Y NO DEF', defID, def, component );
             this.component[def.getName()] = component;
         }
 

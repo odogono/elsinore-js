@@ -66,12 +66,12 @@ export function commandEquals( context, op1, op2 ){
     // if( true ){ console.log('commandEquals', stringify(value1), op, stringify(value2) ); }
 
     if( isValue1Array && !isValue2Array ){
-        if( op == QueryOp.Equals ){
+        if( op === QueryOp.Equals ){
             result = value1.indexOf(value2) !== -1;
         }
     }
     else if( !isValue1Array && isValue2Array ){
-        if( op == QueryOp.Equals ){
+        if( op === QueryOp.Equals ){
             result = (value2.indexOf(value1) !== -1);
         }
     }
@@ -98,7 +98,7 @@ export function commandEquals( context, op1, op2 ){
                 break;
         }
     } else {
-        if( op == QueryOp.Equals ){
+        if( op === QueryOp.Equals ){
             result = deepEqual( value1, value2 );
         }
     }

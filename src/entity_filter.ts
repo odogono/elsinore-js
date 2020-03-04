@@ -19,7 +19,7 @@ export const enum EntityFilterType {
  */
 export class EntityFilter {
 
-    filters:Map<EntityFilterType,BitField> = new Map<EntityFilterType,BitField>();
+    
 
     static create(type:object|EntityFilterType = EntityFilterType.All, bitField?:BitField) : EntityFilter {
         let result = new EntityFilter();
@@ -37,8 +37,8 @@ export class EntityFilter {
 
     static Transform(type:EntityFilterType, registry, entity, entityBitField:BitField, filterBitField:BitField) {
         let ii, len, defID, vals, result;
-        const isInclude = type == EntityFilterType.Include;
-        const isExclude = type == EntityFilterType.Exclude;
+        const isInclude = type === EntityFilterType.Include;
+        const isExclude = type === EntityFilterType.Exclude;
 
         if (isInclude) {
             const removeDefIDs = arrayDifference(
@@ -132,6 +132,8 @@ export class EntityFilter {
         }
         return true;
     }
+
+    filters:Map<EntityFilterType,BitField> = new Map<EntityFilterType,BitField>();
 
     
 

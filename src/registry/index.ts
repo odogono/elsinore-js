@@ -1,18 +1,17 @@
+import { Base, BaseOptions } from '../base';
+import { COMPONENT_ID, COMPONENT_URI, ENTITY_ID, ENTITY_SET_ID, EntityEvent } from '../types';
+import { ComponentDefIDs, ComponentRegistry } from '../schema';
+import { Entity, EntityOptions } from '../entity';
+import { isComponent, isEntity, isEntitySet } from '../util/is';
+
+import { AsyncEntitySet } from '../entity_set/async';
+import { Component } from '../component';
+import { EntitySet } from '../entity_set';
 import { arrayDifference } from '../util/array/difference';
 import { arrayWithout } from '../util/array/without';
+import { createUUID } from '../util/uuid';
 import { isBoolean } from '../util/is';
 import { omit } from '../util/omit';
-import { createUUID } from '../util/uuid';
-import { isComponent, isEntity, isEntitySet } from '../util/is';
-import { Entity, EntityOptions } from '../entity';
-import { EntitySet } from '../entity_set';
-import { Base, BaseOptions } from '../base';
-import { Component } from '../component';
-import { ComponentRegistry, ComponentDefIDs } from '../schema';
-
-import { ENTITY_ID, ENTITY_SET_ID, COMPONENT_ID, COMPONENT_URI, EntityEvent } from '../types';
-
-
 
 export interface RegistryOptions extends BaseOptions {
     sequenceCount?:number;
@@ -283,7 +282,7 @@ export class Registry extends Base {
      * @param  {Function} callback   [description]
      * @return {[type]}              [description]
      */
-    createEntitySet(options:CreateEntitySetOptions = {}) {
+    createEntitySet(options:CreateEntitySetOptions = {}):EntitySet {
         let id:number;
         let result;
         let entitySetType = EntitySet;
@@ -295,9 +294,8 @@ export class Registry extends Base {
         // create a 20 bit
         id = options[ENTITY_SET_ID] || options['id'] || this.createID();
         
-        result = new entitySetType(null, { id });
+        result = new entitySetType(null, { id, registry:this });
 
-        result.setRegistry(this);
         
         // TODO : there has to be a better way of identifying entitysets
         if (result.isMemoryEntitySet) {
@@ -315,7 +313,7 @@ export class Registry extends Base {
             }
         }
         
-        return this.addEntitySet(result);
+        return this.addEntitySet(result) as EntitySet;
     }
 
     /**
@@ -355,12 +353,12 @@ export class Registry extends Base {
      * @param {*} entitySet 
      * @param {*} options 
      */
-    addEntitySet(entitySet, options:{sync?:boolean} = {}) {
+    addEntitySet(entitySet:(EntitySet|AsyncEntitySet), options:{sync?:boolean} = {}) {
         if (!entitySet) {
             return null;
         }
 
-        entitySet.setRegistry(this);
+        // entitySet.setRegistry(this);
 
         if (options.sync || !entitySet.isAsync) {
 
@@ -378,21 +376,23 @@ export class Registry extends Base {
             this._entitySetUUIDs[entitySet.getUUID()] = entitySet;
             // this._entitySetIDs[entitySet.getEntitySetID()] = entitySet;
 
-            entitySet.setRegistry(this);
+            // entitySet.setRegistry(this);
 
             this.trigger( EntityEvent.EntitySetAdd, entitySet);
 
             return entitySet;
         }
 
-        // Log.debug('opening', entitySet.type,entitySet.getUUID());
-        return entitySet.open(options).then(() => {
-            const defs = this.getComponentDefs();
-            return this._registerComponentDefsWithEntitySet(entitySet, defs, options).then(() => {
-                // perform the normal sync adding
-                this.addEntitySet(entitySet, { sync: true });
+        const asyncES = entitySet as AsyncEntitySet;
 
-                return entitySet;
+        // Log.debug('opening', entitySet.type,entitySet.getUUID());
+        return asyncES.open(options).then(() => {
+            const defs = this.getComponentDefs();
+            return this._registerComponentDefsWithEntitySet(asyncES, defs, options).then(() => {
+                // perform the normal sync adding
+                this.addEntitySet(asyncES, { sync: true });
+
+                return asyncES;
             });
         });
     }

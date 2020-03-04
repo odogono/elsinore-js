@@ -168,8 +168,8 @@ export class Query extends Base {
 
         // if( context.debug ){console.log('commands:'); printIns( query,1 ); }
 
-        // console.log('execute', this.commands);
-        // console.log('compiled', this.compiled );
+        console.log('execute', this.commands);
+        console.log('compiled', this.compiled );
 
         for (ii = 0, len = this.compiled.length; ii < len; ii++) {
             command = this.compiled[ii];
@@ -503,7 +503,7 @@ function gatherEntityFilters(context, expression) {
                 obj = context.valueOf(expression[1], true);
 
                 if (!obj) {
-                    if (filter == EntityFilterType.All) {
+                    if (filter === EntityFilterType.All) {
                         result.add(QueryOp.Root);
                         return;
                     }

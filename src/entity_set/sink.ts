@@ -17,13 +17,13 @@ const Log = createLog('EntitySetSink');
  */
 
 interface PullStreamSinkOptions {
-    source?:EntitySet;
-    did?:string;
+    source?: EntitySet;
+    did?: string;
 }
 
 interface AddEntityOptions {
     // original id
-    oid?:string;
+    oid?: string;
 }
 
 /**
@@ -34,13 +34,18 @@ interface AddEntityOptions {
  * @param {*} options
  * @param {Function} completeCb
  */
-export function PullStreamSink(entitySet:EntitySet, options:PullStreamSinkOptions = {}, completeCb?:Function) {
+export function PullStreamSink(
+    entitySet: EntitySet,
+    options: PullStreamSinkOptions = {},
+    completeCb?: Function
+) {
     // let result = [];
     const loader = new JSONLoader();
     let context = { entitySet, registry: entitySet.getRegistry() };
+    // Log.debug('[PullStreamSink]', 'context', context);
     const { source, did } = options;
 
-    let addEntityOptions:AddEntityOptions = {};
+    let addEntityOptions: AddEntityOptions = {};
     if (source) {
         addEntityOptions.oid = source.cid;
     }
@@ -59,13 +64,14 @@ export function PullStreamSink(entitySet:EntitySet, options:PullStreamSinkOption
 
             try {
                 let p;
+                // Log.debug('[sink]', 'what is', data);
                 let [item, itemOptions] = data;
 
                 // check whether the incoming data has an OriginID and whether
                 // that OID matches the entitySet to which we are connected.
                 // if they do match, then disregard the event, as it originally came
                 // from the entitySet - an echo!
-                if (itemOptions.oid == entitySet.cid) {
+                if (itemOptions.oid === entitySet.cid) {
                     // Log.debug('🐸 [sink][Entity]', `looks like origin ${itemOptions.oid} is same as target ${entitySet.cid}`);
                     return read(null, next);
                 }
@@ -84,7 +90,7 @@ export function PullStreamSink(entitySet:EntitySet, options:PullStreamSinkOption
                     // if( added ) Log.debug('🐷 [sink][Entity]', data == added, data.msg, added.msg );
                 } else {
                     // Log.debug('[sink][_processCommand]', entitySet.cid, item);
-                    if (item[LCMD_COMMAND] == LCMD_REMOVE_COMPONENT) {
+                    if (item[LCMD_COMMAND] === LCMD_REMOVE_COMPONENT) {
                         // Log.debug('[sink][_processCommand]', entitySet._components);
                     }
                     p = loader._processCommand(context, item, options);

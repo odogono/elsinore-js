@@ -1,32 +1,32 @@
-import { Base } from './base';
 import {
-    setEntityIDFromID,
-    getEntityIDFromID,
-    getEntitySetIDFromID
-} from './util/id';
-import { stringify } from './util/stringify';
-import { extend } from './util/extend';
-import { omit } from './util/omit';
-import { hash } from './util/hash';
-import { uniqueID } from './util/unique_id';
-import { deepEqual } from './util/deep_equal';
-import { deepExtend } from './util/deep_extend';
-import { isComponent } from './util/is';
-import { Entity } from './entity';
-import { EntitySet } from './entity_set';
-
-import {
+    COMPONENT_DEF_ID,
     COMPONENT_ID,
     COMPONENT_URI,
-    COMPONENT_DEF_ID,
+    ComponentDefID,
+    ComponentID,
     ENTITY_ID,
     ENTITY_SET_ID,
     EntityEvent,
-    ComponentID,
-    ComponentDefID,
     EntityID,
     EntitySetID
 } from './types';
+import {
+    getEntityIDFromID,
+    getEntitySetIDFromID,
+    setEntityIDFromID
+} from './util/id';
+
+import { Base } from './base';
+import { Entity } from './entity';
+import { EntitySet } from './entity_set';
+import { deepEqual } from './util/deep_equal';
+import { deepExtend } from './util/deep_extend';
+import { extend } from './util/extend';
+import { hash } from './util/hash';
+import { isComponent } from './util/is';
+import { omit } from './util/omit';
+import { stringify } from './util/stringify';
+import { uniqueID } from './util/unique_id';
 
 /**
  * Components contain data
@@ -64,7 +64,7 @@ export class Component extends Base {
         this.preinitialize.apply(this, arguments);
 
         if (attrs !== undefined) {
-            this.set(attrs, options); //this.attributes = attrs || {};
+            this.set(attrs, options);
         } else {
             this._hash = this.hash();
         }
@@ -135,15 +135,19 @@ export class Component extends Base {
         let changes = [];
         for (let attr in attrs) {
             let value = attrs[attr];
-            if (existing[attr] != value) {
+            if (existing[attr] !== value) {
                 changes.push(attr);
             }
         }
 
         // console.log('[set]', attrs, existing, changes);
-
+        
         if (changes.length > 0) {
-            extend(existing, attrs); // typeof attrs === 'function' ? attrs(existing) : attrs);
+            // console.log('[set]', this.attributes, attrs);
+            // if( attrs['0'] ){
+                // throw new Error('stop');
+            // }
+            this.attributes = {...this.attributes, ...attrs};// extend(existing, attrs); // typeof attrs === 'function' ? attrs(existing) : attrs);
             this._hash = this.hash();
             this.trigger(EntityEvent.ComponentUpdate, changes);
         }
@@ -280,10 +284,10 @@ export class Component extends Base {
         if (!other || !other.isComponent) {
             return false;
         }
-        if (this == other) {
+        if (this === other) {
             return true;
         }
-        if (this._hash == other._hash) {
+        if (this._hash === other._hash) {
             return true;
         }
 
@@ -302,6 +306,8 @@ export class Component extends Base {
         // if (this.id !== 0) {
         //     result[COMPONENT_ID] = this.id;
         // }
+
+        // console.log('[Component][toJSON]', result );
 
         if (this.entityID > 0) {
             result[ENTITY_ID] = this.entityID;

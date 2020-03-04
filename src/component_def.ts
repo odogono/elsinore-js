@@ -4,6 +4,7 @@ import { componentNameFromUri } from './util/name_from_uri';
 import { hash } from './util/hash';
 import { isObject } from './util/is';
 import { stringify } from './util/stringify';
+
 // import { createLog } from './util/log';
 
 // const Log = createLog('ComponentDef', false);
@@ -103,20 +104,20 @@ export class ComponentDef extends Base {
  * @param {*} props
  */
 function createAttrsFromProperties(props) {
-    let name, property, value;
+    let property;
     let result = {};
     if (!props) {
         return result;
     }
-
-    for (name in props) {
-        value = props[name];
-        property = value;
-        if (isObject(value)) {
-            if (value.default !== void 0) {
-                value = property.default;
-            } else if (value.type !== void 0) {
-                switch (value.type) {
+    // console.log('[ComponentDef][createAttrsFromProperties]', props );
+    for (let prop of props) {
+        const {name, type, default:defaultValue} = prop;
+        let value = defaultValue;
+        // property = value;
+        // if (isObject(value)) {
+            
+            if (value === undefined && type !== undefined) {
+                switch (type) {
                     case 'integer':
                         value = 0;
                         break;
@@ -131,7 +132,7 @@ function createAttrsFromProperties(props) {
                         break;
                 }
             }
-        }
+        // }
         result[name] = value;
     }
 

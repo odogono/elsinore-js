@@ -53,6 +53,7 @@ function argCount(operator) {
 
     switch (operator) {
         case EntityFilterType.All:
+        return 2;
         case EntityFilterType.Any:
         case EntityFilterType.None:
             return 1;
@@ -174,6 +175,7 @@ export class DslContext {
     attr(attr) {
         const context = this.readContext(this);
         context.pushVal(['AT', attr]);
+        console.log('[attr]', JSON.stringify(context) )
         return context;
     }
 
@@ -201,9 +203,10 @@ export class DslContext {
 
     where(...clauses) : DslContext {
         const context = this.readContext(this);
+        // console.log('[where]', JSON.stringify(clauses) )
 
         if (clauses.length <= 0) {
-            return context;
+            
         }
         if (clauses.length === 1) {
             context.pushVal(clauses[0]);
@@ -222,12 +225,14 @@ export class DslContext {
             
             context.valStack = context.valStack.concat( arrayFlatten(clauses, true) );
         }
+        // console.log('[where]', JSON.stringify(context) )
         return context;
     }
 
     equals(val) : DslContext {
         this.pushVal(val, true);
         this.pushOp(QueryOp.Equals);
+        // console.log('[equals]', JSON.stringify(this) )
         return this;
     }
 
@@ -269,6 +274,7 @@ export class DslContext {
             context.pushVal(filterFn, true);
         }
 
+        // console.log('[all]', JSON.stringify(context) )
         return context;
     }
 

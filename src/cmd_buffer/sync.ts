@@ -1,25 +1,18 @@
-import { Component, setComponentID, cloneComponent } from '../component';
-import { Entity, cloneEntity } from '../entity';
-import { EntitySet } from '../entity_set';
-import { Collection } from '../util/collection';
-
-import { isInteger } from '../util/is';
-import { toInteger } from '../util/to';
-import { componentsFromCollections } from '../util/array/value';
-import { valueArray } from '../util/array/value';
-import { entityToString } from '../util/to_string';
-import { stringify } from '../util/stringify';
-import { isComponent, isEntity } from '../util/is';
-import { arrayDifference } from '../util/array/difference';
-
 import {
-    ENTITY_ID,
-    EntityEvent,
     Command,
+    ENTITY_ID,
     EntityCommand,
-    EntityCommandBuffer
+    EntityCommandBuffer,
+    EntityEvent
 } from '../types';
+import { Component, cloneComponent, setComponentID } from '../component';
+import { Entity, cloneEntity } from '../entity';
+import { isComponent, isEntity } from '../util/is';
 
+import { Collection } from '../util/collection';
+import { EntitySet } from '../entity_set';
+import { entityToString } from '../util/to_string';
+import { toInteger } from '../util/to';
 
 export interface CommandBufferOptions {
     entity?:Entity;
@@ -197,7 +190,7 @@ export class SyncCmdBuffer {
 
         // debug = options.debug;
         // batch = options.batch; // cmds get batched together and then executed
-        execute = options.execute === void 0 ? true : options.execute;
+        execute = options.execute === undefined ? true : options.execute;
         executeOptions = { ...options, removeEmptyEntity: true };
 
         if (!component) {
@@ -206,7 +199,7 @@ export class SyncCmdBuffer {
 
         // if we have been passed an array, then batch all those commands together
         if (Array.isArray(component)) {
-            if (options.batch === void 0) {
+            if (options.batch === undefined) {
                 options.batch = true;
                 options.execute = false;
                 if (execute !== false) {
@@ -306,12 +299,12 @@ export class SyncCmdBuffer {
         }
 
         // batch = options.batch; // cmds get batched together and then executed
-        execute = options.execute === void 0 ? true : options.execute;
+        execute = options.execute === undefined ? true : options.execute;
 
         // if we are dealing with an array of entities, ensure they all get executed in
         // a single batch
         if (Array.isArray(entity)) {
-            if (options.batch === void 0) {
+            if (options.batch === undefined) {
                 options.batch = true;
                 options.execute = false;
                 if (execute !== false) {
@@ -422,13 +415,13 @@ export class SyncCmdBuffer {
         }
 
         // batch = options.batch; // cmds get batched together and then executed
-        execute = options.execute === void 0 ? true : options.execute;
+        execute = options.execute === undefined ? true : options.execute;
         executeOptions = { ...options, removeEmptyEntity: true };
 
         // if we are dealing with an array of entities, ensure they all get executed in
         // a single batch
         if (Array.isArray(entity)) {
-            if (options.batch === void 0) {
+            if (options.batch === undefined) {
                 options.batch = true;
                 options.execute = false;
                 if (execute !== false) {
@@ -559,7 +552,7 @@ export class SyncCmdBuffer {
                         
                         // if (debug) console.log('[CmdBufferSync][execute][Command.ComponentAdd]', 'clone', com.toJSON());
 
-                        if (component.id === 0) {
+                        if (component.id === 0 || component.id === undefined ) {
 
                             // if the component has no id, then assign on either from the existing component, or by generation
 
@@ -586,7 +579,7 @@ export class SyncCmdBuffer {
 
                         tEntity._addComponent(component);
 
-                        // if( debug ) console.log('[CmdBufferSync][execute][Command.ComponentAdd]', tEntity );
+                        console.log('[CmdBufferSync][execute][Command.ComponentAdd]', component );
 
                         // console.log('[CmdBufferSync][execute]', 'checking for', tEntity.id, tEntity.cid, this.entitiesAdded );
                         // console.log('NOT GOING TO WORK BECAUSE THE ENTITIY IS KEYED BY CID NOT ID', this.entitiesAdded.has(tEntity.id) );
@@ -772,7 +765,7 @@ export class SyncCmdBuffer {
      *
      * @param {*} source
      */
-    triggerEvents(source, options) {
+    triggerEvents(source:EntitySet, options) {
         options.cid = source.cid;
         triggerEvent(source, EntityEvent.ComponentUpdate, this.componentsUpdated, options);
         triggerEvent(source, EntityEvent.ComponentRemove, this.componentsRemoved, options);
@@ -785,8 +778,8 @@ export class SyncCmdBuffer {
 
 
 
-function triggerEvent(source, name, collection, options) {
+function triggerEvent(source:EntitySet, name:string, collection, options) {
     if (collection.size() > 0) {
-        source.emit(name, collection.models, options);
+        source.trigger(name, collection.models, options);
     }
 }

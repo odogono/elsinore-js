@@ -1,8 +1,10 @@
-// import { EntityProcessor } from '../entity_processor';
-import { stringify } from './stringify';
 import { isCollection, isComponent, isEntity, isEntitySet } from './is';
 
+import { Component } from '../component';
+import { EntitySet } from '../entity_set/index';
 import { getEntityIDFromID } from './id';
+// import { EntityProcessor } from '../entity_processor';
+import { stringify } from './stringify';
 
 /**
  *
@@ -31,7 +33,7 @@ export function entityToString(entity, indent = '') {
  * @param {*} component
  * @param {*} indent
  */
-export function componentToString(component, indent = '') {
+export function componentToString(component:Component, indent = '') {
     let componentJSON;
 
     if (!component) {
@@ -42,9 +44,11 @@ export function componentToString(component, indent = '') {
     const cCid = component.cid;
     const componentID = component.id || 0;
     const cDefID = component.getDefID();
-    const cName = component.name;
+    const cName = component.getDefName();
     const entityID = getEntityIDFromID(component.getEntityID());
-    const componentHash = component.hash(true);
+    const componentHash = component.hash();
+
+    // console.log('[componentToString]', component);
 
     return `${indent}${cCid} (${componentID}) ${cName}(${cDefID}) e:${entityID} ${componentHash} ${componentJSON}`;
 }
@@ -54,7 +58,7 @@ export function componentToString(component, indent = '') {
  * @param {*} es
  * @param {*} indent
  */
-export function entitySetToString(es, indent) {
+export function entitySetToString(es:EntitySet, indent:string) {
     let entity;
     let res = [];
     let it;
@@ -65,9 +69,9 @@ export function entitySetToString(es, indent) {
     res.push(`${indent}- ${es.cid} (${es.id}) ${es.getUUID()}`);
     indent = indent + '  ';
 
-    if (es.entityFilters) {
-        es.entityFilters.forEach(ef => res.push(indent + 'ef( ' + ef.toString() + ' )'));
-    }
+    // if (es.entityFilters) {
+    //     es.entityFilters.forEach(ef => res.push(indent + 'ef( ' + ef.toString() + ' )'));
+    // }
 
     while ((entity = it.next().value)) {
         res = res.concat(entityToString(entity, indent));

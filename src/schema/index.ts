@@ -244,7 +244,7 @@ export class ComponentRegistry extends Base {
      * @param {*} cb
      */
     createComponent(defUri:string|number, attrs?, options:{throwOnNotFound?:boolean} = {}) {
-        let throwOnNotFound = options.throwOnNotFound === void 0 ? true : options.throwOnNotFound;
+        let throwOnNotFound = options.throwOnNotFound === undefined ? true : options.throwOnNotFound;
         
         let def = <ComponentDef>this.getComponentDef(defUri, { throwOnNotFound });
 
@@ -260,13 +260,14 @@ export class ComponentRegistry extends Base {
 
         //
 
-        if (attrs === void 0 && isObject(defUri)) {
+        if (attrs === undefined && isObject(defUri)) {
             attrs = defUri;
         }
 
         // we create with attrs from the def, not properties -
         // since the properties describe how the attrs should be set
         const defAttrs = def.getAttrs();
+        // console.log('[Schema][createComponent]', defAttrs );
         attrs = { ...defAttrs, ...attrs };
 
         // NOTE: no longer neccesary to pass parse:true as the component constructor calls component.parse
