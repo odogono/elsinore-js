@@ -1,5 +1,7 @@
-import FlakeId63 from 'flake-idgen-63';
-import intformat from 'biguint-format';
+// import FlakeId63 from 'flake-idgen-63';
+import intformat from './util/biguint-format';
+
+import { assert } from 'chai';
 
 /**
  * flake53 (https://github.com/cablehead/python-fity3)
@@ -25,39 +27,39 @@ import intformat from 'biguint-format';
  */
 
 describe('Snowflake ids', () => {
-    test('flakeId63', () => {
-        const flakeIdGen63 = new FlakeId63({
-            processId: 15, // 0 - 15
-            worker: 31 // 0 - 31
-        });
+    // it('flakeId63', () => {
+    //     const flakeIdGen63 = new FlakeId63({
+    //         processId: 15, // 0 - 15
+    //         worker: 31 // 0 - 31
+    //     });
 
-        const flake = flakeIdGen63.next();
+    //     const flake = flakeIdGen63.next();
 
-        console.info([...flake]);
-        console.info(intformat(flake, 'dec'));
-        console.info(intformat(flake, 'hex', { groupsize: 2 }));
-        console.info(intformat(flake, 'bin', { groupsize: 4 }));
+    //     console.info([...flake]);
+    //     console.info(intformat(flake, 'dec'));
+    //     console.info(intformat(flake, 'hex', { groupsize: 2 }));
+    //     console.info(intformat(flake, 'bin', { groupsize: 4 }));
 
-        // 3262265848503439360
-        // 3262267454246588416
+    //     // 3262265848503439360
+    //     // 3262267454246588416
 
-        console.info(parseFlake63(int64_to_str([...flake])));
-    });
+    //     console.info(parseFlake63(int64_to_str([...flake])));
+    // });
 
-    test('flake parsing', () => {
+    it('flake parsing', () => {
         const flake = new Uint8Array([45, 69, 229, 129, 70, 239, 144, 0]);
 
         const processId = (flake[5] >> 1) & 0xf;
 
-        expect(processId).toBe(7);
+        assert.equal(processId, 7);
 
         const worker = ((flake[5] & 0x1) << 4) | ((flake[6] & 0xf0) >> 4);
 
-        expect(worker).toBe(25);
+        assert.equal(worker, 25);
 
         const counter = ((flake[6] & 0xf) << 8) | flake[7];
 
-        expect(counter).toBe(0);
+        assert.equal(counter, 0);
 
         // const firstSixBytes = 49778226448111;
         const firstSixBytes =
@@ -69,7 +71,7 @@ describe('Snowflake ids', () => {
             flake[5];
         const timestamp = rshift(firstSixBytes, 5); // shift by 5
 
-        expect(timestamp).toBe(1555569576503);
+        assert.equal(timestamp, 1555569576503);
 
         // console.log( flake.length );
         // console.info(  _arrayBufferToBase64(flake) );//  intformat(flake, 'bin', { groupsize: 4 }));
@@ -77,7 +79,7 @@ describe('Snowflake ids', () => {
         // (( flake[5] & 0xE0) >> 5)
     });
 
-    test('flake parse', () => {
+    it('flake parse', () => {
         // see also https://github.com/negezor/snowyflake - uses BigInt though
         const flake = new Uint8Array([45, 70, 0, 166, 181, 191, 240, 0]);
         const view = new DataView(flake.buffer);
@@ -89,9 +91,9 @@ describe('Snowflake ids', () => {
         // 3262295696090329088n
         // 3262295696090329000
 
-        expect(int64_to_str([...flake])).toBe('3262295696090329088');
+        assert.equal(int64_to_str([...flake]), '3262295696090329088');
 
-        expect(parseFlake63('3262295696090329088')).toEqual({
+        assert.deepEqual(parseFlake63('3262295696090329088'), {
             counter: 0,
             processId: 15,
             date: new Date('2019-04-18T10:36:48.941Z'),
@@ -100,7 +102,7 @@ describe('Snowflake ids', () => {
             worker: 31
         });
 
-        expect(hexstr_to_int64_array('0x2D4600A6B5BFF000')).toEqual([
+        assert.deepEqual(hexToInt64Array('0x2D4600A6B5BFF000'), [
             45,
             70,
             0,
@@ -110,7 +112,7 @@ describe('Snowflake ids', () => {
             240,
             0
         ]);
-        expect(str_to_int64_array('3262295696090329088')).toEqual([
+        assert.deepEqual(stringToInt64Array('3262295696090329088'), [
             45,
             70,
             0,
@@ -128,10 +130,10 @@ describe('Snowflake ids', () => {
             timestamp: 1555594808509
         };
 
-        expect(buildFlake63(descr)).toEqual('3262318763855181235');
+        assert.equal( buildFlake63(descr), '3262318763855181235');
 
         // ((data[6] & 0xF) << 8) | data[7];
-        expect(parseFlake63('3262318763855181235', 'arr')).toEqual([
+        assert.deepEqual(parseFlake63('3262318763855181235', 'arr'), [
             45,
             70,
             21,
@@ -142,7 +144,7 @@ describe('Snowflake ids', () => {
             179
         ]);
 
-        expect(parseFlake63('3262318763855181235')).toEqual({
+        assert.deepEqual(parseFlake63('3262318763855181235'), {
             counter: 1459,
             processId: 6,
             date: new Date('2019-04-18T13:40:08.509Z'),
@@ -154,7 +156,7 @@ describe('Snowflake ids', () => {
         // expect( parseFlake63('3262318763855061171', 'bin') ).toEqual( '' );
     });
 
-    test.only('flake53', () => {
+    it('flake53', () => {
         const data = {
             timestamp: 1555608701611,
             workerId: 14,
@@ -162,13 +164,13 @@ describe('Snowflake ids', () => {
             epoch: TwitterEpoch
         };
 
-        expect(buildFlake53(data)).toEqual(582606444998890);
+        assert.equal(buildFlake53(data), 582606444998890);
 
-        expect(parseFlake53(582606444998890, data.epoch)).toEqual(data);
+        assert.deepEqual(parseFlake53(582606444998890, data.epoch), data);
 
-        expect(Number.isSafeInteger(582606444998890)).toBe(true);
+        assert.isOk(Number.isSafeInteger(582606444998890) );
 
-        expect(str_to_int64_array('582606444998890')).toEqual([
+        assert.deepEqual(stringToInt64Array('582606444998890'), [
             0,
             2,
             17,
@@ -238,7 +240,7 @@ function parseFlake53(
 }
 
 // https://gist.github.com/lttlrck/4129238
-function hexstr_to_int64_array(str) {
+function hexToInt64Array( str:string) {
     let result = new Array(8);
 
     let hiStr = (str + '').replace(/^0x/, '');
@@ -257,11 +259,11 @@ function hexstr_to_int64_array(str) {
     return result;
 }
 
-function str_to_int64_array(str) {
+function stringToInt64Array(str:string) {
     // because i am lame and cant find a direct means
     // of converting a dec string, i convert to hex
     // first
-    return hexstr_to_int64_array(decToHex(str));
+    return hexToInt64Array(decToHex(str));
 }
 
 // http://www.danvk.org/hex2dec.html
@@ -381,7 +383,7 @@ function int64_to_str(a: number[], signed: boolean = false): string {
 }
 
 function parseFlake63(flake: string, format = 'obj') {
-    const data = str_to_int64_array(flake);
+    const data = stringToInt64Array(flake);
 
     if (format === 'arr') {
         return data;

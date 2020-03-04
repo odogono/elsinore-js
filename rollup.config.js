@@ -1,8 +1,10 @@
-import CommonJS from 'rollup-plugin-commonjs';
+import CommonJS from '@rollup/plugin-commonjs';
 import { terser as Minify } from 'rollup-plugin-terser';
-import NodeResolve from 'rollup-plugin-node-resolve';
-import Replace from 'rollup-plugin-replace';
-import Typescript from 'rollup-plugin-typescript';
+import NodeResolve from '@rollup/plugin-node-resolve';
+import Replace from '@rollup/plugin-replace';
+import Typescript from "rollup-plugin-typescript2";
+import MultiEntry from '@rollup/plugin-multi-entry';
+import NodePolyfills from 'rollup-plugin-node-polyfills';
 import pkg from './package.json';
 import { readFileSync } from 'fs';
 
@@ -14,7 +16,10 @@ const banner = readFileSync('./banner.txt', 'utf-8')
     .replace('${time}', new Date());
 
 const typescriptPlugin = Typescript({
-    typescript: require('typescript')
+    tsconfigOverride: { compilerOptions : { module: "es2015" } },
+    tsconfig: './tsconfig.json',
+    typescript: require('typescript'),
+    useTsconfigDeclarationDir: true
 });
 
 const sourcemap = isProduction;
