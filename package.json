@@ -33,32 +33,26 @@
   },
   "non-dependencies": {},
   "devDependencies": {
-    "@types/jest": "24.0.18",
-    "@types/tape": "4.2.33",
+    "ava": "^3.5.0",
     "biguint-format": "^1.0.1",
+    "eslint": "^6.8.0",
     "flake-idgen-63": "^1.0.1",
-    "jest": "24.9.0",
     "odgn-json": "^0.3.1",
-    "prettier": "1.18.2",
+    "prettier": "^1.19.1",
     "pull-file": "^1.1.0",
     "pull-stream": "3.6.14",
     "pull-stringify": "^2.0.0",
     "pull-utf8-decoder": "^1.0.2",
-    "rollup": "1.20.3",
+    "rollup": "^1.32.0",
     "rollup-plugin-commonjs": "10.1.0",
     "rollup-plugin-node-resolve": "5.2.0",
     "rollup-plugin-replace": "2.2.0",
-    "rollup-plugin-terser": "5.1.1",
+    "rollup-plugin-terser": "^5.2.0",
     "rollup-plugin-typescript": "1.0.1",
     "stream-to-pull-stream": "1.7.3",
-    "tap-dot": "2.0.0",
-    "tape": "4.11.0",
-    "terser": "4.2.1",
-    "ts-jest": "24.0.2",
-    "ts-node": "8.3.0",
-    "tslint": "5.19.0",
-    "tslint-config-prettier": "^1.18.0",
-    "typescript": "3.6.2"
+    "terser": "^4.6.6",
+    "ts-node": "^8.6.2",
+    "typescript": "^3.8.3"
   },
   "scripts": {
     "build": "rollup -c",
@@ -69,22 +63,6 @@
     "dist": "NODE_ENV=production npm run dist:noclean",
     "lint": "eslint  --ext .ts src",
     "prepare": "npm run dist",
-    "test": "NODE_ENV=test ts-node test/index.js | tap-dot",
-    "spec": "NODE_ENV=test ts-node test/index.js | tap-spec"
-  },
-  "jest": {
-    "transform": {
-      "^.+\\.ts$": "ts-jest"
-    },
-    "testRegex": "(/test/.*|(\\.|/)(test|spec))\\.(ts)$",
-    "moduleDirectories": [
-      "node_modules",
-      "src"
-    ],
-    "moduleFileExtensions": [
-      "ts",
-      "js"
-    ],
-    "testEnvironment": "node"
+    "test": "ava"
   }
 }
