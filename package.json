@@ -1,9 +1,8 @@
 {
-  "name": "elsinore",
-  "version": "5.2.2",
+  "name": "odgn-entity",
+  "version": "6.0.0",
   "description": "a javascript Entity Component System",
   "keywords": [
-    "elsinore",
     "entity",
     "entity-component",
     "ecs",
@@ -22,9 +21,9 @@
     "type": "git",
     "url": "https://github.com/odogono/elsinore-js.git"
   },
-  "main": "dist/elsinore.cjs.js",
-  "module": "dist/elsinore.esm.js",
-  "browser": "dist/elsinore.umd.js",
+  "main": "dist/ecs.cjs.js",
+  "module": "dist/ecs.esm.js",
+  "browser": "dist/ecs.umd.js",
   "dependencies": {
     "flake-idgen": "^1.1.2",
     "minivents": "^2.2.0",
@@ -41,7 +40,6 @@
     "@types/chai": "^4.2.10",
     "@types/expect": "^24.3.0",
     "@types/mocha": "^7.0.2",
-    "ava": "^3.5.0",
     "biguint-format": "^1.0.1",
     "buffer-es6": "^4.9.3",
     "chai": "^4.2.0",
@@ -75,7 +73,7 @@
     "dist": "NODE_ENV=production npm run dist:noclean",
     "lint": "eslint  --ext .ts src",
     "prepare": "npm run dist",
-    "test": "ava",
+    "test": "mocha",
     "browser-test": "npm run build-test",
     "reload:client": "odgn-live-reload",
     "reload:client:delay": "odgn-live-reload --delay=1200",
