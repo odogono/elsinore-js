@@ -3,7 +3,8 @@ import {
     findWithIndex, QueryStack,
     peek as peekQueryStack,
     push as pushQueryStack,
-    replace as replaceQueryStack
+    replace as replaceQueryStack,
+    InstDefMeta
 } from "../stack";
 import { 
     createComponent, 
@@ -15,7 +16,7 @@ import { stringify } from "../../util/json";
 
 const Log = createLog('Inst][CreateComponent');
 
-export const meta = {
+export const meta:InstDefMeta = {
     op: '@c'
 };
 

@@ -8,17 +8,41 @@ import { create as createQueryStack,
     peekV as peekQueryStack,
     findV,
     addInstruction,
+    InstDef,
     QueryStack } from '../src/query/stack';
 import * as ComponentRegistry from '../src/component_registry';
 import { createLog } from '../src/util/log';
 import util from 'util';
 import { stringify } from '../src/util/json';
 
+import * as InstCDef from '../src/query/insts/component_def';
+import * as InstComC from '../src/query/insts/component_create';
+import * as InstVal from '../src/query/insts/value';
+import * as InstEq from '../src/query/insts/equals';
+import {VL} from '../src/query/insts/value';
+
 const Log = createLog('TestQuery');
 
 
 
 describe('Query', () => {
+
+    it('should evaluate a boolean expression', () => {
+        const insts = [
+            [ '==', ['VL', 10], ['VL', 10] ]
+        ];
+
+        let stack = buildQueryStack();
+
+        stack = executeQueryStack( stack, insts );
+
+        assert.ok( peekQueryStack(stack), 'the values are equal' );
+
+        stack = executeQueryStack( stack, [ [ '==', ['VL', 10], ['VL', 12] ] ] );
+
+        assert.notOk( peekQueryStack(stack), 'the values are not equal' );
+    });
+    
 
     it('should register a component def', async () => {
 
@@ -30,7 +54,7 @@ describe('Query', () => {
         ];
 
         let registry = ComponentRegistry.create();
-        let stack = await buildQueryStack();
+        let stack = buildQueryStack();
 
         // important that a ComponentRegistry exists on the stack, otherwise
         // the definition command will fail
@@ -42,12 +66,15 @@ describe('Query', () => {
 
         registry = findV( stack, ComponentRegistry.Type );
         
-        // Log.debug('[post stack]', registry );
+        // Log.debug('[post stack]', stack.items );
+
+        assert.equal( stack.items.length, 2 );
 
         const def:ComponentDef = ComponentRegistry.getByUri( registry, '/piece/knight');
         const component:Component = peekQueryStack( stack );
 
-        // Log.debug('def id', component, comToObject(component) );
+
+        // Log.debug('component', component, comToObject(component) );
 
         assert.equal( def.uri, '/piece/knight' );
         assert.equal( getComponentDefId(component), def[DefT] );
@@ -59,15 +86,24 @@ describe('Query', () => {
 
 
 
-async function buildQueryStack(){
+function buildQueryStack(){
+    const insts:InstDef[] = [InstCDef,InstComC,InstVal,InstEq];
     let stack = createQueryStack();
-
-    let inst = await import('../src/query/insts/component_def');
-    stack = addInstruction( stack, inst );
-    
-    inst = await import('../src/query/insts/component_create');
-    stack = addInstruction( stack, inst );
-    
-
-    return stack;
+    stack = addInstruction( stack, insts );
+    // stack = addInstruction( stack, InstComC );
+    // stack = addInstruction( stack, InstVal );
+    return stack
 }
+
+// async function buildQueryStack(){
+//     let stack = createQueryStack();
+
+//     let inst = await import('../src/query/insts/component_def');
+//     stack = addInstruction( stack, inst );
+    
+//     inst = await import('../src/query/insts/component_create');
+//     stack = addInstruction( stack, inst );
+    
+
+//     return stack;
+// }

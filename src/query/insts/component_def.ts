@@ -1,14 +1,15 @@
 import { createLog } from "../../util/log";
 import { findWithIndex, QueryStack, 
     peek as peekQueryStack,
-    replace as replaceQueryStack } from "../stack";
+    replace as replaceQueryStack, 
+    InstDefMeta} from "../stack";
 import { ComponentRegistry, register, Type as ComponentRegistryT } from "../../component_registry";
 import { isObject } from "../../util/is";
 import { stringify } from "../../util/json";
 
 const Log = createLog('Inst][ComponentDef');
 
-export const meta = {
+export const meta:InstDefMeta = {
     op: '@d'
 };
 

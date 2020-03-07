@@ -4,17 +4,22 @@ import { isObject } from "../util/is";
 
 const Log = createLog('QueryStack');
 
-interface InstDef {
+export interface InstDefMeta {
+    op: string;
+}
+
+export interface InstDef {
+    meta: InstDefMeta;
     compile: Function;
     execute: Function;
 }
 
-type Value = [ Symbol, any ];
+type StackValue = [ Symbol, any ];
 
-const AnyValue = Symbol.for('any');
+const AnyValue = Symbol.for('VL');
 
 export interface QueryStack {
-    items: Value[];
+    items: StackValue[];
     instructions: Map<string, InstDef>;
 }
 
@@ -25,15 +30,21 @@ export function create(){
     };
 }
 
-export function push( stack:QueryStack, value:Value ):QueryStack {
+/**
+ * Pushes a stack value onto the stack
+ */
+export function push( stack:QueryStack, value:StackValue ):QueryStack {
     return {
         ...stack,
         items: [...stack.items, value]
     };
 }
 
-export function pushV( stack:QueryStack, value:any ):QueryStack {
-    let itemValue:Value = [ AnyValue, value ];
+/**
+ * Pushes an arbirtrary value onto the stack
+ */
+export function pushV( stack:QueryStack, value:any, valueType = AnyValue ):QueryStack {
+    let itemValue:StackValue = [ valueType, value ];
     if( isObject(value) && value.type ){
         itemValue = [value.type, value];
     }
@@ -45,7 +56,7 @@ export function pushV( stack:QueryStack, value:any ):QueryStack {
     }
 }
 
-export function pop(stack:QueryStack): [QueryStack,Value] {
+export function pop(stack:QueryStack): [QueryStack,StackValue] {
     const length = stack.items.length;
     if( length === 0 ){
         return undefined;
@@ -58,7 +69,7 @@ export function pop(stack:QueryStack): [QueryStack,Value] {
     return [stack, value];
 }
 
-export function peek(stack:QueryStack):Value {
+export function peek(stack:QueryStack):StackValue {
     return stack.items[ stack.items.length -1 ];
 }
 
@@ -67,6 +78,7 @@ export function peekV(stack:QueryStack):any {
     if( value !== undefined ){
         return value[1];
     }
+    return undefined;
 }
 
 /**
@@ -76,7 +88,7 @@ export function peekV(stack:QueryStack):any {
  * @param index 
  * @param newItem 
  */
-export function replace( stack:QueryStack, index:number, newItem:Value ): QueryStack {
+export function replace( stack:QueryStack, index:number, newItem:StackValue ): QueryStack {
     const items = stack.items.map( (item, ii) => {
         if( ii !== index ){
             return item;
@@ -89,7 +101,7 @@ export function replace( stack:QueryStack, index:number, newItem:Value ): QueryS
 /**
  * 
  */
-export function findWithIndex( stack:QueryStack, type:Symbol ): [ number, Value ] {
+export function findWithIndex( stack:QueryStack, type:Symbol ): [ number, StackValue ] {
     for( let ii = stack.items.length-1; ii >= 0; ii-- ){
         const item = stack.items[ii];
         if( type === item[0] ){
@@ -108,21 +120,38 @@ export function findV( stack:QueryStack, type:Symbol ): any {
 export function execute( stack:QueryStack, stmts:Array<Array<any>> ): QueryStack {
     return stmts.reduce( (stack, stmt) => {
         const [op, ...args] = stmt;
-        const inst = getInstruction(stack, op);
+        // check whether the op is valid
+        // Log.debug('[execute]', 'Looking for', op, 
+        // Array.from(stack.instructions.keys()).map(k => k.description );
+
+        const inst = getInstruction(stack, op );
+        // Log.debug('[execute]', op, stmt, inst )
+
         if( inst === undefined ){
+            Log.debug('[execute]', 'instruction not found', op );
             return stack;
         }
         
-        // Log.debug('[execute]', op, inst )
-        return inst.execute( stack, ...args );
+        const result = inst.execute( stack, ...args );
+
+        return result ?? stack;
     }, stack );
 }
 
-export function addInstruction( stack:QueryStack, {meta, compile, execute} ){
+
+export function addInstruction( stack:QueryStack, inst:InstDef|InstDef[] ){
+    if( Array.isArray(inst) ){
+        return inst.reduce( (st,ins) => addInstruction(st,ins), stack );
+    }
+
+    const { meta, compile, execute } = inst;
     const {op} = meta;
 
-    const instructions = new Map( stack.instructions );
-    instructions.set( op, {compile,execute} ); 
+    const instructions = new Map<string, InstDef>( stack.instructions );
+    
+    // Log.debug('[addInstruction]', 'adding inst', op);
+    instructions.set( op, {meta,compile,execute} ); 
+
     return {
         ...stack,
         instructions

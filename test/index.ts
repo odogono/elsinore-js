@@ -1,1 +1,2 @@
-import './id';
+import './component_def';
+import './query';

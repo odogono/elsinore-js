@@ -27,7 +27,7 @@ export default [
             name: 'test',
             file: 'dist/elsinore.tests.js',
             format: 'iife',
-            sourcemap: false,
+            sourcemap: true,
             globals: {
                 chai: 'chai',
                 it: 'it',
@@ -44,6 +44,7 @@ export default [
             // MultiEntry(),
             // NodePolyfills({ buffer: true, process: true }),
             // isProduction && Minify()
+            // Minify()
         ]
     }
 ];
