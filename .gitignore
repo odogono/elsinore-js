@@ -29,3 +29,5 @@ npm-debug.log
 test-old
 bin/old_test
 TODO.md
+coverage
+.nyc_output

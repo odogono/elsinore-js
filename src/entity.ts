@@ -1,7 +1,7 @@
 import { BitField } from 'odgn-bitfield';
 import { Component } from "./component";
 
-
+export const Token = Symbol.for('@e');
 
 
 export class Entity {
