@@ -109,6 +109,9 @@ export function hash( def:ComponentDef ): number {
     return hashValue( JSON.stringify( toObject(def) ), false ) as number;
 }
 
+export function getDefId( def:ComponentDef ): number {
+    return def[Token];
+}
 
 /**
  * Converts the ComponentDef into an object

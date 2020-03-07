@@ -33,7 +33,7 @@ export function execute(stack: QueryStack, uri, attributes ) {
     
     const component = createComponent(registry, uri, attributes );
     
-    // Log.debug('[execute]', 'created', component );
+    // Log.debug('[execute]', 'created', attributes, component );
 
     stack = pushQueryStack( stack, [ ComponentT, component] );
     // stack = replaceQueryStack(stack, index, [type, registry]);

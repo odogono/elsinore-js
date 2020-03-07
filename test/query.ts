@@ -1,6 +1,6 @@
 import { assert } from 'chai';
 
-import { ComponentDef, Token as DefT } from '../src/component_def';
+import { ComponentDef, Token as DefT, getDefId } from '../src/component_def';
 import { Component, getComponentDefId, toObject as comToObject } from '../src/component';
 import { create as createQueryStack, 
     execute as executeQueryStack,
@@ -19,7 +19,9 @@ import * as InstCDef from '../src/query/insts/component_def';
 import * as InstComC from '../src/query/insts/component_create';
 import * as InstVal from '../src/query/insts/value';
 import * as InstEq from '../src/query/insts/equals';
+import * as InstAd from '../src/query/insts/add';
 import {VL} from '../src/query/insts/value';
+import { Entity, getComponent } from '../src/entity';
 
 const Log = createLog('TestQuery');
 
@@ -42,7 +44,7 @@ describe('Query', () => {
 
         assert.notOk( peekQueryStack(stack), 'the values are not equal' );
     });
-    
+
 
     it('should register a component def', async () => {
 
@@ -82,12 +84,90 @@ describe('Query', () => {
 
         // convert the stack to instructions - should be the same as the initial
     })
+
+    describe('Entity', () => {
+
+        it('should create from a component', () => {
+
+            let registry = ComponentRegistry.create();
+            let stack = buildQueryStack();
+
+            // add the registry to the stack
+            stack = pushQueryStack( stack, registry );
+
+            // register the username component
+            stack = executeQueryStack( stack, [
+                [ '@d', '/component/username', [ 'username' ] ],
+            // create a component and add it to the stack
+                [ '@c', '/component/username', { '@e':23, 'username': 'alex' } ],
+            ]);
+
+            // get the updated component registry
+            registry = findV( stack, ComponentRegistry.Type );
+
+            const def = ComponentRegistry.getByUri( registry, '/component/username' );
+
+            // Log.debug('[post stack]', stack.items );
+            
+            // add the component to a new entity
+            stack = executeQueryStack( stack, [
+                [ 'AD', '@e' ]
+            ]);
+
+            const entity:Entity = peekQueryStack( stack );
+
+            // Log.debug('[result]', entity );
+
+            assert.equal( entity.bitField.count(), 1 );
+
+            const component = getComponent( entity, getDefId(def) );
+
+            assert.equal( component.username, 'alex' );
+
+            // const component = entity.getComponent
+            // Log.debug('[post stack]', stack.items );
+
+        })
+    })
+
+    describe('EntitySet', () => {
+
+        // it('should add a component with an entity id', () => {
+
+        //     let registry = ComponentRegistry.create();
+        //     let stack = buildQueryStack();
+
+        //     // add the registry to the stack
+        //     stack = pushQueryStack( stack, registry );
+
+        //     // register the username component
+        //     stack = executeQueryStack( stack, [
+        //         [ '@d', '/component/username', [ 'username' ] ],
+        //     ]);
+
+        //     // create an entityset
+        //     let es = createEntitySet();
+
+        //     // add the entityset to the stack
+        //     stack = pushQueryStack( stack, es );
+
+        //     // create a component and add it to the stack
+        //     stack = executeQueryStack( stack, [
+        //         [ '@c', '/component/username', { '@e':23, 'username': 'alex' } ],
+        //     ]);
+
+        //     // add the component to the es
+        //     stack = executeQueryStack( stack, [
+        //         [ 'ADD', '@es' ]
+        //     ]);
+        // })
+    })
 })
 
 
 
 function buildQueryStack(){
-    const insts:InstDef[] = [InstCDef,InstComC,InstVal,InstEq];
+    const insts:InstDef[] = [InstCDef,InstComC,InstVal,InstEq, InstAd];
     let stack = createQueryStack();
     stack = addInstruction( stack, insts );
     // stack = addInstruction( stack, InstComC );

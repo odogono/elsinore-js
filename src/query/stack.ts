@@ -69,17 +69,51 @@ export function pop(stack:QueryStack): [QueryStack,StackValue] {
     return [stack, value];
 }
 
+/**
+ * Pops values from the stack while the type matches
+ * 
+ * @param stack 
+ * @param type 
+ */
+export function popValuesOfTypeV( stack:QueryStack, type:Symbol ): [QueryStack, any[]] {
+    const length = stack.items.length;
+    if( length === 0 ){
+        return [stack, []];
+    }
+
+    let results = [];
+    let ii = length-1;
+
+    for( ii;ii>=0;ii-- ){
+        const value = stack.items[ ii ];
+        if( value[0] !== type ){
+            break;
+        }
+        results.push( value );
+    }
+
+    // cut the stack down to size
+    stack = {
+        ...stack,
+        items: stack.items.slice(0, ii+1)
+    };
+
+    return [stack, results.map( r => r[1] )];
+}
+
 export function peek(stack:QueryStack):StackValue {
     return stack.items[ stack.items.length -1 ];
 }
 
-export function peekV(stack:QueryStack):any {
+export function peekV(stack:QueryStack ):any {
     const value = stack.items[ stack.items.length -1 ];
     if( value !== undefined ){
         return value[1];
     }
     return undefined;
 }
+
+
 
 /**
  * Replaces an item in the stack at the given index

@@ -22,12 +22,26 @@ export interface ComponentObj {
 }
 
 
-export function create(params:any):Component {
-    const result = {
-        [DefToken]: 0,
-        [EntityToken]: 0,
-        ...params,
-    };
+export function create(params:object):Component {
+
+    let result:any = { [DefToken]: 0, [EntityToken]:0 };
+    for( let key of Object.keys(params) ){
+        if( key === '@d' ){
+            result[DefToken] = params['@d'];
+        }
+        else if( key === '@e' ){
+            result[EntityToken] = params['@e'];
+        }
+        else {
+            result[key] = params[key];
+        }
+    }
+
+    // const result = {
+    //     [DefToken]: 0,
+    //     [EntityToken]: 0,
+    //     ...params,
+    // };
 
     // console.log('[Component][create]', toObject(result) );
 
@@ -40,6 +54,13 @@ export function getComponentDefId( component:Component ): number {
 
 export function getComponentEntityId( component:Component ): number {
     return component[EntityToken];
+}
+
+export function setEntityId( component:Component, entityId:number ): Component {
+    return {
+        ...component,
+        [EntityToken]: entityId
+    };
 }
 
 export function toObject( component:Component ): ComponentObj {

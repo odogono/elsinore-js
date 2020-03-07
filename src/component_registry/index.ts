@@ -39,6 +39,17 @@ export function getByUri( registry, uri:string ): ComponentDef {
     return registry.byUri.get( uri );
 }
 
+export function getByDefId( registry, defId:number ): ComponentDef {
+    return registry.componentDefs[defId];
+}
+
+
+/**
+ * Registers a Component definition
+ * 
+ * @param registry 
+ * @param param1 
+ */
 export function register( registry:ComponentRegistry, {uri, properties} ): [ComponentRegistry, ComponentDef] {
 
     // Log.debug('[register]', uri, properties );
@@ -93,10 +104,10 @@ export function createComponent( registry:ComponentRegistry, defId:(string|numbe
 
     let params = {
         ...attributes,
-        [DefToken]: def[DefToken]
+        '@d': def[DefToken]
     };
 
-    // Log.debug('[createComponent]', 'def', def );
+    // Log.debug('[createComponent]', 'def', def[DefToken] );
 
     // create a component instance
     const component = createComponentInstance(params);
