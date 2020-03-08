@@ -2,6 +2,8 @@ import { Component } from "../component";
 import { BitField } from "odgn-bitfield";
 import { createUUID } from "../util/uuid";
 
+export const Code = '@es';
+export const Type = Symbol.for(Code);
 
 export type ComponentId = [number, number];
 

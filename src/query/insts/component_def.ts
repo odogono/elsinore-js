@@ -4,7 +4,7 @@ import { findWithIndex, QueryStack,
     replace as replaceQueryStack, 
     InstDefMeta} from "../stack";
 import { ComponentRegistry, register, Type as ComponentRegistryT } from "../../component_registry";
-import { isObject } from "../../util/is";
+import { isObject, isString } from "../../util/is";
 import { stringify } from "../../util/json";
 
 const Log = createLog('Inst][ComponentDef');
@@ -33,8 +33,11 @@ export function execute( stack:QueryStack, uri, properties ) {
         } else {
             properties = {uri, properties };
         }
+    } else if( isString(properties) ){
+        properties = {uri, properties};
     }
 
+    // Log.debug('[execute]', uri, properties);
     let [uregistry, def] = register( registry, properties );
     
     stack = replaceQueryStack( stack, index, [type,uregistry] );

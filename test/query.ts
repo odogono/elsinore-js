@@ -1,14 +1,17 @@
 import { assert } from 'chai';
 
 import { ComponentDef, Token as DefT, getDefId } from '../src/component_def';
-import { Component, getComponentDefId, toObject as comToObject } from '../src/component';
+import { Component, getComponentDefId, toObject as comToObject, getComponentEntityId } from '../src/component';
 import { create as createQueryStack, 
     execute as executeQueryStack,
     pushV as pushQueryStack,
     peekV as peekQueryStack,
+    buildAndExecute as buildQuery,
     findV,
     addInstruction,
     InstDef,
+    BuildQueryFn,
+    BuildQueryParams,
     QueryStack } from '../src/query/stack';
 import * as ComponentRegistry from '../src/component_registry';
 import { createLog } from '../src/util/log';
@@ -20,6 +23,7 @@ import * as InstComC from '../src/query/insts/component_create';
 import * as InstVal from '../src/query/insts/value';
 import * as InstEq from '../src/query/insts/equals';
 import * as InstAd from '../src/query/insts/add';
+import * as InstSelect from '../src/query/insts/select';
 import {VL} from '../src/query/insts/value';
 import { Entity, getComponent } from '../src/entity';
 
@@ -100,6 +104,7 @@ describe('Query', () => {
                 [ '@d', '/component/username', [ 'username' ] ],
             // create a component and add it to the stack
                 [ '@c', '/component/username', { '@e':23, 'username': 'alex' } ],
+                [ '@c', '/component/username', { 'username': 'peter' } ],
             ]);
 
             // get the updated component registry
@@ -107,12 +112,13 @@ describe('Query', () => {
 
             const def = ComponentRegistry.getByUri( registry, '/component/username' );
 
-            // Log.debug('[post stack]', stack.items );
             
             // add the component to a new entity
             stack = executeQueryStack( stack, [
                 [ 'AD', '@e' ]
             ]);
+            
+            // Log.debug('[post stack]', stack.items );
 
             const entity:Entity = peekQueryStack( stack );
 
@@ -126,7 +132,26 @@ describe('Query', () => {
 
             // const component = entity.getComponent
             // Log.debug('[post stack]', stack.items );
+        });
 
+        it('should create from a shortform',() => {
+            let registry = ComponentRegistry.create();
+            let stack = buildQueryStack();
+
+            stack = buildQuery( stack, ({component, def, entity, inst, value}:BuildQueryParams) => {
+                value( registry );
+                def('/component/username', 'username');
+                def('/component/isActive', {name: 'isActive', type: 'boolean', default:false});
+                // inst(['AL', ComponentRegistry.Code ])
+                component('/component/username', {username: 'alex'}),
+                component('/component/isActive', {isActive: true}),
+                entity()
+            });
+
+            const entity:Entity = peekQueryStack( stack );
+            assert.equal( entity.bitField.count(), 2 );
+
+            // Log.debug('[post stack]', stack.items );
         })
     })
 
@@ -167,7 +192,10 @@ describe('Query', () => {
 
 
 function buildQueryStack(){
-    const insts:InstDef[] = [InstCDef,InstComC,InstVal,InstEq, InstAd];
+    const insts:InstDef[] = [
+        InstCDef,InstComC,InstVal,InstEq, InstAd,
+        InstSelect
+    ];
     let stack = createQueryStack();
     stack = addInstruction( stack, insts );
     // stack = addInstruction( stack, InstComC );

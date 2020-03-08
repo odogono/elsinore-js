@@ -11,7 +11,8 @@ export type ComponentDefs = Array<ComponentDef>;
 
 const Log = createLog('ComponentRegistry');
 
-export const Type = Symbol.for('ComponentRegistry');
+export const Code = '@cr';
+export const Type = Symbol.for(Code);
 
 export interface ComponentRegistry {
     type: Symbol;
@@ -41,6 +42,10 @@ export function getByUri( registry, uri:string ): ComponentDef {
 
 export function getByDefId( registry, defId:number ): ComponentDef {
     return registry.componentDefs[defId];
+}
+
+export function getComponentDefs( registry ): ComponentDef[] {
+    return registry.componentDefs;
 }
 
 

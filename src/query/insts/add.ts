@@ -17,7 +17,7 @@ export const meta:InstDefMeta = {
 export function compile() {
 }
 
-export function execute( stack:QueryStack, arg:string ) {
+export function execute( stack:QueryStack, arg:string ):QueryStack {
 
     if( arg === '@e' ){
         return executeAddToEntity( stack );

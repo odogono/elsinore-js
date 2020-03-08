@@ -1,11 +1,11 @@
+import { Token as EntityToken } from './entity';
+import { Token as DefToken } from './component_def';
 
 
 export type ComponentProperties = Map<string, any>;
 
-export const Type = Symbol.for('Component');
-export const Token = Symbol.for('@c');
-import { Token as EntityToken } from './entity';
-import { Token as DefToken } from './component_def';
+export const Code = '@c';
+export const Token = Symbol.for(Code);
 
 
 export interface Component {

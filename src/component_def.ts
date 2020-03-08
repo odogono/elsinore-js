@@ -1,9 +1,10 @@
 import {hash as hashValue} from './util/hash';
-import { isObject, isString } from './util/is';
+import { isObject, isString, isFunction } from './util/is';
 import { toCamelCase, toCapitalized } from './util/to';
 
 
-export const Type = Symbol.for('ComponentDef');
+// export const Type = Symbol.for('@d');
+export const Code = '@d'; 
 export const Token = Symbol.for('@d');
 
 
@@ -119,7 +120,10 @@ export function getDefId( def:ComponentDef ): number {
 export function toObject( def:ComponentDef, includeId:boolean = true ): object {
     let {[Token]:id, name, uri, properties } = def;
 
-    let objProps = properties.map( p => propertyToObject(p) );
+    // if( !isFunction(properties.map) ){
+    //     console.log('[toObject]', properties, typeof properties);
+    // }
+    let objProps = isObject(properties) ? [properties] : properties.map( p => propertyToObject(p) );
 
     return {
         '@d': id,

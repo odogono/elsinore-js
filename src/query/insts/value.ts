@@ -1,5 +1,5 @@
 import { createLog } from "../../util/log";
-import { QueryStack, InstDefMeta } from "../stack";
+import { QueryStack, InstDefMeta, pushV } from "../stack";
 
 const Log = createLog('Inst][Value');
 
@@ -12,8 +12,8 @@ export const meta:InstDefMeta = {
 export function compile() {
 }
 
-export function execute( stack:QueryStack, uri, properties ) {
-
+export function execute( stack:QueryStack, value ):QueryStack {
+    return pushV( stack, value );
 }
 
 export function valueOf( value:(['VL', any]|any) ): any {
@@ -22,3 +22,4 @@ export function valueOf( value:(['VL', any]|any) ): any {
     }
     return value;
 }
+

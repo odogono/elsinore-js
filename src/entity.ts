@@ -1,7 +1,8 @@
 import { BitField } from 'odgn-bitfield';
-import { Component, getComponentDefId, setEntityId } from "./component";
+import { Component, getComponentDefId, setEntityId as setComponentEntityId } from "./component";
 
-export const Token = Symbol.for('@e');
+export const Code = '@e';
+export const Token = Symbol.for(Code);
 
 
 export interface Entity {
@@ -23,6 +24,11 @@ export function create( id:number = 0 ):Entity {
     }
 }
 
+/**
+ * 
+ * @param entity 
+ * @param component 
+ */
 export function addComponent( entity:Entity, component:Component ):Entity {
     const defId = getComponentDefId(component);
     // console.log('[Entity][addComponent]', defId );
@@ -32,7 +38,7 @@ export function addComponent( entity:Entity, component:Component ):Entity {
 
     const entityId = getEntityId(entity);
     
-    setEntityId( component, entityId );
+    setComponentEntityId( component, entityId );
 
     let components = new Map<number, Component>( entity.components );
     components.set( defId, component );
@@ -47,8 +53,16 @@ export function addComponent( entity:Entity, component:Component ):Entity {
     };
 }
 
+/**
+ * 
+ * @param entity 
+ */
 export function getEntityId( entity:Entity ): number {
     return entity ? entity[Token] : 0;
+}
+
+export function setEntityId( entity:Entity, id:number ): Entity {
+    return entity;
 }
 
 export function getComponent( entity:Entity, defId:number ): Component {

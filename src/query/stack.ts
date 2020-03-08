@@ -1,5 +1,6 @@
 import { createLog } from "../util/log";
 import { isObject } from "../util/is";
+import { ComponentRegistry } from "../component_registry";
 
 
 const Log = createLog('QueryStack');
@@ -197,30 +198,37 @@ export function getInstruction( stack:QueryStack, op:string ): InstDef {
 }
 
 
-// export class QueryStackO {
+export type buildDefFn = (uri: string, ...args: any[]) => void;
+export type buildComponentFn = (uri: string, props:object) => void;
+export type buildInstFn = (...args: any[]) => void;
+export type buildEntityFn = () => void;
+export type buildValueFn = (registry: ComponentRegistry) => void;
+export interface BuildQueryParams {
+    def:buildDefFn, 
+    component: buildComponentFn,
+    entity:buildEntityFn,
+    inst:buildInstFn,
+    value:buildValueFn
+}
+export type BuildQueryFn = (BuildQueryParams) => void;
 
-//     items = [];
-//     instructions = new Map<string, InstDef>();
+export function build( stack:QueryStack, buildFn:BuildQueryFn ):any[] {
 
-//     constructor(){
-//     }
+    let stmts = [];
 
-    
+    const def = (uri:string, ...args) => stmts.push( [ '@d', uri, ...args] );
+    const component = (uri:string, props:object) => stmts.push( ['@c', uri, props]);
+    const entity = () => stmts.push( ['AD', '@e'] );
+    const value = (registry:ComponentRegistry) => stmts.push( [ 'VL', registry ] );
+    const inst = (...args) => stmts.push(args);
 
+    buildFn( {inst, component, def, entity, value} );
 
-//     execute( stmts:Array<Array<any>> ): QueryStack {
-//         return stmts.reduce( (stack, stmt) => {
-//             const [op, ...args] = stmt;
-//             const inst = this.getInstruction(op);
-//             if( !inst ){
-//                 return stack;
-//             }
+    return stmts;
+}
 
-//             return inst.execute( stack, ...args );
-//         }, this );
-//     }
-
-
-    
-// }
-
+export function buildAndExecute( stack:QueryStack, buildFn:BuildQueryFn ): QueryStack {
+    const stmts = build( stack, buildFn );
+    stack = execute( stack, stmts );
+    return stack;
+}
