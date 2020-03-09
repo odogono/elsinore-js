@@ -42,6 +42,27 @@ export function push( stack:QueryStack, value:StackValue ):QueryStack {
 }
 
 /**
+ * Prepends a value to the stack
+ * 
+ * @param stack 
+ * @param value 
+ */
+export function unshift( stack:QueryStack, value:StackValue ): QueryStack {
+    return {
+        ...stack,
+        items: [ value, ...stack.items ]
+    }
+}
+
+export function unshiftV( stack:QueryStack, value:any, valueType = AnyValue ):QueryStack {
+    let itemValue:StackValue = [ valueType, value ];
+    if( isObject(value) && value.type ){
+        itemValue = [value.type, value];
+    }
+    return unshift( stack, itemValue );
+}
+
+/**
  * Pushes an arbirtrary value onto the stack
  */
 export function pushV( stack:QueryStack, value:any, valueType = AnyValue ):QueryStack {
@@ -49,12 +70,7 @@ export function pushV( stack:QueryStack, value:any, valueType = AnyValue ):Query
     if( isObject(value) && value.type ){
         itemValue = [value.type, value];
     }
-
-    // console.log('[pushV]', [...stack.items, itemValue] );
-    return {
-        ...stack,
-        items: [...stack.items, itemValue ]
-    }
+    return push( stack, itemValue );
 }
 
 export function pop(stack:QueryStack): [QueryStack,StackValue] {
@@ -147,6 +163,12 @@ export function findWithIndex( stack:QueryStack, type:Symbol ): [ number, StackV
     return [-1, undefined];
 }
 
+/**
+ * Returns the first value of type from the stack
+ * 
+ * @param stack 
+ * @param type 
+ */
 export function findV( stack:QueryStack, type:Symbol ): any {
     const [_, value] = findWithIndex( stack, type );
     return value ? value[1] : undefined;

@@ -1,5 +1,6 @@
 import { BitField } from 'odgn-bitfield';
 import { Component, getComponentDefId, setEntityId as setComponentEntityId } from "./component";
+import { isObject } from './util/is';
 
 export const Code = '@e';
 export const Token = Symbol.for(Code);
@@ -22,6 +23,10 @@ export function create( id:number = 0 ):Entity {
         components: new Map<number,Component>(),
         bitField: new BitField()
     }
+}
+
+export function createBitfield( ebf?:BitField ):BitField {
+    return new BitField(ebf);
 }
 
 /**
@@ -54,6 +59,17 @@ export function addComponent( entity:Entity, component:Component ):Entity {
 }
 
 /**
+ * A direct means of adding an already owned component to the entity
+ * @param entity 
+ * @param component 
+ */
+export function addComponentUnsafe( entity:Entity, defId: number, component:Component ):Entity {
+    entity.components.set( defId, component );
+    entity.bitField.set( defId );
+    return entity;
+}
+
+/**
  * 
  * @param entity 
  */
@@ -67,4 +83,16 @@ export function setEntityId( entity:Entity, id:number ): Entity {
 
 export function getComponent( entity:Entity, defId:number ): Component {
     return entity.components.get(defId);
+}
+
+export function getComponents(entity:Entity): Component[] {
+    return Array.from( entity.components.values() );
+}
+
+export function isEntity( item:any ): boolean {
+    return isObject(item) && Token in item;
+}
+
+export function size( entity:Entity ): number {
+    return entity.components.size;
 }

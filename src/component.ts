@@ -1,5 +1,6 @@
 import { Token as EntityToken } from './entity';
 import { Token as DefToken } from './component_def';
+import { isObject, isString } from './util/is';
 
 
 export type ComponentProperties = Map<string, any>;
@@ -7,6 +8,8 @@ export type ComponentProperties = Map<string, any>;
 export const Code = '@c';
 export const Token = Symbol.for(Code);
 
+// made up of entityId,defId
+export type ComponentId = string; //[number, number];
 
 export interface Component {
     [key: string]: any;
@@ -48,6 +51,19 @@ export function create(params:object):Component {
     return result;
 }
 
+export function getComponentId( component:Component ): ComponentId {
+    return JSON.stringify( [component[EntityToken], component[DefToken]] );
+    // return [component[EntityToken], component[DefToken]].join(',');
+}
+export const toComponentId = ( eid:number, did:number ) => JSON.stringify([eid,did]);
+
+export const isComponentId = (val:any) => isString(val);
+
+export function fromComponentId( id:ComponentId ): [number,number] {
+    return JSON.parse(id);
+    // return id.split(',');
+}
+
 export function getComponentDefId( component:Component ): number {
     return component[DefToken];
 }
@@ -72,6 +88,10 @@ export function toObject( component:Component ): ComponentObj {
         result[key] = component[key];
     }
     return result;
+}
+
+export function isComponent( item:any ): boolean {
+    return isObject(item) && DefToken in item && EntityToken in item;
 }
 
 // export class Component {

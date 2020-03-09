@@ -18,14 +18,9 @@ import { createLog } from '../src/util/log';
 import util from 'util';
 import { stringify } from '../src/util/json';
 
-import * as InstCDef from '../src/query/insts/component_def';
-import * as InstComC from '../src/query/insts/component_create';
-import * as InstVal from '../src/query/insts/value';
-import * as InstEq from '../src/query/insts/equals';
-import * as InstAd from '../src/query/insts/add';
-import * as InstSelect from '../src/query/insts/select';
-import {VL} from '../src/query/insts/value';
+
 import { Entity, getComponent } from '../src/entity';
+import { buildQueryStack } from './util/stack';
 
 const Log = createLog('TestQuery');
 
@@ -188,30 +183,3 @@ describe('Query', () => {
         // })
     })
 })
-
-
-
-function buildQueryStack(){
-    const insts:InstDef[] = [
-        InstCDef,InstComC,InstVal,InstEq, InstAd,
-        InstSelect
-    ];
-    let stack = createQueryStack();
-    stack = addInstruction( stack, insts );
-    // stack = addInstruction( stack, InstComC );
-    // stack = addInstruction( stack, InstVal );
-    return stack
-}
-
-// async function buildQueryStack(){
-//     let stack = createQueryStack();
-
-//     let inst = await import('../src/query/insts/component_def');
-//     stack = addInstruction( stack, inst );
-    
-//     inst = await import('../src/query/insts/component_create');
-//     stack = addInstruction( stack, inst );
-    
-
-//     return stack;
-// }

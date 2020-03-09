@@ -50,6 +50,28 @@ export function getComponentDefs( registry ): ComponentDef[] {
 
 
 /**
+ * Resolves an array of Def identifiers (uri,hash, or did) to ComponentDefs
+ * @param registry 
+ * @param dids 
+ */
+export function resolveComponentDefIds( registry:ComponentRegistry, dids:any[] ): ComponentDef[] {
+    if( !Array.isArray(dids) || dids.length === 0 ){
+        return [];
+    }
+
+    return dids.map( did => {
+        if( isString(did) ){
+            return getByUri( registry, did );
+        }
+        else if( isInteger(did) ){
+            return registry.byHash.get(did) || registry.componentDefs[did];
+        }
+        return undefined;
+    });
+}
+
+
+/**
  * Registers a Component definition
  * 
  * @param registry 
