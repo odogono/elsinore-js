@@ -21,9 +21,9 @@ export interface ComponentRegistry {
 
     componentDefs: ComponentDefs;
 
-    byUri: Map<string, ComponentDef>;
+    byUri: Map<string, number>;
 
-    byHash: Map<number, ComponentDef>;
+    byHash: Map<number, number>;
 }
 
 export function create(): ComponentRegistry {
@@ -31,13 +31,18 @@ export function create(): ComponentRegistry {
         type: Type,
         uuid: createUUID(),
         componentDefs: [],
-        byUri: new Map<string, ComponentDef>(),
-        byHash: new Map<number, ComponentDef>(),
+        byUri: new Map<string, number>(),
+        byHash: new Map<number, number>(),
     };
 }
 
+export function getByHash( registry, hash:number ): ComponentDef {
+    const did = registry.byHash.get( hash );
+    return did === undefined ? undefined : registry.componentDefs[did];
+}
 export function getByUri( registry, uri:string ): ComponentDef {
-    return registry.byUri.get( uri );
+    const did = registry.byUri.get( uri );
+    return did === undefined ? undefined : registry.componentDefs[did];
 }
 
 export function getByDefId( registry, defId:number ): ComponentDef {
@@ -64,7 +69,7 @@ export function resolveComponentDefIds( registry:ComponentRegistry, dids:any[] )
             return getByUri( registry, did );
         }
         else if( isInteger(did) ){
-            return registry.byHash.get(did) || registry.componentDefs[did];
+            return getByHash(registry,did) || registry.componentDefs[did];
         }
         return undefined;
     });
@@ -81,25 +86,25 @@ export function register( registry:ComponentRegistry, {uri, properties} ): [Comp
 
     // Log.debug('[register]', uri, properties );
 
-    let id = registry.componentDefs.length;
+    let did = registry.componentDefs.length+1;
 
-    let def = createComponentDef(id, {uri, properties});
+    let def = createComponentDef(did, {uri, properties});
 
     // Hash the def, and check whether we already have this
     let hash = hashComponentDef( def );
 
-    const existing = registry.byHash.get(hash);
+    const existing = getByHash(registry,hash);
     if( existing !== undefined ){
         throw new Error(`component definition already exists (${existing[DefToken]}/${existing.uri})`);
     }
 
     // seems legit, add it
-    def = { ...def, [DefToken]: registry.componentDefs.length+1 };
+    def = { ...def, [DefToken]: did };
 
-    let byHash = new Map<number, ComponentDef>(registry.byHash);
-    let byUri = new Map<string, ComponentDef>(registry.byUri);
-    byHash.set( hash, def );
-    byUri.set( def.uri, def );
+    let byHash = new Map<number, number>(registry.byHash);
+    let byUri = new Map<string, number>(registry.byUri);
+    byHash.set( hash, did );
+    byUri.set( def.uri, did );
 
     registry = {
         ...registry,
@@ -120,7 +125,7 @@ export function createComponent( registry:ComponentRegistry, defId:(string|numbe
 
     // Log.debug('[createComponent]', defId, attributes, registry );
     if( isString(defId) ){
-        def = registry.byUri.get( defId as string );
+        def = getByUri(registry,  defId as string );
     } else if( isInteger(defId) ){
         def = registry.componentDefs[defId];
     }
