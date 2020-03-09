@@ -10,7 +10,8 @@ import {
     ComponentRegistry,
     create as createComponentRegistry,
     resolveComponentDefIds,
-    Type as ComponentRegistryT} from '../../src/component_registry';
+    Type as ComponentRegistryT,
+    getByDefId} from '../../src/component_registry';
 
 import { create as createQueryStack, 
     execute as executeQueryStack,
@@ -24,8 +25,9 @@ import { create as createQueryStack,
     BuildQueryFn,
     BuildQueryParams,
     QueryStack } from '../../src/query/stack';
-import { Entity, getComponent } from '../../src/entity';
+import { Entity, getComponent, getComponents } from '../../src/entity';
 import { getDefId } from '../../src/component_def';
+import { getComponentDefId } from '../../src/component';
 
 
 export function buildQueryStack(){
@@ -41,18 +43,22 @@ export function buildQueryStack(){
 }
 
 
-export function buildComponentRegistry( buildFn:BuildQueryFn ): [QueryStack, ComponentRegistry] {
+export function buildComponentRegistry( buildFn?:BuildQueryFn ): [QueryStack, ComponentRegistry] {
     let registry = createComponentRegistry();
     let stack = buildQueryStack();
 
     stack = pushQueryStack( stack, registry );
 
-    stack = buildQuery( stack, buildFn );
+    if( buildFn ){
+        stack = buildQuery( stack, buildFn );
+    }
+
+    registry = findV( stack, ComponentRegistryT );
 
     return [stack, registry];
 }
 
-export function buildEntity( stack:QueryStack, buildFn:BuildQueryFn ): [QueryStack,Entity] {
+export function buildAndExecuteQuery( stack:QueryStack, buildFn:BuildQueryFn ): [QueryStack,Entity] {
     // // find registry
     // let registry = findV( stack, ComponentRegistryT );
     // if( registry === undefined ){
@@ -71,19 +77,52 @@ export function buildEntity( stack:QueryStack, buildFn:BuildQueryFn ): [QuerySta
     return [stack,entity];
 }
 
+export function buildEntity( stack:QueryStack, buildFn:BuildQueryFn, entityId:number = 0 ): [QueryStack,Entity] {
+    // // find registry
+    // let registry = findV( stack, ComponentRegistryT );
+    // if( registry === undefined ){
+    //     registry = createComponentRegistry();
+    //     stack = unshiftV( stack, registry, ComponentRegistryT );
+    // }
+
+    stack = buildQuery( stack, buildFn );
+
+    stack = executeQueryStack( stack, [
+        [ 'AD', '@e', entityId ]
+    ]);
+
+    const entity:Entity = peekQueryStack( stack );
+
+    return [stack,entity];
+}
+
 
 export const assertHasComponents = (registry:ComponentRegistry, entity:Entity, dids:any[]) => {
     const defs = resolveComponentDefIds( registry, dids );
 
+    
+    
+    
+    
     defs.forEach( (def,ii) => {
         if( def === undefined ){
             assert.fail(`unknown component def ${dids[ii]}`);
             return;
         }
         const com = getComponent(entity, getDefId(def) );
-
+        
         if( com === undefined ){
             assert.fail(`missing component ${dids[ii]} on entity`);
+        }
+    })
+    
+    const coms = getComponents( entity );
+    coms.forEach( com => {
+        const did = getComponentDefId(com);
+        const def = getByDefId(registry, did);
+
+        if( defs.find( def => getDefId(def) === did ) === undefined ){
+            assert.fail(`entity has component ${def.uri}`);
         }
     })
 

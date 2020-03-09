@@ -79,12 +79,25 @@ export type AddType = Entity | Component | AddArrayType;
  */
 export function add( es:EntitySet, item:AddType, options:AddOptions = {}):EntitySet {
     if( Array.isArray(item) ){
-    }
-    if( isEntity(item) ){
-        return addEntity( es, item as Entity, options );
+        // sort the incoming items into entities and components
+        let [ents,coms] = (item as any[]).reduce( ([ents,coms], item ) => {
+            if( isComponent(item) ){
+                coms.push(item);
+            }else if( isEntity(item) ){
+                ents.push(item);
+            }
+            return [ents,coms];
+        }, [[],[]] );
+
+        es = options.retain ? es : clearChanges(es);
+        es = addComponents(es, coms);
+        es = applyRemoveChanges(es)
     }
     if( isComponent(item) ){
         return addComponent( es, item as Component, options );
+    }
+    if( isEntity(item) ){
+        return addEntity( es, item as Entity, options );
     }
     return es;
 }
@@ -103,6 +116,12 @@ function addEntity( es:EntitySet, entity:Entity, options:AddOptions = {}): Entit
     es = addComponents( es, getComponents(entity) );
     es = applyRemoveChanges(es)
     
+    return es;
+}
+
+function addComponent( es:EntitySet, com:Component, options:AddOptions = {}): EntitySet {
+    es = options.retain ? es : clearChanges(es);
+    es = addComponents( es, [com] );
     return es;
 }
 
@@ -127,9 +146,7 @@ export function getEntity( es:EntitySet, eid:number ): Entity {
     }, createEntityInstance(eid) );
 }
 
-function addComponent( es:EntitySet, component:Component, options:AddOptions = {}): EntitySet {
-    return es;
-}
+
 
 export function getComponent( es:EntitySet, id:ComponentId|Component ): Component {
     if( isComponentId(id) ){
@@ -183,6 +200,8 @@ function addComponents( es:EntitySet, components:Component[] ): EntitySet {
     // set a new (same) entity id on all orphaned components
     [es, components] = assignEntityIds(es, components)
 
+    // Log.debug('[addComponents]', components);
+
     // mark incoming components as either additions or updates
     es = components.reduce( (es, com) => markComponentAdd(es, com), es );
     
@@ -218,7 +237,51 @@ function applyUpdatedComponents(es:EntitySet, cid:ComponentId ): EntitySet {
  * @param es 
  */
 function applyRemoveChanges(es:EntitySet): EntitySet {
+    // applies any removal changes that have previously been marked
+    const removedComs = getChanges( es.comChanges, ChangeSetOp.Remove );
+
+    es = removedComs.reduce( (es,cid) => applyRemoveComponent(es,cid), es );
+
+    const removedEnts = getChanges( es.entChanges, ChangeSetOp.Remove );
+
+    es = removedEnts.reduce( (es,eid) => applyRemoveEntity(es,eid), es );
+
     return es;
+}
+
+
+function applyRemoveComponent(es:EntitySet, cid:ComponentId):EntitySet {
+    let [eid,did] = fromComponentId(cid);
+
+    // remove the component id from the entity
+    let entities = new Map<number,BitField>(es.entities);
+    let ebf = createBitfield( entities.get(eid) );
+    ebf.set( did, false );
+    entities.set( eid, ebf );
+
+    // remove component
+    let components = new Map<ComponentId,Component>(es.components);
+    components.delete(cid);
+
+    es = {
+        ...es,
+        entities,
+        components
+    }
+
+    if( ebf.size() === 0 ){
+        return markEntityRemove( es, eid );
+    }
+    
+    return es;
+}
+
+function applyRemoveEntity(es:EntitySet, eid:number):EntitySet {
+
+    let entities = new Map<number, BitField>(es.entities);
+    entities.delete( eid );
+
+    return {...es, entities};
 }
 
 /**
@@ -258,6 +321,9 @@ function markEntityAdd( es:EntitySet, eid:number ):EntitySet {
 function markEntityUpdate( es:EntitySet, eid:number ):EntitySet {
     return { ...es, entChanges: updateCS( es.entChanges, eid) };
 }
+function markEntityRemove( es:EntitySet, eid:number ):EntitySet {
+    return { ...es, entChanges: removeCS( es.entChanges, eid) };
+}
 
 
 /**
@@ -281,8 +347,8 @@ function assignEntityIds( es:EntitySet, components:Component[] ): [EntitySet, Co
 
     [es, set, eid, components] = components.reduce( ([es, set, eid, components], com) => {
 
-        let defId = getComponentDefId(com);
-        // Log.debug('[assignEntityIds]', 'com', defId );
+        let did = getComponentDefId(com);
+        // Log.debug('[assignEntityIds]', 'com', did );
 
         // component already has an id - add it to the list of components
         if( getComponentEntityId(com) !== 0 ){
@@ -290,17 +356,20 @@ function assignEntityIds( es:EntitySet, components:Component[] ): [EntitySet, Co
         }
 
         // not yet assigned an entity, or we have already seen this com type
-        if( eid === 0 || set.has(defId) ){
+        if( eid === 0 || set.has(did) ){
             // create a new entity - this also applies if we encounter a component
             // of a type we have seen before
             [es, eid] = createEntity(es);
+            
+            // Log.debug('[assignEntityIds]', 'new entity', did, set.has(did), eid );
 
             com = setComponentEntityId( com, eid );
 
             // # mark the def as having been seen, store the new entity, add the component
             // {es, MapSet.put(set, def_id), entity_id, [com | components]}
-            return [ es, set.add(defId), eid, [...components,com] ];
+            return [ es, set.add(did), eid, [...components,com] ];
         } else {
+            // Log.debug('[assignEntityIds]', 'already have', did, eid);
             // we have a new entity_id already
             com = setComponentEntityId( com, eid );
             return [ es, set, eid, [...components, com] ];

@@ -34,8 +34,8 @@ export function createBitfield( ebf?:BitField ):BitField {
  * @param entity 
  * @param component 
  */
-export function addComponent( entity:Entity, component:Component ):Entity {
-    const defId = getComponentDefId(component);
+export function addComponent( entity:Entity, com:Component ):Entity {
+    const defId = getComponentDefId(com);
     // console.log('[Entity][addComponent]', defId );
     if( defId === 0 ){
         return entity;
@@ -43,10 +43,10 @@ export function addComponent( entity:Entity, component:Component ):Entity {
 
     const entityId = getEntityId(entity);
     
-    setComponentEntityId( component, entityId );
+    com = setComponentEntityId( com, entityId );
 
     let components = new Map<number, Component>( entity.components );
-    components.set( defId, component );
+    components.set( defId, com );
 
     let bitField = new BitField( entity.bitField );
     bitField.set( defId );

@@ -38,15 +38,15 @@ export function create(): ComponentRegistry {
 
 export function getByHash( registry, hash:number ): ComponentDef {
     const did = registry.byHash.get( hash );
-    return did === undefined ? undefined : registry.componentDefs[did];
+    return did === undefined ? undefined : registry.componentDefs[did-1];
 }
 export function getByUri( registry, uri:string ): ComponentDef {
     const did = registry.byUri.get( uri );
-    return did === undefined ? undefined : registry.componentDefs[did];
+    return did === undefined ? undefined : registry.componentDefs[did-1];
 }
 
 export function getByDefId( registry, defId:number ): ComponentDef {
-    return registry.componentDefs[defId];
+    return registry.componentDefs[defId-1];
 }
 
 export function getComponentDefs( registry ): ComponentDef[] {
@@ -69,7 +69,7 @@ export function resolveComponentDefIds( registry:ComponentRegistry, dids:any[] )
             return getByUri( registry, did );
         }
         else if( isInteger(did) ){
-            return getByHash(registry,did) || registry.componentDefs[did];
+            return getByHash(registry,did) || registry.componentDefs[did-1];
         }
         return undefined;
     });
@@ -127,10 +127,11 @@ export function createComponent( registry:ComponentRegistry, defId:(string|numbe
     if( isString(defId) ){
         def = getByUri(registry,  defId as string );
     } else if( isInteger(defId) ){
-        def = registry.componentDefs[defId];
+        def = getByHash(registry, defId as number) || registry.componentDefs[(defId as number)-1];
     }
 
     if( def === undefined ){
+        // Log.debug('[createComponent]', registry.byUri.get( defId as string ), registry.componentDefs );
         throw new Error(`component def not found: ${defId}`);
     }
 
