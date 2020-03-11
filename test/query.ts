@@ -12,21 +12,33 @@ import { create as createQueryStack,
     InstDef,
     BuildQueryFn,
     BuildQueryParams,
-    QueryStack } from '../src/query/stack';
+    QueryStack, 
+    popEntity} from '../src/query/stack';
     import { EntitySet, 
         create as createEntitySet,
         size as entitySetSize,
         add as esAdd, 
         Type as EntitySetT,
         createEntity} from '../src/entity_set';
-import * as ComponentRegistry from '../src/component_registry';
+import { 
+    ComponentRegistry,
+    Type as ComponentRegistryT,
+    create as createComponentRegistry,
+    getByUri
+ } from '../src/component_registry';
 import { createLog } from '../src/util/log';
 import util from 'util';
 import { stringify } from '../src/util/json';
+import { Select } from '../src/query/insts/select';
 
 
 import { Entity, getComponent } from '../src/entity';
-import { buildQueryStack, serialiseStack } from './util/stack';
+import { 
+    prepareFixture,
+    buildQueryStack, 
+    serialiseStack, 
+    assertHasComponents,
+    assertIncludesComponents} from './util/stack';
 import Path from 'path';
 import { loadFixture } from './util/import';
 const Log = createLog('TestQuery');
@@ -61,7 +73,7 @@ describe('Query', () => {
             [ "@c", "/piece/knight", { "rank": 1, "file": "g" } ]
         ];
 
-        let registry = ComponentRegistry.create();
+        let registry = createComponentRegistry();
         let stack = buildQueryStack();
 
         // important that a ComponentRegistry exists on the stack, otherwise
@@ -72,13 +84,13 @@ describe('Query', () => {
 
         stack = executeQueryStack( stack, insts );
 
-        registry = findV( stack, ComponentRegistry.Type );
+        registry = findV( stack, ComponentRegistryT );
         
         // Log.debug('[post stack]', stack.items );
 
         assert.equal( stack.items.length, 2 );
 
-        const def:ComponentDef = ComponentRegistry.getByUri( registry, '/piece/knight');
+        const def:ComponentDef = getByUri( registry, '/piece/knight');
         const component:Component = peekQueryStack( stack );
 
 
@@ -95,7 +107,7 @@ describe('Query', () => {
 
         it('should create from a component', () => {
 
-            let registry = ComponentRegistry.create();
+            let registry = createComponentRegistry();
             let stack = buildQueryStack();
 
             // add the registry to the stack
@@ -110,14 +122,14 @@ describe('Query', () => {
             ]);
 
             // get the updated component registry
-            registry = findV( stack, ComponentRegistry.Type );
+            registry = findV( stack, ComponentRegistryT );
 
-            const def = ComponentRegistry.getByUri( registry, '/component/username' );
+            const def = getByUri( registry, '/component/username' );
 
             
             // add the component to a new entity
             stack = executeQueryStack( stack, [
-                [ 'AD', '@e' ]
+                [ '@e' ]
             ]);
             
             // Log.debug('[post stack]', stack.items );
@@ -137,7 +149,7 @@ describe('Query', () => {
         });
 
         it('should create from a shortform',() => {
-            let registry = ComponentRegistry.create();
+            let registry = createComponentRegistry();
             let stack = buildQueryStack();
 
             stack = buildQuery( stack, ({component, def, entity, inst, value}:BuildQueryParams) => {
@@ -161,7 +173,7 @@ describe('Query', () => {
 
         // it('should add a component with an entity id', () => {
 
-        //     let registry = ComponentRegistry.create();
+        //     let registry = createComponentRegistry();
         //     let stack = buildQueryStack();
 
         //     // add the registry to the stack
@@ -192,33 +204,39 @@ describe('Query', () => {
 
     describe('Select', () => {
 
-        it.skip('selects entities which contain a given def id', async () => {
-            const data = await loadFixture( 'chess.ldjson' );
+        // select entities/components 
+        //   - which have dids - SEA/ SCA
+        //   - which have one of the dids - SEO/SCO
+        //   - which do not have any of dids - SEN/SCN
+        
 
-            let registry = ComponentRegistry.create();
-            let stack = buildQueryStack();
-            let es = createEntitySet({});
 
-            // add the registry to the stack
-            stack = pushQueryStack( stack, registry );
-
-            // add es
-            stack = pushQueryStack( stack, es, EntitySetT );
-
-            // register the username component
-            stack = executeQueryStack( stack, data );
-
-            // add all entities to es
-            stack = executeQueryStack( stack, [ ['AD', '@es'] ]);
-
-            es = findV( stack, EntitySetT );
+        it('selects entities which contain a given def id', async () => {
+            let ents;
+            let [stack,registry] = await prepareFixture('todo.ldjson');
 
             // Log.debug('loaded', stack );
 
-            const lines = serialiseStack(stack);
+            // execute a select. the result will be a new entitylist
+            // on the stack
+            stack = executeQueryStack( stack, [
+                [ Select.AllEntities, '/component/priority' ]
+            ]);
 
-            Log.debug('output', lines.map( l => JSON.stringify(l) ));
+            // resolve the entity list to entities
+            [stack, ents] = popEntity( stack );
+
+            // assert.lengthOf( ents, 2 );
+
+            assertIncludesComponents( registry, ents[0], ['/component/priority'] );
+            assertIncludesComponents( registry, ents[1], ['/component/priority'] );
+
+            // const lines = serialiseStack(stack);
+
+            // Log.debug('output', lines.map( l => JSON.stringify(l) ));
+            // Log.debug('output', stack );
         })
         
     })
 })
+

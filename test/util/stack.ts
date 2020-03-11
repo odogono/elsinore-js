@@ -30,10 +30,46 @@ import { create as createQueryStack,
 import { Entity, getComponent, getComponents, createBitfield } from '../../src/entity';
 import { EntitySet, Type as EntitySetT, 
     matchEntities as matchEntitySetEntities, 
+    create as createEntitySet,
     getEntity} from '../../src/entity_set';
-import { getDefId, toObject as defToObject } from '../../src/component_def';
+import { getDefId, toObject as defToObject, ComponentDef } from '../../src/component_def';
 import{ getComponentDefId, toObject as componentToObject } from '../../src/component';
+import { loadFixture } from './import';
 
+
+
+export interface PrepareFixtureOptions {
+    addToEntitySet?: boolean;
+}
+
+export async function prepareFixture( name:string, options:PrepareFixtureOptions = {} ): Promise<[ QueryStack, ComponentRegistry, EntitySet ]> {
+    const data = await loadFixture( name );
+
+    let registry = createComponentRegistry();
+    let stack = buildQueryStack();
+    let es = options.addToEntitySet ? createEntitySet({}) : undefined;
+
+    // add the registry to the stack
+    stack = pushQueryStack( stack, registry );
+
+    if( options.addToEntitySet ){
+        stack = pushQueryStack( stack, es, EntitySetT );
+    }
+
+    // execute the fixture query 
+    stack = executeQueryStack( stack, data );
+
+    if( options.addToEntitySet ){
+        // add all entities to es
+        stack = executeQueryStack( stack, [ ['AD', '@es'] ]);
+
+        es = findV( stack, EntitySetT );
+    }
+
+    registry = findV( stack, ComponentRegistryT );
+
+    return [ stack, registry, es ];
+}
 
 
 export function buildQueryStack(){
@@ -103,12 +139,24 @@ export function buildEntity( stack:QueryStack, buildFn:BuildQueryFn, entityId:nu
 }
 
 
-export const assertHasComponents = (registry:ComponentRegistry, entity:Entity, dids:any[]) => {
-    const defs = resolveComponentDefIds( registry, dids );
+export const assertIncludesComponents  = (registry:ComponentRegistry, entity:Entity, dids:any[]) => {
+    const defs = resolveComponentDefIds( registry, dids, {asDef:true} ) as ComponentDef[];
 
-    
-    
-    
+    defs.forEach( (def,ii) => {
+        if( def === undefined ){
+            assert.fail(`unknown component def ${dids[ii]}`);
+            return;
+        }
+        const com = getComponent(entity, getDefId(def) );
+        
+        if( com === undefined ){
+            assert.fail(`missing component ${dids[ii]} on entity`);
+        }
+    })
+}
+
+export const assertHasComponents = (registry:ComponentRegistry, entity:Entity, dids:any[]) => {
+    const defs = resolveComponentDefIds( registry, dids, {asDef:true} ) as ComponentDef[];
     
     defs.forEach( (def,ii) => {
         if( def === undefined ){
@@ -131,19 +179,6 @@ export const assertHasComponents = (registry:ComponentRegistry, entity:Entity, d
             assert.fail(`entity has component ${def.uri}`);
         }
     })
-
-    // // see https://github.com/chaijs/chai/blob/master/lib/chai/assertion.js
-    // // for Assertion's argument definitions
-    // const test = new chai.Assertion(null, null, chai.assert, true);
-
-    // test.
-    // test.assert(
-    //     actual === "special",
-    //     `expected ${actual} to be "special"`,
-    //     `expected ${actual} to not be "special"`,
-    //     "special",
-    //     actual,
-    //     true);
 }
 
 

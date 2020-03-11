@@ -1,6 +1,10 @@
 import { createLog } from "../util/log";
 import { isObject } from "../util/is";
 import { ComponentRegistry } from "../component_registry";
+import { Type as EntitySetType } from '../entity_set';
+import { BitField } from "odgn-bitfield";
+import { MatchOptions } from '../constants';
+import { EntityList, createEntityList, Type as EntityT, Entity, getEntityId, EntityListType } from "../entity";
 
 
 const Log = createLog('QueryStack');
@@ -163,6 +167,14 @@ export function findWithIndex( stack:QueryStack, type:Symbol ): [ number, StackV
     return [-1, undefined];
 }
 
+export function findWithIndexV( stack:QueryStack, type:Symbol ): [number, any] {
+    let [index, [_, value]] = findWithIndex(stack, type);
+    if (index === -1) {
+        throw new Error(`type ${type} missing on stack`);
+    }
+    return [index, value];
+}
+
 /**
  * Returns the first value of type from the stack
  * 
@@ -243,7 +255,7 @@ export function build( stack:QueryStack, buildFn:BuildQueryFn ):any[] {
 
     const def = (uri:string, ...args) => stmts.push( [ '@d', uri, ...args] );
     const component = (uri:string, props:object) => stmts.push( ['@c', uri, props]);
-    const entity = () => stmts.push( ['AD', '@e'] );
+    const entity = () => stmts.push( [ '@e'] );
     const value = (registry:ComponentRegistry) => stmts.push( [ 'VL', registry ] );
     const inst = (...args) => stmts.push(args);
 
@@ -256,4 +268,84 @@ export function buildAndExecute( stack:QueryStack, buildFn:BuildQueryFn ): Query
     const stmts = build( stack, buildFn );
     stack = execute( stack, stmts );
     return stack;
+}
+
+
+
+/**
+ * Returns an EntityList containing entities that match the given bitfield
+ * of dids along with the entitySet they belong to
+ * 
+ * @param stack 
+ * @param bf 
+ */
+export function matchEntities( stack:QueryStack, bf:BitField, options:MatchOptions = {} ): EntityList {
+    const limit = options.limit !== undefined ? options.limit : Number.MAX_SAFE_INTEGER;
+
+    let eids:number[] = [];
+
+    // work down the stack
+    for( let ii = stack.items.length-1; ii >= 0; ii-- ){
+        if( eids.length >= limit ){
+            break;
+        }
+        const [type,val] = stack.items[ii];
+        // if( type === EntityT && getEntityId(val) !== 0 ){
+        //     Log.debug('[matchEntities]', getEntityId(val), bf.toValues(), val.bitField.toValues() )
+        // }
+        if( type === EntityT && getEntityId(val) !== 0 && BitField.or(bf, val.bitField) ){
+            eids.push( getEntityId(val) );
+        }
+    }
+
+    return createEntityList(eids, bf);
+}
+
+
+/**
+ * Pops an Entity from the stack.
+ * If the top value is an EntityList or EntitySet, an array of entities is returneds
+ */
+export function popEntity( stack:QueryStack ): [QueryStack, Entity | Entity[]] {
+    let type
+    let val = undefined;
+    const top = peek( stack );
+
+    if( top === undefined ){
+        return [stack, undefined];
+    }
+
+    [type] = top;
+    
+    if( type === EntityListType ){
+        [stack, [type, val]] = pop(stack);
+
+        // Log.debug('[popEntity] resolving', val.entityIds )
+        val = resolveEntityList(stack, val);
+        // (val as EntityList).entityIds
+    }
+    else if( type === EntitySetType ){
+
+    }
+
+    return [stack, val];
+}
+
+
+function resolveEntityList( stack:QueryStack, list:EntityList ): Entity[] {
+    let result = [];
+
+    for( let ii = stack.items.length-1; ii >= 0; ii-- ){
+        const [type,val] = stack.items[ii];
+
+        if( type === EntityT ){
+            const eid = getEntityId(val);
+            // list.entityIds.find( leid => leid === eid )
+            if( list.entityIds.indexOf(eid) !== -1 ){
+                result.push( val );
+            }
+        }
+    }
+
+    return result;
 }

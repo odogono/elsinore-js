@@ -28,6 +28,7 @@ import { ChangeSet,
 import { generateId } from './simple_id';
 import { createLog } from "../util/log";
 import { isInteger } from "../util/is";
+import { MatchOptions } from '../constants';
 
 export const Code = '@es';
 export const Type = Symbol.for(Code);
@@ -189,9 +190,7 @@ export function getComponent( es:EntitySet, id:ComponentId|Component ): Componen
 //     return es;
 // }
 
-export interface MatchEntityOptions {
-    limit?: number;
-}
+
 
 /**
  * Returns a list of entity ids which match against the bitfield
@@ -200,7 +199,7 @@ export interface MatchEntityOptions {
  * @param mbf 
  * @param options 
  */
-export function matchEntities( es:EntitySet, mbf:BitField, options:MatchEntityOptions = {} ): EntityList {
+export function matchEntities( es:EntitySet, mbf:BitField, options:MatchOptions = {} ): EntityList {
     let matches = [];
     const limit = options.limit !== undefined ? options.limit : Number.MAX_SAFE_INTEGER;
 

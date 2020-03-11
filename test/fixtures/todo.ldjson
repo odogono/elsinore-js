@@ -1,0 +1,24 @@
+[ "@d", "/component/title", [ "title" ] ]
+[ "@d", "/component/completed", {"name":"completed", "type":"boolean", "default":false} ]
+[ "@d", "/component/priority", [ {"name":"priority", "type":"integer, "default": 0} ] ]
+
+
+[ "@c", "/component/title", { "text":"get out of bed"}  ]
+[ "@c", "/component/completed", {"completed":true} ]
+[ "@c", "/component/priority", {"priority":10} ]
+[ "@e", 100 ]
+
+[ "@c", "/component/title", { "text":"phone up friend"}  ]
+[ "@c", "/component/completed", {"completed":true} ]
+[ "@e", 101 ]
+
+[ "@c", "/component/title", { "text":"turn on news"}  ]
+[ "@c", "/component/completed", {"completed":false} ]
+[ "@e", 102 ]
+
+[ "@c", "/component/title", { "text":"drink some tea"}  ]
+[ "@e", 103 ]
+
+[ "@c", "/component/title", { "text":"do some shopping"}  ]
+[ "@c", "/component/priority", {"priority":-5} ]
+[ "@e", 104 ]

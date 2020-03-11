@@ -27,7 +27,7 @@
   "dependencies": {
     "flake-idgen": "^1.1.2",
     "minivents": "^2.2.0",
-    "odgn-bitfield": "^1.0.5",
+    "odgn-bitfield": "^1.0.7",
     "pull-pushable": "2.2.0"
   },
   "non-dependencies": {},

@@ -1,11 +1,13 @@
 import { ComponentDef, 
     Token as DefToken,
     create as createComponentDef,
-    hash as hashComponentDef } from "../component_def";
+    hash as hashComponentDef, 
+    getDefId} from "../component_def";
 import { createUUID } from "../util/uuid";
 import { createLog } from "../util/log";
 import { isString, isInteger } from "../util/is";
 import { create as createComponentInstance, Component } from '../component';
+import { BitField } from "odgn-bitfield";
 
 export type ComponentDefs = Array<ComponentDef>;
 
@@ -54,17 +56,23 @@ export function getComponentDefs( registry ): ComponentDef[] {
 }
 
 
+export interface ResolveComponentDefOptions {
+    asDef?: boolean;
+}
 /**
- * Resolves an array of Def identifiers (uri,hash, or did) to ComponentDefs
- * @param registry 
- * @param dids 
+ * Resolves an array of Def identifiers (uri,hash, or did) to ComponentDefs  
+ * @param registry ComponentRegistry
+ * @param dids array of def ids as strings or numbers 
  */
-export function resolveComponentDefIds( registry:ComponentRegistry, dids:any[] ): ComponentDef[] {
+export function resolveComponentDefIds( registry:ComponentRegistry, dids:any[], options:ResolveComponentDefOptions = {} ): BitField | ComponentDef[] {
+    const bf = new BitField();
+    const asDef = options.asDef === true;
+
     if( !Array.isArray(dids) || dids.length === 0 ){
-        return [];
+        return asDef ? [] : bf;
     }
 
-    return dids.map( did => {
+    const defs = dids.map( did => {
         if( isString(did) ){
             return getByUri( registry, did );
         }
@@ -73,6 +81,14 @@ export function resolveComponentDefIds( registry:ComponentRegistry, dids:any[] )
         }
         return undefined;
     });
+
+    
+    if( asDef ){
+        return defs;
+    }
+    // console.log('[resolveComponentDefIds]', dids, defs, bf )
+
+    return defs.reduce( (bf,def) => def === undefined ? bf : bf.set( getDefId(def) ), bf );
 }
 
 

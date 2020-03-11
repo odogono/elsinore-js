@@ -4,7 +4,9 @@ import { isObject } from './util/is';
 
 export const Code = '@e';
 export const Token = Symbol.for(Code);
+export const Type = Symbol.for(Code);
 
+export const EntityListType = Symbol.for('@el');
 
 export interface EntityList {
     entityIds: number[];
@@ -47,7 +49,7 @@ export function createBitfield( ebf?:BitField|'all' ):BitField {
  */
 export function addComponent( entity:Entity, com:Component ):Entity {
     const defId = getComponentDefId(com);
-    // console.log('[Entity][addComponent]', defId );
+    
     if( defId === 0 ){
         return entity;
     }
