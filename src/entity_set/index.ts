@@ -13,17 +13,21 @@ import { createUUID } from "../util/uuid";
 import { ComponentRegistry } from "../component_registry";
 import { Entity, 
     isEntity, 
-    getComponents, 
+    getComponents as getEntityComponents, 
     Token as EntityT, 
     create as createEntityInstance,
     createBitfield, 
-    addComponentUnsafe} from "../entity";
+    addComponentUnsafe,
+    getEntityId,
+    EntityList,
+    createEntityList} from "../entity";
 import { ChangeSet,
     create as createChangeSet,
     add as addCS, update as updateCS, remove as removeCS, ChangeSetOp, getChanges 
 } from "./change_set";
 import { generateId } from './simple_id';
 import { createLog } from "../util/log";
+import { isInteger } from "../util/is";
 
 export const Code = '@es';
 export const Type = Symbol.for(Code);
@@ -70,6 +74,7 @@ export interface AddOptions {
 
 export type AddArrayType = Entity[] | Component[];
 export type AddType = Entity | Component | AddArrayType;
+export type RemoveType = ComponentId | Entity | Component;
 
 /**
  * 
@@ -78,6 +83,8 @@ export type AddType = Entity | Component | AddArrayType;
  * @param options 
  */
 export function add( es:EntitySet, item:AddType, options:AddOptions = {}):EntitySet {
+    es = options.retain ? es : clearChanges(es);
+
     if( Array.isArray(item) ){
         // sort the incoming items into entities and components
         let [ents,coms] = (item as any[]).reduce( ([ents,coms], item ) => {
@@ -89,17 +96,47 @@ export function add( es:EntitySet, item:AddType, options:AddOptions = {}):Entity
             return [ents,coms];
         }, [[],[]] );
 
-        es = options.retain ? es : clearChanges(es);
+        // Log.debug('[add]', ents)
+    
+        es = ents.reduce( (es,e) => addComponents(es, getEntityComponents(e)), es );
+
         es = addComponents(es, coms);
         es = applyRemoveChanges(es)
     }
-    if( isComponent(item) ){
-        return addComponent( es, item as Component, options );
+    else if( isComponent(item) ){
+        es = addComponents( es, [item as Component] );
     }
-    if( isEntity(item) ){
-        return addEntity( es, item as Entity, options );
+    else if( isEntity(item) ){
+        let e = item as Entity
+        es = markRemoveComponents(es, e[EntityT] );
+        es = addComponents( es, getEntityComponents(e) );
     }
+
+    es = applyRemoveChanges(es)
+    
     return es;
+}
+
+export function removeComponent( es:EntitySet, item:RemoveType, options:AddOptions = {}): EntitySet {
+    es = options.retain ? es : clearChanges(es);
+    let cid = isComponentId(item) ? item as ComponentId : isComponent(item) ? getComponentId(item as Component) : undefined;
+    if( cid === undefined ){
+        return es;
+    }
+    es = markComponentRemove( es, cid );
+
+    // Log.debug('[removeComponent]', es );
+    return applyRemoveChanges(es);
+}
+
+export function removeEntity( es:EntitySet, item:(number|Entity), options:AddOptions = {} ):EntitySet {
+    es = options.retain ? es : clearChanges(es);
+    let eid = isInteger(item) ? item as number : isEntity(item) ? getEntityId(item as Entity) : 0;
+    if( eid === 0 ){
+        return es;
+    }
+    es = markEntityComponentsRemove( es, eid );
+    return applyRemoveChanges(es);
 }
 
 export function size(entitySet:EntitySet): number {
@@ -107,23 +144,6 @@ export function size(entitySet:EntitySet): number {
 }
 
 
-
-
-function addEntity( es:EntitySet, entity:Entity, options:AddOptions = {}): EntitySet {
-
-    es = options.retain ? es : clearChanges(es);
-    es = markRemoveComponents(es, entity[EntityT] );
-    es = addComponents( es, getComponents(entity) );
-    es = applyRemoveChanges(es)
-    
-    return es;
-}
-
-function addComponent( es:EntitySet, com:Component, options:AddOptions = {}): EntitySet {
-    es = options.retain ? es : clearChanges(es);
-    es = addComponents( es, [com] );
-    return es;
-}
 
 
 /**
@@ -147,7 +167,11 @@ export function getEntity( es:EntitySet, eid:number ): Entity {
 }
 
 
-
+/**
+ * Returns a Component by its id
+ * @param es 
+ * @param id 
+ */
 export function getComponent( es:EntitySet, id:ComponentId|Component ): Component {
     if( isComponentId(id) ){
         return es.components.get( id as ComponentId );
@@ -157,10 +181,42 @@ export function getComponent( es:EntitySet, id:ComponentId|Component ): Componen
 }
 
 
-function addArray( es:EntitySet, items:AddArrayType, options:AddOptions = {}): EntitySet {
-    return es;
+// export function getComponents( es:EntitySet ): Component[] {
+//     return Array.from( es.components.values() )
+// }
+
+// function addArray( es:EntitySet, items:AddArrayType, options:AddOptions = {}): EntitySet {
+//     return es;
+// }
+
+export interface MatchEntityOptions {
+    limit?: number;
 }
 
+/**
+ * Returns a list of entity ids which match against the bitfield
+ * 
+ * @param es 
+ * @param mbf 
+ * @param options 
+ */
+export function matchEntities( es:EntitySet, mbf:BitField, options:MatchEntityOptions = {} ): EntityList {
+    let matches = [];
+    const limit = options.limit !== undefined ? options.limit : Number.MAX_SAFE_INTEGER;
+
+    const isAll = mbf.toString() === 'all';
+    for( let [eid, ebf] of es.entities ){
+        // console.log('[matchEntities]', 'limit', eid, mbf.toString(), ebf.toString(), BitField.or( mbf, ebf ));
+        if( isAll || BitField.or( mbf, ebf ) ){
+            matches.push( eid );
+
+            if( matches.length >= limit ){
+                break;
+            }
+        }
+    }
+    return createEntityList( matches );
+}
 
 
 
@@ -187,6 +243,11 @@ function markRemoveComponents( es:EntitySet, id:number ): EntitySet {
     for( let ii=0;ii<dids.length;ii++ ){
         es = markComponentRemove(es, toComponentId(id, dids[ii]) );
     }
+
+    return es;
+}
+
+function addEntities( es:EntitySet, ents:Entity[] ): EntitySet {
 
     return es;
 }
@@ -242,6 +303,8 @@ function applyRemoveChanges(es:EntitySet): EntitySet {
 
     es = removedComs.reduce( (es,cid) => applyRemoveComponent(es,cid), es );
 
+    // Log.debug('[applyRemoveChanges]', es.entChanges );
+
     const removedEnts = getChanges( es.entChanges, ChangeSetOp.Remove );
 
     es = removedEnts.reduce( (es,eid) => applyRemoveEntity(es,eid), es );
@@ -269,7 +332,9 @@ function applyRemoveComponent(es:EntitySet, cid:ComponentId):EntitySet {
         components
     }
 
-    if( ebf.size() === 0 ){
+    // Log.debug('[applyRemoveComponent]', cid, ebf.count() );
+
+    if( ebf.count() === 0 ){
         return markEntityRemove( es, eid );
     }
     
@@ -323,6 +388,16 @@ function markEntityUpdate( es:EntitySet, eid:number ):EntitySet {
 }
 function markEntityRemove( es:EntitySet, eid:number ):EntitySet {
     return { ...es, entChanges: removeCS( es.entChanges, eid) };
+}
+
+function markEntityComponentsRemove( es: EntitySet, eid:number ): EntitySet {
+    const ebf = es.entities.get( eid );
+    if( ebf === undefined ){
+        return es;
+    }
+    
+    return ebf.toValues().reduce( (es,did) => 
+        markComponentRemove(es, toComponentId(eid,did)), es );
 }
 
 

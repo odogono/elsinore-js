@@ -1,0 +1,199 @@
+// IRC scenario
+// all entity ids are static so as to make testing relationships easier
+
+// component defs
+
+[ "@d", "/component/nickname", { "properties":[ { "name": "nickname", "type":"string" } ] } ]
+
+[ "@d", "/component/username", "username" ]
+    
+[ "@d", "/component/name", [ { "name":"name", "type":"string", "minLength":3, "maxLength":64 } ] ]
+
+[ "@d", "/component/status", [ "status" ] ]
+
+[ "@d", "/component/channel", [ "name" ] ]
+
+[
+    "@d", "/component/channel_member",
+    {
+        "properties":[
+            { "name": "channel", "type": "integer", "format": "entity" },
+            { "name": "client", "type": "integer", "format": "entity" }
+        ]
+    }
+]
+
+[ "@d", "/component/topic", [ "topic" ] ]
+
+[ "@d", "/component/mode/invisible" ]
+
+[ "@d", "/component/mode/invite_only" ]
+
+[ "@d", "/component/mode/channel_op" ]
+
+[ "@d", "/component/mode/moderated" ]
+
+[ "@d", "/component/mode/private" ]
+
+[
+    "@d", "/component/mode/limit",
+    {
+        "description": "limits the members to this entity",
+        "properties": [
+            { "name": "limit", "type": "integer"}
+        ]
+    }
+]
+
+
+
+// channels
+
+// components with entity ids (@e) are added directly to the ES - no need for @cmd: entity
+[ "@c", "/component/channel", { "@e":1, "name":"ecs" } ]
+[ "@c", "/component/topic", { "@e":1, "topic": "Entity Component Systems" } ]
+[ "@c", "/component/mode/private", { "@e":1 } ]
+[ "@c", "/component/status", { "@e":1, "status": "active"} ]
+
+[ "@c", "/component/channel", { "@e":2, "name": "chat"} ]
+[ "@c", "/component/mode/limit"{ "@e":2, , "limit": 10 } ]
+[ "@c", "/component/mode/invisible", { "@e":2  } ]
+[ "@c", "/component/status", { "@e":2, "status": "active"} ]
+
+[ "@c", "/component/channel", { "@e":3, "name": "mr-rap"} ]
+[ "@c", "/component/mode/invite_only"{ "@e":3,  } ]
+[ "@c", "/component/topic", { "@e":3, "topic": "Male Rappers" } ]
+[ "@c", "/component/status", { "@e":3, "status": "inactive"} ]
+
+[ "@c", "/component/channel", { "@e":4, "name": "ms-rap"} ]
+[ "@c", "/component/mode/moderated"{ "@e":4  } ]
+[ "@c", "/component/topic", { "@e":4, "topic": "Female Rappers" } ]
+[ "@c", "/component/status", { "@e":4, "status": "active"} ]
+
+[ "@c", "/component/username", { "@e":5, "username":"kfareed"} ]
+[ "@c", "/component/nickname", { "@e":5, "nickname":"qtip"} ]
+[ "@c", "/component/name", { "@e":5, "name": "Kamaal Ibn John Fareed" } ]
+[ "@c", "/component/status", { "@e":5, "status": "active"} ]
+
+[ "@c", "/component/username", { "@e":6, "username":"mdiamond"} ]
+[ "@c", "/component/nickname", { "@e":6, "nickname":"miked"} ]
+[ "@c", "/component/name", { "@e":6, "name": "Michael Louis Diamond"} ]
+[ "@c", "/component/status", { "@e":6, "status": "active"} ]
+
+[ "@c", "/component/username", { "@e":7, "username":"kelam"} ]
+[ "@c", "/component/nickname", { "@e":7, "nickname":"guru"} ]
+[ "@c", "/component/name", { "@e":7, "name": "Keith Edward Elam" } ]
+[ "@c", "/component/mode/invisible"{ "@e":7,  } ]
+
+[ "@c", "/component/username", { "@e":8, "username":"melliott"} ]
+[ "@c", "/component/nickname", { "@e":8, "nickname":"missy"} ]
+[ "@c", "/component/name", { "@e":8, "name": "Melissa Arnette Elliott" } ]
+
+[ "@c", "/component/username", { "@e":9, "username":"mblige"} ]
+[ "@c", "/component/nickname", { "@e":9, "nickname":"mary"} ]
+[ "@c", "/component/name", { "@e":9, "name": "Mary Jane Blige" } ]
+
+
+[ "@c", "/component/username", { "@e":10, "username":"kthornton"} ]
+[ "@c", "/component/nickname", { "@e":10, "nickname":"koolkeith"} ]
+[ "@c", "/component/name", { "@e":10, "name": "Keith Matthew Thornton" } ]
+
+[ "@c", "/component/username", { "@e":11, "username":"ggrice"} ]
+[ "@c", "/component/nickname", { "@e":11, "nickname":"gza"} ]
+[ "@c", "/component/name", { "@e":11, "name": "Gary Grice" } ]
+[ "@c", "/component/status", { "@e":11, "status": "active"} ]
+
+[ "@c", "/component/username", { "@e":12, "username":"lhill"} ]
+[ "@c", "/component/nickname", { "@e":12, "nickname":"lauryn"} ]
+[ "@c", "/component/name", { "@e":12, "name": "Lauryn Noelle Hill" } ]
+[ "@c", "/component/status", { "@e":12, "status": "active"} ]
+
+[ "@c", "/component/username", { "@e":13, "username":"aveenendaal"} ]
+[ "@c", "/component/nickname", { "@e":13, "nickname":"alex"} ]
+[ "@c", "/component/name", { "@e":13, "name": "Alexander Veenendaal" } ]
+[ "@c", "/component/status", { "@e":13, "status": "active"} ]
+
+
+// [ "@q", "select_channel_id", [
+//     // the include filter only selects the specified components
+//     [ "@include", "/component/channel", "@where", "name", "=", "@$0" ],
+//     // 2nd arg is null, because we only have a single component type selected
+//     [ "@pluck", null, "@e" ],
+//     // select first attribute
+//     [ "@first" ]
+// ]]
+
+// ["@q", "select_user_id", [
+//     // the include filter only selects the specified components
+//     [ "@include", "/component/username", "@where", "username", "=", "@$0" ],
+//     // 2nd arg is null, because we only have a single component type selected
+//     [ "@pluck", null, "@e" ],
+//     [ "@first" ]
+// ]]
+
+
+// channel members
+
+[ "@c", "/component/channel_member", { "@e":14, 
+    "channel": [ "@rq", "select_channel_id", [ "ecs" ] ], 
+    "client": [ "@rq", "select_user_id", ["aveenendaal"] ], 
+    "username":"aveenendaal", "cname":"ecs" } ]
+
+[ "@c", "/component/mode/channel_op", { "@e":14 } ]
+
+[ "@c", "/component/channel_member", { "@e":15, "channel": 3, "client": 5, "username":"kfareed", "cname":"mr-rap" ]
+
+[ "@c", "/component/channel_member", { "@e":16, "channel": 4, "client": 8, "username":"melliott", "cname":"ms-rap" ]
+[ "@c", "/component/mode/invisible" {"@e":16}]
+
+[ "@c", "/component/channel_member", { "@e":17, "channel": 3, "client": 6, "username":"mdiamond", "cname":"mr-rap" ]
+
+[ "@c", "/component/channel_member", { "@e":18, "channel": 3, "client": 7, "username":"kelam", "cname":"mr-rap" ]
+[ "@c", "/component/mode/invisible" {"@e":18}]
+
+[ "@c", "/component/channel_member", { "@e":19, "channel": 3, "client": 10, "username":"kthornton", "cname":"mr-rap" ]
+[ "@c", "/component/mode/channel_op" {"@e":19}]
+
+
+[ "@c", "/component/channel_member", { "@e":20, "channel": 3, "client": 11, "username":"ggrice", "cname":"mr-rap" ]
+
+[ "@c", "/component/channel_member", { "@e":20, "channel": 4, "client": 9, "username":"mblige", "cname":"ms-rap" ]
+[ "@c", "/component/mode/channel_op" {"@e":21}]
+
+[ "@c", "/component/channel_member", { "@e":21, "channel": 4, "client": 12, "username":"lhill", "cname":"ms-rap"]
+
+[ "@c", "/component/channel_member", { "@e":22, "channel": 4, "client": 13, "username":"aveenendaal", "cname":"ms-rap" ]
+
+[ "@c", "/component/channel_member", { "channel": 2, "client": 13, "username":"mdiamond", "cname":"chat" {"@e":23}]
+[ "@c", "/component/mode/channel_op" {"@e":23}]
+[ "@c", "/component/channel_member", { "channel": 2, "client": 5, "username":"kfareed", "cname":"chat" {"@e":24}]
+[ "@c", "/component/channel_member", { "channel": 2, "client": 10, "username":"kthornton", "cname":"chat" {"@e":25}]
+[ "@c", "/component/channel_member", { "channel": 2, "client": 13, "username":"aveenendaal", "cname":"chat" {"@e":26}]
+
+// this query selects the other entities which are members of the same channel
+// as entity id 13
+// { "@cmd":"query", "args":{"client_id": 13}, "query":[
+//     // args get sent in as 'alias_as' - if they are object
+//     // [ "@alias_as", "client_id", 13 ],
+// 
+//     // 1. select channel ids which client `client_id` belongs to and store as alias `channel_ids`
+//     [ "@all", "/component/channel_member", "@where", "client", "=", [ "@alias", "client_id"] ],
+//     // pluck selects the 'channel' property from the selected entities
+//     [ "@pluck", "/component/channel_member", "channel" ],
+//     [ "@alias_as", "channel_ids" ],
+// 
+//     // 2. select channel members which belong to the channel ids stored in the alias `channelIDs`
+//     "@root",
+//     [ "@all", "/component/channel_member", "@where", "channel", "=", "@alias", "channel_ids" ],
+// 
+//     // pluck returns an array of the specified attribute from the components
+//     [ "@pluck", "/component/channel_member", "client", { "unique":true } ],
+//     // without returns an array without the specified value
+//     [ "@without", [ "alias", "client_id"] ],
+// 
+//     // 3. using the channel_member client ids, select an entityset of client entities by entity ids
+//     // creates a new ES from selected ids - note that the function uses the result of the last
+//     // query option
+//     "@select_by_id"
+//     // the result is a list of entity ids which are members of the same channels as 'client_id'
+//  ] }

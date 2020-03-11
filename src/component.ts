@@ -11,6 +11,10 @@ export const Token = Symbol.for(Code);
 // made up of entityId,defId
 export type ComponentId = string; //[number, number];
 
+export interface ComponentList {
+    componentIds: ComponentId[];
+}
+
 export interface Component {
     [key: string]: any;
     [DefToken]: number;

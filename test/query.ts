@@ -13,6 +13,12 @@ import { create as createQueryStack,
     BuildQueryFn,
     BuildQueryParams,
     QueryStack } from '../src/query/stack';
+    import { EntitySet, 
+        create as createEntitySet,
+        size as entitySetSize,
+        add as esAdd, 
+        Type as EntitySetT,
+        createEntity} from '../src/entity_set';
 import * as ComponentRegistry from '../src/component_registry';
 import { createLog } from '../src/util/log';
 import util from 'util';
@@ -20,8 +26,9 @@ import { stringify } from '../src/util/json';
 
 
 import { Entity, getComponent } from '../src/entity';
-import { buildQueryStack } from './util/stack';
-
+import { buildQueryStack, serialiseStack } from './util/stack';
+import Path from 'path';
+import { loadFixture } from './util/import';
 const Log = createLog('TestQuery');
 
 
@@ -181,5 +188,37 @@ describe('Query', () => {
         //         [ 'ADD', '@es' ]
         //     ]);
         // })
+    })
+
+    describe('Select', () => {
+
+        it.skip('selects entities which contain a given def id', async () => {
+            const data = await loadFixture( 'chess.ldjson' );
+
+            let registry = ComponentRegistry.create();
+            let stack = buildQueryStack();
+            let es = createEntitySet({});
+
+            // add the registry to the stack
+            stack = pushQueryStack( stack, registry );
+
+            // add es
+            stack = pushQueryStack( stack, es, EntitySetT );
+
+            // register the username component
+            stack = executeQueryStack( stack, data );
+
+            // add all entities to es
+            stack = executeQueryStack( stack, [ ['AD', '@es'] ]);
+
+            es = findV( stack, EntitySetT );
+
+            // Log.debug('loaded', stack );
+
+            const lines = serialiseStack(stack);
+
+            Log.debug('output', lines.map( l => JSON.stringify(l) ));
+        })
+        
     })
 })

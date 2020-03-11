@@ -32,7 +32,7 @@ export function compile() {
  * AL <defId>
  * AL <@d>
  */
-export function execute( stack:QueryStack, ...args ) {
+export function execute( stack:QueryStack, op:string, ...args ) {
     // Log.debug('[execute]', args );
 
     if( args[0] === ComponentRegistryCode ){

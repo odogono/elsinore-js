@@ -40,3 +40,4 @@ test.html
 rollup*
 .babelrc
 .eslintrc
+.mocharc.json

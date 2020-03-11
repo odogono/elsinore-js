@@ -13,7 +13,7 @@ export const meta:InstDefMeta = {
 export function compile() {
 }
 
-export function execute( stack:QueryStack, left:[], right:[] ) {
+export function execute( stack:QueryStack, op:string, left:[], right:[] ) {
     // Log.debug('[execute]', left, right );
     const leftV = valueOf(left);
     const rightV = valueOf(right);

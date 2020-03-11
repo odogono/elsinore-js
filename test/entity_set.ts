@@ -24,6 +24,7 @@ import { EntitySet,
     create as createEntitySet,
     size as entitySetSize,
     add as esAdd, 
+    removeComponent, 
     getEntity,
     getComponent,
     createEntity} from '../src/entity_set';
@@ -206,6 +207,26 @@ describe('Entity Set (Mem)', () => {
     });
 
 
-    
+    describe('Removing', () => {
+        it('removes a component', () => {
+            let com = createComponent(registry, '/component/channel', {name: 'chat'} );
+            let es = createEntitySet({});
+
+            es = esAdd( es, com );
+
+            assert.equal( entitySetSize(es), 1 );
+            
+            const cid = getChanges( es.comChanges, ChangeSetOp.Add )[0];
+            
+            es = removeComponent( es, cid );
+
+            // Log.debug('es', es);
+            
+            assert.equal( entitySetSize(es), 0 );
+
+        });
+        it('removes an entity and all its components', () => {});
+    });
+
 
 })

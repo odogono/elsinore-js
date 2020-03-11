@@ -6,7 +6,7 @@ import { ComponentRegistry } from "../component_registry";
 const Log = createLog('QueryStack');
 
 export interface InstDefMeta {
-    op: string;
+    op: string | string[];
 }
 
 export interface InstDef {
@@ -15,7 +15,7 @@ export interface InstDef {
     execute: Function;
 }
 
-type StackValue = [ Symbol, any ];
+export type StackValue = [ Symbol, any ];
 
 const AnyValue = Symbol.for('VL');
 
@@ -182,14 +182,14 @@ export function execute( stack:QueryStack, stmts:Array<Array<any>> ): QueryStack
         // Array.from(stack.instructions.keys()).map(k => k.description );
 
         const inst = getInstruction(stack, op );
-        // Log.debug('[execute]', op, stmt, inst )
+        // Log.debug('[execute]', op, stmt )
 
         if( inst === undefined ){
             Log.debug('[execute]', 'instruction not found', op );
             return stack;
         }
         
-        const result = inst.execute( stack, ...args );
+        const result = inst.execute( stack, op, ...args );
 
         return result ?? stack;
     }, stack );
@@ -206,9 +206,12 @@ export function addInstruction( stack:QueryStack, inst:InstDef|InstDef[] ){
 
     const instructions = new Map<string, InstDef>( stack.instructions );
     
-    // Log.debug('[addInstruction]', 'adding inst', op);
-    instructions.set( op, {meta,compile,execute} ); 
-
+    if( Array.isArray(op) ){
+        (op as string[]).map( o => instructions.set( o, {meta,compile,execute} )  );
+    } else {
+        instructions.set( op, {meta,compile,execute} ); 
+    }
+    
     return {
         ...stack,
         instructions

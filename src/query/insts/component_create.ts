@@ -23,7 +23,7 @@ export const meta:InstDefMeta = {
 export function compile() {
 }
 
-export function execute(stack: QueryStack, uri, attributes ) {
+export function execute(stack: QueryStack, op:string, uri, attributes ) {
     // find the ComponentRegistry in the stack
     let [index, [type, registry]] = findWithIndex(stack, ComponentRegistryT);
 

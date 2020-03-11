@@ -12,7 +12,7 @@ export const meta:InstDefMeta = {
 export function compile() {
 }
 
-export function execute( stack:QueryStack, value ):QueryStack {
+export function execute( stack:QueryStack, op:string, value:any ):QueryStack {
     return pushV( stack, value );
 }
 

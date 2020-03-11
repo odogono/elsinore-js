@@ -6,6 +6,13 @@ export const Code = '@e';
 export const Token = Symbol.for(Code);
 
 
+export interface EntityList {
+    entityIds: number[];
+    // used to record the bitfield that compiled this list
+    // this enables the list to be used as an index
+    bf?: BitField;
+}
+
 export interface Entity {
     [Token]: number;
 
@@ -25,7 +32,11 @@ export function create( id:number = 0 ):Entity {
     }
 }
 
-export function createBitfield( ebf?:BitField ):BitField {
+export function createEntityList( entityIds:number[] = [], bf?:BitField ): EntityList {
+    return {entityIds, bf};
+}
+
+export function createBitfield( ebf?:BitField|'all' ):BitField {
     return new BitField(ebf);
 }
 

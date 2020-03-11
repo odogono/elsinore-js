@@ -16,7 +16,7 @@ export const meta:InstDefMeta = {
 export function compile() {
 }
 
-export function execute( stack:QueryStack, uri, properties ) {
+export function execute( stack:QueryStack, op:string, uri, properties ) {
 
     // Log.debug('[execute]', JSON.stringify( stack, null, '\t' ) );
 
@@ -35,6 +35,9 @@ export function execute( stack:QueryStack, uri, properties ) {
         }
     } else if( isString(properties) ){
         properties = {uri, properties};
+    }
+    else if( properties === undefined ){
+        properties = {uri, properties:[]};
     }
 
     // Log.debug('[execute]', uri, properties);

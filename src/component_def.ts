@@ -114,16 +114,30 @@ export function getDefId( def:ComponentDef ): number {
     return def[Token];
 }
 
+
+export interface ComponentDefObj {
+    '@d': number;
+    name: string;
+    uri: string;
+    properties: any[];
+}
+
 /**
  * Converts the ComponentDef into an object
  */
-export function toObject( def:ComponentDef, includeId:boolean = true ): object {
+export function toObject( def:ComponentDef, includeId:boolean = true ): ComponentDefObj {
     let {[Token]:id, name, uri, properties } = def;
 
     // if( !isFunction(properties.map) ){
     //     console.log('[toObject]', properties, typeof properties);
     // }
-    let objProps = isObject(properties) ? [properties] : properties.map( p => propertyToObject(p) );
+    let objProps = [];
+    if( Array.isArray(properties) ){
+        objProps= properties.map( p => propertyToObject(p) );
+    }
+    else if( isObject(properties) && Object.keys(properties).length > 0 ){
+        objProps = [properties];
+    } 
 
     return {
         '@d': id,
