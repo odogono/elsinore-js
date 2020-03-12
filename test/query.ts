@@ -1,18 +1,22 @@
 import { assert } from 'chai';
 
-import { ComponentDef, Token as DefT, getDefId } from '../src/component_def';
-import { Component, getComponentDefId, toObject as comToObject, getComponentEntityId } from '../src/component';
+import { ComponentDef, Type as DefT, getDefId } from '../src/component_def';
+import { 
+    Component, 
+    Type as ComponentT,
+    getComponentDefId, 
+    toObject as comToObject, 
+    getComponentEntityId 
+} from '../src/component';
 import { create as createQueryStack, 
-    execute as executeQueryStack,
-    pushV as pushQueryStack,
+    push as pushQueryStack,
     peekV as peekQueryStack,
     buildAndExecute as buildQuery,
+    pushValues,
     findV,
-    addInstruction,
-    InstDef,
-    BuildQueryFn,
-    BuildQueryParams,
     QueryStack, 
+    BuildQueryParams,
+    StackValue,
     popEntity} from '../src/query/stack';
     import { EntitySet, 
         create as createEntitySet,
@@ -41,6 +45,7 @@ import {
     assertIncludesComponents} from './util/stack';
 import Path from 'path';
 import { loadFixture } from './util/import';
+import { VL } from '../src/query/insts/value';
 const Log = createLog('TestQuery');
 
 
@@ -48,19 +53,44 @@ const Log = createLog('TestQuery');
 describe('Query', () => {
 
     it('should evaluate a boolean expression', () => {
-        const insts = [
-            [ '==', ['VL', 10], ['VL', 10] ]
+        const insts:StackValue[] = [
+            [ 'VL', 'hello'],
+                        [ 'VL', 4 ],
+                        [ 'VL', 6 ],
+                    [ '+' ],
+                    [ 'VL', 10 ],
+                [ '==' ],
+                    [ 'VL', 7 ],
+                    [ 'VL', 7 ],
+                [ '==' ],
+            [ '==' ],
         ];
 
+        /**
+         * push [VL,10]
+         * push [VL,10]
+         * push [==]
+         * 
+         * (push compiles the instruction)
+         * 
+         */
+
+        let value:StackValue;
         let stack = buildQueryStack();
+        [stack, value] = pushValues( stack, insts );
 
-        stack = executeQueryStack( stack, insts );
+        // execute pops the top value and executes it
+        // [stack, value] = executeQueryStack( stack );
 
-        assert.ok( peekQueryStack(stack), 'the values are equal' );
+        // TODO popValue executes the value as well as returns/removes it
+        // TODO executeValue executes but does not pop/return it
+        
+        // Log.debug('stack', stack.items);
+        assert.ok( value[1], 'the values are equal' );
 
-        stack = executeQueryStack( stack, [ [ '==', ['VL', 10], ['VL', 12] ] ] );
+        // stack = executeQueryStack( stack, [ [ '==', ['VL', 10], ['VL', 12] ] ] );
 
-        assert.notOk( peekQueryStack(stack), 'the values are not equal' );
+        // assert.notOk( peekQueryStack(stack), 'the values are not equal' );
     });
 
 
@@ -68,39 +98,37 @@ describe('Query', () => {
 
         // instructions make up a query
         // a query is executed against the query engine
-        const insts = [
-            [ "@d", "/piece/knight", { "properties":[ "rank", "file" ] } ],
-            [ "@c", "/piece/knight", { "rank": 1, "file": "g" } ]
+        const insts:StackValue[] = [
+            
+            [ 'VL', { "properties":[ "rank", "file" ] } ],
+            [ 'VL', "/piece/knight" ],
+            [ "@d" ],
+
+            [ 'VL', { "rank": 1, "file": "g" } ],
+            [ 'VL', "/piece/knight" ],
+            [ "@c" ],
         ];
 
+        let value:StackValue;
+        let component:Component;
         let registry = createComponentRegistry();
         let stack = buildQueryStack();
 
         // important that a ComponentRegistry exists on the stack, otherwise
         // the definition command will fail
-        stack = pushQueryStack( stack, registry );
+        [stack,value] = pushQueryStack( stack, [ComponentRegistryT,registry] );
         
-        // Log.debug('[post stack]', stack ); //stringify( stack, '\t' ) );
+        [stack,[,component]] = pushValues( stack, insts );
 
-        stack = executeQueryStack( stack, insts );
+        // Log.debug('stack', stack.items );
 
         registry = findV( stack, ComponentRegistryT );
         
-        // Log.debug('[post stack]', stack.items );
-
-        assert.equal( stack.items.length, 2 );
-
         const def:ComponentDef = getByUri( registry, '/piece/knight');
-        const component:Component = peekQueryStack( stack );
-
-
-        // Log.debug('component', component, comToObject(component) );
-
+        
         assert.equal( def.uri, '/piece/knight' );
         assert.equal( getComponentDefId(component), def[DefT] );
         assert.equal( component.file, "g" );
-
-        // convert the stack to instructions - should be the same as the initial
     })
 
     describe('Entity', () => {
@@ -109,43 +137,44 @@ describe('Query', () => {
 
             let registry = createComponentRegistry();
             let stack = buildQueryStack();
+            let value:StackValue;
 
             // add the registry to the stack
-            stack = pushQueryStack( stack, registry );
+            [stack] = pushQueryStack( stack, registry, ComponentRegistryT );
 
             // register the username component
-            stack = executeQueryStack( stack, [
-                [ '@d', '/component/username', [ 'username' ] ],
-            // create a component and add it to the stack
-                [ '@c', '/component/username', { '@e':23, 'username': 'alex' } ],
-                [ '@c', '/component/username', { 'username': 'peter' } ],
+            [stack] = pushValues( stack, [
+
+                [ 'VL', [ 'username' ] ],
+                [ 'VL', '/component/username' ],
+                [ '@d'],
+                
+                // create a component and add it to the stack
+                [ 'VL', { '@e':23, 'username': 'alex' } ],
+                [ 'VL', '/component/username' ],
+                [ '@c' ],
+
+                [ 'VL', { 'username': 'peter' } ],
+                [ 'VL', '/component/username' ],
+                [ '@c' ],
             ]);
 
             // get the updated component registry
             registry = findV( stack, ComponentRegistryT );
 
             const def = getByUri( registry, '/component/username' );
-
+            let entity:Entity;
             
             // add the component to a new entity
-            stack = executeQueryStack( stack, [
-                [ '@e' ]
-            ]);
+            [stack, [,entity]] = pushQueryStack( stack, [ '@e' ] );
             
-            // Log.debug('[post stack]', stack.items );
-
-            const entity:Entity = peekQueryStack( stack );
-
-            // Log.debug('[result]', entity );
+            // Log.debug('[result]', stack.items );
 
             assert.equal( entity.bitField.count(), 1 );
 
             const component = getComponent( entity, getDefId(def) );
 
             assert.equal( component.username, 'alex' );
-
-            // const component = entity.getComponent
-            // Log.debug('[post stack]', stack.items );
         });
 
         it('should create from a shortform',() => {
@@ -169,6 +198,7 @@ describe('Query', () => {
         })
     })
 
+    
     describe('EntitySet', () => {
 
         // it('should add a component with an entity id', () => {
@@ -213,30 +243,46 @@ describe('Query', () => {
 
         it('selects entities which contain a given def id', async () => {
             let ents;
+            let value:StackValue;
             let [stack,registry] = await prepareFixture('todo.ldjson');
 
-            // Log.debug('loaded', stack );
-
+            
             // execute a select. the result will be a new entitylist
             // on the stack
-            stack = executeQueryStack( stack, [
-                [ Select.AllEntities, '/component/priority' ]
-            ]);
-
-            // resolve the entity list to entities
+            [stack,value] = pushValues(stack, [ 
+                [VL, '/component/priority'], 
+                [Select.AllEntities]] 
+                );
+                
+            // Log.debug('loaded', stack.items );
+            
+            // // resolve the entity list to entities
             [stack, ents] = popEntity( stack );
 
-            // assert.lengthOf( ents, 2 );
+            assert.lengthOf( ents, 2 );
 
             assertIncludesComponents( registry, ents[0], ['/component/priority'] );
             assertIncludesComponents( registry, ents[1], ['/component/priority'] );
 
-            // const lines = serialiseStack(stack);
+            // // const lines = serialiseStack(stack);
 
-            // Log.debug('output', lines.map( l => JSON.stringify(l) ));
-            // Log.debug('output', stack );
-        })
+            // // Log.debug('output', lines.map( l => JSON.stringify(l) ));
+            // // Log.debug('output', stack );
+        });
+
         
+        it('selects entities which match the component attribute value', async () => {
+            let ents;
+            let [stack,registry] = await prepareFixture('todo.ldjson');
+
+            [stack] = pushValues( stack, [
+                [ 'VL', true ],
+                [ 'AT', '/component/completed#isComplete' ],
+                [ '==' ], 
+                [ Select.AllEntities ],
+            ])
+        });//*/
     })
+    //*/        
 })
 

@@ -1,5 +1,5 @@
 import { ComponentDef, 
-    Token as DefToken,
+    Type as DefT,
     create as createComponentDef,
     hash as hashComponentDef, 
     getDefId} from "../component_def";
@@ -13,11 +13,10 @@ export type ComponentDefs = Array<ComponentDef>;
 
 const Log = createLog('ComponentRegistry');
 
-export const Code = '@cr';
-export const Type = Symbol.for(Code);
+export const Type = '@cr';
 
 export interface ComponentRegistry {
-    type: Symbol;
+    type: typeof Type;
 
     uuid: string;
 
@@ -111,11 +110,11 @@ export function register( registry:ComponentRegistry, {uri, properties} ): [Comp
 
     const existing = getByHash(registry,hash);
     if( existing !== undefined ){
-        throw new Error(`component definition already exists (${existing[DefToken]}/${existing.uri})`);
+        throw new Error(`component definition already exists (${existing[DefT]}/${existing.uri})`);
     }
 
     // seems legit, add it
-    def = { ...def, [DefToken]: did };
+    def = { ...def, [DefT]: did };
 
     let byHash = new Map<number, number>(registry.byHash);
     let byUri = new Map<string, number>(registry.byUri);
@@ -153,10 +152,10 @@ export function createComponent( registry:ComponentRegistry, defId:(string|numbe
 
     let params = {
         ...attributes,
-        '@d': def[DefToken]
+        '@d': def[DefT]
     };
 
-    // Log.debug('[createComponent]', 'def', def[DefToken] );
+    // Log.debug('[createComponent]', 'def', def[DefT] );
 
     // create a component instance
     const component = createComponentInstance(params);

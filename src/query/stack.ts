@@ -1,10 +1,11 @@
 import { createLog } from "../util/log";
-import { isObject } from "../util/is";
+import { isObject, isString } from "../util/is";
 import { ComponentRegistry } from "../component_registry";
 import { Type as EntitySetType } from '../entity_set';
 import { BitField } from "odgn-bitfield";
 import { MatchOptions } from '../constants';
 import { EntityList, createEntityList, Type as EntityT, Entity, getEntityId, EntityListType } from "../entity";
+import { VL } from "./insts/value";
 
 
 const Log = createLog('QueryStack');
@@ -15,13 +16,18 @@ export interface InstDefMeta {
 
 export interface InstDef {
     meta: InstDefMeta;
-    compile: Function;
-    execute: Function;
+    compile?: Function;
+    execute?: Function;
 }
 
-export type StackValue = [ Symbol, any ];
+export type InstResult = [
+    QueryStack, StackValue?, boolean?
+];
 
-const AnyValue = Symbol.for('VL');
+export type StackOp = string;
+export type StackValue = [ StackOp ] | [ StackOp, any ] ;
+
+const AnyValue = 'VL';
 
 export interface QueryStack {
     items: StackValue[];
@@ -35,15 +41,100 @@ export function create(){
     };
 }
 
+// function instCompile(stack:QueryStack, op:string): [QueryStack, StackValue] {
+//     return [ stack, [op] ];
+// }
+
 /**
  * Pushes a stack value onto the stack
  */
-export function push( stack:QueryStack, value:StackValue ):QueryStack {
-    return {
-        ...stack,
-        items: [...stack.items, value]
-    };
+export function push( stack:QueryStack, value:any|StackValue, op?:StackOp ):[QueryStack,StackValue] {
+    if( op !== undefined ){
+        value = [op,value]
+    } else {
+        [op] = value;
+    }
+    
+    const instDef = getInstruction( stack, op );
+
+    if( instDef === undefined ){
+        Log.debug(`unknown op ${op} ${JSON.stringify(value)}` );
+        return [stack, value];
+    }
+
+    let skipPush = true;
+
+    if( instDef.execute ){
+        // Log.debug('[push][execute]', value );
+        let result = instDef.execute(stack, ...value);
+        if( Array.isArray(result) === false ){
+            Log.debug('[push][execute]', 'undefined result from', op, result );
+        }
+        [stack,value,skipPush] = result;
+        // Log.debug('[push][execute]', 'post', op, value === undefined );
+        // Log.debug('[push][execute]', 'post', stack.items.map( ([op,]) => op ) );
+
+    }
+    
+    if( value !== undefined && skipPush !== false ){
+        stack = { ...stack, items: [...stack.items, value ] };
+    }
+    
+    return [stack, value];
 }
+
+
+export function pushValues( stack:QueryStack, values:StackValue[] ): [QueryStack,StackValue] {
+    let value:StackValue;
+    for(let ii=0;ii<values.length;ii++ ){
+        value = values[ii];
+
+        [stack,value] = push( stack, value );
+    }
+    return [stack, value];
+}
+
+// export function pushValues( stack:QueryStack, values:StackValue[] ):QueryStack {
+//     for(let ii=0;ii<values.length;ii++ ){
+//         let [op,args] = values[ii];
+
+//         const instDef = getInstruction( stack, op );
+    
+//         if( instDef === undefined ){
+//             throw new Error(`unknown op ${op}: ${args}` );
+//         }
+        
+//         let compiled:StackValue;
+
+//         if( instDef.compile ){
+//             // Log.debug('[pushValues][compile]', op, args );
+//             [stack,compiled] = instDef.compile(stack, op, args);
+//         } else {
+//             compiled = [op,args];
+//         }
+        
+//         stack = {...stack, items:[...stack.items, compiled] };
+
+//         // stack = instDef.execute( stack, ...compiled );
+//     }
+//     return stack;
+// }
+
+// export function popExecute( stack:QueryStack ): QueryStack {
+//     let inst:StackValue;
+
+//     [stack, inst] = pop(stack);
+    
+//     const module = getInstruction(stack, inst[0] );
+
+//     if( module === undefined ){
+//         throw new Error(`instruction not found ${inst[0]}`);
+//     }
+
+//     stack = module.execute(stack, ...inst);
+
+//     return stack;
+// }
 
 /**
  * Prepends a value to the stack
@@ -69,18 +160,19 @@ export function unshiftV( stack:QueryStack, value:any, valueType = AnyValue ):Qu
 /**
  * Pushes an arbirtrary value onto the stack
  */
-export function pushV( stack:QueryStack, value:any, valueType = AnyValue ):QueryStack {
-    let itemValue:StackValue = [ valueType, value ];
-    if( isObject(value) && value.type ){
-        itemValue = [value.type, value];
-    }
-    return push( stack, itemValue );
-}
+// export function pushV( stack:QueryStack, value:any, valueType = AnyValue ):QueryStack {
+//     let itemValue:StackValue = [ valueType, value ];
+//     if( isObject(value) && value.type ){
+//         itemValue = [value.type, value];
+//     }
+//     return push( stack, itemValue );
+// }
 
 export function pop(stack:QueryStack): [QueryStack,StackValue] {
     const length = stack.items.length;
     if( length === 0 ){
-        return undefined;
+        throw new Error('stack empty');
+        // return undefined;
     }
     const value = stack.items[ length - 1 ];
     stack = {
@@ -90,13 +182,15 @@ export function pop(stack:QueryStack): [QueryStack,StackValue] {
     return [stack, value];
 }
 
+
+
 /**
  * Pops values from the stack while the type matches
  * 
  * @param stack 
  * @param type 
  */
-export function popValuesOfTypeV( stack:QueryStack, type:Symbol ): [QueryStack, any[]] {
+export function popValuesOfTypeV( stack:QueryStack, type:StackOp ): [QueryStack, any[]] {
     const length = stack.items.length;
     if( length === 0 ){
         return [stack, []];
@@ -122,8 +216,8 @@ export function popValuesOfTypeV( stack:QueryStack, type:Symbol ): [QueryStack, 
     return [stack, results.map( r => r[1] )];
 }
 
-export function peek(stack:QueryStack):StackValue {
-    return stack.items[ stack.items.length -1 ];
+export function peek(stack:QueryStack, offset:number = 0):StackValue {
+    return stack.items[ stack.items.length -1 - offset ];
 }
 
 export function peekV(stack:QueryStack ):any {
@@ -156,7 +250,7 @@ export function replace( stack:QueryStack, index:number, newItem:StackValue ): Q
 /**
  * 
  */
-export function findWithIndex( stack:QueryStack, type:Symbol ): [ number, StackValue ] {
+export function findWithIndex( stack:QueryStack, type:StackOp ): [ number, StackValue ] {
     for( let ii = stack.items.length-1; ii >= 0; ii-- ){
         const item = stack.items[ii];
         if( type === item[0] ){
@@ -167,7 +261,7 @@ export function findWithIndex( stack:QueryStack, type:Symbol ): [ number, StackV
     return [-1, undefined];
 }
 
-export function findWithIndexV( stack:QueryStack, type:Symbol ): [number, any] {
+export function findWithIndexV( stack:QueryStack, type:StackOp ): [number, any] {
     let [index, [_, value]] = findWithIndex(stack, type);
     if (index === -1) {
         throw new Error(`type ${type} missing on stack`);
@@ -181,31 +275,85 @@ export function findWithIndexV( stack:QueryStack, type:Symbol ): [number, any] {
  * @param stack 
  * @param type 
  */
-export function findV( stack:QueryStack, type:Symbol ): any {
+export function findV( stack:QueryStack, type:StackOp ): any {
     const [_, value] = findWithIndex( stack, type );
     return value ? value[1] : undefined;
 }
 
-export function execute( stack:QueryStack, stmts:Array<Array<any>> ): QueryStack {
-    return stmts.reduce( (stack, stmt) => {
-        const [op, ...args] = stmt;
-        // check whether the op is valid
-        // Log.debug('[execute]', 'Looking for', op, 
-        // Array.from(stack.instructions.keys()).map(k => k.description );
 
-        const inst = getInstruction(stack, op );
-        // Log.debug('[execute]', op, stmt )
-
-        if( inst === undefined ){
-            Log.debug('[execute]', 'instruction not found', op );
-            return stack;
-        }
-        
-        const result = inst.execute( stack, op, ...args );
-
-        return result ?? stack;
-    }, stack );
+export interface ExecuteOptions {
+    pushResult?:boolean;
 }
+/**
+ * Executes the top instruction on the stack if it can be executed
+ * pushes the result back onto the stack
+ * 
+ * pops, executes, pushes 
+ * 
+ * @param stack 
+ */
+// export function execute( stack:QueryStack, options:ExecuteOptions = {pushResult:true} ): [QueryStack,StackValue] {
+//     let value:StackValue;
+
+//     value = peek(stack);
+//     const op = value[0];
+    
+//     const module = getInstruction(stack, op );
+
+//     if( module === undefined ){
+//         throw new Error(`instruction not found ${op}`);
+//     }
+
+//     [stack] = pop(stack);
+
+//     if( module.execute ){
+
+//         Log.debug('[execute]', op, value, module.execute );
+//         [stack,value] = module.execute(stack, ...value);
+        
+//         Log.debug('[execute]', op, value, '->', stack.items )
+
+//         if( value !== undefined && options.pushResult ){
+//             Log.debug('[execute]', 'pushResult', value)
+//             stack = push( stack, value );
+//         }
+//     }
+
+//     return [ stack, value];
+// }
+
+
+/**
+ * Pops and executes, returns the value
+ * 
+ * @param stack 
+ */
+// export function popExecute(stack:QueryStack): [QueryStack,StackValue] {
+//     return execute( stack, {pushResult:false});
+// }
+
+
+// export function executeAll( stack:QueryStack ): QueryStack {
+//     // stack.items.reverse().reduce( (stack, inst) => {
+        
+//     // }, stack );
+
+//     while( true ){
+//         let inst = peek(stack);
+//         if( inst === undefined ){
+//             return stack;
+//         }
+//         const module = getInstruction(stack, inst[0] );
+//         if( module && module.execute ){
+//             [stack] = pop(stack);
+//             stack = module.execute(stack, ...inst);
+//         }
+//     }
+// }
+
+// export function executeOld( stack:QueryStack, stmts:any ): QueryStack {
+//     return stack;
+// }
 
 
 export function addInstruction( stack:QueryStack, inst:InstDef|InstDef[] ){
@@ -230,7 +378,7 @@ export function addInstruction( stack:QueryStack, inst:InstDef|InstDef[] ){
     };
 }
 
-export function getInstruction( stack:QueryStack, op:string ): InstDef {
+export function getInstruction( stack:QueryStack, op:StackOp ): InstDef {
     return stack.instructions.get( op );
 }
 
@@ -253,20 +401,39 @@ export function build( stack:QueryStack, buildFn:BuildQueryFn ):any[] {
 
     let stmts = [];
 
-    const def = (uri:string, ...args) => stmts.push( [ '@d', uri, ...args] );
-    const component = (uri:string, props:object) => stmts.push( ['@c', uri, props]);
+    const def = (uri:string, args) => 
+        stmts = [...stmts, [VL, args], [VL, uri], [ '@d' ] ];
+    const component = (uri:string, props:object) => 
+        stmts = [...stmts, [VL,props], [VL,uri], ['@c']];
     const entity = () => stmts.push( [ '@e'] );
-    const value = (registry:ComponentRegistry) => stmts.push( [ 'VL', registry ] );
+    const value = (registry:ComponentRegistry) => stmts.push( [ getValueType(registry), registry ] );
     const inst = (...args) => stmts.push(args);
 
     buildFn( {inst, component, def, entity, value} );
 
+    
+
     return stmts;
+}
+
+function getValueType( value:any ): string {
+    if( isObject(value) && isString(value.type) ){
+        return value.type;
+    }
+    return 'VL';
 }
 
 export function buildAndExecute( stack:QueryStack, buildFn:BuildQueryFn ): QueryStack {
     const stmts = build( stack, buildFn );
-    stack = execute( stack, stmts );
+
+    // Log.debug('[buildFn]', stmts);
+
+    [stack] = pushValues( stack, stmts );
+
+    // stack = stmts.reduce( (stack,inst) => push(stack,inst), stack );
+
+    // [stack] = execute( stack );
+
     return stack;
 }
 

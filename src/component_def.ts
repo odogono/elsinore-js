@@ -3,13 +3,12 @@ import { isObject, isString, isFunction } from './util/is';
 import { toCamelCase, toCapitalized } from './util/to';
 
 
-// export const Type = Symbol.for('@d');
-export const Code = '@d'; 
-export const Token = Symbol.for('@d');
+
+export const Type = '@d'; 
 
 
 export interface ComponentDef {
-    [Token]: number;
+    [Type]: number;
     uri: string;
     name: string;
     properties: ComponentDefProperty[];
@@ -93,7 +92,7 @@ export function createFromObj({id, name, uri, properties, ...extra}): ComponentD
     }
 
     return {
-        [Token]: id,
+        [Type]: id,
         uri,
         name,
         properties,
@@ -111,7 +110,7 @@ export function hash( def:ComponentDef ): number {
 }
 
 export function getDefId( def:ComponentDef ): number {
-    return def[Token];
+    return def[Type];
 }
 
 
@@ -126,7 +125,7 @@ export interface ComponentDefObj {
  * Converts the ComponentDef into an object
  */
 export function toObject( def:ComponentDef, includeId:boolean = true ): ComponentDefObj {
-    let {[Token]:id, name, uri, properties } = def;
+    let {[Type]:id, name, uri, properties } = def;
 
     // if( !isFunction(properties.map) ){
     //     console.log('[toObject]', properties, typeof properties);

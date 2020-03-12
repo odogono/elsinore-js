@@ -2,7 +2,9 @@ import { createLog } from "../../util/log";
 import { findWithIndex, QueryStack, 
     peek as peekQueryStack,
     replace as replaceQueryStack, 
-    InstDefMeta} from "../stack";
+    InstDefMeta,
+    pop,
+    StackValue} from "../stack";
 import { ComponentRegistry, register, Type as ComponentRegistryT } from "../../component_registry";
 import { isObject, isString } from "../../util/is";
 import { stringify } from "../../util/json";
@@ -13,12 +15,21 @@ export const meta:InstDefMeta = {
     op: '@d'
 };
 
-export function compile() {
-}
+export function execute( stack:QueryStack, op:string ) {
+    let properties;
+    let uri;
+    let value:StackValue;
 
-export function execute( stack:QueryStack, op:string, uri, properties ) {
+    // pop uri
+    [stack, value] = pop(stack);
+    uri = value[1];
 
-    // Log.debug('[execute]', JSON.stringify( stack, null, '\t' ) );
+    // pop properties
+    [stack, value] = pop(stack);
+    properties = value[1];
+    
+
+    // Log.debug('[execute]', uri, properties ); //JSON.stringify( stack, null, '\t' ) );
 
     // find the ComponentRegistry in the stack
     let [index, [type,registry]] = findWithIndex( stack, ComponentRegistryT );
@@ -48,5 +59,5 @@ export function execute( stack:QueryStack, op:string, uri, properties ) {
     // Log.debug('[execute]', JSON.stringify( stack, null, '\t' ) );
     // Log.debug('[execute]', uri, properties, peekQueryStack(stack) );
 
-    return stack;
+    return [stack];
 }

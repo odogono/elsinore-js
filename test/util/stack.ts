@@ -6,6 +6,7 @@ import * as InstComC from '../../src/query/insts/component_create';
 import * as InstVal from '../../src/query/insts/value';
 import * as InstEq from '../../src/query/insts/equals';
 import * as InstAd from '../../src/query/insts/add';
+import * as InstAttr from '../../src/query/insts/attribute';
 import * as InstSelect from '../../src/query/insts/select';
 import {VL} from '../../src/query/insts/value';
 import {
@@ -16,17 +17,18 @@ import {
     getByDefId} from '../../src/component_registry';
 
 import { create as createQueryStack, 
-    execute as executeQueryStack,
-    pushV as pushQueryStack,
     peekV as peekQueryStack,
     buildAndExecute as buildQuery,
     findV,
+    push,
     unshiftV,
     addInstruction,
     InstDef,
     BuildQueryFn,
+    pushValues,
     BuildQueryParams,
-    QueryStack } from '../../src/query/stack';
+    QueryStack, 
+    getInstruction} from '../../src/query/stack';
 import { Entity, getComponent, getComponents, createBitfield } from '../../src/entity';
 import { EntitySet, Type as EntitySetT, 
     matchEntities as matchEntitySetEntities, 
@@ -35,6 +37,7 @@ import { EntitySet, Type as EntitySetT,
 import { getDefId, toObject as defToObject, ComponentDef } from '../../src/component_def';
 import{ getComponentDefId, toObject as componentToObject } from '../../src/component';
 import { loadFixture } from './import';
+import { isString, isNumeric } from '../../src/util/is';
 
 
 
@@ -43,27 +46,34 @@ export interface PrepareFixtureOptions {
 }
 
 export async function prepareFixture( name:string, options:PrepareFixtureOptions = {} ): Promise<[ QueryStack, ComponentRegistry, EntitySet ]> {
-    const data = await loadFixture( name );
+    
 
     let registry = createComponentRegistry();
     let stack = buildQueryStack();
     let es = options.addToEntitySet ? createEntitySet({}) : undefined;
 
     // add the registry to the stack
-    stack = pushQueryStack( stack, registry );
+    [stack] = push( stack, registry, ComponentRegistryT );
 
     if( options.addToEntitySet ){
-        stack = pushQueryStack( stack, es, EntitySetT );
+        [stack] = push( stack, es, EntitySetT );
     }
 
+    let data = await loadFixture( name );
+
+    data = parseData( stack, data );
+
+    // console.log('[prepareFixture]', data );
+
     // execute the fixture query 
-    stack = executeQueryStack( stack, data );
+
+    [stack] = pushValues( stack, data );
 
     if( options.addToEntitySet ){
         // add all entities to es
-        stack = executeQueryStack( stack, [ ['AD', '@es'] ]);
+        [stack, [,es]] = push( stack, ['@es'] );
 
-        es = findV( stack, EntitySetT );
+        // es = findV( stack, EntitySetT );
     }
 
     registry = findV( stack, ComponentRegistryT );
@@ -75,7 +85,7 @@ export async function prepareFixture( name:string, options:PrepareFixtureOptions
 export function buildQueryStack(){
     const insts:InstDef[] = [
         InstCDef,InstComC,InstVal,InstEq, InstAd,
-        InstSelect
+        InstSelect, InstAttr
     ];
     let stack = createQueryStack();
     stack = addInstruction( stack, insts );
@@ -89,7 +99,7 @@ export function buildComponentRegistry( buildFn?:BuildQueryFn ): [QueryStack, Co
     let registry = createComponentRegistry();
     let stack = buildQueryStack();
 
-    stack = pushQueryStack( stack, registry );
+    [stack] = push( stack, registry, ComponentRegistryT );
 
     if( buildFn ){
         stack = buildQuery( stack, buildFn );
@@ -107,14 +117,11 @@ export function buildAndExecuteQuery( stack:QueryStack, buildFn:BuildQueryFn ): 
     //     registry = createComponentRegistry();
     //     stack = unshiftV( stack, registry, ComponentRegistryT );
     // }
+    let entity:Entity;
 
     stack = buildQuery( stack, buildFn );
 
-    stack = executeQueryStack( stack, [
-        [ 'AD', '@e' ]
-    ]);
-
-    const entity:Entity = peekQueryStack( stack );
+    [stack, [,entity]] = push( stack, [ 'AD', '@e' ] );
 
     return [stack,entity];
 }
@@ -126,14 +133,14 @@ export function buildEntity( stack:QueryStack, buildFn:BuildQueryFn, entityId:nu
     //     registry = createComponentRegistry();
     //     stack = unshiftV( stack, registry, ComponentRegistryT );
     // }
+    let entity:Entity;
 
     stack = buildQuery( stack, buildFn );
 
-    stack = executeQueryStack( stack, [
-        [ 'AD', '@e', entityId ]
+    [stack, [,entity]] = pushValues( stack, [
+        ['VL', entityId],
+        ['@e']
     ]);
-
-    const entity:Entity = peekQueryStack( stack );
 
     return [stack,entity];
 }
@@ -233,4 +240,25 @@ export function serialiseEntitySet( es:EntitySet, registry:ComponentRegistry ): 
         res.push( ['@e', eid] );
         return res;
     },[]);
+}
+
+
+function parseData( stack:QueryStack, data:string[] ): any[]{
+
+    return data.map( inst => {
+        if( isString(inst) ){
+            if( getInstruction(stack, inst) !== undefined ){
+                return [ inst ];
+            }
+        }
+        else if( Array.isArray(inst) ){
+            if( inst.length > 0 ){
+                if( getInstruction(stack, inst) !== undefined ){
+                    return inst;
+                }
+            }
+        }
+
+        return [ VL, inst ];
+    })
 }

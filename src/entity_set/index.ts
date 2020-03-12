@@ -14,7 +14,7 @@ import { ComponentRegistry } from "../component_registry";
 import { Entity, 
     isEntity, 
     getComponents as getEntityComponents, 
-    Token as EntityT, 
+    Type as EntityT, 
     create as createEntityInstance,
     createBitfield, 
     addComponentUnsafe,
@@ -27,17 +27,18 @@ import { ChangeSet,
 } from "./change_set";
 import { generateId } from './simple_id';
 import { createLog } from "../util/log";
-import { isInteger } from "../util/is";
+import { isInteger, isObject } from "../util/is";
 import { MatchOptions } from '../constants';
 
-export const Code = '@es';
-export const Type = Symbol.for(Code);
+export const Type = '@es';
 
 
 
 const Log = createLog('EntitySet');
 
 export interface EntitySet {
+    type: typeof Type;
+    
     uuid: string;
     
     // a map of {entity_id, def_id} to Component.t
@@ -64,8 +65,13 @@ export function create({registry}:CreateEntitySetParams):EntitySet {
     const comChanges = createChangeSet<ComponentId>();
 
     return {
+        type: Type,
         uuid, components, entities, entChanges, comChanges
     }
+}
+
+export function isEntitySet( value:any ):boolean {
+    return isObject(value) && value.type === Type;
 }
 
 
@@ -203,7 +209,7 @@ export function matchEntities( es:EntitySet, mbf:BitField, options:MatchOptions 
     let matches = [];
     const limit = options.limit !== undefined ? options.limit : Number.MAX_SAFE_INTEGER;
 
-    const isAll = mbf.toString() === 'all';
+    const isAll = BitField.isAllSet(mbf);// mbf.toString() === 'all';
     for( let [eid, ebf] of es.entities ){
         // console.log('[matchEntities]', 'limit', eid, mbf.toString(), ebf.toString(), BitField.or( mbf, ebf ));
         if( isAll || BitField.or( mbf, ebf ) ){
@@ -415,6 +421,12 @@ function getOrAddEntityBitfield( es:EntitySet, eid:number ): [EntitySet, BitFiel
     return [es, ebf];
 }
 
+/**
+ * Assigns entity ids to an array of components
+ * 
+ * @param es 
+ * @param components 
+ */
 function assignEntityIds( es:EntitySet, components:Component[] ): [EntitySet, Component[]] {
     let set;
     let eid;

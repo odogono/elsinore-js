@@ -4,13 +4,15 @@ import {
     peek as peekQueryStack,
     push as pushQueryStack,
     replace as replaceQueryStack,
-    InstDefMeta
+    InstDefMeta,
+    StackValue,
+    pop
 } from "../stack";
 import { 
     createComponent, 
     Type as ComponentRegistryT 
 } from "../../component_registry";
-import { Token as ComponentT } from '../../component';
+import { Type as ComponentT } from '../../component';
 import { isObject } from "../../util/is";
 import { stringify } from "../../util/json";
 
@@ -20,10 +22,21 @@ export const meta:InstDefMeta = {
     op: '@c'
 };
 
-export function compile() {
-}
 
-export function execute(stack: QueryStack, op:string, uri, attributes ) {
+export function execute(stack: QueryStack, op:string ) {
+    let value:StackValue;
+
+    let uri:string;
+    let attributes:object;
+
+    // pop uri
+    [stack, value] = pop(stack);
+    uri = value[1];
+
+    // pop properties
+    [stack, value] = pop(stack);
+    attributes = value[1];
+
     // find the ComponentRegistry in the stack
     let [index, [type, registry]] = findWithIndex(stack, ComponentRegistryT);
 
@@ -35,11 +48,12 @@ export function execute(stack: QueryStack, op:string, uri, attributes ) {
     
     // Log.debug('[execute]', 'created', attributes, component );
 
-    stack = pushQueryStack( stack, [ ComponentT, component] );
+    value = [ ComponentT, component];
+    // stack = pushQueryStack( stack, [ ComponentT, component] );
     // stack = replaceQueryStack(stack, index, [type, registry]);
 
     // Log.debug('[execute]', JSON.stringify( stack, null, '\t' ) );
     // Log.debug('[execute]', uri, properties, peekQueryStack(stack) );
 
-    return stack;
+    return [stack, value];
 }

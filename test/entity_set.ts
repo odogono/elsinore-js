@@ -33,7 +33,7 @@ import { buildQueryStack,
     buildEntity, 
     assertHasComponents } from './util/stack';
 import { getChanges, ChangeSetOp } from '../src/entity_set/change_set';
-import { Token as ComponentT, fromComponentId, getComponentDefId, Component } from '../src/component';
+import { Type as ComponentT, fromComponentId, getComponentDefId, Component } from '../src/component';
 
 const Log = createLog('TestEntitySet');
 

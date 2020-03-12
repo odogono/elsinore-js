@@ -1,24 +1,58 @@
-[ "@d", "/component/title", [ "title" ] ]
-[ "@d", "/component/completed", {"name":"completed", "type":"boolean", "default":false} ]
-[ "@d", "/component/priority", [ {"name":"priority", "type":"integer, "default": 0} ] ]
+[ "title" ]
+"/component/title"
+"@d"
+{"name":"isComplete", "type":"boolean", "default":false}
+"/component/completed"
+"@d"
+{"name":"priority", "type":"integer, "default": 0}
+"/component/priority"
+"@d"
 
 
-[ "@c", "/component/title", { "text":"get out of bed"}  ]
-[ "@c", "/component/completed", {"completed":true} ]
-[ "@c", "/component/priority", {"priority":10} ]
-[ "@e", 100 ]
+{ "text":"get out of bed"} 
+"/component/title"
+"@c"
 
-[ "@c", "/component/title", { "text":"phone up friend"}  ]
-[ "@c", "/component/completed", {"completed":true} ]
-[ "@e", 101 ]
+{"isComplete":true}
+"/component/completed"
+"@c"
 
-[ "@c", "/component/title", { "text":"turn on news"}  ]
-[ "@c", "/component/completed", {"completed":false} ]
-[ "@e", 102 ]
+{"priority":10}
+"/component/priority"
+"@c"
 
-[ "@c", "/component/title", { "text":"drink some tea"}  ]
-[ "@e", 103 ]
+100
+"@e"
 
-[ "@c", "/component/title", { "text":"do some shopping"}  ]
-[ "@c", "/component/priority", {"priority":-5} ]
-[ "@e", 104 ]
+{ "text":"phone up friend"} 
+"/component/title"
+"@c"
+{"isComplete":true}
+"/component/completed"
+"@c"
+101
+"@e"
+
+{ "text":"turn on news"} 
+"/component/title"
+"@c"
+{"isComplete":false}
+"/component/completed"
+"@c"
+102
+"@e"
+
+{ "text":"drink some tea"}
+"/component/title"
+"@c"
+103
+"@e"
+
+{ "text":"do some shopping"} 
+"/component/title"
+"@c"
+{"priority":-5}
+"/component/priority"
+"@c"
+104
+"@e"

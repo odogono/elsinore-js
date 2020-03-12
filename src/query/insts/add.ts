@@ -1,65 +1,181 @@
 import { createLog } from "../../util/log";
 import { QueryStack, InstDefMeta, 
     popValuesOfTypeV,
-    pushV as pushQueryStack,
+    push,
     replace as replaceQueryStack,
     findV,
     StackValue,
-    findWithIndex, } from "../stack";
-import { Type as EntitySetT, add as addEntity, EntitySet } from '../../entity_set';
+    findWithIndex,
+    peek,
+    pop,
+    InstResult, } from "../stack";
+import { Type as EntitySetT, 
+    isEntitySet,
+    add as addEntity, 
+    EntitySet } from '../../entity_set';
 import { VL, valueOf } from "./value";
-import { Token as EntityT, 
+import { Type as EntityT, 
     Entity,
-    getEntityId, addComponent, create as createEntity } from '../../entity';
-import { Token as ComponentT, getComponentEntityId, getComponentDefId } from '../../component';
+    getEntityId, addComponent, create as createEntity, isEntity } from '../../entity';
+import { Type as ComponentT, getComponentEntityId, getComponentDefId, Component } from '../../component';
 import { isInteger } from "../../util/is";
 import { BitField } from "odgn-bitfield";
 
 const Log = createLog('Inst][Add');
 
-export const ADD = Symbol.for('AD');
+export const ADD = 'AD';
 
 export const meta:InstDefMeta = {
-    op: [ 'AD', '@e' ]
+    op: [ 'AD', '@e', '@es', '@el' ]
 };
 
 export function compile() {
 }
 
-export function execute( stack:QueryStack, op:string, ...args:any[] ):QueryStack {
+export function execute( stack:QueryStack, op:string, ...args:any[] ):InstResult {
     if( op === '@e' ){
-        const eid =  isInteger(args[0]) ? args[0] : 0;
-        return executeAddToEntity( stack, eid );
-    }
-    else if( args[0] === '@es' ){
-        let es:EntitySet;
-        let idx = -1;
-        let value:StackValue; 
-        // find the last es
-        [idx, value] = findWithIndex( stack, EntitySetT );
-        if( idx === -1  ){
-            throw new Error('EntitySet not found on stack');
+        if( isEntity(args[0]) ){
+            // nothing to do with an entity VaLue
+            // Log.debug('[execute]', 'not adding', '@e', args );
+            return [stack, [op,args[0]] ];
         }
-        es = value[1];
-        let ents:Entity[];
-        [stack,ents] = popValuesOfTypeV( stack, EntityT );
-        es = addEntity( es, ents );
-        stack = replaceQueryStack( stack, idx, [EntitySetT, es] );
+        return executeAddEntity( stack, args[0] );
     }
-    return stack;
+    else if( op === '@es' ){
+        if( isEntitySet(args[0]) ){
+            return [stack, [op,args[0]]];
+        }
+        return executeAddEntitySet(stack);
+    }
+    else if( op === '@el' ){
+        return [stack, [op,args[0]]];
+    }
+
+    return [stack, undefined];
 }
 
+function executeAddEntity( stack:QueryStack, eid:number ): InstResult {
+    let value:StackValue;
+    let entity:Entity;
 
-function executeAddToEntity( stack:QueryStack, eid:number = 0 ): QueryStack {
+    // if( isEntity(eid) ){
+    //     return [stack,undefined];
+    // }
+
+    // Log.debug('[addEntity]', eid );
+
+    if( eid === undefined ){
+        value = peek( stack );
     
-    // collect all the components from the top of the stack
-    // it stops popping when it comes to the first non ComponentT
-    // value
-    let [nstack, components] = popValuesOfTypeV( stack, ComponentT );
+        if( value[0] === VL && isInteger(value[1]) ){
+            [stack, [,eid]] = pop(stack);
+        }
+    }
 
-    // Log.debug('[executeAddToEntity]', 'components', components );
+    // look for any components
 
-    const [_,entities] = components.reduce( ([entity,entities], com) => {
+    let coms:Component[];
+
+    [stack, coms] = popValuesOfTypeV( stack, ComponentT );
+
+    if( coms.length > 0 ){
+        let ents:Entity[] = componentsToEntities( eid, coms );
+
+        // push each of the entities onto the stack
+        [stack, value] = ents.reduce( ( [stack,value] ,e) => {
+            return push( stack, e, EntityT );
+        }, [stack,value]);
+
+        // return an undefined value so nothing further gets pushed on
+        return [stack,value, false];
+
+    } else {
+        entity = createEntity(eid);
+
+        return [stack, [EntityT,entity] ];
+    }
+
+    // const eid =  isInteger(args[0]) ? args[0] : 0;
+    // return executeAddToEntity( stack, eid );
+
+    
+}
+
+function executeAddEntitySet( stack:QueryStack ): InstResult {
+    // let value:StackValue;
+
+    
+
+    let es:EntitySet;
+    let idx = -1;
+    let value:StackValue; 
+    // // find the last es
+    [idx, value] = findWithIndex( stack, EntitySetT );
+    if( idx === -1  ){
+        throw new Error('EntitySet not found on stack');
+    }
+    es = value[1];
+    let ents:Entity[];
+    [stack,ents] = popValuesOfTypeV( stack, EntityT );
+
+    // Log.debug('[executeAddEntitySet]', 'adding', ents );
+    es = addEntity( es, ents );
+    stack = replaceQueryStack( stack, idx, [EntitySetT, es] );
+
+    // Log.debug('[executeAddEntitySet]', stack.items );
+
+    return [stack, [EntitySetT,es], false];
+}
+
+// function executeAddToEntity( stack:QueryStack, eid:number = 0 ): QueryStack {
+    
+//     // collect all the components from the top of the stack
+//     // it stops popping when it comes to the first non ComponentT
+//     // value
+//     let [nstack, components] = popValuesOfTypeV( stack, ComponentT );
+
+//     // Log.debug('[executeAddToEntity]', 'components', components );
+
+//     const [_,entities] = components.reduce( ([entity,entities], com) => {
+//         const did = getComponentDefId(com);
+//         let entityId = eid || getComponentEntityId( com );
+
+//         if( entity === null || entityId !== getEntityId(entity) ){
+//             // Log.debug('[executeAddToEntity]', 'new entity', getEntityId(entity), entity);
+//             entity = createEntity(entityId);
+//             entities.push( entity );
+//         }
+
+//         // const debug = eid === 100 && did === 1;
+
+//         // if( debug ) Log.debug('[executeAddToEntity]', 'adding', eid, did, entity.bitField.toValues() );
+
+//         entity = addComponent(entity, com);
+
+//         // if( debug ) console.log( mbf.toValues() );
+//         // if( debug ) console.log( entity );
+//         // if( debug ) Log.debug('[executeAddToEntity]', 'added', eid, did, entity.bitField.toValues() );
+
+//         entities.splice( entities.length-1, 1, entity );
+        
+//         // Log.debug('[executeAddToEntity]', 'added', eid, getComponentDefId(com), entity.bitField.toValues(), com );
+
+//         return [entity,entities];
+//     }, [null, []]);
+
+//     // push each entity to the stack
+//     return entities.reduce( (stack,entity) => {
+//         // Log.debug('[executeAddToEntity]', 'adding entity', entity )
+//         return push( stack, entity, EntityT );
+//     }, nstack );
+//     // Log.debug('[executeAddToEntity]', nstack);
+    
+//     // return nstack;
+// }
+
+
+function componentsToEntities( eid:number, coms:Component[] ):Entity[] {
+    const [_,ents] = coms.reduce( ([entity,entities], com) => {
         const did = getComponentDefId(com);
         let entityId = eid || getComponentEntityId( com );
 
@@ -86,12 +202,5 @@ function executeAddToEntity( stack:QueryStack, eid:number = 0 ): QueryStack {
         return [entity,entities];
     }, [null, []]);
 
-    // push each entity to the stack
-    return entities.reduce( (stack,entity) => {
-        // Log.debug('[executeAddToEntity]', 'adding entity', entity )
-        return pushQueryStack( stack, entity, EntityT );
-    }, nstack );
-    // Log.debug('[executeAddToEntity]', nstack);
-    
-    // return nstack;
+    return ents;
 }

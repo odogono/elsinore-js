@@ -2,11 +2,9 @@ import { BitField } from 'odgn-bitfield';
 import { Component, getComponentDefId, setEntityId as setComponentEntityId } from "./component";
 import { isObject } from './util/is';
 
-export const Code = '@e';
-export const Token = Symbol.for(Code);
-export const Type = Symbol.for(Code);
+export const Type = '@e';
 
-export const EntityListType = Symbol.for('@el');
+export const EntityListType = '@el';
 
 export interface EntityList {
     entityIds: number[];
@@ -16,7 +14,7 @@ export interface EntityList {
 }
 
 export interface Entity {
-    [Token]: number;
+    [Type]: number;
 
     // maps component defId to Component
     components: Map<number, Component>;
@@ -28,7 +26,7 @@ export interface Entity {
 
 export function create( id:number = 0 ):Entity {
     return {
-        [Token]: id,
+        [Type]: id,
         components: new Map<number,Component>(),
         bitField: new BitField()
     }
@@ -65,7 +63,7 @@ export function addComponent( entity:Entity, com:Component ):Entity {
     bitField.set( defId );
 
     return {
-        [Token]: entityId,
+        [Type]: entityId,
         components,
         bitField
     };
@@ -87,7 +85,7 @@ export function addComponentUnsafe( entity:Entity, defId: number, component:Comp
  * @param entity 
  */
 export function getEntityId( entity:Entity ): number {
-    return entity ? entity[Token] : 0;
+    return entity ? entity[Type] : 0;
 }
 
 export function setEntityId( entity:Entity, id:number ): Entity {
@@ -103,7 +101,7 @@ export function getComponents(entity:Entity): Component[] {
 }
 
 export function isEntity( item:any ): boolean {
-    return isObject(item) && Token in item;
+    return isObject(item) && Type in item;
 }
 
 export function size( entity:Entity ): number {

@@ -1,12 +1,11 @@
-import { Token as EntityToken } from './entity';
-import { Token as DefToken } from './component_def';
+import { Type as EntityT } from './entity';
+import { Type as DefT } from './component_def';
 import { isObject, isString } from './util/is';
 
 
 export type ComponentProperties = Map<string, any>;
 
-export const Code = '@c';
-export const Token = Symbol.for(Code);
+export const Type = '@c';
 
 // made up of entityId,defId
 export type ComponentId = string; //[number, number];
@@ -17,8 +16,8 @@ export interface ComponentList {
 
 export interface Component {
     [key: string]: any;
-    [DefToken]: number;
-    [EntityToken]: number;
+    [DefT]: number;
+    [EntityT]: number;
     // props: Map<string, any>;
 }
 
@@ -31,13 +30,13 @@ export interface ComponentObj {
 
 export function create(params:object):Component {
 
-    let result:any = { [DefToken]: 0, [EntityToken]:0 };
+    let result:any = { [DefT]: 0, [EntityT]:0 };
     for( let key of Object.keys(params) ){
         if( key === '@d' ){
-            result[DefToken] = params['@d'];
+            result[DefT] = params['@d'];
         }
         else if( key === '@e' ){
-            result[EntityToken] = params['@e'];
+            result[EntityT] = params['@e'];
         }
         else {
             result[key] = params[key];
@@ -45,8 +44,8 @@ export function create(params:object):Component {
     }
 
     // const result = {
-    //     [DefToken]: 0,
-    //     [EntityToken]: 0,
+    //     [DefT]: 0,
+    //     [EntityT]: 0,
     //     ...params,
     // };
 
@@ -56,8 +55,8 @@ export function create(params:object):Component {
 }
 
 export function getComponentId( component:Component ): ComponentId {
-    return JSON.stringify( [component[EntityToken], component[DefToken]] );
-    // return [component[EntityToken], component[DefToken]].join(',');
+    return JSON.stringify( [component[EntityT], component[DefT]] );
+    // return [component[EntityT], component[DefT]].join(',');
 }
 export const toComponentId = ( eid:number, did:number ) => JSON.stringify([eid,did]);
 
@@ -69,24 +68,24 @@ export function fromComponentId( id:ComponentId ): [number,number] {
 }
 
 export function getComponentDefId( component:Component ): number {
-    return component[DefToken];
+    return component[DefT];
 }
 
 export function getComponentEntityId( component:Component ): number {
-    return component[EntityToken];
+    return component[EntityT];
 }
 
 export function setEntityId( component:Component, entityId:number ): Component {
     return {
         ...component,
-        [EntityToken]: entityId
+        [EntityT]: entityId
     };
 }
 
 export function toObject( component:Component ): ComponentObj {
     let result = {
-        '@d': component[DefToken],
-        '@e': component[EntityToken]
+        '@d': component[DefT],
+        '@e': component[EntityT]
     };
     for( let key of Object.keys(component) ){
         result[key] = component[key];
@@ -95,7 +94,7 @@ export function toObject( component:Component ): ComponentObj {
 }
 
 export function isComponent( item:any ): boolean {
-    return isObject(item) && DefToken in item && EntityToken in item;
+    return isObject(item) && DefT in item && EntityT in item;
 }
 
 // export class Component {
