@@ -111,7 +111,7 @@ function selectEntitiesWithAll( stack:QueryStack, dids:any[] ): InstResult {
     // Log.debug('[selectEntitiesWithAll]', dids, bf );
 
     // add to stack
-    [stack,value] = push( stack, ents, EntityListType );
+    [stack,value] = push( stack, [EntityListType,ents] );
     
     return [stack, value, false];
 }
@@ -140,7 +140,7 @@ function executeSelectDefs( stack:QueryStack ):InstResult {
     const defs = getComponentDefs(registry);
 
     return [defs.reverse().reduce( (st, def) => {
-        [stack] = push( st, def, ComponentDefT );
+        [stack] = push( st, [ComponentDefT,def] );
         return stack;
     }, stack )];
 }

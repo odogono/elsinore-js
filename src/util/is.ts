@@ -3,14 +3,16 @@ const getClass:Function = {}.toString;
 /**
  * Checks if the value is an object
  *
- * taken from https://github.com/lodash/lodash/blob/master/isObject.js
+ * 
  *
  * @param {*} value The value to check.
  * @returns {boolean} Returns `true` if `value` is an object, else `false`.
  */
 export function isObject(value:any): boolean {
-    const type = typeof value;
-    return value != null && (type === 'object' || type === 'function')
+    // taken from https://github.com/lodash/lodash/blob/master/isObject.js
+    // const type = typeof value;
+    // return value != null && (type === 'object' || type === 'function')
+    return Object.prototype.toString.call(value) === '[object Object]';
 }
 
 /**

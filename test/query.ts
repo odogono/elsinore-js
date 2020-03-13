@@ -17,7 +17,8 @@ import { create as createQueryStack,
     QueryStack, 
     BuildQueryParams,
     StackValue,
-    popEntity} from '../src/query/stack';
+    popEntity,
+    push} from '../src/query/stack';
     import { EntitySet, 
         create as createEntitySet,
         size as entitySetSize,
@@ -69,23 +70,72 @@ describe('Query', () => {
         assert.ok( value[1], 'the values are equal' );
     });
 
-    it('defines an anonymous function', () => {
+    it('operates on objects', () => {
+        let value:StackValue;
+        let stack = buildQueryStack();
+
+        [stack,value] = pushValues( stack, [
+            {},
+            1,
+            'rank',
+            'PT'
+        ]);
+
+        assert.deepEqual( value[1], {rank: 1} );
+
+        // [stack,value] = pushValues( stack, [
+        //     'rank',
+        //     'GT'
+        // ]);
+
+    });
+
+    it('defines a list and calls it', () => {
         const insts:any[] = [
-            // define an anonymous function
-            'FN', 9, '+', ';',
+            '[', 9, '+', ']',
             10,
             'SW', // swap the last two values
-            // ['VL', [ 9, '+'] ], // could also...
-            'CL', // call the function
+            '@sl', // push list
         ];
-
+        
         let value:StackValue;
         let stack = buildQueryStack();
         [stack, value] = pushValues( stack, insts );
         // Log.debug('stack', stack.items )
         // Log.debug('value', value )
         assert.equal( value[1], 19 );
+        
+        [stack, value] = pushValues( stack, [
+            'cls',
+            10,
+            ['@sl', [[ VL, 11], '+'] ]
+        ] );
+        
+        assert.equal( value[1], 21 );
+
     });
+
+    it('defines a word', () => {
+        let value:StackValue;
+        let stack = buildQueryStack();
+
+        // defines a word with a list value
+        [stack, value] = pushValues( stack, [
+            '[', 8, '*', ']',
+            'mult8',
+            'def',
+        ] );
+
+        
+        [stack, value] = pushValues( stack, [
+            8,
+            'mult8'
+        ]);
+        
+        // Log.debug('stack', stack.items );
+
+        assert.equal( value[1], 64 );
+    })
 
 
     it('should register a component def', async () => {
@@ -134,23 +184,23 @@ describe('Query', () => {
             let value:StackValue;
 
             // add the registry to the stack
-            [stack] = pushQueryStack( stack, registry, ComponentRegistryT );
+            [stack] = pushQueryStack( stack, [ComponentRegistryT,registry] );
 
             // register the username component
             [stack] = pushValues( stack, [
 
-                [ 'VL', [ 'username' ] ],
-                [ 'VL', '/component/username' ],
-                [ '@d'],
+                'username',
+                '/component/username',
+                '@d',
                 
                 // create a component and add it to the stack
-                [ 'VL', { '@e':23, 'username': 'alex' } ],
-                [ 'VL', '/component/username' ],
-                [ '@c' ],
+                { '@e':23, 'username': 'alex' },
+                '/component/username',
+                '@c',
 
-                [ 'VL', { 'username': 'peter' } ],
-                [ 'VL', '/component/username' ],
-                [ '@c' ],
+                { 'username': 'peter' },
+                '/component/username',
+                '@c',
             ]);
 
             // get the updated component registry
@@ -244,9 +294,9 @@ describe('Query', () => {
             // execute a select. the result will be a new entitylist
             // on the stack
             [stack,value] = pushValues(stack, [ 
-                [VL, '/component/priority'], 
-                [Select.AllEntities]] 
-                );
+                '/component/priority', 
+                Select.AllEntities
+            ]);
                 
             // Log.debug('loaded', stack.items );
             
@@ -270,15 +320,21 @@ describe('Query', () => {
             let [stack,registry] = await prepareFixture('todo.ldjson');
 
             [stack] = pushValues( stack, [
+
+                '[', 
                 true,
                 [ 'AT', '/component/completed#isComplete' ],
-                '==', 
+                '==',
+                ']',
+
                 // FN true '/component/completed#isComplete' AT == END
                 // [ 'FN', [ true, '/component/completed#isComplete', AT, == ] ]
                 // next - test @c '/component/completed#isComplete', AT
                 // next - test fn declaration - FN starts a new stack, prevents execution when pushing
-                [ Select.AllEntities ],
-            ])
+                Select.AllEntities,
+            ]);
+
+            // Log.debug('stack', stack.items)
         });//*/
     })
     //*/        

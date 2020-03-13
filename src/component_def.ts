@@ -70,6 +70,7 @@ export function create( ...args:any[] ): ComponentDef {
         params = {...third, ...params };
     }
     
+    // console.log('[create]', params );
     return createFromObj(params);
 }
 

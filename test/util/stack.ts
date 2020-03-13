@@ -23,13 +23,14 @@ import { create as createQueryStack,
     findV,
     push,
     unshiftV,
-    addInstruction,
+    addInstructionDef,
     InstDef,
     BuildQueryFn,
     pushValues,
     BuildQueryParams,
     QueryStack, 
-    getInstruction} from '../../src/query/stack';
+    getInstruction,
+    InstModuleDef} from '../../src/query/stack';
 import { Entity, getComponent, getComponents, createBitfield } from '../../src/entity';
 import { EntitySet, Type as EntitySetT, 
     matchEntities as matchEntitySetEntities, 
@@ -54,10 +55,10 @@ export async function prepareFixture( name:string, options:PrepareFixtureOptions
     let es = options.addToEntitySet ? createEntitySet({}) : undefined;
 
     // add the registry to the stack
-    [stack] = push( stack, registry, ComponentRegistryT );
+    [stack] = push( stack, [ComponentRegistryT,registry] );
 
     if( options.addToEntitySet ){
-        [stack] = push( stack, es, EntitySetT );
+        [stack] = push( stack, [EntitySetT,es] );
     }
 
     let data = await loadFixture( name );
@@ -84,14 +85,12 @@ export async function prepareFixture( name:string, options:PrepareFixtureOptions
 
 
 export function buildQueryStack(){
-    const insts:InstDef[] = [
+    const insts:InstModuleDef[] = [
         InstStack, InstCDef,InstComC,InstVal,InstEq, InstAd,
         InstSelect, InstAttr
     ];
     let stack = createQueryStack();
-    stack = addInstruction( stack, insts );
-    // stack = addInstruction( stack, InstComC );
-    // stack = addInstruction( stack, InstVal );
+    stack = addInstructionDef( stack, insts );
     return stack
 }
 
@@ -100,7 +99,7 @@ export function buildComponentRegistry( buildFn?:BuildQueryFn ): [QueryStack, Co
     let registry = createComponentRegistry();
     let stack = buildQueryStack();
 
-    [stack] = push( stack, registry, ComponentRegistryT );
+    [stack] = push( stack, [ComponentRegistryT,registry] );
 
     if( buildFn ){
         stack = buildQuery( stack, buildFn );

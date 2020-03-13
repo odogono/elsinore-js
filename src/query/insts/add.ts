@@ -83,7 +83,7 @@ function executeAddEntity( stack:QueryStack, eid:number ): InstResult {
 
         // push each of the entities onto the stack
         [stack, value] = ents.reduce( ( [stack,value] ,e) => {
-            return push( stack, e, EntityT );
+            return push( stack, [EntityT,e] );
         }, [stack,value]);
 
         // return an undefined value so nothing further gets pushed on

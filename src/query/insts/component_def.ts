@@ -19,6 +19,9 @@ export function execute( stack:QueryStack, op:string ) {
     let properties;
     let uri;
     let value:StackValue;
+    let index:number;
+    let registry:ComponentRegistry;
+    let type:string;
 
     // pop uri
     [stack, value] = pop(stack);
@@ -32,13 +35,18 @@ export function execute( stack:QueryStack, op:string ) {
     // Log.debug('[execute]', uri, properties ); //JSON.stringify( stack, null, '\t' ) );
 
     // find the ComponentRegistry in the stack
-    let [index, [type,registry]] = findWithIndex( stack, ComponentRegistryT );
+    [index, value] = findWithIndex( stack, ComponentRegistryT );
 
     if( index === -1 ){
         throw new Error('ComponentRegistry missing on stack');
     }
 
-    if( isObject(properties) ){
+    [type,registry] = value;
+
+    if( Array.isArray(properties) ){
+        properties = {uri, properties};
+    }
+    else if( isObject(properties) ){
         if( properties.properties ){
             properties.uri = uri;
         } else {

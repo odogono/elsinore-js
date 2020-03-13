@@ -14,11 +14,14 @@ export interface InstDefMeta {
     op: string | string[];
 }
 
-export interface InstDef {
+
+export interface InstModuleDef {
     meta: InstDefMeta;
     compile?: Function;
     execute?: Function;
 }
+
+export type InstDef = InstModuleDef | StackValue;
 
 export type InstResult = [
     QueryStack, StackValue?, boolean?
@@ -30,10 +33,15 @@ export type StackValue = [ StackOp ] | [ StackOp, any ] ;
 const AnyValue = 'VL';
 export const Type = '@qs';
 
+export interface QueryStackDefs {
+    [def: string]: StackValue;
+}
+
 export interface QueryStack {
     type: typeof Type,
     execute: boolean;
     items: StackValue[];
+    defs: QueryStackDefs;
     instructions: Map<string, InstDef>;
 }
 
@@ -42,55 +50,61 @@ export function create():QueryStack {
         type: Type,
         execute: true,
         items: [],
+        defs: {},
         instructions: new Map<string, InstDef>()
     };
 }
 
-// function instCompile(stack:QueryStack, op:string): [QueryStack, StackValue] {
-//     return [ stack, [op] ];
-// }
+export function isInstModuleDef(value:any):boolean {
+    return isObject(value) && value.meta !== undefined;
+}
 
 /**
  * Pushes a stack value onto the stack
  */
-export function push( stack:QueryStack, value:any|StackValue, op?:StackOp ):[QueryStack,StackValue] {
-    if( op !== undefined ){
-        value = [op,value]
+export function push( stack:QueryStack, value:any|StackValue ):[QueryStack,StackValue] {
+    let op:string = VL;
+    if( isObject(value) ){
+        // Log.debug('[push]', 'value object', value, Object.prototype.toString.call(value) )
+        value = [VL,value];
+    }
+    else if(Array.isArray(value) ){
+        [op] = value;
     } else {
-        if(Array.isArray(value) ){
-            [op] = value;
+        if( isString(value) && getInstruction(stack,value) !== undefined ){
+            op = value;
+            value = [op]
         } else {
-            if( isString(value) && getInstruction(stack,value) !== undefined ){
-                op = value;
-                value = [op]
-            } else {
-                value = [VL, value];
-                op = VL;
-            }
+            value = [VL, value];
         }
     }
 
-    // Log.debug('[push]', value)
-    
-    const instDef = getInstruction( stack, op );
+    let instModule:InstModuleDef;
+    let instDef = getInstruction( stack, op );
 
-    if( instDef === undefined ){
+    if( isInstModuleDef(instDef) ){
+        instModule = instDef as InstModuleDef;
+    } else {
+        [op] = value = (instDef as StackValue);
+        instModule = getInstruction(stack,op) as InstModuleDef;
+    }
+
+    if( isInstModuleDef === undefined ){
         Log.debug(`unknown op ${op} ${JSON.stringify(value)}` );
         return [stack, value];
     }
 
     let doPush = true;
-
-    if( instDef?.execute ){
+    
+    if( instModule?.execute ){
         // Log.debug('[push][execute]', value );
-        let result = instDef.execute(stack, ...value);
+        let result = instModule.execute(stack, ...value);
         if( Array.isArray(result) === false ){
             Log.debug('[push][execute]', 'undefined result from', op, result );
         }
         [stack,value,doPush] = result;
         // Log.debug('[push][execute]', 'post', op, value === undefined );
         // Log.debug('[push][execute]', 'post', stack.items.map( ([op,]) => op ) );
-
     }
     
     if( value !== undefined && doPush !== false ){
@@ -388,9 +402,10 @@ export interface ExecuteOptions {
 // }
 
 
-export function addInstruction( stack:QueryStack, inst:InstDef|InstDef[] ){
+
+export function addInstructionDef( stack:QueryStack, inst:InstModuleDef|InstModuleDef[] ){
     if( Array.isArray(inst) ){
-        return inst.reduce( (st,ins) => addInstruction(st,ins), stack );
+        return inst.reduce( (st,ins) => addInstructionDef(st,ins), stack );
     }
 
     const { meta, compile, execute } = inst;
@@ -410,8 +425,27 @@ export function addInstruction( stack:QueryStack, inst:InstDef|InstDef[] ){
     };
 }
 
+// export function getInstModule( stack:QueryStack, op:StackOp ): InstModuleDef {
+//     return stack.instructions.get( op );
+// }
+
 export function getInstruction( stack:QueryStack, op:StackOp ): InstDef {
+    const def = stack.defs[op];
+    if( def !== undefined ){
+        return def;
+    }
     return stack.instructions.get( op );
+    // return stack.instructions.get( op );
+}
+
+
+export function addDef( stack:QueryStack, name:string, value:StackValue ): QueryStack {
+    const defs = {...stack.defs, [name]: value };
+    return {...stack, defs};
+}
+
+export function getDef(stack:QueryStack, name:string): StackValue {
+    return stack.defs[name];
 }
 
 
@@ -452,7 +486,34 @@ function getValueType( value:any ): string {
     if( isObject(value) && isString(value.type) ){
         return value.type;
     }
-    return 'VL';
+    return VL;
+}
+
+export function assertStackSize( stack:QueryStack, expected:number, msg?:string ) {
+    const len = stack.items.length;
+    if( len < expected ){
+        if( msg === undefined ){
+            msg = `expected stack size ${expected}, actual: ${len}`;
+        }
+        throw new Error(msg);
+    }
+}
+
+export function assertStackValueType( stack:QueryStack, index:number, opType:string, argType?:any ){
+    // Log.debug('[assertStackValueType]', 'argType', argType );
+    const len = stack.items.length;
+    const idx = len -1 -index;
+    if( idx < 0 ){
+        throw new Error(`value out of bounds: -${index+1} : ${len}`);
+    }
+    const value:StackValue = stack.items[ idx ];
+    if( value[0] !== opType ){
+        throw new Error(`expected value of type ${opType} at index ${idx} : got ${value[0]}`);
+    }
+    if( argType !== undefined && typeof value[1] !== argType ){
+        throw new Error(`expected arg of type ${argType} at index ${idx} : got ${typeof value[1]}`);
+    }
+    
 }
 
 export function buildAndExecute( stack:QueryStack, buildFn:BuildQueryFn ): QueryStack {
