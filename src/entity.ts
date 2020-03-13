@@ -96,7 +96,10 @@ export function getComponent( entity:Entity, defId:number ): Component {
     return entity.components.get(defId);
 }
 
-export function getComponents(entity:Entity): Component[] {
+export function getComponents(entity:Entity, bf?:BitField): Component[] {
+    if( bf !== undefined ){
+        return bf.toValues().map( did => entity.components.get(did) ).filter(Boolean);
+    }
     return Array.from( entity.components.values() );
 }
 

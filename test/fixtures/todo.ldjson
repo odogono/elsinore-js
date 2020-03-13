@@ -1,4 +1,4 @@
-[ "title" ]
+[ "text" ]
 "/component/title"
 "@d"
 {"name":"isComplete", "type":"boolean", "default":false}

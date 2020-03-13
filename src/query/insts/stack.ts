@@ -3,7 +3,11 @@ import { QueryStack, InstDefMeta,
     pop,
     Type as QueryStackT,
     create as createStack,
-    push, StackValue, peek, InstResult, InstDef, shift, pushRaw, assertStackSize, assertStackValueType, addDef, isInstModuleDef, InstModuleDef, } from "../stack";
+    push, StackValue, peek, 
+    InstResult, InstDef, shift, pushRaw, assertStackSize, 
+    assertStackValueType, addDef, 
+    getInstruction,
+    isInstModuleDef, InstModuleDef, getDef, } from "../stack";
 import { VL, valueOf } from "./value";
 import { isFunction } from "../../util/is";
 
@@ -18,9 +22,10 @@ export const List = '@sl';
 export const Put = 'PT';
 export const Clear = 'CLS';
 export const Define = 'def';
+export const GetInst = 'gdef';
 
 export const meta:InstDefMeta = {
-    op: [ OpenList, CloseList, List, Swap, Stack, Put, Clear, Define ]
+    op: [ OpenList, CloseList, List, Swap, Stack, Put, Clear, Define, GetInst ]
 };
 
 const OpMap = {
@@ -32,6 +37,7 @@ const OpMap = {
     [Put]: executePut,
     [List]: executeList,
     [Define]: executeDefine,
+    [GetInst]: executeGetDefine,
 };
 
 export function execute( stack:QueryStack, op, args  ):InstResult {
@@ -163,6 +169,19 @@ export function executeList( stack:QueryStack, op:string, list:StackValue[] ):In
     return [stack, value, false];
 }
 
+
+export function executeGetDefine( stack:QueryStack ): InstResult {
+    let name:string;
+    let value:StackValue;
+
+    [stack,[,name]] = pop(stack);
+
+    const instDef = getDef(stack, name);
+
+    // Log.debug('[executeGetDefine]', instDef );
+
+    return [stack, instDef];
+}
 
 export function executeDefine( stack:QueryStack ): InstResult {
     assertStackSize( stack, 2, `${Define} requires 2 args: <key> <value>`);

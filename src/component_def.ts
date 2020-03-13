@@ -86,10 +86,12 @@ export function createFromObj({id, name, uri, properties, ...extra}): ComponentD
         name = toCapitalized( toCamelCase( parts[0] ) );
     }
 
-    if( isString(properties) ){
+    if( isString(properties) || isObject(properties) ){
         properties = [ createProperty(properties) ];
     } else if( Array.isArray(properties) ){
         properties = properties.map( prop => createProperty(prop) );
+    } else {
+        console.log('but what', properties );
     }
 
     return {
@@ -112,6 +114,10 @@ export function hash( def:ComponentDef ): number {
 
 export function getDefId( def:ComponentDef ): number {
     return def[Type];
+}
+
+export function getProperty( def:ComponentDef, name:string ): ComponentDefProperty {
+    return def.properties.find( p => p.name === name );
 }
 
 

@@ -2,13 +2,11 @@ import { assert } from 'chai';
 import { createLog } from '../src/util/log';
 import {ComponentRegistry, Type as ComponentRegistryT, createComponent } from '../src/component_registry';
 import {  
-    execute as executeQueryStack,
-    pushV as pushQueryStack,
+    pushValues,
     peekV as peekQueryStack,
     buildAndExecute as buildQuery,
     findV,
     unshiftV,
-    addInstruction,
     InstDef,
     BuildQueryFn,
     BuildQueryParams,

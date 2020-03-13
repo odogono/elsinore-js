@@ -1,7 +1,8 @@
 import { createLog } from "../util/log";
 import { isObject, isString } from "../util/is";
 import { ComponentRegistry } from "../component_registry";
-import { Type as EntitySetType } from '../entity_set';
+import { Type as ComponentT, getComponentDefId } from "../component";
+import { Type as EntitySetT, matchEntities as esMatchEntities, EntitySet } from '../entity_set';
 import { BitField } from "odgn-bitfield";
 import { MatchOptions } from '../constants';
 import { EntityList, createEntityList, Type as EntityT, Entity, getEntityId, EntityListType } from "../entity";
@@ -539,7 +540,7 @@ export function buildAndExecute( stack:QueryStack, buildFn:BuildQueryFn ): Query
  * @param stack 
  * @param bf 
  */
-export function matchEntities( stack:QueryStack, bf:BitField, options:MatchOptions = {} ): EntityList {
+export function matchEntities( stack:QueryStack, bf:BitField, options:MatchOptions = {} ): [EntityList, StackValue] {
     const limit = options.limit !== undefined ? options.limit : Number.MAX_SAFE_INTEGER;
 
     let eids:number[] = [];
@@ -553,12 +554,27 @@ export function matchEntities( stack:QueryStack, bf:BitField, options:MatchOptio
         // if( type === EntityT && getEntityId(val) !== 0 ){
         //     Log.debug('[matchEntities]', getEntityId(val), bf.toValues(), val.bitField.toValues() )
         // }
-        if( type === EntityT && getEntityId(val) !== 0 && BitField.or(bf, val.bitField) ){
-            eids.push( getEntityId(val) );
+        if( type === EntitySetT ){
+            return [ esMatchEntities( val, bf ), [type,val] ];
+        }
+        else if( type === EntityT ){
+            if( getEntityId(val) !== 0 && BitField.or(bf, val.bitField) ){
+                
+                eids.push( getEntityId(val) );
+
+                // return [createEntityList( [getEntityId(val)], bf), [type,val]];
+            }
+            // break;
+        }
+        else if( type === ComponentT ){
+            const did = getComponentDefId(val);
+            if( bf.get(did) === true ){
+                return [ undefined,[type,val] ];
+            }
         }
     }
 
-    return createEntityList(eids, bf);
+    return [createEntityList(eids, bf),undefined];
 }
 
 
@@ -580,11 +596,12 @@ export function popEntity( stack:QueryStack ): [QueryStack, Entity | Entity[]] {
     if( type === EntityListType ){
         [stack, [type, val]] = pop(stack);
 
+        // Log.debug('[dammit]',  type, val);
         // Log.debug('[popEntity] resolving', val.entityIds )
         val = resolveEntityList(stack, val);
         // (val as EntityList).entityIds
     }
-    else if( type === EntitySetType ){
+    else if( type === EntitySetT ){
 
     }
 
@@ -595,11 +612,15 @@ export function popEntity( stack:QueryStack ): [QueryStack, Entity | Entity[]] {
 function resolveEntityList( stack:QueryStack, list:EntityList ): Entity[] {
     let result = [];
 
+    // Log.debug('[dammit]', stack.items );
+
     for( let ii = stack.items.length-1; ii >= 0; ii-- ){
         const [type,val] = stack.items[ii];
 
         if( type === EntityT ){
             const eid = getEntityId(val);
+            if( !list.entityIds ){
+            }
             // list.entityIds.find( leid => leid === eid )
             if( list.entityIds.indexOf(eid) !== -1 ){
                 result.push( val );

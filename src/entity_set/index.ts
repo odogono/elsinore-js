@@ -220,9 +220,28 @@ export function matchEntities( es:EntitySet, mbf:BitField, options:MatchOptions 
             }
         }
     }
-    return createEntityList( matches );
+    return createEntityList( matches, mbf );
 }
 
+
+/**
+ * 
+ * @param es 
+ * @param list 
+ */
+export function getComponents( es:EntitySet, list:EntityList ): Component[] {
+
+    const dids = list.bf ? list.bf.toValues() : [];
+    
+    return list.entityIds.reduce( (list,eid) => {
+
+        return dids.reduce( (list,did) => {
+            list.push( es.components.get( toComponentId(eid,did) ) );
+            return list;
+        }, list);
+
+    }, []);
+}
 
 
 function clearChanges( entitySet:EntitySet ): EntitySet {

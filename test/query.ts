@@ -115,11 +115,14 @@ describe('Query', () => {
 
     });
 
-    it('defines a word', () => {
+    // 
+    // IF
+
+    it('defines an instruction', () => {
         let value:StackValue;
         let stack = buildQueryStack();
 
-        // defines a word with a list value
+        // defines an instruction with a list value
         [stack, value] = pushValues( stack, [
             '[', 8, '*', ']',
             'mult8',
@@ -132,9 +135,11 @@ describe('Query', () => {
             'mult8'
         ]);
         
-        // Log.debug('stack', stack.items );
-
         assert.equal( value[1], 64 );
+        
+        [stack,value] = pushValues( stack, [ [VL,'mult8'], 'gdef'] );
+
+        // Log.debug('stack', stack.items );
     })
 
 
@@ -303,6 +308,7 @@ describe('Query', () => {
             // // resolve the entity list to entities
             [stack, ents] = popEntity( stack );
 
+            // Log.debug('loaded', ents );
             assert.lengthOf( ents, 2 );
 
             assertIncludesComponents( registry, ents[0], ['/component/priority'] );
@@ -314,8 +320,75 @@ describe('Query', () => {
             // // Log.debug('output', stack );
         });
 
-        
+        it('selects a component which matches the component attribute value', async () => {
+            let registry = createComponentRegistry();
+            let stack = buildQueryStack();
+            let value:StackValue;
+
+            // add the registry to the stack
+            [stack] = pushQueryStack( stack, [ComponentRegistryT,registry] );
+
+            [stack] = pushValues(stack, [
+                [ 'VL', { "properties":[ "rank", "file" ] } ],
+                [ 'VL', "/piece/knight" ],
+                [ "@d" ],
+    
+                [ 'VL', { "rank": 1, "file": "g" } ],
+                [ 'VL', "/piece/knight" ],
+                [ "@c" ],
+            ]);
+
+            [stack,value] = push( stack, ['AT', '/piece/knight#file'] );
+
+            assert.equal( value[1], 'g' );
+
+            // Log.debug('stack', stack.items );
+        });
+
         it('selects entities which match the component attribute value', async () => {
+            let ents;
+            let [stack,registry] = await prepareFixture('todo.ldjson', {addToEntitySet:true});
+            let value:StackValue;
+
+            // [stack,value] = push( stack, ['AT', '/component/completed#isComplete'] );
+            [stack,value] = push( stack, ['AT', '/component/title#text'] );
+
+            // Log.debug('value', value );
+            assert.deepEqual( value, 
+                [ VL, [
+                  'do some shopping',
+                  'drink some tea',
+                  'turn on news',
+                  'phone up friend',
+                  'get out of bed'
+                ] ] );
+
+            // Log.debug('stack', stack.items );
+        });
+
+        it('selects entities which match the component attribute value', async () => {
+            let ents;
+            let [stack,registry] = await prepareFixture('todo.ldjson');
+
+            [stack] = pushValues( stack, [
+
+                '[', 
+                true,
+                [ 'AT', '/component/completed#isComplete' ],
+                '==',
+                ']',
+
+                // FN true '/component/completed#isComplete' AT == END
+                // [ 'FN', [ true, '/component/completed#isComplete', AT, == ] ]
+                // next - test @c '/component/completed#isComplete', AT
+                // next - test fn declaration - FN starts a new stack, prevents execution when pushing
+                Select.AllEntities,
+            ]);
+
+            // Log.debug('stack', stack.items)
+        });//*/
+        
+        it('selects a component which matches the component attribute value', async () => {
             let ents;
             let [stack,registry] = await prepareFixture('todo.ldjson');
 

@@ -18,6 +18,8 @@ import { stringify } from "../../util/json";
 
 const Log = createLog('Inst][CreateComponent');
 
+export const ComponentCreate = '@c';
+
 export const meta:InstDefMeta = {
     op: '@c'
 };

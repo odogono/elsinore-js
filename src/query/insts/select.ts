@@ -106,9 +106,9 @@ function selectEntitiesWithAll( stack:QueryStack, dids:any[] ): InstResult {
     // convert into a bitfield of def ids
     const bf = resolveComponentDefIds( registry, dids ) as BitField;
     
-    let ents = matchEntities( stack, bf );
+    let [ents] = matchEntities( stack, bf );
     
-    // Log.debug('[selectEntitiesWithAll]', dids, bf );
+    // Log.debug('[selectEntitiesWithAll]', dids, bf, ents );
 
     // add to stack
     [stack,value] = push( stack, [EntityListType,ents] );

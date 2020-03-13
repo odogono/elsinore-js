@@ -121,7 +121,7 @@ export function buildAndExecuteQuery( stack:QueryStack, buildFn:BuildQueryFn ): 
 
     stack = buildQuery( stack, buildFn );
 
-    [stack, [,entity]] = push( stack, [ 'AD', '@e' ] );
+    [stack, [,entity]] = push( stack, '@e' );
 
     return [stack,entity];
 }
@@ -138,8 +138,8 @@ export function buildEntity( stack:QueryStack, buildFn:BuildQueryFn, entityId:nu
     stack = buildQuery( stack, buildFn );
 
     [stack, [,entity]] = pushValues( stack, [
-        ['VL', entityId],
-        ['@e']
+        entityId,
+        '@e'
     ]);
 
     return [stack,entity];

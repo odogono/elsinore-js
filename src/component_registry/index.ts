@@ -2,7 +2,8 @@ import { ComponentDef,
     Type as DefT,
     create as createComponentDef,
     hash as hashComponentDef, 
-    getDefId} from "../component_def";
+    getDefId,
+    getProperty} from "../component_def";
 import { createUUID } from "../util/uuid";
 import { createLog } from "../util/log";
 import { isString, isInteger } from "../util/is";
@@ -58,6 +59,9 @@ export function getComponentDefs( registry ): ComponentDef[] {
 export interface ResolveComponentDefOptions {
     asDef?: boolean;
 }
+
+type ResolveComponentDefIdResult = [ Component, string ][] | [BitField, string][];
+
 /**
  * Resolves an array of Def identifiers (uri,hash, or did) to ComponentDefs  
  * @param registry ComponentRegistry
@@ -71,7 +75,7 @@ export function resolveComponentDefIds( registry:ComponentRegistry, dids:any[], 
         return asDef ? [] : bf;
     }
 
-    const defs = dids.map( did => {
+    const defs:ComponentDef[] = dids.map( did => {
         if( isString(did) ){
             return getByUri( registry, did );
         }
@@ -81,13 +85,46 @@ export function resolveComponentDefIds( registry:ComponentRegistry, dids:any[], 
         return undefined;
     });
 
-    
     if( asDef ){
         return defs;
     }
-    // console.log('[resolveComponentDefIds]', dids, defs, bf )
 
     return defs.reduce( (bf,def) => def === undefined ? bf : bf.set( getDefId(def) ), bf );
+}
+
+/**
+ * 
+ * @param registry 
+ * @param did 
+ */
+export function resolveComponentDefAttribute( registry:ComponentRegistry, did:string ): [BitField, string] {
+
+    let attrName:string;
+    const isAttr = (did as string).indexOf('#') !== -1;
+    if( isAttr ){
+        [did,attrName] = (did as string).split('#');
+    }
+
+    // Log.debug('[resolveComponentDefAttribute]', did,attrName );
+    
+    const def = getByUri( registry, did );
+
+    if( !def ){
+        Log.debug('[resolveComponentDefAttribute]', 'def not found', did);
+        return [new BitField(), undefined];
+    }
+
+    // Log.debug('[resolveComponentDefAttribute]', 'getting prop', def, attrName );
+
+    const prop = getProperty( def, attrName );
+
+    const bf = BitField.create([getDefId(def)])
+
+    // console.log('[resolveComponentDefAttribute]', did, isAttr, attrName, def.properties );
+
+    // Log.debug('[resolveComponentDefAttribute]', def, attrName );
+    return [bf, prop ? attrName : undefined];
+    
 }
 
 
