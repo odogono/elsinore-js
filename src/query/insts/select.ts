@@ -65,12 +65,12 @@ export function execute( stack:QueryStack, op:string ):InstResult {
         throw new Error(`op not found: ${op}`);
     }
     
-    Log.debug('[execute]', stack.items );
+    // Log.debug('[execute]', stack.items );
 
     [stack,value] = pop(stack);
     let did = value[1];
 
-    Log.debug('[execute]', 'did', value);
+    // Log.debug('[execute]', 'did', value);
 
     // popValueOfType( stack, VL );
 
@@ -108,7 +108,7 @@ function selectEntitiesWithAll( stack:QueryStack, dids:any[] ): InstResult {
     
     let ents = matchEntities( stack, bf );
     
-    Log.debug('[selectEntitiesWithAll]', dids, bf );
+    // Log.debug('[selectEntitiesWithAll]', dids, bf );
 
     // add to stack
     [stack,value] = push( stack, ents, EntityListType );

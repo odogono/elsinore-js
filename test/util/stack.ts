@@ -8,6 +8,7 @@ import * as InstEq from '../../src/query/insts/equals';
 import * as InstAd from '../../src/query/insts/add';
 import * as InstAttr from '../../src/query/insts/attribute';
 import * as InstSelect from '../../src/query/insts/select';
+import * as InstStack from '../../src/query/insts/stack';
 import {VL} from '../../src/query/insts/value';
 import {
     ComponentRegistry,
@@ -84,7 +85,7 @@ export async function prepareFixture( name:string, options:PrepareFixtureOptions
 
 export function buildQueryStack(){
     const insts:InstDef[] = [
-        InstCDef,InstComC,InstVal,InstEq, InstAd,
+        InstStack, InstCDef,InstComC,InstVal,InstEq, InstAd,
         InstSelect, InstAttr
     ];
     let stack = createQueryStack();

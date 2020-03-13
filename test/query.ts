@@ -53,44 +53,38 @@ const Log = createLog('TestQuery');
 describe('Query', () => {
 
     it('should evaluate a boolean expression', () => {
-        const insts:StackValue[] = [
-            [ 'VL', 'hello'],
-                        [ 'VL', 4 ],
-                        [ 'VL', 6 ],
-                    [ '+' ],
-                    [ 'VL', 10 ],
-                [ '==' ],
-                    [ 'VL', 7 ],
-                    [ 'VL', 7 ],
-                [ '==' ],
-            [ '==' ],
+        const insts:any[] = [
+            'hello',
+                    4 , 6 , '+',
+                    10 ,
+                '==' ,
+                7, 7, '==',
+            '==',
         ];
-
-        /**
-         * push [VL,10]
-         * push [VL,10]
-         * push [==]
-         * 
-         * (push compiles the instruction)
-         * 
-         */
 
         let value:StackValue;
         let stack = buildQueryStack();
         [stack, value] = pushValues( stack, insts );
 
-        // execute pops the top value and executes it
-        // [stack, value] = executeQueryStack( stack );
-
-        // TODO popValue executes the value as well as returns/removes it
-        // TODO executeValue executes but does not pop/return it
-        
-        // Log.debug('stack', stack.items);
         assert.ok( value[1], 'the values are equal' );
+    });
 
-        // stack = executeQueryStack( stack, [ [ '==', ['VL', 10], ['VL', 12] ] ] );
+    it('defines an anonymous function', () => {
+        const insts:any[] = [
+            // define an anonymous function
+            'FN', 9, '+', ';',
+            10,
+            'SW', // swap the last two values
+            // ['VL', [ 9, '+'] ], // could also...
+            'CL', // call the function
+        ];
 
-        // assert.notOk( peekQueryStack(stack), 'the values are not equal' );
+        let value:StackValue;
+        let stack = buildQueryStack();
+        [stack, value] = pushValues( stack, insts );
+        // Log.debug('stack', stack.items )
+        // Log.debug('value', value )
+        assert.equal( value[1], 19 );
     });
 
 
@@ -276,9 +270,13 @@ describe('Query', () => {
             let [stack,registry] = await prepareFixture('todo.ldjson');
 
             [stack] = pushValues( stack, [
-                [ 'VL', true ],
+                true,
                 [ 'AT', '/component/completed#isComplete' ],
-                [ '==' ], 
+                '==', 
+                // FN true '/component/completed#isComplete' AT == END
+                // [ 'FN', [ true, '/component/completed#isComplete', AT, == ] ]
+                // next - test @c '/component/completed#isComplete', AT
+                // next - test fn declaration - FN starts a new stack, prevents execution when pushing
                 [ Select.AllEntities ],
             ])
         });//*/

@@ -13,6 +13,6 @@ export const meta:InstDefMeta = {
 };
 
 export function execute( stack:QueryStack, op, args  ):InstResult {
-    Log.debug(args);
+    // Log.debug(args);
     return [stack, [op,args]];
 }

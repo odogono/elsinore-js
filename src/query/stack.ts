@@ -28,14 +28,19 @@ export type StackOp = string;
 export type StackValue = [ StackOp ] | [ StackOp, any ] ;
 
 const AnyValue = 'VL';
+export const Type = '@qs';
 
 export interface QueryStack {
+    type: typeof Type,
+    execute: boolean;
     items: StackValue[];
     instructions: Map<string, InstDef>;
 }
 
-export function create(){
+export function create():QueryStack {
     return {
+        type: Type,
+        execute: true,
         items: [],
         instructions: new Map<string, InstDef>()
     };
@@ -52,8 +57,20 @@ export function push( stack:QueryStack, value:any|StackValue, op?:StackOp ):[Que
     if( op !== undefined ){
         value = [op,value]
     } else {
-        [op] = value;
+        if(Array.isArray(value) ){
+            [op] = value;
+        } else {
+            if( isString(value) && getInstruction(stack,value) !== undefined ){
+                op = value;
+                value = [op]
+            } else {
+                value = [VL, value];
+                op = VL;
+            }
+        }
     }
+
+    // Log.debug('[push]', value)
     
     const instDef = getInstruction( stack, op );
 
@@ -62,34 +79,39 @@ export function push( stack:QueryStack, value:any|StackValue, op?:StackOp ):[Que
         return [stack, value];
     }
 
-    let skipPush = true;
+    let doPush = true;
 
-    if( instDef.execute ){
+    if( instDef?.execute ){
         // Log.debug('[push][execute]', value );
         let result = instDef.execute(stack, ...value);
         if( Array.isArray(result) === false ){
             Log.debug('[push][execute]', 'undefined result from', op, result );
         }
-        [stack,value,skipPush] = result;
+        [stack,value,doPush] = result;
         // Log.debug('[push][execute]', 'post', op, value === undefined );
         // Log.debug('[push][execute]', 'post', stack.items.map( ([op,]) => op ) );
 
     }
     
-    if( value !== undefined && skipPush !== false ){
+    if( value !== undefined && doPush !== false ){
         stack = { ...stack, items: [...stack.items, value ] };
     }
     
     return [stack, value];
 }
 
+export function pushRaw( stack:QueryStack, value:StackValue ): QueryStack {
+    return {...stack, items: [...stack.items,value] };
+}
 
-export function pushValues( stack:QueryStack, values:StackValue[] ): [QueryStack,StackValue] {
+
+export function pushValues( stack:QueryStack, values:StackValue[]|any[] ): [QueryStack,StackValue] {
     let value:StackValue;
     for(let ii=0;ii<values.length;ii++ ){
         value = values[ii];
-
+        // Log.debug('[pushValues]', 'pre', value);
         [stack,value] = push( stack, value );
+        // Log.debug('[pushValues]', 'post', value);
     }
     return [stack, value];
 }
@@ -147,6 +169,16 @@ export function unshift( stack:QueryStack, value:StackValue ): QueryStack {
         ...stack,
         items: [ value, ...stack.items ]
     }
+}
+
+/**
+ * Removes and returns a value from
+ * @param stack 
+ */
+export function shift( stack:QueryStack ): [QueryStack, StackValue] {
+    let items = [...stack.items];
+    let value = items.shift();
+    return [{...stack, items},value];
 }
 
 export function unshiftV( stack:QueryStack, value:any, valueType = AnyValue ):QueryStack {

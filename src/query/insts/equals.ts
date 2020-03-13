@@ -29,7 +29,7 @@ export function execute( stack:QueryStack, op:string ) {
     
     
     if( lval[0] !== VL || rval[0] !== VL ){
-        Log.debug('[execute]', op, lval, '!=', rval );
+        // Log.debug('[execute]', op, lval, '!=', rval );
         return [stack, [op] ];
     }
 
