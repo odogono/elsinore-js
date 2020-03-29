@@ -12,7 +12,8 @@ import {
 import { 
     createComponent, 
     Type as ComponentRegistryT, 
-    resolveComponentDefIds
+    resolveComponentDefIds,
+    getByDefId
 } from "../../component_registry";
 import { Type as ComponentT } from '../../component';
 import { isObject } from "../../util/is";
@@ -31,12 +32,13 @@ export const meta:InstDefMeta = {
 
 export function executeFetch( stack:QueryStack, [,registry]:StackValue, [op,arg]:StackValue ): InstResult {
     // Log.debug('[executeFetch]', [op,arg] );
-    let defs = resolveComponentDefIds( registry, [arg], {asDef:true} ) as ComponentDef[];
+    let bf = resolveComponentDefIds( registry, [arg] );
+    let dids = bf.toValues();
 
-    if( defs.length === 1 ){
-        return [ stack, ['@d', defs[0]] ];
+    if( dids.length === 1 ){
+        return [ stack, ['@d', getByDefId( registry, dids[0] ) ] ];
     } else {
-        return [ stack, [StackList, defs]];
+        return [ stack, [StackList, dids.map(did => getByDefId(registry, did)) ]];
     }
 }
 

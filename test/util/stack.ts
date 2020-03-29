@@ -184,14 +184,15 @@ export function buildEntity( stack:QueryStack, buildFn:BuildQueryFn, entityId:nu
 
 
 export const assertIncludesComponents  = (registry:ComponentRegistry, entity:Entity, dids:any[]) => {
-    const defs = resolveComponentDefIds( registry, dids, {asDef:true} ) as ComponentDef[];
+    const bf = resolveComponentDefIds( registry, dids );
+    // const defs = resolveComponentDefIds( registry, dids ) as ComponentDef[];
 
-    defs.forEach( (def,ii) => {
-        if( def === undefined ){
-            assert.fail(`unknown component def ${dids[ii]}`);
-            return;
-        }
-        const com = getComponent(entity, getDefId(def) );
+    bf.toValues().forEach( (did,ii) => {
+        // if( def === undefined ){
+        //     assert.fail(`unknown component def ${dids[ii]}`);
+        //     return;
+        // }
+        const com = getComponent(entity, did );
         
         if( com === undefined ){
             assert.fail(`missing component ${dids[ii]} on entity`);
@@ -200,14 +201,14 @@ export const assertIncludesComponents  = (registry:ComponentRegistry, entity:Ent
 }
 
 export const assertHasComponents = (registry:ComponentRegistry, entity:Entity, dids:any[]) => {
-    const defs = resolveComponentDefIds( registry, dids, {asDef:true} ) as ComponentDef[];
+    const bf = resolveComponentDefIds( registry, dids );
     
-    defs.forEach( (def,ii) => {
-        if( def === undefined ){
-            assert.fail(`unknown component def ${dids[ii]}`);
-            return;
-        }
-        const com = getComponent(entity, getDefId(def) );
+    bf.toValues().forEach( (did,ii) => {
+        // if( def === undefined ){
+        //     assert.fail(`unknown component def ${dids[ii]}`);
+        //     return;
+        // }
+        const com = getComponent(entity, did );
         
         if( com === undefined ){
             assert.fail(`missing component ${dids[ii]} on entity`);
@@ -219,7 +220,8 @@ export const assertHasComponents = (registry:ComponentRegistry, entity:Entity, d
         const did = getComponentDefId(com);
         const def = getByDefId(registry, did);
 
-        if( defs.find( def => getDefId(def) === did ) === undefined ){
+        if( !bf.get(did) ){
+        // if( defs.find( def => getDefId(def) === did ) === undefined ){
             assert.fail(`entity has component ${def.uri}`);
         }
     })

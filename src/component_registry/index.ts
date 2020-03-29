@@ -57,10 +57,6 @@ export function getComponentDefs( registry ): ComponentDef[] {
 }
 
 
-export interface ResolveComponentDefOptions {
-    asDef?: boolean;
-}
-
 type ResolveComponentDefIdResult = [ Component, string ][] | [BitField, string][];
 
 type ResolveDefIds = string | string[] | number | number[];
@@ -70,12 +66,11 @@ type ResolveDefIds = string | string[] | number | number[];
  * @param registry ComponentRegistry
  * @param dids array of def ids as strings or numbers 
  */
-export function resolveComponentDefIds( registry:ComponentRegistry, dids:ResolveDefIds, options:ResolveComponentDefOptions = {} ): BitField | ComponentDef[] {
+export function resolveComponentDefIds( registry:ComponentRegistry, dids:ResolveDefIds ): BitField {
     const bf = new BitField();
-    const asDef = options.asDef === true;
-
+    
     if( !Array.isArray(dids) || dids.length === 0 ){
-        return asDef ? [] : bf;
+        return bf;
     }
 
     const defs:ComponentDef[] = (dids as []).map( did => {
@@ -88,10 +83,6 @@ export function resolveComponentDefIds( registry:ComponentRegistry, dids:Resolve
         }
         return undefined;
     });
-
-    if( asDef ){
-        return defs;
-    }
 
     return defs.reduce( (bf,def) => def === undefined ? bf : bf.set( getDefId(def) ), bf );
 }
