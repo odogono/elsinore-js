@@ -79,7 +79,7 @@ export function resolveComponentDefIds( registry:ComponentRegistry, dids:Resolve
     }
 
     const defs:ComponentDef[] = (dids as []).map( did => {
-        Log.debug('[resolveComponentDefIds]', did );
+        // Log.debug('[resolveComponentDefIds]', did );
         if( isString(did) ){
             return getByUri( registry, did );
         }

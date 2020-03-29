@@ -31,7 +31,7 @@ import { ChangeSet,
 } from "./change_set";
 import { generateId } from './simple_id';
 import { createLog } from "../util/log";
-import { isInteger, isObject } from "../util/is";
+import { isInteger, isObject, isString } from "../util/is";
 import { MatchOptions } from '../constants';
 
 export const Type = '@es';
@@ -252,10 +252,10 @@ export function getComponents( es:EntitySet, list:EntityList|ComponentList ): Co
  * @param es 
  * @param list 
  */
-export function getEntities( es:EntitySetMem, list:EntityList ): Entity[] {
+export function getEntities( es:EntitySet, list:EntityList ): Entity[] {
     let ents = [];
     return list.entityIds.reduce( (ents, eid) => {
-        return [...ents, getEntity( es, eid )];
+        return [...ents, getEntity( es as EntitySetMem, eid )];
     }, ents);
 }
 
@@ -526,7 +526,7 @@ export function createEntity( es:EntitySetMem ): [ EntitySetMem, number ] {
 
 
 export interface ESQuery {
-    '@e'?: number;
+    '@e'?: number|string;
     '@c'?: string;
 }
 
@@ -540,28 +540,48 @@ export type QueryResult = EntityList | ComponentList;
  * @param es 
  */
 export function query( es:EntitySet, registry:ComponentRegistry, query:ESQuery ): QueryResult {
-    let result = createEntityList();
-    if( '@e' in query ){
-        let id = query['@e'];
-        if( (es as EntitySetMem).entities.get(id) ){
-            result = createEntityList( [ id ], createBitfield() );
+    let result;
+    let eq = query['@e'];
+    if( eq ){
+        if( isInteger(eq) ){
+            if( (es as EntitySetMem).entities.get(eq as number) ){
+                result = createEntityList( [ eq as number ], createBitfield() );
+            }
+        } else if( isString(eq) ){
+            let dids:any = eq;
+            dids = Array.isArray(dids) ? dids : [ dids ];
+            let bf = resolveComponentDefIds( registry, dids ) as BitField;
+            result = matchEntitiesII( es as EntitySetMem, bf );
         }
     }
+    let cq:any = query['@c'];
     if( '@c' in query ){
-        let dids:any = query['@c'];
-        dids = Array.isArray(dids) ? dids : [ dids ];
-        let bf = resolveComponentDefIds( registry, dids ) as BitField;
+        cq = (Array.isArray(cq) ? cq : [ cq ]) as string[];
+        let bf = resolveComponentDefIds( registry, cq ) as BitField;
+        let cids = [];
 
         // Log.debug('[query]', 'cids', (es as EntitySetMem).components.keys() );
+        if( isEntityList(result) ){
+            (result as EntityList).entityIds.reduce( (cids,eid) => {
+                let ebf = (es as EntitySetMem).entities.get(eid);
+                let dids = bf.toValues();
+                for( let ii=0;ii<dids.length;ii++ ){
+                    if( ebf.get(dids[ii] ) ){
+                        cids.push( toComponentId(eid,dids[ii]) );
+                    }
+                }
+                return cids;
+            }, cids)
+        }
+        else {
+            (es as EntitySetMem).components.forEach( (v,cid) => {
+                let c = fromComponentId(cid)[1];
+                if( bf.get( c ) ){
+                    cids.push( cid );
+                }
+            })
+        }
 
-        let cids = [];
-        (es as EntitySetMem).components.forEach( (v,cid) => {
-            let c = fromComponentId(cid)[1];
-            if( bf.get( c ) ){
-                cids.push( cid );
-            }
-        })
-        
         return createComponentList( cids );
 
         // Log.debug('[query]', 'resolved', bf );
@@ -570,9 +590,25 @@ export function query( es:EntitySet, registry:ComponentRegistry, query:ESQuery )
     return result;
 }
 
+function matchEntitiesII( es:EntitySetMem, mbf:BitField ): EntityList {
+    let matches = [];
+    // let entities = new Map<number,BitField>();
+    // let {returnEntities, limit} = options;
+    // limit = limit !== undefined ? limit : Number.MAX_SAFE_INTEGER;
+
+    const isAll = BitField.isAllSet(mbf);// mbf.toString() === 'all';
+    for( let [eid, ebf] of es.entities ){
+        if( isAll || BitField.or( mbf, ebf ) ){
+            matches.push( eid );
+        }
+    }
+    return createEntityList( matches, mbf );
+}
+
 /**
  * Returns a list of entity ids which match against the bitfield
  * 
+ * TODO - GET RID
  * @param es 
  * @param mbf 
  * @param options 

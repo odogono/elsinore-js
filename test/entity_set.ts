@@ -14,7 +14,7 @@ import { Entity,
     size as entitySize, 
     isEntity,
     EntityList} from '../src/entity';
-import { ComponentList } from '../src/component';
+import { ComponentList, getComponentEntityId } from '../src/component';
 import { EntitySet, 
     create as createEntitySet,
     size as entitySetSize,
@@ -23,6 +23,7 @@ import { EntitySet,
     getEntity,
     getComponent,
     getComponents as esGetComponents,
+    getEntities as esGetEntities,
     query as esQuery,
     createEntity,
     EntitySetMem} from '../src/entity_set';
@@ -247,17 +248,15 @@ describe('Entity Set (Mem)', () => {
             // entity id
         })
 
-        it.only('retrieves components by def id', async () => {
+        it('retrieves components by def id', async () => {
             // returns all components that match
             let q = {'@c': '/component/completed' };
             let list = esQuery( es, registry, q ) as ComponentList;
 
             // Log.debug('es', es);
-
-            
             let coms = esGetComponents( es, list );
             
-            Log.debug('result', coms);
+            // Log.debug('result', coms);
 
             assert.equal( coms.length, 3 );
             assert.ok( coms.reduce( (v,c) => v && 'isComplete' in c.attributes, true ) );
@@ -268,16 +267,32 @@ describe('Entity Set (Mem)', () => {
 
         it('retrieves entities by def id', async () => {
             // returns all entities that have this component
-            // {'@e': '/component/completed' },
+            let q = {'@e': '/component/completed' };
+            let list = esQuery( es, registry, q ) as EntityList;
+
+            
+            let e = esGetEntities( es, list );
+            
+            assert.equal( e.length, 3 );
             // [ value (entityId) ]
             // entitylist [ eid, ... ]
         })
 
-        it('retrieves entity by id and def id', async () => {
+        it.only('retrieves entity by id and def id', async () => {
             // returns component on entity 101
-            // { '@e':101 '@c': '/component/completed' },
-            // [ value (component), entityId, defId ]
-            // component [eid,did] OR undefined
+            // the trick here is that this is a two pass op.
+            // first the entity is selected, then the component
+            // the result is a componentlist because of the component
+            let q = { '@e':101, '@c': '/component/completed' };
+            let list = esQuery( es, registry, q ) as ComponentList;
+            
+            // Log.debug('result', es);
+            
+            let coms = esGetComponents( es, list );
+            
+            Log.debug('result', coms);
+
+            assert.equal( getComponentEntityId( coms[0] ), 101 );
         })
 
         it('retrieves entities by def id', async () => {
