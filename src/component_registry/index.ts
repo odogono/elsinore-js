@@ -3,7 +3,8 @@ import { ComponentDef,
     create as createComponentDef,
     hash as hashComponentDef, 
     getDefId,
-    getProperty} from "../component_def";
+    getProperty,
+    ComponentDefObj} from "../component_def";
 import { createUUID } from "../util/uuid";
 import { createLog } from "../util/log";
 import { isString, isInteger } from "../util/is";
@@ -17,7 +18,7 @@ const Log = createLog('ComponentRegistry');
 export const Type = '@cr';
 
 export interface ComponentRegistry {
-    type: typeof Type;
+    isComponentRegistry: boolean;
 
     uuid: string;
 
@@ -30,7 +31,7 @@ export interface ComponentRegistry {
 
 export function create(): ComponentRegistry {
     return {
-        type: Type,
+        isComponentRegistry: true,
         uuid: createUUID(),
         componentDefs: [],
         byUri: new Map<string, number>(),
@@ -62,12 +63,14 @@ export interface ResolveComponentDefOptions {
 
 type ResolveComponentDefIdResult = [ Component, string ][] | [BitField, string][];
 
+type ResolveDefIds = string | string[] | number | number[];
+
 /**
  * Resolves an array of Def identifiers (uri,hash, or did) to ComponentDefs  
  * @param registry ComponentRegistry
  * @param dids array of def ids as strings or numbers 
  */
-export function resolveComponentDefIds( registry:ComponentRegistry, dids:any[], options:ResolveComponentDefOptions = {} ): BitField | ComponentDef[] {
+export function resolveComponentDefIds( registry:ComponentRegistry, dids:ResolveDefIds, options:ResolveComponentDefOptions = {} ): BitField | ComponentDef[] {
     const bf = new BitField();
     const asDef = options.asDef === true;
 
@@ -75,7 +78,8 @@ export function resolveComponentDefIds( registry:ComponentRegistry, dids:any[], 
         return asDef ? [] : bf;
     }
 
-    const defs:ComponentDef[] = dids.map( did => {
+    const defs:ComponentDef[] = (dids as []).map( did => {
+        Log.debug('[resolveComponentDefIds]', did );
         if( isString(did) ){
             return getByUri( registry, did );
         }
@@ -134,13 +138,13 @@ export function resolveComponentDefAttribute( registry:ComponentRegistry, did:st
  * @param registry 
  * @param param1 
  */
-export function register( registry:ComponentRegistry, {uri, properties} ): [ComponentRegistry, ComponentDef] {
+export function register( registry:ComponentRegistry, value:ComponentDef|ComponentDefObj ): [ComponentRegistry, ComponentDef] {
 
     // Log.debug('[register]', uri, properties );
 
     let did = registry.componentDefs.length+1;
 
-    let def = createComponentDef(did, {uri, properties});
+    let def = createComponentDef(did, value );
 
     // Hash the def, and check whether we already have this
     let hash = hashComponentDef( def );

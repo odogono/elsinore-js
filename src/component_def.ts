@@ -36,6 +36,7 @@ const propertyDefaults = {
  */
 export function create( ...args:any[] ): ComponentDef {
     if( args.length === 0 ){
+
         throw new Error('invalid create params');
     }
 
@@ -45,6 +46,8 @@ export function create( ...args:any[] ): ComponentDef {
     let name = '';
     let properties = [];
     let params:any = {};
+
+    // console.log('[create]', first, args );
 
     if( Number.isInteger(first) ){
         params.id = first;
@@ -70,7 +73,7 @@ export function create( ...args:any[] ): ComponentDef {
         params = {...third, ...params };
     }
     
-    // console.log('[create]', params );
+    
     return createFromObj(params);
 }
 
@@ -103,6 +106,10 @@ export function createFromObj({id, name, uri, properties, ...extra}): ComponentD
     }
 }
 
+export function isComponentDef( value:any ):boolean {
+    return isObject(value) && Type in value;
+}
+
 
 /**
  * Returns a hashed number for the ComponentDef
@@ -125,7 +132,7 @@ export interface ComponentDefObj {
     '@d': number;
     name: string;
     uri: string;
-    properties: any[];
+    properties?: any[];
 }
 
 /**
@@ -134,23 +141,17 @@ export interface ComponentDefObj {
 export function toObject( def:ComponentDef, includeId:boolean = true ): ComponentDefObj {
     let {[Type]:id, name, uri, properties } = def;
 
-    // if( !isFunction(properties.map) ){
-    //     console.log('[toObject]', properties, typeof properties);
-    // }
-    let objProps = [];
-    if( Array.isArray(properties) ){
-        objProps= properties.map( p => propertyToObject(p) );
-    }
-    else if( isObject(properties) && Object.keys(properties).length > 0 ){
-        objProps = [properties];
-    } 
+    let objProps:any[];
 
-    return {
-        '@d': id,
-        name,
-        uri,
-        properties: objProps
-    };
+    if( properties ){
+        objProps = properties.map( p => propertyToObject(p) );
+    }
+
+    let result:ComponentDefObj = { '@d': id, name, uri };
+    if( objProps?.length > 0 ){
+        result = {...result, properties: objProps };
+    }
+    return result;
 }
 
 

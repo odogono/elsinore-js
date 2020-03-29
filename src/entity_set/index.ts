@@ -6,11 +6,14 @@ import { Component, isComponent,
     setEntityId as setComponentEntityId,
     toComponentId,
     isComponentId,
-    fromComponentId
+    fromComponentId,
+    createComponentList,
+    ComponentList,
+    isComponentList
  } from "../component";
 import { BitField } from "odgn-bitfield";
 import { createUUID } from "../util/uuid";
-import { ComponentRegistry } from "../component_registry";
+import { ComponentRegistry, resolveComponentDefIds } from "../component_registry";
 import { Entity, 
     isEntity, 
     getComponents as getEntityComponents, 
@@ -20,7 +23,8 @@ import { Entity,
     addComponentUnsafe,
     getEntityId,
     EntityList,
-    createEntityList} from "../entity";
+    createEntityList,
+    isEntityList} from "../entity";
 import { ChangeSet,
     create as createChangeSet,
     add as addCS, update as updateCS, remove as removeCS, ChangeSetOp, getChanges 
@@ -37,19 +41,25 @@ export const Type = '@es';
 const Log = createLog('EntitySet');
 
 export interface EntitySet {
-    type: typeof Type;
+    isEntitySet: boolean;
     
     uuid: string;
     
+    
+
+    entChanges: ChangeSet<number>;
+    
+    comChanges: ChangeSet<ComponentId>;
+}
+
+export interface EntitySetMem extends EntitySet {
+    isEntitySetMem: boolean;
+
     // a map of {entity_id, def_id} to Component.t
     components: Map<ComponentId, Component>;
     
     // a map of entityId to Bitfield
     entities: Map<number, BitField>;
-
-    entChanges: ChangeSet<number>;
-    
-    comChanges: ChangeSet<ComponentId>;
 }
 
 
@@ -57,7 +67,7 @@ export interface CreateEntitySetParams{
     registry?: ComponentRegistry;
 }
 
-export function create({registry}:CreateEntitySetParams):EntitySet {
+export function create({}:CreateEntitySetParams={}):EntitySetMem {
     const uuid = createUUID();
     const components = new Map<ComponentId, Component>();
     const entities = new Map<number, BitField>();
@@ -65,13 +75,14 @@ export function create({registry}:CreateEntitySetParams):EntitySet {
     const comChanges = createChangeSet<ComponentId>();
 
     return {
-        type: Type,
+        isEntitySet:true,
+        isEntitySetMem:true,
         uuid, components, entities, entChanges, comChanges
     }
 }
 
 export function isEntitySet( value:any ):boolean {
-    return isObject(value) && value.type === Type;
+    return isObject(value) && value.isEntitySet === true;
 }
 
 
@@ -79,7 +90,7 @@ export interface AddOptions {
     retain?: boolean;
 }
 
-export type AddArrayType = Entity[] | Component[];
+export type AddArrayType = (Entity|Component)[];// Entity[] | Component[];
 export type AddType = Entity | Component | AddArrayType;
 export type RemoveType = ComponentId | Entity | Component;
 
@@ -89,7 +100,7 @@ export type RemoveType = ComponentId | Entity | Component;
  * @param item 
  * @param options 
  */
-export function add( es:EntitySet, item:AddType, options:AddOptions = {}):EntitySet {
+export function add( es:EntitySetMem, item:AddType, options:AddOptions = {}):EntitySetMem {
     es = options.retain ? es : clearChanges(es);
 
     if( Array.isArray(item) ){
@@ -124,7 +135,7 @@ export function add( es:EntitySet, item:AddType, options:AddOptions = {}):Entity
     return es;
 }
 
-export function removeComponent( es:EntitySet, item:RemoveType, options:AddOptions = {}): EntitySet {
+export function removeComponent( es:EntitySetMem, item:RemoveType, options:AddOptions = {}): EntitySetMem {
     es = options.retain ? es : clearChanges(es);
     let cid = isComponentId(item) ? item as ComponentId : isComponent(item) ? getComponentId(item as Component) : undefined;
     if( cid === undefined ){
@@ -136,7 +147,7 @@ export function removeComponent( es:EntitySet, item:RemoveType, options:AddOptio
     return applyRemoveChanges(es);
 }
 
-export function removeEntity( es:EntitySet, item:(number|Entity), options:AddOptions = {} ):EntitySet {
+export function removeEntity( es:EntitySetMem, item:(number|Entity), options:AddOptions = {} ):EntitySetMem {
     es = options.retain ? es : clearChanges(es);
     let eid = isInteger(item) ? item as number : isEntity(item) ? getEntityId(item as Entity) : 0;
     if( eid === 0 ){
@@ -146,8 +157,8 @@ export function removeEntity( es:EntitySet, item:(number|Entity), options:AddOpt
     return applyRemoveChanges(es);
 }
 
-export function size(entitySet:EntitySet): number {
-    return entitySet.entities.size;
+export function size(es:EntitySetMem): number {
+    return es.entities.size;
 }
 
 
@@ -158,7 +169,7 @@ export function size(entitySet:EntitySet): number {
  * @param es 
  * @param eid 
  */
-export function getEntity( es:EntitySet, eid:number ): Entity {
+export function getEntity( es:EntitySetMem, eid:number ): Entity {
     let ebf = es.entities.get(eid);
     if( ebf === undefined ){
         return undefined;
@@ -179,7 +190,7 @@ export function getEntity( es:EntitySet, eid:number ): Entity {
  * @param es 
  * @param id 
  */
-export function getComponent( es:EntitySet, id:ComponentId|Component ): Component {
+export function getComponent( es:EntitySetMem, id:ComponentId|Component ): Component {
     if( isComponentId(id) ){
         return es.components.get( id as ComponentId );
     }
@@ -198,53 +209,64 @@ export function getComponent( es:EntitySet, id:ComponentId|Component ): Componen
 
 
 
-/**
- * Returns a list of entity ids which match against the bitfield
- * 
- * @param es 
- * @param mbf 
- * @param options 
- */
-export function matchEntities( es:EntitySet, mbf:BitField, options:MatchOptions = {} ): EntityList {
-    let matches = [];
-    const limit = options.limit !== undefined ? options.limit : Number.MAX_SAFE_INTEGER;
 
-    const isAll = BitField.isAllSet(mbf);// mbf.toString() === 'all';
-    for( let [eid, ebf] of es.entities ){
-        // console.log('[matchEntities]', 'limit', eid, mbf.toString(), ebf.toString(), BitField.or( mbf, ebf ));
-        if( isAll || BitField.or( mbf, ebf ) ){
-            matches.push( eid );
-
-            if( matches.length >= limit ){
-                break;
-            }
-        }
-    }
-    return createEntityList( matches, mbf );
+export function getComponentsByDefId( es:EntitySetMem, bf:BitField, options:MatchOptions = {} ): Component[] {
+    let el = matchEntities( es, bf, {...options, returnEntities:false} ) as EntityList;
+    const dids = bf.toValues();
+    
+    return el.entityIds.reduce( (memo, eid) => 
+        memo.concat( 
+            dids.map( did => es.components.get( toComponentId(eid, did ) ) ).filter(Boolean) )
+    , []);
 }
-
 
 /**
  * 
  * @param es 
  * @param list 
  */
-export function getComponents( es:EntitySet, list:EntityList ): Component[] {
+export function getComponents( es:EntitySet, list:EntityList|ComponentList ): Component[] {
 
-    const dids = list.bf ? list.bf.toValues() : [];
-    
-    return list.entityIds.reduce( (list,eid) => {
+    if( isEntityList(list) ){
+        const el = list as EntityList;
+        const dids = el.bf ? el.bf.toValues() : [];
+        
+        return el.entityIds.reduce( (list,eid) => {
+            return dids.reduce( (list,did) => {
+                list.push( (es as EntitySetMem).components.get( toComponentId(eid,did) ) );
+                return list;
+            }, list);
 
-        return dids.reduce( (list,did) => {
-            list.push( es.components.get( toComponentId(eid,did) ) );
-            return list;
-        }, list);
+        }, []);
+    } else if( isComponentList(list) ){
+        const cl = list as ComponentList;
+        return cl.cids.map( cid => (es as EntitySetMem).components.get(cid) );
+    }
 
-    }, []);
+    return [];
 }
 
+/**
+ * Resolves entity ids in a list to Entity instances
+ * 
+ * @param es 
+ * @param list 
+ */
+export function getEntities( es:EntitySetMem, list:EntityList ): Entity[] {
+    let ents = [];
+    return list.entityIds.reduce( (ents, eid) => {
+        return [...ents, getEntity( es, eid )];
+    }, ents);
+}
 
-function clearChanges( entitySet:EntitySet ): EntitySet {
+// export function reduce( es:EntitySet, list:EntityList, reduceFn, memo ) {
+//     list.entityIds.reduce( (memo,eid) => {
+//         es.entities.get(eid)
+//     }, memo );
+// }
+
+
+function clearChanges( entitySet:EntitySetMem ): EntitySetMem {
     return {
         ...entitySet,
         comChanges: createChangeSet(),
@@ -252,7 +274,7 @@ function clearChanges( entitySet:EntitySet ): EntitySet {
     };
 }
 
-function markRemoveComponents( es:EntitySet, id:number ): EntitySet {
+function markRemoveComponents( es:EntitySetMem, id:number ): EntitySetMem {
     if( id === 0 ){
         return es;
     }
@@ -271,7 +293,7 @@ function markRemoveComponents( es:EntitySet, id:number ): EntitySet {
     return es;
 }
 
-function addEntities( es:EntitySet, ents:Entity[] ): EntitySet {
+function addEntities( es:EntitySetMem, ents:Entity[] ): EntitySetMem {
 
     return es;
 }
@@ -281,7 +303,7 @@ function addEntities( es:EntitySet, ents:Entity[] ): EntitySet {
  * @param es 
  * @param components 
  */
-function addComponents( es:EntitySet, components:Component[] ): EntitySet {
+function addComponents( es:EntitySetMem, components:Component[] ): EntitySetMem {
     // set a new (same) entity id on all orphaned components
     [es, components] = assignEntityIds(es, components)
 
@@ -299,7 +321,7 @@ function addComponents( es:EntitySet, components:Component[] ): EntitySet {
 }
 
 
-function applyUpdatedComponents(es:EntitySet, cid:ComponentId ): EntitySet {
+function applyUpdatedComponents(es:EntitySetMem, cid:ComponentId ): EntitySetMem {
     const [eid,did] = fromComponentId(cid);
     let ebf:BitField;
 
@@ -321,7 +343,7 @@ function applyUpdatedComponents(es:EntitySet, cid:ComponentId ): EntitySet {
  * 
  * @param es 
  */
-function applyRemoveChanges(es:EntitySet): EntitySet {
+function applyRemoveChanges(es:EntitySetMem): EntitySetMem {
     // applies any removal changes that have previously been marked
     const removedComs = getChanges( es.comChanges, ChangeSetOp.Remove );
 
@@ -337,7 +359,7 @@ function applyRemoveChanges(es:EntitySet): EntitySet {
 }
 
 
-function applyRemoveComponent(es:EntitySet, cid:ComponentId):EntitySet {
+function applyRemoveComponent(es:EntitySetMem, cid:ComponentId):EntitySetMem {
     let [eid,did] = fromComponentId(cid);
 
     // remove the component id from the entity
@@ -365,7 +387,7 @@ function applyRemoveComponent(es:EntitySet, cid:ComponentId):EntitySet {
     return es;
 }
 
-function applyRemoveEntity(es:EntitySet, eid:number):EntitySet {
+function applyRemoveEntity(es:EntitySetMem, eid:number):EntitySetMem {
 
     let entities = new Map<number, BitField>(es.entities);
     entities.delete( eid );
@@ -378,7 +400,7 @@ function applyRemoveEntity(es:EntitySet, eid:number):EntitySet {
  * @param es 
  * @param com 
  */
-function markComponentAdd( es:EntitySet, com:Component ):EntitySet {
+function markComponentAdd( es:EntitySetMem, com:Component ):EntitySetMem {
     // adds the component to the entityset if it is unknown,
     // otherwise marks as an update
     const cid = getComponentId( com );
@@ -396,25 +418,25 @@ function markComponentAdd( es:EntitySet, com:Component ):EntitySet {
     return { ...es, components, comChanges: addCS( es.comChanges, cid ) };
 }
 
-function markComponentUpdate( es:EntitySet, cid:ComponentId ):EntitySet {
+function markComponentUpdate( es:EntitySetMem, cid:ComponentId ):EntitySetMem {
     return { ...es, comChanges: updateCS( es.comChanges, cid ) };
 }
 
-function markComponentRemove( es:EntitySet, cid:ComponentId ):EntitySet {
+function markComponentRemove( es:EntitySetMem, cid:ComponentId ):EntitySetMem {
     return { ...es, comChanges: removeCS( es.comChanges, cid ) };
 }
 
-function markEntityAdd( es:EntitySet, eid:number ):EntitySet {
+function markEntityAdd( es:EntitySetMem, eid:number ):EntitySetMem {
     return { ...es, entChanges: addCS( es.entChanges, eid) };
 }
-function markEntityUpdate( es:EntitySet, eid:number ):EntitySet {
+function markEntityUpdate( es:EntitySetMem, eid:number ):EntitySetMem {
     return { ...es, entChanges: updateCS( es.entChanges, eid) };
 }
-function markEntityRemove( es:EntitySet, eid:number ):EntitySet {
+function markEntityRemove( es:EntitySetMem, eid:number ):EntitySetMem {
     return { ...es, entChanges: removeCS( es.entChanges, eid) };
 }
 
-function markEntityComponentsRemove( es: EntitySet, eid:number ): EntitySet {
+function markEntityComponentsRemove( es: EntitySetMem, eid:number ): EntitySetMem {
     const ebf = es.entities.get( eid );
     if( ebf === undefined ){
         return es;
@@ -430,7 +452,7 @@ function markEntityComponentsRemove( es: EntitySet, eid:number ): EntitySet {
  * @param es 
  * @param eid 
  */
-function getOrAddEntityBitfield( es:EntitySet, eid:number ): [EntitySet, BitField] {
+function getOrAddEntityBitfield( es:EntitySetMem, eid:number ): [EntitySetMem, BitField] {
     let ebf = es.entities.get( eid );
     if( ebf === undefined ){
         // {mark_entity(es, :add, eid), Entity.ebf()}
@@ -446,7 +468,7 @@ function getOrAddEntityBitfield( es:EntitySet, eid:number ): [EntitySet, BitFiel
  * @param es 
  * @param components 
  */
-function assignEntityIds( es:EntitySet, components:Component[] ): [EntitySet, Component[]] {
+function assignEntityIds( es:EntitySetMem, components:Component[] ): [EntitySetMem, Component[]] {
     let set;
     let eid;
 
@@ -488,7 +510,7 @@ function assignEntityIds( es:EntitySet, components:Component[] ): [EntitySet, Co
     return [es, components];
 }
 
-export function createEntity( es:EntitySet ): [ EntitySet, number ] {
+export function createEntity( es:EntitySetMem ): [ EntitySetMem, number ] {
     const eid = generateId();
 
     const entities = new Map<number,BitField>( es.entities );
@@ -499,4 +521,85 @@ export function createEntity( es:EntitySet ): [ EntitySet, number ] {
     es = markEntityAdd( es, eid);
 
     return [ es, eid ];
+}
+
+
+
+export interface ESQuery {
+    '@e'?: number;
+    '@c'?: string;
+}
+
+export type QueryResult = EntityList | ComponentList;
+
+/**
+ * Takes queries in the form
+ *  [BF, <bitField>] - selects matching components
+ *  [AT, <bitField>, <attrName>] - selects attributes
+ * <BF> <BF> OR - matches entities which match either
+ * @param es 
+ */
+export function query( es:EntitySet, registry:ComponentRegistry, query:ESQuery ): QueryResult {
+    let result = createEntityList();
+    if( '@e' in query ){
+        let id = query['@e'];
+        if( (es as EntitySetMem).entities.get(id) ){
+            result = createEntityList( [ id ], createBitfield() );
+        }
+    }
+    if( '@c' in query ){
+        let dids:any = query['@c'];
+        dids = Array.isArray(dids) ? dids : [ dids ];
+        let bf = resolveComponentDefIds( registry, dids ) as BitField;
+
+        // Log.debug('[query]', 'cids', (es as EntitySetMem).components.keys() );
+
+        let cids = [];
+        (es as EntitySetMem).components.forEach( (v,cid) => {
+            let c = fromComponentId(cid)[1];
+            if( bf.get( c ) ){
+                cids.push( cid );
+            }
+        })
+        
+        return createComponentList( cids );
+
+        // Log.debug('[query]', 'resolved', bf );
+    }
+
+    return result;
+}
+
+/**
+ * Returns a list of entity ids which match against the bitfield
+ * 
+ * @param es 
+ * @param mbf 
+ * @param options 
+ */
+export function matchEntities( es:EntitySetMem, mbf:BitField, options:MatchOptions = {} ): EntityList|Entity[] {
+    let matches = [];
+    // let entities = new Map<number,BitField>();
+    let {returnEntities, limit} = options;
+    limit = limit !== undefined ? limit : Number.MAX_SAFE_INTEGER;
+
+    const isAll = BitField.isAllSet(mbf);// mbf.toString() === 'all';
+    for( let [eid, ebf] of es.entities ){
+        // console.log('[matchEntities]', 'limit', eid, mbf.toString(), ebf.toString(), BitField.or( mbf, ebf ));
+        if( isAll || BitField.or( mbf, ebf ) ){
+            if( returnEntities ){
+                matches.push( getEntity( es, eid ) );
+            } else {
+                matches.push( eid );
+                // entities.set(eid, ebf);
+            }
+
+            if( matches.length >= limit ){
+                break;
+            }
+        }
+    }
+
+    // Log.debug('[matchEntities]', 'dammit', entities );
+    return returnEntities ? matches : createEntityList( matches, mbf );
 }

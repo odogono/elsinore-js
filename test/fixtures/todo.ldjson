@@ -1,58 +1,30 @@
-[ "text" ]
-"/component/title"
-"@d"
-{"name":"isComplete", "type":"boolean", "default":false}
-"/component/completed"
-"@d"
-{"name":"priority", "type":"integer, "default": 0}
-"/component/priority"
-"@d"
+[ !format, "a" ]
+[ !require, @cr ]
+
+[ "!d", "/component/title", "text" ]
+[ "!d" "/component/completed", {"name":"isComplete", "type":"boolean", "default":false} ]
+[ "!d", "/component/priority", {"name":"priority", "type":"integer", "default": 0}]
+
+[ "!c", "/component/title", { "text":"get out of bed"} ]
+[ "!c", "/component/completed", {"isComplete":true}]
+[ "!c", "/component/priority", {"priority":10}]
+
+[ "!e", 100 ]
 
 
-{ "text":"get out of bed"} 
-"/component/title"
-"@c"
+[ "!c", "/component/title", { "text":"phone up friend"} ]
+[ "!c", "/component/completed", {"isComplete":true}]
+[ "!e", 101 ]
 
-{"isComplete":true}
-"/component/completed"
-"@c"
 
-{"priority":10}
-"/component/priority"
-"@c"
+[ "!c", "/component/title", { "text":"turn on the news"} ]
+[ "!c", "/component/completed", {"isComplete":false} ]
+[ "!e", 102 ]
 
-100
-"@e"
+[ "!c", "/component/title", { "text":"drink some tea"} ]
+[ "!e", 103 ]
 
-{ "text":"phone up friend"} 
-"/component/title"
-"@c"
-{"isComplete":true}
-"/component/completed"
-"@c"
-101
-"@e"
 
-{ "text":"turn on news"} 
-"/component/title"
-"@c"
-{"isComplete":false}
-"/component/completed"
-"@c"
-102
-"@e"
-
-{ "text":"drink some tea"}
-"/component/title"
-"@c"
-103
-"@e"
-
-{ "text":"do some shopping"} 
-"/component/title"
-"@c"
-{"priority":-5}
-"/component/priority"
-"@c"
-104
-"@e"
+[ "!c", "/component/title", { "text":"do some shopping"}]
+[ "!c", "/component/priority", {"priority":-5} ]
+[ "!e", 104 ]

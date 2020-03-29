@@ -4,20 +4,17 @@ import {ComponentRegistry, Type as ComponentRegistryT, createComponent } from '.
 import {  
     pushValues,
     peekV as peekQueryStack,
-    buildAndExecute as buildQuery,
     findV,
-    unshiftV,
-    InstDef,
-    BuildQueryFn,
-    BuildQueryParams,
-    QueryStack, 
-    buildAndExecute,
-    popValuesOfTypeV} from '../src/query/stack';
+    QueryStack,
+    StackValue
+} from '../src/query/stack';
 import { Entity,
     create as createEntityInstance, 
     getComponent as getEntityComponent,
     size as entitySize, 
-    isEntity} from '../src/entity';
+    isEntity,
+    EntityList} from '../src/entity';
+import { ComponentList } from '../src/component';
 import { EntitySet, 
     create as createEntitySet,
     size as entitySetSize,
@@ -25,11 +22,15 @@ import { EntitySet,
     removeComponent, 
     getEntity,
     getComponent,
-    createEntity} from '../src/entity_set';
+    getComponents as esGetComponents,
+    query as esQuery,
+    createEntity,
+    EntitySetMem} from '../src/entity_set';
 import { buildQueryStack, 
     buildComponentRegistry, 
     buildEntity, 
-    assertHasComponents } from './util/stack';
+    assertHasComponents, 
+    prepareFixture} from './util/stack';
 import { getChanges, ChangeSetOp } from '../src/entity_set/change_set';
 import { Type as ComponentT, fromComponentId, getComponentDefId, Component } from '../src/component';
 
@@ -55,14 +56,12 @@ describe('Entity Set (Mem)', () => {
     describe('Adding', () => {
 
         it('should create an entity (id)', () => {
-            let es:EntitySet = createEntitySet({});
+            let es = createEntitySet({});
             let id = 0;
 
             [es, id] = createEntity(es);
 
             assert.isAtLeast( id, 1 );
-
-            
         });
 
         it('should ignore an entity without an id', () => {
@@ -99,7 +98,7 @@ describe('Entity Set (Mem)', () => {
             
             assert.equal( entitySize(e), 3 );
             
-            let es:EntitySet = createEntitySet({});
+            let es = createEntitySet();
             
             es = esAdd( es, e );
             
@@ -226,5 +225,111 @@ describe('Entity Set (Mem)', () => {
         it('removes an entity and all its components', () => {});
     });
 
+    describe('Query', () => {
+
+        let es:EntitySet;
+        let registry:ComponentRegistry;
+
+        beforeEach( async () => {
+            [,registry,es] = await prepareFixture('todo.ldjson', {addToEntitySet:true});
+        })
+
+        it('retrieves by entity id', async () => {
+            // Log.debug('stack', stack.items);//, _getCallerFile() );
+            // 
+
+            let q = { '@e': 100 };
+            let list = esQuery( es, registry, q ) as EntityList;
+
+            // Log.debug('result', list);
+
+            assert.include( list.entityIds, 100 );
+            // entity id
+        })
+
+        it.only('retrieves components by def id', async () => {
+            // returns all components that match
+            let q = {'@c': '/component/completed' };
+            let list = esQuery( es, registry, q ) as ComponentList;
+
+            // Log.debug('es', es);
+
+            
+            let coms = esGetComponents( es, list );
+            
+            Log.debug('result', coms);
+
+            assert.equal( coms.length, 3 );
+            assert.ok( coms.reduce( (v,c) => v && 'isComplete' in c.attributes, true ) );
+
+            // [ value (component), entityId ]
+            // componentlist ( [entityId,defId] )
+        })
+
+        it('retrieves entities by def id', async () => {
+            // returns all entities that have this component
+            // {'@e': '/component/completed' },
+            // [ value (entityId) ]
+            // entitylist [ eid, ... ]
+        })
+
+        it('retrieves entity by id and def id', async () => {
+            // returns component on entity 101
+            // { '@e':101 '@c': '/component/completed' },
+            // [ value (component), entityId, defId ]
+            // component [eid,did] OR undefined
+        })
+
+        it('retrieves entities by def id', async () => {
+            // returns entities which have the components
+            // {"@e": ['/component/completed','/component/priority'] },
+            // entitylist - [ eid, ... ]
+        })
+
+        it('retrieves component attributes', async () => {
+            // returns the values of text on the component
+            // { '@at':'/component/title#text' },
+            // return [value, [eid,did],attr]  tuple [ value, entityid, defid, attrName ]
+            // [ 'drink some tea', {'@e':103, '@c':'/component/title, '@at':'text'} ]
+            // "drink some tea", { '@at':'/component/title#text' }, '=='
+            // exists? value|undefined
+            // "drink some tea", { '@c':'/component/title#text' }, '=='
+            // componentlist [ [eid,did], ... ]
+            // true, { '@e':'/component/completed#isComplete' }, '=='
+            // entitylist? 
+        })
+
+    })
 
 })
+
+
+// https://stackoverflow.com/a/29581862
+function _getCallerFile() {
+    var originalFunc = Error.prepareStackTrace;
+
+    var callerfile;
+    try {
+        var err = new Error();
+        var currentfile;
+
+        Error.prepareStackTrace = function (err, stack) { return stack; };
+
+        // let stack:string[] = err.stack as any;
+        let entry = (err.stack as any).shift();
+        // console.log('eNtRy', entry.getFunctionName());
+        currentfile = entry.getFileName();
+
+        while (err.stack.length) {
+            entry = (err.stack as any).shift();
+            // console.log('eNtRy', entry.getFunctionName());
+            callerfile = entry.getFileName();
+
+            if(currentfile !== callerfile) break;
+        }
+    } catch (e) {}
+
+    Error.prepareStackTrace = originalFunc; 
+
+    return callerfile;
+}

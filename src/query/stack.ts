@@ -2,10 +2,16 @@ import { createLog } from "../util/log";
 import { isObject, isString } from "../util/is";
 import { ComponentRegistry } from "../component_registry";
 import { Type as ComponentT, getComponentDefId } from "../component";
-import { Type as EntitySetT, matchEntities as esMatchEntities, EntitySet } from '../entity_set';
+import { Type as EntitySetT, matchEntities as esMatchEntities, EntitySet, getEntities } from '../entity_set';
 import { BitField } from "odgn-bitfield";
 import { MatchOptions } from '../constants';
-import { EntityList, createEntityList, Type as EntityT, Entity, getEntityId, EntityListType } from "../entity";
+import { EntityList, 
+    createEntityList, 
+    Type as EntityT, 
+    Entity, 
+    getEntityId, 
+    EntityListType,
+    EntityMap } from "../entity";
 import { VL } from "./insts/value";
 
 
@@ -18,8 +24,13 @@ export interface InstDefMeta {
 
 export interface InstModuleDef {
     meta: InstDefMeta;
-    compile?: Function;
-    execute?: Function;
+    compile?: (stack:QueryStack, val:StackValue) => StackValue;
+    execute?: (stack:QueryStack, val:StackValue) => InstResult;
+    executeAdd?: (stack:QueryStack, left:StackValue, right:StackValue) => InstResult;
+    executeSubtract?: (stack:QueryStack, left:StackValue, right:StackValue) => InstResult;
+    executeFetch?: (stack:QueryStack, container:StackValue, value:StackValue) => InstResult;
+    toStringValue?: (stack:QueryStack, value:StackValue) => InstResult;
+    toListValue?: (stack:QueryStack, value:StackValue) => InstResult;
 }
 
 export type InstDef = InstModuleDef | StackValue;
@@ -30,6 +41,7 @@ export type InstResult = [
 
 export type StackOp = string;
 export type StackValue = [ StackOp ] | [ StackOp, any ] ;
+export type StackValueCompiled = [ StackValue, InstModuleDef ];
 
 const AnyValue = 'VL';
 export const Type = '@qs';
@@ -60,10 +72,11 @@ export function isInstModuleDef(value:any):boolean {
     return isObject(value) && value.meta !== undefined;
 }
 
-/**
- * Pushes a stack value onto the stack
- */
-export function push( stack:QueryStack, value:any|StackValue ):[QueryStack,StackValue] {
+export function isStackValue(value:any):boolean {
+    return Array.isArray(value) && value.length == 2;
+}
+
+export function compile( stack:QueryStack, value:any ):StackValueCompiled {
     let op:string = VL;
     if( isObject(value) ){
         // Log.debug('[push]', 'value object', value, Object.prototype.toString.call(value) )
@@ -74,39 +87,62 @@ export function push( stack:QueryStack, value:any|StackValue ):[QueryStack,Stack
     } else {
         if( isString(value) && getInstruction(stack,value) !== undefined ){
             op = value;
-            value = [op]
+            value = [op, undefined];
         } else {
             value = [VL, value];
         }
     }
+
+    // Log.debug('[compile]', value );
 
     let instModule:InstModuleDef;
     let instDef = getInstruction( stack, op );
 
     if( isInstModuleDef(instDef) ){
         instModule = instDef as InstModuleDef;
-    } else {
+    } else if( instDef !== undefined ) {
+        // Log.debug('wuh?', instDef);
         [op] = value = (instDef as StackValue);
         instModule = getInstruction(stack,op) as InstModuleDef;
     }
 
     if( isInstModuleDef === undefined ){
         Log.debug(`unknown op ${op} ${JSON.stringify(value)}` );
-        return [stack, value];
+        return [value, undefined];
     }
 
+    if( instModule?.compile ){
+        // Log.debug('[compile]', value[0])
+        return [ instModule.compile( stack, value ), instModule];
+    }
+
+    // Log.debug('oh', op, value)
+
+    return [value, instModule];
+}
+
+/**
+ * Pushes a stack value onto the stack
+ */
+export function push( stack:QueryStack, value:any|StackValue ):[QueryStack,StackValue] {
+    let instModule:InstModuleDef;
+    let compiled = compile(stack, value);
+    // Log.debug('[push]','compile', value, compiled );
+    [ value, instModule ] = compiled;
+    
     let doPush = true;
     
     if( instModule?.execute ){
         // Log.debug('[push][execute]', value );
-        let result = instModule.execute(stack, ...value);
+        let result = instModule.execute(stack, value);
         if( Array.isArray(result) === false ){
-            Log.debug('[push][execute]', 'undefined result from', op, result );
+            Log.debug('[push][execute]', 'undefined result from', value, result );
         }
         [stack,value,doPush] = result;
         // Log.debug('[push][execute]', 'post', op, value === undefined );
         // Log.debug('[push][execute]', 'post', stack.items.map( ([op,]) => op ) );
     }
+    // Log.debug('[push][execute]', value );
     
     if( value !== undefined && doPush !== false ){
         stack = { ...stack, items: [...stack.items, value ] };
@@ -131,47 +167,6 @@ export function pushValues( stack:QueryStack, values:StackValue[]|any[] ): [Quer
     return [stack, value];
 }
 
-// export function pushValues( stack:QueryStack, values:StackValue[] ):QueryStack {
-//     for(let ii=0;ii<values.length;ii++ ){
-//         let [op,args] = values[ii];
-
-//         const instDef = getInstruction( stack, op );
-    
-//         if( instDef === undefined ){
-//             throw new Error(`unknown op ${op}: ${args}` );
-//         }
-        
-//         let compiled:StackValue;
-
-//         if( instDef.compile ){
-//             // Log.debug('[pushValues][compile]', op, args );
-//             [stack,compiled] = instDef.compile(stack, op, args);
-//         } else {
-//             compiled = [op,args];
-//         }
-        
-//         stack = {...stack, items:[...stack.items, compiled] };
-
-//         // stack = instDef.execute( stack, ...compiled );
-//     }
-//     return stack;
-// }
-
-// export function popExecute( stack:QueryStack ): QueryStack {
-//     let inst:StackValue;
-
-//     [stack, inst] = pop(stack);
-    
-//     const module = getInstruction(stack, inst[0] );
-
-//     if( module === undefined ){
-//         throw new Error(`instruction not found ${inst[0]}`);
-//     }
-
-//     stack = module.execute(stack, ...inst);
-
-//     return stack;
-// }
 
 /**
  * Prepends a value to the stack
@@ -237,7 +232,7 @@ export function pop(stack:QueryStack): [QueryStack,StackValue] {
  * @param stack 
  * @param type 
  */
-export function popValuesOfTypeV( stack:QueryStack, type:StackOp ): [QueryStack, any[]] {
+export function popOfType( stack:QueryStack, ...types:StackOp[] ): [QueryStack, StackValue[]] {
     const length = stack.items.length;
     if( length === 0 ){
         return [stack, []];
@@ -248,7 +243,7 @@ export function popValuesOfTypeV( stack:QueryStack, type:StackOp ): [QueryStack,
 
     for( ii;ii>=0;ii-- ){
         const value = stack.items[ ii ];
-        if( value[0] !== type ){
+        if( types.indexOf( value[0] ) === -1 ){
             break;
         }
         results.push( value );
@@ -260,7 +255,14 @@ export function popValuesOfTypeV( stack:QueryStack, type:StackOp ): [QueryStack,
         items: stack.items.slice(0, ii+1)
     };
 
-    return [stack, results.map( r => r[1] )];
+    return [stack, results];
+}
+
+export function popOfTypeV( stack:QueryStack, ...types:StackOp[] ): [QueryStack, any[]] {
+
+    let results = [];
+    [stack,results] = popOfType(stack, ...types );
+    return [stack, results.map( r => r[1] )]; 
 }
 
 export function peek(stack:QueryStack, offset:number = 0):StackValue {
@@ -326,81 +328,15 @@ export function findV( stack:QueryStack, type:StackOp ): any {
     const [_, value] = findWithIndex( stack, type );
     return value ? value[1] : undefined;
 }
+export function find( stack:QueryStack, type:StackOp ): StackValue {
+    const [_, value] = findWithIndex( stack, type );
+    return value;
+}
 
 
 export interface ExecuteOptions {
     pushResult?:boolean;
 }
-/**
- * Executes the top instruction on the stack if it can be executed
- * pushes the result back onto the stack
- * 
- * pops, executes, pushes 
- * 
- * @param stack 
- */
-// export function execute( stack:QueryStack, options:ExecuteOptions = {pushResult:true} ): [QueryStack,StackValue] {
-//     let value:StackValue;
-
-//     value = peek(stack);
-//     const op = value[0];
-    
-//     const module = getInstruction(stack, op );
-
-//     if( module === undefined ){
-//         throw new Error(`instruction not found ${op}`);
-//     }
-
-//     [stack] = pop(stack);
-
-//     if( module.execute ){
-
-//         Log.debug('[execute]', op, value, module.execute );
-//         [stack,value] = module.execute(stack, ...value);
-        
-//         Log.debug('[execute]', op, value, '->', stack.items )
-
-//         if( value !== undefined && options.pushResult ){
-//             Log.debug('[execute]', 'pushResult', value)
-//             stack = push( stack, value );
-//         }
-//     }
-
-//     return [ stack, value];
-// }
-
-
-/**
- * Pops and executes, returns the value
- * 
- * @param stack 
- */
-// export function popExecute(stack:QueryStack): [QueryStack,StackValue] {
-//     return execute( stack, {pushResult:false});
-// }
-
-
-// export function executeAll( stack:QueryStack ): QueryStack {
-//     // stack.items.reverse().reduce( (stack, inst) => {
-        
-//     // }, stack );
-
-//     while( true ){
-//         let inst = peek(stack);
-//         if( inst === undefined ){
-//             return stack;
-//         }
-//         const module = getInstruction(stack, inst[0] );
-//         if( module && module.execute ){
-//             [stack] = pop(stack);
-//             stack = module.execute(stack, ...inst);
-//         }
-//     }
-// }
-
-// export function executeOld( stack:QueryStack, stmts:any ): QueryStack {
-//     return stack;
-// }
 
 
 
@@ -415,9 +351,17 @@ export function addInstructionDef( stack:QueryStack, inst:InstModuleDef|InstModu
     const instructions = new Map<string, InstDef>( stack.instructions );
     
     if( Array.isArray(op) ){
-        (op as string[]).map( o => instructions.set( o, {meta,compile,execute} )  );
+        (op as string[]).map( o => {
+            if( instructions.get(o) !== undefined ){
+                Log.debug('[addInstructionDef]', 'warning overwriting inst', o, instructions.get(o));
+            }
+            instructions.set( o, inst )  
+        });
     } else {
-        instructions.set( op, {meta,compile,execute} ); 
+        if( instructions.get(op) !== undefined ){
+            Log.debug('[addInstructionDef]', 'warning overwriting inst', op, instructions.get(op));
+        }
+        instructions.set( op, inst ); 
     }
     
     return {
@@ -430,13 +374,14 @@ export function addInstructionDef( stack:QueryStack, inst:InstModuleDef|InstModu
 //     return stack.instructions.get( op );
 // }
 
-export function getInstruction( stack:QueryStack, op:StackOp ): InstDef {
-    const def = stack.defs[op];
-    if( def !== undefined ){
-        return def;
+export function getInstruction( stack:QueryStack, op:StackOp, moduleOnly:boolean = false ): InstDef {
+    if( !moduleOnly ){
+        const def = stack.defs[op];
+        if( def !== undefined ){
+            return def;
+        }
     }
     return stack.instructions.get( op );
-    // return stack.instructions.get( op );
 }
 
 
@@ -450,45 +395,6 @@ export function getDef(stack:QueryStack, name:string): StackValue {
 }
 
 
-export type buildDefFn = (uri: string, ...args: any[]) => void;
-export type buildComponentFn = (uri: string, props:object) => void;
-export type buildInstFn = (...args: any[]) => void;
-export type buildEntityFn = () => void;
-export type buildValueFn = (registry: ComponentRegistry) => void;
-export interface BuildQueryParams {
-    def:buildDefFn, 
-    component: buildComponentFn,
-    entity:buildEntityFn,
-    inst:buildInstFn,
-    value:buildValueFn
-}
-export type BuildQueryFn = (BuildQueryParams) => void;
-
-export function build( stack:QueryStack, buildFn:BuildQueryFn ):any[] {
-
-    let stmts = [];
-
-    const def = (uri:string, args) => 
-        stmts = [...stmts, [VL, args], [VL, uri], [ '@d' ] ];
-    const component = (uri:string, props:object) => 
-        stmts = [...stmts, [VL,props], [VL,uri], ['@c']];
-    const entity = () => stmts.push( [ '@e'] );
-    const value = (registry:ComponentRegistry) => stmts.push( [ getValueType(registry), registry ] );
-    const inst = (...args) => stmts.push(args);
-
-    buildFn( {inst, component, def, entity, value} );
-
-    
-
-    return stmts;
-}
-
-function getValueType( value:any ): string {
-    if( isObject(value) && isString(value.type) ){
-        return value.type;
-    }
-    return VL;
-}
 
 export function assertStackSize( stack:QueryStack, expected:number, msg?:string ) {
     const len = stack.items.length;
@@ -514,22 +420,14 @@ export function assertStackValueType( stack:QueryStack, index:number, opType:str
     if( argType !== undefined && typeof value[1] !== argType ){
         throw new Error(`expected arg of type ${argType} at index ${idx} : got ${typeof value[1]}`);
     }
-    
 }
 
-export function buildAndExecute( stack:QueryStack, buildFn:BuildQueryFn ): QueryStack {
-    const stmts = build( stack, buildFn );
+// export function assertStackValue( value:StackValue, type:StackOp ) {
+//     if( value[0] !== type ){
+//         throw new Error(`expected value of type ${type} : got ${value[0]}`);
+//     }
+// }
 
-    // Log.debug('[buildFn]', stmts);
-
-    [stack] = pushValues( stack, stmts );
-
-    // stack = stmts.reduce( (stack,inst) => push(stack,inst), stack );
-
-    // [stack] = execute( stack );
-
-    return stack;
-}
 
 
 
@@ -544,6 +442,7 @@ export function matchEntities( stack:QueryStack, bf:BitField, options:MatchOptio
     const limit = options.limit !== undefined ? options.limit : Number.MAX_SAFE_INTEGER;
 
     let eids:number[] = [];
+    let entities:EntityMap = new Map<number,BitField>();
 
     // work down the stack
     for( let ii = stack.items.length-1; ii >= 0; ii-- ){
@@ -555,14 +454,16 @@ export function matchEntities( stack:QueryStack, bf:BitField, options:MatchOptio
         //     Log.debug('[matchEntities]', getEntityId(val), bf.toValues(), val.bitField.toValues() )
         // }
         if( type === EntitySetT ){
-            return [ esMatchEntities( val, bf ), [type,val] ];
+            return [ esMatchEntities( val, bf ) as EntityList, [type,val] ];
         }
         else if( type === EntityT ){
-            if( getEntityId(val) !== 0 && BitField.or(bf, val.bitField) ){
+            let eid = getEntityId(val);
+            if( eid !== 0 && BitField.or(bf, val.bitField) ){
                 
-                eids.push( getEntityId(val) );
+                eids.push( eid );
+                entities.set(eid,val.bitField);
 
-                // return [createEntityList( [getEntityId(val)], bf), [type,val]];
+                // return [createEntityList( [eid], bf), [type,val]];
             }
             // break;
         }
@@ -612,19 +513,18 @@ export function popEntity( stack:QueryStack ): [QueryStack, Entity | Entity[]] {
 function resolveEntityList( stack:QueryStack, list:EntityList ): Entity[] {
     let result = [];
 
-    // Log.debug('[dammit]', stack.items );
-
     for( let ii = stack.items.length-1; ii >= 0; ii-- ){
         const [type,val] = stack.items[ii];
 
         if( type === EntityT ){
             const eid = getEntityId(val);
-            if( !list.entityIds ){
-            }
             // list.entityIds.find( leid => leid === eid )
             if( list.entityIds.indexOf(eid) !== -1 ){
                 result.push( val );
             }
+        }
+        else if( type === EntitySetT ){
+            return getEntities( val, list );
         }
     }
 

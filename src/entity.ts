@@ -6,8 +6,15 @@ export const Type = '@e';
 
 export const EntityListType = '@el';
 
+
+// type EntityMap = Map<number, BitField>;
+export type EntityMap = Map<number, BitField>;
+
 export interface EntityList {
     entityIds: number[];
+    // a map of entityId to comDef ids
+    // NO - only entityIds, anything else runs the risk of becoming stale
+    // entities: EntityMap;
     // used to record the bitfield that compiled this list
     // this enables the list to be used as an index
     bf?: BitField;
@@ -34,6 +41,10 @@ export function create( id:number = 0 ):Entity {
 
 export function createEntityList( entityIds:number[] = [], bf?:BitField ): EntityList {
     return {entityIds, bf};
+}
+
+export function isEntityList(value:any):boolean {
+    return isObject(value) && 'entityIds' in value;
 }
 
 export function createBitfield( ebf?:BitField|'all' ):BitField {

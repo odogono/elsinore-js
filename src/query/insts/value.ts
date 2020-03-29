@@ -6,12 +6,12 @@ const Log = createLog('Inst][Value');
 export const VL = 'VL';
 
 export const meta:InstDefMeta = {
-    op: ['VL', '@cr']
+    op: ['VL']
 };
 
-export function compile(stack:QueryStack, op:string, value:any): [QueryStack, StackValue] {
-    return [ stack, [op,value] ];
-}
+// export function compile(stack:QueryStack, op:string, value:any): [QueryStack, StackValue] {
+//     return [op,value];
+// }
 
 // export function execute( stack:QueryStack, op:string, value:any ):QueryStack {
 //     return stack; //return pushV( stack, value );

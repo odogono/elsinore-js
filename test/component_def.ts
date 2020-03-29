@@ -5,9 +5,10 @@ import {
     createProperty,
     propertyToObject,
     toObject as componentDefToObject,
-    create as createComponentDef
+    create as createComponentDef,
+    getDefId
 } from '../src/component_def';
-import { Component } from '../src/component';
+import { Component, getComponentDefId } from '../src/component';
 import { createLog } from '../src/util/log';
 import { toPascalCase } from '../src/util/to';
 import util from 'util';
@@ -54,5 +55,16 @@ describe('ComponentDef', () => {
             uri: '/component/piece/knight',
             properties: [ { name: 'rank' }, { name: 'file' } ]
         });
+    });
+
+    it('should create from an instance', () => {
+        const data = { uri: '/component/piece/knight', properties:[ 'rank', 'file' ] };
+        let def = createComponentDef(data);
+
+        def = createComponentDef( 22, def );
+
+
+        assert.equal( getDefId(def), 22 );
+        Log.debug('def', def);
     })
 });

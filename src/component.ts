@@ -11,7 +11,7 @@ export const Type = '@c';
 export type ComponentId = string; //[number, number];
 
 export interface ComponentList {
-    componentIds: ComponentId[];
+    cids: ComponentId[];
 }
 
 export interface Component {
@@ -52,6 +52,14 @@ export function create(params:object):Component {
     // console.log('[Component][create]', toObject(result) );
 
     return result;
+}
+
+export function createComponentList( cids:ComponentId[] ){
+    return { cids };
+}
+
+export function isComponentList(value:any):boolean {
+    return isObject(value) && 'cids' in value;
 }
 
 export function getComponentId( component:Component ): ComponentId {

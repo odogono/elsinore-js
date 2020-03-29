@@ -11,15 +11,19 @@ import {
 import { create as createQueryStack, 
     push as pushQueryStack,
     peekV as peekQueryStack,
-    buildAndExecute as buildQuery,
+    
     pushValues,
     findV,
     QueryStack, 
-    BuildQueryParams,
     StackValue,
     popEntity,
     push} from '../src/query/stack';
-    import { EntitySet, 
+    import { Type as EntityT } from '../src/entity';
+import {
+    BuildQueryParams, 
+    buildAndExecute as buildQuery 
+} from '../src/query/build';
+import { EntitySet, 
         create as createEntitySet,
         size as entitySetSize,
         add as esAdd, 
@@ -32,21 +36,24 @@ import {
     getByUri
  } from '../src/component_registry';
 import { createLog } from '../src/util/log';
-import util from 'util';
-import { stringify } from '../src/util/json';
 import { Select } from '../src/query/insts/select';
 
 
-import { Entity, getComponent } from '../src/entity';
+import { Entity, getComponent, getEntityId } from '../src/entity';
 import { 
     prepareFixture,
     buildQueryStack, 
     serialiseStack, 
     assertHasComponents,
-    assertIncludesComponents} from './util/stack';
+    assertIncludesComponents,
+    serialiseEntitySet,
+    serialiseEntity} from './util/stack';
 import Path from 'path';
 import { loadFixture } from './util/import';
 import { VL } from '../src/query/insts/value';
+import { Get, Fetch } from '../src/query/insts/stack';
+import { Attribute } from '../src/query/insts/attribute';
+import { BF } from '../src/query/insts/bitfield';
 const Log = createLog('TestQuery');
 
 
@@ -62,10 +69,12 @@ describe('Query', () => {
                 7, 7, '==',
             '==',
         ];
-
+        
         let value:StackValue;
         let stack = buildQueryStack();
         [stack, value] = pushValues( stack, insts );
+        
+        // Log.debug('stack', stack.items )
 
         assert.ok( value[1], 'the values are equal' );
     });
@@ -80,8 +89,31 @@ describe('Query', () => {
             'rank',
             'PT'
         ]);
-
+        
         assert.deepEqual( value[1], {rank: 1} );
+        
+        
+        // add op works providing first element is the object
+        [stack,value] = pushValues( stack, [
+            'b',
+            'file',
+            {},
+            '+'
+        ]);
+
+        
+        assert.deepEqual( value[1], {file: 'b'} );
+        
+        [stack,value] = pushValues( stack, [
+            'CLS',
+            'rank',
+            { name:'knight', rank:5, file:'e' },
+            '-'
+        ]);
+        
+        // Log.debug('stack', stack.items )
+        
+        assert.deepEqual( value[1], {name:'knight', file: 'e'} );
 
         // [stack,value] = pushValues( stack, [
         //     'rank',
@@ -295,15 +327,17 @@ describe('Query', () => {
             let value:StackValue;
             let [stack,registry] = await prepareFixture('todo.ldjson');
 
+            // add entities on stack to an entityset
+            [stack] = push( stack, '@es' );
             
             // execute a select. the result will be a new entitylist
             // on the stack
             [stack,value] = pushValues(stack, [ 
-                '/component/priority', 
+                '/component/priority',
                 Select.AllEntities
             ]);
-                
-            // Log.debug('loaded', stack.items );
+            
+            // Log.debug('loaded', stack.items[2] );
             
             // // resolve the entity list to entities
             [stack, ents] = popEntity( stack );
@@ -329,31 +363,50 @@ describe('Query', () => {
             [stack] = pushQueryStack( stack, [ComponentRegistryT,registry] );
 
             [stack] = pushValues(stack, [
-                [ 'VL', { "properties":[ "rank", "file" ] } ],
-                [ 'VL', "/piece/knight" ],
+                [ VL, { "properties":[ "rank", "file" ] } ],
+                [ VL, "/piece/knight" ],
                 [ "@d" ],
     
-                [ 'VL', { "rank": 1, "file": "g" } ],
-                [ 'VL', "/piece/knight" ],
-                [ "@c" ],
+                [ VL, { "rank": 1, "file": "g" } ],
+                [ VL, "/piece/knight" ],
+                [ '@c' ],
             ]);
 
-            [stack,value] = push( stack, ['AT', '/piece/knight#file'] );
+            [stack,value] = pushValues( stack, [
+                [ Attribute, '/piece/knight#file'],
+                Get
+            ]);
 
             assert.equal( value[1], 'g' );
 
             // Log.debug('stack', stack.items );
         });
 
-        it('selects entities which match the component attribute value', async () => {
+        it('selects components which match the component attribute', async () => {
             let ents;
             let [stack,registry] = await prepareFixture('todo.ldjson', {addToEntitySet:true});
             let value:StackValue;
-
+            
             // [stack,value] = push( stack, ['AT', '/component/completed#isComplete'] );
-            [stack,value] = push( stack, ['AT', '/component/title#text'] );
+            [stack,value] = pushValues( stack, [
+                // { '@c':'/component/title#text' }
+                { '@c':'/component/title#text' },
+                [ 'turn on the news', { '@c':'/component/title#text' }, '=='],
+                [Attribute, '/component/title#text'], // return attribute values
+                // { '@c':'/component/title' }
+                [ '@c', '/component/title'], // return components
+                // { '@e':'/component/title' }
+                [ "@bf", '/component/title'], // return entities
+                // { '@e':100 }
+                [ '@e', 100], // fetch entity by id
+                { '@e':100, '@c': '/component/title' }, // fetch component from entity 100
+                [ '@c', '@e', 100, '@d', '/component/title' ], // fetch component by entity id
+                Fetch
+            ]);
 
-            // Log.debug('value', value );
+            // Log.debug( serialiseEntitySet( value[1], registry ) );
+            // Log.debug('stack', stack.items );
+
             assert.deepEqual( value, 
                 [ VL, [
                   'do some shopping',
@@ -364,6 +417,74 @@ describe('Query', () => {
                 ] ] );
 
             // Log.debug('stack', stack.items );
+        });
+
+        it.only('indicates whether any of the entities have the given component attribute value', async () => {
+            let ents;
+            let [stack,registry] = await prepareFixture('todo.ldjson', {addToEntitySet:true});
+            let value:StackValue;
+
+            // [stack] = push(stack, ['@debug',true] );
+            
+            [stack,value] = pushValues( stack, [
+                '[', 
+                'turn on news',
+                ['AT', '/component/title#text'],
+                '==', ']',
+                Select.AllEntities
+            ] );
+
+            // [stack] = push(stack, ['@debug',false] );
+
+            Log.debug('stack', stack.items );
+            // returns true since the array of values that the AL returns
+            // contains the string
+            assert.deepEqual(value, [VL,true] );
+        });
+
+        it('selects entity by id', async () => {
+            let ents;
+            let [stack,registry] = await prepareFixture('todo.ldjson', {addToEntitySet:true});
+            let value:StackValue;
+
+            [stack,value] = pushValues( stack, [
+                101,
+                Select.Entity
+            ]);
+            assert.equal( getEntityId( value[1] ), 101 );
+            
+            
+            // matches the previous entity by a component defid
+            [stack,value] = pushValues( stack, [
+                '/component/title',
+                Select.Entity
+            ]);
+
+            // Log.debug( serialiseEntity(value[1], findV(stack,ComponentRegistryT) ));
+            // assert.equal( getEntityId( value[1] ), 104 );
+            assertIncludesComponents( registry, value[1], ['/component/title'] );
+
+            // Log.debug('stack', stack.items)
+        });
+
+        it('selects entities which match the component attribute value', async () => {
+            let ents;
+            let [stack,registry] = await prepareFixture('todo.ldjson', {addToEntitySet:true});
+            let value:StackValue;
+
+            
+            [stack,value] = pushValues( stack, [
+                // define a function that gets passed to entity select
+                '[', 'turn on news', ['AT', '/component/title#text'], '==', ']',
+                Select.AllEntities,
+            ] );
+
+            // Log.debug('stack', stack.items)
+            Log.debug('value', value)
+
+            // returns true since the array of values that the AL returns
+            // contains the string
+            // assert.deepEqual(value, [VL,true] );
         });
 
         it('selects entities which match the component attribute value', async () => {
@@ -394,11 +515,14 @@ describe('Query', () => {
 
             [stack] = pushValues( stack, [
 
-                '[', 
-                true,
-                [ 'AT', '/component/completed#isComplete' ],
-                '==',
-                ']',
+                '[', true, [ 'AT', '/component/completed#isComplete' ], '==', ']',
+
+                // optimisation: after the inst runs, cache the required coms
+
+                // Select. compiles all entities
+                // fn is evaluated against each entity bf
+                // when the AT is reached, the e component is resolved
+                // if the entity has the com, the value is extracted
 
                 // FN true '/component/completed#isComplete' AT == END
                 // [ 'FN', [ true, '/component/completed#isComplete', AT, == ] ]
@@ -406,6 +530,38 @@ describe('Query', () => {
                 // next - test fn declaration - FN starts a new stack, prevents execution when pushing
                 Select.AllEntities,
             ]);
+
+            // query = [
+            //     {:AL, {:VL, "/component/piece/pawn"}},
+            //     {
+            //       :AND,
+            //       # evals all with a file = a
+            //       {:==, {:AT, "/component/position#file"}, {:VL, "a"}},
+            //       {:==, {:AT, "/component/position#rank"}, {:VL, 2}}
+            //     }
+            //   ]
+
+            [
+                // select entities with /component/piece/pawn where rank = 2 and file = a
+                'a', ['AT', '/component/position#file'], '==',
+                2, ['AT', '/component/position#rank'], '==',
+                'AND',
+                [ 'COM', '/component/piece/pawn' ],
+                'AND',
+                // /component/piece/pawn && (/component/position#rank == 2 && /component/position#file == a)
+                // select entities which have /component/piece/pawn == list of entities
+                // select entities which have /component/position == list of entities
+                // match rank attribute against 2 == list of entities - equals(bf,rank,2)
+                // match file attribute against a == list of entities - equals(bf,file,a)
+
+                Select.AllEntities
+            ]
+
+            // <expr> <expr> AND
+            // <expr> <expr> OR
+
+
+            // select /component/piece/pawn
 
             // Log.debug('stack', stack.items)
         });//*/
