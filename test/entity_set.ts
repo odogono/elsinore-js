@@ -26,7 +26,9 @@ import { EntitySet,
     getEntities as esGetEntities,
     query as esQuery,
     createEntity,
-    EntitySetMem} from '../src/entity_set';
+    EntitySetMem,
+    ESQuery,
+    compileQueryPart} from '../src/entity_set';
 import { buildQueryStack, 
     buildComponentRegistry, 
     buildEntity, 
@@ -34,6 +36,7 @@ import { buildQueryStack,
     prepareFixture} from './util/stack';
 import { getChanges, ChangeSetOp } from '../src/entity_set/change_set';
 import { Type as ComponentT, fromComponentId, getComponentDefId, Component } from '../src/component';
+import { VL } from '../src/query/insts/value';
 
 const Log = createLog('TestEntitySet');
 
@@ -250,7 +253,7 @@ describe('Entity Set (Mem)', () => {
 
         it('retrieves components by def id', async () => {
             // returns all components that match
-            let q = {'@c': '/component/completed' };
+            let q = {'@d': '/component/completed' };
             let list = esQuery( es, registry, q ) as ComponentList;
 
             // Log.debug('es', es);
@@ -278,30 +281,111 @@ describe('Entity Set (Mem)', () => {
             // entitylist [ eid, ... ]
         })
 
-        it.only('retrieves entity by id and def id', async () => {
+        it('retrieves entity by id and def id', async () => {
             // returns component on entity 101
             // the trick here is that this is a two pass op.
             // first the entity is selected, then the component
             // the result is a componentlist because of the component
-            let q = { '@e':101, '@c': '/component/completed' };
+            let q = { '@e':101, '@d': '/component/completed' };
             let list = esQuery( es, registry, q ) as ComponentList;
             
             // Log.debug('result', es);
             
             let coms = esGetComponents( es, list );
             
-            Log.debug('result', coms);
+            // Log.debug('result', coms);
 
             assert.equal( getComponentEntityId( coms[0] ), 101 );
+        });
+
+        it.only('compiles query', async () => {
+            let cases = [
+                [
+                    // select entity by id
+                    { '@e': 100 },
+                    [ '@e', 100 ],
+                ],
+                [
+                    // select entities with components
+                    {'@e': ['/component/completed', '/component/title'] },
+                    ['EC', [1,2] ],
+                ],
+                [
+                    // select def
+                    {'@d': '/component/completed' },
+                    ['@d', [2]],
+                ],
+                [
+                    // select components
+                    {'@d': ['/component/completed', '/component/title'] },
+                    ['@d', [1,2] ],
+                ],
+                [
+                    // select component on entity
+                    { '@e':101, '@d': '/component/completed' },
+                    [ 'EC', 101, [2] ]
+                ],
+                [
+                    // select attribute on entity
+                    { '@e': 102, '@a':'title' },
+                    [ 'EA', 102, 'title' ]
+                ],
+                [
+                    // select component attribute
+                    { '@d': '/component/title', '@a':'text' },
+                    [ 'CA', [1], 'text']
+                ],
+                [
+                    // select attribute on component
+                    { '@e': ['/component/priority','/component/completed'], '@a':'priority' },
+                    [ 'CA', [2,3], 'priority']
+                ]
+            ];
+
+            cases.forEach( ([q,expected]) => {
+                let cq = compileQueryPart(es,registry,q);
+                Log.debug('compiled', cq);
+                assert.deepEqual( cq, expected );
+            })
+
         })
 
-        it('retrieves entities by def id', async () => {
+        it('retrieves component attributes', async () => {
+            let q:ESQuery = { '@d': '/component/title', '@a':'text' };
             // returns entities which have the components
+
+            
+
+            let list = esQuery( es, registry, q );
+             
+            Log.debug('result', list);
+
+            assert.lengthOf( list as any, 5 );
+            assert.equal(list[0][2], 'do some shopping');
+
+            // returns a list of component attributes associated to an entity 
+            q = { '@e': ['/component/priority','/component/completed'], '@a':'priority' };
+            // q = { '@e': ['/component/priority','/component/completed'] };
+
+            list = esQuery( es, registry, q );
+             
+            Log.debug('result', list); // [ 'CV', '[100,3]', 10 ]
+
+            assert.deepEqual( (list as any).map( v => v[2] ), [10] );
+
+            // [ eid, attrVal ]
             // {"@e": ['/component/completed','/component/priority'] },
             // entitylist - [ eid, ... ]
         })
 
         it('retrieves component attributes', async () => {
+            
+            // let q = [ [VL,'drink some tea'], { '@d': '/component/title', '@a':'text' }, '=='];
+            let q = [ '==', { '@d': '/component/title', '@a':'text' }, [VL,'drink some tea'] ];
+            // select attributes
+            // select components which have an attribute
+            // selects /component/title
+
             // returns the values of text on the component
             // { '@at':'/component/title#text' },
             // return [value, [eid,did],attr]  tuple [ value, entityid, defid, attrName ]

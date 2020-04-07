@@ -6,7 +6,7 @@ const Log = createLog('Inst][Value');
 export const VL = 'VL';
 
 export const meta:InstDefMeta = {
-    op: ['VL']
+    op: [VL]
 };
 
 // export function compile(stack:QueryStack, op:string, value:any): [QueryStack, StackValue] {
@@ -18,7 +18,7 @@ export const meta:InstDefMeta = {
 // }
 
 export function valueOf( value:(['VL', any]|any) ): any {
-    if( Array.isArray(value) && value[0] === 'VL' ){
+    if( Array.isArray(value) && value[0] === VL ){
         return value[1];
     }
     return value;

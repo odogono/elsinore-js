@@ -6,12 +6,13 @@ export const Type = '@e';
 
 export const EntityListType = '@el';
 
+export type EntityId = number;
 
 // type EntityMap = Map<number, BitField>;
-export type EntityMap = Map<number, BitField>;
+export type EntityMap = Map<EntityId, BitField>;
 
 export interface EntityList {
-    entityIds: number[];
+    entityIds: EntityId[];
     // a map of entityId to comDef ids
     // NO - only entityIds, anything else runs the risk of becoming stale
     // entities: EntityMap;
@@ -21,7 +22,7 @@ export interface EntityList {
 }
 
 export interface Entity {
-    [Type]: number;
+    [Type]: EntityId;
 
     // maps component defId to Component
     components: Map<number, Component>;
