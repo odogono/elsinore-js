@@ -54,8 +54,6 @@ export interface EntitySet {
 
     uuid: string;
 
-
-
     entChanges: ChangeSet<number>;
 
     comChanges: ChangeSet<ComponentId>;

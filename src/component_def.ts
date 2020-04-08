@@ -83,6 +83,12 @@ export function createFromObj({id, name, uri, properties, ...extra}): ComponentD
     // # use the provided or extract from the last part of the uri
     // name = name || uri |> String.split("/") |> List.last() |> Macro.camelize()
 
+    if( '@d' in extra ){
+        let {['@d']: did, ...res} = extra;
+        id = extra['@d'];
+        extra = res;
+    }
+
     if( !name ){
         // console.log('[createFromObj]', 'creating name from', uri );
         let parts:string[] = uri.split('/').reverse();
@@ -94,7 +100,7 @@ export function createFromObj({id, name, uri, properties, ...extra}): ComponentD
     } else if( Array.isArray(properties) ){
         properties = properties.map( prop => createProperty(prop) );
     } else {
-        console.log('but what', properties );
+        // console.log('but what', properties );
     }
 
     return {
