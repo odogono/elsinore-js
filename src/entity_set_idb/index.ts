@@ -74,15 +74,12 @@ export interface EntitySetIDB extends EntitySet {
     isComponentRegistry: boolean;
 
     // keep a reference to the open es db
-    db: IDBDatabase;
-    // a map of {entity_id, def_id} to Component.t
-    // components: Map<ComponentId, Component>;
-    
-    // a map of entityId to Bitfield
-    // entities: Map<number, BitField>;
+    db?: IDBDatabase;
 
+    // records entity changes from the last op
     entChanges: ChangeSet<number>;
     
+    // records component changes from the last op
     comChanges: ChangeSet<ComponentId>;
 
     // cached component defs
@@ -109,7 +106,11 @@ export function create(options?:CreateEntitySetParams):EntitySetIDB {
     }
 }
 
-
+/**
+ * Registers a new ComponentDef in the entityset
+ * @param es 
+ * @param value 
+ */
 export async function register( es: EntitySetIDB, value:ComponentDef|ComponentDefObj|any ): Promise<[EntitySetIDB, ComponentDef]> {
 
     es = await openEntitySet(es);
@@ -132,57 +133,8 @@ export async function register( es: EntitySetIDB, value:ComponentDef|ComponentDe
     es.byUri.set( def.uri, did );
     es.byHash.set( hash, did );
 
-    // let all = store.openCursor();
-    // all.onsuccess = (evt) => {
-    //     let cursor = (evt.target as any).result;
-    //     if (cursor) {
-    //         let key = cursor.primaryKey;
-    //         let value = cursor.value;
-    //         // Log.debug('[register][all]', value);
-    //         cursor.continue();
-    //     }
-    //     else {
-    //         // no more results
-    //     }
-    // }
-
     return [es, def];
 }
-
-// export function getByHash( es:EntitySetIDB, hash:number ): ComponentDef {
-//     const did = es.byHash.get( hash );
-//     return did === undefined ? undefined : es.componentDefs[did-1];
-// }
-
-// export function getByDefId( es:EntitySetIDB, defId:number ): ComponentDef|undefined {
-//     return es.componentDefs[defId-1];
-// }
-
-// export function getByUri( es:EntitySetIDB, uri:string ): ComponentDef|undefined {
-//     const did = es.byUri.get( uri );
-//     // Log.debug('[getByUri]', did, es.componentDefs[did]);
-//     return did === undefined ? undefined : es.componentDefs[did-1];
-
-//     // es = await openEntitySet(es);
-
-//     // const tx = es.db.transaction(STORE_COMPONENT_DEFS, 'readonly');
-//     // const store = tx.objectStore(STORE_COMPONENT_DEFS);
-//     // const idx = store.index('by_uri');
-
-//     // let def = await idbGet(idx, uri);
-
-//     // return def ? createComponentDef(def) : undefined;
-// }
-
-// export async function getByHash( es:EntitySetIDB, hash:number ): Promise<ComponentDef|undefined> {
-//     es = await openEntitySet(es);
-
-//     const store = es.db.transaction(STORE_COMPONENT_DEFS, 'readonly').objectStore(STORE_COMPONENT_DEFS);
-//     const idx = store.index('by_hash');
-
-//     let def = await idbGet(idx, hash);
-//     return def ? createComponentDef(def) : undefined;
-// }
 
 export async function getComponentDefs( es:EntitySetIDB ): Promise<ComponentDef[]> {
     es = await openEntitySet(es, {readDefs:false});
@@ -429,26 +381,12 @@ async function applyRemoveComponent(es: EntitySetIDB, cid: ComponentId): Promise
     }
 
     // remove the component id from the entity
-    // let entities = new Map<number, BitField>(es.entities);
-    // let ebf = createBitfield(entities.get(eid));
     e.bitField.set(did, false);
-    // ebf.set(did, false);
-    
-    // entities.set(eid, ebf);
 
     // remove component
 
     const store = es.db.transaction(STORE_COMPONENTS, 'readwrite').objectStore(STORE_COMPONENTS);
     await idbDelete(store, [eid,did] );
-    
-    // let components = new Map<ComponentId, Component>(es.components);
-    // components.delete(cid);
-
-    // es = {
-    //     ...es,
-    //     entities,
-    //     components
-    // }
 
     // Log.debug('[applyRemoveComponent]', cid, ebf.count() );
 

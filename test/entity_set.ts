@@ -226,7 +226,7 @@ describe('Entity Set (Mem)', () => {
 
         });
         
-        it.only('removes an entity and all its components', () => {
+        it('removes an entity and all its components', () => {
             let e:Entity;
             let es = createEntitySet({});
 
