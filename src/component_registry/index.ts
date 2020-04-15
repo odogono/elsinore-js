@@ -4,7 +4,8 @@ import { ComponentDef,
     hash as hashComponentDef, 
     getDefId,
     getProperty,
-    ComponentDefObj} from "../component_def";
+    ComponentDefObj,
+    isComponentDef} from "../component_def";
 import { createUUID } from "../util/uuid";
 import { createLog } from "../util/log";
 import { isString, isInteger } from "../util/is";
@@ -22,10 +23,8 @@ export interface ComponentRegistry {
 
     uuid: string;
 
-    componentDefs: ComponentDefs;
-
+    componentDefs: ComponentDef[];
     byUri: Map<string, number>;
-
     byHash: Map<number, number>;
 }
 
@@ -74,7 +73,7 @@ export function resolveComponentDefIds( registry:ComponentRegistry, dids:Resolve
     }
 
     const defs:ComponentDef[] = (dids as []).map( did => {
-        // Log.debug('[resolveComponentDefIds]', did );
+        // Log.debug('[resolveComponentDefIds]', did, registry );
         if( isString(did) ){
             return getByUri( registry, did );
         }
@@ -167,7 +166,7 @@ export function register( registry:ComponentRegistry, value:ComponentDef|Compone
 /**
  * 
  */
-export function createComponent( registry:ComponentRegistry, defId:(string|number), attributes ): Component {
+export function createComponent( registry:ComponentRegistry, defId:(string|number), attributes = {} ): Component {
     let def:ComponentDef = undefined;
 
     // Log.debug('[createComponent]', defId, attributes, registry );
@@ -175,6 +174,8 @@ export function createComponent( registry:ComponentRegistry, defId:(string|numbe
         def = getByUri(registry,  defId as string );
     } else if( isInteger(defId) ){
         def = getByHash(registry, defId as number) || registry.componentDefs[(defId as number)-1];
+    } else if( isComponentDef(defId) ){
+        def = defId as any as ComponentDef;
     }
 
     if( def === undefined ){

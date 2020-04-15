@@ -70,6 +70,10 @@ export const toComponentId = ( eid:number, did:number ) => JSON.stringify([eid,d
 
 export const isComponentId = (val:any) => isString(val);
 
+/**
+ * Returns the entityId and defId from a ComponentId
+ * @param id 
+ */
 export function fromComponentId( id:ComponentId ): [number,number] {
     return JSON.parse(id);
     // return id.split(',');

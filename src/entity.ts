@@ -101,7 +101,7 @@ export function getEntityId( entity:Entity ): number {
 }
 
 export function setEntityId( entity:Entity, id:number ): Entity {
-    return entity;
+    return {...entity, [Type]:id};
 }
 
 export function getComponent( entity:Entity, defId:number ): Component {

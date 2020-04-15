@@ -1,19 +1,70 @@
-import { CreateEntitySetParams, EntitySet } from "../entity_set";
+import { 
+    AddOptions,
+    AddType,
+    clearChanges,
+    CreateEntitySetParams, 
+    EntitySet,
+    markEntityAdd,
+    markComponentUpdate,
+    markComponentRemove,
+    markEntityUpdate,
+    markEntityRemove,
+    RemoveType,
+} from "../entity_set";
 import { createUUID } from "../util/uuid";
 import { ChangeSet,
     create as createChangeSet,
-    add as addCS, update as updateCS, remove as removeCS, ChangeSetOp, getChanges 
+    add as addCS, 
+    update as updateCS, 
+    find as findCS,
+    remove as removeCS, ChangeSetOp, getChanges 
 } from "../entity_set/change_set";
-import { ComponentId } from "../component";
-import { ComponentDef, ComponentDefObj, create as createComponentDef, toObject as defToObject } from '../component_def';
+import { ComponentId, isComponent, 
+    setEntityId as setComponentEntityId,
+    create as createComponentInstance,
+    isComponentId,
+    getComponentId,
+    Component, getComponentDefId, getComponentEntityId, fromComponentId, toComponentId } from "../component";
+
+import { ComponentDef, 
+    ComponentDefObj, 
+    create as createComponentDef, 
+    toObject as defToObject,
+    hash as hashDef, 
+    isComponentDef,
+    Type as ComponentDefT} from '../component_def';
 import { createLog } from "../util/log";
+import { 
+    Type as EntityT,
+    isEntity,
+    create as createEntityInstance,
+    getComponents as getEntityComponents,
+    createBitfield,
+    Entity,
+    getEntityId,
+    setEntityId,
+    EntityId,
+    addComponentUnsafe,
+} from "../entity";
+import { BitField } from "odgn-bitfield";
+import { idbOpen, idbDeleteDB, 
+    idbDelete, idbGet, 
+    idbPut, idbLastKey, 
+    idbGetAll, 
+    idbGetRange, 
+    idbCount 
+} from "./idb";
+import { isString, isInteger } from "../util/is";
+import { getByUri, getByHash } from "../component_registry";
 
 const Log = createLog('EntitySetIDB');
 
 const PREFIX = 'ecs';
+const STORE_META = 'meta';
 const STORE_ENTITY_SETS = 'entity_sets';
 const STORE_COMPONENT_DEFS = 'defs';
 const STORE_COMPONENTS = 'component';
+const STORE_ENTITIES = 'entity';
 
 /**
  * As a storage backed ES, this entityset has functions
@@ -33,10 +84,15 @@ export interface EntitySetIDB extends EntitySet {
     entChanges: ChangeSet<number>;
     
     comChanges: ChangeSet<ComponentId>;
+
+    // cached component defs
+    componentDefs: ComponentDef[];
+    byUri: Map<string, number>;
+    byHash: Map<number, number>;
 }
 
 
-export function create({registry}:CreateEntitySetParams):EntitySetIDB {
+export function create(options?:CreateEntitySetParams):EntitySetIDB {
     const uuid = createUUID();
     
     const entChanges = createChangeSet<number>();
@@ -46,7 +102,10 @@ export function create({registry}:CreateEntitySetParams):EntitySetIDB {
         isComponentRegistry: true,
         isEntitySet:true,
         db: undefined,
-        uuid, entChanges, comChanges
+        uuid, entChanges, comChanges,
+        componentDefs: [],
+        byUri: new Map<string, number>(),
+        byHash: new Map<number, number>(),
     }
 }
 
@@ -56,52 +115,132 @@ export async function register( es: EntitySetIDB, value:ComponentDef|ComponentDe
     es = await openEntitySet(es);
 
     // get the latest id
+    // Log.debug('[register]', es );
     const tx = es.db.transaction(STORE_COMPONENT_DEFS, 'readwrite');
     const store = tx.objectStore(STORE_COMPONENT_DEFS);
 
-    let did = await getLastKey( store );
+    let did = await idbLastKey( store );
     did = did === undefined ? 1 : did + 1;
     
     let def = createComponentDef( did, value );
     let record = defToObject( def );
+    let hash = hashDef( def );
 
-    const evt = await put( store, {...record} );
+    await idbPut( store, {...record, '_hash':hash} );
 
-    let all = store.openCursor();
-    all.onsuccess = (evt) => {
-        let cursor = (evt.target as any).result;
-        if (cursor) {
-            let key = cursor.primaryKey;
-            let value = cursor.value;
-            // Log.debug('[register][all]', value);
-            cursor.continue();
-        }
-        else {
-            // no more results
-        }
-    }
+    es.componentDefs[did-1] = def;
+    es.byUri.set( def.uri, did );
+    es.byHash.set( hash, did );
+
+    // let all = store.openCursor();
+    // all.onsuccess = (evt) => {
+    //     let cursor = (evt.target as any).result;
+    //     if (cursor) {
+    //         let key = cursor.primaryKey;
+    //         let value = cursor.value;
+    //         // Log.debug('[register][all]', value);
+    //         cursor.continue();
+    //     }
+    //     else {
+    //         // no more results
+    //     }
+    // }
 
     return [es, def];
 }
 
-// export function getByHash( registry, hash:number ): ComponentDef {
-//     const did = registry.byHash.get( hash );
-//     return did === undefined ? undefined : registry.componentDefs[did-1];
+// export function getByHash( es:EntitySetIDB, hash:number ): ComponentDef {
+//     const did = es.byHash.get( hash );
+//     return did === undefined ? undefined : es.componentDefs[did-1];
 // }
 
-export async function getByUri( es:EntitySetIDB, uri:string ): Promise<ComponentDef|undefined> {
-    es = await openEntitySet(es);
+// export function getByDefId( es:EntitySetIDB, defId:number ): ComponentDef|undefined {
+//     return es.componentDefs[defId-1];
+// }
+
+// export function getByUri( es:EntitySetIDB, uri:string ): ComponentDef|undefined {
+//     const did = es.byUri.get( uri );
+//     // Log.debug('[getByUri]', did, es.componentDefs[did]);
+//     return did === undefined ? undefined : es.componentDefs[did-1];
+
+//     // es = await openEntitySet(es);
+
+//     // const tx = es.db.transaction(STORE_COMPONENT_DEFS, 'readonly');
+//     // const store = tx.objectStore(STORE_COMPONENT_DEFS);
+//     // const idx = store.index('by_uri');
+
+//     // let def = await idbGet(idx, uri);
+
+//     // return def ? createComponentDef(def) : undefined;
+// }
+
+// export async function getByHash( es:EntitySetIDB, hash:number ): Promise<ComponentDef|undefined> {
+//     es = await openEntitySet(es);
+
+//     const store = es.db.transaction(STORE_COMPONENT_DEFS, 'readonly').objectStore(STORE_COMPONENT_DEFS);
+//     const idx = store.index('by_hash');
+
+//     let def = await idbGet(idx, hash);
+//     return def ? createComponentDef(def) : undefined;
+// }
+
+export async function getComponentDefs( es:EntitySetIDB ): Promise<ComponentDef[]> {
+    es = await openEntitySet(es, {readDefs:false});
 
     const tx = es.db.transaction(STORE_COMPONENT_DEFS, 'readonly');
     const store = tx.objectStore(STORE_COMPONENT_DEFS);
-    const idx = store.index('by_uri');
-    const req = idx.get(uri);
-    let evt = await new Promise( (res,rej) => {
-        req.onsuccess = (evt) => res(evt);
-        req.onerror = (evt) => rej(evt);
-    })
 
-    return req.result ? createComponentDef(req.result) : undefined;
+    return new Promise( (res,rej) => {    
+        let all = store.openCursor();
+        let result = [];
+        all.onsuccess = (evt) => {
+            let cursor = (evt.target as any).result;
+            if( cursor ){
+                let { '_hash':h, ...data } = cursor.value;
+                let def = createComponentDef( data );
+                const did = def[ComponentDefT];
+                const hash = hashDef(def);
+                es.componentDefs[ did-1 ] = def;
+                es.byHash.set( hash, did );
+                es.byUri.set( def.uri, did );
+                result.push( def );
+                cursor.continue();
+            } else {
+                res( result );
+            }
+        }
+        all.onerror = (evt) => rej( evt );
+    });
+}
+
+export function createComponent( registry:EntitySetIDB, defId:(string|number|ComponentDef), attributes = {} ): Component {
+    let def:ComponentDef = undefined;
+
+    // Log.debug('[createComponent]', defId, attributes, registry );
+    if( isString(defId) ){
+        def = getByUri(registry,  defId as string );
+    } else if( isInteger(defId) ){
+        def = getByHash(registry, defId as number) || registry.componentDefs[(defId as number)-1];
+    } else if( isComponentDef(defId) ){
+        def = defId as any as ComponentDef;
+    }
+
+    if( def === undefined ){
+        // Log.debug('[createComponent]', registry.byUri.get( defId as string ), registry.componentDefs );
+        throw new Error(`component def not found: ${defId}`);
+    }
+
+    let params = {
+        ...attributes,
+        '@d': def[ComponentDefT]
+    };
+
+    // Log.debug('[createComponent]', 'def', def[DefT] );
+
+    // create a component instance
+    const component = createComponentInstance(params);
+
+    return component;
 }
 
 // export function getByDefId( registry, defId:number ): ComponentDef {
@@ -113,62 +252,449 @@ export async function getByUri( es:EntitySetIDB, uri:string ): Promise<Component
 // }
 
 
+export async function add(es: EntitySetIDB, item: AddType, options: AddOptions = {}): Promise<EntitySetIDB> {
+    es = await openEntitySet(es);
+    es = options.retain ? es : clearChanges(es as EntitySet) as EntitySetIDB;
 
-export function createEntity(es: EntitySetIDB): Promise<[EntitySetIDB, number]> {
+    if (Array.isArray(item)) {
+        // sort the incoming items into entities and components
+        let [ents, coms] = (item as any[]).reduce(([ents, coms], item) => {
+            if (isComponent(item)) {
+                coms.push(item);
+            } else if (isEntity(item)) {
+                ents.push(item);
+            }
+            return [ents, coms];
+        }, [[], []]);
 
-    return new Promise( (resolve,reject) => {
+        // Log.debug('[add]', ents)
 
-    
-    let reqOpen = indexedDB.open("test");
-    let edb;
-    reqOpen.onupgradeneeded = () => {
-        edb = reqOpen.result;
+        es = await ents.reduce((pes, e) => 
+            pes.then( es => addComponents(es, getEntityComponents(e)) ), 
+        Promise.resolve(es));
 
-        let store = edb.createObjectStore('entities', {keyPath:'id', autoIncrement:true});
-        store.put({bf:[1,2,3,4]});
-
-        // store = db.createObjectStore("books", {keyPath: "isbn"});
-        // store.createIndex("by_title", "title", {unique: true});
-    
-        // store.put({title: "Quarry Memories", author: "Fred", isbn: 123456});
-        // store.put({title: "Water Buffaloes", author: "Fred", isbn: 234567});
-        // store.put({title: "Bedrock Nights", author: "Barney", isbn: 345678});
+        es = await addComponents(es, coms);
+        es = await applyRemoveChanges(es)
+    }
+    else if (isComponent(item)) {
+        es = await addComponents(es, [item as Component]);
+    }
+    else if (isEntity(item)) {
+        let e = item as Entity
+        es = await markRemoveComponents(es, e[EntityT]);
+        es = await addComponents(es, getEntityComponents(e));
     }
 
-    reqOpen.onsuccess = (event) => {
-        edb = reqOpen.result;
-        // thisDb = e.target.result
+    es = await applyRemoveChanges(es)
 
-        Log.debug('idb onsuccess', event );
-        var store= edb.transaction('entities', 'readonly').objectStore('entities');
-
-        var allRecords = store.getAll();
-        allRecords.onsuccess = function() {
-            console.log(allRecords.result);
-
-            resolve([es,0]);
-        };
-    }
-
-    });
-    // Log.debug('idb open', request);
-    // const eid = generateId();
-
-    // const entities = new Map<number, BitField>(es.entities);
-    // entities.set(eid, createBitfield());
-
-    // es = { ...es, entities };
-
-    // es = markEntityAdd(es, eid);
-
-    // return [es, 0];
+    return es;
 }
 
 
-function openEntitySet( es:EntitySetIDB ): Promise<EntitySetIDB>{
+/**
+ * Removes a component. if it is the last entity on the component, the entity is also removed
+ * @param es 
+ * @param item 
+ * @param options 
+ */
+export async function removeComponent(es: EntitySetIDB, item: RemoveType, options: AddOptions = {}): Promise<EntitySetIDB> {
+    es = options.retain ? es : clearChanges(es) as EntitySetIDB;
+    let cid = isComponentId(item) ? item as ComponentId : isComponent(item) ? getComponentId(item as Component) : undefined;
+    if (cid === undefined) {
+        return es;
+    }
+    es = markComponentRemove(es, cid) as EntitySetIDB;
+
+    // Log.debug('[removeComponent]', es );
+    return await applyRemoveChanges(es);
+}
+
+/**
+ * Removes an entity and all its components
+ * 
+ * @param es 
+ * @param item 
+ * @param options 
+ */
+export async function removeEntity(es: EntitySetIDB, item: (number | Entity), options: AddOptions = {}): Promise<EntitySetIDB> {
+    es = options.retain ? es : clearChanges(es) as EntitySetIDB;
+    let eid = isInteger(item) ? item as number : isEntity(item) ? getEntityId(item as Entity) : 0;
+    // Log.debug('[removeEntity]', eid);
+    if (eid === 0) {
+        return es;
+    }
+    es = await markEntityComponentsRemove(es, eid);
+    return await applyRemoveChanges(es);
+}
+
+
+/**
+ * Returns an entity instance with components
+ * 
+ * @param es 
+ * @param eid 
+ */
+export async function getEntity(es:EntitySetIDB, eid:EntityId): Promise<Entity> {
+    es = await openEntitySet(es);
+    let e = await _getEntity(es, eid);
+    if( e === undefined ){
+        return undefined;
+    }
+
+    const store = es.db.transaction(STORE_COMPONENTS, 'readonly').objectStore(STORE_COMPONENTS);
+
+    let result = await idbGetRange(store, IDBKeyRange.bound([eid,0], [eid,Number.MAX_SAFE_INTEGER] ) );
+
+    e = result.reduce( (e,{value:cdat}) => {
+        let {'_e':ceid, '_d':cdid, ...rest} = cdat;
+        let com = {'@e':ceid, '@d':cdid, ...rest};
+
+        return addComponentUnsafe(e,cdid,com);
+    }, e);
+
+    return e;
+}
+
+export async function size(es:EntitySetIDB): Promise<number> {
+    es = await openEntitySet(es);
+    const store = es.db.transaction(STORE_ENTITIES, 'readonly').objectStore(STORE_ENTITIES);
+    return idbCount(store);
+}
+
+export async function addComponents(es: EntitySetIDB, components: Component[]): Promise<EntitySetIDB> {
+    // set a new (same) entity id on all orphaned components
+    [es, components] = await assignEntityIds(es, components)
+
+    // Log.debug('[addComponents]', components);
+
+    // mark incoming components as either additions or updates
+    es = await components.reduce( (pes, com) => {
+        return pes.then( (es) => markComponentAdd(es, com));
+    }, Promise.resolve(es));
+
+    // gather the components that have been added or updated and apply
+    const changedCids = getChanges(es.comChanges, ChangeSetOp.Add | ChangeSetOp.Update)
+
+    return changedCids.reduce((pes, cid) => pes.then( es => applyUpdatedComponents(es, cid) ), Promise.resolve(es));
+
+    // return es;
+}
+
+async function applyUpdatedComponents(es: EntitySetIDB, cid: ComponentId): Promise<EntitySetIDB> {
+    const [eid, did] = fromComponentId(cid);
+    let ebf: BitField;
+
+    [es, ebf] = await getOrAddEntityBitfield(es, eid);
+
+    const isNew = findCS( es.entChanges, eid ) === ChangeSetOp.Add;
+
+    // Log.debug('[applyUpdatedComponents]', eid, isNew, es.entChanges );
+
+    // does the component already belong to this entity?
+    if (ebf.get(did) === false) {
+        let e = createEntityInstance(eid);
+        e.bitField = ebf;
+        e.bitField.set(did);
+        
+        e = await setEntity(es, e);
+
+        return isNew ? es : markEntityUpdate(es as EntitySetIDB, eid) as EntitySetIDB;
+    }
+
+    return isNew ? es : markEntityUpdate(es, eid) as EntitySetIDB;
+}
+
+
+async function applyRemoveChanges(es: EntitySetIDB): Promise<EntitySetIDB> {
+    // applies any removal changes that have previously been marked
+    const removedComs = getChanges(es.comChanges, ChangeSetOp.Remove);
+
+    es = await removedComs.reduce((pes, cid) => pes.then( es => applyRemoveComponent(es, cid)), Promise.resolve(es));
+
+    // Log.debug('[applyRemoveChanges]', es.entChanges );
+
+    const removedEnts = getChanges(es.entChanges, ChangeSetOp.Remove);
+
+    es = await removedEnts.reduce((pes, eid) => pes.then( es => applyRemoveEntity(es, eid)), Promise.resolve(es));
+
+    return es;
+}
+
+async function applyRemoveComponent(es: EntitySetIDB, cid: ComponentId): Promise<EntitySetIDB> {
+    let [eid, did] = fromComponentId(cid);
+
+    let e = await _getEntity(es, eid);
+    if( e === undefined ){
+        throw new Error(`entity ${eid} not found`);
+    }
+
+    // remove the component id from the entity
+    // let entities = new Map<number, BitField>(es.entities);
+    // let ebf = createBitfield(entities.get(eid));
+    e.bitField.set(did, false);
+    // ebf.set(did, false);
+    
+    // entities.set(eid, ebf);
+
+    // remove component
+
+    const store = es.db.transaction(STORE_COMPONENTS, 'readwrite').objectStore(STORE_COMPONENTS);
+    await idbDelete(store, [eid,did] );
+    
+    // let components = new Map<ComponentId, Component>(es.components);
+    // components.delete(cid);
+
+    // es = {
+    //     ...es,
+    //     entities,
+    //     components
+    // }
+
+    // Log.debug('[applyRemoveComponent]', cid, ebf.count() );
+
+    if (e.bitField.count() === 0) {
+        return markEntityRemove(es, eid) as EntitySetIDB;
+    } else {
+        e = await setEntity(es, e);
+    }
+
+    return es;
+}
+
+/**
+ * Removes an entity from the store
+ * @param es 
+ * @param eid 
+ */
+function applyRemoveEntity(es: EntitySetIDB, eid: number): Promise<EntitySetIDB> {
+    const store = es.db.transaction(STORE_ENTITIES, 'readwrite').objectStore(STORE_ENTITIES);
+    return idbDelete(store, eid ).then( () => es );
+}
+
+export async function markComponentAdd(es: EntitySetIDB, com: Component): Promise<EntitySetIDB> {
+    // adds the component to the entityset if it is unknown,
+    // otherwise marks as an update
+    const cid = getComponentId(com);
+    const existing = await getComponent(es, cid);
+
+    // Log.debug('[markComponentAdd]', cid, existing );
+
+    if (existing !== undefined) {
+        return Promise.resolve( markComponentUpdate(es as EntitySet, cid) as EntitySetIDB );
+    }
+
+    // convert the keys
+    let {'@e':eid, '@d':did, ...rest} = com;
+    let scom = {'_e':eid, '_d':did, ...rest};
+
+    es = await openEntitySet(es);
+
+    const store = es.db.transaction(STORE_COMPONENTS, 'readwrite').objectStore(STORE_COMPONENTS);
+
+    // Log.debug('[markComponentAdd]', scom);
+
+    await idbPut( store, scom );
+
+    return { ...es, comChanges: addCS(es.comChanges, cid) };
+}
+
+async function markRemoveComponents(es: EntitySetIDB, eid: number): Promise<EntitySetIDB> {
+    if (eid === 0) {
+        return es;
+    }
+
+    let e = await _getEntity(es, eid);
+    if( e === undefined ){
+        return es;
+    }
+
+    // const ebf = es.entities.get(id);
+    if (e.bitField.count() === 0) {
+        return es;
+    }
+
+    const dids = e.bitField.toValues();
+
+    for (let ii = 0; ii < dids.length; ii++) {
+        es = markComponentRemove(es, toComponentId(eid, dids[ii])) as EntitySetIDB;
+    }
+
+    return es;
+}
+
+
+async function markEntityComponentsRemove(es: EntitySetIDB, eid: number): Promise<EntitySetIDB> {
+
+    const store = es.db.transaction(STORE_COMPONENTS, 'readonly').objectStore(STORE_COMPONENTS);
+    let result = await idbGetRange(store, IDBKeyRange.bound([eid,0], [eid,Number.MAX_SAFE_INTEGER] ) );
+
+    return result.reduce( (prev, {key}) => {
+        return prev.then( es => {
+            const [eid,did] = key as number[];
+            return markComponentRemove(es, toComponentId(eid,did)) as EntitySetIDB
+        })
+    }, Promise.resolve(es) );
+
+    // return ebf.toValues().reduce((es, did) =>
+    //     markComponentRemove(es, toComponentId(eid, did)), es as EntitySet) as EntitySetIDB;
+}
+
+/**
+ * 
+ * @param es 
+ * @param eid 
+ */
+async function getOrAddEntityBitfield(es: EntitySetIDB, eid: number): Promise<[EntitySetIDB, BitField]> {
+    const store = es.db.transaction(STORE_ENTITIES, 'readonly').objectStore(STORE_ENTITIES);
+
+    let record = await idbGet(store, eid);
+    if( record === undefined ){
+        return [markEntityAdd(es,eid) as EntitySetIDB, createBitfield()];
+    }
+
+    let ebf = createBitfield( record.bf );
+
+    return [es, ebf];
+}
+
+
+/**
+ * Assigns entity ids to an array of components
+ * 
+ * @param es 
+ * @param components 
+ */
+async function assignEntityIds(es: EntitySetIDB, components: Component[]): Promise<[EntitySetIDB, Component[]]> {
+    let set;
+    let eid;
+    type Memo = [ EntitySetIDB,Set<number>,number,Component[] ];
+    const initial:Memo = [es, new Set(), 0, []];
+
+    [es, set, eid, components] = await components.reduce( async (last, com) => {
+
+        let [es, set, eid, components] = await last;
+
+        let did = getComponentDefId(com);
+        // Log.debug('[assignEntityIds]', 'com', did );
+
+        // component already has an id - add it to the list of components
+        if (getComponentEntityId(com) !== 0) {
+            return [es, set, eid, [...components, com]];
+        }
+
+        // not yet assigned an entity, or we have already seen this com type
+        if (eid === 0 || set.has(did)) {
+            // create a new entity - this also applies if we encounter a component
+            // of a type we have seen before
+            [es, eid] = await createEntity(es);
+
+            // Log.debug('[assignEntityIds]', 'new entity', did, set.has(did), eid );
+
+            com = setComponentEntityId(com, eid);
+
+            // # mark the def as having been seen, store the new entity, add the component
+            // {es, MapSet.put(set, def_id), entity_id, [com | components]}
+            return [es, set.add(did), eid, [...components, com]];
+        } else {
+            // Log.debug('[assignEntityIds]', 'already have', did, eid);
+            // we have a new entity_id already
+            com = setComponentEntityId(com, eid);
+            return [es, set, eid, [...components, com]];
+        }
+    }, Promise.resolve<Memo>(initial) ) as Memo;
+
+    // Log.debug('[assignEntityIds]', 'coms', components );
+
+    return [es, components];
+}
+
+async function setEntity(es:EntitySetIDB, e:Entity): Promise<Entity> {
+    let store = es.db.transaction(STORE_ENTITIES, 'readwrite').objectStore(STORE_ENTITIES);
+
+    let eid = getEntityId(e);
+
+    if( eid === 0 ){
+        eid = await idbLastKey(store);
+        eid = eid === undefined ? 1 : eid + 1;
+    }
+    let bf = e.bitField !== undefined ? e.bitField.toValues() : [];
+
+    await idbPut( store, {bf}, eid );
+
+    return setEntityId(e,eid);
+}
+
+function _getEntity(es:EntitySetIDB, eid:EntityId): Promise<Entity|undefined> {
+    let store = es.db.transaction(STORE_ENTITIES, 'readonly').objectStore(STORE_ENTITIES);
+
+    return idbGet(store, eid).then( data => {
+        if( data === undefined ){
+            return undefined;
+        }
+        
+        let e = createEntityInstance(eid);
+        e.bitField.set( data.bf );
+        return e;
+    })
+}
+
+export async function createEntity(es: EntitySetIDB): Promise<[EntitySetIDB, number]> {
+    es = await openEntitySet(es);
+
+    let e = createEntityInstance();
+
+    e = await setEntity( es, e );
+    const eid = getEntityId(e);
+    // Log.debug('[createEntity]', es);
+
+    es = markEntityAdd(es, eid ) as EntitySetIDB;
+
+    return [es, eid];
+}
+
+
+/**
+ * Returns a Component by its id
+ * @param es 
+ * @param id 
+ */
+export async function getComponent(es: EntitySetIDB, id: ComponentId | Component): Promise<Component> {
+    let cid:ComponentId = isComponentId(id) ? id as ComponentId : getComponentId(id as Component);
+    
+    es = await openEntitySet(es);
+
+    let [eid,did] = fromComponentId(cid);
+
+    const store = es.db.transaction(STORE_COMPONENTS, 'readonly').objectStore(STORE_COMPONENTS);
+    // const idx = store.index('by_cid');
+
+    
+    let result = await idbGetRange(store, IDBKeyRange.bound([eid,did], [eid,did]) );
+    // Log.debug('[getComponent]', eid, did, result);
+
+    if( result.length === 0 ){
+        return undefined;
+    }
+
+    let {'_e':ceid, '_d':cdid, ...rest} = result[0].value;
+    let com = {'@e':ceid, '@d':cdid, ...rest};
+
+    return com;
+
+    // return Promise.resolve(undefined); //es.components.get(cid);
+}
+
+
+interface OpenEntitySetOptions {
+    readDefs?: boolean;
+}
+
+function openEntitySet( es:EntitySetIDB, options:OpenEntitySetOptions = {} ): Promise<EntitySetIDB>{
     if( es.db !== undefined ){
         return Promise.resolve(es);
     }
+    const readDefs = options.readDefs === undefined ? true : options.readDefs;
+
     return openMeta().then( (db:IDBDatabase) => {
         const tx = db.transaction(STORE_ENTITY_SETS, 'readwrite');
         const store = tx.objectStore(STORE_ENTITY_SETS);
@@ -179,112 +705,114 @@ function openEntitySet( es:EntitySetIDB ): Promise<EntitySetIDB>{
         
         return new Promise( (res,rej) => {
             request.onsuccess = () => {
-                return openIDB( dbName, 1, onEntitySetUpgrade ).then( db => {
-                    res( {...es, db} );
+                return idbOpen( dbName, 1, onEntitySetUpgrade ).then( db => {
+
+
+                    es = {...es, db};
+                    return res(es);
+                    // Log.debug('[openEntitySet]', 'okkk', es, readDefs );
+                    // return readDefs === true ?
+                    //     getComponentDefs(es).then( es => res(es) )
+                    //     : res(es);
+                    // res( es );
                 })
             }
             request.onerror = () => rej(request.error);
-        });
-    })
+        })
+    }).then( (es:EntitySetIDB) => {
+        // read existing component defs into local cache
+        if( readDefs === true ){
+            return getComponentDefs(es).then( () => es );
+        }
+        return es;
+    });
 }
 
 function closeEntitySet( es:EntitySet ){
 
 }
 
-const esStoreName = (es:EntitySet) => `${PREFIX}:es:${es.uuid}`;
 
+export async function deleteEntitySet( es:EntitySet ){
+    const db = await openMeta();
+    let store = db.transaction(STORE_ENTITY_SETS, 'readonly').objectStore(STORE_ENTITY_SETS);
+    
+    // check the entitySet exists
+    // const idx = store.index('by_uuid');
+    const record = await idbGet(store, es.uuid);
+
+    if( record === undefined ){
+        Log.debug('[deleteEntitySet]', 'es', es.uuid, 'does not exist');
+        return false;
+    }
+
+    await idbDeleteDB( esStoreName(es) )
+
+    
+    store = db.transaction(STORE_ENTITY_SETS, 'readwrite').objectStore(STORE_ENTITY_SETS);
+    await idbDelete( store, record.uuid );
+
+    return true;
+}
+
+
+
+const esStoreName = (es:EntitySet) => `${PREFIX}:es:${es.uuid}`;
+const esMetaName = () => `${PREFIX}:${STORE_META}`;
 
 /**
  * MetaDB stores details of entitysets stored within
  */
 function openMeta(){
-    return openIDB('meta', 1, (db:IDBDatabase, evt:IDBVersionChangeEvent) => {
-        let store = db.createObjectStore(STORE_ENTITY_SETS, {keyPath:'id', autoIncrement:true})
-        store.createIndex('by_uuid', 'uuid', {unique:true});
+    return idbOpen( esMetaName(), 1, (db:IDBDatabase, evt:IDBVersionChangeEvent) => {
+        let store = db.createObjectStore(STORE_ENTITY_SETS, {keyPath:'uuid'})
+        // store.createIndex('by_uuid', 'uuid', {unique:true});
     });
 }
 
 function onEntitySetUpgrade(db:IDBDatabase, ev:IDBVersionChangeEvent) {
-    let store = db.createObjectStore('entity', {keyPath:'id', autoIncrement:true});
+    let store = db.createObjectStore(STORE_ENTITIES, {autoIncrement:true});
     
     // store component data
-    store = db.createObjectStore(STORE_COMPONENTS, {keyPath:'id', autoIncrement:true});
-    store.createIndex('by_cid', 'cid', {unique:true}); // [eid,did]
-    // store.createIndex('by_eid', '@e');
-    // store.createIndex('by_did', '@d');
+    store = db.createObjectStore(STORE_COMPONENTS, {keyPath:['_e', '_d']});
+    // store.createIndex('by_cid', ['@e', '@d'], {unique:true});
+    
     store = db.createObjectStore(STORE_COMPONENT_DEFS, {autoIncrement:true});
-    store.createIndex('by_uri', 'uri');
+    store.createIndex('by_uri', 'uri', {unique:false});
+    store.createIndex('by_hash', '_hash', {unique:true});
+
 }
 
-type OnUpgradeHandler = (db:IDBDatabase, ev:IDBVersionChangeEvent) => any;
 
-function openIDB( name:string, version:number, onUpgrade?:OnUpgradeHandler ): Promise<IDBDatabase> {
-    return new Promise((resolve, reject) => {
-        const request = indexedDB.open(name, version);
 
-        if( onUpgrade ){
-            request.onupgradeneeded = (evt:IDBVersionChangeEvent) => {
-                const db = request.result;
-                return onUpgrade(db,evt);
+
+export function clearIDB() {
+    // get a list of all the entityset uuids
+    return getEntitySetIDs()
+        .then(uuids => {
+            // Log.debug('[deleteIDB]', 'existing entitysets', uuids);
+            return Promise.all(uuids.map(uuid => deleteEntitySet( {uuid} as EntitySet) ));
+        })
+        .then(() => idbDeleteDB(STORE_META));
+}
+
+function getEntitySetIDs():Promise<string[]> {
+    return openMeta().then(conn => {
+        return new Promise((resolve, reject) => {
+            const store = conn.transaction(STORE_ENTITY_SETS, 'readonly').objectStore(STORE_ENTITY_SETS);
+            let req = store.openCursor();
+            let result = [];
+
+            req.onsuccess = evt => {
+                let cursor = req.result;
+                if (cursor) {
+                    result.push(cursor.value.uuid);
+                    cursor.continue();
+                    return;
+                }
+                resolve(result);
             };
-        }
-
-        request.onsuccess = evt => {
-            const db = request.result;
-
-            db.onversionchange = evt => {
-                db.close();
-            };
-            return resolve(db);
-        };
-
-        request.onerror = () => reject(request.error);
-        request.onblocked = () => Log.warn('[openIDB][onblocked]', 'pending till unblocked');
+        });
     });
 }
 
-export function deleteIDB(name) {
-    return new Promise((resolve, reject) => {
-        // Log.debug('[deleteIDB]', 'deleting', dbName);
-        const request = indexedDB.deleteDatabase(name);
-
-        request.onerror = err => {
-            Log.error('[deleteIDB]', 'Error deleting database.', err);
-            return resolve(true);
-        };
-
-        request.onblocked = e => Log.error('[deleteIDB]', 'request blocked', e);
-
-        request.onsuccess = event => {
-            Log.info('[deleteIDB]', 'ok', name);
-            return resolve(true);
-        };
-    });
-}
-
-
-/**
- * Returns the key of the last record added
- * @param store 
- */
-function getLastKey( store:IDBObjectStore ): Promise<any> {
-    return new Promise( (res,rej) => {
-        let req = store.openCursor(null, 'prev');
-        req.onsuccess = (evt) => res( req.result ? req.result.key : undefined );
-        req.onerror = (ev) => rej(ev);
-    })
-}
-
-/**
- * Puts a record on the store
- * @param store 
- * @param record 
- */
-async function put( store:IDBObjectStore, record ): Promise<Event> {
-    return new Promise( (res,rej) => {
-        const req = store.put( record );
-        req.onsuccess = (ev:Event) => res(ev);
-        req.onerror = () => { rej(req.error) };
-    })
-}

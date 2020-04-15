@@ -36,7 +36,11 @@ import { Type as ComponentDefT } from '../component_def';
 import {
     ChangeSet,
     create as createChangeSet,
-    add as addCS, update as updateCS, remove as removeCS, ChangeSetOp, getChanges
+    add as addCS, 
+    update as updateCS, 
+    remove as removeCS, 
+    find as findCS,
+    ChangeSetOp, getChanges
 } from "./change_set";
 import { generateId } from './simple_id';
 import { createLog } from "../util/log";
@@ -108,7 +112,7 @@ export type RemoveType = ComponentId | Entity | Component;
  * @param options 
  */
 export function add(es: EntitySetMem, item: AddType, options: AddOptions = {}): EntitySetMem {
-    es = options.retain ? es : clearChanges(es);
+    es = options.retain ? es : clearChanges(es) as EntitySetMem;
 
     if (Array.isArray(item)) {
         // sort the incoming items into entities and components
@@ -123,8 +127,10 @@ export function add(es: EntitySetMem, item: AddType, options: AddOptions = {}): 
 
         // Log.debug('[add]', ents)
 
+        // add components on entities
         es = ents.reduce((es, e) => addComponents(es, getEntityComponents(e)), es);
 
+        // add components
         es = addComponents(es, coms);
         es = applyRemoveChanges(es)
     }
@@ -143,19 +149,19 @@ export function add(es: EntitySetMem, item: AddType, options: AddOptions = {}): 
 }
 
 export function removeComponent(es: EntitySetMem, item: RemoveType, options: AddOptions = {}): EntitySetMem {
-    es = options.retain ? es : clearChanges(es);
+    es = options.retain ? es : clearChanges(es) as EntitySetMem;
     let cid = isComponentId(item) ? item as ComponentId : isComponent(item) ? getComponentId(item as Component) : undefined;
     if (cid === undefined) {
         return es;
     }
-    es = markComponentRemove(es, cid);
+    es = markComponentRemove(es, cid) as EntitySetMem;
 
     // Log.debug('[removeComponent]', es );
     return applyRemoveChanges(es);
 }
 
 export function removeEntity(es: EntitySetMem, item: (number | Entity), options: AddOptions = {}): EntitySetMem {
-    es = options.retain ? es : clearChanges(es);
+    es = options.retain ? es : clearChanges(es) as EntitySetMem;
     let eid = isInteger(item) ? item as number : isEntity(item) ? getEntityId(item as Entity) : 0;
     if (eid === 0) {
         return es;
@@ -273,7 +279,7 @@ export function getEntities(es: EntitySet, list: EntityList): Entity[] {
 // }
 
 
-function clearChanges(entitySet: EntitySetMem): EntitySetMem {
+export function clearChanges(entitySet: EntitySet): EntitySet {
     return {
         ...entitySet,
         comChanges: createChangeSet(),
@@ -294,7 +300,7 @@ function markRemoveComponents(es: EntitySetMem, id: number): EntitySetMem {
     const dids = ebf.toValues();
 
     for (let ii = 0; ii < dids.length; ii++) {
-        es = markComponentRemove(es, toComponentId(id, dids[ii]));
+        es = markComponentRemove(es, toComponentId(id, dids[ii])) as EntitySetMem;
     }
 
     return es;
@@ -334,16 +340,21 @@ function applyUpdatedComponents(es: EntitySetMem, cid: ComponentId): EntitySetMe
 
     [es, ebf] = getOrAddEntityBitfield(es, eid);
 
+    const isNew = findCS( es.entChanges, eid ) === ChangeSetOp.Add;
+
+    // Log.debug('[applyUpdatedComponents]', eid, isNew, ebf.get(did) === false );
+
     // does the component already belong to this entity?
     if (ebf.get(did) === false) {
         ebf = createBitfield(ebf);
         ebf.set(did);
         const entities = new Map<number, BitField>(es.entities);
         entities.set(eid, ebf);
-        return markEntityUpdate({ ...es, entities }, eid);
+        es = { ...es, entities };
+        return isNew ? es : markEntityUpdate(es as EntitySet, eid) as EntitySetMem;
     }
 
-    return markEntityUpdate(es, eid);
+    return isNew ? es : markEntityUpdate(es, eid) as EntitySetMem;
 }
 
 /**
@@ -388,7 +399,7 @@ function applyRemoveComponent(es: EntitySetMem, cid: ComponentId): EntitySetMem 
     // Log.debug('[applyRemoveComponent]', cid, ebf.count() );
 
     if (ebf.count() === 0) {
-        return markEntityRemove(es, eid);
+        return markEntityRemove(es, eid) as EntitySetMem;
     }
 
     return es;
@@ -407,7 +418,7 @@ function applyRemoveEntity(es: EntitySetMem, eid: number): EntitySetMem {
  * @param es 
  * @param com 
  */
-function markComponentAdd(es: EntitySetMem, com: Component): EntitySetMem {
+export function markComponentAdd(es: EntitySetMem, com: Component): EntitySetMem {
     // adds the component to the entityset if it is unknown,
     // otherwise marks as an update
     const cid = getComponentId(com);
@@ -416,7 +427,7 @@ function markComponentAdd(es: EntitySetMem, com: Component): EntitySetMem {
     // Log.debug('[markComponentAdd]', cid, existing );
 
     if (existing !== undefined) {
-        return markComponentUpdate(es, cid);
+        return markComponentUpdate(es as EntitySet, cid) as EntitySetMem;
     }
 
     const components = new Map<ComponentId, Component>(es.components);
@@ -425,21 +436,24 @@ function markComponentAdd(es: EntitySetMem, com: Component): EntitySetMem {
     return { ...es, components, comChanges: addCS(es.comChanges, cid) };
 }
 
-function markComponentUpdate(es: EntitySetMem, cid: ComponentId): EntitySetMem {
+export function markComponentUpdate(es: EntitySet, cid: ComponentId): EntitySet {
     return { ...es, comChanges: updateCS(es.comChanges, cid) };
 }
 
-function markComponentRemove(es: EntitySetMem, cid: ComponentId): EntitySetMem {
+export function markComponentRemove(es: EntitySet, cid: ComponentId): EntitySet {
     return { ...es, comChanges: removeCS(es.comChanges, cid) };
 }
 
-function markEntityAdd(es: EntitySetMem, eid: number): EntitySetMem {
+export function markEntityAdd(es: EntitySet, eid: number): EntitySet {
+    // Log.debug('[markEntityAdd]', eid);
     return { ...es, entChanges: addCS(es.entChanges, eid) };
 }
-function markEntityUpdate(es: EntitySetMem, eid: number): EntitySetMem {
+export function markEntityUpdate(es: EntitySet, eid: number): EntitySet {
+    // Log.debug('[markEntityUpdate]', eid);
+    // throw new Error('do not update');
     return { ...es, entChanges: updateCS(es.entChanges, eid) };
 }
-function markEntityRemove(es: EntitySetMem, eid: number): EntitySetMem {
+export function markEntityRemove(es: EntitySet, eid: number): EntitySet {
     return { ...es, entChanges: removeCS(es.entChanges, eid) };
 }
 
@@ -450,11 +464,12 @@ function markEntityComponentsRemove(es: EntitySetMem, eid: number): EntitySetMem
     }
 
     return ebf.toValues().reduce((es, did) =>
-        markComponentRemove(es, toComponentId(eid, did)), es);
+        markComponentRemove(es, toComponentId(eid, did)), es as EntitySet) as EntitySetMem;
 }
 
 
 /**
+ * Gets or Inserts an entity based on its id
  * 
  * @param es 
  * @param eid 
@@ -463,7 +478,7 @@ function getOrAddEntityBitfield(es: EntitySetMem, eid: number): [EntitySetMem, B
     let ebf = es.entities.get(eid);
     if (ebf === undefined) {
         // {mark_entity(es, :add, eid), Entity.ebf()}
-        return [markEntityAdd(es, eid), createBitfield()];
+        return [markEntityAdd(es, eid) as EntitySetMem, createBitfield()];
     }
 
     return [es, ebf];
@@ -525,7 +540,7 @@ export function createEntity(es: EntitySetMem): [EntitySetMem, number] {
 
     es = { ...es, entities };
 
-    es = markEntityAdd(es, eid);
+    es = markEntityAdd(es, eid) as EntitySetMem;
 
     return [es, eid];
 }

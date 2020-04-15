@@ -28,12 +28,13 @@ import { EntitySet,
     createEntity,
     EntitySetMem,
     ESQuery,
-    compileQueryPart} from '../src/entity_set';
+    compileQueryPart,
+    removeEntity} from '../src/entity_set';
 import { buildQueryStack, 
     buildComponentRegistry, 
     buildEntity, 
-    assertHasComponents, 
     prepareFixture} from './util/stack';
+import { assertHasComponents } from './util/assert';
 import { getChanges, ChangeSetOp } from '../src/entity_set/change_set';
 import { Type as ComponentT, fromComponentId, getComponentDefId, Component } from '../src/component';
 import { VL } from '../src/query/insts/value';
@@ -75,8 +76,6 @@ describe('Entity Set (Mem)', () => {
             es = esAdd(es, e);
 
             assert.equal( entitySetSize(es), 0 );
-
-            // Log.debug('es', es);
         })
 
         it('should ignore an entity with an id, but without any components', () => {
@@ -226,7 +225,29 @@ describe('Entity Set (Mem)', () => {
             assert.equal( entitySetSize(es), 0 );
 
         });
-        it('removes an entity and all its components', () => {});
+        
+        it.only('removes an entity and all its components', () => {
+            let e:Entity;
+            let es = createEntitySet({});
+
+            [stack,e] = buildEntity( stack, ({component}) => {
+                component('/component/channel', {name: 'chat'});
+                component('/component/status', {status: 'inactive'});
+                component('/component/topic', {topic: 'data-structures'});
+            }, 15);
+
+            es = esAdd( es, e );
+
+            assert.equal( entitySetSize(es), 1 );
+            
+            const eid = getChanges( es.entChanges, ChangeSetOp.Add )[0];
+            
+            assert.exists( eid, 'entity should have been added' );
+
+            es = removeEntity( es, eid );
+
+            assert.equal( entitySetSize(es), 0 );
+        });
     });
 
     describe('Query', () => {
@@ -298,7 +319,7 @@ describe('Entity Set (Mem)', () => {
             assert.equal( getComponentEntityId( coms[0] ), 101 );
         });
 
-        it.only('compiles query', async () => {
+        it('compiles query', async () => {
             let cases = [
                 [
                     // select entity by id

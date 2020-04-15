@@ -6,6 +6,8 @@ import {
     propertyToObject,
     toObject as componentDefToObject,
     create as createComponentDef,
+    hash as hashComponentDef,
+    toObject as defToObject,
     getDefId
 } from '../src/component_def';
 import { Component, getComponentDefId } from '../src/component';
@@ -31,6 +33,8 @@ describe('ComponentDef', () => {
         // Log.debug('def', def);
         // Log.debug('def', componentDefToObject(def));
 
+        // /def @d, uri, name
+        // /property/status status
         assert.deepEqual(componentDefToObject(def),
             {
                 '@d': 2, 
@@ -65,6 +69,22 @@ describe('ComponentDef', () => {
 
 
         assert.equal( getDefId(def), 22 );
-        Log.debug('def', def);
+        
+    });
+
+    it('hash should return identical values', () => {
+        const data = { uri: '/component/piece/knight', properties:[ 'rank', 'file' ] };
+        let def = createComponentDef(data);
+        let hashA = hashComponentDef(def);
+
+        def = createComponentDef( 22, def );
+        let hashB = hashComponentDef(def);
+
+        assert.equal( hashA, hashB );
+
+        assert.equal(
+            hashComponentDef(createComponentDef( 22, data )),
+            hashComponentDef(createComponentDef( 24, data ))
+        )
     })
 });

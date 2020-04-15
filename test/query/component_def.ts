@@ -22,6 +22,9 @@ describe('ComponentDef', () => {
         let stack = buildQueryStack();
         let value:StackValue;
         
+        // /uri - '/component/priority'
+        // /property - def_id, name, type, default
+
         [stack,value] = pushValues( stack, [
             { uri:'/component/priority', 
               properties:[ {"name":"priority", "type":"integer", "default": 0} ] },

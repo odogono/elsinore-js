@@ -36,6 +36,20 @@ export function getChanges<T>( set:ChangeSet<T>, ops:ChangeSetOp ): Array<T> {
     return [...result];
 }
 
+export function find<T>( set:ChangeSet<T>, val:T ):ChangeSetOp {
+    let op = ChangeSetOp.None;
+    if( set.added.has(val) ){
+        op |= ChangeSetOp.Add;
+    }
+    if( set.updated.has(val) ){
+        op |= ChangeSetOp.Update;
+    }
+    if( set.removed.has(val) ){
+        op |= ChangeSetOp.Remove;
+    }
+    return op;
+}
+
 export function add<T>( set:ChangeSet<T>, val:T ):ChangeSet<T> {
     const added = new Set(set.added).add( val );
     const updated = new Set(set.updated);

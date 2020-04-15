@@ -122,7 +122,7 @@ export function isComponentDef( value:any ):boolean {
  * 
  */
 export function hash( def:ComponentDef ): number {
-    return hashValue( JSON.stringify( toObject(def) ), false ) as number;
+    return hashValue( JSON.stringify( toObject(def, false) ), false ) as number;
 }
 
 export function getDefId( def:ComponentDef ): number {
@@ -135,7 +135,7 @@ export function getProperty( def:ComponentDef, name:string ): ComponentDefProper
 
 
 export interface ComponentDefObj {
-    '@d': number;
+    '@d'?: number;
     name: string;
     uri: string;
     properties?: any[];
@@ -153,7 +153,10 @@ export function toObject( def:ComponentDef, includeId:boolean = true ): Componen
         objProps = properties.map( p => propertyToObject(p) );
     }
 
-    let result:ComponentDefObj = { '@d': id, name, uri };
+    let result:ComponentDefObj = { name, uri };
+    if( includeId ){
+        result['@d'] = id;
+    }
     if( objProps?.length > 0 ){
         result = {...result, properties: objProps };
     }
@@ -181,6 +184,9 @@ export function createProperty(params:any): ComponentDefProperty {
         defaultValue = params.default || defaultValue;
         
         for( let key of Object.keys(params) ){
+            if( key === 'additional' ){
+                continue;
+            }
             if( key in propertyDefaults === false ){
                 additional.set(key, params[key]);
             }
