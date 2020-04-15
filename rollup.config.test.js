@@ -10,11 +10,17 @@ import NodePolyfills from 'rollup-plugin-node-polyfills';
 // import { readFileSync } from 'fs';
 
 const environment = process.env.NODE_ENV || 'development';
+const jsEnv = process.env.JS_ENV || 'browser';
 const isProduction = false; //environment === 'production';
 
+const tsconfigOverride = { compilerOptions: { declaration: false, sourceMap: true, module: "es2015" } };
+
 const typescriptPlugin = Typescript({
-    tsconfigOverride: { compilerOptions : { module: "es2015" } },
+    // Disable type checking during the build
+    // to increase the build speed.
+    check: false,
     tsconfig: './tsconfig.json',
+    tsconfigOverride,
     typescript: require('typescript'),
     useTsconfigDeclarationDir: true
 });
@@ -22,7 +28,7 @@ const typescriptPlugin = Typescript({
 export default [
     // browser-friendly UMD build
     {
-        input: 'test/index.ts',
+        input: 'test/entity_set_idb.ts',
         output: {
             name: 'test',
             file: 'dist/elsinore.tests.js',
@@ -37,6 +43,7 @@ export default [
         external: ['chai', 'it', 'describe'],
         plugins: [
             Replace({ 'process.env.NODE_ENV': JSON.stringify(environment) }),
+            Replace({ 'process.env.JS_ENV': JSON.stringify(jsEnv) }),
             NodePolyfills(),
             NodeResolve({ browser: true, preferBuiltins: false }),
             typescriptPlugin,
