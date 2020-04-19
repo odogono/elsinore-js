@@ -112,34 +112,13 @@ export function create(options?:CreateEntitySetSQLParams):EntitySetSQL {
  * @param value 
  */
 export function register( es: EntitySetSQL, value:ComponentDef|ComponentDefObj|any ): [EntitySetSQL, ComponentDef] {
-
-    es = openEntitySet(es);
-
-    
+    es = openEntitySet(es);    
     let def = createComponentDef( 0, value );
+
 
     // insert the def into the def tbl
     def = sqlInsertDef( es.db, def );
 
-    // // get the latest id
-    // Log.debug('[register]', es );
-    // const tx = es.db.transaction(STORE_COMPONENT_DEFS, 'readwrite');
-    // const store = tx.objectStore(STORE_COMPONENT_DEFS);
-
-    // let did = await idbLastKey( store );
-    // did = did === undefined ? 1 : did + 1;
-    
-    // const def = undefined;
-
-    
-    // let record = defToObject( def );
-    // Log.debug('def', def, record );
-    // Log.debug('def', defToStmt(def) );
-    // let hash = hashDef( def );
-
-    // await idbPut( store, {...record, '_hash':hash} );
-    // const did = def[ComponentDefT];
-    // const hash = hashDef(def);
     const did = def[ComponentDefT];
     const {hash,tblName} = (def as ComponentDefSQL);
 
