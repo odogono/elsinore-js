@@ -32,11 +32,11 @@ export interface Entity {
 }
 
 
-export function create( id:number = 0 ):Entity {
+export function create( id:number = 0, bitField:BitField = new BitField() ):Entity {
     return {
         [Type]: id,
         components: new Map<number,Component>(),
-        bitField: new BitField()
+        bitField
     }
 }
 

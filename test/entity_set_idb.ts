@@ -98,15 +98,6 @@ describe('Entity Set (IndexedDB)', () => {
             def = getByHash(es, hashDef(def) );
 
             assert.equal( def.uri, '/component/position' );
-
-            // Log.debug('def', defToObject(def) );
-
-            // let all = await getComponentDefs( es );
-
-            // let com = createComponent( es as any, def, {rank:2, file:'b'} );
-
-
-            // Log.debug('com', com);
         })
 
     });
@@ -243,9 +234,17 @@ describe('Entity Set (IndexedDB)', () => {
             // Log.debug('stack', es )
         });
 
-        it('overwrites an entity', async () => {
+        it.only('overwrites an entity', async () => {
             let e:Entity;
             let [es, buildEntity] = await buildEntitySet();
+
+            await register( es, // component def is a component
+                { name:'ComponentDef', uri:'/def', properties:[
+                    { name:'@d', type:'integer' },
+                    { name:'uri', type:'string' },
+                    { name:'name' },
+                    { name:'properties', type:'array' }
+                ] } );
 
             e = buildEntity( es, ({component}) => {
                 component('/component/channel', {name: 'chat'});

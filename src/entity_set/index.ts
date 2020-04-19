@@ -75,11 +75,12 @@ export interface EntitySetMem extends EntitySet {
 
 
 export interface CreateEntitySetParams {
+    uuid?: string;
     registry?: ComponentRegistry;
 }
 
-export function create({ }: CreateEntitySetParams = {}): EntitySetMem {
-    const uuid = createUUID();
+export function create(options: CreateEntitySetParams = {}): EntitySetMem {
+    const uuid = options.uuid || createUUID();
     const components = new Map<ComponentId, Component>();
     const entities = new Map<number, BitField>();
     const entChanges = createChangeSet<number>();

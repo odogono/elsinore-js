@@ -76,6 +76,8 @@ export interface EntitySetIDB extends EntitySet {
     // keep a reference to the open es db
     db?: IDBDatabase;
 
+    
+
     // records entity changes from the last op
     entChanges: ChangeSet<number>;
     

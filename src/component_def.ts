@@ -101,6 +101,7 @@ export function createFromObj({id, name, uri, properties, ...extra}): ComponentD
         properties = properties.map( prop => createProperty(prop) );
     } else {
         // console.log('but what', properties );
+        properties = [];
     }
 
     return {
@@ -123,6 +124,10 @@ export function isComponentDef( value:any ):boolean {
  */
 export function hash( def:ComponentDef ): number {
     return hashValue( JSON.stringify( toObject(def, false) ), false ) as number;
+}
+
+export function hashStr( def:ComponentDef ): string {
+    return hashValue( JSON.stringify( toObject(def, false) ), true ) as string;
 }
 
 export function getDefId( def:ComponentDef ): number {
