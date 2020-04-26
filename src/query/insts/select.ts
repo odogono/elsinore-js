@@ -6,7 +6,6 @@ import {
     push,
     replace as replaceQueryStack,
     InstDefMeta,
-    matchEntities,
     InstResult,
     popOfTypeV,
     StackValue,
@@ -25,7 +24,7 @@ import * as StackInsts from './stack';
 
 import { VL, valueOf } from "./value";
 import { BitField } from "odgn-bitfield";
-import { Type as EntityT, EntityListType, EntityList, Entity, getEntityId } from "../../entity";
+import { Type as EntityT, EntityListType, EntityList, Entity, getEntityId, createEntityList } from "../../entity";
 import { Type as EntitySetT, getEntity, matchEntities as esMatchEntities } from '../../entity_set';
 import { isInteger, isString } from "../../util/is";
 import { Attribute, compile as compileAttr } from './attribute';
@@ -198,7 +197,7 @@ function selectEntitiesWithAll( stack:QueryStack, criteria:StackValue ): InstRes
 
         // }, []);
     } else if( criteriaType === VL && isString(criteriaValue) ){
-        let [el,ec] = matchEntities( stack, bf );
+        let [el] = [createEntityList() ];// matchEntities( stack, bf );
         let registry = findV( stack, ComponentRegistryT );
         bf = resolveComponentDefIds( registry, [criteriaValue] ) as BitField;
 

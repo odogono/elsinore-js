@@ -1,96 +1,91 @@
 import { assert } from 'chai';
 
-if( process.env.JS_ENV !== 'browser' ){
-    require('fake-indexeddb/auto');
-}
-
-import { createLog } from '../src/util/log';
+import { createLog } from '../../src/util/log';
 import {ComponentRegistry, 
     Type as ComponentRegistryT,
     resolveComponentDefIds, 
     getByUri,
     getByHash,
-    } from '../src/component_registry';
+    } from '../../src/component_registry';
 import {  
     pushValues,
     peekV as peekQueryStack,
     findV,
     QueryStack,
     StackValue
-} from '../src/query/stack';
+} from '../../src/query/stack';
 import { Entity,
     create as createEntityInstance, 
     addComponent as addComponentToEntity,
     getComponent as getEntityComponent,
     size as entitySize, 
     isEntity,
-    EntityList} from '../src/entity';
+    EntityList} from '../../src/entity';
 import { 
     toObject as defToObject, 
     hash as hashDef, 
     isComponentDef, 
     ComponentDef, 
     Type
-} from '../src/component_def';
-import { ComponentList, getComponentEntityId } from '../src/component';
+} from '../../src/component_def';
+import { ComponentList, getComponentEntityId } from '../../src/component';
 import { 
     // EntitySet, 
-    EntitySetIDB,
+    EntitySetFS,
     create as createEntitySet,
+    deleteEntitySet,
     register,
     size as entitySetSize,
     add as esAdd, 
     createComponent, 
-    removeComponent, 
-    removeEntity,
+    // removeComponent, 
+    // removeEntity,
     getEntity,
-    // getComponent,
+    getComponent,
     // getComponents as esGetComponents,
     // getEntities as esGetEntities,
-    getComponentDefs,
+    // getComponentDefs,
     createEntity,
-    clearIDB,
-    markComponentAdd,
-    getComponent,
-    addComponents,
+    // clearIDB,
+    // markComponentAdd,
+    // getComponent,
+    // addComponents,
     // EntitySetMem,
     // ESQuery,
     // compileQueryPart
-} from '../src/entity_set_idb';
+} from '../../src/entity_set_fs';
 import { 
     assertHasComponents, 
-    } from './util/assert';
-import { BuildQueryFn } from '../src/query/build';
-import { getChanges, ChangeSetOp } from '../src/entity_set/change_set';
-import { Type as ComponentT, fromComponentId, getComponentDefId, Component } from '../src/component';
-import { VL } from '../src/query/insts/value';
+    } from '../util/assert';
+import { BuildQueryFn } from '../../src/query/build';
+import { getChanges, ChangeSetOp } from '../../src/entity_set/change_set';
+import { Type as ComponentT, fromComponentId, getComponentDefId, Component } from '../../src/component';
+import { VL } from '../../src/query/insts/value';
 
-const Log = createLog('TestEntitySetIDB');
+const Log = createLog('TestEntitySetFS');
 
-// require("fake-indexeddb/auto");
-// let registry:ComponentRegistry;
-// let stack:QueryStack;
+const esOptions = {uuid:'test1', path: './esfs'};
 
 describe('Entity Set (IndexedDB)', () => {
 
     beforeEach( async () => {
-        await clearIDB();
+        await deleteEntitySet(createEntitySet(esOptions));
     })
 
     describe('registering component defs', () => {
 
         it('registers', async () => {
             let def;
-            let es = createEntitySet({});
+            let es = createEntitySet(esOptions );
             const data = { uri: '/component/position', properties:[ {name:'rank',type:'integer'}, 'file' ] };
     
             [es, def] = await register( es, data );
 
-            // Log.debug('es', es);
-
+            
             [es,def] = await register( es, "/component/piece/king" );
-            [es,def] = await register( es, "/component/piece/queen" );
-
+            // [es,def] = await register( es, "/component/piece/queen" );
+            
+            // Log.debug('es', es);
             def = getByUri(es, '/component/position');
 
             assert.ok( isComponentDef(def) );
@@ -105,7 +100,7 @@ describe('Entity Set (IndexedDB)', () => {
     describe('Adding', () => {
 
         it('should create an entity (id)', async () => {
-            let es = createEntitySet({});
+            let es = createEntitySet(esOptions);
             let id = 0;
 
             [es, id] = await createEntity(es);
@@ -114,7 +109,7 @@ describe('Entity Set (IndexedDB)', () => {
         });
 
         it('should ignore an entity without an id', async () => {
-            let es = createEntitySet({});
+            let es = createEntitySet(esOptions);
             let e = createEntityInstance();
             let def:ComponentDef;
 
@@ -137,7 +132,7 @@ describe('Entity Set (IndexedDB)', () => {
         });
 
         it('should ignore an entity with an id, but without any components', async () => {
-            let es = createEntitySet({});
+            let es = createEntitySet(esOptions);
             let e = createEntityInstance(2);
 
             es = await esAdd(es, e);
@@ -163,7 +158,7 @@ describe('Entity Set (IndexedDB)', () => {
             
             es = await esAdd( es, e );
             
-            // Log.debug('es');
+            Log.debug('es', es);
             
             assert.equal( await entitySetSize(es), 1 );
             
@@ -229,9 +224,9 @@ describe('Entity Set (IndexedDB)', () => {
 
             es = await esAdd( es, coms );
 
+            // Log.debug('stack', es )
             assert.equal( await entitySetSize(es), 3 );
 
-            // Log.debug('stack', es )
         });
 
         it.only('overwrites an entity', async () => {
@@ -273,58 +268,18 @@ describe('Entity Set (IndexedDB)', () => {
 
             const did = getByUri( es, '/component/channel_member')[Type]
             let com = getEntityComponent(e, did)
+
+            Log.debug('e', com);
             assert.equal( com.channel, 3 );
-            // Log.debug('e', com);
-        });
-
-    });
-
-    describe('Removing', () => {
-        it('removes a component', async () => {
-            let [es] = await buildEntitySet();
-            let com = createComponent(es, '/component/channel', {name: 'chat'} );
-            
-            es = await esAdd( es, com );
-
-            assert.equal( await entitySetSize(es), 1 );
-            
-            const cid = getChanges( es.comChanges, ChangeSetOp.Add )[0];
-            
-            es = await removeComponent( es, cid );
-
-            // Log.debug('es', es);
-            
-            assert.equal( await entitySetSize(es), 0 );
-
-        });
-        it('removes an entity and all its components', async () => {
-            let e:Entity;
-            let [es, buildEntity] = await buildEntitySet();
-
-            e = buildEntity( es, ({component}) => {
-                component('/component/channel', {name: 'chat'});
-                component('/component/status', {status: 'inactive'});
-                component('/component/topic', {topic: 'data-structures'});
-            }, 15);
-
-            es = await esAdd( es, e );
-
-            const eid = getChanges( es.entChanges, ChangeSetOp.Add )[0];
-
-            // Log.debug('es', eid);
-            assert.exists( eid, 'entity should have been added' );
-            
-            es = await removeEntity( es, eid );
-
-            assert.equal( await entitySetSize(es), 0, 'no entities should exist' );
         });
     });
-
 
 });
 
-async function buildEntitySet(): Promise<[EntitySetIDB,Function]> {
-    let es = createEntitySet();
+
+
+async function buildEntitySet(): Promise<[EntitySetFS,Function]> {
+    let es = createEntitySet(esOptions);
 
     const defs = [
         { uri: '/component/channel', properties:[ 'name'] },
@@ -341,7 +296,7 @@ async function buildEntitySet(): Promise<[EntitySetIDB,Function]> {
         })
     , Promise.resolve(es) );
 
-    const buildEntity = (es:EntitySetIDB, buildFn:BuildQueryFn, eid:number = 0 ) => {
+    const buildEntity = (es:EntitySetFS, buildFn:BuildQueryFn, eid:number = 0 ) => {
         let e = createEntityInstance(eid);
         const component = (uri:string, props:object) => {
             let def = getByUri(es, uri);

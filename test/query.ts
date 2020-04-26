@@ -132,7 +132,7 @@ describe('Query', () => {
 
     it('defines a list and calls it', () => {
         const insts: any[] = [
-            '[', 9, '+', ']',
+            '(', 9, '+', ')',
             10,
             'SW', // swap the last two values
             '@sl', // push list
@@ -164,7 +164,7 @@ describe('Query', () => {
 
         // defines an instruction with a list value
         [stack, value] = pushValues(stack, [
-            '[', 8, '*', ']',
+            '(', 8, '*', ')',
             'mult8',
             'def',
         ]);
@@ -435,10 +435,10 @@ describe('Query', () => {
             // [stack] = push(stack, ['@debug',true] );
 
             [stack, value] = pushValues(stack, [
-                '[',
+                '(',
                 'turn on news',
                 ['AT', '/component/title#text'],
-                '==', ']',
+                '==', ')',
                 Select.AllEntities
             ]);
 
@@ -483,7 +483,7 @@ describe('Query', () => {
 
             [stack, value] = pushValues(stack, [
                 // define a function that gets passed to entity select
-                '[', 'turn on news', ['AT', '/component/title#text'], '==', ']',
+                '(', 'turn on news', ['AT', '/component/title#text'], '==', ')',
                 Select.AllEntities,
             ]);
 
@@ -501,11 +501,11 @@ describe('Query', () => {
 
             [stack] = pushValues(stack, [
 
-                '[',
+                '(',
                 true,
                 ['AT', '/component/completed#isComplete'],
                 '==',
-                ']',
+                ')',
 
                 // FN true '/component/completed#isComplete' AT == END
                 // [ 'FN', [ true, '/component/completed#isComplete', AT, == ] ]
@@ -523,7 +523,7 @@ describe('Query', () => {
 
             [stack] = pushValues(stack, [
 
-                '[', true, ['AT', '/component/completed#isComplete'], '==', ']',
+                '(', true, ['AT', '/component/completed#isComplete'], '==', ')',
 
                 // optimisation: after the inst runs, cache the required coms
 

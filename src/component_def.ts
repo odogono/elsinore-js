@@ -7,6 +7,19 @@ import { toCamelCase, toCapitalized } from './util/to';
 export const Type = '@d'; 
 
 
+export enum PropertyType {
+    String,
+    Integer,
+    Number,
+    Boolean,
+    Array,
+    Binary,
+    JSON, // also an object
+    Entity,
+    BitField,
+};
+
+
 export interface ComponentDef {
     [Type]: number;
     uri: string;

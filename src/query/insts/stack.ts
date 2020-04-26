@@ -31,8 +31,8 @@ import { Attribute } from "./attribute";
 
 const Log = createLog('Inst][Stack');
 
-export const OpenList = '[';
-export const CloseList = ']';
+export const OpenList = '(';
+export const CloseList = ')';
 export const Stack = '@qs';
 export const StackList = '@sl';
 export const Put = 'PT';

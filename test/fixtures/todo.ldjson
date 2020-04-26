@@ -1,15 +1,22 @@
-[ !format, "a" ]
-[ !require, @cr ]
+1 version == assert
 
-[ "!d", "/component/title", "text" ]
-[ "!d" "/component/completed", {"name":"isComplete", "type":"boolean", "default":false} ]
-[ "!d", "/component/priority", {"name":"priority", "type":"integer", "default": 0}]
+// create a new EntitySet
+{} !es
 
-[ "!c", "/component/title", { "text":"get out of bed"} ]
-[ "!c", "/component/completed", {"isComplete":true}]
-[ "!c", "/component/priority", {"priority":10}]
+// create a ComponentDef, add it to the EntitySet
+[ "/component/title", "text" ] !d +
 
-[ "!e", 100 ]
+[ "/component/completed", {"name":"isComplete", "type":"boolean", "default":false} ] !d +
+[ "/component/priority", {"name":"priority", "type":"integer", "default": 0} ] !d !
+
+// create an empty array, add components to it
+[]
+[ "/component/title", { "text":"get out of bed"} ] !c +
+[ "/component/completed", {"isComplete":true}] !c +
+[ "/component/priority", {"priority":10}] !c +
+
+// create an entity, add the component array to it
+100 !e +
 
 
 [ "!c", "/component/title", { "text":"phone up friend"} ]

@@ -27,9 +27,12 @@
   "dependencies": {
     "better-sqlite3": "^6.0.1",
     "flake-idgen": "^1.1.2",
+    "fs-extra": "^9.0.0",
     "minivents": "^2.2.0",
     "odgn-bitfield": "^1.0.7",
-    "pull-pushable": "2.2.0"
+    "pull-pushable": "2.2.0",
+    "shelljs": "^0.8.3",
+    "tmp": "^0.1.0"
   },
   "non-dependencies": {},
   "devDependencies": {
@@ -40,7 +43,10 @@
     "@types/better-sqlite3": "^5.4.0",
     "@types/chai": "^4.2.11",
     "@types/expect": "^24.3.0",
+    "@types/fs-extra": "^8.1.0",
     "@types/mocha": "^7.0.2",
+    "@types/shelljs": "^0.8.7",
+    "@types/temp-dir": "^2.0.2",
     "biguint-format": "^1.0.1",
     "buffer-es6": "^4.9.3",
     "chai": "^4.2.0",

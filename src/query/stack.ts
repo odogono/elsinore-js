@@ -22,10 +22,15 @@ export interface InstDefMeta {
 }
 
 
+/**
+ * http://wiki.laptop.org/go/Forth_Lesson_1
+ */
+
 export interface InstModuleDef {
     meta: InstDefMeta;
     compile?: (stack:QueryStack, val:StackValue) => StackValue;
     execute?: (stack:QueryStack, val:StackValue) => InstResult;
+    executeOp?: (stack:QueryStack, op:StackOp, ...args:StackValue ) => InstResult;
     executeAdd?: (stack:QueryStack, left:StackValue, right:StackValue) => InstResult;
     executeSubtract?: (stack:QueryStack, left:StackValue, right:StackValue) => InstResult;
     executeFetch?: (stack:QueryStack, container:StackValue, value:StackValue) => InstResult;
@@ -160,9 +165,7 @@ export function pushValues( stack:QueryStack, values:StackValue[]|any[] ): [Quer
     let value:StackValue;
     for(let ii=0;ii<values.length;ii++ ){
         value = values[ii];
-        // Log.debug('[pushValues]', 'pre', value);
         [stack,value] = push( stack, value );
-        // Log.debug('[pushValues]', 'post', value);
     }
     return [stack, value];
 }
@@ -431,102 +434,102 @@ export function assertStackValueType( stack:QueryStack, index:number, opType:str
 
 
 
-/**
- * Returns an EntityList containing entities that match the given bitfield
- * of dids along with the entitySet they belong to
- * 
- * @param stack 
- * @param bf 
- */
-export function matchEntities( stack:QueryStack, bf:BitField, options:MatchOptions = {} ): [EntityList, StackValue] {
-    const limit = options.limit !== undefined ? options.limit : Number.MAX_SAFE_INTEGER;
+// /**
+//  * Returns an EntityList containing entities that match the given bitfield
+//  * of dids along with the entitySet they belong to
+//  * 
+//  * @param stack 
+//  * @param bf 
+//  */
+// export function matchEntities( stack:QueryStack, bf:BitField, options:MatchOptions = {} ): [EntityList, StackValue] {
+//     const limit = options.limit !== undefined ? options.limit : Number.MAX_SAFE_INTEGER;
 
-    let eids:number[] = [];
-    let entities:EntityMap = new Map<number,BitField>();
+//     let eids:number[] = [];
+//     let entities:EntityMap = new Map<number,BitField>();
 
-    // work down the stack
-    for( let ii = stack.items.length-1; ii >= 0; ii-- ){
-        if( eids.length >= limit ){
-            break;
-        }
-        const [type,val] = stack.items[ii];
-        // if( type === EntityT && getEntityId(val) !== 0 ){
-        //     Log.debug('[matchEntities]', getEntityId(val), bf.toValues(), val.bitField.toValues() )
-        // }
-        if( type === EntitySetT ){
-            return [ esMatchEntities( val, bf ) as EntityList, [type,val] ];
-        }
-        else if( type === EntityT ){
-            let eid = getEntityId(val);
-            if( eid !== 0 && BitField.or(bf, val.bitField) ){
+//     // work down the stack
+//     for( let ii = stack.items.length-1; ii >= 0; ii-- ){
+//         if( eids.length >= limit ){
+//             break;
+//         }
+//         const [type,val] = stack.items[ii];
+//         // if( type === EntityT && getEntityId(val) !== 0 ){
+//         //     Log.debug('[matchEntities]', getEntityId(val), bf.toValues(), val.bitField.toValues() )
+//         // }
+//         if( type === EntitySetT ){
+//             return [ esMatchEntities( val, bf ) as EntityList, [type,val] ];
+//         }
+//         else if( type === EntityT ){
+//             let eid = getEntityId(val);
+//             if( eid !== 0 && BitField.or(bf, val.bitField) ){
                 
-                eids.push( eid );
-                entities.set(eid,val.bitField);
+//                 eids.push( eid );
+//                 entities.set(eid,val.bitField);
 
-                // return [createEntityList( [eid], bf), [type,val]];
-            }
-            // break;
-        }
-        else if( type === ComponentT ){
-            const did = getComponentDefId(val);
-            if( bf.get(did) === true ){
-                return [ undefined,[type,val] ];
-            }
-        }
-    }
+//                 // return [createEntityList( [eid], bf), [type,val]];
+//             }
+//             // break;
+//         }
+//         else if( type === ComponentT ){
+//             const did = getComponentDefId(val);
+//             if( bf.get(did) === true ){
+//                 return [ undefined,[type,val] ];
+//             }
+//         }
+//     }
 
-    return [createEntityList(eids, bf),undefined];
-}
+//     return [createEntityList(eids, bf),undefined];
+// }
 
 
-/**
- * Pops an Entity from the stack.
- * If the top value is an EntityList or EntitySet, an array of entities is returneds
- */
-export function popEntity( stack:QueryStack ): [QueryStack, Entity | Entity[]] {
-    let type
-    let val = undefined;
-    const top = peek( stack );
+// /**
+//  * Pops an Entity from the stack.
+//  * If the top value is an EntityList or EntitySet, an array of entities is returneds
+//  */
+// export function popEntity( stack:QueryStack ): [QueryStack, Entity | Entity[]] {
+//     let type
+//     let val = undefined;
+//     const top = peek( stack );
 
-    if( top === undefined ){
-        return [stack, undefined];
-    }
+//     if( top === undefined ){
+//         return [stack, undefined];
+//     }
 
-    [type] = top;
+//     [type] = top;
     
-    if( type === EntityListType ){
-        [stack, [type, val]] = pop(stack);
+//     if( type === EntityListType ){
+//         [stack, [type, val]] = pop(stack);
 
-        // Log.debug('[dammit]',  type, val);
-        // Log.debug('[popEntity] resolving', val.entityIds )
-        val = resolveEntityList(stack, val);
-        // (val as EntityList).entityIds
-    }
-    else if( type === EntitySetT ){
+//         // Log.debug('[dammit]',  type, val);
+//         // Log.debug('[popEntity] resolving', val.entityIds )
+//         val = resolveEntityList(stack, val);
+//         // (val as EntityList).entityIds
+//     }
+//     else if( type === EntitySetT ){
 
-    }
+//     }
 
-    return [stack, val];
-}
+//     return [stack, val];
+// }
 
 
-function resolveEntityList( stack:QueryStack, list:EntityList ): Entity[] {
-    let result = [];
+// function resolveEntityList( stack:QueryStack, list:EntityList ): Entity[] {
+//     let result = [];
 
-    for( let ii = stack.items.length-1; ii >= 0; ii-- ){
-        const [type,val] = stack.items[ii];
+//     for( let ii = stack.items.length-1; ii >= 0; ii-- ){
+//         const [type,val] = stack.items[ii];
 
-        if( type === EntityT ){
-            const eid = getEntityId(val);
-            // list.entityIds.find( leid => leid === eid )
-            if( list.entityIds.indexOf(eid) !== -1 ){
-                result.push( val );
-            }
-        }
-        else if( type === EntitySetT ){
-            return getEntities( val, list );
-        }
-    }
+//         if( type === EntityT ){
+//             const eid = getEntityId(val);
+//             // list.entityIds.find( leid => leid === eid )
+//             if( list.entityIds.indexOf(eid) !== -1 ){
+//                 result.push( val );
+//             }
+//         }
+//         else if( type === EntitySetT ){
+//             return getEntities( val, list );
+//         }
+//     }
 
-    return result;
-}
+//     return result;
+// }

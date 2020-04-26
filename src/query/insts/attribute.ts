@@ -1,7 +1,7 @@
 import { createLog } from "../../util/log";
 import { QueryStack, InstDefMeta, 
     pop,
-    push, StackValue, peek, InstResult, findWithIndexV, matchEntities, findV, } from "../stack";
+    push, StackValue, peek, InstResult, findWithIndexV, findV, } from "../stack";
 import {
     Type as ComponentRegistryT, resolveComponentDefIds, resolveComponentDefAttribute
 } from '../../component_registry';

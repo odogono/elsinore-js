@@ -31,3 +31,5 @@ bin/old_test
 TODO.md
 coverage
 .nyc_output
+esfs
+*.sqlite
