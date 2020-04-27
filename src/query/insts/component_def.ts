@@ -22,47 +22,47 @@ export const meta:InstDefMeta = {
 export function execute( stack:QueryStack, [op,arg]:StackValue ):InstResult {
     let def:ComponentDef = parseArg(stack,arg);
 
-    if( op === DEF){
-        return [stack, [op,arg]];
-    }
+    // if( op === DEF){
+    //     return [stack, [op,arg]];
+    // }
 
-    // let properties;
-    let value:StackValue;
-    let index:number;
-    let registry:ComponentRegistry;
-    let type:string;
-    // let def:ComponentDef;
+    // // let properties;
+    // let value:StackValue;
+    // let index:number;
+    // let registry:ComponentRegistry;
+    // let type:string;
+    // // let def:ComponentDef;
 
 
-    // if( isComponentDef(arg) ){
-    //     def = arg;
-    // } else if( isObject(arg) ){
-        //     def = createComponentDef(arg);
-    if( arg === undefined ){
-            // pop def
-        [stack, [, def]] = pop(stack);
-        // Log.debug('create', def);
-        def = createComponentDef( def );
-    }
+    // // if( isComponentDef(arg) ){
+    // //     def = arg;
+    // // } else if( isObject(arg) ){
+    //     //     def = createComponentDef(arg);
+    // if( arg === undefined ){
+    //         // pop def
+    //     [stack, [, def]] = pop(stack);
+    //     // Log.debug('create', def);
+    //     def = createComponentDef( def );
+    // }
 
-    // find the ComponentRegistry in the stack
-    [index, value] = findWithIndex( stack, ComponentRegistryT );
+    // // find the ComponentRegistry in the stack
+    // [index, value] = findWithIndex( stack, ComponentRegistryT );
 
-    if( index === -1 ){
-        // no registry, so just return value
-        return [stack, [ComponentDefT, def]];
-    }
+    // if( index === -1 ){
+    //     // no registry, so just return value
+    //     return [stack, [ComponentDefT, def]];
+    // }
 
-    // Log.debug('create', def);
+    // // Log.debug('create', def);
 
-    [type,registry] = value;
+    // [type,registry] = value;
 
-    let [uregistry] = register( registry, def );
+    // let [uregistry] = register( registry, def );
     
-    stack = replaceQueryStack( stack, index, [type,uregistry] );
+    // stack = replaceQueryStack( stack, index, [type,uregistry] );
     
-    // Log.debug('[execute]', JSON.stringify( stack, null, '\t' ) );
-    // Log.debug('[execute]', uri, properties, peekQueryStack(stack) );
+    // // Log.debug('[execute]', JSON.stringify( stack, null, '\t' ) );
+    // // Log.debug('[execute]', uri, properties, peekQueryStack(stack) );
 
     return [stack];
 }

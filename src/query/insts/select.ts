@@ -25,7 +25,7 @@ import * as StackInsts from './stack';
 import { VL, valueOf } from "./value";
 import { BitField } from "odgn-bitfield";
 import { Type as EntityT, EntityListType, EntityList, Entity, getEntityId, createEntityList } from "../../entity";
-import { Type as EntitySetT, getEntity, matchEntities as esMatchEntities } from '../../entity_set';
+import { Type as EntitySetT, getEntity } from '../../entity_set';
 import { isInteger, isString } from "../../util/is";
 import { Attribute, compile as compileAttr } from './attribute';
 
@@ -121,15 +121,15 @@ function selectEntity( stack:QueryStack, value:StackValue ): InstResult {
         bf = resolveComponentDefIds( registry, [eid] ) as BitField;
         // Log.debug('resolve', eid, bf.toValues(), type )
 
-        if( type === EntitySetT ){
-            let el = esMatchEntities( container, bf, {limit:1, returnEntities:true} ) as Entity[];
-            e = el[0];
-        }
-        else if( type === EntityT ){
-            if( BitField.or( bf, (container as Entity).bitField ) ){
-                e = container;
-            }
-        }
+        // if( type === EntitySetT ){
+        //     let el = esMatchEntities( container, bf, {limit:1, returnEntities:true} ) as Entity[];
+        //     e = el[0];
+        // }
+        // else if( type === EntityT ){
+        //     if( BitField.or( bf, (container as Entity).bitField ) ){
+        //         e = container;
+        //     }
+        // }
     }
 
     return [stack, [EntityT,e] ];
@@ -165,7 +165,7 @@ function selectEntitiesWithAll( stack:QueryStack, criteria:StackValue ): InstRes
 
         bf = determineBitField(registry, el);
 
-        let ents = esMatchEntities( es, bf );
+        // let ents = esMatchEntities( es, bf );
 
         // take each entity
         // push each StackList inst onto the stack
@@ -204,7 +204,7 @@ function selectEntitiesWithAll( stack:QueryStack, criteria:StackValue ): InstRes
         // Log.debug('[selectEntitiesWithAll]', bf.toValues(), criteriaValue );
         let es = findV(stack, EntitySetT);
 
-        el = esMatchEntities( es, bf ) as EntityList;
+        // el = esMatchEntities( es, bf ) as EntityList;
         
         return [stack, [EntityListType,el]];
     }
@@ -266,15 +266,15 @@ function selectComponentsWithSome( stack:QueryStack, ...args:any[] ): InstResult
 
 
 
-function executeSelectDefs( stack:QueryStack ):InstResult {
+// function executeSelectDefs( stack:QueryStack ):InstResult {
 
-    // find the component registry
-    let [index, [type, registry]] = findWithIndex(stack, ComponentRegistryT);
+//     // find the component registry
+//     let [index, [type, registry]] = findWithIndex(stack, ComponentRegistryT);
 
-    const defs = getComponentDefs(registry);
+//     const defs = getComponentDefs(registry);
 
-    return [defs.reverse().reduce( (st, def) => {
-        [stack] = push( st, [ComponentDefT,def] );
-        return stack;
-    }, stack )];
-}
+//     return [defs.reverse().reduce( (st, def) => {
+//         [stack] = push( st, [ComponentDefT,def] );
+//         return stack;
+//     }, stack )];
+// }

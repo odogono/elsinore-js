@@ -11,6 +11,7 @@ import { createLog } from "../util/log";
 import { isString, isInteger } from "../util/is";
 import { create as createComponentInstance, Component } from '../component';
 import { BitField } from "odgn-bitfield";
+import { EntitySet } from "../entity_set";
 
 export type ComponentDefs = Array<ComponentDef>;
 
@@ -28,30 +29,30 @@ export interface ComponentRegistry {
     byHash: Map<number, number>;
 }
 
-export function create(): ComponentRegistry {
-    return {
-        isComponentRegistry: true,
-        uuid: createUUID(),
-        componentDefs: [],
-        byUri: new Map<string, number>(),
-        byHash: new Map<number, number>(),
-    };
-}
+// export function create(): ComponentRegistry {
+//     return {
+//         isComponentRegistry: true,
+//         uuid: createUUID(),
+//         componentDefs: [],
+//         byUri: new Map<string, number>(),
+//         byHash: new Map<number, number>(),
+//     };
+// }
 
-export function getByHash( registry, hash:number ): ComponentDef {
+export function getByHash<ES extends EntitySet>( registry:ES, hash:number ): ComponentDef {
     const did = registry.byHash.get( hash );
     return did === undefined ? undefined : registry.componentDefs[did-1];
 }
-export function getByUri( registry, uri:string ): ComponentDef {
+export function getByUri<ES extends EntitySet>( registry:ES, uri:string ): ComponentDef {
     const did = registry.byUri.get( uri );
     return did === undefined ? undefined : registry.componentDefs[did-1];
 }
 
-export function getByDefId( registry, defId:number ): ComponentDef {
+export function getByDefId<ES extends EntitySet>( registry:ES, defId:number ): ComponentDef {
     return registry.componentDefs[defId-1];
 }
 
-export function getComponentDefs( registry ): ComponentDef[] {
+export function getComponentDefs<ES extends EntitySet>( registry:ES ): ComponentDef[] {
     return registry.componentDefs;
 }
 
@@ -65,7 +66,7 @@ type ResolveDefIds = string | string[] | number | number[];
  * @param registry ComponentRegistry
  * @param dids array of def ids as strings or numbers 
  */
-export function resolveComponentDefIds( registry:ComponentRegistry, dids:ResolveDefIds ): BitField {
+export function resolveComponentDefIds<ES extends EntitySet>( registry:ES, dids:ResolveDefIds ): BitField {
     const bf = new BitField();
     
     if( !Array.isArray(dids) || dids.length === 0 ){
@@ -91,7 +92,7 @@ export function resolveComponentDefIds( registry:ComponentRegistry, dids:Resolve
  * @param registry 
  * @param did 
  */
-export function resolveComponentDefAttribute( registry:ComponentRegistry, did:string ): [BitField, string] {
+export function resolveComponentDefAttribute<ES extends EntitySet>( registry:ES, did:string ): [BitField, string] {
 
     let attrName:string;
     const isAttr = (did as string).indexOf('#') !== -1;
@@ -128,7 +129,7 @@ export function resolveComponentDefAttribute( registry:ComponentRegistry, did:st
  * @param registry 
  * @param param1 
  */
-export function register( registry:ComponentRegistry, value:ComponentDef|ComponentDefObj ): [ComponentRegistry, ComponentDef] {
+export function register<ES extends EntitySet>( registry:ES, value:ComponentDef|ComponentDefObj|string ): [ES, ComponentDef] {
 
     // Log.debug('[register]', uri, properties );
 
@@ -166,7 +167,7 @@ export function register( registry:ComponentRegistry, value:ComponentDef|Compone
 /**
  * 
  */
-export function createComponent( registry:ComponentRegistry, defId:(string|number), attributes = {} ): Component {
+export function createComponent<ES extends EntitySet>( registry:ES, defId:(string|number), attributes = {} ): Component {
     let def:ComponentDef = undefined;
 
     // Log.debug('[createComponent]', defId, attributes, registry );

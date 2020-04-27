@@ -11,7 +11,7 @@ import { QueryStack, InstDefMeta,
     InstModuleDef, 
     getDef, 
     popOfTypeV, 
-    StackOp, popOfType, findWithIndex, } from "../stack";
+    StackOp, popOfType, findWithIndex, AsyncInstResult, pushValues, } from "../stack";
 import {
     Type as EntityT,
     getComponents as getEntityComponents
@@ -96,7 +96,7 @@ export function execute( stack:QueryStack, [op,arg]:StackValue  ):InstResult {
 }
 
 
-export function executeOpenList( stack:QueryStack, [op,arg]:StackValue ):InstResult {
+export async function executeOpenList( stack:QueryStack, [op,arg]:StackValue ):AsyncInstResult {
     // Log.debug('[executeOpenList]', op, args );
 
     if( arg ){
@@ -112,7 +112,7 @@ export function executeOpenList( stack:QueryStack, [op,arg]:StackValue ):InstRes
         op === CloseList ? [op, inst] : [op, disableInstDef(inst) ] );
     subStack.instructions = new Map<string, InstDef>( insts );
 
-    [subStack] = push( subStack, [QueryStackT,stack] );
+    [subStack] = await push( subStack, [QueryStackT,stack] );
 
     return [subStack];
 }
@@ -298,7 +298,7 @@ export function executeGet( stack:QueryStack ): InstResult {
  * @param op 
  * @param list 
  */
-export function executeList( stack:QueryStack, op:string, list:StackOp|StackValue[] ):InstResult {
+export async function executeList( stack:QueryStack, op:string, list:StackOp|StackValue[] ):AsyncInstResult {
     let value:StackValue;
     let args:StackValue[];
     let arg;
@@ -319,7 +319,8 @@ export function executeList( stack:QueryStack, op:string, list:StackOp|StackValu
 
 
     // push each of the args onto the stack
-    [stack,value] = args.reduce( ( [stack,value],inst) => push(stack, inst), [stack,value] );
+    // [stack,value] = args.reduce( ( [stack,value],inst) => push(stack, inst), [stack,value] );
+    [stack] = await pushValues(stack, args);
 
     return [stack, value, false];
 }

@@ -42,19 +42,28 @@ export function identity(){
     return 'tokenizer';
 }
 
+export interface TokenizeOptions {
+    returnValues?: boolean;
+}
 
-export function tokenize(data:string, options = {}) {
+export function tokenizeString(data:string, options:TokenizeOptions = {}) {
+    const returnValues = options.returnValues ?? false;
     let context = createContext();
 
-    context = tokenizeString(context, data);
+    if( !data.endsWith('\n') ){
+        data = data + '\n';
+    }
 
-    return context;
+    context = tokenize(context, data);
+
+    return returnValues ? context.output.map( e => e[0] ) : context.output;
+    // return context;
 }
 
 /**
  * Entry point for parsing a new string
  */
-export function tokenizeString(context:TokenizerContext, input:string):TokenizerContext {
+export function tokenize(context:TokenizerContext, input:string):TokenizerContext {
     context = context || createContext();
     context.length = context.pos + input.length;
 
@@ -114,6 +123,7 @@ function processAlt(context:TokenizerContext, input:string):TokenizerContext {
                 }
             }
             else {
+                // console.log('start val', char, pos);
                 mode = set(mode,MODE_VALUE);
                 mode = unset(mode, MODE_MAYBE_QUOTE );
                 offset = linePosition;
@@ -148,22 +158,18 @@ function processAlt(context:TokenizerContext, input:string):TokenizerContext {
                     case ':':
                     case ',':
                     // case '\n':
-                        // console.log('but what', buffer);
+                        // console.log('but what', buffer, mode);
                         output.push([
                             parseValue(trimRight(buffer)),
                             markPosition,
                             line
                         ]);
-                        mode = unset(mode, MODE_MULTI_QUOTE);
+                        mode = unset(mode, MODE_MULTI_QUOTE | MODE_VALUE);
                         // maybeWithinQuote = false;
                         buffer = '';
 
                         if ( char !== ',') {
-                            output.push([
-                                char,
-                                pos,
-                                line
-                            ]);
+                            output.push([char,pos,line]);
                         }
                         break;
                 }
@@ -183,10 +189,18 @@ function processAlt(context:TokenizerContext, input:string):TokenizerContext {
                 buffer = '';
             }
         } else if( isSet(mode, MODE_VALUE) ){
-            if( char === ' ' || isNewline || char === ',' || char === ':' ){
-                // console.log('end value', buffer, parseValue(trimRight(buffer)) );
-                output.push([parseValue(trimRight(buffer)),markPosition,line]);
+            if( char === ' ' || isNewline || char === ',' || char === ':' || char === ']' || char === '}' ){
+                let value = parseValue(trimRight(buffer));
+                output.push([value,markPosition,line]);
                 mode = unset(mode, MODE_VALUE);
+                // console.log('end val', value, pos);
+                if( char === ']' || char === '}' ){
+                    // output.push([ char,markPosition,line]);
+                    // buffer = '';
+                    cpos -=1;
+                    pos -=1;
+                    linePosition -=1;
+                }
                 buffer = '';
             }
         

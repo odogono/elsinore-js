@@ -9,7 +9,9 @@ import {
     pop,
     InstResult,
     push,
-    popOfTypeV
+    popOfTypeV,
+    pushValues,
+    AsyncInstResult
 } from "../stack";
 import { 
     createComponent, 
@@ -29,7 +31,7 @@ export const meta:InstDefMeta = {
 };
 
 
-export function execute(stack: QueryStack, [op,arg]:StackValue ):InstResult {
+export async function execute(stack: QueryStack, [op,arg]:StackValue ):AsyncInstResult {
     
     if( op === ENT ){
         if( !isEntity(arg) ){
@@ -62,9 +64,11 @@ export function execute(stack: QueryStack, [op,arg]:StackValue ):InstResult {
         let ents:Entity[] = componentsToEntities( eid, coms );
 
         // push each of the entities onto the stack
-        [stack, value] = ents.reduce( ( [stack,value] ,e) => {
-            return push( stack, [EntityT,e] );
-        }, [stack,value]);
+        let insts:StackValue[] = ents.map( e => [EntityT,e] );
+        [stack] = await pushValues(stack,insts);
+        // [stack, value] = ents.reduce( ( [stack,value] ,e) => {
+        //     return push( stack, [EntityT,e] );
+        // }, [stack,value]);
 
         // return an undefined value so nothing further gets pushed on
         return [stack, value, false];

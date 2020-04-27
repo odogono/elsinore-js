@@ -10,13 +10,13 @@ describe('Tokenizer', () => {
     it('parses', async () => {
         let data, out;
         // out = tokenize(`[ "/component/title", "text" ] 29 :nope !d +\n`);
-        out = tokenizeString(undefined, `[ "/component/title", "te`);
-        out = tokenizeString(out, `xt" ] 29 :nope !d +\n`);
+        out = tokenize(undefined, `[ "/component/title", "te`);
+        out = tokenize(out, `xt" ] 29 :nope !d +\n`);
         
         Log.debug( out.output );
 
-        out = tokenize(`{ "debug": true } \n`);
-        Log.debug( out.output );
+        out = tokenizeString(`{ "debug": true } \n`);
+        Log.debug( out );
 
         data = `1 version == assert
 
@@ -24,8 +24,8 @@ describe('Tokenizer', () => {
         { debug: true, ace:99 } !es
         `
 
-        out = tokenize(data);
-        Log.debug( out.output );
+        out = tokenizeString(data);
+        Log.debug( out );
 
     //     // Log.debug( Tokenizer );
 
@@ -35,8 +35,8 @@ describe('Tokenizer', () => {
         human:   Hjson
         machine: JSON
     }`;
-        out = tokenize(data);
-        Log.debug( out.output );
+        out = tokenizeString(data);
+        Log.debug( out );
 
         data = `{
             md:
@@ -46,8 +46,8 @@ describe('Tokenizer', () => {
                   This line is indented by two spaces.
                 '''
             }`
-        out = tokenize(data);
-        Log.debug( out.output );
+        out = tokenizeString(data);
+        Log.debug( out );
 
         data = `
         {
@@ -55,9 +55,54 @@ describe('Tokenizer', () => {
             "{}": " spaces at the start/end "
             this: "is OK though: {}[],:"
         }`;
-        out = tokenize(data);
-        Log.debug( out.output );
+        out = tokenizeString(data);
+        Log.debug( out );
+    });
+
+    it.only('parses arrays', () => {
+        // let data = '[29]';
+        // let out = tokenizeString(data);
         
+
+        // assert.deepEqual(out, [
+        //     [ '[', 0, 0 ],
+        //     [ 29, 1, 0 ],
+        //     [ ']', 3, 0 ],
+        // ]);
+
+        let cases = [
+            ['[29]', 
+            [
+                [ '[', 0, 0 ],
+                [ 29, 1, 0 ],
+                [ ']', 3, 0 ],
+            ]],
+            ['[29] 30',
+            [
+                [ '[', 0, 0 ],
+                [ 29, 1, 0 ],
+                [ ']', 3, 0 ],
+                [ 30, 5, 0 ],
+            ]],
+            ['[29,+] 30',
+            [
+                [ '[', 0, 0 ],
+                [ 29, 1, 0 ],
+                [ '+', 4, 0],
+                [ ']', 5, 0 ],
+                [ 30, 7, 0 ],
+            ]],
+            [ `"get out of bed"`,
+            [
+                [ 'get out of bed', 0, 0]
+            ]]
+        ];
+
+        cases.forEach( ([input,expected]) => {
+            let output = tokenizeString(input as string);
+            // Log.debug(output);
+            assert.deepEqual( output, expected as [] );
+        });
 
     });
 

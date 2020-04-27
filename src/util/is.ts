@@ -75,6 +75,9 @@ export function isBrowser():boolean {
 }
 
 
+export function isPromise(value:any): boolean {
+    return value && typeof value.then === 'function';
+}
 
 export function isEmpty(value:any): boolean {
     if( value == null ){

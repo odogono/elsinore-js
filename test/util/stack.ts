@@ -17,10 +17,8 @@ import * as InstCR from '../../src/query/insts/component_registry';
 import {VL} from '../../src/query/insts/value';
 import {
     ComponentRegistry,
-    create as createComponentRegistry,
     resolveComponentDefIds,
-    Type as ComponentRegistryT,
-    getByDefId} from '../../src/component_registry';
+    Type as ComponentRegistryT, getByDefId} from '../../src/component_registry';
 
 import { create as createQueryStack, 
     peekV as peekQueryStack,
@@ -35,7 +33,8 @@ import { create as createQueryStack,
     QueryStack, 
     getInstruction,
     InstModuleDef,
-    StackOp} from '../../src/query/stack';
+    StackOp,
+    SType} from '../../src/query/stack';
 import {
     buildAndExecute as buildQuery,
     BuildQueryFn,
@@ -64,14 +63,13 @@ export async function loadFixtureDefs( name:string ) {
     return prepareFixture(name, {allowOps:['!d']});
 }
 
-export async function prepareFixture( name:string, options:PrepareFixtureOptions = {} ): Promise<[ QueryStack, ComponentRegistry, EntitySet ]> {
-    let registry = createComponentRegistry();
+export async function prepareFixture( name:string, options:PrepareFixtureOptions = {} ): Promise<[ QueryStack, EntitySet ]> {
     let stack = buildQueryStack();
     let op:StackOp;
     let es:EntitySet;// = options.addToEntitySet ? createEntitySet({}) : undefined;
 
     // add the registry to the stack
-    [stack] = push( stack, [ComponentRegistryT, createComponentRegistry()] );
+    [stack] = push( stack, [ComponentRegistryT, es] );
 
     let data = await loadFixture( 'todo.ldjson' );
 
@@ -107,9 +105,9 @@ export async function prepareFixture( name:string, options:PrepareFixtureOptions
         [stack, [op,es]] = push( stack, '!es' );
     }
 
-    registry = findV( stack, ComponentRegistryT );
+    // registry = findV( stack, ComponentRegistryT );
 
-    return [ stack, registry, es ];
+    return [ stack, es ];
 }
 
 
@@ -133,20 +131,19 @@ export function buildQueryStack(){
 }
 
 
-export function buildComponentRegistry( buildFn?:BuildQueryFn ): [QueryStack, ComponentRegistry] {
-    let registry = createComponentRegistry();
-    let stack = buildQueryStack();
+// export function buildComponentRegistry( buildFn?:BuildQueryFn ): [QueryStack, ComponentRegistry] {
+//     let stack = buildQueryStack();
 
-    [stack] = push( stack, [ComponentRegistryT,registry] );
+//     [stack] = push( stack, [ComponentRegistryT,registry] );
 
-    if( buildFn ){
-        stack = buildQuery( stack, buildFn );
-    }
+//     if( buildFn ){
+//         stack = buildQuery( stack, buildFn );
+//     }
 
-    registry = findV( stack, ComponentRegistryT );
+//     registry = findV( stack, ComponentRegistryT );
 
-    return [stack, registry];
-}
+//     return [stack, registry];
+// }
 
 export function buildAndExecuteQuery( stack:QueryStack, buildFn:BuildQueryFn ): [QueryStack,Entity] {
     // // find registry
@@ -168,8 +165,8 @@ export function buildEntity( stack:QueryStack, buildFn:BuildQueryFn, entityId:nu
     // find registry
     let registry = findV( stack, ComponentRegistryT );
     if( registry === undefined ){
-        registry = createComponentRegistry();
-        stack = unshiftV( stack, registry, ComponentRegistryT );
+        // registry = createComponentRegistry();
+        stack = unshiftV( stack, registry, SType.EntitySet );
     }
     let entity:Entity;
 
@@ -229,7 +226,7 @@ export function serialiseEntitySet( es:EntitySetMem, registry:ComponentRegistry 
         const e = getEntity(es, eid );
         const coms = getComponents(e);
         res = coms.reduce( (res,com) => {
-            const def = getByDefId(registry, getComponentDefId(com) );
+            const def = getByDefId(es, getComponentDefId(com) );
             const attrs = omit( componentToObject(com), '@d', '@e');
             const out = [ '@c', def.uri ];
             res.push( Object.keys(attrs).length > 0 ? [...out,attrs] : out  );
@@ -240,11 +237,11 @@ export function serialiseEntitySet( es:EntitySetMem, registry:ComponentRegistry 
     },[]);
 }
 
-export function serialiseEntity( e:Entity, registry:ComponentRegistry ): any[] {
+export function serialiseEntity( es:EntitySet, e:Entity ): any[] {
     const eid = getEntityId(e);
     const coms = getComponents(e);
     let res = coms.reduce( (res,com) => {
-        const def = getByDefId(registry, getComponentDefId(com) );
+        const def = getByDefId(es, getComponentDefId(com) );
         const attrs = omit( componentToObject(com), '@d', '@e');
         const out = [ '@c', def.uri ];
         res.push( Object.keys(attrs).length > 0 ? [...out,attrs] : out  );

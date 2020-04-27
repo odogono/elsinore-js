@@ -1,6 +1,9 @@
 import { assert } from 'chai';
 import { createLog } from '../src/util/log';
-import {ComponentRegistry, Type as ComponentRegistryT, createComponent } from '../src/component_registry';
+import {ComponentRegistry, Type as ComponentRegistryT, 
+    createComponent, 
+    getByUri, getByHash, getByDefId,
+    register } from '../src/component_registry';
 import {  
     pushValues,
     peekV as peekQueryStack,
@@ -30,14 +33,14 @@ import { EntitySet,
     ESQuery,
     compileQueryPart,
     removeEntity} from '../src/entity_set';
-import { buildQueryStack, 
-    buildComponentRegistry, 
+import { buildQueryStack,
     buildEntity, 
     prepareFixture} from './util/stack';
 import { assertHasComponents } from './util/assert';
 import { getChanges, ChangeSetOp } from '../src/entity_set/change_set';
 import { Type as ComponentT, fromComponentId, getComponentDefId, Component } from '../src/component';
 import { VL } from '../src/query/insts/value';
+import { isComponentDef, hash as hashDef } from '../src/component_def';
 
 const Log = createLog('TestEntitySet');
 
@@ -47,14 +50,37 @@ let stack:QueryStack;
 
 describe('Entity Set (Mem)', () => {
     beforeEach( () => {
-        [stack,registry] = buildComponentRegistry( ({def}) => {
-            def('/component/channel', 'name');
-            def('/component/status', 'status');
-            def('/component/topic', 'topic');
-            def('/component/username', 'username');
-            def('/component/channel_member', 'channel_member' );
-        });
+        // [stack,registry] = buildComponentRegistry( ({def}) => {
+        //     def('/component/channel', 'name');
+        //     def('/component/status', 'status');
+        //     def('/component/topic', 'topic');
+        //     def('/component/username', 'username');
+        //     def('/component/channel_member', 'channel_member' );
+        // });
         // Log.debug('[beforeEach]', stack.items, registry )
+    })
+
+    describe('Component Defs', () => {
+        it.only('registers', async () => {
+            let def;
+            let es = createEntitySet({});
+            const data = { uri: '/component/position', properties:[ {name:'rank',type:'integer'}, 'file' ] };
+    
+            [es, def] = register<EntitySetMem>( es, data );
+
+            // Log.debug('es', es);
+
+            [es,def] = register( es, "/component/piece/king" );
+            [es,def] = register( es, "/component/piece/queen" );
+
+            def = getByUri(es, '/component/position');
+
+            assert.ok( isComponentDef(def) );
+
+            def = getByHash(es, hashDef(def) );
+
+            assert.equal( def.uri, '/component/position' );
+        })
     })
 
 
@@ -124,8 +150,8 @@ describe('Entity Set (Mem)', () => {
 
         it('adds a component', () => {
             // Log.debug('registry', registry);
-            let com = createComponent(registry, '/component/channel', {name: 'chat'} );
             let es = createEntitySet({});
+            let com = createComponent(es, '/component/channel', {name: 'chat'} );
 
             es = esAdd( es, com );
 
@@ -141,8 +167,8 @@ describe('Entity Set (Mem)', () => {
         });
         
         it('adds a component with an entity id', () => {
-            let com = createComponent(registry, '/component/channel', {'@e':23, name: 'discussion'} );
             let es = createEntitySet({});
+            let com = createComponent(es, '/component/channel', {'@e':23, name: 'discussion'} );
 
             es = esAdd( es, com );
 
@@ -150,7 +176,7 @@ describe('Entity Set (Mem)', () => {
 
             let e = getEntity(es, 23);
 
-            assertHasComponents( registry, e, ['/component/channel'] );
+            assertHasComponents( es, e, ['/component/channel'] );
 
             com = getEntityComponent( e, getComponentDefId(com) );
 
@@ -164,7 +190,7 @@ describe('Entity Set (Mem)', () => {
 
             // create a number of components
             coms = ['chat', 'dev', 'politics'].map( name => 
-                createComponent(registry, '/component/channel', {name}));
+                createComponent(es, '/component/channel', {name}));
 
             es = esAdd( es, coms );
 
@@ -198,7 +224,7 @@ describe('Entity Set (Mem)', () => {
 
             e = getEntity(es, 15);
 
-            assertHasComponents( registry, e, 
+            assertHasComponents( es, e, 
                 ['/component/username', '/component/status', '/component/channel_member' ] );
 
             // Log.debug('e', es);
@@ -209,8 +235,8 @@ describe('Entity Set (Mem)', () => {
 
     describe('Removing', () => {
         it('removes a component', () => {
-            let com = createComponent(registry, '/component/channel', {name: 'chat'} );
             let es = createEntitySet({});
+            let com = createComponent(es, '/component/channel', {name: 'chat'} );
 
             es = esAdd( es, com );
 
@@ -253,10 +279,9 @@ describe('Entity Set (Mem)', () => {
     describe('Query', () => {
 
         let es:EntitySet;
-        let registry:ComponentRegistry;
 
         beforeEach( async () => {
-            [,registry,es] = await prepareFixture('todo.ldjson', {addToEntitySet:true});
+            [,es] = await prepareFixture('todo.ldjson', {addToEntitySet:true});
         })
 
         it('retrieves by entity id', async () => {
@@ -264,7 +289,7 @@ describe('Entity Set (Mem)', () => {
             // 
 
             let q = { '@e': 100 };
-            let list = esQuery( es, registry, q ) as EntityList;
+            let list = esQuery( es, q ) as EntityList;
 
             // Log.debug('result', list);
 
@@ -275,7 +300,7 @@ describe('Entity Set (Mem)', () => {
         it('retrieves components by def id', async () => {
             // returns all components that match
             let q = {'@d': '/component/completed' };
-            let list = esQuery( es, registry, q ) as ComponentList;
+            let list = esQuery( es, q ) as ComponentList;
 
             // Log.debug('es', es);
             let coms = esGetComponents( es, list );
@@ -292,7 +317,7 @@ describe('Entity Set (Mem)', () => {
         it('retrieves entities by def id', async () => {
             // returns all entities that have this component
             let q = {'@e': '/component/completed' };
-            let list = esQuery( es, registry, q ) as EntityList;
+            let list = esQuery( es, q ) as EntityList;
 
             
             let e = esGetEntities( es, list );
@@ -308,7 +333,7 @@ describe('Entity Set (Mem)', () => {
             // first the entity is selected, then the component
             // the result is a componentlist because of the component
             let q = { '@e':101, '@d': '/component/completed' };
-            let list = esQuery( es, registry, q ) as ComponentList;
+            let list = esQuery( es, q ) as ComponentList;
             
             // Log.debug('result', es);
             
@@ -377,7 +402,7 @@ describe('Entity Set (Mem)', () => {
 
             
 
-            let list = esQuery( es, registry, q );
+            let list = esQuery( es, q );
              
             Log.debug('result', list);
 
@@ -388,7 +413,7 @@ describe('Entity Set (Mem)', () => {
             q = { '@e': ['/component/priority','/component/completed'], '@a':'priority' };
             // q = { '@e': ['/component/priority','/component/completed'] };
 
-            list = esQuery( es, registry, q );
+            list = esQuery( es, q );
              
             Log.debug('result', list); // [ 'CV', '[100,3]', 10 ]
 

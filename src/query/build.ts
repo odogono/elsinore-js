@@ -38,13 +38,13 @@ export function build( stack:QueryStack, buildFn:BuildQueryFn ):any[] {
 }
 
 
-export function buildAndExecute( stack:QueryStack, buildFn:BuildQueryFn ): QueryStack {
+export async function buildAndExecute( stack:QueryStack, buildFn:BuildQueryFn ): Promise<QueryStack> {
     const stmts = build( stack, buildFn );
 
     // console.log('[buildAndExecute]', stack.items );
     // console.log('[buildAndExecute]', stmts );
 
-    [stack] = pushValues( stack, stmts );
+    [stack] = await pushValues( stack, stmts );
 
 
     return stack;

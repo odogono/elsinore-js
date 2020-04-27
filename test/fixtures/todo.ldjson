@@ -1,13 +1,12 @@
 1 version == assert
 
 // create a new EntitySet
-{} !es
+// {} !es
 
 // create a ComponentDef, add it to the EntitySet
 [ "/component/title", "text" ] !d +
-
 [ "/component/completed", {"name":"isComplete", "type":"boolean", "default":false} ] !d +
-[ "/component/priority", {"name":"priority", "type":"integer", "default": 0} ] !d !
+[ "/component/priority", {"name":"priority", "type":"integer", "default": 0} ] !d +
 
 // create an empty array, add components to it
 []
@@ -16,22 +15,23 @@
 [ "/component/priority", {"priority":10}] !c +
 
 // create an entity, add the component array to it
-100 !e +
+100 !e swap +
 
+[]
+[ "/component/title", { "text":"phone up friend"} ] !c +
+[ "/component/completed", {"isComplete":true}] !c +
+101 !e swap +
 
-[ "!c", "/component/title", { "text":"phone up friend"} ]
-[ "!c", "/component/completed", {"isComplete":true}]
-[ "!e", 101 ]
+[]
+[ "/component/title", { "text":"turn on the news"} ] !c +
+[ "/component/completed", {"isComplete":false} ] !c +
+102 !e swap +
 
+[]
+[ "/component/title", { "text":"drink some tea"} ] !c +
+103 !e swap +
 
-[ "!c", "/component/title", { "text":"turn on the news"} ]
-[ "!c", "/component/completed", {"isComplete":false} ]
-[ "!e", 102 ]
-
-[ "!c", "/component/title", { "text":"drink some tea"} ]
-[ "!e", 103 ]
-
-
-[ "!c", "/component/title", { "text":"do some shopping"}]
-[ "!c", "/component/priority", {"priority":-5} ]
-[ "!e", 104 ]
+[]
+[ "/component/title", { "text":"do some shopping"}] !c +
+[ "/component/priority", {"priority":-5} ] !c +
+104 !e swap +

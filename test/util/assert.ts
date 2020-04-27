@@ -1,7 +1,6 @@
 import { assert } from 'chai';
 import {
     ComponentRegistry,
-    create as createComponentRegistry,
     resolveComponentDefIds,
     Type as ComponentRegistryT,
     getByDefId} from '../../src/component_registry';
@@ -15,7 +14,7 @@ import { getDefId, toObject as defToObject, ComponentDef } from '../../src/compo
 import{ getComponentDefId, toObject as componentToObject } from '../../src/component';
 
 
-export const assertIncludesComponents  = (registry:ComponentRegistry, entity:Entity, dids:any[]) => {
+export function assertIncludesComponents<ES extends EntitySet>(registry:ES, entity:Entity, dids:any[]) {
     const bf = resolveComponentDefIds( registry, dids );
     // const defs = resolveComponentDefIds( registry, dids ) as ComponentDef[];
 
@@ -32,7 +31,7 @@ export const assertIncludesComponents  = (registry:ComponentRegistry, entity:Ent
     })
 }
 
-export const assertHasComponents = (registry:ComponentRegistry, entity:Entity, dids:any[]) => {
+export function assertHasComponents<ES extends EntitySet>(registry:ES, entity:Entity, dids:any[]){
     const bf = resolveComponentDefIds( registry, dids );
     
     bf.toValues().forEach( (did,ii) => {

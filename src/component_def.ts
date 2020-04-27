@@ -154,7 +154,7 @@ export function getProperty( def:ComponentDef, name:string ): ComponentDefProper
 
 export interface ComponentDefObj {
     '@d'?: number;
-    name: string;
+    name?: string;
     uri: string;
     properties?: any[];
 }
