@@ -11,7 +11,7 @@ import { createLog } from "../util/log";
 import { isString, isInteger } from "../util/is";
 import { create as createComponentInstance, Component } from '../component';
 import { BitField } from "odgn-bitfield";
-import { EntitySet } from "../entity_set";
+import { EntitySet } from "./index";
 
 export type ComponentDefs = Array<ComponentDef>;
 
@@ -19,25 +19,7 @@ const Log = createLog('ComponentRegistry');
 
 export const Type = '@cr';
 
-export interface ComponentRegistry {
-    isComponentRegistry: boolean;
 
-    uuid: string;
-
-    componentDefs: ComponentDef[];
-    byUri: Map<string, number>;
-    byHash: Map<number, number>;
-}
-
-// export function create(): ComponentRegistry {
-//     return {
-//         isComponentRegistry: true,
-//         uuid: createUUID(),
-//         componentDefs: [],
-//         byUri: new Map<string, number>(),
-//         byHash: new Map<number, number>(),
-//     };
-// }
 
 export function getByHash<ES extends EntitySet>( registry:ES, hash:number ): ComponentDef {
     const did = registry.byHash.get( hash );

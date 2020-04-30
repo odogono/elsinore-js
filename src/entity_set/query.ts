@@ -6,8 +6,8 @@ import { createLog } from "../util/log";
 import { isObject, isInteger, isString } from "../util/is";
 import { MatchOptions } from '../constants';
 import {
-    resolveComponentDefIds as registryResolve
-} from "../component_registry";
+    resolveComponentDefIds
+} from "./registry";
 import { 
     create as createStack,
     SType,
@@ -56,13 +56,28 @@ export function onEntity(es:EntitySetMem, stack: ESMemQueryStack): InstResult<ES
     [stack, data] = pop(stack);
 
     let eid = unpackStackValue(data, SType.Value);
+    let bf:BitField;
     
-    let e = getEntity(es, eid );
-    
-    // Log.debug('[onEntity]', eid, e);
-    // let e = createEntityInstance(eid);
+    if( isString(eid) ){
+        bf = resolveComponentDefIds(es, [eid]);
+        
+        let matches:number[] = [];
+        const isAll = BitField.isAllSet(bf);// bf.toString() === 'all';
+        for (let [eid, ebf] of es.entities) {
+            if (isAll || BitField.and(bf, ebf)) {
+                matches.push(eid);
+            }
+        }
+        // Log.debug('[onEntity]', 'did', eid);
+        // let list = createEntityList(matches, bf);
+        return [stack, [SType.Entity, matches]]
+    }
+    else if( isInteger(eid) ){
+        let e = getEntity(es, eid );
+        return [stack, [SType.Entity,e]];
+    }
 
-    return [stack, [SType.Entity,e]];
+    return [stack];
 }
 
 
@@ -146,14 +161,14 @@ export function compileQueryPart(es: EntitySet, query): any {
             if (isInteger(eid)) {
                 result = ['@e', eid];
             } else {
-                let bf = registryResolve(es, eid) as BitField;
+                let bf = resolveComponentDefIds(es, eid) as BitField;
                 result = ['EC', bf.toValues()];
             }
         }
         if ('@d' in query) {
             let did = query['@d'];
             did = Array.isArray(did) ? did : [did];
-            let bf = registryResolve(es, did) as BitField;
+            let bf = resolveComponentDefIds(es, did) as BitField;
             
             did = bf.toValues();// bf.count() === 1 ? bf.toValues()[0] : bf.toValues();
             if (result[0] === '@e') {
@@ -189,7 +204,7 @@ function queryEntity(es: EntitySet, result, eq) {
     } else if (isString(eq) || Array.isArray(eq)) {
         let dids: any = eq;
         dids = Array.isArray(dids) ? dids : [dids];
-        let bf = registryResolve(es, dids) as BitField;
+        let bf = resolveComponentDefIds(es, dids) as BitField;
         // Log.debug('[query][resolve]', dids, bf.toValues() );
         result = matchEntitiesII(es as EntitySetMem, bf);
     }
@@ -197,7 +212,7 @@ function queryEntity(es: EntitySet, result, eq) {
 }
 function queryComponentDef(es: EntitySet, result, cq) {
     cq = (Array.isArray(cq) ? cq : [cq]) as string[];
-    let bf = registryResolve(es, cq) as BitField;
+    let bf = resolveComponentDefIds(es, cq) as BitField;
     let cids = [];
 
     // Log.debug('[query]', 'cids', (es as EntitySetMem).components.keys() );

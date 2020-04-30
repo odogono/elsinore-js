@@ -48,7 +48,7 @@ import { ChangeSet,
 import { stringify, parseJSON } from "../util/json";
 import { createLog } from "../util/log";
 import { buildFlake53, parseFlake53 } from '../util/id';
-import { getByDefId, getByUri, getByHash } from '../component_registry';
+import { getByDefId, getByUri, getByHash } from '../entity_set/registry';
 import { fchmodSync } from 'fs-extra';
 import { isString, isInteger, isEmpty } from '../util/is';
 import { StackValue } from '../query/stack';
@@ -58,8 +58,7 @@ const Log = createLog('EntitySetFS');
  * A file system based EntitySet
  */
 export interface EntitySetFS extends EntitySet {
-    isComponentRegistry: boolean;
-
+    
     // keep a reference to the open es db
     db: FsRef;
     debug: boolean;
@@ -116,7 +115,6 @@ export function create(options:CreateEntitySetFSParams={}):EntitySetFS {
     const db = fsCreateRef( `${prefix}${uuid}`, path);
 
     return {
-        isComponentRegistry: true,
         isEntitySet:true,
         isAsync: true,
         isOpen: false,

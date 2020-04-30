@@ -3,8 +3,8 @@ import { QueryStack, InstDefMeta,
     pop,
     push, StackValue, peek, InstResult, findWithIndexV, findV, } from "../stack";
 import {
-    Type as ComponentRegistryT, resolveComponentDefIds, resolveComponentDefAttribute
-} from '../../component_registry';
+    resolveComponentDefIds, resolveComponentDefAttribute
+} from '../../entity_set/registry';
 
 import { getDefId } from "../../component_def";
 import { Type as ComponentT, Component, getComponentDefId } from "../../component";
@@ -28,7 +28,7 @@ export const meta:InstDefMeta = {
 // }
 
 export function compile( stack:QueryStack, [op,arg]:StackValue ): StackValue {
-    let registry = findV( stack, ComponentRegistryT );
+    let registry = findV( stack, EntitySetT );
     const [bf,attrName] = resolveComponentDefAttribute( registry, arg );
     return [op, [bf,attrName]];
 }

@@ -13,10 +13,6 @@ import {
     peek,
     findV
 } from "../stack";
-import {
-    Type as ComponentRegistryCode,
-    Type as ComponentRegistryT, getComponentDefs, resolveComponentDefIds, ComponentRegistry 
-} from "../../component_registry";
 import { Type as ComponentDefT } from '../../component_def';
 import * as StackInsts from './stack';
 
@@ -25,6 +21,7 @@ import { Type as EntityT, EntityListType, EntityList, Entity, getEntityId, creat
 import { Type as EntitySetT, getEntity } from '../../entity_set';
 import { isInteger, isString } from "../../util/is";
 import { Attribute, compile as compileAttr } from './attribute';
+import { resolveComponentDefIds } from "../../entity_set/registry";
 
 
 const Log = createLog('Inst][Select');
@@ -113,7 +110,7 @@ function selectEntity( stack:QueryStack, value:StackValue ): InstResult<QuerySta
             e = getEntityId(container) === eid ? container : undefined;
         }
     } else if( isString(eid) ){
-        let registry = findV(stack, ComponentRegistryT);
+        let registry = findV(stack, EntitySetT);
         // can only be a did
         bf = resolveComponentDefIds( registry, [eid] ) as BitField;
         // Log.debug('resolve', eid, bf.toValues(), type )
@@ -149,7 +146,7 @@ function selectEntitiesWithAll( stack:QueryStack, criteria:StackValue ): InstRes
     // const bf = resolveComponentDefIds( registry, dids ) as BitField;
     let bf;// = BitField.create('all');
     
-    let registry = findV( stack, ComponentRegistryT );
+    let registry = findV( stack, EntitySetT );
     // const [bf,attrName] = resolveComponentDefAttribute( registry, args );
 
 
@@ -195,7 +192,7 @@ function selectEntitiesWithAll( stack:QueryStack, criteria:StackValue ): InstRes
         // }, []);
     } else if( criteriaType === 'VL' && isString(criteriaValue) ){
         let [el] = [createEntityList() ];// matchEntities( stack, bf );
-        let registry = findV( stack, ComponentRegistryT );
+        let registry = findV( stack, EntitySetT );
         bf = resolveComponentDefIds( registry, [criteriaValue] ) as BitField;
 
         // Log.debug('[selectEntitiesWithAll]', bf.toValues(), criteriaValue );

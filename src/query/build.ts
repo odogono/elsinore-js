@@ -1,14 +1,13 @@
-import { 
-    Type as ComponentRegistryT, 
-    ComponentRegistry } from "../component_registry";
-import { QueryStack, pushValues } from "./stack";
+
+import { QueryStack, pushValues, SType } from "./stack";
+import { EntitySet } from "../entity_set";
 
 
 export type buildDefFn = (uri: string, ...args: any[]) => void;
 export type buildComponentFn = (uri: string, props:object) => void;
 export type buildInstFn = (...args: any[]) => void;
 export type buildEntityFn = () => void;
-export type buildValueFn = (registry: ComponentRegistry) => void;
+export type buildValueFn = (registry: EntitySet) => void;
 export interface BuildQueryParams {
     def:buildDefFn, 
     component: buildComponentFn,
@@ -27,7 +26,7 @@ export function build( stack:QueryStack, buildFn:BuildQueryFn ):any[] {
     const component = (uri:string, props:object) => 
         stmts = [...stmts, {'@c':uri, ...props}, '!c' ] ;
     const entity = () => stmts.push( [ '!e'] );
-    const value = (registry:ComponentRegistry) => stmts.push( [ ComponentRegistryT, registry ] );
+    const value = (registry:EntitySet) => stmts.push( [ SType.EntitySet, registry ] );
     const inst = (...args) => stmts.push(args);
 
     buildFn( {inst, component, def, entity, value} );

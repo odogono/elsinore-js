@@ -16,7 +16,7 @@ import { ComponentDef,
     hash as hashDef, 
     isComponentDef,
     Type as ComponentDefT} from '../component_def';
-import { getByUri, getByHash, getByDefId } from "../component_registry";
+import { getByUri, getByHash, getByDefId } from "../entity_set/registry";
 import { EntitySet, CreateEntitySetParams, markEntityAdd, markComponentUpdate, markEntityUpdate, AddType, AddOptions, clearChanges, markEntityRemove, markComponentRemove } from "../entity_set";
 import { 
     Type as EntityT,
@@ -59,7 +59,7 @@ import { SqlRef,
 import { createLog } from "../util/log";
 import { isString, isInteger } from "../util/is";
 import { StackValue } from "../query/stack";
-export { getByHash, getByUri } from '../component_registry';
+export { getByHash, getByUri } from '../entity_set/registry';
 
 const Log = createLog('EntitySetSQL');
 
@@ -68,8 +68,7 @@ const Log = createLog('EntitySetSQL');
  * as a ComponentRegistry
  */
 export interface EntitySetSQL extends EntitySet {
-    isComponentRegistry: boolean;
-
+    
     // keep a reference to the open es db
     db?: SqlRef;
 
@@ -110,7 +109,6 @@ export function create(options?:CreateEntitySetSQLParams):EntitySetSQL {
     const comChanges = createChangeSet<ComponentId>();
 
     return {
-        isComponentRegistry: true,
         isEntitySet:true,
         isAsync: false,
         db: undefined,

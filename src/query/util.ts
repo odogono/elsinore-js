@@ -19,6 +19,9 @@ export function valueToString( val:StackValue ):string {
         case SType.Component:
             return `(${type} ${getComponentId(value)})`;
         case SType.Entity:
+            if( Array.isArray(value) ){
+                return `(${type} ${stringify(value)})`;
+            }
             return `(${type} ${getEntityId(value)})`;
         case SType.Array:
             return `[` + value.map(v => valueToString(v) ).join(' ') + ']';

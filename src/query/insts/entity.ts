@@ -14,10 +14,7 @@ import {
     AsyncInstResult,
     SType
 } from "../stack";
-import { 
-    createComponent, 
-    Type as ComponentRegistryT 
-} from "../../component_registry";
+
 import { Type as ComponentT, Component, getComponentDefId, getComponentEntityId } from '../../component';
 import { Type as EntityT, create as createEntity, getEntityId, addComponent, Entity, isEntity } from '../../entity';
 import { isNumeric, isInteger } from "../../util/is";

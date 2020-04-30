@@ -51,7 +51,7 @@ import {
     EntitySetMem
 } from '../../src/entity_set';
 import { isString } from '../../src/util/is';
-import { register, createComponent } from '../../src/component_registry';
+import { register, createComponent } from '../../src/entity_set/registry';
 import {
     Entity, create as createEntityInstance, isEntity,
     addComponent as addComponentToEntity
@@ -500,17 +500,25 @@ describe('Query', () => {
                 ['select', onSelect, SType.Array],
             ]);
 
-            Log.debug('---');
+            // Log.debug('---');
+            [stack] = await pushValues(stack, query);
+
+            // Log.debug('stack:', stackToString(stack) );
+        });
+
+        it.only('fetches entities with components', async () => {
+            let query = parse(`[ /component/completed !e ] select`);
+
+            let [stack, es] = await loadEntitySetFromFixture('todo.ldjson');
+
+            stack = addWords(stack, [
+                ['select', onSelect, SType.Array],
+            ]);
+
+            // Log.debug('---');
             [stack] = await pushValues(stack, query);
 
             Log.debug('stack:', stackToString(stack) );
-        });
-
-        it('fetches entities with components', async () => {
-            let query = parse(`
-        [ [ /component/completed ] @e ]
-        select
-        `)
         })
 
         it('fetches component attributes', async () => {

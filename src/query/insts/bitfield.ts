@@ -3,7 +3,7 @@ import { InstDefMeta, QueryStack, pop, StackValue, InstResult, StackOp, findWith
 import { BitField } from "odgn-bitfield";
 import { StackList } from "./stack";
 import { isString, isInteger } from "../../util/is";
-import { Type as ComponentRegistryT, resolveComponentDefIds } from "../../../src/component_registry";
+import { Type as ComponentRegistryT, resolveComponentDefIds } from "../../../src/entity_set/registry";
 
 const Log = createLog('Inst][BitField');
 

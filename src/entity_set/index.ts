@@ -15,10 +15,9 @@ import {
 import { BitField } from "odgn-bitfield";
 import { createUUID } from "../util/uuid";
 import {
-    ComponentRegistry,
     resolveComponentDefIds as registryResolve,
     register
-} from "../component_registry";
+} from "./registry";
 import {
     Entity,
     isEntity,
@@ -56,7 +55,7 @@ export const Type = '@es';
 
 const Log = createLog('ESMem');
 
-export interface EntitySet extends ComponentRegistry {
+export interface EntitySet {
     isAsync: boolean;
 
     isEntitySet: boolean;
@@ -66,6 +65,10 @@ export interface EntitySet extends ComponentRegistry {
     entChanges: ChangeSet<number>;
 
     comChanges: ChangeSet<ComponentId>;
+
+    componentDefs: ComponentDef[];
+    byUri: Map<string, number>;
+    byHash: Map<number, number>;
 
     // ugh, this is turning into a class, but query demands
     // a neutral way of accessing entitysets
@@ -91,7 +94,6 @@ export interface EntitySetMem extends EntitySet {
 
 export interface CreateEntitySetParams {
     uuid?: string;
-    registry?: ComponentRegistry;
 }
 
 export function create(options: CreateEntitySetParams = {}): EntitySetMem {
@@ -104,7 +106,6 @@ export function create(options: CreateEntitySetParams = {}): EntitySetMem {
     return {
         isEntitySet: true,
         isAsync: false,
-        isComponentRegistry: true,
         isEntitySetMem: true,
         uuid, components, entities, entChanges, comChanges,
         componentDefs: [],

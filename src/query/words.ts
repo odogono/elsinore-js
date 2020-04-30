@@ -14,7 +14,7 @@ import {
 } from './stack';
 import { create as createComponentDef, isComponentDef } from '../../src/component_def';
 import { isString } from '../../src/util/is';
-import { register, createComponent } from '../../src/component_registry';
+import { register, createComponent } from '../../src/entity_set/registry';
 import {
     Entity, create as createEntityInstance, isEntity,
     addComponent as addComponentToEntity

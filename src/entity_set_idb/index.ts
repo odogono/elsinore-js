@@ -57,7 +57,7 @@ import { idbOpen, idbDeleteDB,
     idbCount 
 } from "./idb";
 import { isString, isInteger } from "../util/is";
-import { getByUri, getByHash } from "../component_registry";
+import { getByUri, getByHash } from "../entity_set/registry";
 import { StackValue } from "../query/stack";
 
 const Log = createLog('EntitySetIDB');
@@ -74,7 +74,6 @@ const STORE_ENTITIES = 'entity';
  * as a ComponentRegistry
  */
 export interface EntitySetIDB extends EntitySet {
-    isComponentRegistry: boolean;
 
     // keep a reference to the open es db
     db?: IDBDatabase;
@@ -101,7 +100,6 @@ export function create(options?:CreateEntitySetParams):EntitySetIDB {
     const comChanges = createChangeSet<ComponentId>();
 
     return {
-        isComponentRegistry: true,
         isEntitySet:true,
         isAsync: true,
         db: undefined,
