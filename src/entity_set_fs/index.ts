@@ -23,6 +23,8 @@ import {
     setEntityId,
     EntityId,
     addComponentUnsafe,
+    createEntityList,
+    EntityList,
 } from "../entity";
 import { FsRef, fsCreateRef, fsOpen, fsTmpDir, fsWriteFile, fsDelete, fsReadFile, fsExists } from "./fs";
 import { createUUID } from "../util/uuid";
@@ -67,15 +69,18 @@ export interface EntitySetFS extends EntitySet {
     prefix: string;
 
     // records entity changes from the last op
-    entChanges: ChangeSet<number>;
+    // entChanges: ChangeSet<number>;
     
     // records component changes from the last op
-    comChanges: ChangeSet<ComponentId>;
+    // comChanges: ChangeSet<ComponentId>;
 
     // cached component defs
     componentDefs: ComponentDefFS[];
-    byUri: Map<string, number>;
-    byHash: Map<number, number>;
+    // byUri: Map<string, number>;
+    // byHash: Map<number, number>;
+
+    // esAdd: FSAdd;
+    // esRegister: () => any;
 }
 
 
@@ -83,6 +88,8 @@ export interface EntitySetFS extends EntitySet {
 export interface ComponentDefFS extends ComponentDef {
     tblName?: string;
     hash?: number;
+
+    
 }
 
 const defDef = createComponentDef( 1, '/component/def', [ 'uri', 'name', 'hash', 'properties'] ) as ComponentDefFS;
@@ -110,6 +117,7 @@ export function create(options:CreateEntitySetFSParams={}):EntitySetFS {
     return {
         isComponentRegistry: true,
         isEntitySet:true,
+        isAsync: true,
         isOpen: false,
         db,
         separatorChar: '\t',
@@ -120,6 +128,13 @@ export function create(options:CreateEntitySetFSParams={}):EntitySetFS {
         componentDefs: [],
         byUri: new Map<string, number>(),
         byHash: new Map<number, number>(),
+
+        esAdd: add,
+        esRegister: register,
+        esGetComponent: getComponent,
+        esGetComponentDefs: (es:EntitySetFS) => es.componentDefs,
+        esEntities: async (es:EntitySetFS) => await getEntities(es),
+        esGetEntity: (es:EntitySetFS, eid:EntityId) => getEntity(es,eid)
     }
 }
 
@@ -154,6 +169,8 @@ export async function register( es: EntitySetFS, value:ComponentDef|ComponentDef
     return [es, undefined];
 }
 
+
+type FSAdd = (es:EntitySetFS, item:AddType, options:AddOptions) => Promise<EntitySetFS>;
 
 export async function add(es: EntitySetFS, item: AddType, options: AddOptions = {}): Promise<EntitySetFS> {
     es = await openEntitySet(es);
@@ -265,18 +282,14 @@ export async function getEntity(es:EntitySetFS, eid:EntityId): Promise<Entity> {
         let com = coms.find( com => com["@d"] === did && com["@e"] === eid );
         return addComponentUnsafe( await e,did,com);
     }, Promise.resolve(e) );
-    // const store = es.db.transaction(STORE_COMPONENTS, 'readonly').objectStore(STORE_COMPONENTS);
+    
+}
 
-    // let result = await idbGetRange(store, IDBKeyRange.bound([eid,0], [eid,Number.MAX_SAFE_INTEGER] ) );
-
-    // e = result.reduce( (e,{value:cdat}) => {
-    //     let {'_e':ceid, '_d':cdid, ...rest} = cdat;
-    //     let com = {'@e':ceid, '@d':cdid, ...rest};
-
-    //     return addComponentUnsafe(e,cdid,com);
-    // }, e);
-
-    // return e;
+export async function getEntities(es:EntitySetFS): Promise<EntityList> {
+    es = await openEntitySet(es);
+    let ents = await readEntityFile(es);
+    let ids = ents.map( e => e[EntityT] );
+    return createEntityList(ids);
 }
 
 /**

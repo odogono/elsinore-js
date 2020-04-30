@@ -127,7 +127,7 @@ export function createFromObj({id, name, uri, properties, ...extra}): ComponentD
 }
 
 export function isComponentDef( value:any ):boolean {
-    return isObject(value) && Type in value;
+    return isObject(value) && 'uri' in value && 'properties' in value;
 }
 
 

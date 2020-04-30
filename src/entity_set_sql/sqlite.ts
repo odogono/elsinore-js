@@ -327,6 +327,16 @@ export function sqlLastId(ref:SqlRef): number {
     return id;
 }
 
+export function sqlGetEntities(ref:SqlRef): number[] {
+    let stmt = ref.db.prepare('SELECT id FROM tbl_entity');
+    let rows = stmt.all();
+    if( rows.length === 0 ){
+        return [];
+    }
+
+    return rows.map( r => r.did );
+}
+
 export function getLastEntityId(ref:SqlRef):number {
     let stmt = ref.db.prepare('SELECT id FROM tbl_entity ORDER BY id DESC LIMIT 1');
     let row = stmt.get();

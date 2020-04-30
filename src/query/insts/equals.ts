@@ -1,7 +1,7 @@
 import { createLog } from "../../util/log";
 import { QueryStack, InstDefMeta, 
     pop,
-    push, StackValue, peek, InstResult, StackOp, getInstruction, InstDef, InstModuleDef, } from "../stack";
+    push, StackValue, peek, InstResult, StackOp, InstDef, InstModuleDef, } from "../stack";
 import { VL, valueOf } from "./value";
 import { isObject } from "../../util/is";
 
@@ -16,10 +16,10 @@ export const Equals = '==';
 
 
 const OpMap = {
-    [Add]: executeAdd,
-    [Sub]: executeSub,
-    [Mul]: executeMul,
-    [Equals]: executeEquals,
+    // [Add]: executeAdd,
+    // [Sub]: executeSub,
+    // [Mul]: executeMul,
+    // [Equals]: executeEquals,
 };
 
 export const meta:InstDefMeta = {
@@ -74,71 +74,71 @@ export function executeEquals( stack:QueryStack, [op,arg]:StackValue ):InstResul
     return [stack, [VL, lval === rval]];
 }
 
-function executeAdd( stack:QueryStack  ): InstResult {
-    let lval,rval;
-    let op:StackOp;
-    let arg:any;
+// function executeAdd( stack:QueryStack  ): InstResult {
+//     let lval,rval;
+//     let op:StackOp;
+//     let arg:any;
 
-    [stack,[op,arg]] = pop(stack);
-    [stack,rval] = pop(stack);
+//     [stack,[op,arg]] = pop(stack);
+//     [stack,rval] = pop(stack);
 
-    if( op !== VL ){
-        // attempt to find a function
-        const instDef:InstModuleDef = getInstruction( stack, op, true ) as InstModuleDef;
-        if( instDef?.executeAdd ){
-            // Log.debug('[executeAdd]', [op,arg], rval);
-            return instDef.executeAdd( stack, [op,arg], rval );
-        }
+//     if( op !== VL ){
+//         // attempt to find a function
+//         const instDef:InstModuleDef = getInstruction( stack, op, true ) as InstModuleDef;
+//         if( instDef?.executeAdd ){
+//             // Log.debug('[executeAdd]', [op,arg], rval);
+//             return instDef.executeAdd( stack, [op,arg], rval );
+//         }
 
-        throw new Error(`invalid add arg: ${op}`);
-    }
+//         throw new Error(`invalid add arg: ${op}`);
+//     }
 
-    if( isObject(lval[1]) ){
-        // add to object - pop key and value
-        let obj = lval[1];
-        // [stack,lval] = pop(stack);
-        // [stack,rval] = pop(stack);
-        return [stack, [VL, {...obj, [lval[1]]:rval[1] }]];
-    }
+//     if( isObject(lval[1]) ){
+//         // add to object - pop key and value
+//         let obj = lval[1];
+//         // [stack,lval] = pop(stack);
+//         // [stack,rval] = pop(stack);
+//         return [stack, [VL, {...obj, [lval[1]]:rval[1] }]];
+//     }
 
-    [stack,rval] = pop(stack);
+//     [stack,rval] = pop(stack);
 
-    return [stack, [VL, lval[1] + rval[1]] ];
-}
+//     return [stack, [VL, lval[1] + rval[1]] ];
+// }
 
-function executeSub( stack:QueryStack  ): InstResult {
-    let lval,rval;
-    let op:StackOp;
-    let arg:any;
+// function executeSub( stack:QueryStack  ): InstResult {
+//     let lval,rval;
+//     let op:StackOp;
+//     let arg:any;
 
-    [stack,[op,arg]] = pop(stack);
-    [stack,rval] = pop(stack);
+//     [stack,[op,arg]] = pop(stack);
+//     [stack,rval] = pop(stack);
 
-    if( op !== VL ){
-        // attempt to find a function
-        const instDef:InstModuleDef = getInstruction( stack, op, true ) as InstModuleDef;
-        if( instDef?.executeSubtract ){
-            return instDef.executeSubtract( stack, [op,arg], rval );
-        }
+//     if( op !== VL ){
+//         // attempt to find a function
+//         const instDef:InstModuleDef = getInstruction( stack, op, true ) as InstModuleDef;
+//         if( instDef?.executeSubtract ){
+//             return instDef.executeSubtract( stack, [op,arg], rval );
+//         }
 
-        throw new Error(`invalid subtract arg: ${op}`);
-    }
+//         throw new Error(`invalid subtract arg: ${op}`);
+//     }
 
-    if( isObject(lval[1]) ){
-        // remove from object - pop key
-        [stack,rval] = pop(stack);
-        const { [rval[1]]: val, ...obj } = lval[1];
+//     if( isObject(lval[1]) ){
+//         // remove from object - pop key
+//         [stack,rval] = pop(stack);
+//         const { [rval[1]]: val, ...obj } = lval[1];
 
-        return [stack, [VL, obj]];
-    }
+//         return [stack, [VL, obj]];
+//     }
 
-    [stack,rval] = pop(stack);
+//     [stack,rval] = pop(stack);
 
-    lval = valueOf(lval);
-    rval = valueOf(rval);
+//     lval = valueOf(lval);
+//     rval = valueOf(rval);
 
-    return [stack, [VL, lval - rval] ];
-}
+//     return [stack, [VL, lval - rval] ];
+// }
 
 function executeMul( stack:QueryStack  ): InstResult {
     let lval,rval;

@@ -95,6 +95,25 @@ describe('Tokenizer', () => {
             [ `"get out of bed"`,
             [
                 [ 'get out of bed', 0, 0]
+            ]],
+            [ `{"name":"Completed","uri":"/component/completed","properties":[{"name":"isComplete","type":"boolean"}]} !d`,
+            [
+                [ "{",0,0 ],
+                ["name",1,0],
+                ["Completed",8,0],
+                ["uri",20,0],
+                [ "/component/completed",26,0],
+                ["properties",49,0],
+                [ "[",62,0],
+                [ "{",63,0],
+                ["name",64,0],
+                ["isComplete",71,0],
+                ["type",84,0],
+                ["boolean",91,0],
+                [ "}",100,0],
+                [ "]",101,0],
+                [ "}",102,0],
+                [ "!d",104,0],
             ]]
         ];
 

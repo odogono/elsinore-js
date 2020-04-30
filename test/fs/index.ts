@@ -7,13 +7,24 @@ import {ComponentRegistry,
     getByUri,
     getByHash,
     } from '../../src/component_registry';
-import {  
-    pushValues,
-    peekV as peekQueryStack,
-    findV,
-    QueryStack,
-    StackValue
+import { 
+    create as createStack, 
+    SType, 
+    addWords, 
+    pushValues, 
+    QueryStack, 
+    StackValue, 
+    InstResult, AsyncInstResult, 
+    push, pop, peek, pushRaw, 
+    findV, 
+    popOfType,
+    assertStackValueType 
 } from '../../src/query/stack';
+import {
+    onComponentDef,
+    onAddToEntitySet,
+    onEntity,
+} from '../../src/query/words';
 import { Entity,
     create as createEntityInstance, 
     addComponent as addComponentToEntity,
@@ -61,6 +72,11 @@ import { BuildQueryFn } from '../../src/query/build';
 import { getChanges, ChangeSetOp } from '../../src/entity_set/change_set';
 import { Type as ComponentT, fromComponentId, getComponentDefId, Component } from '../../src/component';
 import { VL } from '../../src/query/insts/value';
+import { tokenizeString } from '../../src/query/tokenizer';
+import { isEntitySet } from '../../src/entity_set';
+import { onMapOpen, onAdd, onClear, onEntitySet } from '../../src/query/words';
+import { stringify } from '../../src/util/json';
+import { stackToString, parse } from '../util/stack';
 
 const Log = createLog('TestEntitySetFS');
 
@@ -170,7 +186,7 @@ describe('Entity Set (IndexedDB)', () => {
             // Log.debug( e );
 
             assertHasComponents(
-                es as ComponentRegistry,
+                es,
                 e,
                 ["/component/channel", "/component/status", "/component/topic"]
             );
@@ -229,7 +245,7 @@ describe('Entity Set (IndexedDB)', () => {
 
         });
 
-        it.only('overwrites an entity', async () => {
+        it('overwrites an entity', async () => {
             let e:Entity;
             let [es, buildEntity] = await buildEntitySet();
 
@@ -274,12 +290,70 @@ describe('Entity Set (IndexedDB)', () => {
         });
     });
 
+
+    describe('Query', () => {
+        it('adds a def to an EntitySet', async () => {
+            let data = parse(`/component/text !d +`);
+            // Log.debug('data', stringify(data));
+    
+            let stack = createStack();
+            stack = addWords(stack, [
+                ['{', onMapOpen],
+                ['+', onAdd, SType.Value, SType.Value ],
+                ['+', onAddToEntitySet, SType.EntitySet, SType.Any ],
+                [ 'cls', onClear ],
+                [ '!d', onComponentDef, SType.Value ],
+                [ '!es', onEntitySet, SType.Map ],
+            ]);
+
+            let es = createEntitySet(esOptions);
+            [stack] = await push(stack, [SType.EntitySet, es]);
+
+            [stack] = await pushValues( stack, data );
+            Log.debug('stack', stringify(stack.items,1) );
+
+            es = stack.items[0][1];
+            Log.debug('es', es );
+    
+            assert.ok( isEntitySet(es));
+        })
+
+        it('adds an entity', async () => {
+            let data = parse('+');
+
+            let e:Entity;
+            let [es, buildEntity] = await buildEntitySet();
+
+            e = buildEntity( es, ({component}) => {
+                component('/component/channel', {name: 'chat'});
+                component('/component/status', {status: 'inactive'});
+                component('/component/topic', {topic: 'data-structures'});
+            });
+
+            let stack = createStack();
+            stack = addWords(stack, [
+                ['!e', onEntity],
+                ['+', onAddToEntitySet, SType.EntitySet, SType.Any ],
+            ]);
+
+            [stack] = await push(stack, [SType.EntitySet, es]);
+            [stack] = await push(stack, [SType.Entity, e]);
+
+            [stack] = await pushValues(stack,data);
+
+            // Log.debug('stack', stringify(stack.items,1) );
+            Log.debug('stack', stackToString(stack) );
+
+            assert.equal( stack.items.length, 1 );
+
+        });
+    })
+
 });
 
 
-
-async function buildEntitySet(): Promise<[EntitySetFS,Function]> {
-    let es = createEntitySet(esOptions);
+async function buildEntitySet(options = esOptions): Promise<[EntitySetFS,Function]> {
+    let es = createEntitySet(options);
 
     const defs = [
         { uri: '/component/channel', properties:[ 'name'] },

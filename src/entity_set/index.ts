@@ -16,7 +16,8 @@ import { BitField } from "odgn-bitfield";
 import { createUUID } from "../util/uuid";
 import {
     ComponentRegistry,
-    resolveComponentDefIds as registryResolve
+    resolveComponentDefIds as registryResolve,
+    register
 } from "../component_registry";
 import {
     Entity,
@@ -32,7 +33,7 @@ import {
     isEntityList,
     EntityId
 } from "../entity";
-import { Type as ComponentDefT } from '../component_def';
+import { Type as ComponentDefT, ComponentDef } from '../component_def';
 import {
     ChangeSet,
     create as createChangeSet,
@@ -55,6 +56,8 @@ export const Type = '@es';
 const Log = createLog('EntitySet');
 
 export interface EntitySet extends ComponentRegistry {
+    isAsync: boolean;
+
     isEntitySet: boolean;
 
     uuid: string;
@@ -62,6 +65,15 @@ export interface EntitySet extends ComponentRegistry {
     entChanges: ChangeSet<number>;
 
     comChanges: ChangeSet<ComponentId>;
+
+    // ugh, this is turning into a class, but query demands
+    // a neutral way of accessing entitysets
+    esAdd: (es,data) => any;
+    esRegister: (es,def) => any;
+    esGetComponentDefs: (es) => ComponentDef[];
+    esGetComponent: (es,cid:(ComponentId|Component)) => any;
+    esEntities: (es) => Promise<EntityList>;
+    esGetEntity: (es,eid:EntityId) => Promise<Entity>;
 }
 
 export interface EntitySetMem extends EntitySet {
@@ -89,12 +101,20 @@ export function create(options: CreateEntitySetParams = {}): EntitySetMem {
 
     return {
         isEntitySet: true,
+        isAsync: false,
         isComponentRegistry: true,
         isEntitySetMem: true,
         uuid, components, entities, entChanges, comChanges,
         componentDefs: [],
         byUri: new Map<string, number>(),
         byHash: new Map<number, number>(),
+
+        esAdd: add,
+        esRegister: register,
+        esGetComponentDefs: (es:EntitySetMem) => es.componentDefs,
+        esGetComponent: getComponent,
+        esEntities: (es:EntitySetMem) => Promise.resolve( createEntityList( Array.from(es.entities.keys())) ),
+        esGetEntity: (es:EntitySetMem, eid:EntityId) => Promise.resolve( getEntity(es,eid) )
     }
 }
 
@@ -111,6 +131,9 @@ export type AddArrayType = (Entity | Component)[];// Entity[] | Component[];
 export type AddType = Entity | Component | AddArrayType;
 export type RemoveType = ComponentId | Entity | Component;
 
+
+type ESAddFn<ES extends EntitySet> = (es:ES, item:AddType, options:AddOptions) => ES;
+
 /**
  * 
  * @param es 
@@ -118,7 +141,7 @@ export type RemoveType = ComponentId | Entity | Component;
  * @param options 
  */
 export function add(es: EntitySetMem, item: AddType, options: AddOptions = {}): EntitySetMem {
-    es = options.retain ? es : clearChanges(es) as EntitySetMem;
+    es = options.retain ? es : clearChanges(es);
 
     if (Array.isArray(item)) {
         // sort the incoming items into entities and components
@@ -285,7 +308,7 @@ export function getEntities(es: EntitySet, list: EntityList): Entity[] {
 // }
 
 
-export function clearChanges(entitySet: EntitySet): EntitySet {
+export function clearChanges<ES extends EntitySet>(entitySet: ES): ES {
     return {
         ...entitySet,
         comChanges: createChangeSet(),
@@ -496,18 +519,18 @@ function getOrAddEntityBitfield(es: EntitySetMem, eid: number): [EntitySetMem, B
  * @param es 
  * @param components 
  */
-function assignEntityIds(es: EntitySetMem, components: Component[]): [EntitySetMem, Component[]] {
+function assignEntityIds(es: EntitySetMem, coms: Component[]): [EntitySetMem, Component[]] {
     let set;
     let eid;
 
-    [es, set, eid, components] = components.reduce(([es, set, eid, components], com) => {
+    [es, set, eid, coms] = coms.reduce(([es, set, eid, coms], com) => {
 
         let did = getComponentDefId(com);
         // Log.debug('[assignEntityIds]', 'com', did );
 
         // component already has an id - add it to the list of components
         if (getComponentEntityId(com) !== 0) {
-            return [es, set, eid, [...components, com]];
+            return [es, set, eid, [...coms, com]];
         }
 
         // not yet assigned an entity, or we have already seen this com type
@@ -521,21 +544,21 @@ function assignEntityIds(es: EntitySetMem, components: Component[]): [EntitySetM
             com = setComponentEntityId(com, eid);
 
             // # mark the def as having been seen, store the new entity, add the component
-            // {es, MapSet.put(set, def_id), entity_id, [com | components]}
-            return [es, set.add(did), eid, [...components, com]];
+            // {es, MapSet.put(set, def_id), entity_id, [com | coms]}
+            return [es, set.add(did), eid, [...coms, com]];
         } else {
             // Log.debug('[assignEntityIds]', 'already have', did, eid);
             // we have a new entity_id already
             com = setComponentEntityId(com, eid);
-            return [es, set, eid, [...components, com]];
+            return [es, set, eid, [...coms, com]];
         }
 
-        // return [es, set, eid, components];
+        // return [es, set, eid, coms];
     }, [es, new Set(), 0, []]);
 
-    // Log.debug('[assignEntityIds]', 'coms', es );
+    // Log.debug('[assignEntityIds]', 'coms', coms );
 
-    return [es, components];
+    return [es, coms];
 }
 
 export function createEntity(es: EntitySetMem): [EntitySetMem, number] {

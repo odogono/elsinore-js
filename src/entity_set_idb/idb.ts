@@ -148,6 +148,14 @@ export function idbGetAll( idx:(IDBIndex|IDBObjectStore), key:any ):Promise<any[
     })
 }
 
+export function idbGetAllKeys( idx:(IDBIndex|IDBObjectStore) ):Promise<any[]>{
+    return new Promise( (res,rej) => {
+        const req = idx.getAllKeys();
+        req.onsuccess = (evt) => res(req.result);
+        req.onerror = (evt) => rej(evt);
+    })
+}
+
 /**
  * Deletes a record from the store
  * @param store 

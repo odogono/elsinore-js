@@ -45,12 +45,14 @@ import {
     setEntityId,
     EntityId,
     addComponentUnsafe,
+    EntityList,
+    createEntityList,
 } from "../entity";
 import { BitField } from "odgn-bitfield";
 import { idbOpen, idbDeleteDB, 
     idbDelete, idbGet, 
     idbPut, idbLastKey, 
-    idbGetAll, 
+    idbGetAllKeys, 
     idbGetRange, 
     idbCount 
 } from "./idb";
@@ -100,11 +102,19 @@ export function create(options?:CreateEntitySetParams):EntitySetIDB {
     return {
         isComponentRegistry: true,
         isEntitySet:true,
+        isAsync: true,
         db: undefined,
         uuid, entChanges, comChanges,
         componentDefs: [],
         byUri: new Map<string, number>(),
         byHash: new Map<number, number>(),
+
+        esAdd: add,
+        esRegister: register,
+        esGetComponent: getComponent,
+        esGetComponentDefs: (es:EntitySetIDB) => es.componentDefs,
+        esEntities: async (es:EntitySetIDB) => getEntities(es),
+        esGetEntity: (es:EntitySetIDB, eid:EntityId) => getEntity(es,eid)
     }
 }
 
@@ -307,6 +317,15 @@ export async function getEntity(es:EntitySetIDB, eid:EntityId): Promise<Entity> 
     }, e);
 
     return e;
+}
+
+export async function getEntities(es:EntitySetIDB): Promise<EntityList> {
+    es = await openEntitySet(es);
+    const store = es.db.transaction(STORE_ENTITIES, 'readonly').objectStore(STORE_ENTITIES);
+
+    let result = await idbGetAllKeys(store);
+
+    return createEntityList(result);
 }
 
 export async function size(es:EntitySetIDB): Promise<number> {

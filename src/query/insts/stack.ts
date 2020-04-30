@@ -5,13 +5,13 @@ import { QueryStack, InstDefMeta,
     create as createStack,
     push, StackValue, peek, 
     InstResult, InstDef, shift, pushRaw, assertStackSize, 
-    assertStackValueType, addDef, 
-    getInstruction,
+    
+    
     isInstModuleDef, 
     InstModuleDef, 
-    getDef, 
+    
     popOfTypeV, 
-    StackOp, popOfType, findWithIndex, AsyncInstResult, pushValues, } from "../stack";
+    StackOp, popOfType, findWithIndex, AsyncInstResult, pushValues, SType, } from "../stack";
 import {
     Type as EntityT,
     getComponents as getEntityComponents
@@ -72,20 +72,20 @@ export const meta:InstDefMeta = {
 };
 
 const OpMap = {
-    [OpenList]: executeOpenList,
-    [CloseList]: executeCloseList,
-    [Swap]: executeSwap,
-    [Cls]: executeClear,
-    [Stack]: (stack:QueryStack) => [stack],
-    [Put]: executePut,
-    [Get]: executeGet,
-    [Fetch]: executeFetch,
-    [StackList]: executeList,
-    [Define]: executeDefine,
-    [GetInst]: executeGetDefine,
-    [ToString]: executeToString,
-    [ToList]: executeToList,
-    [Require]: executeRequire
+    // [OpenList]: executeOpenList,
+    // [CloseList]: executeCloseList,
+    // [Swap]: executeSwap,
+    // [Cls]: executeClear,
+    // [Stack]: (stack:QueryStack) => [stack],
+    // [Put]: executePut,
+    // [Get]: executeGet,
+    // [Fetch]: executeFetch,
+    // [StackList]: executeList,
+    // [Define]: executeDefine,
+    // [GetInst]: executeGetDefine,
+    // [ToString]: executeToString,
+    // [ToList]: executeToList,
+    // [Require]: executeRequire
 };
 
 export function execute( stack:QueryStack, [op,arg]:StackValue  ):InstResult {
@@ -96,26 +96,26 @@ export function execute( stack:QueryStack, [op,arg]:StackValue  ):InstResult {
 }
 
 
-export async function executeOpenList( stack:QueryStack, [op,arg]:StackValue ):AsyncInstResult {
-    // Log.debug('[executeOpenList]', op, args );
+// export async function executeOpenList( stack:QueryStack, [op,arg]:StackValue ):AsyncInstResult {
+//     // Log.debug('[executeOpenList]', op, args );
 
-    if( arg ){
-        return [stack, [op,arg]];
-    }
+//     if( arg ){
+//         return [stack, [op,arg]];
+//     }
 
-    let subStack:QueryStack = createStack();
-    subStack.execute = false;
+//     let subStack:QueryStack = createStack();
+//     subStack.execute = false;
     
-    // disable all instructions apart from End
-    type ia = [string,InstDef][];
-    const insts:ia = Array.from( stack.instructions ).map( ([op,inst]) => 
-        op === CloseList ? [op, inst] : [op, disableInstDef(inst) ] );
-    subStack.instructions = new Map<string, InstDef>( insts );
+//     // disable all instructions apart from End
+//     type ia = [string,InstDef][];
+//     const insts:ia = Array.from( stack.instructions ).map( ([op,inst]) => 
+//         op === CloseList ? [op, inst] : [op, disableInstDef(inst) ] );
+//     subStack.instructions = new Map<string, InstDef>( insts );
 
-    [subStack] = await push( subStack, [QueryStackT,stack] );
+//     [subStack] = await push( subStack, [QueryStackT,stack] );
 
-    return [subStack];
-}
+//     return [subStack];
+// }
 
 function disableInstDef( inst:InstDef ): InstDef {
     if( isInstModuleDef(inst) ){
@@ -151,29 +151,29 @@ export function executeSwap( stack:QueryStack ):InstResult {
     return [stack];
 }
 
-export function executeToString( stack:QueryStack  ):InstResult {
-    let op:StackOp;
-    let arg:any;
-    [stack, [op,arg]] = pop(stack);
+// export function executeToString( stack:QueryStack  ):InstResult {
+//     let op:StackOp;
+//     let arg:any;
+//     [stack, [op,arg]] = pop(stack);
 
-    const moduleDef = getInstruction( stack, op, true) as InstModuleDef;
-    if( moduleDef?.toStringValue ){
-        return moduleDef.toStringValue( stack, [op,arg] );
-    }
-    return [stack,[VL, JSON.stringify(arg) ] ];
-}
+//     const moduleDef = getInstruction( stack, op, true) as InstModuleDef;
+//     if( moduleDef?.toStringValue ){
+//         return moduleDef.toStringValue( stack, [op,arg] );
+//     }
+//     return [stack,[VL, JSON.stringify(arg) ] ];
+// }
 
-export function executeToList( stack:QueryStack  ):InstResult {
-    let op:StackOp;
-    let arg:any;
-    [stack, [op,arg]] = pop(stack);
+// export function executeToList( stack:QueryStack  ):InstResult {
+//     let op:StackOp;
+//     let arg:any;
+//     [stack, [op,arg]] = pop(stack);
 
-    const moduleDef = getInstruction( stack, op, true) as InstModuleDef;
-    if( moduleDef?.toListValue ){
-        return moduleDef.toListValue( stack, [op,arg] );
-    }
-    return [stack,[StackList, [arg] ] ];
-}
+//     const moduleDef = getInstruction( stack, op, true) as InstModuleDef;
+//     if( moduleDef?.toListValue ){
+//         return moduleDef.toListValue( stack, [op,arg] );
+//     }
+//     return [stack,[StackList, [arg] ] ];
+// }
 
 /**
  * Pushes the value of a StackValue onto the stack
@@ -220,19 +220,19 @@ export function executePut( stack:QueryStack ):InstResult {
     return [stack, map];
 }
 
-export function executeFetch( stack:QueryStack ): InstResult {
-    let op:StackOp, cop:StackOp;
-    let arg:any;
-    let container:any;
-    [stack, [op,arg]] = pop(stack);
-    [stack, [cop,container]] = pop(stack);
+// export function executeFetch( stack:QueryStack ): InstResult {
+//     let op:StackOp, cop:StackOp;
+//     let arg:any;
+//     let container:any;
+//     [stack, [op,arg]] = pop(stack);
+//     [stack, [cop,container]] = pop(stack);
 
-    const moduleDef = getInstruction( stack, cop, true) as InstModuleDef;
-    if( moduleDef?.executeFetch ){
-        return moduleDef.executeFetch( stack, [cop,container], [op,arg] );
-    }
-    return [stack,[VL, undefined ] ];
-}
+//     const moduleDef = getInstruction( stack, cop, true) as InstModuleDef;
+//     if( moduleDef?.executeFetch ){
+//         return moduleDef.executeFetch( stack, [cop,container], [op,arg] );
+//     }
+//     return [stack,[VL, undefined ] ];
+// }
 
 export function executeGet( stack:QueryStack ): InstResult {
     let map:StackValue;
@@ -310,7 +310,7 @@ export async function executeList( stack:QueryStack, op:string, list:StackOp|Sta
         args = Array.isArray(arg) ? arg : [arg];
     } else if( isString(list) ){
         // a type has been specified - gather all previous of type into a list
-        [stack, args] = popOfType( stack, list as StackOp );
+        [stack, args] = popOfType( stack, list as SType );
         // Log.debug('[executeList]', list, args);
         return [stack, [StackList, args] ];
     } else {
@@ -326,32 +326,32 @@ export async function executeList( stack:QueryStack, op:string, list:StackOp|Sta
 }
 
 
-export function executeGetDefine( stack:QueryStack ): InstResult {
-    let name:string;
-    let value:StackValue;
+// export function executeGetDefine( stack:QueryStack ): InstResult {
+//     let name:string;
+//     let value:StackValue;
 
-    [stack,[,name]] = pop(stack);
+//     [stack,[,name]] = pop(stack);
 
-    const instDef = getDef(stack, name);
+//     const instDef = getDef(stack, name);
 
-    // Log.debug('[executeGetDefine]', instDef );
+//     // Log.debug('[executeGetDefine]', instDef );
 
-    return [stack, instDef];
-}
+//     return [stack, instDef];
+// }
 
-export function executeDefine( stack:QueryStack ): InstResult {
-    assertStackSize( stack, 2, `${Define} requires 2 args: <key> <value>`);
+// export function executeDefine( stack:QueryStack ): InstResult {
+//     assertStackSize( stack, 2, `${Define} requires 2 args: <key> <value>`);
 
-    let name:string;
-    let value:StackValue;
+//     let name:string;
+//     let value:StackValue;
 
-    [stack,[,name]] = pop(stack);
-    [stack,value] = pop(stack);
+//     [stack,[,name]] = pop(stack);
+//     [stack,value] = pop(stack);
 
-    stack = addDef( stack, name, value);
+//     stack = addDef( stack, name, value);
 
-    return [stack];
-}
+//     return [stack];
+// }
 
 export function executeRequire( stack:QueryStack, [op,arg]:StackValue ): InstResult {
     let [idx] = findWithIndex( stack, arg);

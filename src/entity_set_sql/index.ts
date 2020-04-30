@@ -29,6 +29,8 @@ import {
     setEntityId,
     EntityId,
     addComponentUnsafe,
+    EntityList,
+    createEntityList,
 } from "../entity";
 import { ChangeSet,
     create as createChangeSet,
@@ -39,7 +41,21 @@ import { ChangeSet,
 } from "../entity_set/change_set";
 import { BitField } from "odgn-bitfield";
 import { createUUID } from "../util/uuid";
-import { SqlRef, sqlOpen, sqlIsOpen, sqlInsertDef, sqlRetrieveDefByUri, sqlRetrieveDefByHash, sqlRetrieveDefs, getLastEntityId, sqlUpdateEntity, sqlRetrieveEntity, sqlRetrieveComponent, sqlUpdateComponent, sqlCount, sqlDeleteComponent, sqlDeleteEntity, sqlRetrieveEntityComponents, sqlComponentExists } from "./sqlite";
+import { SqlRef, 
+    sqlOpen, sqlIsOpen, 
+    sqlInsertDef, sqlRetrieveDefByUri, sqlRetrieveDefByHash, 
+    sqlRetrieveDefs, 
+    getLastEntityId, 
+    sqlUpdateEntity, 
+    sqlRetrieveEntity, 
+    sqlRetrieveComponent, 
+    sqlUpdateComponent, 
+    sqlCount, 
+    sqlDeleteComponent, sqlDeleteEntity, 
+    sqlRetrieveEntityComponents, 
+    sqlComponentExists,
+    sqlGetEntities
+} from "./sqlite";
 import { createLog } from "../util/log";
 import { isString, isInteger } from "../util/is";
 export { getByHash, getByUri } from '../component_registry';
@@ -95,6 +111,7 @@ export function create(options?:CreateEntitySetSQLParams):EntitySetSQL {
     return {
         isComponentRegistry: true,
         isEntitySet:true,
+        isAsync: false,
         db: undefined,
         isMemory,
         debug,
@@ -102,6 +119,13 @@ export function create(options?:CreateEntitySetSQLParams):EntitySetSQL {
         componentDefs: [],
         byUri: new Map<string, number>(),
         byHash: new Map<number, number>(),
+
+        esAdd: add,
+        esRegister: register,
+        esGetComponent: getComponent,
+        esGetComponentDefs: (es:EntitySetSQL) => getComponentDefs(es),
+        esEntities: (es:EntitySetSQL) => getEntities(es),
+        esGetEntity: (es:EntitySetSQL, eid:EntityId) => Promise.resolve(getEntity(es,eid))
     }
 }
 
@@ -524,7 +548,13 @@ export function getEntity(es:EntitySetSQL, eid:EntityId): Entity {
     return e;
 }
 
+export async function getEntities(es:EntitySetSQL): Promise<EntityList> {
+    es = openEntitySet(es);
 
+    let eids = sqlGetEntities( es.db );
+
+    return Promise.resolve( createEntityList(eids) );
+}
 
 interface OpenEntitySetOptions {
     readDefs?: boolean;

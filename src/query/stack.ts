@@ -5,24 +5,27 @@ import { Type as ComponentT, getComponentDefId } from "../component";
 import { Type as EntitySetT } from '../entity_set';
 import { BitField } from "odgn-bitfield";
 import { MatchOptions } from '../constants';
-import { EntityList, 
-    createEntityList, 
-    Type as EntityT, 
-    Entity, 
-    getEntityId, 
+import {
+    EntityList,
+    createEntityList,
+    Type as EntityT,
+    Entity,
+    getEntityId,
     EntityListType,
-    EntityMap } from "../entity";
+    EntityMap
+} from "../entity";
+import { stringify } from "../util/json";
 
 export enum SType {
-    Value = 'VL',
-    Array = 'AR',
-    Map = 'MP',
-    Function = 'FN',
-    Entity = '@e',
-    EntitySet = '@es',
-    Component = '@c',
-    ComponentDef = '@d',
-    Any = '*'
+    Value = '%v',
+    Array = '%[]',
+    Map = '%{}',
+    Function = '%()',
+    Entity = '%e',
+    EntitySet = '%es',
+    Component = '%c',
+    ComponentDef = '%d',
+    Any = '%*'
 };
 
 const Log = createLog('QueryStack');
@@ -38,14 +41,14 @@ export interface InstDefMeta {
 
 export interface InstModuleDef {
     meta: InstDefMeta;
-    compile?: (stack:QueryStack, val:StackValue) => StackValue;
-    execute?: (stack:QueryStack, val:StackValue) => InstResult;
-    executeOp?: (stack:QueryStack, op:StackOp, ...args:StackValue ) => InstResult;
-    executeAdd?: (stack:QueryStack, left:StackValue, right:StackValue) => InstResult;
-    executeSubtract?: (stack:QueryStack, left:StackValue, right:StackValue) => InstResult;
-    executeFetch?: (stack:QueryStack, container:StackValue, value:StackValue) => InstResult;
-    toStringValue?: (stack:QueryStack, value:StackValue) => InstResult;
-    toListValue?: (stack:QueryStack, value:StackValue) => InstResult;
+    compile?: (stack: QueryStack, val: StackValue) => StackValue;
+    execute?: (stack: QueryStack, val: StackValue) => InstResult;
+    executeOp?: (stack: QueryStack, op: StackOp, ...args: StackValue) => InstResult;
+    executeAdd?: (stack: QueryStack, left: StackValue, right: StackValue) => InstResult;
+    executeSubtract?: (stack: QueryStack, left: StackValue, right: StackValue) => InstResult;
+    executeFetch?: (stack: QueryStack, container: StackValue, value: StackValue) => InstResult;
+    toStringValue?: (stack: QueryStack, value: StackValue) => InstResult;
+    toListValue?: (stack: QueryStack, value: StackValue) => InstResult;
 }
 
 export type InstDef = InstModuleDef | StackValue;
@@ -56,8 +59,8 @@ export type InstResult = [
 export type AsyncInstResult = Promise<InstResult>;
 
 export type StackOp = string;
-export type StackValue = [ StackOp ] | [ StackOp, any ] ;
-export type StackValueCompiled = [ StackValue, InstModuleDef ];
+export type StackValue = [StackOp] | [StackOp, any];
+export type StackValueCompiled = [StackValue, InstModuleDef];
 
 // const AnyValue = 'VL';
 export const Type = '@qs';
@@ -67,48 +70,40 @@ export interface QueryStackDefs {
 }
 
 export interface QueryStack {
-    type: typeof Type,
-    execute: boolean;
     items: StackValue[];
-    defs: QueryStackDefs;
-    instructions: Map<string, InstDef>;
     words: any;
 }
 
-export function create():QueryStack {
+export function create(): QueryStack {
     return {
-        type: Type,
-        execute: true,
         items: [],
-        defs: {},
-        instructions: new Map<string, InstDef>(),
         words: {}
     };
 }
 
-export function isInstModuleDef(value:any):boolean {
+export function isInstModuleDef(value: any): boolean {
     return isObject(value) && value.meta !== undefined;
 }
 
-export function isStackValue(value:any):boolean {
+export function isStackValue(value: any): boolean {
     return Array.isArray(value) && value.length == 2;
 }
 
-export function compile( stack:QueryStack, value:any ):StackValueCompiled {
-    let op:string = SType.Value;
-    if( isObject(value) ){
+export function compile(stack: QueryStack, value: any): StackValueCompiled {
+    let op: string = SType.Value;
+    if (isObject(value)) {
         // Log.debug('[push]', 'value object', value, Object.prototype.toString.call(value) )
-        value = [SType.Value,value];
+        value = [SType.Value, value];
     }
-    else if(Array.isArray(value) ){
+    else if (Array.isArray(value)) {
         [op] = value;
     } else {
-        if( isString(value) && getInstruction(stack,value) !== undefined ){
-            op = value;
-            value = [op, undefined];
-        } else {
-            value = [SType.Value, value];
-        }
+        // if (isString(value) && getInstruction(stack, value) !== undefined) {
+        //     op = value;
+        //     value = [op, undefined];
+        // } else {
+        // }
+        value = [SType.Value, value];
     }
 
     // Log.debug('[compile]', value );
@@ -145,30 +140,36 @@ type AsyncPushResult = Promise<[QueryStack, StackValue]>
 /**
  * Pushes a stack value onto the stack
  */
-export async function push( stack:QueryStack, value:any|StackValue ):AsyncPushResult {
-    let instModule:InstModuleDef;
+export async function push(stack: QueryStack, value: any | StackValue): AsyncPushResult {
+    let instModule: InstModuleDef;
     let compiled = compile(stack, value);
-    [ value, instModule ] = compiled;
-    
+    [value, instModule] = compiled;
+
     // Log.debug('[push]',value );
 
     let doPush = true;
 
     const handler = getWord(stack, value);
-    if( handler !== undefined ){
-        let result = handler(stack, value);
+    if (handler !== undefined) {
 
-        if( isPromise(result) ){
-            [stack,value,doPush] = await result;
-            // return (result as any).then( ([stack,value,doPush]) => {
-            //     if( value !== undefined && doPush !== false ){
-            //         stack = { ...stack, items: [...stack.items, value ] };
-            //     }
-                
-            //     return [stack, value];
-            // });
-        } else {
-            [stack,value,doPush] = result;
+        try {
+            let result = handler(stack, value);
+
+            if (isPromise(result)) {
+                [stack, value, doPush] = await result;
+                // return (result as any).then( ([stack,value,doPush]) => {
+                //     if( value !== undefined && doPush !== false ){
+                //         stack = { ...stack, items: [...stack.items, value ] };
+                //     }
+
+                //     return [stack, value];
+                // });
+            } else {
+                [stack, value, doPush] = result;
+            }
+        } catch (err) {
+            // Log.warn('[push]', err.stack);
+            throw new Error(`${err.message}: ${stringify(value)}`);
         }
     }
     // else if( instModule?.execute ){
@@ -182,41 +183,43 @@ export async function push( stack:QueryStack, value:any|StackValue ):AsyncPushRe
     //     // Log.debug('[push][execute]', 'post', stack.items.map( ([op,]) => op ) );
     // }
     // Log.debug('[push][execute]', value );
-    
-    if( value !== undefined && doPush !== false ){
-        stack = { ...stack, items: [...stack.items, value ] };
+
+    if (value !== undefined && doPush !== false) {
+        stack = { ...stack, items: [...stack.items, value] };
     }
-    
+
     return [stack, value];
 }
 
-export function pushRaw( stack:QueryStack, value:StackValue ): QueryStack {
-    return {...stack, items: [...stack.items,value] };
+export function pushRaw(stack: QueryStack, value: StackValue): QueryStack {
+    return { ...stack, items: [...stack.items, value] };
 }
 
 
-export async function pushValues( stack:QueryStack, values:StackValue[] ):Promise<[QueryStack,StackValue[]]> {
-    let ovalues:StackValue[];
+export async function pushValues(stack: QueryStack, values: StackValue[]): Promise<[QueryStack, StackValue[]]> {
+    let ovalues: StackValue[];
 
-    let start:[QueryStack,StackValue[]] = [stack, [] ];
+    let start: [QueryStack, StackValue[]] = [stack, []];
 
-    [stack,ovalues] = await values.reduce<Promise<[QueryStack,StackValue[]]>>( async (prev, value) => {
-        let out;
-        [stack,out] = await prev;
-        return push(stack,value).then( ([stack,value]) => {
-            return [stack, [...out,value]];
-        })
+    try {
+        [stack, ovalues] = await values.reduce<Promise<[QueryStack, StackValue[]]>>(async (prev, value) => {
+            let out: StackValue[];
+            [stack, out] = await prev;
 
-        // return prev.then( ([stack,out]) => {
-        //     return push(stack,value);
-        // })
-    }, Promise.resolve(start) );
+            return push(stack, value).then(([stack, value]) => {
+                return [stack, [...out, value]];
+            })
+        }, Promise.resolve(start));
 
+    } catch (err) {
+        Log.warn('[pushValues]', err.message);
+        return [stack, []];
+    }
     // for(let ii=0;ii<values.length;ii++ ){
     //     value = values[ii];
     //     [stack,value] = push( stack, value );
     // }
-    return [stack,ovalues];
+    return [stack, ovalues];
 }
 
 
@@ -226,10 +229,10 @@ export async function pushValues( stack:QueryStack, values:StackValue[] ):Promis
  * @param stack 
  * @param value 
  */
-export function unshift( stack:QueryStack, value:StackValue ): QueryStack {
+export function unshift(stack: QueryStack, value: StackValue): QueryStack {
     return {
         ...stack,
-        items: [ value, ...stack.items ]
+        items: [value, ...stack.items]
     }
 }
 
@@ -237,18 +240,18 @@ export function unshift( stack:QueryStack, value:StackValue ): QueryStack {
  * Removes and returns a value from
  * @param stack 
  */
-export function shift( stack:QueryStack ): [QueryStack, StackValue] {
+export function shift(stack: QueryStack): [QueryStack, StackValue] {
     let items = [...stack.items];
     let value = items.shift();
-    return [{...stack, items},value];
+    return [{ ...stack, items }, value];
 }
 
-export function unshiftV( stack:QueryStack, value:any, valueType = SType.Value ):QueryStack {
-    let itemValue:StackValue = [ valueType, value ];
-    if( isObject(value) && value.type ){
+export function unshiftV(stack: QueryStack, value: any, valueType = SType.Value): QueryStack {
+    let itemValue: StackValue = [valueType, value];
+    if (isObject(value) && value.type) {
         itemValue = [value.type, value];
     }
-    return unshift( stack, itemValue );
+    return unshift(stack, itemValue);
 }
 
 /**
@@ -262,13 +265,13 @@ export function unshiftV( stack:QueryStack, value:any, valueType = SType.Value )
 //     return push( stack, itemValue );
 // }
 
-export function pop(stack:QueryStack): [QueryStack,StackValue] {
+export function pop(stack: QueryStack): [QueryStack, StackValue] {
     const length = stack.items.length;
-    if( length === 0 ){
+    if (length === 0) {
         throw new Error('stack empty');
         // return undefined;
     }
-    const value = stack.items[ length - 1 ];
+    const value = stack.items[length - 1];
     stack = {
         ...stack,
         items: stack.items.slice(0, -1)
@@ -284,46 +287,46 @@ export function pop(stack:QueryStack): [QueryStack,StackValue] {
  * @param stack 
  * @param type 
  */
-export function popOfType( stack:QueryStack, ...types:StackOp[] ): [QueryStack, StackValue[]] {
+export function popOfType(stack: QueryStack, ...types: SType[]): [QueryStack, StackValue[]] {
     const length = stack.items.length;
-    if( length === 0 ){
+    if (length === 0) {
         return [stack, []];
     }
 
     let results = [];
-    let ii = length-1;
+    let ii = length - 1;
 
-    for( ii;ii>=0;ii-- ){
-        const value = stack.items[ ii ];
-        if( types.indexOf( value[0] ) === -1 ){
+    for (ii; ii >= 0; ii--) {
+        const value = stack.items[ii];
+        if (types.indexOf(value[0] as SType) === -1) {
             break;
         }
-        results.push( value );
+        results.push(value);
     }
 
     // cut the stack down to size
     stack = {
         ...stack,
-        items: stack.items.slice(0, ii+1)
+        items: stack.items.slice(0, ii + 1)
     };
 
     return [stack, results];
 }
 
-export function popOfTypeV( stack:QueryStack, ...types:StackOp[] ): [QueryStack, any[]] {
+export function popOfTypeV(stack: QueryStack, ...types: SType[]): [QueryStack, any[]] {
 
     let results = [];
-    [stack,results] = popOfType(stack, ...types );
-    return [stack, results.map( r => r[1] )]; 
+    [stack, results] = popOfType(stack, ...types);
+    return [stack, results.map(r => r[1])];
 }
 
-export function peek(stack:QueryStack, offset:number = 0):StackValue {
-    return stack.items[ stack.items.length -1 - offset ];
+export function peek(stack: QueryStack, offset: number = 0): StackValue {
+    return stack.items[stack.items.length - 1 - offset];
 }
 
-export function peekV(stack:QueryStack ):any {
-    const value = stack.items[ stack.items.length -1 ];
-    if( value !== undefined ){
+export function peekV(stack: QueryStack): any {
+    const value = stack.items[stack.items.length - 1];
+    if (value !== undefined) {
         return value[1];
     }
     return undefined;
@@ -338,9 +341,9 @@ export function peekV(stack:QueryStack ):any {
  * @param index 
  * @param newItem 
  */
-export function replace( stack:QueryStack, index:number, newItem:StackValue ): QueryStack {
-    const items = stack.items.map( (item, ii) => {
-        if( ii !== index ){
+export function replace(stack: QueryStack, index: number, newItem: StackValue): QueryStack {
+    const items = stack.items.map((item, ii) => {
+        if (ii !== index) {
             return item;
         }
         return newItem;
@@ -351,10 +354,10 @@ export function replace( stack:QueryStack, index:number, newItem:StackValue ): Q
 /**
  * 
  */
-export function findWithIndex( stack:QueryStack, type:StackOp ): [ number, StackValue ] {
-    for( let ii = stack.items.length-1; ii >= 0; ii-- ){
+export function findWithIndex(stack: QueryStack, type: StackOp): [number, StackValue] {
+    for (let ii = stack.items.length - 1; ii >= 0; ii--) {
         const item = stack.items[ii];
-        if( type === item[0] ){
+        if (type === item[0]) {
             // Log.debug('[findWithIndex]', 'found', item, ii );
             return [ii, item];
         }
@@ -362,7 +365,7 @@ export function findWithIndex( stack:QueryStack, type:StackOp ): [ number, Stack
     return [-1, undefined];
 }
 
-export function findWithIndexV( stack:QueryStack, type:StackOp ): [number, any] {
+export function findWithIndexV(stack: QueryStack, type: StackOp): [number, any] {
     let [index, [_, value]] = findWithIndex(stack, type);
     if (index === -1) {
         throw new Error(`type ${type} missing on stack`);
@@ -376,76 +379,76 @@ export function findWithIndexV( stack:QueryStack, type:StackOp ): [number, any] 
  * @param stack 
  * @param type 
  */
-export function findV( stack:QueryStack, type:StackOp ): any {
-    const [_, value] = findWithIndex( stack, type );
+export function findV(stack: QueryStack, type: StackOp): any {
+    const [_, value] = findWithIndex(stack, type);
     return value ? value[1] : undefined;
 }
-export function find( stack:QueryStack, type:StackOp ): StackValue {
-    const [_, value] = findWithIndex( stack, type );
+export function find(stack: QueryStack, type: StackOp): StackValue {
+    const [_, value] = findWithIndex(stack, type);
     return value;
 }
 
 
 export interface ExecuteOptions {
-    pushResult?:boolean;
+    pushResult?: boolean;
 }
 
 
 interface WordMap {
-    [word: string]: [ WordFn, SType[] ]
+    [word: string]: [WordFn, SType[]]
 };
 
-type WordFn = (stack:QueryStack, val:StackValue) => InstResult;
-type AsyncWordFn = (stack:QueryStack, val:StackValue) => Promise<InstResult>;
-type WordSpec = [ string, WordFn|AsyncWordFn, ...SType[] ];
+type WordFn = (stack: QueryStack, val: StackValue) => InstResult;
+type AsyncWordFn = (stack: QueryStack, val: StackValue) => Promise<InstResult>;
+type WordSpec = [string, WordFn | AsyncWordFn, ...SType[]];
 
 
 
-export function addWords( stack:QueryStack, words:WordSpec[] ){
-    return words.reduce( (stack, spec) => {
+export function addWords(stack: QueryStack, words: WordSpec[]) {
+    return words.reduce((stack, spec) => {
         const [word, fn, ...args] = spec;
         // Log.debug('[addWords]', word, [fn,args]);
         let patterns = stack.words[word] || [];
-        patterns = [...patterns, [ fn, args ]];
-        return {...stack, words:{...stack.words, [word]:patterns} };
+        patterns = [...patterns, [fn, args]];
+        return { ...stack, words: { ...stack.words, [word]: patterns } };
     }, stack);
 }
 
 
-function getWord( stack:QueryStack, value:StackValue ): WordFn|undefined {
+function getWord(stack: QueryStack, value: StackValue): WordFn | undefined {
     // const [type,word] = value;
-    if( value[0] !== SType.Value ){
+    if (value[0] !== SType.Value) {
         return undefined;
     }
     const wval = value[1];
     const patterns = stack.words[wval];
-    if( patterns === undefined ){
+    if (patterns === undefined) {
         return undefined;
     }
     // Log.debug('[getWord]', 'match', `'${wval}'`, patterns);
-    let pattern = patterns.find( pat => {
-        const [,args] = pat;
+    let pattern = patterns.find(pat => {
+        const [, args] = pat;
         // Log.debug('[getWord]', 'match', `'${wval}'`, args, stack.items );
-        if( matchStack(stack.items, args) ){
+        if (matchStack(stack.items, args)) {
             return pat;
         }
     });
     return pattern !== undefined ? pattern[0] : undefined;
 }
 
-function matchStack( stackItems:StackValue[], pattern:SType[] ){
+function matchStack(stackItems: StackValue[], pattern: SType[]) {
     const pLength = pattern.length;
-    if( pLength === 0 ){
+    if (pLength === 0) {
         return true;
     }
     const sLength = stackItems.length;
-    if( pLength > sLength ){
+    if (pLength > sLength) {
         return false;
     }
-    for( let ii=0;ii<pLength;ii++ ){
-        const sym = pattern[pLength-1-ii];
-        const [vt] = stackItems[sLength-1-ii];
-        if( sym !== SType.Any && sym !== vt ){
+    for (let ii = 0; ii < pLength; ii++) {
+        const sym = pattern[pLength - 1 - ii];
+        const [vt] = stackItems[sLength - 1 - ii];
+        if (sym !== SType.Any && sym !== vt) {
             return false;
         }
     }
@@ -453,84 +456,84 @@ function matchStack( stackItems:StackValue[], pattern:SType[] ){
     return true;
 }
 
-export function addInstructionDef( stack:QueryStack, inst:InstModuleDef|InstModuleDef[] ){
-    if( Array.isArray(inst) ){
-        return inst.reduce( (st,ins) => addInstructionDef(st,ins), stack );
-    }
+// export function addInstructionDef(stack: QueryStack, inst: InstModuleDef | InstModuleDef[]) {
+//     if (Array.isArray(inst)) {
+//         return inst.reduce((st, ins) => addInstructionDef(st, ins), stack);
+//     }
 
-    const { meta, compile, execute } = inst;
-    const {op} = meta;
+//     const { meta, compile, execute } = inst;
+//     const { op } = meta;
 
-    const instructions = new Map<string, InstDef>( stack.instructions );
-    
-    if( Array.isArray(op) ){
-        (op as string[]).map( o => {
-            if( instructions.get(o) !== undefined ){
-                Log.debug('[addInstructionDef]', 'warning overwriting inst', o, instructions.get(o));
-            }
-            instructions.set( o, inst )  
-        });
-    } else {
-        if( instructions.get(op) !== undefined ){
-            Log.debug('[addInstructionDef]', 'warning overwriting inst', op, instructions.get(op));
-        }
-        instructions.set( op, inst ); 
-    }
-    
-    return {
-        ...stack,
-        instructions
-    };
-}
+//     const instructions = new Map<string, InstDef>(stack.instructions);
+
+//     if (Array.isArray(op)) {
+//         (op as string[]).map(o => {
+//             if (instructions.get(o) !== undefined) {
+//                 Log.debug('[addInstructionDef]', 'warning overwriting inst', o, instructions.get(o));
+//             }
+//             instructions.set(o, inst)
+//         });
+//     } else {
+//         if (instructions.get(op) !== undefined) {
+//             Log.debug('[addInstructionDef]', 'warning overwriting inst', op, instructions.get(op));
+//         }
+//         instructions.set(op, inst);
+//     }
+
+//     return {
+//         ...stack,
+//         instructions
+//     };
+// }
 
 // export function getInstModule( stack:QueryStack, op:StackOp ): InstModuleDef {
 //     return stack.instructions.get( op );
 // }
 
-export function getInstruction( stack:QueryStack, op:StackOp, moduleOnly:boolean = false ): InstDef {
-    if( !moduleOnly ){
-        const def = stack.defs[op];
-        if( def !== undefined ){
-            return def;
-        }
-    }
-    return stack.instructions.get( op );
-}
+// export function getInstruction(stack: QueryStack, op: StackOp, moduleOnly: boolean = false): InstDef {
+//     if (!moduleOnly) {
+//         const def = stack.defs[op];
+//         if (def !== undefined) {
+//             return def;
+//         }
+//     }
+//     return stack.instructions.get(op);
+// }
 
 
-export function addDef( stack:QueryStack, name:string, value:StackValue ): QueryStack {
-    const defs = {...stack.defs, [name]: value };
-    return {...stack, defs};
-}
+// export function addDef(stack: QueryStack, name: string, value: StackValue): QueryStack {
+//     const defs = { ...stack.defs, [name]: value };
+//     return { ...stack, defs };
+// }
 
-export function getDef(stack:QueryStack, name:string): StackValue {
-    return stack.defs[name];
-}
+// export function getDef(stack: QueryStack, name: string): StackValue {
+//     return stack.defs[name];
+// }
 
 
 
-export function assertStackSize( stack:QueryStack, expected:number, msg?:string ) {
+export function assertStackSize(stack: QueryStack, expected: number, msg?: string) {
     const len = stack.items.length;
-    if( len < expected ){
-        if( msg === undefined ){
+    if (len < expected) {
+        if (msg === undefined) {
             msg = `expected stack size ${expected}, actual: ${len}`;
         }
         throw new Error(msg);
     }
 }
 
-export function assertStackValueType( stack:QueryStack, index:number, opType:string, argType?:any ){
+export function assertStackValueType(stack: QueryStack, index: number, opType: string, argType?: any) {
     // Log.debug('[assertStackValueType]', 'argType', argType );
     const len = stack.items.length;
-    const idx = len -1 -index;
-    if( idx < 0 ){
-        throw new Error(`value out of bounds: -${index+1} : ${len}`);
+    const idx = len - 1 - index;
+    if (idx < 0) {
+        throw new Error(`value out of bounds: -${index + 1} : ${len}`);
     }
-    const value:StackValue = stack.items[ idx ];
-    if( value[0] !== opType ){
+    const value: StackValue = stack.items[idx];
+    if (value[0] !== opType) {
         throw new Error(`expected value of type ${opType} at index ${idx} : got ${value[0]}`);
     }
-    if( argType !== undefined && typeof value[1] !== argType ){
+    if (argType !== undefined && typeof value[1] !== argType) {
         throw new Error(`expected arg of type ${argType} at index ${idx} : got ${typeof value[1]}`);
     }
 }
@@ -572,7 +575,7 @@ export function assertStackValueType( stack:QueryStack, index:number, opType:str
 //         else if( type === EntityT ){
 //             let eid = getEntityId(val);
 //             if( eid !== 0 && BitField.or(bf, val.bitField) ){
-                
+
 //                 eids.push( eid );
 //                 entities.set(eid,val.bitField);
 
@@ -606,7 +609,7 @@ export function assertStackValueType( stack:QueryStack, index:number, opType:str
 //     }
 
 //     [type] = top;
-    
+
 //     if( type === EntityListType ){
 //         [stack, [type, val]] = pop(stack);
 

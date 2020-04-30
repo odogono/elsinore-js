@@ -11,7 +11,8 @@ import {
     push,
     popOfTypeV,
     pushValues,
-    AsyncInstResult
+    AsyncInstResult,
+    SType
 } from "../stack";
 import { 
     createComponent, 
@@ -58,7 +59,7 @@ export async function execute(stack: QueryStack, [op,arg]:StackValue ):AsyncInst
     let coms:Component[];
 
     // consumes all previous Components on the stack
-    [stack, coms] = popOfTypeV( stack, ComponentT );
+    [stack, coms] = popOfTypeV( stack, SType.Component );
 
     if( coms.length > 0 ){
         let ents:Entity[] = componentsToEntities( eid, coms );

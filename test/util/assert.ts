@@ -6,7 +6,6 @@ import {
     getByDefId} from '../../src/component_registry';
 import { Entity, getComponent, getComponents, createBitfield, getEntityId, EntityList } from '../../src/entity';
 import { EntitySet, Type as EntitySetT, 
-    matchEntities as matchEntitySetEntities, 
     create as createEntitySet,
     getEntity,
     EntitySetMem} from '../../src/entity_set';

@@ -8,7 +8,8 @@ import {
     StackValue,
     pop,
     InstResult,
-    popOfTypeV
+    popOfTypeV,
+    SType
 } from "../stack";
 import { 
     createComponent, 
@@ -49,7 +50,7 @@ export function execute(stack: QueryStack, [op,arg]:StackValue ):InstResult {
 
     // look for components or entities preceeding and add them
     // consumes all previous Components on the stack
-    [stack, vals] = popOfTypeV( stack, EntityT, ComponentT );
+    [stack, vals] = popOfTypeV( stack, SType.Entity, SType.Component );
 
     // Log.debug('[execute]', 'adding', vals);
     es = esAdd( es, vals );
