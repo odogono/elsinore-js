@@ -62,7 +62,7 @@ import {
 } from '../../src/entity_set_idb';
 import { 
     assertHasComponents, 
-    } from './util/assert';
+    } from '../util/assert';
 import { BuildQueryFn } from '../../src/query/build';
 import { getChanges, ChangeSetOp } from '../../src/entity_set/change_set';
 import { Type as ComponentT, fromComponentId, getComponentDefId, Component } from '../../src/component';
@@ -181,7 +181,7 @@ describe('Entity Set (IndexedDB)', () => {
             // Log.debug( e );
 
             assertHasComponents(
-                es as ComponentRegistry,
+                es,
                 e,
                 ["/component/channel", "/component/status", "/component/topic"]
             );
@@ -240,7 +240,7 @@ describe('Entity Set (IndexedDB)', () => {
             // Log.debug('stack', es )
         });
 
-        it.only('overwrites an entity', async () => {
+        it('overwrites an entity', async () => {
             let e:Entity;
             let [es, buildEntity] = await buildEntitySet();
 
@@ -342,13 +342,16 @@ describe('Entity Set (IndexedDB)', () => {
             ]);
 
             let es = createEntitySet();
+
             [stack] = await push(stack, [SType.EntitySet, es]);
+            // Log.debug('es', es );
 
             [stack] = await pushValues( stack, data );
-            Log.debug('stack', stringify(stack.items,1) );
+            // Log.debug('stack', stringify(stack.items,1) );
 
             es = stack.items[0][1];
-            Log.debug('es', es );
+
+            assert.lengthOf( es.esGetComponentDefs(es), 1 );
     
             assert.ok( isEntitySet(es));
         })
@@ -377,7 +380,7 @@ describe('Entity Set (IndexedDB)', () => {
             [stack] = await pushValues(stack,data);
 
             // Log.debug('stack', stringify(stack.items,1) );
-            Log.debug('stack', stackToString(stack) );
+            // Log.debug('stack', stackToString(stack) );
 
             assert.equal( stack.items.length, 1 );
 

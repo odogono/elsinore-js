@@ -71,8 +71,7 @@ import {
 import { BuildQueryFn } from '../../src/query/build';
 import { getChanges, ChangeSetOp } from '../../src/entity_set/change_set';
 import { Type as ComponentT, fromComponentId, getComponentDefId, Component } from '../../src/component';
-import { VL } from '../../src/query/insts/value';
-import { tokenizeString } from '../../src/query/tokenizer';
+
 import { isEntitySet } from '../../src/entity_set';
 import { onMapOpen, onAdd, onClear, onEntitySet } from '../../src/query/words';
 import { stringify } from '../../src/util/json';

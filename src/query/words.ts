@@ -131,7 +131,7 @@ export async function onAddToEntitySet(stack: QueryStack): AsyncInstResult {
     let es: EntitySet = unpackStackValue(right, SType.EntitySet);
 
     try {
-        const { esAdd, esRegister } = es;
+        const { esAdd, esRegister, isAsync } = es;
 
         let values:any[] = left[0] !== SType.Array ? [value] : value;
 
@@ -147,11 +147,12 @@ export async function onAddToEntitySet(stack: QueryStack): AsyncInstResult {
 
         es = await defs.reduce( async (es,def) => {
             es = await es;
-            [es] = esRegister(es, def);
+            // Log.debug('[onAddToEntitySet]', 'huh')
+            [es] = isAsync ? await esRegister(es, def) : esRegister(es,def);
             return es;
         },Promise.resolve(es));
 
-        es = await esAdd( es, coms );
+        es = isAsync ? await esAdd( es, coms ) : esAdd( es, coms );
 
     } catch (err) {
         Log.warn('[onAddToEntitySet]', 'error', value, err.stack);
