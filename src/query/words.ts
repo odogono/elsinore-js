@@ -108,11 +108,15 @@ export function unpackStackValue(val: StackValue, assertType: SType = SType.Any,
     if (recursive && type === SType.Array) {
         return value.map(av => unpackStackValue(av));
     }
+    if( recursive && type === SType.ComponentValue ){
+        return value[2];
+    }
     if (recursive && type === SType.Map) {
         return Object.keys(value).reduce((res, key) => {
             return { ...res, [key]: unpackStackValue(value[key]) }
         }, {});
     } else {
+        // Log.debug('[unpackStackValue]', 'wat', value);
         return value;
     }
 }
@@ -323,6 +327,27 @@ export function onArrayClose<QS extends QueryStack>(stack: QS, val: StackValue):
     val = [SType.Array, stack.items];
     stack = (stack as any).stack;
     return [stack, val];
+}
+
+export function onArraySpread<QS extends QueryStack>(stack: QS, val: StackValue): Result<QS> {
+    [stack, val] = pop(stack);
+    let value = unpackStackValue(val, SType.Array);
+
+    // if( val[0] === SType.Array ){
+    //     value = value.map( v => [Array.isArray(v) ? SType.Array : SType.Value, v] );
+        stack = { ...stack, items: [...stack.items, ...value] };
+    // }
+    return [stack];
+}
+
+export function onValue<QS extends QueryStack>(stack: QS, val: StackValue): Result<QS> {
+    [stack, val] = pop(stack);
+    let value = unpackStackValue(val);
+    if( val[0] === SType.Array ){
+        value = value.map( v => [Array.isArray(v) ? SType.Array : SType.Value, v] );
+        stack = { ...stack, items: [...stack.items, ...value] };
+    }
+    return [stack];
 }
 
 

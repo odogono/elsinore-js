@@ -7,10 +7,13 @@ export enum SType {
     Array = '%[]',
     Map = '%{}',
     Function = '%()',
+    Bitfield = '%bf',
     Entity = '%e',
     EntitySet = '%es',
     Component = '%c',
     ComponentDef = '%d',
+    ComponentAttr = '%ca',
+    ComponentValue = '%cv',
     Any = '%*'
 };
 
@@ -129,11 +132,11 @@ export async function pushValues<QS extends QueryStack>(stack: QS, values: Stack
         }, Promise.resolve(start));
 
     } catch (err) {
-        if( err instanceof StackError ){
-            Log.warn('[pushValues]', err.message);
-            return [stack, []];
-        }
-        Log.debug('not a stackerror?', err instanceof StackError, err.name)
+        Log.warn('[pushValues]', err.message );
+        // if( err instanceof StackError ){
+        //     return [stack, []];
+        // }
+        // Log.debug('not a stackerror?', err instanceof StackError, err.name)
         throw err;
     }
     // for(let ii=0;ii<values.length;ii++ ){

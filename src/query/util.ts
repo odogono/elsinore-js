@@ -14,9 +14,16 @@ export function valueToString( val:StackValue ):string {
     switch( type ){
         case SType.EntitySet:
             return type;
+        case SType.ComponentAttr:
+            return `(${type}, ${stringify(value)})`;
+        case SType.ComponentValue:
+            return `(${type}, ${stringify(value)})`;
         case SType.ComponentDef:
             return `(${type} ${value.uri})`;
         case SType.Component:
+            if( Array.isArray(value) ){
+                return `[${type},` + value.map( v => stringify(v) ).join(', ') + ']';
+            }
             return `(${type} ${getComponentId(value)})`;
         case SType.Entity:
             if( Array.isArray(value) ){
@@ -24,12 +31,14 @@ export function valueToString( val:StackValue ):string {
             }
             return `(${type} ${getEntityId(value)})`;
         case SType.Array:
-            return `[` + value.map(v => valueToString(v) ).join(' ') + ']';
+            return `[` + value.map(v => valueToString(v) ).join(', ') + ']';
         case SType.Map:
             return '{' + Object.keys(value).reduce( (res,key) => {
                 return [...res, `${key}: ${valueToString(value[key])}`];
             },[]).join(',') + '}';
+        case SType.Value:
+            return `${stringify(value)}`;
         default:
-            return stringify(value);
+            return val.length === 2 ? `(${type}, ${stringify(value)})` : stringify(val);
     }
 }

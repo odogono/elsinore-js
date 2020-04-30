@@ -23,12 +23,14 @@ import {
 import {
     onSwap, onArrayOpen, 
     onAddArray, 
+    onArraySpread,
     onAdd, onConcat, onMapOpen, 
     onEntity, onSelect, 
     onArgError,
     onComponentDef, onComponent, 
     onEntitySet, onAddComponentToEntity,
     onClear,
+    onValue,
     onDefine,
     onAddToEntitySet,
     onAssertType,
@@ -130,7 +132,7 @@ describe('Query', () => {
 
         [stack] = await pushValues(stack, data);
         // stack = addWord(stack, ']', onArrayClose );
-        // Log.debug('stack', stringify(stack.items) );
+        Log.debug('stack', stackToString(stack) );
     });
 
     it('adds to an array', async () => {
@@ -506,8 +508,8 @@ describe('Query', () => {
             // Log.debug('stack:', stackToString(stack) );
         });
 
-        it.only('fetches entities with components', async () => {
-            let query = parse(`[ /component/completed !e ] select`);
+        it('fetches entities with components', async () => {
+            let query = parse(`[ /component/completed !bf @e ] select`);
 
             let [stack, es] = await loadEntitySetFromFixture('todo.ldjson');
 
@@ -515,11 +517,88 @@ describe('Query', () => {
                 ['select', onSelect, SType.Array],
             ]);
 
-            // Log.debug('---');
+            [stack] = await pushValues(stack, query);
+
+            // Log.debug('stack:', stackToString(stack) );
+
+            let [, value] = pop(stack);            
+            assert.deepEqual( unpackStackValue(value), [102,101,100] );
+        })
+
+        it('fetches component attributes', async () => {
+            let unpack = parse(``)
+            let query = parse(`[ 
+                /component/title text !ca 
+                @cv 
+            ] select`);
+
+            let [stack, es] = await loadEntitySetFromFixture('todo.ldjson');
+
+            stack = addWords(stack, [
+                ['select', onSelect, SType.Array],
+                ['spread', onArraySpread, SType.Array ],
+            ]);
+
             [stack] = await pushValues(stack, query);
 
             Log.debug('stack:', stackToString(stack) );
+            Log.debug('stack:', stack.items );
         })
+
+        it('fetches entity component attribute', async () => {
+            let query = parse(`[ 
+                103 @e 
+                /component/title text !ca 
+                @cv 
+            ] select`);
+
+            let [stack, es] = await loadEntitySetFromFixture('todo.ldjson');
+
+            stack = addWords(stack, [
+                ['select', onSelect, SType.Array],
+                ['@val', onValue, SType.Array ],
+                ['spread', onArraySpread, SType.Array ],
+            ]);
+
+            [stack] = await pushValues(stack, query);
+
+            Log.debug('stack:', stackToString(stack) );
+            Log.debug('stack:', stack.items );
+        })
+
+        it.only('fetches matching component attribute', async () => {
+            let query = parse(`[ 
+                // fetches values for text from all the entities in the es
+                /component/title text !ca @cv
+                "drink some tea"
+                ==
+                @c
+            ] select`);
+            query = parse(`[ 
+                // fetches values for text from all the entities in the es
+                /component/title text !ca
+                "do some shopping"
+                ==
+                // [ /component/priority  ] !bf
+                // @e // return result as entityIds
+                // @c // return result as components
+            ] select`);
+
+            let [stack, es] = await loadEntitySetFromFixture('todo.ldjson');
+
+            stack = addWords(stack, [
+                ['select', onSelect, SType.Array],
+                ['@val', onValue, SType.Array ],
+                ['spread', onArraySpread, SType.Array ],
+            ]);
+
+            [stack] = await pushValues(stack, query);
+
+            Log.debug('stack:', stackToString(stack) );
+            Log.debug('stack:', stringify(stack.items,1) );
+        })
+
+
 
         it('fetches component attributes', async () => {
             let query = parse(`

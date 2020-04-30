@@ -46,7 +46,7 @@ import { generateId } from './simple_id';
 import { createLog } from "../util/log";
 import { isInteger, isObject, isString } from "../util/is";
 import { MatchOptions } from '../constants';
-import { select, matchEntities } from "./query";
+import { select } from "./query";
 import { StackValue } from "../query/stack";
 
 export const Type = '@es';
@@ -76,7 +76,7 @@ export interface EntitySet {
     esRegister: (es,def) => any;
     esGetComponentDefs: (es) => ComponentDef[];
     esGetComponent: (es,cid:(ComponentId|Component)) => any;
-    esEntities: (es) => Promise<EntityList>;
+    esEntities: (es:EntitySet, bf?:BitField) => Promise<EntityList>;
     esGetEntity: (es,eid:EntityId) => Promise<Entity>;
     esSelect: (es, query:StackValue[]) => Promise<StackValue[]>;
 }
@@ -116,7 +116,7 @@ export function create(options: CreateEntitySetParams = {}): EntitySetMem {
         esRegister: register,
         esGetComponentDefs: (es:EntitySetMem) => es.componentDefs,
         esGetComponent: getComponent,
-        esEntities: (es:EntitySetMem) => Promise.resolve( createEntityList( Array.from(es.entities.keys())) ),
+        esEntities: (es:EntitySetMem, bf?:BitField) => Promise.resolve( matchEntities(es, bf) ),
         esGetEntity: (es:EntitySetMem, eid:EntityId) => Promise.resolve( getEntity(es,eid) ),
         esSelect: select,
     }
@@ -576,4 +576,40 @@ export function createEntity(es: EntitySetMem): [EntitySetMem, number] {
     es = markEntityAdd(es, eid) as EntitySetMem;
 
     return [es, eid];
+}
+
+
+/**
+ * Returns a list of entity ids which match against the bitfield
+ * 
+ * TODO - GET RID
+ * @param es 
+ * @param mbf 
+ * @param options 
+ */
+export function matchEntities(es: EntitySetMem, mbf: BitField, options: MatchOptions = {}): EntityList {
+    let matches = [];
+    // let entities = new Map<number,BitField>();
+    let { returnEntities, limit } = options;
+    limit = limit !== undefined ? limit : Number.MAX_SAFE_INTEGER;
+
+    const isAll = BitField.isAllSet(mbf);// mbf.toString() === 'all';
+    for (let [eid, ebf] of es.entities) {
+        // console.log('[matchEntities]', 'limit', eid, mbf.toString(), ebf.toString(), BitField.or( mbf, ebf ));
+        if (isAll || BitField.or(mbf, ebf)) {
+            if (returnEntities) {
+                matches.push(getEntity(es, eid));
+            } else {
+                matches.push(eid);
+                // entities.set(eid, ebf);
+            }
+
+            if (matches.length >= limit) {
+                break;
+            }
+        }
+    }
+
+    // Log.debug('[matchEntities]', 'dammit', entities );
+    return createEntityList(matches, mbf);
 }
