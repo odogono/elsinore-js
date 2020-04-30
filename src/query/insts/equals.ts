@@ -1,7 +1,7 @@
 import { createLog } from "../../util/log";
 import { QueryStack, InstDefMeta, 
     pop,
-    push, StackValue, peek, InstResult, StackOp, InstDef, InstModuleDef, } from "../stack";
+    push, StackValue, peek, InstResult, StackOp } from "../stack";
 
 const Log = createLog('Inst][Equals');
 
@@ -28,7 +28,7 @@ export const meta:InstDefMeta = {
 //     op: ['==', '+', '*']
 // };
 
-export function execute( stack:QueryStack, value:StackValue  ):InstResult {
+export function execute( stack:QueryStack, value:StackValue  ):InstResult<QueryStack> {
     // if( !isFunction( OpMap[op] ) ){
     //     Log.debug('[execute]', 'fn not found', op, OpMap[op] );
     // }
@@ -36,7 +36,7 @@ export function execute( stack:QueryStack, value:StackValue  ):InstResult {
     return OpMap[op](stack, value);
 }
 
-export function executeEquals( stack:QueryStack, [op,arg]:StackValue ):InstResult {
+export function executeEquals( stack:QueryStack, [op,arg]:StackValue ):InstResult<QueryStack> {
     let lval,rval;
 
     // Log.debug('[execute]', op, stack.items );
@@ -138,7 +138,7 @@ export function executeEquals( stack:QueryStack, [op,arg]:StackValue ):InstResul
 //     return [stack, [VL, lval - rval] ];
 // }
 
-function executeMul( stack:QueryStack  ): InstResult {
+function executeMul( stack:QueryStack  ): InstResult<QueryStack> {
     let lval,rval;
     [stack,lval] = pop(stack);
     [stack,rval] = pop(stack);

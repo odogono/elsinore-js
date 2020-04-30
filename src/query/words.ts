@@ -9,6 +9,7 @@ import {
     push, pop, peek, pushRaw,
     findV,
     popOfType,
+    StackError,
     assertStackValueType
 } from './stack';
 import { create as createComponentDef, isComponentDef } from '../../src/component_def';
@@ -32,36 +33,53 @@ import { createLog } from "../util/log";
 
 const Log = createLog('QueryWords');
 
+type Result<QS extends QueryStack> = InstResult<QS>;
+type AsyncResult<QS extends QueryStack> = Promise<InstResult<QS>>;
 
-export function onEntityFetch(stack: QueryStack, val: StackValue): InstResult {
+
+export async function onSelect<QS extends QueryStack>(stack: QS, val: StackValue): AsyncResult<QS> {
     let left, right;
 
     [stack, right] = pop(stack);
     [stack, left] = pop(stack);
 
-    let es = unpackStackValue(left, SType.EntitySet);
-    let query = unpackStackValue(right);
+    let es:EntitySet = unpackStackValue(left, SType.EntitySet);
+    let query = unpackStackValue(right, SType.Array, false);
+
+    const {isAsync,esSelect} = es;
 
     // Log.debug('left', left);
     // Log.debug('right', right);
 
-    Log.warn('TODO : hereth starts querying');
+    let result = await esSelect(es, query);
 
-    return [stack];
+    if( result ){
+        // append output stack
+        stack = { ...stack, items: [...stack.items, ...result] };
+    }
+
+    return [stack ];
 }
 
-export function onEntity(stack: QueryStack, val: StackValue): InstResult {
+export function onArgError<QS extends QueryStack>(stack: QS, val: StackValue): Result<QS> {
+    Log.debug('[onArgError]', val);
+    throw new StackError('invalid argument');
+}
+
+
+export function onEntity<QS extends QueryStack>(stack: QS, val: StackValue): Result<QS> {
     let data: StackValue;
     [stack, data] = pop(stack);
 
     let eid = unpackStackValue(data, SType.Value);
+    // Log.debug('[onEntity]', eid);
     let e = createEntityInstance(eid);
 
     return [stack, [SType.Entity, e]];
 }
 
 
-export function onComponent(stack: QueryStack, val: StackValue): InstResult {
+export function onComponent<QS extends QueryStack>(stack: QS, val: StackValue): Result<QS> {
     let data: StackValue;
 
     [stack, data] = pop(stack);
@@ -99,7 +117,7 @@ export function unpackStackValue(val: StackValue, assertType: SType = SType.Any,
     }
 }
 
-export function onAddComponentToEntity(stack: QueryStack, val: StackValue): InstResult {
+export function onAddComponentToEntity<QS extends QueryStack>(stack: QS, val: StackValue): Result<QS> {
     let ev: StackValue, cv: StackValue;
 
     [stack, cv] = pop(stack);
@@ -120,7 +138,7 @@ export function onAddComponentToEntity(stack: QueryStack, val: StackValue): Inst
 
 
 
-export async function onAddToEntitySet(stack: QueryStack): AsyncInstResult {
+export async function onAddToEntitySet<QS extends QueryStack>(stack: QS): AsyncInstResult<QS> {
     let left, right;
     [stack, left] = pop(stack);
     [stack, right] = pop(stack);
@@ -170,7 +188,7 @@ export async function onAddToEntitySet(stack: QueryStack): AsyncInstResult {
 //     return [stack, [SType.EntitySet, es] ];
 // }
 
-export function onEntitySet(stack: QueryStack, val: StackValue): InstResult {
+export function onEntitySet<QS extends QueryStack>(stack: QS, val: StackValue): Result<QS> {
     let data: StackValue;
 
     [stack, data] = pop(stack);
@@ -181,7 +199,7 @@ export function onEntitySet(stack: QueryStack, val: StackValue): InstResult {
     return [stack, [SType.EntitySet, es]];
 }
 
-export function onComponentDef(stack: QueryStack): InstResult {
+export function onComponentDef<QS extends QueryStack>(stack: QS): Result<QS> {
     let data: StackValue;
     try {
 
@@ -212,18 +230,21 @@ export function onComponentDef(stack: QueryStack): InstResult {
 }
 
 
-export function onDefine(stack: QueryStack, val: StackValue): InstResult {
+export function onDefine<QS extends QueryStack>(stack: QS, val: StackValue): Result<QS> {
     let word: StackValue, value: StackValue;
     [stack, word] = pop(stack);
     [stack, value] = pop(stack);
 
-    let wordFn = async (stack: QueryStack, val: StackValue): AsyncInstResult => {
+    // Log.debug('[onDefine]', word, value);
+
+    let wordFn = async <QS extends QueryStack>(stack: QS, val: StackValue): AsyncInstResult<QS> => {
         let wordVal = value[0] === SType.Array ? value[1] : [value];
+        // Log.debug('[onDefine]', 'push', wordVal);
         [stack] = await pushValues(stack, wordVal);
         return [stack];
     }
 
-    stack = addWords(stack, [
+    stack = addWords<QS>(stack, [
         [word[1], wordFn]
     ])
 
@@ -231,7 +252,7 @@ export function onDefine(stack: QueryStack, val: StackValue): InstResult {
 };
 
 
-export function onAddArray(stack: QueryStack, val: StackValue): InstResult {
+export function onAddArray<QS extends QueryStack>(stack: QS, val: StackValue): Result<QS> {
     let left, right;
     [stack, left] = pop(stack);
     [stack, right] = pop(stack);
@@ -244,7 +265,7 @@ export function onAddArray(stack: QueryStack, val: StackValue): InstResult {
     return [stack, [type, arr]];
 }
 
-export function onAdd(stack: QueryStack, val: StackValue): InstResult {
+export function onAdd<QS extends QueryStack>(stack: QS, val: StackValue): Result<QS> {
     let lv, rv;
 
     [stack, lv] = pop(stack);
@@ -258,10 +279,10 @@ export function onAdd(stack: QueryStack, val: StackValue): InstResult {
     return [stack, [SType.Value, value]];
 }
 
-export function onMapOpen(stack: QueryStack, val: StackValue): InstResult {
-    let sub = createQuery();
+export function onMapOpen<QS extends QueryStack>(stack: QS, val: StackValue): Result<QS> {
+    let sub = createQuery<QS>();
     // add something which will interpret each push
-    sub = addWords(sub, [
+    sub = addWords<QS>(sub, [
         ['{', onMapOpen],
         ['[', onArrayOpen],
         ['}', onMapClose],
@@ -270,7 +291,7 @@ export function onMapOpen(stack: QueryStack, val: StackValue): InstResult {
     return [sub];
 }
 
-export function onMapClose(stack: QueryStack, val: StackValue): InstResult {
+export function onMapClose<QS extends QueryStack>(stack: QS, val: StackValue): Result<QS> {
     let map = stack.items.reduce((result, val, idx, array) => {
         if (idx % 2 === 0) {
             let key = unpackStackValue(val);
@@ -285,10 +306,10 @@ export function onMapClose(stack: QueryStack, val: StackValue): InstResult {
     return [stack, val];
 }
 
-export function onArrayOpen(stack: QueryStack, val: StackValue): InstResult {
-    let sub = createQuery();
+export function onArrayOpen<QS extends QueryStack>(stack: QS, val: StackValue): Result<QS> {
+    let sub = createQuery<QS>();
     // sub.words = {...stack.words};
-    sub = addWords(sub, [
+    sub = addWords<QS>(sub, [
         ['{', onMapOpen],
         ['[', onArrayOpen],
         [']', onArrayClose],
@@ -297,7 +318,7 @@ export function onArrayOpen(stack: QueryStack, val: StackValue): InstResult {
     return [sub];
 }
 
-export function onArrayClose(stack: QueryStack, val: StackValue): InstResult {
+export function onArrayClose<QS extends QueryStack>(stack: QS, val: StackValue): Result<QS> {
     // Log.debug('[onArrayClose]', stack);
     val = [SType.Array, stack.items];
     stack = (stack as any).stack;
@@ -312,7 +333,7 @@ export function onArrayClose(stack: QueryStack, val: StackValue): InstResult {
  * @param stack 
  * @param val 
  */
-export function onConcat(stack: QueryStack, val: StackValue): InstResult {
+export function onConcat<QS extends QueryStack>(stack: QS, val: StackValue): Result<QS> {
     let first;
     let values: StackValue[];
     [stack, first] = pop(stack);
@@ -331,7 +352,7 @@ export function onConcat(stack: QueryStack, val: StackValue): InstResult {
     return [stack, [SType.Array, values]];
 }
 
-export function onBuildMap(stack: QueryStack): InstResult {
+export function onBuildMap<QS extends QueryStack>(stack: QS): Result<QS> {
     let left, right;
     let values: StackValue[];
     [stack, left] = pop(stack);
@@ -354,7 +375,7 @@ export function onBuildMap(stack: QueryStack): InstResult {
     return [stack, [SType.Map, map]];
 }
 
-export function onSwap(stack: QueryStack, val: StackValue): InstResult {
+export function onSwap<QS extends QueryStack>(stack: QS, val: StackValue): Result<QS> {
     let left, right;
     [stack, left] = pop(stack);
     [stack, right] = pop(stack);
@@ -365,24 +386,24 @@ export function onSwap(stack: QueryStack, val: StackValue): InstResult {
     return [stack];
 }
 
-export function onDrop(stack: QueryStack, val: StackValue): InstResult {
+export function onDrop<QS extends QueryStack>(stack: QS, val: StackValue): Result<QS> {
     [stack] = pop(stack);
     return [stack];
 }
 
 
-export function onClear(stack: QueryStack, val: StackValue): InstResult {
+export function onClear<QS extends QueryStack>(stack: QS, val: StackValue): Result<QS> {
     stack = { ...stack, items: [] };
     // [stack,val] = push( stack, [SType.Value, '1.0.0'] );
     return [stack];
 };
 
-export async function onVersion(stack: QueryStack, val: StackValue): AsyncInstResult {
+export async function onVersion<QS extends QueryStack>(stack: QS, val: StackValue): AsyncInstResult<QS> {
     [stack, val] = await push(stack, [SType.Value, '1.0.0']);
     return [stack, val, false];
 };
 
-export function onEquals(stack: QueryStack, val: StackValue): InstResult {
+export function onEquals<QS extends QueryStack>(stack: QS, val: StackValue): Result<QS> {
     let left, right;
     [stack, left] = pop(stack);
     [stack, right] = pop(stack);
@@ -393,7 +414,7 @@ export function onEquals(stack: QueryStack, val: StackValue): InstResult {
     return [stack, [SType.Value, equal]];
 }
 
-export function onAssertType(stack: QueryStack): InstResult {
+export function onAssertType<QS extends QueryStack>(stack: QS): Result<QS> {
     let value: StackValue;
     [stack, value] = pop(stack);
     let type = unpackStackValue(value, SType.Value);

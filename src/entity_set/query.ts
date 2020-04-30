@@ -8,8 +8,63 @@ import { MatchOptions } from '../constants';
 import {
     resolveComponentDefIds as registryResolve
 } from "../component_registry";
+import { 
+    create as createStack,
+    SType,
+    addWords,
+    pushValues,
+    QueryStack,
+    StackValue,
+    InstResult, AsyncInstResult,
+    push, pop, peek, pushRaw,
+    findV,
+    find as findValue,
+ } from "../query/stack";
+import { unpackStackValue } from "../query/words";
+import { stackToString } from "../query/util";
 
-const Log = createLog('EntitySetQuery');
+const Log = createLog('ESMemQuery');
+
+
+interface ESMemQueryStack extends QueryStack {
+    es: EntitySetMem
+}
+
+/**
+ * 
+ * @param es 
+ * @param query 
+ */
+export async function select( es:EntitySetMem, query:StackValue[] ): Promise<StackValue[]> {
+    let stack = createStack() as ESMemQueryStack;
+    stack.es = es;
+
+    stack = addWords( stack, [
+        ['!e', (stack:ESMemQueryStack) => onEntity(es,stack)],
+    ]);
+    
+    [stack] = await pushValues(stack, query );
+    // Log.debug('[select]', stackToString(stack) );
+
+
+    return stack.items;
+}
+
+
+export function onEntity(es:EntitySetMem, stack: ESMemQueryStack): InstResult<ESMemQueryStack> {
+    let data: StackValue;
+    [stack, data] = pop(stack);
+
+    let eid = unpackStackValue(data, SType.Value);
+    
+    let e = getEntity(es, eid );
+    
+    // Log.debug('[onEntity]', eid, e);
+    // let e = createEntityInstance(eid);
+
+    return [stack, [SType.Entity,e]];
+}
+
 
 
 export interface ESQuery {

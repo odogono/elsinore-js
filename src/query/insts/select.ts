@@ -10,10 +10,8 @@ import {
     popOfTypeV,
     StackValue,
     pop,
-    compile,
     peek,
-    findV,
-    StackValueCompiled
+    findV
 } from "../stack";
 import {
     Type as ComponentRegistryCode,
@@ -49,11 +47,11 @@ export const meta:InstDefMeta = {
 };
 
 const fns = {
-    [Select.Entity]: selectEntity,
-    [Select.AllEntities]: selectEntitiesWithAll,
-    [Select.AllComponents]: selectComponentsWithAll,
-    [Select.SomeEntities]: selectEntitiesWithSome,
-    [Select.SomeComponents]: selectComponentsWithSome
+    // [Select.Entity]: selectEntity,
+    // [Select.AllEntities]: selectEntitiesWithAll,
+    // [Select.AllComponents]: selectComponentsWithAll,
+    // [Select.SomeEntities]: selectEntitiesWithSome,
+    // [Select.SomeComponents]: selectComponentsWithSome
 };
 
 
@@ -66,7 +64,7 @@ const fns = {
  * AL <defId>
  * AL <@d>
  */
-export function execute( stack:QueryStack, [op,arg]:StackValue ):InstResult {
+export function execute( stack:QueryStack, [op,arg]:StackValue ):InstResult<QueryStack> {
     let value:StackValue;
     const fn = fns[ op ];
     
@@ -101,7 +99,7 @@ export function execute( stack:QueryStack, [op,arg]:StackValue ):InstResult {
 }
 
 
-function selectEntity( stack:QueryStack, value:StackValue ): InstResult {
+function selectEntity( stack:QueryStack, value:StackValue ): InstResult<QueryStack> {
     let [type,container] = peek(stack);
     let e:Entity;
     let bf:BitField;
@@ -139,7 +137,7 @@ function selectEntity( stack:QueryStack, value:StackValue ): InstResult {
  * @param stack 
  * @param args component defIds
  */
-function selectEntitiesWithAll( stack:QueryStack, criteria:StackValue ): InstResult {
+function selectEntitiesWithAll( stack:QueryStack, criteria:StackValue ): InstResult<QueryStack> {
     let value:StackValue;
 
     let [criteriaType, criteriaValue] = criteria;
@@ -157,24 +155,24 @@ function selectEntitiesWithAll( stack:QueryStack, criteria:StackValue ): InstRes
 
     if( criteriaType === StackInsts.StackList ){
 
-        let es = findV( stack, EntitySetT );
+        // let es = findV( stack, EntitySetT );
 
-        let el = compileList( stack, criteriaValue );
-        Log.debug('stack compiled', el );
+        // let el = compileList( stack, criteriaValue );
+        // Log.debug('stack compiled', el );
 
-        bf = determineBitField(registry, el);
+        // bf = determineBitField(registry, el);
 
-        // let ents = esMatchEntities( es, bf );
+        // // let ents = esMatchEntities( es, bf );
 
-        // take each entity
-        // push each StackList inst onto the stack
-        // if it is an attribute inst:, -- substitute in [ component, attr, GET ]
-        // - get the component
-        // - get the component attr
+        // // take each entity
+        // // push each StackList inst onto the stack
+        // // if it is an attribute inst:, -- substitute in [ component, attr, GET ]
+        // // - get the component
+        // // - get the component attr
 
 
-        Log.debug('stack list bf', bf.toValues() );
-        Log.debug('pre stack', stack.items );
+        // Log.debug('stack list bf', bf.toValues() );
+        // Log.debug('pre stack', stack.items );
         // let el = criteriaValue as EntityList;
         // const isES = ec[0] === EntitySetT;
 
@@ -213,23 +211,19 @@ function selectEntitiesWithAll( stack:QueryStack, criteria:StackValue ): InstRes
     
 }
 
-function compileList( stack:QueryStack, list:any[] ): StackValueCompiled[] {
-    return list.map( inst =>  compile( stack, inst ) );
-}
-
 /**
  * Scans the values for components or attributes
  * @param list 
  */
-function determineBitField( registry:ComponentRegistry, list:StackValueCompiled[] ):BitField {
-    return list.reduce( (bf,[[op,val],]) => {
-        Log.debug('check', op, val );
-        if( op === 'AT' ){
-            return bf.set( val[0] as BitField );
-        }
-        return bf;
-    }, BitField.create() );
-}
+// function determineBitField( registry:ComponentRegistry, list:StackValueCompiled[] ):BitField {
+//     return list.reduce( (bf,[[op,val],]) => {
+//         Log.debug('check', op, val );
+//         if( op === 'AT' ){
+//             return bf.set( val[0] as BitField );
+//         }
+//         return bf;
+//     }, BitField.create() );
+// }
 
 // function selectEntitiesWithAll( stack:QueryStack, dids:any[] ): InstResult {
 //     let value:StackValue;
@@ -249,17 +243,17 @@ function determineBitField( registry:ComponentRegistry, list:StackValueCompiled[
 //     return [stack, value, false];
 // }
 
-function selectEntitiesWithSome( stack:QueryStack, ...args:any[] ): InstResult {
-    return [stack];
-}
+// function selectEntitiesWithSome( stack:QueryStack, ...args:any[] ): InstResult {
+//     return [stack];
+// }
 
-function selectComponentsWithAll( stack:QueryStack, ...args:any[] ): InstResult {
-    return [stack];
-}
+// function selectComponentsWithAll( stack:QueryStack, ...args:any[] ): InstResult {
+//     return [stack];
+// }
 
-function selectComponentsWithSome( stack:QueryStack, ...args:any[] ): InstResult {
-    return [stack];
-}
+// function selectComponentsWithSome( stack:QueryStack, ...args:any[] ): InstResult {
+//     return [stack];
+// }
 
 
 

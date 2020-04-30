@@ -51,6 +51,7 @@ import { buildFlake53, parseFlake53 } from '../util/id';
 import { getByDefId, getByUri, getByHash } from '../component_registry';
 import { fchmodSync } from 'fs-extra';
 import { isString, isInteger, isEmpty } from '../util/is';
+import { StackValue } from '../query/stack';
 const Log = createLog('EntitySetFS');
 
 /**
@@ -134,7 +135,8 @@ export function create(options:CreateEntitySetFSParams={}):EntitySetFS {
         esGetComponent: getComponent,
         esGetComponentDefs: (es:EntitySetFS) => es.componentDefs,
         esEntities: async (es:EntitySetFS) => await getEntities(es),
-        esGetEntity: (es:EntitySetFS, eid:EntityId) => getEntity(es,eid)
+        esGetEntity: (es:EntitySetFS, eid:EntityId) => getEntity(es,eid),
+        esSelect: (es:EntitySetFS, query:StackValue[]) => null,
     }
 }
 

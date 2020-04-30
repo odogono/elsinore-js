@@ -4,11 +4,7 @@ import { QueryStack, InstDefMeta,
     Type as QueryStackT,
     create as createStack,
     push, StackValue, peek, 
-    InstResult, InstDef, shift, pushRaw, assertStackSize, 
-    
-    
-    isInstModuleDef, 
-    InstModuleDef, 
+    InstResult, shift, pushRaw, assertStackSize, 
     
     popOfTypeV, 
     StackOp, popOfType, findWithIndex, AsyncInstResult, pushValues, SType, } from "../stack";
@@ -87,12 +83,12 @@ const OpMap = {
     // [Require]: executeRequire
 };
 
-export function execute( stack:QueryStack, [op,arg]:StackValue  ):InstResult {
-    // if( !isFunction( OpMap[op] ) ){
-    //     Log.debug('[execute]', 'fn not found', op, OpMap[op] );
-    // }
-    return OpMap[op](stack, [op,arg]);
-}
+// export function execute( stack:QueryStack, [op,arg]:StackValue  ):InstResult {
+//     // if( !isFunction( OpMap[op] ) ){
+//     //     Log.debug('[execute]', 'fn not found', op, OpMap[op] );
+//     // }
+//     return OpMap[op](stack, [op,arg]);
+// }
 
 
 // export async function executeOpenList( stack:QueryStack, [op,arg]:StackValue ):AsyncInstResult {
@@ -116,39 +112,39 @@ export function execute( stack:QueryStack, [op,arg]:StackValue  ):InstResult {
 //     return [subStack];
 // }
 
-function disableInstDef( inst:InstDef ): InstDef {
-    if( isInstModuleDef(inst) ){
-        return {meta: (inst as InstModuleDef).meta};
-    }
-    return undefined;
-}
+// function disableInstDef( inst:InstDef ): InstDef {
+//     if( isInstModuleDef(inst) ){
+//         return {meta: (inst as InstModuleDef).meta};
+//     }
+//     return undefined;
+// }
 
 
-export function executeCloseList( subStack:QueryStack, [op,arg]:StackValue  ):InstResult {
-    // Log.debug( '[executeCloseList]', subStack.items );
+// export function executeCloseList( subStack:QueryStack, [op,arg]:StackValue  ):InstResult {
+//     // Log.debug( '[executeCloseList]', subStack.items );
 
-    // get the old stack back
-    let stack:QueryStack;
-    [subStack, [,stack]] = shift( subStack );
+//     // get the old stack back
+//     let stack:QueryStack;
+//     [subStack, [,stack]] = shift( subStack );
 
-    // Log.debug( '[executeCloseList]', subStack.items );
+//     // Log.debug( '[executeCloseList]', subStack.items );
 
-    // push a Function containing all the instructions onto the stack
-    stack = pushRaw( stack, [StackList, subStack.items] );
+//     // push a Function containing all the instructions onto the stack
+//     stack = pushRaw( stack, [StackList, subStack.items] );
 
-    return [stack];
-}
+//     return [stack];
+// }
 
-export function executeSwap( stack:QueryStack ):InstResult {
-    let a:StackValue, b:StackValue;
-    // swap the last two elements on the stack
-    [stack, a] = pop(stack);
-    [stack, b] = pop(stack);
-    stack = pushRaw(stack, a);
-    stack = pushRaw(stack, b);
+// export function executeSwap( stack:QueryStack ):InstResult {
+//     let a:StackValue, b:StackValue;
+//     // swap the last two elements on the stack
+//     [stack, a] = pop(stack);
+//     [stack, b] = pop(stack);
+//     stack = pushRaw(stack, a);
+//     stack = pushRaw(stack, b);
 
-    return [stack];
-}
+//     return [stack];
+// }
 
 // export function executeToString( stack:QueryStack  ):InstResult {
 //     let op:StackOp;
@@ -194,30 +190,30 @@ export function executeSwap( stack:QueryStack ):InstResult {
 //     return [stack, value, false];
 // }
 
-export function executeClear( stack:QueryStack ):InstResult {
-    return [ {...stack, items:[]} ];
-}
+// export function executeClear( stack:QueryStack ):InstResult {
+//     return [ {...stack, items:[]} ];
+// }
 
-export function executePut( stack:QueryStack ):InstResult {
-    let map:StackValue;
-    let key:StackValue;
-    let value:StackValue;
+// export function executePut( stack:QueryStack ):InstResult {
+//     let map:StackValue;
+//     let key:StackValue;
+//     let value:StackValue;
 
-    assertStackSize( stack, 3, `${Put} requires 3 args: <key> <value> <map>`);
-    // assertStackValueType( stack, 2, 'VL', typeof {} );
-    // assertStackValueType( stack, 1, 'VL' );
-    // assertStackValueType( stack, 0, 'VL' );
+//     assertStackSize( stack, 3, `${Put} requires 3 args: <key> <value> <map>`);
+//     // assertStackValueType( stack, 2, 'VL', typeof {} );
+//     // assertStackValueType( stack, 1, 'VL' );
+//     // assertStackValueType( stack, 0, 'VL' );
 
-    [stack, key] = pop(stack);
-    [stack, value] = pop(stack);
-    [stack, map] = pop(stack);
+//     [stack, key] = pop(stack);
+//     [stack, value] = pop(stack);
+//     [stack, map] = pop(stack);
 
-    map[1] = {...map[1], [key[1]]:value[1]};
+//     map[1] = {...map[1], [key[1]]:value[1]};
 
-    // Log.debug('[executePut]', map);
+//     // Log.debug('[executePut]', map);
 
-    return [stack, map];
-}
+//     return [stack, map];
+// }
 
 // export function executeFetch( stack:QueryStack ): InstResult {
 //     let op:StackOp, cop:StackOp;
@@ -233,63 +229,63 @@ export function executePut( stack:QueryStack ):InstResult {
 //     return [stack,['VL', undefined ] ];
 // }
 
-export function executeGet( stack:QueryStack ): InstResult {
-    let map:StackValue;
-    let key:StackValue;
-    let value:StackValue;
-    let keyOp,keyVal;
-    let mapOp,mapVal;
+// export function executeGet( stack:QueryStack ): InstResult {
+//     let map:StackValue;
+//     let key:StackValue;
+//     let value:StackValue;
+//     let keyOp,keyVal;
+//     let mapOp,mapVal;
 
-    [stack, [keyOp,keyVal]] = pop(stack);
-    [stack, [mapOp, mapVal]] = pop(stack);
-    // const mapType = map[0];
+//     [stack, [keyOp,keyVal]] = pop(stack);
+//     [stack, [mapOp, mapVal]] = pop(stack);
+//     // const mapType = map[0];
 
-    // Log.debug('[executeGet]', 'key', keyOp );
+//     // Log.debug('[executeGet]', 'key', keyOp );
 
-    if( keyOp === Attribute ){
-        let [bf, name] = keyVal;
-        // Log.debug('[executeGet]', mapType, bf.toValues(), name);
-        if( mapOp === ComponentT ){
-            // check the component is of the correct type
-            let did = getComponentDefId(mapVal);
-            if( !bf.get(did) ){
-                // Log.debug('[executeGet]', 'nope', mapVal );
-                return [stack, ['VL', undefined] ];
-        }
+//     if( keyOp === Attribute ){
+//         let [bf, name] = keyVal;
+//         // Log.debug('[executeGet]', mapType, bf.toValues(), name);
+//         if( mapOp === ComponentT ){
+//             // check the component is of the correct type
+//             let did = getComponentDefId(mapVal);
+//             if( !bf.get(did) ){
+//                 // Log.debug('[executeGet]', 'nope', mapVal );
+//                 return [stack, ['VL', undefined] ];
+//         }
             
-            // Log.debug('[executeGet]', mapVal, keyVal);
-            return name !== undefined ? 
-                [stack, ['VL', mapVal[ name ]] ] : 
-                [stack, [ComponentT,mapVal] ];
+//             // Log.debug('[executeGet]', mapVal, keyVal);
+//             return name !== undefined ? 
+//                 [stack, ['VL', mapVal[ name ]] ] : 
+//                 [stack, [ComponentT,mapVal] ];
 
-        } else if( mapOp === EntityT ){
-            let coms = getEntityComponents( mapVal, bf );
+//         } else if( mapOp === EntityT ){
+//             let coms = getEntityComponents( mapVal, bf );
             
-            if( name === undefined ){
-                return [stack, ['VL',coms] ];
-            }
-            return [stack, ['VL', coms.map( com => com[name] ).filter(Boolean)]];
-        }
-        else if( mapOp === EntitySetT ){
-            // Log.debug('[executeGet]', bf, name);
-            let coms = getComponentsByDefId( mapVal, bf );
+//             if( name === undefined ){
+//                 return [stack, ['VL',coms] ];
+//             }
+//             return [stack, ['VL', coms.map( com => com[name] ).filter(Boolean)]];
+//         }
+//         else if( mapOp === EntitySetT ){
+//             // Log.debug('[executeGet]', bf, name);
+//             let coms = getComponentsByDefId( mapVal, bf );
 
-            if( name !== undefined ){
-                return [stack, ['VL', coms.map( com => com[name] ).filter(Boolean) ]];
-            }
-            return [stack, [EntitySetT, addToEntitySet( createEntitySet({}), coms )]];
-        }
-        // if( map[0] !== )
-        // throw new Error(`expected value of type ${type} : got ${value[0]}`);
-        // assertStackValueType( stack, 1 )
-    }
-    else if( keyOp === 'VL' ){
-        let [type,val] = map;
-        // if( isObject(val) ){
-            return [stack, ['VL', val[keyVal]] ];
-        // }
-    }
-}
+//             if( name !== undefined ){
+//                 return [stack, ['VL', coms.map( com => com[name] ).filter(Boolean) ]];
+//             }
+//             return [stack, [EntitySetT, addToEntitySet( createEntitySet({}), coms )]];
+//         }
+//         // if( map[0] !== )
+//         // throw new Error(`expected value of type ${type} : got ${value[0]}`);
+//         // assertStackValueType( stack, 1 )
+//     }
+//     else if( keyOp === 'VL' ){
+//         let [type,val] = map;
+//         // if( isObject(val) ){
+//             return [stack, ['VL', val[keyVal]] ];
+//         // }
+//     }
+// }
 
 /**
  * 
@@ -297,32 +293,32 @@ export function executeGet( stack:QueryStack ): InstResult {
  * @param op 
  * @param list 
  */
-export async function executeList( stack:QueryStack, op:string, list:StackOp|StackValue[] ):AsyncInstResult {
-    let value:StackValue;
-    let args:StackValue[];
-    let arg;
+// export async function executeList( stack:QueryStack, op:string, list:StackOp|StackValue[] ):AsyncInstResult {
+//     let value:StackValue;
+//     let args:StackValue[];
+//     let arg;
     
-    // Log.debug('[executeList]', list );
+//     // Log.debug('[executeList]', list );
 
-    if( list === undefined ){
-        [stack, [op,arg] ] = pop(stack);
-        args = Array.isArray(arg) ? arg : [arg];
-    } else if( isString(list) ){
-        // a type has been specified - gather all previous of type into a list
-        [stack, args] = popOfType( stack, list as SType );
-        // Log.debug('[executeList]', list, args);
-        return [stack, [StackList, args] ];
-    } else {
-        args = list as StackValue[];
-    }
+//     if( list === undefined ){
+//         [stack, [op,arg] ] = pop(stack);
+//         args = Array.isArray(arg) ? arg : [arg];
+//     } else if( isString(list) ){
+//         // a type has been specified - gather all previous of type into a list
+//         [stack, args] = popOfType( stack, list as SType );
+//         // Log.debug('[executeList]', list, args);
+//         return [stack, [StackList, args] ];
+//     } else {
+//         args = list as StackValue[];
+//     }
 
 
-    // push each of the args onto the stack
-    // [stack,value] = args.reduce( ( [stack,value],inst) => push(stack, inst), [stack,value] );
-    [stack] = await pushValues(stack, args);
+//     // push each of the args onto the stack
+//     // [stack,value] = args.reduce( ( [stack,value],inst) => push(stack, inst), [stack,value] );
+//     [stack] = await pushValues(stack, args);
 
-    return [stack, value, false];
-}
+//     return [stack, value, false];
+// }
 
 
 // export function executeGetDefine( stack:QueryStack ): InstResult {
@@ -352,10 +348,10 @@ export async function executeList( stack:QueryStack, op:string, list:StackOp|Sta
 //     return [stack];
 // }
 
-export function executeRequire( stack:QueryStack, [op,arg]:StackValue ): InstResult {
-    let [idx] = findWithIndex( stack, arg);
-    if( idx === -1 ){
-        throw new Error(`could not find ${arg} on stack`);
-    }
-    return [stack];
-}
+// export function executeRequire( stack:QueryStack, [op,arg]:StackValue ): InstResult {
+//     let [idx] = findWithIndex( stack, arg);
+//     if( idx === -1 ){
+//         throw new Error(`could not find ${arg} on stack`);
+//     }
+//     return [stack];
+// }

@@ -30,32 +30,32 @@ export const meta:InstDefMeta = {
 };
 
 
-export function executeFetch( stack:QueryStack, [,registry]:StackValue, [op,arg]:StackValue ): InstResult {
-    // Log.debug('[executeFetch]', [op,arg] );
-    let bf = resolveComponentDefIds( registry, [arg] );
-    let dids = bf.toValues();
+// export function executeFetch( stack:QueryStack, [,registry]:StackValue, [op,arg]:StackValue ): InstResult {
+//     // Log.debug('[executeFetch]', [op,arg] );
+//     let bf = resolveComponentDefIds( registry, [arg] );
+//     let dids = bf.toValues();
 
-    if( dids.length === 1 ){
-        return [ stack, ['@d', getByDefId( registry, dids[0] ) ] ];
-    } else {
-        return [ stack, [StackList, dids.map(did => getByDefId(registry, did)) ]];
-    }
-}
+//     if( dids.length === 1 ){
+//         return [ stack, ['@d', getByDefId( registry, dids[0] ) ] ];
+//     } else {
+//         return [ stack, [StackList, dids.map(did => getByDefId(registry, did)) ]];
+//     }
+// }
 
-export function toListValue( stack:QueryStack, [op,registry]:StackValue ): InstResult {
+// export function toListValue( stack:QueryStack, [op,registry]:StackValue ): InstResult {
 
-    let insts = registry.componentDefs.map( def => {
-        const obj = defToObject(def);
+//     let insts = registry.componentDefs.map( def => {
+//         const obj = defToObject(def);
 
-        // if( obj.properties.length > 0 ){
-        //     return [ obj.properties, obj.uri, '@d' ];
-        // }
-        return [ obj, '@d' ];
-    });
+//         // if( obj.properties.length > 0 ){
+//         //     return [ obj.properties, obj.uri, '@d' ];
+//         // }
+//         return [ obj, '@d' ];
+//     });
 
 
-    return [stack, [StackList, insts ]];
-}
+//     return [stack, [StackList, insts ]];
+// }
 
 
 // export function execute(stack: QueryStack, [op,arg]:StackValue ):InstResult {

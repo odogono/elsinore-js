@@ -31,27 +31,27 @@ export const meta:InstDefMeta = {
 };
 
 
-export function execute( stack:QueryStack, [op,arg]:StackValue ):InstResult {
-    // if( op === '@e' ){
-    //     if( isEntity(args[0]) ){
-    //         // nothing to do with an entity VaLue
-    //         // Log.debug('[execute]', 'not adding', '@e', args );
-    //         return [stack, [op,args[0]] ];
-    //     }
-    //     return executeAddEntity( stack, args[0] );
-    // }
-    // else if( op === '@es' ){
-    //     if( isEntitySet(args[0]) ){
-    //         return [stack, [op,args[0]]];
-    //     }
-    //     return executeAddEntitySet(stack);
-    // }
-    // else if( op === '@el' ){
-    //     return [stack, [op,args[0]]];
-    // }
+// export function execute( stack:QueryStack, [op,arg]:StackValue ):InstResult {
+//     // if( op === '@e' ){
+//     //     if( isEntity(args[0]) ){
+//     //         // nothing to do with an entity VaLue
+//     //         // Log.debug('[execute]', 'not adding', '@e', args );
+//     //         return [stack, [op,args[0]] ];
+//     //     }
+//     //     return executeAddEntity( stack, args[0] );
+//     // }
+//     // else if( op === '@es' ){
+//     //     if( isEntitySet(args[0]) ){
+//     //         return [stack, [op,args[0]]];
+//     //     }
+//     //     return executeAddEntitySet(stack);
+//     // }
+//     // else if( op === '@el' ){
+//     //     return [stack, [op,args[0]]];
+//     // }
 
-    return [stack, undefined];
-}
+//     return [stack, undefined];
+// }
 
 // function executeAddEntity( stack:QueryStack, eid:number ): InstResult {
 //     let value:StackValue;

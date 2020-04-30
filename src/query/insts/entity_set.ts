@@ -29,28 +29,28 @@ export const meta:InstDefMeta = {
 };
 
 
-/**
- * '!es' - create es
- * @param stack 
- * @param param1 
- */
-export function execute(stack: QueryStack, [op,arg]:StackValue ):InstResult {
+// /**
+//  * '!es' - create es
+//  * @param stack 
+//  * @param param1 
+//  */
+// export function execute(stack: QueryStack, [op,arg]:StackValue ):InstResult {
 
-    if( op === ES ){
-        return [stack, [op,arg]];
-    }
+//     if( op === ES ){
+//         return [stack, [op,arg]];
+//     }
 
-    let es = createEntitySet();
-    let vals:(Entity|Component)[];
+//     let es = createEntitySet();
+//     let vals:(Entity|Component)[];
 
-    // Log.debug('stack', stack.items );
+//     // Log.debug('stack', stack.items );
 
-    // look for components or entities preceeding and add them
-    // consumes all previous Components on the stack
-    [stack, vals] = popOfTypeV( stack, SType.Entity, SType.Component );
+//     // look for components or entities preceeding and add them
+//     // consumes all previous Components on the stack
+//     [stack, vals] = popOfTypeV( stack, SType.Entity, SType.Component );
 
-    // Log.debug('[execute]', 'adding', vals);
-    es = esAdd( es, vals );
+//     // Log.debug('[execute]', 'adding', vals);
+//     es = esAdd( es, vals );
 
-    return [stack, [ES, es]];
-}
+//     return [stack, [ES, es]];
+// }

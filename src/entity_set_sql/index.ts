@@ -58,6 +58,7 @@ import { SqlRef,
 } from "./sqlite";
 import { createLog } from "../util/log";
 import { isString, isInteger } from "../util/is";
+import { StackValue } from "../query/stack";
 export { getByHash, getByUri } from '../component_registry';
 
 const Log = createLog('EntitySetSQL');
@@ -125,7 +126,8 @@ export function create(options?:CreateEntitySetSQLParams):EntitySetSQL {
         esGetComponent: getComponent,
         esGetComponentDefs: (es:EntitySetSQL) => getComponentDefs(es),
         esEntities: (es:EntitySetSQL) => getEntities(es),
-        esGetEntity: (es:EntitySetSQL, eid:EntityId) => Promise.resolve(getEntity(es,eid))
+        esGetEntity: (es:EntitySetSQL, eid:EntityId) => Promise.resolve(getEntity(es,eid)),
+        esSelect: (es:EntitySetSQL, query:StackValue[]) => null,
     }
 }
 

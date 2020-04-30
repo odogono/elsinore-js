@@ -1,5 +1,5 @@
 import { createLog } from "../../util/log";
-import { InstDefMeta, QueryStack, pop, StackValue, InstResult, StackValueCompiled, StackOp, findWithIndex } from "../stack";
+import { InstDefMeta, QueryStack, pop, StackValue, InstResult, StackOp, findWithIndex } from "../stack";
 import { BitField } from "odgn-bitfield";
 import { StackList } from "./stack";
 import { isString, isInteger } from "../../util/is";
@@ -14,7 +14,7 @@ export const meta:InstDefMeta = {
     op: [BF, BFs]
 };
 
-export function execute( stack:QueryStack, [op,arg]:StackValue ):InstResult {
+export function execute( stack:QueryStack, [op,arg]:StackValue ):InstResult<QueryStack> {
     arg = parseArg(stack,arg);
     if( op === BF || arg !== undefined ){
         return [stack,[op, arg ]];
@@ -69,7 +69,7 @@ function parseArg(stack:QueryStack, arg:any){
     return undefined;
 }
 
-export function executeAdd( stack:QueryStack, left:StackValue, right:StackValue ): InstResult {
+export function executeAdd( stack:QueryStack, left:StackValue, right:StackValue ): InstResult<QueryStack> {
     let [lop,bf] = left;
 
     // Log.debug('[executeAdd]', right )
@@ -78,7 +78,7 @@ export function executeAdd( stack:QueryStack, left:StackValue, right:StackValue 
     return [stack, [lop,bf]];
 }
 
-export function executeSubtract( stack:QueryStack, left:StackValue, right:StackValue ): InstResult {
+export function executeSubtract( stack:QueryStack, left:StackValue, right:StackValue ): InstResult<QueryStack> {
     let [lop,bf] = left;
 
     bf = applyValue( bf, right, (bf,val) => bf.set(val,false) );
@@ -86,11 +86,11 @@ export function executeSubtract( stack:QueryStack, left:StackValue, right:StackV
     return [stack, [lop,bf]];
 }
 
-export function toStringValue( stack:QueryStack, [op,bf]:StackValue ): InstResult {
+export function toStringValue( stack:QueryStack, [op,bf]:StackValue ): InstResult<QueryStack> {
     return [stack, ['VL', bf.toString()]];
 }
 
-export function toListValue( stack:QueryStack, [op,bf]:StackValue ): InstResult {
+export function toListValue( stack:QueryStack, [op,bf]:StackValue ): InstResult<QueryStack> {
     return [stack, [StackList, bf.toValues()]];
 }
 

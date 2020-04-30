@@ -47,13 +47,14 @@ import { generateId } from './simple_id';
 import { createLog } from "../util/log";
 import { isInteger, isObject, isString } from "../util/is";
 import { MatchOptions } from '../constants';
-import { matchEntities } from "./query";
+import { select, matchEntities } from "./query";
+import { StackValue } from "../query/stack";
 
 export const Type = '@es';
 
 
 
-const Log = createLog('EntitySet');
+const Log = createLog('ESMem');
 
 export interface EntitySet extends ComponentRegistry {
     isAsync: boolean;
@@ -74,6 +75,7 @@ export interface EntitySet extends ComponentRegistry {
     esGetComponent: (es,cid:(ComponentId|Component)) => any;
     esEntities: (es) => Promise<EntityList>;
     esGetEntity: (es,eid:EntityId) => Promise<Entity>;
+    esSelect: (es, query:StackValue[]) => Promise<StackValue[]>;
 }
 
 export interface EntitySetMem extends EntitySet {
@@ -114,7 +116,8 @@ export function create(options: CreateEntitySetParams = {}): EntitySetMem {
         esGetComponentDefs: (es:EntitySetMem) => es.componentDefs,
         esGetComponent: getComponent,
         esEntities: (es:EntitySetMem) => Promise.resolve( createEntityList( Array.from(es.entities.keys())) ),
-        esGetEntity: (es:EntitySetMem, eid:EntityId) => Promise.resolve( getEntity(es,eid) )
+        esGetEntity: (es:EntitySetMem, eid:EntityId) => Promise.resolve( getEntity(es,eid) ),
+        esSelect: select,
     }
 }
 

@@ -32,7 +32,7 @@ export const meta:InstDefMeta = {
 };
 
 
-export async function execute(stack: QueryStack, [op,arg]:StackValue ):AsyncInstResult {
+export async function execute(stack: QueryStack, [op,arg]:StackValue ):AsyncInstResult<QueryStack> {
     
     if( op === ENT ){
         if( !isEntity(arg) ){

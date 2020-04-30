@@ -21,7 +21,13 @@ import {
 } from '../../src/query/stack';
 
 import {
-    onSwap, onArrayOpen, onAddArray, onAdd, onConcat, onMapOpen, onEntity, onEntityFetch, onComponentDef, onComponent, onEntitySet, onAddComponentToEntity,
+    onSwap, onArrayOpen, 
+    onAddArray, 
+    onAdd, onConcat, onMapOpen, 
+    onEntity, onSelect, 
+    onArgError,
+    onComponentDef, onComponent, 
+    onEntitySet, onAddComponentToEntity,
     onClear,
     onDefine,
     onAddToEntitySet,
@@ -29,6 +35,9 @@ import {
     unpackStackValue,
     onBuildMap
 } from '../../src/query/words';
+import {
+    stackToString,
+} from '../../src/query/util';
 // import { VL, valueOf } from '../../src/query/insts/value';
 import { stringify } from '../../src/util/json';
 import { create as createComponentDef, isComponentDef } from '../../src/component_def';
@@ -48,8 +57,9 @@ import {
     addComponent as addComponentToEntity
 } from '../../src/entity';
 import { isComponent, Component, isComponentList } from '../../src/component';
-import { stackToString, esToInsts } from '../util/stack';
+import { esToInsts } from '../util/stack';
 import { getChanges, ChangeSetOp } from '../../src/entity_set/change_set';
+
 
 
 
@@ -64,7 +74,7 @@ describe('Query', () => {
     it('executes an async word', async () => {
         let stack = createStack();
         let data = parse('100 doubleit');
-        const onDoubleIt = async (stack: QueryStack, v: StackValue): AsyncInstResult => {
+        const onDoubleIt = async (stack: QueryStack, v: StackValue): AsyncInstResult<QueryStack> => {
             [stack, v] = pop(stack);
             let result = sv(v[1] * 2);
             return Promise.resolve([stack, result]);
@@ -188,9 +198,10 @@ describe('Query', () => {
         ]);
 
         [stack] = await pushValues(stack, data);
-
+        // Log.debug('stack:', stackToString(stack));
+        
         assert.deepEqual(stack.items, [[SType.Value, 1974]]);
-        // Log.debug('stack', stringify(stack.items) );
+        // Log.debug('stack:', stackToString(stack));
 
         data = parse('cls [100, +] plus1k define');
 
@@ -451,7 +462,6 @@ describe('Query', () => {
             ['[', onArrayOpen],
             ['{', onMapOpen],
             ['!e', onEntity],
-            ['@e', onEntityFetch, SType.EntitySet, SType.Value],
             ['!d', onComponentDef, SType.Array],
             ['!c', onComponent, SType.Array],
             ['!es', onEntitySet, SType.Map],
@@ -482,11 +492,18 @@ describe('Query', () => {
     describe('Select', () => {
 
         it('fetches entities by id', async () => {
-            let query = parse(`102 @e`);
+            let query = parse(`[102 !e] select`);
 
             let [stack, es] = await loadEntitySetFromFixture('todo.ldjson');
 
-            // Log.debug('stack', stackToString(stack) );
+            stack = addWords(stack, [
+                ['select', onSelect, SType.Array],
+            ]);
+
+            Log.debug('---');
+            [stack] = await pushValues(stack, query);
+
+            Log.debug('stack:', stackToString(stack) );
         });
 
         it('fetches entities with components', async () => {
@@ -548,7 +565,7 @@ async function loadEntitySetFromFixture(name: string): Promise<[QueryStack, Enti
         ['[', onArrayOpen],
         ['{', onMapOpen],
         ['!e', onEntity],
-        ['@e', onEntityFetch, SType.EntitySet, SType.Value],
+        // ['@e', onEntityFetch, SType.Value],
         ['!d', onComponentDef, SType.Array],
         ['!c', onComponent, SType.Array],
         ['!es', onEntitySet, SType.Map],
@@ -562,7 +579,8 @@ async function loadEntitySetFromFixture(name: string): Promise<[QueryStack, Enti
 
     [stack] = await pushValues(stack, insts);
 
-    [, es] = findValue(stack, SType.EntitySet);
+    let esValue = findValue(stack, SType.EntitySet);
+    es = esValue ? esValue[1]: undefined;
 
     return [stack, es];
 }

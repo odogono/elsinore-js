@@ -58,6 +58,7 @@ import { idbOpen, idbDeleteDB,
 } from "./idb";
 import { isString, isInteger } from "../util/is";
 import { getByUri, getByHash } from "../component_registry";
+import { StackValue } from "../query/stack";
 
 const Log = createLog('EntitySetIDB');
 
@@ -114,7 +115,8 @@ export function create(options?:CreateEntitySetParams):EntitySetIDB {
         esGetComponent: getComponent,
         esGetComponentDefs: (es:EntitySetIDB) => es.componentDefs,
         esEntities: async (es:EntitySetIDB) => getEntities(es),
-        esGetEntity: (es:EntitySetIDB, eid:EntityId) => getEntity(es,eid)
+        esGetEntity: (es:EntitySetIDB, eid:EntityId) => getEntity(es,eid),
+        esSelect: (es:EntitySetIDB, query:StackValue[]) => null,
     }
 }
 

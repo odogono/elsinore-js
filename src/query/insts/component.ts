@@ -34,61 +34,61 @@ export const meta:InstDefMeta = {
  * @param stack 
  * @param param1 
  */
-export function execute(stack: QueryStack, [op,arg]:StackValue ):InstResult {
+// export function execute(stack: QueryStack, [op,arg]:StackValue ):InstResult {
 
-    if( op === COM ){
-        // if( !isComponent(arg) ){
-        //     arg = createComponent(arg);
-        // }
-        return [stack, [op,arg]];
-    }
+//     if( op === COM ){
+//         // if( !isComponent(arg) ){
+//         //     arg = createComponent(arg);
+//         // }
+//         return [stack, [op,arg]];
+//     }
 
-    let value:StackValue;
-    let index:number;
+//     let value:StackValue;
+//     let index:number;
 
-    let uri:string;
-    let attributes:object;
-    let com:Component;
+//     let uri:string;
+//     let attributes:object;
+//     let com:Component;
 
-    [uri,attributes,com] = parse(arg);
+//     [uri,attributes,com] = parse(arg);
 
-    if( com !== undefined ){
-        return [stack, [op,com]];
-    }
+//     if( com !== undefined ){
+//         return [stack, [op,com]];
+//     }
 
     
-    // Log.debug('create', uri, attributes, arg);
-    // Log.debug('stack', stack.items);
-    if( uri === undefined ){
-        // pop uri
-        [stack, value] = pop(stack);
-        [uri,attributes] = parse( value[1] );
-    }
-    if( attributes === undefined ){
-        // pop attributes
-        [stack, value] = pop(stack);
-        attributes = value[1];
-    }
+//     // Log.debug('create', uri, attributes, arg);
+//     // Log.debug('stack', stack.items);
+//     if( uri === undefined ){
+//         // pop uri
+//         [stack, value] = pop(stack);
+//         [uri,attributes] = parse( value[1] );
+//     }
+//     if( attributes === undefined ){
+//         // pop attributes
+//         [stack, value] = pop(stack);
+//         attributes = value[1];
+//     }
     
-    // throw 'stop';
+//     // throw 'stop';
 
-    // find the ComponentRegistry in the stack
-    [index, value] = findWithIndex(stack, ComponentRegistryT);
+//     // find the ComponentRegistry in the stack
+//     [index, value] = findWithIndex(stack, ComponentRegistryT);
 
-    if (index === -1) {
-        Log.debug('no reg', stack.items);
-        // return [stack, [COM, { [COM]:uri, ...attributes} ]]
-        throw new Error('ComponentRegistry missing on stack');
-    }
+//     if (index === -1) {
+//         Log.debug('no reg', stack.items);
+//         // return [stack, [COM, { [COM]:uri, ...attributes} ]]
+//         throw new Error('ComponentRegistry missing on stack');
+//     }
 
-    // Log.debug('wait', uri, attributes, arg);
+//     // Log.debug('wait', uri, attributes, arg);
 
-    let [,registry] = value;
+//     let [,registry] = value;
     
-    com = createComponent(registry, uri, attributes );
+//     com = createComponent(registry, uri, attributes );
 
-    return [stack, [ ComponentT, com]];
-}
+//     return [stack, [ ComponentT, com]];
+// }
 
 function parse( value:any ): [string?, object?,Component?] {
     if( Array.isArray(value) && value[0] === 'VL' ){
