@@ -1,7 +1,6 @@
 import { createLog } from "../../util/log";
 import { InstDefMeta, QueryStack, pop, StackValue, InstResult, StackValueCompiled, StackOp, findWithIndex } from "../stack";
 import { BitField } from "odgn-bitfield";
-import { VL } from "./value";
 import { StackList } from "./stack";
 import { isString, isInteger } from "../../util/is";
 import { Type as ComponentRegistryT, resolveComponentDefIds } from "../../../src/component_registry";
@@ -51,7 +50,7 @@ function parseArg(stack:QueryStack, arg:any){
         let op:StackOp;
         let bf = BitField.create();
         [op,arg] = arg;
-        if( op === VL ){
+        if( op === 'VL' ){
             bf = applyValue(bf,[op,arg])
         }
         else if( op === StackList ){
@@ -88,7 +87,7 @@ export function executeSubtract( stack:QueryStack, left:StackValue, right:StackV
 }
 
 export function toStringValue( stack:QueryStack, [op,bf]:StackValue ): InstResult {
-    return [stack, [VL, bf.toString()]];
+    return [stack, ['VL', bf.toString()]];
 }
 
 export function toListValue( stack:QueryStack, [op,bf]:StackValue ): InstResult {
@@ -99,7 +98,7 @@ function applyValue( bf:BitField, [op,arg]:StackValue, applyFn?:(bf:BitField, ar
 
     applyFn = applyFn || ((bf,val) => bf.set(val));
 
-    if( op === VL ){
+    if( op === 'VL' ){
         if( isString(arg) ){
 
         }

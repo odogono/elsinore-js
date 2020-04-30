@@ -6,7 +6,6 @@ import {
     Type as ComponentRegistryT, resolveComponentDefIds, resolveComponentDefAttribute
 } from '../../component_registry';
 
-import { VL, valueOf } from "./value";
 import { getDefId } from "../../component_def";
 import { Type as ComponentT, Component, getComponentDefId } from "../../component";
 import { BitField } from "odgn-bitfield";

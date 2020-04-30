@@ -15,7 +15,6 @@ import { Type as EntitySetT,
     add as addEntity, 
     create as createEntitySet,
     EntitySet } from '../../entity_set';
-import { VL, valueOf } from "./value";
 import { Type as EntityT, 
     Entity,
     getEntityId, addComponent, create as createEntity, isEntity } from '../../entity';

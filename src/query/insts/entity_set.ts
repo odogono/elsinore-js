@@ -17,9 +17,6 @@ import {
 } from "../../component_registry";
 import { Type as ComponentT, isComponent, Component } from '../../component';
 import { Type as EntityT, isEntity, Entity } from '../../entity';
-import { isObject } from "../../util/is";
-import { stringify } from "../../util/json";
-import { VL } from "./value";
 import { Type as EntitySetT, create as createEntitySet, add as esAdd } from '../../entity_set';
 
 const Log = createLog('Inst][EntitySet');

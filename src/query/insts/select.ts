@@ -22,7 +22,6 @@ import {
 import { Type as ComponentDefT } from '../../component_def';
 import * as StackInsts from './stack';
 
-import { VL, valueOf } from "./value";
 import { BitField } from "odgn-bitfield";
 import { Type as EntityT, EntityListType, EntityList, Entity, getEntityId, createEntityList } from "../../entity";
 import { Type as EntitySetT, getEntity } from '../../entity_set';
@@ -196,7 +195,7 @@ function selectEntitiesWithAll( stack:QueryStack, criteria:StackValue ): InstRes
         // el = entityListReduce( el, (e) => {
 
         // }, []);
-    } else if( criteriaType === VL && isString(criteriaValue) ){
+    } else if( criteriaType === 'VL' && isString(criteriaValue) ){
         let [el] = [createEntityList() ];// matchEntities( stack, bf );
         let registry = findV( stack, ComponentRegistryT );
         bf = resolveComponentDefIds( registry, [criteriaValue] ) as BitField;

@@ -2,8 +2,6 @@ import { createLog } from "../../util/log";
 import { QueryStack, InstDefMeta, 
     pop,
     push, StackValue, peek, InstResult, StackOp, InstDef, InstModuleDef, } from "../stack";
-import { VL, valueOf } from "./value";
-import { isObject } from "../../util/is";
 
 const Log = createLog('Inst][Equals');
 
@@ -13,7 +11,7 @@ export const Add = '+';
 export const Sub = '-';
 export const Mul = '*';
 export const Equals = '==';
-
+const VL = 'VL';
 
 const OpMap = {
     // [Add]: executeAdd,
@@ -61,8 +59,8 @@ export function executeEquals( stack:QueryStack, [op,arg]:StackValue ):InstResul
     // throw Error('stop');
     [stack, rval] = pop(stack);
     
-    lval = valueOf(lval);
-    rval = valueOf(rval);
+    lval = lval[1];
+    rval = rval[1];
 
     if( Array.isArray(lval) ){
         return [stack, [VL, lval.indexOf(rval) != -1]];
@@ -134,8 +132,8 @@ export function executeEquals( stack:QueryStack, [op,arg]:StackValue ):InstResul
 
 //     [stack,rval] = pop(stack);
 
-//     lval = valueOf(lval);
-//     rval = valueOf(rval);
+//     lval = lval[1];
+//     rval = rval[1];
 
 //     return [stack, [VL, lval - rval] ];
 // }
@@ -145,8 +143,8 @@ function executeMul( stack:QueryStack  ): InstResult {
     [stack,lval] = pop(stack);
     [stack,rval] = pop(stack);
 
-    lval = valueOf(lval);
-    rval = valueOf(rval);
+    lval = lval[1];
+    rval = rval[1];
 
     return [stack, [VL, lval * rval] ];
 }

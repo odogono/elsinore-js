@@ -2,8 +2,6 @@ import {
     Type as ComponentRegistryT, 
     ComponentRegistry } from "../component_registry";
 import { QueryStack, pushValues } from "./stack";
-import { VL } from "./insts/value";
-import { isObject, isString } from "../util/is";
 
 
 export type buildDefFn = (uri: string, ...args: any[]) => void;

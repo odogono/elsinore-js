@@ -23,7 +23,6 @@ import {
     add as addToEntitySet,
     create as createEntitySet,
 } from '../../entity_set';
-import { VL, valueOf } from "./value";
 import { isFunction, isString, isObject } from "../../util/is";
 import { BitField } from "odgn-bitfield";
 import { Type as ComponentT, getComponentDefId } from "../../component";
@@ -160,7 +159,7 @@ export function executeSwap( stack:QueryStack ):InstResult {
 //     if( moduleDef?.toStringValue ){
 //         return moduleDef.toStringValue( stack, [op,arg] );
 //     }
-//     return [stack,[VL, JSON.stringify(arg) ] ];
+//     return [stack,['VL', JSON.stringify(arg) ] ];
 // }
 
 // export function executeToList( stack:QueryStack  ):InstResult {
@@ -205,9 +204,9 @@ export function executePut( stack:QueryStack ):InstResult {
     let value:StackValue;
 
     assertStackSize( stack, 3, `${Put} requires 3 args: <key> <value> <map>`);
-    // assertStackValueType( stack, 2, VL, typeof {} );
-    // assertStackValueType( stack, 1, VL );
-    // assertStackValueType( stack, 0, VL );
+    // assertStackValueType( stack, 2, 'VL', typeof {} );
+    // assertStackValueType( stack, 1, 'VL' );
+    // assertStackValueType( stack, 0, 'VL' );
 
     [stack, key] = pop(stack);
     [stack, value] = pop(stack);
@@ -231,7 +230,7 @@ export function executePut( stack:QueryStack ):InstResult {
 //     if( moduleDef?.executeFetch ){
 //         return moduleDef.executeFetch( stack, [cop,container], [op,arg] );
 //     }
-//     return [stack,[VL, undefined ] ];
+//     return [stack,['VL', undefined ] ];
 // }
 
 export function executeGet( stack:QueryStack ): InstResult {
@@ -255,28 +254,28 @@ export function executeGet( stack:QueryStack ): InstResult {
             let did = getComponentDefId(mapVal);
             if( !bf.get(did) ){
                 // Log.debug('[executeGet]', 'nope', mapVal );
-                return [stack, [VL, undefined] ];
+                return [stack, ['VL', undefined] ];
         }
             
             // Log.debug('[executeGet]', mapVal, keyVal);
             return name !== undefined ? 
-                [stack, [VL, mapVal[ name ]] ] : 
+                [stack, ['VL', mapVal[ name ]] ] : 
                 [stack, [ComponentT,mapVal] ];
 
         } else if( mapOp === EntityT ){
             let coms = getEntityComponents( mapVal, bf );
             
             if( name === undefined ){
-                return [stack, [VL,coms] ];
+                return [stack, ['VL',coms] ];
             }
-            return [stack, [VL, coms.map( com => com[name] ).filter(Boolean)]];
+            return [stack, ['VL', coms.map( com => com[name] ).filter(Boolean)]];
         }
         else if( mapOp === EntitySetT ){
             // Log.debug('[executeGet]', bf, name);
             let coms = getComponentsByDefId( mapVal, bf );
 
             if( name !== undefined ){
-                return [stack, [VL, coms.map( com => com[name] ).filter(Boolean) ]];
+                return [stack, ['VL', coms.map( com => com[name] ).filter(Boolean) ]];
             }
             return [stack, [EntitySetT, addToEntitySet( createEntitySet({}), coms )]];
         }
@@ -284,10 +283,10 @@ export function executeGet( stack:QueryStack ): InstResult {
         // throw new Error(`expected value of type ${type} : got ${value[0]}`);
         // assertStackValueType( stack, 1 )
     }
-    else if( keyOp === VL ){
+    else if( keyOp === 'VL' ){
         let [type,val] = map;
         // if( isObject(val) ){
-            return [stack, [VL, val[keyVal]] ];
+            return [stack, ['VL', val[keyVal]] ];
         // }
     }
 }

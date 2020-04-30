@@ -15,8 +15,7 @@ import {
 } from "../../component_registry";
 import { Type as ComponentT, isComponent, Component } from '../../component';
 import { isObject } from "../../util/is";
-import { stringify } from "../../util/json";
-import { VL } from "./value";
+
 
 const Log = createLog('Inst][Component');
 
@@ -92,7 +91,7 @@ export function execute(stack: QueryStack, [op,arg]:StackValue ):InstResult {
 }
 
 function parse( value:any ): [string?, object?,Component?] {
-    if( Array.isArray(value) && value[0] === VL ){
+    if( Array.isArray(value) && value[0] === 'VL' ){
         value = value[1];
     }
     if( isObject(value) ){
