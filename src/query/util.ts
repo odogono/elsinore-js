@@ -38,6 +38,8 @@ export function valueToString( val:StackValue ):string {
             },[]).join(',') + '}';
         case SType.Value:
             return `${stringify(value)}`;
+        // case SType.Undefined:
+        //     return `undefined`;
         default:
             return val.length === 2 ? `(${type}, ${stringify(value)})` : stringify(val);
     }

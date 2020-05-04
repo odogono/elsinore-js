@@ -215,19 +215,20 @@ export function size(es: EntitySetMem): number {
  * @param es 
  * @param eid 
  */
-export function getEntity(es: EntitySetMem, eid: number): Entity {
+export function getEntity(es: EntitySetMem, eid: number, populate:boolean = true): Entity {
     let ebf = es.entities.get(eid);
     if (ebf === undefined) {
         return undefined;
     }
-
-    // Log.debug('[getEntity]', es.components );
+    let e = createEntityInstance(eid,ebf);
+    if( !populate ){
+        return e;
+    }
 
     return ebf.toValues().reduce((e, did) => {
         const com = es.components.get(toComponentId(eid, did));
-        // Log.debug('[getEntity]', [eid,did], com );
         return addComponentUnsafe(e, did, com);
-    }, createEntityInstance(eid));
+    }, e);
 }
 
 

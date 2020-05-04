@@ -8,12 +8,13 @@ import {
     InstResult, AsyncInstResult,
     push, pop, peek, pushRaw,
     findV,
+    clone as cloneStack,
     popOfType,
     StackError,
     assertStackValueType
 } from './stack';
 import { create as createComponentDef, isComponentDef } from '../../src/component_def';
-import { isString } from '../../src/util/is';
+import { isString, isBoolean } from '../../src/util/is';
 import { register, createComponent } from '../../src/entity_set/registry';
 import {
     Entity, create as createEntityInstance, isEntity,
@@ -207,8 +208,6 @@ export function onComponentDef<QS extends QueryStack>(stack: QS): Result<QS> {
     let data: StackValue;
     try {
 
-    
-
     [stack, data] = pop(stack);
 
     let raw = unpackStackValue(data);
@@ -260,25 +259,31 @@ export function onAddArray<QS extends QueryStack>(stack: QS, val: StackValue): R
     let left, right;
     [stack, left] = pop(stack);
     [stack, right] = pop(stack);
-    // left = peek(stack,1);
-    // right = peek(stack,0);
     let [type, arr] = right;
     arr = [...arr, left];
-
-    // Log.debug('[+Array]', left, right);
     return [stack, [type, arr]];
 }
 
 export function onAdd<QS extends QueryStack>(stack: QS, val: StackValue): Result<QS> {
     let lv, rv;
+    let op = val[1];
 
     [stack, lv] = pop(stack);
     [stack, rv] = pop(stack);
-
+    
     let left = unpackStackValue(lv, SType.Value);
     let right = unpackStackValue(rv, SType.Value);
-
-    let value = left + right;
+    
+    let value = left;
+    switch(op){
+        case '+': value = left + right; break;
+        case '*': value = left * right; break;
+        case '-': value = left - right; break;
+        case '%': value = left % right; break;
+        case '==': value = left === right; break;
+    }
+    
+    // Log.debug('[onAdd]', op, left, right, value);
 
     return [stack, [SType.Value, value]];
 }
@@ -331,7 +336,7 @@ export function onArrayClose<QS extends QueryStack>(stack: QS, val: StackValue):
 
 export function onArraySpread<QS extends QueryStack>(stack: QS, val: StackValue): Result<QS> {
     [stack, val] = pop(stack);
-    let value = unpackStackValue(val, SType.Array);
+    let value = unpackStackValue(val, SType.Array).map(v => [SType.Value,v]);
 
     // if( val[0] === SType.Array ){
     //     value = value.map( v => [Array.isArray(v) ? SType.Array : SType.Value, v] );
@@ -400,6 +405,86 @@ export function onBuildMap<QS extends QueryStack>(stack: QS): Result<QS> {
     return [stack, [SType.Map, map]];
 }
 
+export async function onFilter<QS extends QueryStack>(stack: QS): AsyncResult<QS> {
+    let array, fn;
+    [stack, fn] = pop(stack);
+    [stack, array] = pop(stack);
+    
+    array = unpackStackValue(array, SType.Array, false);
+    fn = unpackStackValue(fn, SType.Array, false);
+
+    let mapStack = cloneStack(stack, {words:true, items:false});
+    let accum = [];
+
+    [mapStack,accum] = await array.reduce( async (result, val) => {
+        [mapStack,accum] = await result;
+        [mapStack] = await push(mapStack, val);
+        [mapStack] = await pushValues(mapStack, fn);
+        let out;
+        // Log.debug('[onFilter]', 'end', mapStack.items );
+        [mapStack,out] = pop(mapStack);
+        if( isTruthy(out) ){
+            accum = [...accum,val];
+        }
+        
+        return [mapStack,accum];
+    }, Promise.resolve([mapStack,accum]) );
+    
+    return [stack, [SType.Array, accum]];
+}
+
+export async function onMap<QS extends QueryStack>(stack: QS): AsyncResult<QS> {
+    let left, right;
+    [stack, right] = pop(stack);
+    [stack, left] = pop(stack);
+    
+    let array = unpackStackValue(left, SType.Array, false);
+    let fn = unpackStackValue(right, SType.Array, false);
+
+    let mapStack = cloneStack(stack, {words:true, items:false});
+
+    mapStack = await array.reduce( async (mapStack, val) => {
+        mapStack = await mapStack;
+        // Log.debug('[onMap]','ok', val);
+        [mapStack] = await push(mapStack, val);
+        [mapStack] = await pushValues(mapStack, fn);
+        
+        return mapStack;
+    }, Promise.resolve(mapStack) );
+    
+    // Log.debug('[onMap]', 'end', mapStack.items );
+    
+    return [stack, [SType.Array, mapStack.items]];
+}
+
+export async function onReduce<QS extends QueryStack>(stack: QS): AsyncResult<QS> {
+    let left, right, accum;
+    [stack, right] = pop(stack);
+    [stack, accum] = pop(stack);
+    [stack, left] = pop(stack);
+    
+    let array = unpackStackValue(left, SType.Array, false);
+    accum = unpackStackValue(accum, SType.Any);
+    let fn = unpackStackValue(right, SType.Array, false);
+
+    let mapStack = cloneStack(stack, {words:true, items:false});
+
+    [mapStack,accum] = await array.reduce( async (result, val) => {
+        [mapStack,accum] = await result;
+        // Log.debug('[onMap]','ok', val);
+        [mapStack] = await push(mapStack, val);
+        [mapStack] = await push(mapStack, accum);
+        [mapStack] = await pushValues(mapStack, fn);
+
+        [mapStack,accum] = pop(mapStack);
+        
+        return [mapStack,accum];
+    }, Promise.resolve([mapStack,accum]) );
+    
+    
+    return [stack, accum];
+}
+
 export function onSwap<QS extends QueryStack>(stack: QS, val: StackValue): Result<QS> {
     let left, right;
     [stack, left] = pop(stack);
@@ -461,6 +546,14 @@ export function onAssertType<QS extends QueryStack>(stack: QS): Result<QS> {
 //     return [stack];
 // }
 
+
+function isTruthy(value:StackValue): boolean {
+    const [type,val] = value;
+    if( isBoolean(val) ){
+        return val;
+    }
+    return false;
+}
 
 function compareValues(left: StackValue, right: StackValue): boolean {
     if (!Array.isArray(left) || !Array.isArray(right)) {

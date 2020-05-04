@@ -31,6 +31,12 @@ export interface Entity {
     bitField: BitField;
 }
 
+export function Entity(id:number = 0, bitField:BitField = new BitField()) {
+    this.id = id;
+    this.bitField = bitField;
+    this.components = new Map<number,Component>();
+}
+
 
 export function create( id:number = 0, bitField:BitField = new BitField() ):Entity {
     return {

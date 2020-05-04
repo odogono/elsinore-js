@@ -1,0 +1,215 @@
+// assert that an entityset exists on the stack
+%es assert_type
+
+
+// position of the entity on the board
+[ 
+    "/component/position", 
+    {"properties":[
+        { "name":"file", "type": "string" },
+        { "name":"rank", "type": "integer" }
+    ]}
+] !d +
+
+// the colour of the entity; white or black
+[
+    "/component/colour",
+    [
+        { "name":"colour", "type": "string", "enum": [ "white", "black" ] }
+    ]
+] !d +
+
+// Traditionally of course a piece can only be of one 
+// type - in which case having a single 'type' component would
+// make sense. But since we are experimenting, lets let pieces
+// have the ability to have multiple capabilities
+
+["/component/piece/king"] !d +
+["/component/piece/queen"] !d +
+["/component/piece/rook"] !d +
+["/component/piece/bishop"] !d +
+["/component/piece/knight"] !d +
+["/component/piece/pawn"] !d +
+
+// the appearance component determines how the entity should appear
+[
+    "/component/appearance", 
+    [
+        { "name":"type", "type": "string", "enum":[ "king", "queen", "rook", "bishop", "knight", "pawn" ] }
+    ]
+] !d +
+
+// Create the entities
+
+// White 
+
+
+[ "/component/piece/rook" ]  !c
+[ "/component/colour", { "colour":"white" } ]  !c
+[ "/component/position", { "file":"a", "rank":1 } ]  !c
+concat 0 !e swap +
+
+[ "/component/piece/knight" ]  !c
+[ "/component/colour", { "colour":"white" } ]  !c
+[ "/component/position", { "file":"b", "rank":1 } ]  !c
+concat 0 !e swap +
+
+[ "/component/piece/bishop" ]  !c
+[ "/component/colour", { "colour":"white" } ]  !c
+[ "/component/position", { "file":"c", "rank":1 } ]  !c
+concat 0 !e swap +
+
+[ "/component/piece/queen" ]  !c
+[ "/component/colour", { "colour":"white" } ]  !c
+[ "/component/position", { "file":"d", "rank":1 } ]  !c
+concat 0 !e swap +
+
+[ "/component/piece/king" ]  !c
+[ "/component/colour", { "colour":"white" } ]  !c
+[ "/component/position", { "file":"e", "rank":1 } ]  !c
+concat 0 !e swap +
+
+[ "/component/piece/bishop" ]  !c
+[ "/component/colour", { "colour":"white" } ]  !c
+[ "/component/position", { "file":"f", "rank":1 } ]  !c
+concat 0 !e swap +
+
+[ "/component/piece/knight" ]  !c
+[ "/component/colour", { "colour":"white" } ]  !c
+[ "/component/position", { "file":"g", "rank":1 } ]  !c
+concat 0 !e swap +
+
+[ "/component/piece/rook" ]  !c
+[ "/component/colour", { "colour":"white" } ]  !c
+[ "/component/position", { "file":"h", "rank":1 } ]  !c
+concat 0 !e swap +
+
+
+[ "/component/piece/pawn" ]  !c
+[ "/component/colour", { "colour":"white" } ]  !c
+[ "/component/position", { "file":"a", "rank":2 } ]  !c
+concat 0 !e swap +
+
+[ "/component/piece/pawn" ]  !c
+[ "/component/colour", { "colour":"white" } ]  !c
+[ "/component/position", { "file":"b", "rank":2 } ]  !c
+concat 0 !e swap +
+
+[ "/component/piece/pawn" ]  !c
+[ "/component/colour", { "colour":"white" } ]  !c
+[ "/component/position", { "file":"c", "rank":2 } ]  !c
+concat 0 !e swap +
+
+[ "/component/piece/pawn" ]  !c
+[ "/component/colour", { "colour":"white" } ]  !c
+[ "/component/position", { "file":"d", "rank":2 } ]  !c
+concat 0 !e swap +
+
+[ "/component/piece/pawn" ]  !c
+[ "/component/colour", { "colour":"white" } ]  !c
+[ "/component/position", { "file":"e", "rank":2 } ]  !c
+concat 0 !e swap +
+
+[ "/component/piece/pawn" ]  !c
+[ "/component/colour", { "colour":"white" } ]  !c
+[ "/component/position", { "file":"f", "rank":2 } ]  !c
+concat 0 !e swap +
+
+[ "/component/piece/pawn" ]  !c
+[ "/component/colour", { "colour":"white" } ]  !c
+[ "/component/position", { "file":"g", "rank":2 } ]  !c
+concat 0 !e swap +
+
+[ "/component/piece/pawn" ]  !c
+[ "/component/colour", { "colour":"white" } ]  !c
+[ "/component/position", { "file":"h", "rank":2 } ]  !c
+concat 0 !e swap +
+
+
+// black 
+
+[ "/component/piece/rook" ]  !c
+[ "/component/colour", { "colour":"black" } ]  !c
+[ "/component/position", { "file":"a", "rank":8 } ]  !c
+concat 0 !e swap +
+
+[ "/component/piece/knight" ]  !c
+[ "/component/colour", { "colour":"black" } ]  !c
+[ "/component/position", { "file":"b", "rank":8 } ]  !c
+concat 0 !e swap +
+
+[ "/component/piece/bishop" ]  !c
+[ "/component/colour", { "colour":"black" } ]  !c
+[ "/component/position", { "file":"c", "rank":8 } ]  !c
+concat 0 !e swap +
+
+[ "/component/piece/queen" ]  !c
+[ "/component/colour", { "colour":"black" } ]  !c
+[ "/component/position", { "file":"d", "rank":8 } ]  !c
+concat 0 !e swap +
+
+[ "/component/piece/king" ]  !c
+[ "/component/colour", { "colour":"black" } ]  !c
+[ "/component/position", { "file":"e", "rank":8 } ]  !c
+concat 0 !e swap +
+
+[ "/component/piece/bishop" ]  !c
+[ "/component/colour", { "colour":"black" } ]  !c
+[ "/component/position", { "file":"f", "rank":8 } ]  !c
+concat 0 !e swap +
+
+[ "/component/piece/knight" ]  !c
+[ "/component/colour", { "colour":"black" } ]  !c
+[ "/component/position", { "file":"g", "rank":8 } ]  !c
+concat 0 !e swap +
+
+[ "/component/piece/rook" ]  !c
+[ "/component/colour", { "colour":"black" } ]  !c
+[ "/component/position", { "file":"h", "rank":8 } ]  !c
+concat 0 !e swap +
+
+
+[ "/component/piece/pawn" ]  !c
+[ "/component/colour", { "colour":"black" } ]  !c
+[ "/component/position", { "file":"a", "rank":7 } ]  !c
+concat 0 !e swap +
+
+[ "/component/piece/pawn" ]  !c
+[ "/component/colour", { "colour":"black" } ]  !c
+[ "/component/position", { "file":"b", "rank":7 } ]  !c
+concat 0 !e swap +
+
+[ "/component/piece/pawn" ]  !c
+[ "/component/colour", { "colour":"black" } ]  !c
+[ "/component/position", { "file":"c", "rank":7 } ]  !c
+concat 0 !e swap +
+
+[ "/component/piece/pawn" ]  !c
+[ "/component/colour", { "colour":"black" } ]  !c
+[ "/component/position", { "file":"d", "rank":7 } ]  !c
+concat 0 !e swap +
+
+[ "/component/piece/pawn" ]  !c
+[ "/component/colour", { "colour":"black" } ]  !c
+[ "/component/position", { "file":"e", "rank":7 } ]  !c
+concat 0 !e swap +
+
+[ "/component/piece/pawn" ]  !c
+[ "/component/colour", { "colour":"black" } ]  !c
+[ "/component/position", { "file":"f", "rank":7 } ]  !c
+concat 0 !e swap +
+
+[ "/component/piece/pawn" ]  !c
+[ "/component/colour", { "colour":"black" } ]  !c
+[ "/component/position", { "file":"g", "rank":7 } ]  !c
+concat 0 !e swap +
+
+[ "/component/piece/pawn" ]  !c
+[ "/component/colour", { "colour":"black" } ]  !c
+[ "/component/position", { "file":"h", "rank":7 } ]  !c
+concat 0 !e swap +
+
+// add entities to an array
+concat
+// add to EntitySet
++

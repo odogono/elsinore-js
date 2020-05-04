@@ -1,6 +1,7 @@
 import { isObject, isString, isPromise } from "../util/is";
 import { stringify } from "../util/json";
 import { createLog } from "../util/log";
+import { deepExtend } from "../util/deep_extend";
 
 export enum SType {
     Value = '%v',
@@ -14,7 +15,8 @@ export enum SType {
     ComponentDef = '%d',
     ComponentAttr = '%ca',
     ComponentValue = '%cv',
-    Any = '%*'
+    Any = '%*',
+    // Undefined = '%un'
 };
 
 const Log = createLog('QueryStack');
@@ -39,13 +41,26 @@ export type StackValue = [StackOp] | [StackOp, any];
 
 export const Type = '@qs';
 
+type WordFn<QS extends QueryStack> = SyncWordFn<QS> | AsyncWordFn<QS>;
+type SyncWordFn<QS extends QueryStack> = (stack: QS, val: StackValue) => InstResult<QS>;
+type AsyncWordFn<QS extends QueryStack> = (stack: QS, val: StackValue) => Promise<InstResult<QS>>;
+
+type WordSpec<QS extends QueryStack> = [string, WordFn<QS>, ...SType[]];
+
+type WordEntry<QS extends QueryStack> = [ WordFn<QS>, SType[] ];
+
+interface Words<QS extends QueryStack> {
+    [name: string]: WordEntry<QS>[]
+}
+
+
 export interface QueryStackDefs {
     [def: string]: StackValue;
 }
 
 export interface QueryStack {
     items: StackValue[];
-    words: any;
+    words: Words<this>;
 }
 
 export function create<QS extends QueryStack>(): QS {
@@ -74,6 +89,34 @@ export function isStackValue(value: any): boolean {
     return Array.isArray(value) && value.length == 2;
 }
 
+
+export interface CloneOptions {
+    items?: boolean;
+    words?: boolean;
+}
+
+
+/**
+ * 
+ * @param stack 
+ * @param options 
+ */
+export function clone<QS extends QueryStack>(stack: QS, options:CloneOptions = {}): QS {
+    const doItems = options.items ?? true;
+    const doWords = options.words ?? true;
+
+    let result = create<QS>();
+
+    if( doItems ){
+        result.items = deepExtend(stack.items);
+    }
+    if( doWords ){
+        result.words = deepExtend(stack.words);
+    }
+
+    return result;
+}
+
 /**
  * Pushes a stack value onto the stack
  */
@@ -93,7 +136,7 @@ export async function push<QS extends QueryStack>(stack: QS, input: any | StackV
             if (isPromise(result)) {
                 [stack, value, doPush] = await result;
             } else {
-                [stack, value, doPush] = result;
+                [stack, value, doPush] = result as InstResult<QS>;
             }
             // Log.debug('[push]', value); 
         } catch (err) {
@@ -322,10 +365,6 @@ export interface ExecuteOptions {
 //     [word: string]: [WordFn, SType[]]
 // };
 
-type WordFn<QS extends QueryStack> = (stack: QS, val: StackValue) => InstResult<QS>;
-type AsyncWordFn<QS extends QueryStack> = (stack: QS, val: StackValue) => Promise<InstResult<QS>>;
-type WordSpec<QS extends QueryStack> = [string, WordFn<QS> | AsyncWordFn<QS>, ...SType[]];
-
 
 
 export function addWords<QS extends QueryStack>(stack: QS, words: WordSpec<QS>[]):QS {
@@ -333,7 +372,7 @@ export function addWords<QS extends QueryStack>(stack: QS, words: WordSpec<QS>[]
         const [word, fn, ...args] = spec;
         // Log.debug('[addWords]', word, [fn,args]);
         let patterns = stack.words[word] || [];
-        patterns = [...patterns, [fn, args]];
+        patterns = [...patterns, [fn, args] ];
         return { ...stack, words: { ...stack.words, [word]: patterns } };
     }, stack);
 }
@@ -341,11 +380,11 @@ export function addWords<QS extends QueryStack>(stack: QS, words: WordSpec<QS>[]
 
 function getWord<QS extends QueryStack>(stack: QS, value: StackValue): WordFn<QS> | undefined {
     // const [type,word] = value;
-    // Log.debug('[getWord]', value);
     if (value[0] !== SType.Value) {
         return undefined;
     }
     const wval = value[1];
+    // Log.debug('[getWord]', value);
     const patterns = stack.words[wval];
     if (patterns === undefined) {
         return undefined;
@@ -353,7 +392,7 @@ function getWord<QS extends QueryStack>(stack: QS, value: StackValue): WordFn<QS
     // Log.debug('[getWord]', 'match', `'${wval}'`, patterns);
     let pattern = patterns.find(pat => {
         const [, args] = pat;
-        // Log.debug('[getWord]', 'match', `'${wval}'`, args, stack.items );
+        // if( wval === '+') Log.debug('[getWord]', 'match', `'${wval}'`, args, stack.items );
         if (matchStack(stack.items, args)) {
             return pat;
         }
