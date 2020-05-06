@@ -10,8 +10,8 @@ import {
     size as entitySetSize,
     add as esAdd, 
     createComponent, 
-    // removeComponent, 
-    // removeEntity,
+    removeComponent, 
+    removeEntity,
     getEntity,
     getComponent,
     // getComponents as esGetComponents,
@@ -25,27 +25,29 @@ import {
     // EntitySetMem,
     // ESQuery,
     // compileQueryPart
-} from '../src/entity_set_sql';
+} from '../../src/entity_set_sql';
 import {
+    getComponent as getEntityComponent,
     create as createEntityInstance, Entity,
     addComponent as addComponentToEntity,
     size as entitySize,
-} from '../src/entity';
+    isEntity,
+} from '../../src/entity';
 import { 
     toObject as defToObject, 
     hash as hashDef, 
     isComponentDef, 
     ComponentDef, 
-    Type
-} from '../src/component_def';
-import { ComponentRegistry } from '../src/component_registry';
+} from '../../src/component_def';
+import { getComponentDefId, Component } from '../../src/component';
 import { 
     assertHasComponents, 
-} from './util/assert';
-import { createLog } from "../src/util/log";
-import { sqlClear } from '../src/entity_set_sql/sqlite';
-import { BuildQueryFn } from '../src/query/build';
-import { getChanges, ChangeSetOp } from '../src/entity_set/change_set';
+} from '../util/assert';
+import { createLog } from "../../src/util/log";
+import { sqlClear } from '../../src/entity_set_sql/sqlite';
+import { BuildQueryFn } from '../../src/query/build';
+import { getChanges, ChangeSetOp } from '../../src/entity_set/change_set';
+import { buildEntity } from '../util/stack';
 
 const Log = createLog('TestEntitySetSQL');
 
@@ -54,6 +56,7 @@ const Log = createLog('TestEntitySetSQL');
 // let stack:QueryStack;
 
 const liveDB = {uuid:'test.sqlite', isMemory:false};
+const testDB = {uuid:'TEST-1', isMemory:true};
 
 describe('Entity Set (SQL)', () => {
 
@@ -90,7 +93,7 @@ describe('Entity Set (SQL)', () => {
 
             let defs = getComponentDefs(es);
 
-            Log.debug('defs', defs);
+            // Log.debug('defs', defs);
         })
 
     });
@@ -148,7 +151,7 @@ describe('Entity Set (SQL)', () => {
 
         it('adds an entity with components', async () => {
             let e:Entity;
-            let [es, buildEntity] = buildEntitySet({...liveDB, debug:true});
+            let [es, buildEntity] = buildEntitySet({...liveDB, debug:false});
 
             e = buildEntity( es, ({component}) => {
                 component('/component/channel', {name: 'chat'});
@@ -162,7 +165,7 @@ describe('Entity Set (SQL)', () => {
             
             es = esAdd( es, e );
             
-            Log.debug('es', es);
+            // Log.debug('es', es);
             
             assert.equal( entitySetSize(es), 1 );
             
@@ -174,15 +177,17 @@ describe('Entity Set (SQL)', () => {
             // Log.debug( e );
 
             assertHasComponents(
-                es as ComponentRegistry,
+                es,
                 e,
                 ["/component/channel", "/component/status", "/component/topic"]
             );
         });
 
+        
+
         it('adds a component', async () => {
             // Log.debug('registry', registry);
-            let [es, buildEntity] = buildEntitySet({...liveDB, debug:true});
+            let [es, buildEntity] = buildEntitySet({...liveDB, debug:false});
             let com = createComponent(es, '/component/channel', {name: 'chat'} );
 
             es = esAdd( es, com );
@@ -198,7 +203,7 @@ describe('Entity Set (SQL)', () => {
             assert.equal( com.name, 'chat' );
         });
         
-        it.only('updates a component', async () => {
+        it('updates a component', async () => {
             // Log.debug('registry', registry);
             let [es, buildEntity] = buildEntitySet({...liveDB, debug:false});
             let com = createComponent(es, '/component/channel', {name: 'chat'} );
@@ -217,11 +222,136 @@ describe('Entity Set (SQL)', () => {
             // Log.debug('>-----');
             es = esAdd( es, com );
 
-            Log.debug('es', es);
+            // Log.debug('es', es);
 
             com = getComponent( es, cid );
 
             assert.equal( com.name, 'chat and laughter' );
+        });
+
+        it('adds a component with an entity id', () => {
+            let [es] = buildEntitySet({...liveDB, debug:false});
+            let com = createComponent(es, '/component/channel', {'@e':23, name: 'discussion'} );
+
+            es = esAdd( es, com );
+
+            // Log.debug('es', es.entChanges);
+
+            assert.equal( entitySetSize(es), 1 );
+
+            let e = getEntity(es, 23);
+
+            // Log.debug('e', e);
+
+            assertHasComponents( es, e, ['/component/channel'] );
+
+            com = getEntityComponent( e, getComponentDefId(com) );
+
+            assert.equal( com.name, 'discussion' );
+        });
+
+        it('adds a single entity from two different components', async () => {
+            let [es] = buildEntitySet({...liveDB, debug:false});
+            let coms = [
+                createComponent(es, '/component/channel', {name: 'discussion'} ),
+                createComponent(es, '/component/status', {status:'active'} )
+            ];
+
+            es = esAdd( es, coms );
+            assert.equal( entitySetSize(es), 1 );
+        });
+
+        it('adds a number of components of the same type', () => {
+            let e:Entity;
+            let coms:Component[];
+            let [es] = buildEntitySet({...liveDB, debug:false});
+
+            // create a number of components
+            coms = ['chat', 'dev', 'politics'].map( name => 
+                createComponent(es, '/component/channel', {name}));
+
+            es = esAdd( es, coms );
+
+            assert.equal( entitySetSize(es), 3 );
+
+            // Log.debug('stack', es )
+        });
+
+        it('overwrites an entity', async () => {
+            let e:Entity;
+            let [es] = buildEntitySet({...liveDB, debug:false});
+
+            e = await buildEntity(es, `
+            [ /component/channel {name: 'chat'} ] !c
+            [ /component/status {status: 'inactive'} ] !c
+            [ /component/topic {status: 'data-structures'} ] !c
+            `, 15);
+
+            // Log.debug('noice', e);
+
+            es = esAdd( es, e );
+
+            assert.ok( isEntity( getEntity(es, 15)) );
+
+            e = await buildEntity(es, `
+                [ /component/username {username: 'alex'}] !c
+                [ /component/status {status: 'inactive'}] !c
+                [ /component/channel_member {channel: 3}] !c
+            `, 15);
+
+            es = esAdd( es, e );
+
+            // Log.debug('e', es.comChanges);
+
+            e = getEntity(es, 15);
+
+            assertHasComponents( es, e, 
+                ['/component/username', '/component/status', '/component/channel_member' ] );
+
+        });
+    });
+
+
+    describe('Removing', () => {
+        it('removes a component', () => {
+            let [es] = buildEntitySet({...liveDB, debug:false});
+            let com = createComponent(es, '/component/channel', {name: 'chat'} );
+
+            es = esAdd( es, com );
+
+            assert.equal( entitySetSize(es), 1 );
+            
+            const cid = getChanges( es.comChanges, ChangeSetOp.Add )[0];
+            
+            es = removeComponent( es, cid );
+
+            // Log.debug('es', es);
+            
+            assert.equal( entitySetSize(es), 0 );
+
+        });
+        
+        it('removes an entity and all its components', async () => {
+            let e:Entity;
+            let [es] = buildEntitySet({...liveDB, debug:false});
+
+            e = await buildEntity(es, `
+            [ /component/channel {name: 'chat'} ] !c
+            [ /component/status {status: 'inactive'} ] !c
+            [ /component/topic {status: 'data-structures'} ] !c
+            `, 15);
+
+            es = esAdd( es, e );
+
+            assert.equal( entitySetSize(es), 1 );
+            
+            const eid = getChanges( es.entChanges, ChangeSetOp.Add )[0];
+            
+            assert.exists( eid, 'entity should have been added' );
+
+            es = removeEntity( es, eid );
+
+            assert.equal( entitySetSize(es), 0 );
         });
     });
 });
