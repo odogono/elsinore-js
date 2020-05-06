@@ -50,6 +50,13 @@ export function find<T>( set:ChangeSet<T>, val:T ):ChangeSetOp {
     return op;
 }
 
+export function merge<T>( a:ChangeSet<T>, b:ChangeSet<T> ): ChangeSet<T> {
+    const added = new Set([...a.added, ...b.added]);
+    const updated = new Set([...a.updated, ...b.updated]);
+    const removed = new Set([...a.removed, ...b.removed]);
+    return {added,updated,removed};
+}
+
 export function add<T>( set:ChangeSet<T>, val:T ):ChangeSet<T> {
     const added = new Set(set.added).add( val );
     const updated = new Set(set.updated);

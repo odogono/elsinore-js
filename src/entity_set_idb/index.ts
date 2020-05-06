@@ -17,6 +17,7 @@ import { ChangeSet,
     add as addCS, 
     update as updateCS, 
     find as findCS,
+    merge as mergeCS,
     remove as removeCS, ChangeSetOp, getChanges 
 } from "../entity_set/change_set";
 import { ComponentId, isComponent, 
@@ -339,6 +340,9 @@ export async function addComponents(es: EntitySetIDB, components: Component[]): 
     [es, components] = await assignEntityIds(es, components)
 
     // Log.debug('[addComponents]', components);
+    // to keep track of changes only in this function, we must temporarily replace
+    let changes = es.comChanges;
+    es.comChanges = createChangeSet<ComponentId>();
 
     // mark incoming components as either additions or updates
     es = await components.reduce( (pes, com) => {
@@ -347,6 +351,9 @@ export async function addComponents(es: EntitySetIDB, components: Component[]): 
 
     // gather the components that have been added or updated and apply
     const changedCids = getChanges(es.comChanges, ChangeSetOp.Add | ChangeSetOp.Update)
+
+    // combine the new changes with the existing
+    es.comChanges = mergeCS( changes, es.comChanges );
 
     return changedCids.reduce((pes, cid) => pes.then( es => applyUpdatedComponents(es, cid) ), Promise.resolve(es));
 

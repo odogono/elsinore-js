@@ -40,6 +40,7 @@ import {
     update as updateCS, 
     remove as removeCS, 
     find as findCS,
+    merge as mergeCS,
     ChangeSetOp, getChanges
 } from "./change_set";
 import { generateId } from './simple_id';
@@ -77,7 +78,7 @@ export interface EntitySet {
     esGetComponentDefs: (es) => ComponentDef[];
     esGetComponent: (es,cid:(ComponentId|Component)) => any;
     esEntities: (es:EntitySet, bf?:BitField) => Promise<EntityList>;
-    esGetEntity: (es,eid:EntityId) => Promise<Entity>;
+    esGetEntity: (es,eid:EntityId, populate?:boolean) => Promise<Entity>;
     esSelect: (es, query:StackValue[]) => Promise<StackValue[]>;
 }
 
@@ -117,7 +118,7 @@ export function create(options: CreateEntitySetParams = {}): EntitySetMem {
         esGetComponentDefs: (es:EntitySetMem) => es.componentDefs,
         esGetComponent: getComponent,
         esEntities: (es:EntitySetMem, bf?:BitField) => Promise.resolve( matchEntities(es, bf) ),
-        esGetEntity: (es:EntitySetMem, eid:EntityId) => Promise.resolve( getEntity(es,eid) ),
+        esGetEntity: (es:EntitySetMem, eid:EntityId, populate:boolean) => Promise.resolve( getEntity(es,eid, populate) ),
         esSelect: select,
     }
 }
@@ -355,6 +356,9 @@ function addComponents(es: EntitySetMem, components: Component[]): EntitySetMem 
     [es, components] = assignEntityIds(es, components)
 
     // Log.debug('[addComponents]', components);
+    // to keep track of changes only in this function, we must temporarily replace
+    let changes = es.comChanges;
+    es.comChanges = createChangeSet<ComponentId>();
 
     // mark incoming components as either additions or updates
     es = components.reduce((es, com) => markComponentAdd(es, com), es);
@@ -362,9 +366,10 @@ function addComponents(es: EntitySetMem, components: Component[]): EntitySetMem 
     // gather the components that have been added or updated and apply
     const changedCids = getChanges(es.comChanges, ChangeSetOp.Add | ChangeSetOp.Update)
 
-    es = changedCids.reduce((es, cid) => applyUpdatedComponents(es, cid), es);
+    // combine the new changes with the existing
+    es.comChanges = mergeCS( changes, es.comChanges );
 
-    return es;
+    return changedCids.reduce((es, cid) => applyUpdatedComponents(es, cid), es);
 }
 
 
@@ -491,13 +496,13 @@ export function markEntityRemove(es: EntitySet, eid: number): EntitySet {
     return { ...es, entChanges: removeCS(es.entChanges, eid) };
 }
 
-function markEntityComponentsRemove(es: EntitySetMem, eid: number): EntitySetMem {
-    const ebf = es.entities.get(eid);
-    if (ebf === undefined) {
+export function markEntityComponentsRemove(es: EntitySetMem, eid: number): EntitySetMem {
+    const e = getEntity(es, eid, false);
+    if (e === undefined) {
         return es;
     }
 
-    return ebf.toValues().reduce((es, did) =>
+    return e.bitField.toValues().reduce((es, did) =>
         markComponentRemove(es, toComponentId(eid, did)), es as EntitySet) as EntitySetMem;
 }
 

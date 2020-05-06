@@ -17,7 +17,16 @@ import { ComponentDef,
     isComponentDef,
     Type as ComponentDefT} from '../component_def';
 import { getByUri, getByHash, getByDefId } from "../entity_set/registry";
-import { EntitySet, CreateEntitySetParams, markEntityAdd, markComponentUpdate, markEntityUpdate, AddType, AddOptions, clearChanges, markEntityRemove, markComponentRemove } from "../entity_set";
+import { EntitySet, 
+    CreateEntitySetParams, 
+    markEntityAdd, 
+    markComponentUpdate, 
+    markEntityUpdate, 
+    AddType, AddOptions, 
+    clearChanges, 
+    markEntityRemove, 
+    markComponentRemove, 
+    RemoveType } from "../entity_set";
 import { 
     Type as EntityT,
     isEntity,
@@ -37,6 +46,7 @@ import { ChangeSet,
     add as addCS, 
     update as updateCS, 
     find as findCS,
+    merge as mergeCS,
     remove as removeCS, ChangeSetOp, getChanges 
 } from "../entity_set/change_set";
 import { BitField } from "odgn-bitfield";
@@ -59,6 +69,7 @@ import { SqlRef,
 import { createLog } from "../util/log";
 import { isString, isInteger } from "../util/is";
 import { StackValue } from "../query/stack";
+import { select } from "./query";
 export { getByHash, getByUri } from '../entity_set/registry';
 
 const Log = createLog('EntitySetSQL');
@@ -108,6 +119,7 @@ export function create(options?:CreateEntitySetSQLParams):EntitySetSQL {
     const entChanges = createChangeSet<number>();
     const comChanges = createChangeSet<ComponentId>();
 
+    // Log.debug('[create]');
     return {
         isEntitySet:true,
         isAsync: false,
@@ -125,7 +137,7 @@ export function create(options?:CreateEntitySetSQLParams):EntitySetSQL {
         esGetComponentDefs: (es:EntitySetSQL) => getComponentDefs(es),
         esEntities: (es:EntitySetSQL) => getEntities(es),
         esGetEntity: (es:EntitySetSQL, eid:EntityId) => Promise.resolve(getEntity(es,eid)),
-        esSelect: (es:EntitySetSQL, query:StackValue[]) => null,
+        esSelect: select,
     }
 }
 
@@ -195,11 +207,15 @@ export function add(es: EntitySetSQL, item: AddType, options: AddOptions = {}): 
 
         // Log.debug('[add]', ents)
 
-        es = ents.reduce((pes, e) => 
-            addComponents(es, getEntityComponents(e) ), 
-        es);
-
+        es = ents.reduce((pes, e) => {
+            let coms = getEntityComponents(e);
+            // Log.debug('[add]', '🐦coms from e', getEntityId(e), coms.length);
+            return addComponents(pes, coms );
+        }, es);
+        // Log.debug('[add]', '🐦coms direct', coms.length);
         es = addComponents(es, coms);
+        // Log.debug('[add]', '-<<<<');
+
         es = applyRemoveChanges(es)
     }
     else if (isComponent(item)) {
@@ -216,6 +232,28 @@ export function add(es: EntitySetSQL, item: AddType, options: AddOptions = {}): 
     return es;
 }
 
+
+export function removeComponent(es: EntitySetSQL, item: RemoveType, options: AddOptions = {}): EntitySetSQL {
+    es = options.retain ? es : clearChanges(es) as EntitySetSQL;
+    let cid = isComponentId(item) ? item as ComponentId : isComponent(item) ? getComponentId(item as Component) : undefined;
+    if (cid === undefined) {
+        return es;
+    }
+    es = markComponentRemove(es, cid) as EntitySetSQL;
+
+    // Log.debug('[removeComponent]', es );
+    return applyRemoveChanges(es);
+}
+
+export function removeEntity(es: EntitySetSQL, item: (number | Entity), options: AddOptions = {}): EntitySetSQL {
+    es = options.retain ? es : clearChanges(es) as EntitySetSQL;
+    let eid = isInteger(item) ? item as number : isEntity(item) ? getEntityId(item as Entity) : 0;
+    if (eid === 0) {
+        return es;
+    }
+    es = markEntityComponentsRemove(es, eid);
+    return applyRemoveChanges(es);
+}
 
 export function createComponent( registry:EntitySetSQL, defId:(string|number|ComponentDef), attributes = {} ): Component {
     let def:ComponentDef = undefined;
@@ -270,6 +308,16 @@ export function markComponentAdd(es: EntitySetSQL, com: Component): EntitySetSQL
     return { ...es, comChanges: addCS(es.comChanges, cid) };
 }
 
+export function markEntityComponentsRemove(es: EntitySetSQL, eid: number): EntitySetSQL {
+    const e = getEntity(es, eid, false);
+    if (e === undefined) {
+        return es;
+    }
+
+    return e.bitField.toValues().reduce((es, did) =>
+        markComponentRemove(es, toComponentId(eid, did)), es as EntitySet) as EntitySetSQL;
+}
+
 function markRemoveComponents(es: EntitySetSQL, eid: number): EntitySetSQL {
     if (eid === 0) {
         return es;
@@ -296,25 +344,36 @@ function markRemoveComponents(es: EntitySetSQL, eid: number): EntitySetSQL {
     return es;
 }
 
-export function addComponents(es: EntitySetSQL, components: Component[]): EntitySetSQL {
+export function addComponents( es: EntitySetSQL, components: Component[]): EntitySetSQL {
     // set a new (same) entity id on all orphaned components
     [es, components] = assignEntityIds(es, components)
 
-    // Log.debug('[addComponents]', components);
+
+    
+    // let changedCids = getChanges(es.comChanges, ChangeSetOp.Add | ChangeSetOp.Update)
+    // Log.debug('[addComponents]', 'pre', changedCids);
+    
+    // to keep track of changes only in this function, we must temporarily replace
+    let changes = es.comChanges;
+    es.comChanges = createChangeSet<ComponentId>();
 
     // mark incoming components as either additions or updates
-    es = components.reduce( (es, com) => {
-        return markComponentAdd(es, com);
-    }, es);
-
+    es = components.reduce( (es, com) => markComponentAdd(es, com), es);
+    
     // gather the components that have been added or updated and apply
-    const changedCids = getChanges(es.comChanges, ChangeSetOp.Add | ChangeSetOp.Update)
+    let changedCids = getChanges(es.comChanges, ChangeSetOp.Add | ChangeSetOp.Update)
+    // Log.debug('[addComponents]', 'post', changedCids);
+
+    // combine the new changes with the existing
+    es.comChanges = mergeCS( changes, es.comChanges );
+
 
     return changedCids.reduce((es, cid) => applyUpdatedComponents(es, cid), es);
 }
 
 
 function applyRemoveChanges(es: EntitySetSQL): EntitySetSQL {
+    // Log.debug('[applyRemoveChanges]', es.comChanges );
     // applies any removal changes that have previously been marked
     const removedComs = getChanges(es.comChanges, ChangeSetOp.Remove);
 
@@ -342,6 +401,7 @@ function applyRemoveComponent(es: EntitySetSQL, cid: ComponentId): EntitySetSQL 
 
     const def = getByDefId( es, did );
     // remove component
+    // Log.debug('[applyRemoveComponent]', eid, did );
     let e = sqlDeleteComponent( es.db, eid, def );
 
     // const store = es.db.transaction(STORE_COMPONENTS, 'readwrite').objectStore(STORE_COMPONENTS);
@@ -377,7 +437,7 @@ function applyUpdatedComponents(es: EntitySetSQL, cid: ComponentId): EntitySetSQ
 
     const isNew = findCS( es.entChanges, eid ) === ChangeSetOp.Add;
 
-    // Log.debug('[applyUpdatedComponents]', eid, isNew, es.entChanges );
+    // Log.debug('[applyUpdatedComponents]', eid, isNew, ebf.get(did) === false );
 
     // does the component already belong to this entity?
     if (ebf.get(did) === false) {
@@ -402,9 +462,14 @@ function getOrAddEntityBitfield(es: EntitySetSQL, eid: number): [EntitySetSQL, B
     // const store = es.db.transaction(STORE_ENTITIES, 'readonly').objectStore(STORE_ENTITIES);
 
     let e = sqlRetrieveEntity(es.db, eid);
+
+    // Log.debug('[getOrAddEntityBitfield]', eid, e );
     // let record = await idbGet(store, eid);
     if( e === undefined ){
-        return [markEntityAdd(es,eid) as EntitySetSQL, createBitfield()];
+        // e = createEntityInstance(eid, createBitfield() );
+        // e = setEntity( es, e );
+        
+        return [markEntityAdd(es,eid) as EntitySetSQL, createBitfield() ];
     }
 
     // let ebf = createBitfield( record.bf );
@@ -496,7 +561,8 @@ function assignEntityIds(es: EntitySetSQL, components: Component[]): [EntitySetS
 }
 
 
-function setEntity(es:EntitySetSQL, e:Entity): Entity {    
+function setEntity(es:EntitySetSQL, e:Entity): Entity {  
+    // Log.debug('[setEntity]', e);  
     return sqlUpdateEntity(es.db, e);
 }
 
@@ -524,11 +590,15 @@ export function createEntity(es: EntitySetSQL): [EntitySetSQL, number] {
  * @param es 
  * @param eid 
  */
-export function getEntity(es:EntitySetSQL, eid:EntityId): Entity {
+export function getEntity(es:EntitySetSQL, eid:EntityId, populate:boolean = true): Entity {
     es = openEntitySet(es);
     let e = _getEntity(es, eid);
     if( e === undefined ){
         return undefined;
+    }
+
+    if( !populate ){
+        return e;
     }
 
     let dids = e.bitField.toValues()
@@ -540,6 +610,7 @@ export function getEntity(es:EntitySetSQL, eid:EntityId): Entity {
 
     // let result = await idbGetRange(store, IDBKeyRange.bound([eid,0], [eid,Number.MAX_SAFE_INTEGER] ) );
 
+    // Log.debug('[getEntity]', coms );
     e = coms.reduce( (e,com) => {
         const did = getComponentDefId(com);
         return addComponentUnsafe(e,did,com);
@@ -580,6 +651,4 @@ function openEntitySet( es:EntitySetSQL, options:OpenEntitySetOptions = {} ): En
 function closeEntitySet( es:EntitySetSQL ){
 
 }
-
-
 

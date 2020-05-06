@@ -43,6 +43,7 @@ import { ChangeSet,
     add as addCS, 
     update as updateCS, 
     find as findCS,
+    merge as mergeCS,
     remove as removeCS, ChangeSetOp, getChanges 
 } from "../entity_set/change_set";
 import { stringify, parseJSON } from "../util/json";
@@ -333,6 +334,9 @@ export async function addComponents(es: EntitySetFS, components: Component[]): P
     [es, components] = await assignEntityIds(es, components)
 
     // Log.debug('[addComponents]', components);
+    // to keep track of changes only in this function, we must temporarily replace
+    let changes = es.comChanges;
+    es.comChanges = createChangeSet<ComponentId>();
 
     // mark incoming components as either additions or updates
     es = await components.reduce( (pes, com) => {
@@ -342,9 +346,10 @@ export async function addComponents(es: EntitySetFS, components: Component[]): P
     // gather the components that have been added or updated and apply
     const changedCids = getChanges(es.comChanges, ChangeSetOp.Add | ChangeSetOp.Update)
 
-    return changedCids.reduce((pes, cid) => pes.then( es => applyUpdatedComponents(es, cid) ), Promise.resolve(es));
+    // combine the new changes with the existing
+    es.comChanges = mergeCS( changes, es.comChanges );
 
-    // return es;
+    return changedCids.reduce((pes, cid) => pes.then( es => applyUpdatedComponents(es, cid) ), Promise.resolve(es));
 }
 
 export function createComponent( registry:EntitySetFS, defId:(string|number|ComponentDef), attributes = {} ): Component {
