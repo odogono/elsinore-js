@@ -49,8 +49,9 @@ export async function onSelect<QS extends QueryStack>(stack: QS, val: StackValue
 
     const {isAsync,esSelect} = es;
 
-    // Log.debug('left', left);
-    // Log.debug('right', right);
+    // Log.debug('[onSelect]', 'left', left);
+    // Log.debug('[onSelect]', 'right', right);
+    // Log.debug('[onSelect]', 'esSelect', es);
 
     let result = await esSelect(es, query);
 
@@ -101,21 +102,21 @@ export function onComponent<QS extends QueryStack>(stack: QS, val: StackValue): 
     return [stack, [SType.Component, com]];
 }
 
-export function unpackStackValue(val: StackValue, assertType: SType = SType.Any, recursive: boolean = true): any {
+export function unpackStackValue(val: StackValue, assertType: SType = SType.Any, recursive: boolean = false): any {
     let [type, value] = val;
     if (assertType !== SType.Any && type !== assertType) {
         throw new Error(`expected type ${assertType}, got ${type}`);
     }
-    if (recursive && type === SType.Array) {
-        return value.map(av => unpackStackValue(av));
+    if (type === SType.Array) {
+        return recursive ? value.map(av => unpackStackValue(av)) : value;
     }
-    if( recursive && type === SType.ComponentValue ){
+    if( type === SType.ComponentValue ){
         return value[2];
     }
-    if (recursive && type === SType.Map) {
-        return Object.keys(value).reduce((res, key) => {
+    if (type === SType.Map) {
+        return recursive ? Object.keys(value).reduce((res, key) => {
             return { ...res, [key]: unpackStackValue(value[key]) }
-        }, {});
+        }, {}) : value;
     } else {
         // Log.debug('[unpackStackValue]', 'wat', value);
         return value;
