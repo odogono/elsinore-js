@@ -155,6 +155,8 @@ export function register( es: EntitySetSQL, value:ComponentDef|ComponentDefObj|a
     // insert the def into the def tbl
     def = sqlInsertDef( es.db, def );
 
+    // Log.debug('[register]', def);
+
     const did = def[ComponentDefT];
     const {hash,tblName} = (def as ComponentDefSQL);
 
@@ -207,14 +209,15 @@ export function add(es: EntitySetSQL, item: AddType, options: AddOptions = {}): 
 
         // Log.debug('[add]', ents)
 
+        // add components from entity
         es = ents.reduce((pes, e) => {
             let coms = getEntityComponents(e);
             // Log.debug('[add]', '🐦coms from e', getEntityId(e), coms.length);
             return addComponents(pes, coms );
         }, es);
-        // Log.debug('[add]', '🐦coms direct', coms.length);
+        
+        // adds lone components
         es = addComponents(es, coms);
-        // Log.debug('[add]', '-<<<<');
 
         es = applyRemoveChanges(es)
     }

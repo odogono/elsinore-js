@@ -2,6 +2,8 @@ import { isObject, isString, isPromise } from "../util/is";
 import { stringify } from "../util/json";
 import { createLog } from "../util/log";
 import { deepExtend } from "../util/deep_extend";
+import { unpackStackValue } from "./words";
+import { EntitySet } from "../entity_set";
 
 export enum SType {
     Value = '%v',
@@ -14,8 +16,9 @@ export enum SType {
     Component = '%c',
     ComponentDef = '%d',
     ComponentAttr = '%ca',
-    ComponentValue = '%cv',
+    // ComponentValue = '%cv',
     Any = '%*',
+    Filter = '%|'
     // Undefined = '%un'
 };
 
@@ -45,7 +48,7 @@ type WordFn<QS extends QueryStack> = SyncWordFn<QS> | AsyncWordFn<QS>;
 type SyncWordFn<QS extends QueryStack> = (stack: QS, val: StackValue) => InstResult<QS>;
 type AsyncWordFn<QS extends QueryStack> = (stack: QS, val: StackValue) => Promise<InstResult<QS>>;
 
-type WordSpec<QS extends QueryStack> = [string, WordFn<QS>, ...SType[]];
+type WordSpec<QS extends QueryStack> = [string, WordFn<QS>, ...(SType|string)[] ];
 
 type WordEntry<QS extends QueryStack> = [ WordFn<QS>, SType[] ];
 
@@ -59,6 +62,7 @@ export interface QueryStackDefs {
 }
 
 export interface QueryStack {
+    es?:EntitySet;
     items: StackValue[];
     words: Words<this>;
 }
@@ -70,7 +74,9 @@ export function create<QS extends QueryStack>(): QS {
     } as QS;
 }
 
-
+export interface StackError {
+    original?: any;
+}
 export class StackError extends Error {
     constructor(...args) {
         super(...args)
@@ -138,10 +144,13 @@ export async function push<QS extends QueryStack>(stack: QS, input: any | StackV
             } else {
                 [stack, value, doPush] = result as InstResult<QS>;
             }
-            // Log.debug('[push]', value); 
+            // if( value ) Log.debug('[push]', value); 
         } catch (err) {
             // Log.warn('[push]', err.stack);
-            throw new Error(`${err.message}: ${stringify(value)}`);
+            let e = new StackError(`${err.message}: ${unpackStackValue(value)}`);
+            e.original = err
+            e.stack = e.stack.split('\n').slice(0,2).join('\n') + '\n' + err.stack;
+            throw e;
         }
     }
     
@@ -235,7 +244,7 @@ export function unshiftV(stack: QueryStack, value: any, valueType = SType.Value)
 export function pop<QS extends QueryStack>(stack: QS): [QS, StackValue] {
     const length = stack.items.length;
     if (length === 0) {
-        throw new Error('stack empty');
+        throw new StackError('stack underflow');
         // return undefined;
     }
     const value = stack.items[length - 1];
@@ -372,7 +381,7 @@ export function addWords<QS extends QueryStack>(stack: QS, words: WordSpec<QS>[]
         const [word, fn, ...args] = spec;
         // Log.debug('[addWords]', word, [fn,args]);
         let patterns = stack.words[word] || [];
-        patterns = [...patterns, [fn, args] ];
+        patterns = [...patterns, [fn, (args as (SType[]))] ];
         return { ...stack, words: { ...stack.words, [word]: patterns } };
     }, stack);
 }
@@ -384,20 +393,25 @@ function getWord<QS extends QueryStack>(stack: QS, value: StackValue): WordFn<QS
         return undefined;
     }
     const wval = value[1];
-    // Log.debug('[getWord]', value);
     const patterns = stack.words[wval];
+    // Log.debug('[getWord]', value, patterns);
     if (patterns === undefined) {
         return undefined;
     }
-    // Log.debug('[getWord]', 'match', `'${wval}'`, patterns);
     let pattern = patterns.find(pat => {
         const [, args] = pat;
-        // if( wval === '+') Log.debug('[getWord]', 'match', `'${wval}'`, args, stack.items );
         if (matchStack(stack.items, args)) {
             return pat;
         }
+        // Log.debug('[getWord]', 'match', `'${wval}'`, args, stack.items );
     });
-    return pattern !== undefined ? pattern[0] : undefined;
+    if( pattern !== undefined ){
+        return pattern[0];
+    }
+    
+    Log.debug('[getWord]', 'match', `'${wval}'`, patterns.map(p => p.slice(1)) );
+    Log.debug('[getWord]', 'match', `'${wval}'`, stack.items);
+    throw new StackError(`invalid params for ${wval}`);
 }
 
 function matchStack(stackItems: StackValue[], pattern: SType[]) {
@@ -411,8 +425,9 @@ function matchStack(stackItems: StackValue[], pattern: SType[]) {
     }
     for (let ii = 0; ii < pLength; ii++) {
         const sym = pattern[pLength - 1 - ii];
-        const [vt] = stackItems[sLength - 1 - ii];
-        if (sym !== SType.Any && sym !== vt) {
+        const [vt,v] = stackItems[sLength - 1 - ii];
+        if (sym !== SType.Any && sym !== vt && sym !== v ) {
+            // Log.debug('[matchStack]', sym, vt, v );
             return false;
         }
     }

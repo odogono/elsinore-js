@@ -149,7 +149,7 @@ export function register<ES extends EntitySet>( registry:ES, value:ComponentDef|
 /**
  * 
  */
-export function createComponent<ES extends EntitySet>( registry:ES, defId:(string|number), attributes = {} ): Component {
+export function createComponent<ES extends EntitySet>( registry:ES, defId:(string|number|ComponentDef), attributes = {} ): Component {
     let def:ComponentDef = undefined;
 
     // Log.debug('[createComponent]', defId, attributes, registry );

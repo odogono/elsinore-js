@@ -356,17 +356,29 @@ function addComponents(es: EntitySetMem, components: Component[]): EntitySetMem 
     [es, components] = assignEntityIds(es, components)
 
     // Log.debug('[addComponents]', components);
+    // let changedCids = getChanges(es.comChanges, ChangeSetOp.Add | ChangeSetOp.Update)
+    // Log.debug('[addComponents]', 'pre', changedCids);
+    // Log.debug('[addComponents]', 'add', getChanges(es.comChanges,ChangeSetOp.Add) );
+    // Log.debug('[addComponents]', 'upd', getChanges(es.comChanges,ChangeSetOp.Update) );
+    // Log.debug('[addComponents]', 'rem', getChanges(es.comChanges,ChangeSetOp.Remove) );
+
     // to keep track of changes only in this function, we must temporarily replace
     let changes = es.comChanges;
     es.comChanges = createChangeSet<ComponentId>();
+    // clearChanges()
 
     // mark incoming components as either additions or updates
     es = components.reduce((es, com) => markComponentAdd(es, com), es);
 
     // gather the components that have been added or updated and apply
-    const changedCids = getChanges(es.comChanges, ChangeSetOp.Add | ChangeSetOp.Update)
-
+    let changedCids = getChanges(es.comChanges, ChangeSetOp.Add | ChangeSetOp.Update)
+    // Log.debug('[addComponents]', 'post', changedCids);
+    
     // combine the new changes with the existing
+    // Log.debug('[addComponents]', 'add', getChanges(es.comChanges,ChangeSetOp.Add) );
+    // Log.debug('[addComponents]', 'upd', getChanges(es.comChanges,ChangeSetOp.Update) );
+    // Log.debug('[addComponents]', 'rem', getChanges(es.comChanges,ChangeSetOp.Remove) );
+    // Log.debug('[addComponents]', 'merge', changes, es.comChanges );
     es.comChanges = mergeCS( changes, es.comChanges );
 
     return changedCids.reduce((es, cid) => applyUpdatedComponents(es, cid), es);
@@ -476,10 +488,13 @@ export function markComponentAdd(es: EntitySetMem, com: Component): EntitySetMem
 }
 
 export function markComponentUpdate(es: EntitySet, cid: ComponentId): EntitySet {
-    return { ...es, comChanges: updateCS(es.comChanges, cid) };
+    const comChanges = updateCS(es.comChanges, cid)
+    // Log.debug('[markComponentUpdate]', cid, comChanges);
+    return { ...es, comChanges };
 }
 
 export function markComponentRemove(es: EntitySet, cid: ComponentId): EntitySet {
+    // Log.debug('[markComponentRemove]', cid);
     return { ...es, comChanges: removeCS(es.comChanges, cid) };
 }
 

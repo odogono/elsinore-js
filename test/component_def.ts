@@ -61,6 +61,18 @@ describe('ComponentDef', () => {
         });
     });
 
+    it('should create from uri/prop array', () => {
+        const data = [ '/component/completed', [{name:'isComplete', type:'boolean', default:false}] ];
+        let def = createComponentDef(undefined, ...data);
+
+        assert.deepEqual( componentDefToObject(def), {
+            '@d': undefined,
+            name: 'Completed',
+            uri: '/component/completed',
+            properties: [ { name: 'isComplete', type:'boolean', default:false } ]
+        });
+    })
+
     it('should create from an instance', () => {
         const data = { uri: '/component/piece/knight', properties:[ 'rank', 'file' ] };
         let def = createComponentDef(data);

@@ -3,7 +3,8 @@ export enum ChangeSetOp {
     None = 0,
     Add = 1 << 0,
     Update = 1 << 1,
-    Remove = 1 << 2
+    Remove = 1 << 2,
+    All = 1<<0 | 1<<1 | 1<<2
 };
 
 
@@ -52,8 +53,15 @@ export function find<T>( set:ChangeSet<T>, val:T ):ChangeSetOp {
 
 export function merge<T>( a:ChangeSet<T>, b:ChangeSet<T> ): ChangeSet<T> {
     const added = new Set([...a.added, ...b.added]);
-    const updated = new Set([...a.updated, ...b.updated]);
     const removed = new Set([...a.removed, ...b.removed]);
+    const updates = [...a.updated, ...b.updated];
+    for(let ii=0;ii<updates.length;ii++) {
+        let val = updates[ii];
+        if( removed.has( val ) ){
+            removed.delete( val );
+        }
+    }
+    const updated = new Set(updates);
     return {added,updated,removed};
 }
 

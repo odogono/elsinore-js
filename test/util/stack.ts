@@ -22,20 +22,16 @@ import { omit } from '../../src/util/omit';
 
 import { create as createQueryStack, 
     peekV as peekQueryStack,
-    
-    findV,
-    push,
-    unshiftV,
-    InstDef,
-    pushValues,
-    
     QueryStack, 
-    InstModuleDef,
     StackOp,
     SType,
-    StackValue} from '../../src/query/stack';
+    StackValue,
+    addWords,
+    push,
+    pushValues,
+    pop} from '../../src/query/stack';
 import {
-    buildAndExecute as buildQuery,
+    // buildAndExecute as buildQuery,
     BuildQueryFn,
 } from '../../src/query/build';
 import { Entity, getComponent, getComponents, createBitfield, getEntityId, EntityList } from '../../src/entity';
@@ -46,11 +42,10 @@ import { EntitySet, Type as EntitySetT,
     EntitySetMem} from '../../src/entity_set';
 import { getDefId, toObject as defToObject, ComponentDef, Type } from '../../src/component_def';
 import{ getComponentId, getComponentDefId, toObject as componentToObject } from '../../src/component';
-import { loadFixture } from './import';
-import { isString, isNumeric } from '../../src/util/is';
 import { createLog } from '../../src/util/log';
 import { tokenizeString } from '../../src/query/tokenizer';
 import { stringify } from '../../src/util/json';
+import { onSwap, onConcat, onArrayOpen, onMapOpen, onEntity, onComponentDef, onComponent, onEntitySet, onAddArray, onAddComponentToEntity, onAddToEntitySet, unpackStackValue } from '../../src/query/words';
 
 const Log = createLog('StackUtils');
 
@@ -212,22 +207,36 @@ export function buildAndExecuteQuery( stack:QueryStack, buildFn:BuildQueryFn ): 
     return [stack,entity];
 }
 
-export function buildEntity( stack:QueryStack, buildFn:BuildQueryFn, entityId:number = 0 ): [QueryStack,Entity] {
-    // find registry
-    // let registry = findV( stack, ComponentRegistryT );
-    // if( registry === undefined ){
-    //     // registry = createComponentRegistry();
-    //     stack = unshiftV( stack, registry, SType.EntitySet );
-    // }
-    let entity:Entity;
+export async function buildEntity( es:EntitySet, query:string, entityId:number = 0 ): Promise<Entity> {
 
-    // stack = buildQuery( stack, buildFn );
+    let stack = createQueryStack();
+    stack = addWords(stack, [
+        ['swap', onSwap],
+        ['concat', onConcat],
+        ['[', onArrayOpen],
+        ['{', onMapOpen],
+        ['!e', onEntity],
+        // ['@e', onEntityFetch, SType.Value],
+        ['!d', onComponentDef, SType.Array],
+        ['!c', onComponent, SType.Array],
+        ['!es', onEntitySet, SType.Map],
+        ['+', onAddArray, SType.Array, SType.Any],
+        ['+', onAddComponentToEntity, SType.Entity, SType.Any],
+        ['+', onAddToEntitySet, SType.EntitySet, SType.Any],
+    ]);
 
-    // [stack, [,entity]] = pushValues( stack, [
-    //     [InstEnt.ENTs,entityId]
-    // ]);
+    
+    [stack] = await push(stack, [SType.EntitySet, es]);
+    
+    let insts = parse(`${query} concat ${entityId} !e swap +`);
+    [stack] = await pushValues(stack, insts);
 
-    return [stack,entity];
+    let ev;
+    [stack,ev] = pop(stack);
+
+    let e = unpackStackValue(ev,SType.Entity);
+
+    return e;
 }
 
 

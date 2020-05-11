@@ -1,23 +1,16 @@
 import { assert } from 'chai';
 import { createLog } from '../src/util/log';
-import {ComponentRegistry, Type as ComponentRegistryT, 
+import {
     createComponent, 
     getByUri, getByHash, getByDefId,
-    register } from '../src/component_registry';
-import {  
-    pushValues,
-    peekV as peekQueryStack,
-    findV,
-    QueryStack,
-    StackValue
-} from '../src/query/stack';
+    register } from '../src/entity_set/registry';
 import { Entity,
     create as createEntityInstance, 
     getComponent as getEntityComponent,
+    addComponent as addComponentToEntity,
     size as entitySize, 
     isEntity,
     EntityList} from '../src/entity';
-import { ComponentList, getComponentEntityId } from '../src/component';
 import { EntitySet, 
     create as createEntitySet,
     size as entitySetSize,
@@ -27,56 +20,22 @@ import { EntitySet,
     getComponent,
     getComponents as esGetComponents,
     getEntities as esGetEntities,
-    // query as esQuery,
     createEntity,
     EntitySetMem,
-    // ESQuery,
-    // compileQueryPart,
     removeEntity} from '../src/entity_set';
-import { buildQueryStack,
-    buildEntity, 
-    prepareFixture} from './util/stack';
 import { assertHasComponents } from './util/assert';
 import { getChanges, ChangeSetOp } from '../src/entity_set/change_set';
-import { Type as ComponentT, fromComponentId, getComponentDefId, Component } from '../src/component';
-import { VL } from '../src/query/insts/value';
+import { fromComponentId, getComponentDefId, Component } from '../src/component';
 import { isComponentDef, hash as hashDef } from '../src/component_def';
+import { BuildQueryFn } from '../src/query/build';
 
 const Log = createLog('TestEntitySet');
 
-// require("fake-indexeddb/auto");
-let registry:ComponentRegistry;
-let stack:QueryStack;
 
-async function registerCommon<ES extends EntitySet>( es:ES ):Promise<ES>{
-    let defs = [
-    {uri:'/component/channel', properties:[ 'name'] },
-    {uri:'/component/status', properties:[ 'status'] },
-    {uri:'/component/topic', properties:[ 'topic'] },
-    {uri:'/component/username', properties:[ 'username'] },
-    {uri:'/component/channel_member', properties:[ 'channel_member' ] },
-    ];
-    return await defs.reduce( async (rEs,def) => {
-        let es = await rEs;
-        // Log.debug('so', es);
-        [es] = es.esRegister( es, def );
-        return es;
-    },Promise.resolve(es)) 
-}
 describe('Entity Set (Mem)', () => {
-    beforeEach( () => {
-        // [stack,registry] = buildComponentRegistry( ({def}) => {
-        //     def('/component/channel', 'name');
-        //     def('/component/status', 'status');
-        //     def('/component/topic', 'topic');
-        //     def('/component/username', 'username');
-        //     def('/component/channel_member', 'channel_member' );
-        // });
-        // Log.debug('[beforeEach]', stack.items, registry )
-    })
-
+    
     describe('Component Defs', () => {
-        it.only('registers', async () => {
+        it('registers', async () => {
             let def;
             let es = createEntitySet({});
             const data = { uri: '/component/position', properties:[ {name:'rank',type:'integer'}, 'file' ] };
@@ -132,43 +91,37 @@ describe('Entity Set (Mem)', () => {
 
         it('adds an entity with components', async () => {
             let e:Entity;
+            let [es,buildEntity] = buildEntitySet();
 
-            // let es = createEntitySet({});
-            // es = await registerCommon(es);
-
-            [stack,e] = buildEntity( stack, ({component}) => {
+            e = buildEntity( es, ({component}) => {
                 component('/component/channel', {name: 'chat'});
                 component('/component/status', {status: 'inactive'});
                 component('/component/topic', {topic: 'data-structures'});
             });
             
-            
+            // Log.debug('es', es);
+
             assert.equal( entitySize(e), 3 );
-            
-            let es = createEntitySet();
             
             es = esAdd( es, e );
             
-            // Log.debug('es');
             
             assert.equal( entitySetSize(es), 1 );
             
             // get the entity added changes to find the entity id
             const [eid] = getChanges( es.entChanges, ChangeSetOp.Add );
             
-            let registry = findV( stack, ComponentRegistryT );
             e = getEntity( es, eid );
 
             assertHasComponents(
-                registry,
+                es,
                 e,
                 ["/component/channel", "/component/status", "/component/topic"]
             );
         });
 
-        it('adds a component', () => {
-            // Log.debug('registry', registry);
-            let es = createEntitySet({});
+        it('adds a component', async () => {
+            let [es] = buildEntitySet();
             let com = createComponent(es, '/component/channel', {name: 'chat'} );
 
             es = esAdd( es, com );
@@ -184,8 +137,8 @@ describe('Entity Set (Mem)', () => {
             assert.equal( com.name, 'chat' );
         });
         
-        it('adds a component with an entity id', () => {
-            let es = createEntitySet({});
+        it('adds a component with an entity id', async () => {
+            let [es] = buildEntitySet();
             let com = createComponent(es, '/component/channel', {'@e':23, name: 'discussion'} );
 
             es = esAdd( es, com );
@@ -199,11 +152,12 @@ describe('Entity Set (Mem)', () => {
             com = getEntityComponent( e, getComponentDefId(com) );
 
             assert.equal( com.name, 'discussion' );
+
+            // Log.debug('es', es);
         });
 
         it('adds a single entity from two different components', async () => {
-            let es = createEntitySet({});
-            es = await registerCommon(es);
+            let [es] = buildEntitySet();
             let coms = [
                 createComponent(es, '/component/channel', {name: 'discussion'} ),
                 createComponent(es, '/component/status', {status:'active'} )
@@ -216,7 +170,7 @@ describe('Entity Set (Mem)', () => {
         it('adds a number of components of the same type', () => {
             let e:Entity;
             let coms:Component[];
-            let es = createEntitySet({});
+            let [es] = buildEntitySet();
 
             // create a number of components
             coms = ['chat', 'dev', 'politics'].map( name => 
@@ -231,9 +185,10 @@ describe('Entity Set (Mem)', () => {
 
         it('overwrites an entity', () => {
             let e:Entity;
-            let es = createEntitySet({});
+            // let es = createEntitySet({});
+            let [es,buildEntity] = buildEntitySet();
 
-            [stack,e] = buildEntity( stack, ({component}) => {
+            e = buildEntity( es, ({component}) => {
                 component('/component/channel', {name: 'chat'});
                 component('/component/status', {status: 'inactive'});
                 component('/component/topic', {topic: 'data-structures'});
@@ -243,9 +198,8 @@ describe('Entity Set (Mem)', () => {
 
             assert.ok( isEntity( getEntity(es, 15)) );
 
-
-            [stack,e] = buildEntity( stack, ({component}) => {
-                component('/component/username', {name: 'alex'});
+            e = buildEntity( es, ({component}) => {
+                component('/component/username', {username: 'alex'});
                 component('/component/status', {status: 'inactive'});
                 component('/component/channel_member', {channel: 3});
             }, 15);
@@ -253,11 +207,19 @@ describe('Entity Set (Mem)', () => {
             es = esAdd( es, e );
 
             e = getEntity(es, 15);
+            // Log.debug('e', es.components);
 
             assertHasComponents( es, e, 
                 ['/component/username', '/component/status', '/component/channel_member' ] );
 
-            // Log.debug('e', es);
+            
+            e = buildEntity( es, ({component}) => {
+                component('/component/channel', {name: 'general'});
+            }, 15);
+            es = esAdd( es, e );
+            e = getEntity(es, 15);
+
+            assertHasComponents( es, e, ['/component/channel']);
         });
 
     });
@@ -265,7 +227,7 @@ describe('Entity Set (Mem)', () => {
 
     describe('Removing', () => {
         it('removes a component', () => {
-            let es = createEntitySet({});
+            let [es] = buildEntitySet();
             let com = createComponent(es, '/component/channel', {name: 'chat'} );
 
             es = esAdd( es, com );
@@ -284,9 +246,9 @@ describe('Entity Set (Mem)', () => {
         
         it('removes an entity and all its components', () => {
             let e:Entity;
-            let es = createEntitySet({});
+            let [es,buildEntity] = buildEntitySet();
 
-            [stack,e] = buildEntity( stack, ({component}) => {
+            e = buildEntity( es, ({component}) => {
                 component('/component/channel', {name: 'chat'});
                 component('/component/status', {status: 'inactive'});
                 component('/component/topic', {topic: 'data-structures'});
@@ -306,178 +268,38 @@ describe('Entity Set (Mem)', () => {
         });
     });
 
-    describe('Query', () => {
-
-        let es:EntitySet;
-
-        beforeEach( async () => {
-            [,es] = await prepareFixture('todo.ldjson', {addToEntitySet:true});
-        })
-
-        // it('retrieves by entity id', async () => {
-        //     // Log.debug('stack', stack.items);//, _getCallerFile() );
-        //     // 
-
-        //     let q = { '@e': 100 };
-        //     let list = esQuery( es, q ) as EntityList;
-
-        //     // Log.debug('result', list);
-
-        //     assert.include( list.entityIds, 100 );
-        //     // entity id
-        // })
-
-        // it('retrieves components by def id', async () => {
-        //     // returns all components that match
-        //     let q = {'@d': '/component/completed' };
-        //     let list = esQuery( es, q ) as ComponentList;
-
-        //     // Log.debug('es', es);
-        //     let coms = esGetComponents( es, list );
-            
-        //     // Log.debug('result', coms);
-
-        //     assert.equal( coms.length, 3 );
-        //     assert.ok( coms.reduce( (v,c) => v && 'isComplete' in c.attributes, true ) );
-
-        //     // [ value (component), entityId ]
-        //     // componentlist ( [entityId,defId] )
-        // })
-
-        // it('retrieves entities by def id', async () => {
-        //     // returns all entities that have this component
-        //     let q = {'@e': '/component/completed' };
-        //     let list = esQuery( es, q ) as EntityList;
-
-            
-        //     let e = esGetEntities( es, list );
-            
-        //     assert.equal( e.length, 3 );
-        //     // [ value (entityId) ]
-        //     // entitylist [ eid, ... ]
-        // })
-
-        // it('retrieves entity by id and def id', async () => {
-        //     // returns component on entity 101
-        //     // the trick here is that this is a two pass op.
-        //     // first the entity is selected, then the component
-        //     // the result is a componentlist because of the component
-        //     let q = { '@e':101, '@d': '/component/completed' };
-        //     let list = esQuery( es, q ) as ComponentList;
-            
-        //     // Log.debug('result', es);
-            
-        //     let coms = esGetComponents( es, list );
-            
-        //     // Log.debug('result', coms);
-
-        //     assert.equal( getComponentEntityId( coms[0] ), 101 );
-        // });
-
-        it('compiles query', async () => {
-            let cases = [
-                [
-                    // select entity by id
-                    { '@e': 100 },
-                    [ '@e', 100 ],
-                ],
-                [
-                    // select entities with components
-                    {'@e': ['/component/completed', '/component/title'] },
-                    ['EC', [1,2] ],
-                ],
-                [
-                    // select def
-                    {'@d': '/component/completed' },
-                    ['@d', [2]],
-                ],
-                [
-                    // select components
-                    {'@d': ['/component/completed', '/component/title'] },
-                    ['@d', [1,2] ],
-                ],
-                [
-                    // select component on entity
-                    { '@e':101, '@d': '/component/completed' },
-                    [ 'EC', 101, [2] ]
-                ],
-                [
-                    // select attribute on entity
-                    { '@e': 102, '@a':'title' },
-                    [ 'EA', 102, 'title' ]
-                ],
-                [
-                    // select component attribute
-                    { '@d': '/component/title', '@a':'text' },
-                    [ 'CA', [1], 'text']
-                ],
-                [
-                    // select attribute on component
-                    { '@e': ['/component/priority','/component/completed'], '@a':'priority' },
-                    [ 'CA', [2,3], 'priority']
-                ]
-            ];
-
-            // cases.forEach( ([q,expected]) => {
-            //     let cq = compileQueryPart(es,registry,q);
-            //     Log.debug('compiled', cq);
-            //     assert.deepEqual( cq, expected );
-            // })
-
-        })
-
-        // it('retrieves component attributes', async () => {
-        //     let q:ESQuery = { '@d': '/component/title', '@a':'text' };
-        //     // returns entities which have the components
-
-            
-
-        //     let list = esQuery( es, q );
-        //      
-        //     Log.debug('result', list);
-
-        //     assert.lengthOf( list as any, 5 );
-        //     assert.equal(list[0][2], 'do some shopping');
-
-        //     // returns a list of component attributes associated to an entity 
-        //     q = { '@e': ['/component/priority','/component/completed'], '@a':'priority' };
-        //     // q = { '@e': ['/component/priority','/component/completed'] };
-
-        //     list = esQuery( es, q );
-        //      
-        //     Log.debug('result', list); // [ 'CV', '[100,3]', 10 ]
-
-        //     assert.deepEqual( (list as any).map( v => v[2] ), [10] );
-
-        //     // [ eid, attrVal ]
-        //     // {"@e": ['/component/completed','/component/priority'] },
-        //     // entitylist - [ eid, ... ]
-        // })
-
-        it('retrieves component attributes', async () => {
-            
-            // let q = [ [VL,'drink some tea'], { '@d': '/component/title', '@a':'text' }, '=='];
-            let q = [ '==', { '@d': '/component/title', '@a':'text' }, [VL,'drink some tea'] ];
-            // select attributes
-            // select components which have an attribute
-            // selects /component/title
-
-            // returns the values of text on the component
-            // { '@at':'/component/title#text' },
-            // return [value, [eid,did],attr]  tuple [ value, entityid, defid, attrName ]
-            // [ 'drink some tea', {'@e':103, '@c':'/component/title, '@at':'text'} ]
-            // "drink some tea", { '@at':'/component/title#text' }, '=='
-            // exists? value|undefined
-            // "drink some tea", { '@c':'/component/title#text' }, '=='
-            // componentlist [ [eid,did], ... ]
-            // true, { '@e':'/component/completed#isComplete' }, '=='
-            // entitylist? 
-        })
-
-    })
-
 })
 
+function buildEntitySet(options?): [EntitySetMem, Function] {
+    let es = createEntitySet(options);
+
+    const defs = [
+        { uri: '/component/channel', properties: ['name'] },
+        { uri: '/component/status', properties: ['status'] },
+        { uri: '/component/topic', properties: ['topic'] },
+        { uri: '/component/username', properties: ['username'] },
+        { uri: '/component/channel_member', properties: ['channel_member'] },
+    ]
+
+    es = defs.reduce((es, dspec) => {
+        [es] = register(es, dspec);
+        return es;
+    }, es);
+
+    const buildEntity = (es: EntitySet, buildFn: BuildQueryFn, eid: number = 0) => {
+        let e = createEntityInstance(eid);
+        const component = (uri: string, props: object) => {
+            let def = getByUri(es, uri);
+            let com = createComponent(es as any, def, props);
+            e = addComponentToEntity(e, com);
+        };
+
+        buildFn({ component });
+        return e;
+    }
+
+    return [es, buildEntity];
+}
 
 // https://stackoverflow.com/a/29581862
 function _getCallerFile() {

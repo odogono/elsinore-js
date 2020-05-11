@@ -31,6 +31,7 @@ import {
     onEntitySet, onAddComponentToEntity,
     onMap,
     onReduce,
+    onPluck,
     onFilter,
     onClear,
     onValue,
@@ -38,6 +39,7 @@ import {
     onAddToEntitySet,
     onAssertType,
     unpackStackValue,
+    unpackStackValueR,
     onBuildMap
 } from '../../src/query/words';
 import {
@@ -77,36 +79,6 @@ const sv = (v): StackValue => [SType.Value, v];
 
 describe('Query', () => {
 
-    async function prep( insts?:string ): Promise<QueryStack> {
-        let stack = createStack();
-        stack = addWords(stack, [
-            ['+', onAddComponentToEntity, SType.Entity, SType.Component],
-            ['+', onAddComponentToEntity, SType.Entity, SType.Array],
-            ['+', onAddToEntitySet, SType.EntitySet, SType.Any],
-            // pattern match stack args
-            ['+', onAddArray, SType.Array, SType.Any],
-            // important that this is after more specific case
-            ['+', onAdd, SType.Value, SType.Value],
-            ['[', onArrayOpen],
-            ['{', onMapOpen],
-            ['to_map', onBuildMap],
-            ['swap', onSwap, SType.Any, SType.Any],
-            ['define', onDefine],
-            ['concat', onConcat],
-            ['cls', onClear],
-            ['!d', onComponentDef, SType.Map],
-            ['!d', onComponentDef, SType.Array],
-            ['!d', onComponentDef, SType.Value],
-            ['!es', onEntitySet, SType.Map],
-            ['!c', onComponent, SType.Array],
-            ['!e', onEntity, SType.Value]
-        ]);
-        if( insts ){
-            [stack] = await pushValues(stack, parse(insts) );
-        }
-        return stack;
-    }
-
 
     it('executes an async word', async () => {
         let stack = createStack();
@@ -126,25 +98,25 @@ describe('Query', () => {
     })
 
     it('swaps the top two elements of the stack', async () => {
-        let stack = await prep(`1 2 3 4 swap`);
+        let [stack] = await prep(`1 2 3 4 swap`);
 
         assert.deepEqual(stack.items, [sv(1), sv(2), sv(4), sv(3)]);
     })
 
     it('builds arrays', async () => {
-        let stack = await prep(`[ hello, world ]`);
+        let [stack] = await prep(`[ hello, world ]`);
         let [,result] = pop(stack);
-        assert.deepEqual( unpackStackValue(result), [ 'hello', 'world' ]);
+        assert.deepEqual( unpackStackValueR(result), [ 'hello', 'world' ]);
     });
 
     it('adds to an array', async () => {
-        let stack = await prep(`[] hello +`);
+        let [stack] = await prep(`[] hello +`);
         let [,result] = pop(stack);
-        assert.deepEqual( unpackStackValue(result), [ 'hello' ]);
+        assert.deepEqual( unpackStackValueR(result), [ 'hello' ]);
     })
 
     it('builds maps', async () => {
-        let stack = await prep(`{ name: alex, age: 45, isActive }`);
+        let [stack] = await prep(`{ name: alex, age: 45, isActive }`);
 
         // stack = addWord(stack, ']', onArrayClose );
         // Log.debug('stack', stringify(stack.items,1) );
@@ -159,59 +131,59 @@ describe('Query', () => {
     });
 
     it('builds a map from an array', async () => {
-        let stack = await prep(`[ name alex age 45 ] to_map`);
+        let [stack] = await prep(`[ name alex age 45 ] to_map`);
 
         let [,result] = pop(stack);
-        let map = unpackStackValue(result, SType.Map);
+        let map = unpackStackValueR(result, SType.Map);
         assert.deepEqual(map, { name: 'alex', age: 45 });
     })
 
     it('defines a word', async () => {
-        let stack = await prep(`1974 year define year`);
+        let [stack] = await prep(`1974 year define year`);
         
         assert.deepEqual(stack.items, [[SType.Value, 1974]]);
         // Log.debug('stack:', stackToString(stack));
     });
         
     it('defines a word that is a function', async () => {
-        let stack = await prep(`cls [100, +] plus1k define`);
+        let [stack] = await prep(`cls [100, +] plus1k define`);
 
         let data = parse(` 13 plus1k`);
 
         [stack] = await pushValues(stack, data);
         let [,result] = pop(stack);
-        assert.deepEqual( unpackStackValue(result) , 113);
+        assert.deepEqual( unpackStackValueR(result) , 113);
     });
 
     it('creates a ComponentDef', async () => {
-        let stack = await prep(`[ /component/title, text ] !d`);
+        let [stack] = await prep(`[ /component/title, [text] ] !d`);
 
         let [,result] = pop(stack);
-        assert.ok(isComponentDef( unpackStackValue(result) ));
+        assert.ok(isComponentDef( unpackStackValueR(result) ));
     })
 
     it('creates an EntitySet', async () => {
-        let stack = await prep(`{} !es`);
+        let [stack] = await prep(`{} !es`);
         
         let [,result] = pop(stack);
-        assert.ok(isEntitySet( unpackStackValue(result) ));
+        assert.ok(isEntitySet( unpackStackValueR(result) ));
     })
 
     it('adds a def to an EntitySet', async () => {
-        let stack = await prep(`{} !es /component/text !d +`);
+        let [stack] = await prep(`{} !es /component/text !d +`);
         
         let [,result] = pop(stack);
-        assert.ok(isEntitySet( unpackStackValue(result) ));
+        assert.ok(isEntitySet( unpackStackValueR(result) ));
     })
 
     it('creates a component', async () => {
         let query = `[ /component/title { text:introduction } ] !c`;
-        let stack = await prep(`{} !es`);
+        let [stack] = await prep(`{} !es`);
         
         let result;
         [stack,result] = pop(stack);
         // Log.debug('stack', stack.items );
-        let es = unpackStackValue(result);
+        let es = unpackStackValueR(result);
         let def;
         [es, def] = register(es, { uri: "/component/title", properties: ["text"] });
         [stack] = await push(stack, [SType.EntitySet, es]);
@@ -224,7 +196,7 @@ describe('Query', () => {
 
     it('adds a component', async () => {
         
-        let stack = await prep(`{} !es 
+        let [stack] = await prep(`{} !es 
         [/component/completed [{name: isComplete, type:boolean default:false}]] !d
         + 
         [ /component/completed {isComplete: true} ] !c +
@@ -247,10 +219,10 @@ describe('Query', () => {
     });
 
     it('adds components', async () => {
-        let stack = await prep(`
+        let [stack] = await prep(`
         // setup
         {} !es
-        [ "/component/title", "text" ] !d
+        [ "/component/title", ["text"] ] !d
         { "name":"Completed","uri":"/component/completed","properties":[ { "name":"isComplete","type":"boolean" } ] } !d
         concat
         + // add array of defs to es
@@ -268,7 +240,7 @@ describe('Query', () => {
         // Log.debug('stack>>>:', stackToString(stack) );
 
         let [,result] = pop(stack);
-        let es = unpackStackValue(result);
+        let es = unpackStackValueR(result);
         assert.ok(isEntitySet( es ));
 
         // Log.debug('es:', es );
@@ -281,9 +253,9 @@ describe('Query', () => {
 
 
     it('creates an entity', async () => {
-        let stack = await prep(`100 !e`);
+        let [stack] = await prep(`100 !e`);
         let [,result] = pop(stack);
-        assert.ok(isEntity(unpackStackValue(result)));
+        assert.ok(isEntity(unpackStackValueR(result)));
     });
 
     it('adds a component to an entity', async () => {
@@ -294,12 +266,12 @@ describe('Query', () => {
             [ "/component/priority", {"priority":10}] !c +
             0 !e swap +
         `;
-        let stack = await prep();
+        let [stack] = await prep();
         [stack] = await buildEntitySet(stack);
         [stack] = await pushValues(stack, parse(query));
 
         let [,result] = pop(stack);
-        let e = unpackStackValue(result);
+        let e = unpackStackValueR(result);
 
         assert.ok(isEntity(e));
         assert.lengthOf(e.components, 3);
@@ -309,22 +281,8 @@ describe('Query', () => {
         // let insts = await loadFixture('todo.ldjson');
         let insts = await loadFixture('chess.insts');
         // Log.debug(insts);
-        let stack = createStack();
-        stack = addWords(stack, [
-            ['assert_type', onAssertType],
-            ['swap', onSwap],
-            ['concat', onConcat],
-            ['[', onArrayOpen],
-            ['{', onMapOpen],
-            ['!e', onEntity],
-            ['!d', onComponentDef, SType.Map],
-            ['!d', onComponentDef, SType.Array],
-            ['!c', onComponent, SType.Array],
-            ['!es', onEntitySet, SType.Map],
-            ['+', onAddArray, SType.Array, SType.Any],
-            ['+', onAddComponentToEntity, SType.Entity, SType.Any],
-            ['+', onAddToEntitySet, SType.EntitySet, SType.Any],
-        ]);
+        let [stack] = await prep();
+        
 
         let es = createEntitySet();
         [stack] = await push(stack, [SType.EntitySet, es]);
@@ -332,7 +290,7 @@ describe('Query', () => {
         [stack] = await pushValues(stack, insts);
 
 
-        es = unpackStackValue(stack.items[0]);
+        es = unpackStackValueR(stack.items[0]);
 
         // Log.debug('es', es);
         assert.equal(entitySetSize(es), 32);
@@ -342,109 +300,101 @@ describe('Query', () => {
         // Log.debug('stack', insts);
         // [stack] = await pushValues(stack, insts);
 
-        // Log.debug('es', unpackStackValue(stack.items[1]));
+        // Log.debug('es', unpackStackValueR(stack.items[1]));
     });
 
     describe('Map', () => {
 
-        async function prep( insts?:string ): Promise<QueryStack> {
-            let stack = createStack();
-            stack = addWords(stack, [
-                ['*', onAdd, SType.Value, SType.Value],
-                ['+', onAdd, SType.Value, SType.Value],
-                ['%', onAdd, SType.Value, SType.Value],
-                ['==', onAdd, SType.Value, SType.Value],
-                ['swap', onSwap, SType.Any, SType.Any],
-                ['map', onMap, SType.Array, SType.Array],
-                ['filter', onFilter, SType.Array, SType.Array],
-                ['reduce', onReduce, SType.Array, SType.Value, SType.Array],
-                ['[', onArrayOpen],
-            ]);
-            if( insts ){
-                [stack] = await pushValues(stack, parse(insts) );
-            }
-            return stack;
-        }
 
-        it('applies to each value in the array', async () => {
-            let stack = await prep(`[1 2 3 4] [10 *] map`);
+        it('maps values', async () => {
+            let [stack] = await prep(`[1 2 3 4] [10 *] map`);
             
             let [,result] = pop(stack);
-            assert.deepEqual( unpackStackValue(result), [10,20,30,40] );
+            assert.deepEqual( unpackStackValueR(result), [10,20,30,40] );
         })
 
-        it('reduces values', async () => {
-            let stack = await prep(`[1 2 3 4] 0 [+] reduce`);
+        it('plucks values', async () => {
+            let [stack] = await prep(`[
+                {text: hello} {text: world}
+            ] text pluck`);
+
+            // ilog(stack.items);
             let [,result] = pop(stack);
-            assert.equal( unpackStackValue(result), 10 );
+            assert.deepEqual( unpackStackValueR(result), ['hello', 'world'] );
+        });
+
+        it('plucks multiple values', async () => {
+            let [stack] = await prep(`[
+                {@e: 3, text: hello, priority: 2}
+                {@e: 4, text: world, priority: -1, status: active}
+            ] [@e, text, status] pluck`);
+
+            // ilog(stack.items);
+            let [,result] = pop(stack);
+            assert.deepEqual( unpackStackValueR(result), [
+                {'@e': 3, text:'hello'},
+                {'@e': 4, text:'world', status:'active'}
+            ] );
+        });
+
+        it('reduces values', async () => {
+            let [stack] = await prep(`[1 2 3 4] 0 [+] reduce`);
+            let [,result] = pop(stack);
+            assert.equal( unpackStackValueR(result), 10 );
         })
 
         it('filters values', async () => {
             // applies an is-even filter
-            let stack = await prep(`[1 2 3 4] [ 2 swap % 0 == ] filter`);
-            Log.debug('stack:', stackToString(stack) );
+            let [stack] = await prep(`[1 2 3 4] [ 2 swap % 0 == ] filter`);
+            // Log.debug('stack:', stackToString(stack) );
             let [,result] = pop(stack);
-            assert.deepEqual( unpackStackValue(result), [2,4] );
+            assert.deepEqual( unpackStackValueR(result), [2,4] );
         })
 
     })
 
     describe('Select', () => {
 
-        async function prep(insts?:string): Promise<[QueryStack,EntitySet]> {
-            let [stack, es] = await loadEntitySetFromFixture('todo.ldjson');
-
-            stack = addWords(stack, [
-                ['cls', onClear],
-                ['select', onSelect, SType.EntitySet, SType.Array],
-                ['spread', onArraySpread, SType.Array ],
-                ['[', onArrayOpen],
-            ]);
-
-            if( insts ){
-                [stack] = await pushValues(stack, parse(insts) );
-            }
-
-            return [stack, es];
-        }
-        
         it('fetches entities by id', async () => {
             let query = `[ 102 @e ] select`;
-            let [stack] = await prep(query);
+            let [stack] = await prep(query, 'todo.ldjson');
 
-            // Log.debug('stack:', stackToString(stack) );
-            // Log.debug('stack:', stack.items );
+            // ilog(stack.items);
             let [,result] = pop(stack);
 
             // the return value is an entity
-            assert.equal( unpackStackValue(result), 102 );
-            // Log.debug('stack:', unpackStackValue(stack.items[0]).map(e => e.bitField.toValues()) );
+            assert.equal( unpackStackValueR(result), 102 );
+            // Log.debug('stack:', unpackStackValueR(stack.items[0]).map(e => e.bitField.toValues()) );
         });
 
         it('fetches entities by did', async () => {
-            let query = `[ "/component/title" !bf @e] select`;
-            let [stack] = await prep(query);
+            let query = `[ "/component/completed" !bf @e] select`;
+            let [stack] = await prep(query, 'todo.ldjson');
 
+            // Log.debug('stack:', stringify(stack.items) );
             // Log.debug('stack:', stackToString(stack) );
-            // Log.debug('stack:', unpackStackValue(stack.items[0]).map(e => e.bitField.toValues()) );
+            // Log.debug('stack:', unpackStackValueR(stack.items[0]).map(e => e.bitField.toValues()) );
             let [,result] = pop(stack);
             assert.deepEqual( 
-                unpackStackValue(result).map(e => e.bitField.toValues()), 
-                [ [ 1, 3 ], [ 1 ], [ 1, 2 ], [ 1, 2 ], [ 1, 2, 3 ]] );
+                unpackStackValueR(result).map(e => e.bitField.toValues()), 
+                [  [ 1, 2 ], [ 1, 2 ], [ 1, 2, 3 ]] );
         });
 
 
         it('fetches component attributes', async () => {
             let [stack] = await prep(`[ 
-                /component/title text !ca 
-                @cv
-            ] select`);
+                /component/title !bf
+                @c
+                text pluck
+            ] select`, 'todo.ldjson');
 
+            // ilog(stack.words);
+            // ilog(stack.items);
             // Log.debug('stack:', stackToString(stack) );
             // Log.debug('stack:', stack.items );
 
             let [,result] = pop(stack);
-            assert.deepEqual( unpackStackValue(result), [
+            assert.deepEqual( unpackStackValueR(result), [
                 'do some shopping', 
                 'drink some tea', 
                 'turn on the news', 
@@ -456,14 +406,14 @@ describe('Query', () => {
         it('fetches entity component attribute', async () => {
             let [stack] = await prep(`[ 
                 103 @e 
-                /component/title text !ca 
-                @cv 
-            ] select`);
+                /component/title !bf
+                @c
+                text pluck
+            ] select`, 'todo.ldjson');
 
-            // Log.debug('stack:', stackToString(stack) );
-            // Log.debug('stack:', stack.items );
+            // ilog(stack.items);
             let [,result] = pop(stack);
-            assert.equal(unpackStackValue(result), 'drink some tea' );
+            assert.equal(unpackStackValueR(result), 'drink some tea' );
         })
 
         it('fetches matching component attribute', async () => {
@@ -474,14 +424,14 @@ describe('Query', () => {
                 // equals in this context means match, rather than equality
                 // its result will be components
                 ==
-            ] select`);
+            ] select`, 'todo.ldjson');
             
             // Log.debug('stack:', stackToString(stack) );
             // Log.debug('stack:', stringify(stack.items,1) );
 
             let [,result] = pop(stack);
             assert.equal( result[0], SType.Array );
-            let coms = unpackStackValue(result);
+            let coms = unpackStackValueR(result);
             assert.equal( coms[0].text, "do some shopping" );
         });
 
@@ -494,13 +444,13 @@ describe('Query', () => {
                 // its result will be components
                 ==
                 @e
-            ] select`);
+            ] select`, 'todo.ldjson');
             
             // Log.debug('stack:', stackToString(stack) );
             // Log.debug('stack:', stringify(stack.items,1) );
             
             let [,result] = pop(stack);
-            let ents = unpackStackValue(result);
+            let ents = unpackStackValueR(result);
             // Log.debug('stack:', ents );
             
             assert.deepEqual( ents.map(e => getEntityId(e)), [101,100] );
@@ -512,36 +462,36 @@ describe('Query', () => {
 });
 
 
-async function loadEntitySetFromFixture(name: string): Promise<[QueryStack, EntitySet]> {
-    let insts = await loadFixture('todo.ldjson');
-    // Log.debug(insts);
-    let stack = createStack();
-    stack = addWords(stack, [
-        ['assert_type', onAssertType],
-        ['swap', onSwap],
-        ['concat', onConcat],
-        ['[', onArrayOpen],
-        ['{', onMapOpen],
-        ['!e', onEntity],
-        // ['@e', onEntityFetch, SType.Value],
-        ['!d', onComponentDef, SType.Array],
-        ['!c', onComponent, SType.Array],
-        ['!es', onEntitySet, SType.Map],
-        ['+', onAddArray, SType.Array, SType.Any],
-        ['+', onAddComponentToEntity, SType.Entity, SType.Any],
-        ['+', onAddToEntitySet, SType.EntitySet, SType.Any],
-    ]);
+// async function loadEntitySetFromFixture(name: string): Promise<[QueryStack, EntitySet]> {
+//     let insts = await loadFixture('todo.ldjson');
+//     // Log.debug(insts);
+//     let stack = createStack();
+//     stack = addWords(stack, [
+//         ['assert_type', onAssertType],
+//         ['swap', onSwap],
+//         ['concat', onConcat],
+//         ['[', onArrayOpen],
+//         ['{', onMapOpen],
+//         ['!e', onEntity],
+//         // ['@e', onEntityFetch, SType.Value],
+//         ['!d', onComponentDef, SType.Array],
+//         ['!c', onComponent, SType.Array],
+//         ['!es', onEntitySet, SType.Map],
+//         ['+', onAddArray, SType.Array, SType.Any],
+//         ['+', onAddComponentToEntity, SType.Entity, SType.Any],
+//         ['+', onAddToEntitySet, SType.EntitySet, SType.Any],
+//     ]);
 
-    let es = createEntitySet();
-    [stack] = await push(stack, [SType.EntitySet, es]);
+//     let es = createEntitySet();
+//     [stack] = await push(stack, [SType.EntitySet, es]);
 
-    [stack] = await pushValues(stack, insts);
+//     [stack] = await pushValues(stack, insts);
 
-    let esValue = findValue(stack, SType.EntitySet);
-    es = esValue ? esValue[1]: undefined;
+//     let esValue = findValue(stack, SType.EntitySet);
+//     es = esValue ? esValue[1]: undefined;
 
-    return [stack, es];
-}
+//     return [stack, es];
+// }
 
 async function loadFixture(name: string) {
     const path = Path.resolve(__dirname, `../fixtures/${name}`);
@@ -560,4 +510,82 @@ export async function buildEntitySet(stack: QueryStack): Promise<[QueryStack, En
         { uri: "/component/priority", properties: [{ "name": "priority", "type": "integer", "default": 0 }] });
     [stack] = await push(stack, [SType.EntitySet, es]);
     return [stack, es];
+}
+
+
+async function prep( insts?:string, fixture?:string ): Promise<[QueryStack,EntitySet]> {
+    let stack = createStack();
+    let es:EntitySet;
+
+    stack = addWords(stack, [
+        ['+', onAddComponentToEntity, SType.Entity, SType.Component],
+        ['+', onAddComponentToEntity, SType.Entity, SType.Array],
+        ['+', onAddToEntitySet, SType.EntitySet, SType.Any],
+        // pattern match stack args
+        ['+', onAddArray, SType.Array, SType.Any],
+        // important that this is after more specific case
+        ['+', onAdd, SType.Value, SType.Value],
+        ['*', onAdd, SType.Value, SType.Value],
+        ['%', onAdd, SType.Value, SType.Value],
+        ['==', onAdd, SType.Value, SType.Value],
+
+        ['[', onArrayOpen],
+        ['{', onMapOpen],
+        ['to_map', onBuildMap],
+        ['swap', onSwap, SType.Any, SType.Any],
+        ['map', onMap, SType.Array, SType.Array],
+        ['pluck', onPluck, SType.Array, SType.Value],
+        ['pluck', onPluck, SType.Array, SType.Array],
+        ['filter', onFilter, SType.Array, SType.Array],
+        ['reduce', onReduce, SType.Array, SType.Value, SType.Array],
+        ['define', onDefine],
+        ['concat', onConcat],
+        ['cls', onClear],
+        ['select', onSelect, SType.EntitySet, SType.Array],
+        ['spread', onArraySpread, SType.Array ],
+        ['!d', onComponentDef, SType.Map],
+        ['!d', onComponentDef, SType.Array],
+        ['!d', onComponentDef, SType.Value],
+        ['!es', onEntitySet, SType.Map],
+        ['!c', onComponent, SType.Array],
+        ['!e', onEntity, SType.Value],
+        ['assert_type', onAssertType],
+    ]);
+    if( fixture ){
+        es = createEntitySet();
+        [stack] = await push(stack, [SType.EntitySet, es]);
+
+        let todoInsts = await loadFixture('todo.ldjson');
+        [stack] = await pushValues(stack, todoInsts);
+
+        let esValue = findValue(stack, SType.EntitySet);
+        es = esValue ? esValue[1]: undefined;
+    }
+    if( insts ){
+        [stack] = await pushValues(stack, parse(insts) );
+    }
+    return [stack,es];
+}
+
+
+
+// async function prep(insts?:string): Promise<[QueryStack,EntitySet]> {
+//     let [stack, es] = await loadEntitySetFromFixture('todo.ldjson');
+
+//     stack = addWords(stack, [
+//         ['cls', onClear],
+        
+//         ['[', onArrayOpen],
+//     ]);
+
+//     if( insts ){
+//         [stack] = await pushValues(stack, parse(insts) );
+//     }
+
+//     return [stack, es];
+// }
+
+function ilog(...args){
+    const util = require('util');
+    console.log( util.inspect( ...args, {depth:null} ) );
 }

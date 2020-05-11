@@ -5,10 +5,10 @@
 // position of the entity on the board
 [ 
     "/component/position", 
-    {"properties":[
+    [
         { "name":"file", "type": "string" },
         { "name":"rank", "type": "integer" }
-    ]}
+    ]
 ] !d +
 
 // the colour of the entity; white or black

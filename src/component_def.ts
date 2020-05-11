@@ -5,7 +5,7 @@ import { toCamelCase, toCapitalized } from './util/to';
 
 
 export const Type = '@d'; 
-
+export type ComponentDefId = number;
 
 export enum PropertyType {
     String,
@@ -85,7 +85,7 @@ export function create( ...args:any[] ): ComponentDef {
     else if( isObject(third) ){
         params = {...third, ...params };
     }
-    
+    // console.log('[create]', params );
     
     return createFromObj(params);
 }
@@ -199,7 +199,8 @@ export function createProperty(params:any): ComponentDefProperty {
     } else if( isObject(params) ) {
         name = params.name || name;
         type = params.type || type;
-        defaultValue = params.default || defaultValue;
+        defaultValue = params.default !== undefined ? params.default : defaultValue;
+        // console.log('but', name, params.default);
         
         for( let key of Object.keys(params) ){
             if( key === 'additional' ){

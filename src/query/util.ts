@@ -16,8 +16,6 @@ export function valueToString( val:StackValue ):string {
             return type;
         case SType.ComponentAttr:
             return `(${type}, ${stringify(value)})`;
-        case SType.ComponentValue:
-            return `(${type}, ${stringify(value)})`;
         case SType.ComponentDef:
             return `(${type} ${value.uri})`;
         case SType.Component:
@@ -38,6 +36,9 @@ export function valueToString( val:StackValue ):string {
             },[]).join(',') + '}';
         case SType.Value:
             return `${stringify(value)}`;
+        case SType.Filter:
+            let [op,left,right] = value;
+            return `${op} ${valueToString(left)} ${valueToString(right)}`;
         // case SType.Undefined:
         //     return `undefined`;
         default:

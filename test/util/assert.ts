@@ -1,9 +1,8 @@
 import { assert } from 'chai';
 import {
-    ComponentRegistry,
     resolveComponentDefIds,
     Type as ComponentRegistryT,
-    getByDefId} from '../../src/component_registry';
+    getByDefId} from '../../src/entity_set/registry';
 import { Entity, getComponent, getComponents, createBitfield, getEntityId, EntityList } from '../../src/entity';
 import { EntitySet, Type as EntitySetT, 
     create as createEntitySet,

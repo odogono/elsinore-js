@@ -64,7 +64,7 @@ export function isInteger(i:any): boolean {
  * Returns true if the passed value is a boolean
  */
 export function isBoolean(value:any):boolean {
-    return value && getClass.call(value) === '[object Boolean]';
+    return value !== undefined && getClass.call(value) === '[object Boolean]';
 }
 
 /**
