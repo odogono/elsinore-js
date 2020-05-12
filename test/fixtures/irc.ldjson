@@ -6,27 +6,22 @@
 
 // component defs
 
-[ "/component/nickname", { "properties":[ { "name": "nickname", "type":"string" } ] } ] !d +
+[ "/component/nickname", [ { name: "nickname" } ] ] !d +
 
-[ "/component/username", ["username"] ] !d +
+[ "/component/username", [ username] ] !d +
     
-[ "/component/name", [ { "name":"name", "type":"string", "minLength":3, "maxLength":64 } ] ] !d +
+[ "/component/name", [ { name:"name", "type":"string", "minLength":3, "maxLength":64 } ] ] !d +
 
-[ "/component/status", [ "status" ] ] !d +
+[ "/component/status", [ status ] ] !d +
 
-[ "/component/channel", [ "name" ] ] !d +
+[ "/component/channel", [ name: "name" ] ] !d +
 
-[
-    "@d", "/component/channel_member",
-    {
-        "properties":[
-            { "name": "channel", "type": "integer", "format": "entity" },
-            { "name": "client", "type": "integer", "format": "entity" }
-        ]
-    }
-] !d +
+[ "/component/channel_member", [
+    { "name": "channel", "type": "integer", "format": "entity" },
+    { "name": "client", "type": "integer", "format": "entity" }
+] ] !d +
 
-"/component/topic", [ "topic" ] !d +
+[ "/component/topic" [ "topic" ] ] !d +
 
 "/component/mode/invisible" !d +
 
@@ -38,7 +33,7 @@
 
 "/component/mode/private" !d +
 
-[ "/component/mode/limit", [ { "name": "limit", "type": "integer"} ] ] !d +
+[ "/component/mode/limit" [ { "name": "limit", "type": "integer"} ] ] !d +
 
 
 
