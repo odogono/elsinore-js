@@ -4,6 +4,7 @@ import { createLog } from "../util/log";
 import { deepExtend } from "../util/deep_extend";
 import { unpackStackValue } from "./words";
 import { EntitySet } from "../entity_set";
+import { stackToString } from "./util";
 
 export enum SType {
     Value = '%v',
@@ -154,7 +155,8 @@ export async function push<QS extends QueryStack>(stack: QS, input: any | StackV
             // Log.warn('[push]', err.stack);
             let e = new StackError(`${err.message}: ${unpackStackValue(value)}`);
             e.original = err
-            e.stack = e.stack.split('\n').slice(0,2).join('\n') + '\n' + err.stack;
+            e.stack = e.stack.split('\n').slice(0,2).join('\n') + '\n' 
+                + [...new Set(err.stack.split('\n'))].join('\n');
             throw e;
         }
     }
@@ -174,32 +176,24 @@ export function pushRaw<QS extends QueryStack>(stack: QS, value: StackValue): QS
 
 
 export async function pushValues<QS extends QueryStack>(stack: QS, values: StackValue[]): Promise<[QS, StackValue[]]> {
-    let ovalues: StackValue[];
-
-    let start: [QS, StackValue[]] = [stack, []];
+    let ovalues: StackValue[] = [];
 
     try {
-        [stack, ovalues] = await values.reduce<Promise<[QS, StackValue[]]>>(async (prev, value) => {
-            let out: StackValue[];
-            [stack, out] = await prev;
 
-            return push(stack, value).then(([stack, value]) => {
-                return [stack, [...out, value]];
-            })
-        }, Promise.resolve(start));
-
-    } catch (err) {
-        Log.warn('[pushValues]', err.message );
-        // if( err instanceof StackError ){
-        //     return [stack, []];
-        // }
-        // Log.debug('not a stackerror?', err instanceof StackError, err.name)
-        throw err;
+    
+    for( const value of values ){
+        let ovalue;
+        [stack, ovalue] = await push(stack, value);
+        ovalues.push(ovalue);
     }
-    // for(let ii=0;ii<values.length;ii++ ){
-    //     value = values[ii];
-    //     [stack,value] = push( stack, value );
-    // }
+
+    } catch( err ){
+        let e = new StackError(`${err.message}: ${stackToString(stack)}`);
+        e.original = err
+            e.stack = e.stack.split('\n').slice(0,2).join('\n') + '\n' 
+                + err.stack;// [...new Set(err.stack.split('\n'))].join('\n');
+            throw e;
+    }
     return [stack, ovalues];
 }
 
