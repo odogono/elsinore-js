@@ -67,6 +67,7 @@ import {
 import { isComponent, Component, isComponentList } from '../../src/component';
 import { esToInsts } from '../util/stack';
 import { getChanges, ChangeSetOp } from '../../src/entity_set/change_set';
+import { fetchComponents, buildBitfield } from '../../src/entity_set/query';
 
 
 
@@ -424,8 +425,12 @@ describe('Query', () => {
                 // equals in this context means match, rather than equality
                 // its result will be components
                 ==
-            ] select`, 'todo.ldjson');
+                /component/title !bf
+                @c
+            ] select
+            `, 'todo.ldjson');
             
+            // ilog(stack.items);
             // Log.debug('stack:', stackToString(stack) );
             // Log.debug('stack:', stringify(stack.items,1) );
 
@@ -446,15 +451,32 @@ describe('Query', () => {
                 @e
             ] select`, 'todo.ldjson');
             
-            // Log.debug('stack:', stackToString(stack) );
-            // Log.debug('stack:', stringify(stack.items,1) );
+            // ilog(stack.items);
             
             let [,result] = pop(stack);
             let ents = unpackStackValueR(result);
             // Log.debug('stack:', ents );
             
-            assert.deepEqual( ents.map(e => getEntityId(e)), [101,100] );
+            assert.deepEqual( ents.map(e => getEntityId(e)), [100,101] );
         });
+
+        it('or condition', async () => {
+            let query = `[
+                /component/position file !ca a ==
+                /component/position file !ca f ==
+                or
+                /component/colour colour !ca white ==
+                and
+                @c
+            ] select`;
+    
+            let [stack,es] = await prep(query, 'chess.insts');
+            // console.log('\n');
+            // Log.debug('stack:', stackToString(stack) );
+            // Log.debug('stack:', stringify(stack.items,1) );
+            // ilog( stack.items );
+        })
+
 
 
     });
@@ -546,8 +568,11 @@ async function prep( insts?:string, fixture?:string ): Promise<[QueryStack,Entit
         ['!d', onComponentDef, SType.Map],
         ['!d', onComponentDef, SType.Array],
         ['!d', onComponentDef, SType.Value],
+        ['!bf', buildBitfield, SType.Array],
+        ['!bf', buildBitfield, SType.Value],
         ['!es', onEntitySet, SType.Map],
         ['!c', onComponent, SType.Array],
+        ['@c', fetchComponents],
         ['!e', onEntity, SType.Value],
         ['assert_type', onAssertType],
     ]);
@@ -555,7 +580,7 @@ async function prep( insts?:string, fixture?:string ): Promise<[QueryStack,Entit
         es = createEntitySet();
         [stack] = await push(stack, [SType.EntitySet, es]);
 
-        let todoInsts = await loadFixture('todo.ldjson');
+        let todoInsts = await loadFixture(fixture);
         [stack] = await pushValues(stack, todoInsts);
 
         let esValue = findValue(stack, SType.EntitySet);

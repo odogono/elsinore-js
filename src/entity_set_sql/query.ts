@@ -32,6 +32,7 @@ import { sqlRetrieveEntityIdByDefId,
     sqlRetrieveComponents, 
     sqlRetrieveEntities } from "./sqlite";
 import { Type, ComponentDefId, ComponentDef } from "../component_def";
+import { onLogicalFilter, parseFilterQuery } from "../entity_set/filter";
 
 const Log = createLog('SQLQuery');
 
@@ -50,16 +51,16 @@ export async function select(es: EntitySetSQL, query: StackValue[]): Promise<Sta
     stack.es = es;
 
     // add first pass words
-    stack = addWords(stack, [
+    stack = addWords<SQLQueryStack>(stack, [
         ['!bf', buildBitfield, SType.Array],
         ['!bf', buildBitfield, SType.Value],
         ['!ca', (stack: SQLQueryStack) => onComponentAttr(es, stack)],
         
-        ['and', onFilter, SType.Any, SType.Any],
-        ['or', onFilter, SType.Any, SType.Any],
-        ['not', onFilter, SType.Any, SType.Any],
-        ['==', onFilter, SType.Any, SType.Any],
-        ['!=', onFilter, SType.Any, SType.Any],
+        ['and', onLogicalFilter, SType.Any, SType.Any],
+        ['or', onLogicalFilter, SType.Any, SType.Any],
+        ['not', onLogicalFilter, SType.Any, SType.Any],
+        ['==', onLogicalFilter, SType.Any, SType.Any],
+        ['!=', onLogicalFilter, SType.Any, SType.Any],
     ]);
 
     [stack] = await pushValues(stack, query);
@@ -136,7 +137,7 @@ export function applyFilter(stack:SQLQueryStack): InstResult<SQLQueryStack> {
 
     // Log.debug('[applyFilter]', filter[2] );
     
-    let result = pr( es, filter[0], filter[1], filter[2] );
+    let result = parseFilterQuery( es, filter[0], filter[1], filter[2] );
     
     // Log.debug('[applyFilter]', 'result' );
     // const util = require('util');
@@ -147,81 +148,81 @@ export function applyFilter(stack:SQLQueryStack): InstResult<SQLQueryStack> {
     return [stack, result];
 }
 
-function pr( es:EntitySetSQL, cmd?, left?, right? ){
-    // Log.debug('[pr]', cmd, left, ',', right);
-    switch(cmd){
-        case 'and':
-        case 'or':
-            return prAnd( es, cmd, left, right );
-        case SType.Bitfield:
-            return [ 'dids', (left as BitField).toValues() ];
-        case '==':
-            return prEquals( es, cmd, left, right );
-        case SType.ComponentAttr:
-            return prCA( es, left[0], left[1] );
-        case SType.Value:
-            return left;
-    }
+// function pr( es:EntitySetSQL, cmd?, left?, right? ){
+//     // Log.debug('[pr]', cmd, left, ',', right);
+//     switch(cmd){
+//         case 'and':
+//         case 'or':
+//             return prAnd( es, cmd, left, right );
+//         case SType.Bitfield:
+//             return [ 'dids', (left as BitField).toValues() ];
+//         case '==':
+//             return prEquals( es, cmd, left, right );
+//         case SType.ComponentAttr:
+//             return prCA( es, left[0], left[1] );
+//         case SType.Value:
+//             return left;
+//     }
     
-}
+// }
 
-function prCA( es:EntitySetSQL,dids, attr ){
-    const did = dids.toValues()[0];
-    const def = getByDefId(es, did );
-    // Log.debug('[prCA]', did, def)
-    return { def:def, key:attr };
-}
+// function prCA( es:EntitySetSQL,dids, attr ){
+//     const did = dids.toValues()[0];
+//     const def = getByDefId(es, did );
+//     // Log.debug('[prCA]', did, def)
+//     return { def:def, key:attr };
+// }
 
-function prEquals( es:EntitySetSQL, cmd, left, right ){
+// function prEquals( es:EntitySetSQL, cmd, left, right ){
     
-    let key;
-    let val;
-    if( left[0] === SType.Value ){
-        val = left[1];
-        key = pr(es,...right);
-    } else if( right[0] === SType.Value ){
-        val = right[1];
-        key = pr(es, ...left);
-    } else {
-        return {eq:[ pr(es,...left), pr(es,...right)]};
-    }
-    if( 'key' in key ){
-        let {key:kk, ...rest} = key;
-        return [ cmd, rest, [kk,val] ];
-    }
+//     let key;
+//     let val;
+//     if( left[0] === SType.Value ){
+//         val = left[1];
+//         key = pr(es,...right);
+//     } else if( right[0] === SType.Value ){
+//         val = right[1];
+//         key = pr(es, ...left);
+//     } else {
+//         return {eq:[ pr(es,...left), pr(es,...right)]};
+//     }
+//     if( 'key' in key ){
+//         let {key:kk, ...rest} = key;
+//         return [ cmd, rest, [kk,val] ];
+//     }
 
-    // Log.debug('[prEquals]', [left,right]);
+//     // Log.debug('[prEquals]', [left,right]);
     
-    return { ...key, val };
-}
-function prAnd( es:EntitySetSQL, cmd, left, right ){
-    let l = pr( es, ...left );
-    let r = right !== undefined ? pr( es, ...right ) : undefined;
-    return [ cmd, l, r ];
-}
+//     return { ...key, val };
+// }
+// function prAnd( es:EntitySetSQL, cmd, left, right ){
+//     let l = pr( es, ...left );
+//     let r = right !== undefined ? pr( es, ...right ) : undefined;
+//     return [ cmd, l, r ];
+// }
 
 
-export function onFilter(stack:SQLQueryStack, value:StackValue): InstResult<SQLQueryStack> {
-    let left, right;
-    const [,op] = value;
+// export function onFilter(stack:SQLQueryStack, value:StackValue): InstResult<SQLQueryStack> {
+//     let left, right;
+//     const [,op] = value;
 
-    // Log.debug('[onFilter]', value);
+//     // Log.debug('[onFilter]', value);
     
-    [stack, right] = pop(stack);
-    [stack, left] = pop(stack);
-    if( left[0] === SType.Filter ){
-        left = left[1];
-    }
-    if( right[0] === SType.Filter ){
-        right = right[1];
-    }
-    // Log.debug('[onFilter]', op, 'L', left);
-    // Log.debug('[onFilter]', op, 'R', right);
+//     [stack, right] = pop(stack);
+//     [stack, left] = pop(stack);
+//     if( left[0] === SType.Filter ){
+//         left = left[1];
+//     }
+//     if( right[0] === SType.Filter ){
+//         right = right[1];
+//     }
+//     // Log.debug('[onFilter]', op, 'L', left);
+//     // Log.debug('[onFilter]', op, 'R', right);
     
-    stack = pushRaw(stack,[SType.Filter, [op, right, left]]);
+//     stack = pushRaw(stack,[SType.Filter, [op, right, left]]);
 
-    return [stack ];
-}
+//     return [stack ];
+// }
 
 
 
