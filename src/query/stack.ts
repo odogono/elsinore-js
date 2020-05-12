@@ -1,4 +1,4 @@
-import { isObject, isString, isPromise } from "../util/is";
+import { isObject, isString, isPromise, isFunction } from "../util/is";
 import { stringify } from "../util/json";
 import { createLog } from "../util/log";
 import { deepExtend } from "../util/deep_extend";
@@ -48,7 +48,7 @@ type WordFn<QS extends QueryStack> = SyncWordFn<QS> | AsyncWordFn<QS>;
 type SyncWordFn<QS extends QueryStack> = (stack: QS, val: StackValue) => InstResult<QS>;
 type AsyncWordFn<QS extends QueryStack> = (stack: QS, val: StackValue) => Promise<InstResult<QS>>;
 
-type WordSpec<QS extends QueryStack> = [string, WordFn<QS>, ...(SType|string)[] ];
+type WordSpec<QS extends QueryStack> = [string, WordFn<QS>|StackValue, ...(SType|string)[] ];
 
 type WordEntry<QS extends QueryStack> = [ WordFn<QS>, SType[] ];
 
@@ -137,12 +137,17 @@ export async function push<QS extends QueryStack>(stack: QS, input: any | StackV
     // Log.debug('[push]','word', input, handler );
     if (handler !== undefined) {
         try {
-            let result = handler(stack, input);
+            if( isStackValue(handler) ){
+                value = (handler as any);
+            } 
+            else {
+                let result = handler(stack, input);
 
-            if (isPromise(result)) {
-                [stack, value, doPush] = await result;
-            } else {
-                [stack, value, doPush] = result as InstResult<QS>;
+                if (isPromise(result)) {
+                    [stack, value, doPush] = await result;
+                } else {
+                    [stack, value, doPush] = result as InstResult<QS>;
+                }
             }
             // if( value ) Log.debug('[push]', value); 
         } catch (err) {
@@ -377,11 +382,11 @@ export interface ExecuteOptions {
 
 
 export function addWords<QS extends QueryStack>(stack: QS, words: WordSpec<QS>[]):QS {
+    // Log.debug('[addWords]', words );//[fn,args]);
     return words.reduce((stack, spec) => {
         const [word, fn, ...args] = spec;
-        // Log.debug('[addWords]', word, [fn,args]);
         let patterns = stack.words[word] || [];
-        patterns = [...patterns, [fn, (args as (SType[]))] ];
+        patterns = [...patterns, [fn, (args as (SType[]))] ] as WordEntry<QS>[];
         return { ...stack, words: { ...stack.words, [word]: patterns } };
     }, stack);
 }
@@ -394,7 +399,7 @@ function getWord<QS extends QueryStack>(stack: QS, value: StackValue): WordFn<QS
     }
     const wval = value[1];
     const patterns = stack.words[wval];
-    // Log.debug('[getWord]', value, patterns);
+    // Log.debug('[getWord]', value, wval, patterns);
     if (patterns === undefined) {
         return undefined;
     }
@@ -459,5 +464,17 @@ export function assertStackValueType(stack: QueryStack, index: number, opType: s
     }
     if (argType !== undefined && typeof value[1] !== argType) {
         throw new Error(`expected arg of type ${argType} at index ${idx} : got ${typeof value[1]}`);
+    }
+}
+
+
+export async function DLog<QS extends QueryStack>(stack:QS, ...args) {
+    const wordFn = getWord(stack,[SType.Value,'dlog']);
+    if( wordFn === undefined || !isStackValue(wordFn) ){
+        return;
+    }
+
+    if( wordFn[1] ){
+        Log.debug(...args);
     }
 }

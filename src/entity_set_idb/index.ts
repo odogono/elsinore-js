@@ -116,7 +116,14 @@ export function create(options?:CreateEntitySetParams):EntitySetIDB {
         esEntities: async (es:EntitySetIDB) => getEntities(es),
         esGetEntity: (es:EntitySetIDB, eid:EntityId) => getEntity(es,eid),
         esSelect: (es:EntitySetIDB, query:StackValue[]) => null,
+        esClone: clone
     }
+}
+
+async function clone(es:EntitySetIDB):Promise<EntitySetIDB>{
+    return {
+        ...es
+    };
 }
 
 /**

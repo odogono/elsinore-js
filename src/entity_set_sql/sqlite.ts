@@ -549,11 +549,11 @@ export function sqlRetrieveByQuery( ref:SqlRef, query:any[] ){
     let comp;
     let sql = [];
     let params = [];
-    Log.debug('[sqlRetrieveByQuery]', query);
+    // Log.debug('[sqlRetrieveByQuery]', query);
     roll( sql, params, ...query );
     
     // sql.push('ORDER BY eid')
-    Log.debug('[sqlRetrieveByQuery]', sql, params);
+    // Log.debug('[sqlRetrieveByQuery]', sql, params);
     
     let stmt = db.prepare(sql.join(' ') );
     // Log.debug('[sqlRetrieveByQuery]', sql);

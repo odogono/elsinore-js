@@ -140,8 +140,7 @@ export function applyFilter(stack:SQLQueryStack): InstResult<SQLQueryStack> {
     let result = parseFilterQuery( es, filter[0], filter[1], filter[2] );
     
     // Log.debug('[applyFilter]', 'result' );
-    // const util = require('util');
-    // console.log( util.inspect( result, {depth:null} ) );
+    // ilog( result );
 
     result = sqlRetrieveByQuery( es.db, result );
 
@@ -551,3 +550,7 @@ function matchEntities(es: EntitySetSQL, mbf: BitField): Entity[] {
     // return matches;
 }
 
+function ilog(...args){
+    const util = require('util');
+    console.log( util.inspect( ...args, {depth:null} ) );
+}

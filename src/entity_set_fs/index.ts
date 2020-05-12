@@ -136,7 +136,14 @@ export function create(options:CreateEntitySetFSParams={}):EntitySetFS {
         esEntities: async (es:EntitySetFS) => await getEntities(es),
         esGetEntity: (es:EntitySetFS, eid:EntityId) => getEntity(es,eid),
         esSelect: (es:EntitySetFS, query:StackValue[]) => null,
+        esClone: clone
     }
+}
+
+async function clone(es:EntitySetFS):Promise<EntitySetFS>{
+    return {
+        ...es
+    };
 }
 
 /**

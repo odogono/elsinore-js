@@ -236,21 +236,18 @@ describe('Select', () => {
         ] select`
         
         let [stack,es] = await prep(query, 'chess.insts');
-        console.log('\n');
-        // Log.debug('stack:', stackToString(stack) );
-        // Log.debug('stack:', stringify(stack.items,1) );
-        const util = require('util');
-        console.log( util.inspect( stack.items, {depth:null} ) );
+        // console.log('\n');
+        // ilog( stack.items );
     })
 
-    it.only('or condition', async () => {
+    it('or condition', async () => {
         let query = `[
             /component/position file !ca a ==
             /component/position file !ca f ==
             or
             /component/colour colour !ca white ==
             and
-            @c
+            // @c
         ] select`;
 
         let [stack,es] = await prep(query, 'chess.insts');

@@ -68,7 +68,6 @@ import { SqlRef,
 } from "./sqlite";
 import { createLog } from "../util/log";
 import { isString, isInteger } from "../util/is";
-import { StackValue } from "../query/stack";
 import { select } from "./query";
 export { getByHash, getByUri } from '../entity_set/registry';
 
@@ -138,7 +137,14 @@ export function create(options?:CreateEntitySetSQLParams):EntitySetSQL {
         esEntities: (es:EntitySetSQL) => getEntities(es),
         esGetEntity: (es:EntitySetSQL, eid:EntityId) => Promise.resolve(getEntity(es,eid)),
         esSelect: select,
+        esClone: clone,
     }
+}
+
+async function clone(es:EntitySetSQL):Promise<EntitySetSQL>{
+    return {
+        ...es
+    };
 }
 
 

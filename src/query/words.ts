@@ -12,9 +12,10 @@ import {
     popOfType,
     StackError,
     assertStackValueType,
-    isStackValue
+    isStackValue,
+    DLog
 } from './stack';
-import { create as createComponentDef, isComponentDef } from '../../src/component_def';
+import { create as createComponentDef, isComponentDef, toShortObject as defToObject } from '../../src/component_def';
 import { isString, isBoolean, isObject, isInteger } from '../../src/util/is';
 import { register, createComponent } from '../../src/entity_set/registry';
 import {
@@ -39,6 +40,32 @@ type Result<QS extends QueryStack> = InstResult<QS>;
 type AsyncResult<QS extends QueryStack> = Promise<InstResult<QS>>;
 
 
+/**
+ * Duplicates the top stack value, or if the op is 'over', duplicates the previous
+ * 
+ * @param stack 
+ * @param op 
+ */
+export async function onDup<QS extends QueryStack>(stack: QS, op): AsyncResult<QS> {
+    let val = peek(stack);
+    if( op === 'over' ){
+        val = peek(stack,1);
+    }
+
+    let out;
+    if( val[0] === SType.EntitySet ){
+        let es: EntitySet = unpackStackValue(val, SType.EntitySet);
+        let dup = await es.esClone(es);
+        out = [SType.EntitySet,dup];
+    } else {
+        // let o = unpackStackValue(val);
+        out = [...val];
+    }
+
+    return [stack,out];
+}
+
+
 export async function onSelect<QS extends QueryStack>(stack: QS): AsyncResult<QS> {
     let left, right;
 
@@ -48,13 +75,7 @@ export async function onSelect<QS extends QueryStack>(stack: QS): AsyncResult<QS
     let es: EntitySet = unpackStackValue(left, SType.EntitySet);
     let query = unpackStackValue(right, SType.Array, false);
 
-    const { isAsync, esSelect } = es;
-
-    // Log.debug('[onSelect]', 'left', left);
-    // Log.debug('[onSelect]', 'right', right);
-    // Log.debug('[onSelect]', 'esSelect', es);
-
-    let result = await esSelect(es, query);
+    let result = await es.esSelect(es, query);
 
     if (result) {
         // append output stack
@@ -167,30 +188,40 @@ export async function onAddToEntitySet<QS extends QueryStack>(stack: QS): AsyncI
     [stack, left] = pop(stack);
     [stack, right] = pop(stack);
 
-    // Log.debug('[onAddToEntitySet]', left );
-    // Log.debug('[onAddToEntitySet]', isComponentDef(value), value );
-    let value = unpackStackValueR(left);
+    // DLog(stack, "here we go");
+    // DLog(stack, '[onAddToEntitySet]', left );
+    // DLog(stack, '[onAddToEntitySet]', isComponentDef(value), value );
+    let value = unpackStackValue(left);
     let es: EntitySet = unpackStackValueR(right, SType.EntitySet);
-
+    
     try {
         const { esAdd, esRegister, isAsync } = es;
-
-        let values: any[] = left[0] !== SType.Array ? [value] : value;
-
+        
+        let values:StackValue[] = left[0] === SType.Array ? left[1] : [ left ];
+        // let values: any[] = left[0] !== SType.Array ? [value] : value;
+        
+        // Log.debug('[onAddToEntitySet]', values );
         // sort into defs and e/com
         let [defs, coms] = values.reduce(([defs, coms], value) => {
-            if (isComponentDef(value)) {
-                defs.push(value);
-            } else if (isEntity(value) || isComponent(value)) {
-                coms.push(value);
+            let [type,inner] = value;
+
+            if ( type === SType.ComponentDef) {
+                if( !isComponentDef(inner) ){
+                    inner = parseComponentDef(inner);
+                }
+                defs.push(inner);
+            } else if (isEntity(inner) || isComponent(inner)) {
+                coms.push(inner);
             }
             return [defs, coms];
         }, [[], []]);
+        // Log.debug('[onAddToEntitySet]', 'coms', coms);
 
         es = await defs.reduce(async (es, def) => {
             es = await es;
-            // Log.debug('[onAddToEntitySet]', 'huh')
+            
             [es] = isAsync ? await esRegister(es, def) : esRegister(es, def);
+            
             return es;
         }, Promise.resolve(es));
 
@@ -201,6 +232,19 @@ export async function onAddToEntitySet<QS extends QueryStack>(stack: QS): AsyncI
     }
     return [stack, [SType.EntitySet, es]];
 }
+
+
+export async function fetchComponentDef<QS extends QueryStack>(stack: QS): AsyncResult<QS> {
+    let val = peek(stack);
+    let es = stack.es;
+
+    if( val[0] === SType.EntitySet ){
+        es = unpackStackValue(val, SType.EntitySet);
+    }
+
+    return [stack, [SType.Array, es.componentDefs.map( def => [SType.ComponentDef, defToObject(def)] )]];
+}
+
 
 // export function onAddDefToES( stack:QueryStack, val:StackValue ):InstResult {
 //     let def, es;
@@ -240,46 +284,65 @@ export function onComponentDef<QS extends QueryStack>(stack: QS): Result<QS> {
             raw = [raw];
         }
 
-        // ensure props are wrapped in an array
-        let [uri, props] = raw;
-        if( props !== undefined && !Array.isArray(props) ){
-            // Log.debug('[onComponentDef]', raw);
-            throw new StackError(`onComponentDef : properties should be wrapped in array: ${uri}`);
-        }
-
-        let def = createComponentDef(undefined, ...raw);
-
-
-
-        return [stack, [SType.ComponentDef, def]];
+        return [stack, [SType.ComponentDef, parseComponentDef(raw)]];
     // } catch (err) {
     //     Log.debug('[onComponentDef]', err.message);
     //     return [stack];
     // }
 }
 
-
-export function onDefine<QS extends QueryStack>(stack: QS, val: StackValue): Result<QS> {
-    let word: StackValue, value: StackValue;
-    [stack, word] = pop(stack);
-    [stack, value] = pop(stack);
-
-    // Log.debug('[onDefine]', word, value);
-
-    let wordFn = async <QS extends QueryStack>(stack: QS, val: StackValue): AsyncInstResult<QS> => {
-        let wordVal = value[0] === SType.Array ? value[1] : [value];
-        // Log.debug('[onDefine]', 'push', wordVal);
-        [stack] = await pushValues(stack, wordVal);
-        return [stack];
+function parseComponentDef(data:any[]){
+    // ensure props are wrapped in an array
+    let [uri, props] = data;
+    if( props !== undefined && !Array.isArray(props) ){
+        // Log.debug('[onComponentDef]', raw);
+        throw new StackError(`onComponentDef : properties should be wrapped in array: ${uri}`);
     }
 
-    stack = addWords<QS>(stack, [
-        [word[1], wordFn]
-    ])
+    return createComponentDef(undefined, ...data);
+}
+
+
+
+
+export function onDefine<QS extends QueryStack>(stack: QS, val: StackValue): Result<QS> {
+    let wordVal: StackValue, value: StackValue;
+    [stack, wordVal] = pop(stack);
+    [stack, value] = pop(stack);
+    const [,word] = wordVal;
+
+    
+    if( word.charAt(0) === '^' ){
+        // a special case - the value is defined directly without a fn call
+        // this is useful for storing env variables
+
+        // Log.debug('[onDefine]', word, value);
+        // let fn = () => value;
+        stack = addWords<QS>(stack, [[word.substring(1), value]] );
+    } else {
+        let wordFn = async <QS extends QueryStack>(stack: QS, val: StackValue): AsyncInstResult<QS> => {
+            let wordVal = value[0] === SType.Array ? value[1] : [value];
+            // Log.debug('[onDefine]', 'push', wordVal);
+            [stack] = await pushValues(stack, wordVal);
+            return [stack];
+        }
+    
+        stack = addWords<QS>(stack, [
+            [word, wordFn]
+        ])
+    }
+
 
     return [stack];
 };
 
+
+export function onPrint<QS extends QueryStack>(stack: QS): Result<QS> {
+    let msg;
+    [stack,msg] = pop(stack);
+    console.info(  unpackStackValue(msg) );
+    return [stack];
+}
 
 export function onAddArray<QS extends QueryStack>(stack: QS, val: StackValue): Result<QS> {
     let left, right;
@@ -555,7 +618,7 @@ export async function onPluck<QS extends QueryStack>(stack: QS): AsyncResult<QS>
 }
 
 
-export function onSwap<QS extends QueryStack>(stack: QS, val: StackValue): Result<QS> {
+export function onSwap<QS extends QueryStack>(stack: QS): Result<QS> {
     let left, right;
     [stack, left] = pop(stack);
     [stack, right] = pop(stack);
@@ -637,3 +700,5 @@ function compareValues(left: StackValue, right: StackValue): boolean {
     }
     return true;
 }
+
+

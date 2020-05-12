@@ -80,6 +80,7 @@ export interface EntitySet {
     esEntities: (es:EntitySet, bf?:BitField) => Promise<EntityList>;
     esGetEntity: (es,eid:EntityId, populate?:boolean) => Promise<Entity>;
     esSelect: (es, query:StackValue[]) => Promise<StackValue[]>;
+    esClone: (es) => Promise<EntitySet>;
 }
 
 export interface EntitySetMem extends EntitySet {
@@ -88,8 +89,7 @@ export interface EntitySetMem extends EntitySet {
     // a map of {entity_id, def_id} to Component.t
     components: Map<ComponentId, Component>;
 
-    // a map of entityId to Bitfield
-    entities: Map<number, BitField>;
+    entities: Map<EntityId, BitField>;
 }
 
 
@@ -100,7 +100,7 @@ export interface CreateEntitySetParams {
 export function create(options: CreateEntitySetParams = {}): EntitySetMem {
     const uuid = options.uuid || createUUID();
     const components = new Map<ComponentId, Component>();
-    const entities = new Map<number, BitField>();
+    const entities = new Map<EntityId, BitField>();
     const entChanges = createChangeSet<number>();
     const comChanges = createChangeSet<ComponentId>();
 
@@ -120,6 +120,22 @@ export function create(options: CreateEntitySetParams = {}): EntitySetMem {
         esEntities: (es:EntitySetMem, bf?:BitField) => Promise.resolve( matchEntities(es, bf) ),
         esGetEntity: (es:EntitySetMem, eid:EntityId, populate:boolean) => Promise.resolve( getEntity(es,eid, populate) ),
         esSelect: select,
+        esClone: clone,
+    }
+}
+
+
+async function clone(es:EntitySetMem){
+    const {components,entities,byUri,byHash,entChanges,comChanges} = es;
+    return {
+        ...es,
+        uuid: createUUID(),
+        components: new Map<ComponentId,Component>(components),
+        entities: new Map<EntityId,BitField>(entities),
+        byUri: new Map<string,number>(byUri),
+        byHash: new Map<number,number>(byHash),
+        entChanges: createChangeSet(entChanges),
+        comChanges: createChangeSet(comChanges),
     }
 }
 

@@ -181,6 +181,11 @@ export function toObject( def:ComponentDef, includeId:boolean = true ): Componen
     return result;
 }
 
+export function toShortObject( def:ComponentDef ) {
+    // [ "/component/completed", [{"name":"isComplete", "type":"boolean", "default":false}] ]
+    let obj = toObject(def, false);
+    return [ obj.uri, obj.properties ];
+}
 
 
 /**
@@ -227,17 +232,13 @@ export function propertyToObject( prop:ComponentDefProperty ): object {
         result[key] = prop[key];
     }
 
-    // result = Object.keys(propertyDefaults).reduce( (out,key) => {
-    //     if( key === 'additional' || propertyDefaults[key] == prop[key] || prop[key] === undefined ){
-    //         return out;
-    //     }
-    //     out[key] = prop[key];
-    //     return out;
-    // }, {});
-
     for (let [key,value] of prop.additional ) {
         result[key] = value;
     }
+
+    // if( Object.keys(result).length === 1 ){
+    //     return result[name];
+    // }
 
     return result;
 }

@@ -14,11 +14,11 @@ export interface ChangeSet<T> {
     removed: Set<T>;
 }
 
-export function create<T>():ChangeSet<T> {
+export function create<T>( set?:ChangeSet<T> ):ChangeSet<T> {
     return {
-        added: new Set<T>(),
-        updated: new Set<T>(),
-        removed: new Set<T>(),
+        added: new Set<T>( set !== undefined ? set.added : undefined ),
+        updated: new Set<T>( set !== undefined ? set.updated : undefined ),
+        removed: new Set<T>( set !== undefined ? set.removed : undefined ),
     };
 }
 
