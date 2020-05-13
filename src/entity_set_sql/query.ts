@@ -151,82 +151,6 @@ export function applyFilter(stack:SQLQueryStack): InstResult<SQLQueryStack> {
     return [stack, result];
 }
 
-// function pr( es:EntitySetSQL, cmd?, left?, right? ){
-//     // Log.debug('[pr]', cmd, left, ',', right);
-//     switch(cmd){
-//         case 'and':
-//         case 'or':
-//             return prAnd( es, cmd, left, right );
-//         case SType.Bitfield:
-//             return [ 'dids', (left as BitField).toValues() ];
-//         case '==':
-//             return prEquals( es, cmd, left, right );
-//         case SType.ComponentAttr:
-//             return prCA( es, left[0], left[1] );
-//         case SType.Value:
-//             return left;
-//     }
-    
-// }
-
-// function prCA( es:EntitySetSQL,dids, attr ){
-//     const did = dids.toValues()[0];
-//     const def = getByDefId(es, did );
-//     // Log.debug('[prCA]', did, def)
-//     return { def:def, key:attr };
-// }
-
-// function prEquals( es:EntitySetSQL, cmd, left, right ){
-    
-//     let key;
-//     let val;
-//     if( left[0] === SType.Value ){
-//         val = left[1];
-//         key = pr(es,...right);
-//     } else if( right[0] === SType.Value ){
-//         val = right[1];
-//         key = pr(es, ...left);
-//     } else {
-//         return {eq:[ pr(es,...left), pr(es,...right)]};
-//     }
-//     if( 'key' in key ){
-//         let {key:kk, ...rest} = key;
-//         return [ cmd, rest, [kk,val] ];
-//     }
-
-//     // Log.debug('[prEquals]', [left,right]);
-    
-//     return { ...key, val };
-// }
-// function prAnd( es:EntitySetSQL, cmd, left, right ){
-//     let l = pr( es, ...left );
-//     let r = right !== undefined ? pr( es, ...right ) : undefined;
-//     return [ cmd, l, r ];
-// }
-
-
-// export function onFilter(stack:SQLQueryStack, value:StackValue): InstResult<SQLQueryStack> {
-//     let left, right;
-//     const [,op] = value;
-
-//     // Log.debug('[onFilter]', value);
-    
-//     [stack, right] = pop(stack);
-//     [stack, left] = pop(stack);
-//     if( left[0] === SType.Filter ){
-//         left = left[1];
-//     }
-//     if( right[0] === SType.Filter ){
-//         right = right[1];
-//     }
-//     // Log.debug('[onFilter]', op, 'L', left);
-//     // Log.debug('[onFilter]', op, 'R', right);
-    
-//     stack = pushRaw(stack,[SType.Filter, [op, right, left]]);
-
-//     return [stack ];
-// }
-
 
 
 export function applyLimit(stack: SQLQueryStack): InstResult<SQLQueryStack> {
@@ -251,76 +175,6 @@ export function fetchValue(stack: SQLQueryStack): InstResult<SQLQueryStack> {
 
     return [stack, value];
 }
-
-
-
-// export function esEquals(es: EntitySetSQL, stack: SQLQueryStack, op: string): InstResult<SQLQueryStack> {
-//     let left, right;
-
-//     [stack, right] = pop(stack);
-//     [stack, left] = pop(stack);
-
-//     let lType = left[0];
-//     // let rType = right[0];
-//     let lVal = unpackStackValue(left, SType.Any, false)
-//     // let rVal = unpackStackValue(right, SType.Any)
-
-//     // Log.debug('[esComponentValueEquals]', 'left', lType, lVal);
-//     // Log.debug('[esComponentValueEquals]', 'right', right);
-
-
-
-//     if (lType == SType.Array) {
-//         lVal = lVal.reduce((out, val) => {
-//             let cmp = compareStackValues(val, right);
-//             if (op === '!=') {
-//                 cmp = !cmp;
-//             }
-//             return cmp ? [...out, val] : out;
-//         }, [])
-
-//         return [stack, [SType.Array, lVal]];
-//     } else if (lType === SType.ComponentAttr) {
-//         const [bf, attr] = lVal;
-//         let rVal = unpackStackValue(right);
-//         let eids: EntityId[] = []; //matchEntities(es, bf);
-//         let did = bf.toValues()[0];
-//         const def = getByDefId(es,did);
-
-//         // select 
-//         let coms = sqlRetrieveComponentValue(es.db, def, attr, rVal, [], true);
-
-//         // let coms = eids.map(eid => getComponent(es, toComponentId(eid, did)))
-//         //     .filter(com => com[attr] === rVal)
-//         //     .map(com => ([SType.Component, com]));
-
-//         return [stack, [SType.Array, coms]];
-//         // Log.debug('[esComValueEquals]', left );
-
-//     } else {
-
-//         throw new StackError(`esEquals: unhandled type ${lType}`);
-//     }
-
-
-//     return [stack];
-// }
-
-// function compareStackValues(left: StackValue, right: StackValue) {
-//     if (left[0] === SType.ComponentValue) {
-//         if (right[0] === SType.Value) {
-//             let val = right[1];
-//             return right[1] === unpackStackValue(left, SType.ComponentValue);
-//         }
-//         if (right[0] === SType.Entity) {
-//             let eids = right[1];
-//             eids = Array.isArray(eids) ? eids : [eids];
-//             let [eid, did] = fromComponentId(left[1][0]);
-//             return eids.indexOf(eid) !== -1;
-//         }
-//     }
-//     throw new StackError(`compare : unhandled types ${left[0]} vs ${right[0]}`);
-// }
 
 
 function popBitField(stack:SQLQueryStack): [SQLQueryStack,ComponentDefSQL[]]{
@@ -374,7 +228,7 @@ export function fetchComponents(stack: SQLQueryStack): InstResult<SQLQueryStack>
             eids = [unpackStackValueR(from)];
         } else if( from[0] === SType.Array ){
             eids = from[1].map( it => {
-                return isStackValue(it) && it[0] === SType.Entity ? it[1] 
+                return isStackValue(it) ? getEntityId(it[1])
                 : isEntity(it) ? getEntityId(it) : undefined;
             }).filter(Boolean);
         }

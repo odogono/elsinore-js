@@ -158,10 +158,10 @@ export function sqlInsertDef(ref: SqlRef, def: ComponentDef): ComponentDefSQL {
     let did = sqlLastId(ref);
 
     let [tblName, sql] = defToStmt(def);
+    // Log.debug('[sqlInsertDef]', sql);
     db.exec(sql);
     // let out = stmt.all(sql);
 
-    // Log.debug('[sqlInsertDef]', out);
 
     let sdef = createComponentDef(did, schema) as ComponentDefSQL;
     sdef.tblName = tblName;
@@ -241,7 +241,7 @@ export function sqlUpdateComponent(ref: SqlRef, com: Component, def: ComponentDe
     const row = stmt.get(eid);
     const exists = row !== undefined;
 
-    let names = def.properties.map(p => p.name);
+    let names = def.properties.map(p => `${p.name}`);
 
     // Log.debug('[sqlUpdateComponent]', com);
 
@@ -258,7 +258,7 @@ export function sqlUpdateComponent(ref: SqlRef, com: Component, def: ComponentDe
 
         let cols = ['eid'];
         // cols = def.properties.reduce( (cols,p) => [...cols,p.name], cols );
-        let colString = [...cols, ...names].join(',');
+        let colString = [...cols, ...names].map(c => `'${c}'`).join(',');
         let vals:any[] = [eid];
         vals = [...vals, ...names.map(name => valueToSQL( com[name] ))];
         let valString = vals.map(v => '?').join(',');
@@ -318,7 +318,7 @@ export function sqlDeleteEntity(ref: SqlRef, eid: EntityId) {
 
 function defToSetStmt(def: ComponentDefSQL) {
     let parts = def.properties.map(prop => {
-        return `${prop.name} = ?`;
+        return `'${prop.name}' = ?`;
     })
     return parts.length > 0 ? `SET ${parts.join(',')}` : '';
 }
@@ -550,13 +550,13 @@ export function sqlRetrieveByQuery( ref:SqlRef, query:any[] ){
     let sql = [];
     let params = [];
     // Log.debug('[sqlRetrieveByQuery]', query);
-    roll( sql, params, ...query );
+    walkFilterQuery( sql, params, ...query );
     
     // sql.push('ORDER BY eid')
     // Log.debug('[sqlRetrieveByQuery]', sql, params);
     
     let stmt = db.prepare(sql.join(' ') );
-    // Log.debug('[sqlRetrieveByQuery]', sql);
+    // Log.debug('[sqlRetrieveByQuery]', sql, params);
     let rows = stmt.all(...params);
     
 
@@ -564,24 +564,27 @@ export function sqlRetrieveByQuery( ref:SqlRef, query:any[] ){
 
 }
 
-function roll(out:string[], params:any[], cmd?, ...args ){
+function walkFilterQuery(out:string[], params:any[], cmd?, ...args ){
     if( cmd === 'dids' ){
         let dids = args[0];
         out.push(`SELECT eid from tbl_entity_component WHERE did IN ( ? )`);
         params.push( dids );
     }
     else if( cmd === 'and' ){
-        roll(out, params, ...args[1] );
+        walkFilterQuery(out, params, ...args[1] );
         out.push('INTERSECT');
-        roll(out, params, ...args[0] );
+        walkFilterQuery(out, params, ...args[0] );
     } else if( cmd === 'or' ){
-        roll(out, params, ...args[0] );
+        walkFilterQuery(out, params, ...args[0] );
         out.push('UNION');
-        roll(out, params, ...args[1] );
+        walkFilterQuery(out, params, ...args[1] );
     } else if( cmd === '==' ){
         let {def} = args[0];
         let tbl = defToTbl(def);
         let [key,val] = args[1];
+        if( Array.isArray(val) ){
+            Log.debug('[walkFilterQuery]', 'might want to do this', val);
+        }
         out.push(`SELECT eid from ${tbl} WHERE ${key} = ?`);
         params.push( valueToSQL(val) );
     }
@@ -606,7 +609,7 @@ function defToStmt(def: ComponentDef) {
     let properties = def.properties || [];
 
     let props = properties.map(prop => {
-        return `${prop.name} ${propTypeToSQL(prop.type)}`;
+        return `'${prop.name}' ${propTypeToSQL(prop.type)}`;
     }).join(',\n');
     if (props.length > 0) {
         props = props + ',';

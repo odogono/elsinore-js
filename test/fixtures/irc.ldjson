@@ -14,7 +14,7 @@
 
 [ "/component/status", [ status ] ] !d +
 
-[ "/component/channel", [ name: "name" ] ] !d +
+[ "/component/channel", [ "name" ] ] !d +
 
 [ "/component/channel_member", [
     { "name": "channel", "type": "integer", "format": "entity" },
