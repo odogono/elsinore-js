@@ -5,6 +5,7 @@ import { deepExtend } from "../util/deep_extend";
 import { unpackStackValue } from "./words";
 import { EntitySet } from "../entity_set";
 import { stackToString } from "./util";
+import { toInteger } from "../util/to";
 
 export enum SType {
     Value = '%v',
@@ -63,13 +64,19 @@ export interface QueryStackDefs {
 }
 
 export interface QueryStack {
+    id: number;
     es?:EntitySet;
     items: StackValue[];
     words: Words<this>;
+    _root: this;
+    _parent: this;
+    _child: this;
 }
+let stackId = 0;
 
 export function create<QS extends QueryStack>(): QS {
     return {
+        id: ++stackId,
         items: [],
         words: {}
     } as QS;
@@ -129,31 +136,94 @@ export function clone<QS extends QueryStack>(stack: QS, options:CloneOptions = {
  */
 export async function push<QS extends QueryStack>(stack: QS, input: any | StackValue): Promise<[QS, StackValue]> {
     // Log.debug('[push]',value );
-    
-    let value:StackValue = isStackValue(input) ? input : [SType.Value, input];
+    // let resultStack:QS = stack;
+    let value:StackValue;
+    let handler:WordFn<QS>;
+    value = isStackValue(input) ? input : [SType.Value, input];
     
     let doPush = true;
+    let lastStack:QS = undefined;
+    let [type,word] = value;
     
-    const handler = getWord(stack, value);
+    if( type === SType.Value && isString(word) ){
+        const len = word.length;
+
+        // escape char for values which might otherwise get processed as words
+        if( len > 1 && word.charAt(0) === '*' ){
+            value = [SType.Value,word.substring(1)] as any;
+        }
+        else {
+            
+            if( len > 1 ){
+                while( word.charAt(0) === '^' ){
+                    if( stack._parent !== undefined ){
+                        if( lastStack === undefined ){
+                            lastStack = stack;
+                            // Log.debug('[push]', '^', 'start at', stack.id);
+                        }
+                        // Log.debug('[push]', '^', word, {id:stack.id, parent:stack._parent.id, o:lastStack.id});
+                        stack._parent._child = stack;
+                        stack = stack._parent;
+                        // Log.debug('[push]', '^', word, Object.keys(stack.words) );
+                    }
+                    word = word.substring(1);
+                    value = [type, word];
+                }
+                // Log.debug('[getWord]', 'from parent', word, parent.words );
+                // handler = getWord(parent, [SType.Value, word.substring(1)]);
+            }
+
+            // words beginning with $ refer to offsets on the root stack
+            if( len > 1 && word.charAt(0) === '$' ){
+                const idx = toInteger(word.substring(1));
+                // let root = stack._root || stack;
+                // let root = stack._parent || stack;
+                // Log.debug('[push]', '$', idx, peek(root,idx), root);
+                // Log.debug('[push]', '$', 'pop', idx, {id:stack.id, o:lastStack.id}, '~', stackToString(stack));
+                // Log.debug(stack);
+                // [root,value] = pop(root,idx);
+                [stack,value] = pop(stack,idx);
+                // lastStack._parent = stack;
+                if( lastStack !== undefined ){
+                    // horribly sucky, but otherwise the change to the stack here
+                    // will get lost if we have ascended previously
+                    stack = updateStackRefs( stack );
+                }
+
+                // Log.debug('[push]', '$', 'pop', value, {id:stack.id, o:lastStack.id}, '~', stackToString(stack));
+                // stack._root = root;
+                // value = peek(root,idx);
+                // Log.debug('[push]', '$', 'cur', stack);
+                // Log.debug('[push]', '$', 'las', lastStack);
+            }
+
+            else {
+                // Log.debug('[push]','word', value );
+                handler = getWord(stack, value);
+            }
+        }
+    }
+    if( lastStack !== undefined ){
+        // Log.debug('[push]', '^', word, 'restore', {id:stack.id, o:lastStack.id});
+        stack = lastStack;
+        // Log.debug('[push]', '^', word, Object.keys(stack.words) );
+    }
+
     // Log.debug('[push]','word', input, handler );
+
     if (handler !== undefined) {
         try {
             if( isStackValue(handler) ){
                 value = (handler as any);
-            } 
+            }
             else {
-                let result = handler(stack, input);
-
-                if (isPromise(result)) {
-                    [stack, value, doPush] = await result;
-                } else {
-                    [stack, value, doPush] = result as InstResult<QS>;
-                }
+                let result = handler(stack, value);
+                [stack, value, doPush] = isPromise(result) ? await result : result as InstResult<QS>;
             }
             // if( value ) Log.debug('[push]', value); 
         } catch (err) {
             // Log.warn('[push]', err.stack);
-            let e = new StackError(`${err.message}: ${unpackStackValue(value)}`);
+            let e = new StackError(`${err.message}`); // : ${unpackStackValue(value)}
             e.original = err
             e.stack = e.stack.split('\n').slice(0,2).join('\n') + '\n' 
                 + [...new Set(err.stack.split('\n'))].join('\n');
@@ -161,8 +231,6 @@ export async function push<QS extends QueryStack>(stack: QS, input: any | StackV
         }
     }
     
-    // Log.debug('[push][execute]', value );
-
     if (value !== undefined && doPush !== false) {
         stack = { ...stack, items: [...stack.items, value] };
     }
@@ -170,29 +238,52 @@ export async function push<QS extends QueryStack>(stack: QS, input: any | StackV
     return [stack, value];
 }
 
+function updateStackRefs<QS extends QueryStack>(stack: QS): QS {
+    // walk children
+    let cur = stack;
+    while( cur._child !== undefined ){
+        let child = cur._child;
+        if( child._parent?.id === stack.id ){
+            child._parent = stack;
+        }
+        if( child._root?.id === stack.id ){
+            child._root = stack;
+        }
+        cur = child;
+    }
+    return stack;
+}
+
 export function pushRaw<QS extends QueryStack>(stack: QS, value: StackValue): QS {
     return { ...stack, items: [...stack.items, value] };
 }
 
+export interface PushOptions {
+    debug?:boolean;
+}
 
-export async function pushValues<QS extends QueryStack>(stack: QS, values: StackValue[]): Promise<[QS, StackValue[]]> {
+export async function pushValues<QS extends QueryStack>(stack: QS, values: StackValue[],options:PushOptions = {}): Promise<[QS, StackValue[]]> {
     let ovalues: StackValue[] = [];
 
     try {
 
-    
     for( const value of values ){
         let ovalue;
+        DLog(stack, '[pushValues]', value);
+        if( options.debug ){
+            Log.debug('[pushValues!]', value);
+        }
         [stack, ovalue] = await push(stack, value);
         ovalues.push(ovalue);
     }
 
     } catch( err ){
-        let e = new StackError(`${err.message}: ${stackToString(stack)}`);
+        // Log.debug('st un?', (stack as any)._parent.items );
+        let e = new StackError(`${err.message}: (${stackToString(stack)})`);
         e.original = err
-            e.stack = e.stack.split('\n').slice(0,2).join('\n') + '\n' 
-                + err.stack;// [...new Set(err.stack.split('\n'))].join('\n');
-            throw e;
+        e.stack = e.stack.split('\n').slice(0,2).join('\n') + '\n' 
+            + err.stack;// [...new Set(err.stack.split('\n'))].join('\n');
+        throw e;
     }
     return [stack, ovalues];
 }
@@ -215,19 +306,19 @@ export function unshift(stack: QueryStack, value: StackValue): QueryStack {
  * Removes and returns a value from
  * @param stack 
  */
-export function shift(stack: QueryStack): [QueryStack, StackValue] {
-    let items = [...stack.items];
-    let value = items.shift();
-    return [{ ...stack, items }, value];
-}
+// export function shift(stack: QueryStack): [QueryStack, StackValue] {
+//     let items = [...stack.items];
+//     let value = items.shift();
+//     return [{ ...stack, items }, value];
+// }
 
-export function unshiftV(stack: QueryStack, value: any, valueType = SType.Value): QueryStack {
-    let itemValue: StackValue = [valueType, value];
-    if (isObject(value) && value.type) {
-        itemValue = [value.type, value];
-    }
-    return unshift(stack, itemValue);
-}
+// export function unshiftV(stack: QueryStack, value: any, valueType = SType.Value): QueryStack {
+//     let itemValue: StackValue = [valueType, value];
+//     if (isObject(value) && value.type) {
+//         itemValue = [value.type, value];
+//     }
+//     return unshift(stack, itemValue);
+// }
 
 /**
  * Pushes an arbirtrary value onto the stack
@@ -240,17 +331,27 @@ export function unshiftV(stack: QueryStack, value: any, valueType = SType.Value)
 //     return push( stack, itemValue );
 // }
 
-export function pop<QS extends QueryStack>(stack: QS): [QS, StackValue] {
+export function pop<QS extends QueryStack>(stack: QS, offset:number = 0): [QS, StackValue] {
     const length = stack.items.length;
-    if (length === 0) {
+    // if (length === 0) {
+    //     // return undefined;
+    // }
+    const idx = length-1-offset;
+    if( idx < 0 || length === 0 ){
         throw new StackError('stack underflow');
-        // return undefined;
     }
-    const value = stack.items[length - 1];
-    stack = {
-        ...stack,
-        items: stack.items.slice(0, -1)
+    const value = stack.items[idx];
+    let items;
+
+    
+    if( offset > 0 ){
+        // Log.debug('[pop]', idx, value );
+        items = stack.items.filter( (val,ii) => idx !== ii )
+        // return [{...stack, items }, value];
+    } else {
+        items = stack.items.slice(0, -1);
     }
+    stack = {...stack, items};
     return [stack, value];
 }
 
@@ -288,24 +389,24 @@ export function popOfType<QS extends QueryStack>(stack: QS, ...types: SType[]): 
     return [stack, results];
 }
 
-export function popOfTypeV(stack: QueryStack, ...types: SType[]): [QueryStack, any[]] {
+// export function popOfTypeV(stack: QueryStack, ...types: SType[]): [QueryStack, any[]] {
 
-    let results = [];
-    [stack, results] = popOfType(stack, ...types);
-    return [stack, results.map(r => r[1])];
-}
+//     let results = [];
+//     [stack, results] = popOfType(stack, ...types);
+//     return [stack, results.map(r => r[1])];
+// }
 
 export function peek(stack: QueryStack, offset: number = 0): StackValue {
     return stack.items[stack.items.length - 1 - offset];
 }
 
-export function peekV(stack: QueryStack): any {
-    const value = stack.items[stack.items.length - 1];
-    if (value !== undefined) {
-        return value[1];
-    }
-    return undefined;
-}
+// export function peekV(stack: QueryStack): any {
+//     const value = stack.items[stack.items.length - 1];
+//     if (value !== undefined) {
+//         return value[1];
+//     }
+//     return undefined;
+// }
 
 
 
@@ -375,11 +476,11 @@ export interface ExecuteOptions {
 
 
 
-export function addWords<QS extends QueryStack>(stack: QS, words: WordSpec<QS>[]):QS {
+export function addWords<QS extends QueryStack>(stack: QS, words: WordSpec<QS>[], replace:boolean = false):QS {
     // Log.debug('[addWords]', words );//[fn,args]);
     return words.reduce((stack, spec) => {
         const [word, fn, ...args] = spec;
-        let patterns = stack.words[word] || [];
+        let patterns = replace ? [] : stack.words[word] || [];
         patterns = [...patterns, [fn, (args as (SType[]))] ] as WordEntry<QS>[];
         return { ...stack, words: { ...stack.words, [word]: patterns } };
     }, stack);
@@ -388,28 +489,28 @@ export function addWords<QS extends QueryStack>(stack: QS, words: WordSpec<QS>[]
 
 function getWord<QS extends QueryStack>(stack: QS, value: StackValue): WordFn<QS> | undefined {
     // const [type,word] = value;
-    if (value[0] !== SType.Value) {
+    if (value[0] !== SType.Value || !isString(value[1]) ) {
         return undefined;
     }
     const wval = value[1];
+
     const patterns = stack.words[wval];
-    // Log.debug('[getWord]', value, wval, patterns);
     if (patterns === undefined) {
         return undefined;
     }
     let pattern = patterns.find(pat => {
         const [, args] = pat;
-        if (matchStack(stack.items, args)) {
-            return pat;
-        }
+        return matchStack(stack.items, args) ? pat : undefined;
+        
         // Log.debug('[getWord]', 'match', `'${wval}'`, args, stack.items );
     });
+    // Log.debug('[getWord]', value, wval, pattern);
     if( pattern !== undefined ){
         return pattern[0];
     }
     
     Log.debug('[getWord]', 'match', `'${wval}'`, patterns.map(p => p.slice(1)) );
-    Log.debug('[getWord]', 'match', `'${wval}'`, stack.items);
+    Log.debug('[getWord]', 'match', `'${wval}'`, stackToString(stack));
     throw new StackError(`invalid params for ${wval}`);
 }
 

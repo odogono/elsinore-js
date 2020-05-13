@@ -23,7 +23,7 @@ import {
     StackOp,
     isStackValue,
 } from "../query/stack";
-import { unpackStackValue, unpackStackValueR, onPluck } from "../query/words";
+import { unpackStackValue, unpackStackValueR, onPluck, onDefine } from "../query/words";
 import { stackToString } from "../query/util";
 import { resolveComponentDefIds, getByDefId } from "../entity_set/registry";
 import { sqlRetrieveEntityIdByDefId, 
@@ -46,15 +46,19 @@ interface SQLQueryStack extends QueryStack {
  * @param es 
  * @param query 
  */
-export async function select(es: EntitySetSQL, query: StackValue[]): Promise<StackValue[]> {
+export async function select(es: EntitySetSQL, query: StackValue[], options = {}): Promise<StackValue[]> {
     let stack = createStack() as SQLQueryStack;
     stack.es = es;
+    if( 'stack' in options ){
+        stack._root = stack._parent = options['stack'];
+    }
 
     // add first pass words
     stack = addWords<SQLQueryStack>(stack, [
         ['!bf', buildBitfield, SType.Array],
         ['!bf', buildBitfield, SType.Value],
-        ['!ca', (stack: SQLQueryStack) => onComponentAttr(es, stack)],
+        ['!ca', onComponentAttr],
+        ['define', onDefine],
         
         ['and', onLogicalFilter, SType.Any, SType.Any],
         ['or', onLogicalFilter, SType.Any, SType.Any],
@@ -445,7 +449,7 @@ const sv = (v) => [SType.Value, v];
  * @param es 
  * @param stack 
  */
-export function onComponentAttr(es: EntitySetSQL, stack: SQLQueryStack): InstResult<SQLQueryStack> {
+export function onComponentAttr(stack: SQLQueryStack): InstResult<SQLQueryStack> {
     let left, right: StackValue;
     [stack, right] = pop(stack);
     [stack, left] = pop(stack);
@@ -453,7 +457,7 @@ export function onComponentAttr(es: EntitySetSQL, stack: SQLQueryStack): InstRes
     let attr = unpackStackValue(right, SType.Value);
     let did = unpackStackValue(left, SType.Value);
 
-    let bf = resolveComponentDefIds(es, [did]);
+    let bf = resolveComponentDefIds(stack.es, [did]);
 
 
     return [stack, [SType.ComponentAttr, [bf, attr]]];

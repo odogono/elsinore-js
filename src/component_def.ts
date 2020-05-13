@@ -184,7 +184,7 @@ export function toObject( def:ComponentDef, includeId:boolean = true ): Componen
 export function toShortObject( def:ComponentDef ) {
     // [ "/component/completed", [{"name":"isComplete", "type":"boolean", "default":false}] ]
     let obj = toObject(def, false);
-    return [ obj.uri, obj.properties ];
+    return obj.properties ? [ obj.uri, obj.properties ] : [obj.uri];
 }
 
 

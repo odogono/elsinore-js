@@ -35,7 +35,7 @@ export function valueToString( val:StackValue ):string {
                 return [...res, `${key}: ${valueToString(value[key])}`];
             },[]).join(',') + '}';
         case SType.Value:
-            return `${stringify(value)}`;
+            return `${(value)}`;
         case SType.Filter:
             let [op,left,right] = value;
             return `${op} ${valueToString(left)} ${valueToString(right)}`;

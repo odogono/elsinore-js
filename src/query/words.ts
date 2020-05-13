@@ -9,11 +9,11 @@ import {
     push, pop, peek, pushRaw,
     findV,
     clone as cloneStack,
-    popOfType,
     StackError,
     assertStackValueType,
     isStackValue,
-    DLog
+    DLog,
+    popOfType
 } from './stack';
 import { create as createComponentDef, isComponentDef, toShortObject as defToObject } from '../../src/component_def';
 import { isString, isBoolean, isObject, isInteger } from '../../src/util/is';
@@ -33,6 +33,7 @@ import {
 } from '../../src/entity_set';
 
 import { createLog } from "../util/log";
+import { stackToString } from './util';
 
 const Log = createLog('QueryWords');
 
@@ -71,11 +72,24 @@ export async function onSelect<QS extends QueryStack>(stack: QS): AsyncResult<QS
 
     [stack, right] = pop(stack);
     [stack, left] = pop(stack);
+    // left = peek(stack);
 
     let es: EntitySet = unpackStackValue(left, SType.EntitySet);
     let query = unpackStackValue(right, SType.Array, false);
+    // const {words} = stack;
+    // Log.debug('[onSelect]', query );
+    // Log.debug('[onSelect]', stack.words );
 
-    let result = await es.esSelect(es, query);
+    // let words = Object.keys(stack.words).reduce( (out,word) => { 
+    //     let spec = stack.words[word];
+    //     for( let en of spec ){
+    //         let [fn, clauses ] = en;
+    //         out = [...out, [word, fn, ...clauses]];
+    //     }
+    //     return out;
+    // },[]);
+
+    let result = await es.esSelect(es, query, {stack} );
 
     if (result) {
         // append output stack
@@ -295,7 +309,7 @@ function parseComponentDef(data:any[]){
     // ensure props are wrapped in an array
     let [uri, props] = data;
     if( props !== undefined && !Array.isArray(props) ){
-        // Log.debug('[onComponentDef]', raw);
+        Log.debug('[onComponentDef]', data);
         throw new StackError(`onComponentDef : properties should be wrapped in array: ${uri}`);
     }
 
@@ -305,42 +319,39 @@ function parseComponentDef(data:any[]){
 
 
 
-export function onDefine<QS extends QueryStack>(stack: QS, val: StackValue): Result<QS> {
-    let wordVal: StackValue, value: StackValue;
+export function onDefine<QS extends QueryStack>(stack: QS, [,op]: StackValue): Result<QS> {
+    let wordVal: StackValue, wordFn, value: StackValue;
     [stack, wordVal] = pop(stack);
     [stack, value] = pop(stack);
-    const [,word] = wordVal;
+    let [,word] = wordVal;
 
     
-    if( word.charAt(0) === '^' ){
-        // a special case - the value is defined directly without a fn call
-        // this is useful for storing env variables
-
-        // Log.debug('[onDefine]', word, value);
-        // let fn = () => value;
-        stack = addWords<QS>(stack, [[word.substring(1), value]] );
-    } else {
-        let wordFn = async <QS extends QueryStack>(stack: QS, val: StackValue): AsyncInstResult<QS> => {
-            let wordVal = value[0] === SType.Array ? value[1] : [value];
-            // Log.debug('[onDefine]', 'push', wordVal);
-            [stack] = await pushValues(stack, wordVal);
+    if( value[0] === SType.Array && op !== 'let'  ){
+        // Log.debug('[onDefine]', op, word, 'values', value );
+        wordFn = async <QS extends QueryStack>(stack: QS): AsyncInstResult<QS> => {
+            [stack] = await pushValues(stack, value[1]);
             return [stack];
         }
-    
-        stack = addWords<QS>(stack, [
-            [word, wordFn]
-        ])
+    } else {
+        // Log.debug('[onDefine]', op, word, 'value', value );
+        wordFn = value;
     }
 
-
+    stack = addWords<QS>(stack, [[word, wordFn]] );
+    
     return [stack];
 };
 
 
-export function onPrint<QS extends QueryStack>(stack: QS): Result<QS> {
+export function onPrint<QS extends QueryStack>(stack: QS, val:StackValue): Result<QS> {
     let msg;
-    [stack,msg] = pop(stack);
-    console.info(  unpackStackValue(msg) );
+    const [,op] = val;
+    if( op === '..' ){
+        console.info( '[onPrint][stack]', '(', stackToString(stack), ')' );
+    } else {
+        [stack,msg] = pop(stack);
+        console.info( '[onPrint]', unpackStackValueR(msg) );
+    }
     return [stack];
 }
 
@@ -351,6 +362,15 @@ export function onAddArray<QS extends QueryStack>(stack: QS, val: StackValue): R
     let [type, arr] = right;
     arr = [...arr, left];
     return [stack, [type, arr]];
+}
+
+export function onFetchArray<QS extends QueryStack>(stack: QS, val: StackValue): Result<QS> {
+    let left,right;
+    [stack, left] = pop(stack);
+    [stack, right] = pop(stack);
+    let arr = unpackStackValue(right,SType.Array);
+    let idx = unpackStackValue(left, SType.Value);
+    return [stack, arr[idx]];
 }
 
 export function onAdd<QS extends QueryStack>(stack: QS, val: StackValue): Result<QS> {
@@ -370,6 +390,7 @@ export function onAdd<QS extends QueryStack>(stack: QS, val: StackValue): Result
         case '-': value = left - right; break;
         case '%': value = left % right; break;
         case '==': value = left === right; break;
+        case '!=': value = left !== right; break;
     }
 
     // Log.debug('[onAdd]', op, left, right, value);
@@ -377,19 +398,36 @@ export function onAdd<QS extends QueryStack>(stack: QS, val: StackValue): Result
     return [stack, [SType.Value, value]];
 }
 
-export function onMapOpen<QS extends QueryStack>(stack: QS, val: StackValue): Result<QS> {
+export function onMapOpen<QS extends QueryStack>(stack: QS): Result<QS> {
     let sub = createQuery<QS>();
+    // Log.debug('[onMapOpen]', stack.items);//Object.keys(stack.words));
+    // DLog(stack, '[onMapOpen]', stack.items );
+    
+    sub._parent = stack;
+    sub._root = stack._root ? stack._root : stack;
+    // Log.debug('[onMapOpen]', {id:sub.id, parent:sub._parent?.id,root:sub._root?.id}, stackToString(stack) );
+    
     // add something which will interpret each push
     sub = addWords<QS>(sub, [
         ['{', onMapOpen],
         ['[', onArrayOpen],
         ['}', onMapClose],
-    ]);
-    (sub as any).stack = stack;
+        [']', onUnexpectedError ],
+    ], true);
+    // throw 'stop';
+    // (sub as any)._stack = stack;
     return [sub];
 }
 
+export function onUnexpectedError<QS extends QueryStack>(stack: QS, val: StackValue): Result<QS> {
+    throw new StackError(`unexpected word '${val}'`);
+}
+
 export function onMapClose<QS extends QueryStack>(stack: QS, val: StackValue): Result<QS> {
+    // if( stack.id === 158 ){
+    //     Log.debug('[onMapClose]', {id:stack.id, parent:stack._parent?.id}, stackToString(stack) );
+    //     Log.debug('[onMapClose]', stack);
+    // }
     let map = stack.items.reduce((result, val, idx, array) => {
         if (idx % 2 === 0) {
             let key = unpackStackValue(val);
@@ -400,36 +438,42 @@ export function onMapClose<QS extends QueryStack>(stack: QS, val: StackValue): R
         return result;
     }, {});
     val = [SType.Map, map];
-    stack = (stack as any).stack;
+    stack = stack._parent;
     return [stack, val];
 }
 
 export function onArrayOpen<QS extends QueryStack>(stack: QS, val: StackValue): Result<QS> {
     let sub = createQuery<QS>();
+    sub._parent = stack;
+    sub._root = stack._root ? stack._root : stack;
+    // Log.debug('[onArrayOpen]', {id:sub.id, parent:sub._parent?.id,root:sub._root?.id}, stackToString(stack) );
     // sub.words = {...stack.words};
     sub = addWords<QS>(sub, [
         ['{', onMapOpen],
         ['[', onArrayOpen],
         [']', onArrayClose],
-    ]);
-    (sub as any).stack = stack;
+        ['}', onUnexpectedError],
+        // ['arse', onUnexpectedError],
+    ], true);
     return [sub];
 }
 
 export function onArrayClose<QS extends QueryStack>(stack: QS, val: StackValue): Result<QS> {
-    // Log.debug('[onArrayClose]', stack);
+    // Log.debug('[onArrayClose]', {id:stack.id, parent:stack._parent?.id}, stackToString(stack) );
     val = [SType.Array, stack.items];
-    stack = (stack as any).stack;
+    stack = stack._parent;
     return [stack, val];
 }
 
-export function onArraySpread<QS extends QueryStack>(stack: QS, val: StackValue): Result<QS> {
+export async function onArraySpread<QS extends QueryStack>(stack: QS, val: StackValue): AsyncResult<QS> {
     [stack, val] = pop(stack);
     let value = unpackStackValueR(val, SType.Array).map(v => [SType.Value, v]);
 
     // if( val[0] === SType.Array ){
     //     value = value.map( v => [Array.isArray(v) ? SType.Array : SType.Value, v] );
-    stack = { ...stack, items: [...stack.items, ...value] };
+    // stack = { ...stack, items: [...stack.items, ...value] };
+    // Log.debug('[onArraySpread]', value);
+    [stack,] = await pushValues(stack, value);
     // }
     return [stack];
 }
@@ -461,12 +505,6 @@ export function onConcat<QS extends QueryStack>(stack: QS, val: StackValue): Res
     [stack, values] = popOfType(stack, type);
 
     values = [first, ...values];
-
-    // let array = [SType.Array, values];
-    // [stack,right] = pop(stack);
-
-    // stack = pushRaw(stack, left);
-    // stack = pushRaw(stack, right);
 
     return [stack, [SType.Array, values]];
 }
@@ -574,6 +612,13 @@ export async function onReduce<QS extends QueryStack>(stack: QS): AsyncResult<QS
     return [stack, accum];
 }
 
+export function onUnique<QS extends QueryStack>(stack: QS): Result<QS> {
+    let val;
+    [stack, val] = pop(stack);
+    let array = unpackStackValueR(val,SType.Array);
+    return [stack, [SType.Array, [...new Set([...array].sort())].map(v => [SType.Value,v]) ]];
+}
+
 export async function onPluck<QS extends QueryStack>(stack: QS): AsyncResult<QS> {
     let left, right;
     [stack, right] = pop(stack);
@@ -659,13 +704,13 @@ export function onEquals<QS extends QueryStack>(stack: QS, val: StackValue): Res
 
 export function onAssertType<QS extends QueryStack>(stack: QS): Result<QS> {
     let value: StackValue;
+    // Log.debug('well shit', stack.items );
     [stack, value] = pop(stack);
     let type = unpackStackValue(value, SType.Value);
     value = peek(stack);
     if (value === undefined) {
         throw new Error(`[onAssertType] stack underflow`);
     }
-    // Log.debug('well shit', value );
     if (value[0] !== type) {
         throw new Error(`[onAssertType] expected type ${type}, got ${value}`);
     }

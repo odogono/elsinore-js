@@ -56,6 +56,7 @@ export const Type = '@es';
 
 const Log = createLog('ESMem');
 
+
 export interface EntitySet {
     isAsync: boolean;
 
@@ -79,7 +80,7 @@ export interface EntitySet {
     esGetComponent: (es,cid:(ComponentId|Component)) => any;
     esEntities: (es:EntitySet, bf?:BitField) => Promise<EntityList>;
     esGetEntity: (es,eid:EntityId, populate?:boolean) => Promise<Entity>;
-    esSelect: (es, query:StackValue[]) => Promise<StackValue[]>;
+    esSelect: (es, query:StackValue[], options) => Promise<StackValue[]>;
     esClone: (es) => Promise<EntitySet>;
 }
 

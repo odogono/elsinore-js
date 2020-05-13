@@ -12,11 +12,10 @@ import {
     QueryStack,
     StackValue,
     InstResult, AsyncInstResult,
-    push, pop, peek, pushRaw,
-    findV,
+    push, pop,
     find as findValue,
-    popOfType,
     assertStackValueType,
+    StackError,
 
 } from '../../src/query/stack';
 
@@ -24,7 +23,9 @@ import {
     onSwap, onArrayOpen,
     onPrint,
     onAddArray,
+    onFetchArray,
     onArraySpread,
+    onUnexpectedError,
     onAdd, onConcat, onMapOpen,
     onEntity, onSelect, onDup, onDrop,
     onArgError,
@@ -34,6 +35,7 @@ import {
     onMap,
     onReduce,
     onPluck,
+    onUnique,
     onFilter,
     onClear,
     onValue,
@@ -106,57 +108,130 @@ describe('Query', () => {
         assert.deepEqual(stack.items, [sv(1), sv(2), sv(4), sv(3)]);
     })
 
-    it('builds arrays', async () => {
-        let [stack] = await prep(`[ hello, world ]`);
-        let [, result] = pop(stack);
-        assert.deepEqual(unpackStackValueR(result), ['hello', 'world']);
-    });
-
-    it('adds to an array', async () => {
-        let [stack] = await prep(`[] hello +`);
-        let [, result] = pop(stack);
-        assert.deepEqual(unpackStackValueR(result), ['hello']);
+    describe('Reference Words', () => {
+        it('references an earlier word', async () => {
+            let [stack] = await prep(`planet world hello $1`);
+            assert.equal( stackToString(stack), 'planet hello world' );
+        });
+        it('works within a list', async () => {
+            let [stack] = await prep(`planet world [ hello $0 ]`);
+            assert.equal( stackToString(stack), 'planet world [hello]' );
+        });
+        it('references above a list', async () => {
+            let [stack] = await prep(`planet [ world [ hello ^^$0 ]]`);
+            assert.equal( stackToString(stack), '[world, [hello, planet]]' );
+            
+            [stack] = await prep(`planet world [ hello ^$1 ]`);
+            assert.equal( stackToString(stack), 'world [hello, planet]' );
+        });
+        it('not evaluated the first time', async () => {
+            // the * char means that the ref will not be evaled until spread is called
+            let [stack] = await prep(`planet world [ hello *$1 ] spread`);
+            assert.equal( stackToString(stack), 'planet hello world' );
+        });
+        it('accesses words in parent', async () => {
+            let [stack] = await prep(`
+            active status let
+            [ status is ^status ]
+            `);
+            assert.equal( stackToString(stack), '[status, is, active]' );
+        })
     })
 
-    it('builds maps', async () => {
-        let [stack] = await prep(`{ name: alex, age: 45, isActive }`);
+    describe('Defining words', () => {
+        it('defines a word', async () => {
+            let [stack] = await prep(`1974 year define year`);
+    
+            assert.deepEqual(stack.items, [[SType.Value, 1974]]);
+            // Log.debug('stack:', stackToString(stack));
+        });
+    
+        it('defines a word that is a function', async () => {
+            let [stack] = await prep(`cls [100, +] plus1k define`);
+    
+            let data = parse(` 13 plus1k`);
+    
+            [stack] = await pushValues(stack, data);
+            let [, result] = pop(stack);
+            assert.deepEqual(unpackStackValueR(result), 113);
+        });
 
-        // stack = addWord(stack, ']', onArrayClose );
-        // Log.debug('stack', stringify(stack.items,1) );
-        let [, result] = pop(stack);
-
-        assert.deepEqual(result,
-            [SType.Map, {
-                name: [SType.Value, 'alex'],
-                age: [SType.Value, 45],
-                isActive: [SType.Value, undefined],
-            }]);
-    });
-
-    it('builds a map from an array', async () => {
-        let [stack] = await prep(`[ name alex age 45 ] to_map`);
-
-        let [, result] = pop(stack);
-        let map = unpackStackValueR(result, SType.Map);
-        assert.deepEqual(map, { name: 'alex', age: 45 });
+        it('pushes values with define', async () => {
+            let [stack] = await prep(`[ 2 3 + ] fn define fn`);
+            assert.equal( stackToString(stack), '5' );
+        })
+        it('pushes single value with let', async () => {
+            let [stack] = await prep(`[ 2 3 + ] fn let fn`);
+            assert.equal( stackToString(stack), '[2, 3, +]' );
+        })
     })
 
-    it('defines a word', async () => {
-        let [stack] = await prep(`1974 year define year`);
+    describe('Maps and Lists', () => {
 
-        assert.deepEqual(stack.items, [[SType.Value, 1974]]);
-        // Log.debug('stack:', stackToString(stack));
+
+        it('builds lists', async () => {
+            let [stack] = await prep(`[ hello, world ]`);
+            let [, result] = pop(stack);
+            assert.deepEqual(unpackStackValueR(result), ['hello', 'world']);
+        });
+
+        it('adds to an list', async () => {
+            let [stack] = await prep(`[] hello +`);
+            let [, result] = pop(stack);
+            assert.deepEqual(unpackStackValueR(result), ['hello']);
+        })
+
+        it('builds maps', async () => {
+            let [stack] = await prep(`{ name: alex, age: 45, isActive }`);
+
+            // stack = addWord(stack, ']', onArrayClose );
+            // Log.debug('stack', stringify(stack.items,1) );
+            let [, result] = pop(stack);
+
+            assert.deepEqual(result,
+                [SType.Map, {
+                    name: [SType.Value, 'alex'],
+                    age: [SType.Value, 45],
+                    isActive: [SType.Value, undefined],
+                }]);
+        });
+
+        it('builds a map from an array', async () => {
+            let [stack] = await prep(`[ name alex age 45 ] to_map`);
+
+            let [, result] = pop(stack);
+            let map = unpackStackValueR(result, SType.Map);
+            assert.deepEqual(map, { name: 'alex', age: 45 });
+        })
+
+        it('handles an invalid array', async () => {
+            // let [stack] = ;
+            try {
+                await prep(`[ 1st 2nd 3rd { name: 4th ]`)
+            }catch(err){
+                assert.instanceOf(err, StackError);
+                // Log.debug('umm', assert.instanceOf(err, StackError));
+            }
+
+            // assert.rejects(stack);
+            // assert.throws( , Error, `unexpected word ']': ("name" "4th")`);
+            // ilog(stack.items);
+        })
+
+        it('references words outside of array', async () => {
+            let [stack] = await prep(`
+            1977 1974
+            [ 1900 ^$0 ^$0 2018 ]
+            `);
+            // ilog(stack.items);
+            let [,result] = pop(stack);
+            assert.deepEqual( unpackStackValueR(result), [1900, 1974,1977, 2018] );
+        })
+
     });
 
-    it('defines a word that is a function', async () => {
-        let [stack] = await prep(`cls [100, +] plus1k define`);
 
-        let data = parse(` 13 plus1k`);
-
-        [stack] = await pushValues(stack, data);
-        let [, result] = pop(stack);
-        assert.deepEqual(unpackStackValueR(result), 113);
-    });
+    
 
     it('creates a ComponentDef', async () => {
         let [stack] = await prep(`[ /component/title, [text] ] !d`);
@@ -266,7 +341,7 @@ describe('Query', () => {
             let es = unpackStackValueR(result);
             assert.ok(isEntitySet(es));
             assert.equal(entitySetSize(es), 1);
-            
+
             [stack, result] = pop(stack);
             es = unpackStackValueR(result);
             assert.ok(isEntitySet(es));
@@ -279,19 +354,19 @@ describe('Query', () => {
             swap drop // lose the es
             // {} !es // new es
             // swap // move defs to top
-            // true ^dlog define
+            // true dlog define
             // + // add defs to es
             `, 'todo.ldjson');
 
             // ilog(stack.words);
-            let [,defs] = pop(stack);
+            let [, defs] = pop(stack);
             // ilog( unpackStackValueR(defs) );
-            assert.deepEqual( unpackStackValueR(defs), [
-                [ '/component/title', [ { name: 'text' } ] ],
-                [ '/component/completed',
-                    [ { name: 'isComplete', type: 'boolean', default: false } ] ],
-                [ '/component/priority',
-                    [ { name: 'priority', type: 'integer', default: 0 } ] ]
+            assert.deepEqual(unpackStackValueR(defs), [
+                ['/component/title', [{ name: 'text' }]],
+                ['/component/completed',
+                    [{ name: 'isComplete', type: 'boolean', default: false }]],
+                ['/component/priority',
+                    [{ name: 'priority', type: 'integer', default: 0 }]]
             ])
         })
 
@@ -523,46 +598,109 @@ describe('Query', () => {
             // console.log('\n');
             // Log.debug('stack:', stackToString(stack) );
             // Log.debug('stack:', stringify(stack.items,1) );
-            ilog( stack.items );
+            ilog(stack.items.splice(1));
         })
 
 
+        it('super select', async () => {
+            let [stack, es] = await prep(`
+            // define a variable holding the es so we don't have to
+            // keep swapping things aroung
+            es let
+
+            [
+                uid let
+                ^es [ /component/username username !ca  *^uid == ] select
+                0 @
+            ] selectUserId define
+            
+            [
+                ch_name let
+                // adding * to a ^ stops it from being eval'd the 1st time, but not the 2nd
+                ^es [ /component/channel name !ca *^ch_name == ] select
+                0 @
+            ] selectChannelId define
+            
+            ggrice selectUserId 
+            
+            "mr-rap" selectChannelId
+            
+            // compose a new component which belongs to the 'mr-rap' channel
+            [ /component/channel_member { "@e":14, channel: ^^$0, client: ^^$0 } ]
+
+            `, 'irc.ldjson');
+
+            // Log.debug( stackToString(stack) );
+            // ilog(stack.items);
+            assert.equal( stackToString(stack), '[/component/channel_member, {@e: 14,channel: (%e 3),client: (%e 11)}]' );
+            // ilog( es );
+        })
+        it('multi fn query', async () => {
+            let [stack, es] = await prep(`
+            es let
+            [
+                client_id let
+                ^es [
+                    /component/channel_member client !ca *^client_id ==
+                    /component/channel_member !bf
+                    @c
+                ] select
+
+                // pick the channel attributes
+                channel pluck 
+            ] selectChannelsFromMember define
+
+            [
+                channel_ids let
+                ^es [
+                    /component/channel_member channel !ca *^channel_ids ==
+                    /component/channel_member !bf
+                    @c
+                ] select
+
+                // select client attr, and make sure there are no duplicates
+                client pluck unique 
+                
+                // make sure this list of clients doesnt include the client_id
+                [ ^client_id != ] filter
+
+            ] selectChannelMemberComs define
+
+            [
+                eids let
+                ^es [ *^eids [/component/name /component/nickname] !bf @c ] select
+            ] selectNames define
+
+            [
+                // 1. select channel ids which 'client_id' belongs to
+                selectChannelsFromMember
+
+                // 2. select channel members which belong to channel_ids
+                selectChannelMemberComs
+             
+                // 3. using the channel_member client ids select the entities
+                selectNames
+
+            ] selectChannelMembersByClientId define
+
+            // selects the nicknames of other entities who share
+            // the same channel as 9 (roxanne)
+            9 selectChannelMembersByClientId
+
+            `, 'irc.ldjson');
+
+            // Log.debug( stackToString(stack) );
+            let result;
+            [,result] = pop(stack);
+            result = unpackStackValue(result,SType.Array);
+            let nicknames = result.map( v => v[1].nickname ).filter(Boolean);
+            assert.deepEqual(nicknames, ['koolgrap', 'lauryn', 'missy']);
+        })
 
     });
 
 });
 
-
-// async function loadEntitySetFromFixture(name: string): Promise<[QueryStack, EntitySet]> {
-//     let insts = await loadFixture('todo.ldjson');
-//     // Log.debug(insts);
-//     let stack = createStack();
-//     stack = addWords(stack, [
-//         ['assert_type', onAssertType],
-//         ['swap', onSwap],
-//         ['concat', onConcat],
-//         ['[', onArrayOpen],
-//         ['{', onMapOpen],
-//         ['!e', onEntity],
-//         // ['@e', onEntityFetch, SType.Value],
-//         ['!d', onComponentDef, SType.Array],
-//         ['!c', onComponent, SType.Array],
-//         ['!es', onEntitySet, SType.Map],
-//         ['+', onAddArray, SType.Array, SType.Any],
-//         ['+', onAddComponentToEntity, SType.Entity, SType.Any],
-//         ['+', onAddToEntitySet, SType.EntitySet, SType.Any],
-//     ]);
-
-//     let es = createEntitySet();
-//     [stack] = await push(stack, [SType.EntitySet, es]);
-
-//     [stack] = await pushValues(stack, insts);
-
-//     let esValue = findValue(stack, SType.EntitySet);
-//     es = esValue ? esValue[1]: undefined;
-
-//     return [stack, es];
-// }
 
 async function loadFixture(name: string) {
     const path = Path.resolve(__dirname, `../fixtures/${name}`);
@@ -599,19 +737,26 @@ async function prep(insts?: string, fixture?: string): Promise<[QueryStack, Enti
         ['*', onAdd, SType.Value, SType.Value],
         ['%', onAdd, SType.Value, SType.Value],
         ['==', onAdd, SType.Value, SType.Value],
+        ['!=', onAdd, SType.Value, SType.Value],
         ['.', onPrint, SType.Any],
+        ['..', onPrint],
+        ['@', onFetchArray, SType.Array,SType.Value],
 
         ['[', onArrayOpen],
         ['{', onMapOpen],
+        ['}', onUnexpectedError],
+        [']', onUnexpectedError],
         ['to_map', onBuildMap],
         ['drop', onDrop, SType.Any],
         ['swap', onSwap, SType.Any, SType.Any],
         ['map', onMap, SType.Array, SType.Array],
         ['pluck', onPluck, SType.Array, SType.Value],
         ['pluck', onPluck, SType.Array, SType.Array],
+        ['unique', onUnique, SType.Array],
         ['filter', onFilter, SType.Array, SType.Array],
         ['reduce', onReduce, SType.Array, SType.Value, SType.Array],
-        ['define', onDefine],
+        ['define', onDefine, SType.Any, SType.Value],
+        ['let', onDefine, SType.Any, SType.Value],
         ['concat', onConcat],
         ['cls', onClear],
         ['dup', onDup, SType.Any],
@@ -623,8 +768,8 @@ async function prep(insts?: string, fixture?: string): Promise<[QueryStack, Enti
         ['!d', onComponentDef, SType.Value],
         ['@d', fetchComponentDef, SType.EntitySet],
         ['@d', fetchComponentDef, SType.EntitySet, SType.Value],
-        ['!bf', buildBitfield, SType.Array],
-        ['!bf', buildBitfield, SType.Value],
+        // ['!bf', buildBitfield, SType.Array],
+        // ['!bf', buildBitfield, SType.Value],
         ['!es', onEntitySet, SType.Map],
         ['!c', onComponent, SType.Array],
         ['@c', fetchComponents],

@@ -1,5 +1,31 @@
 import { isEmpty } from "./is";
 
+
+/**
+ *
+ * @param {*} value
+ * @param {*} defaultValue
+ */
+export function toInteger(value:any, defaultValue:number = 0) {
+    let result = parseInt(value, 10);
+    if (Number.isNaN(result)) {
+        result = defaultValue;
+    }
+    return result < 0 ? Math.ceil(result) : Math.floor(result);
+}
+
+/**
+ * @param value 
+ * @param defaultValue 
+ */
+export function toNumber(value:any, defaultValue:number = 0) {
+    let result = Number(value);
+    if (Number.isNaN(result)) {
+        result = defaultValue;
+    }
+    return result;
+}
+
 /**
  * Capitalises a string
  * 

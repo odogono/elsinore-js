@@ -106,61 +106,35 @@
 concat +
 
 
-// [ "@q", "select_channel_id", [
-//     // the include filter only selects the specified components
-//     [ "@include", "/component/channel", "@where", "name", "=", "@$0" ],
-//     // 2nd arg is null, because we only have a single component type selected
-//     [ "@pluck", null, "@e" ],
-//     // select first attribute
-//     [ "@first" ]
-// ]]
 
-// ["@q", "select_user_id", [
-//     // the include filter only selects the specified components
-//     [ "@include", "/component/username", "@where", "username", "=", "@$0" ],
-//     // 2nd arg is null, because we only have a single component type selected
-//     [ "@pluck", null, "@e" ],
-//     [ "@first" ]
-// ]]
+[ "/component/channel_member", { "@e":15, "channel": 3, "client": 5, "username":"kfareed", "cname":"mr-rap"} ] !c
 
-
-// channel members
-
-// [ "@c", "/component/channel_member", { "@e":14, 
-//     "channel": [ "@rq", "select_channel_id", [ "ecs" ] ], 
-//     "client": [ "@rq", "select_user_id", ["aveenendaal"] ], 
-//     "username":"aveenendaal", "cname":"ecs" } ]
-
-// [ "@c", "/component/mode/channel_op", { "@e":14 } ]
-
-[ "/component/channel_member", { "@e":15, "channel": 3, "client": 5, "username":"kfareed", "cname":"mr-rap" ] !c
-
-[ "/component/channel_member", { "@e":16, "channel": 4, "client": 8, "username":"melliott", "cname":"ms-rap" ] !c
+[ "/component/channel_member", { "@e":16, "channel": 4, "client": 8, "username":"melliott", "cname":"ms-rap"} ] !c
 [ "/component/mode/invisible" {"@e":16}] !c
 
-[ "/component/channel_member", { "@e":17, "channel": 3, "client": 6, "username":"mdiamond", "cname":"mr-rap" ] !c
+[ "/component/channel_member", { "@e":17, "channel": 3, "client": 6, "username":"mdiamond", "cname":"mr-rap"} ] !c
 
-[ "/component/channel_member", { "@e":18, "channel": 3, "client": 7, "username":"kelam", "cname":"mr-rap" ] !c
-[ "/component/mode/invisible" {"@e":18}] !c
+[ "/component/channel_member", { "@e":18, "channel": 3, "client": 7, "username":"kelam", "cname":"mr-rap"} ] !c
+[ "/component/mode/invisible" {"@e":18} ] !c
 
-[ "/component/channel_member", { "@e":19, "channel": 3, "client": 10, "username":"kthornton", "cname":"mr-rap" ] !c
-[ "/component/mode/channel_op" {"@e":19}] !c
+[ "/component/channel_member", { "@e":19, "channel": 3, "client": 10, "username":"kthornton", "cname":"mr-rap" }] !c
+[ "/component/mode/channel_op" {"@e":19} ] !c
 
 
-[ "/component/channel_member", { "@e":20, "channel": 3, "client": 11, "username":"ggrice", "cname":"mr-rap" ] !c
+[ "/component/channel_member", { "@e":20, "channel": 3, "client": 11, "username":"ggrice", "cname":"mr-rap" }] !c
 
-[ "/component/channel_member", { "@e":20, "channel": 4, "client": 9, "username":"rshante", "cname":"ms-rap" ] !c
+[ "/component/channel_member", { "@e":20, "channel": 4, "client": 9, "username":"rshante", "cname":"ms-rap"} ] !c
 [ "/component/mode/channel_op" {"@e":21}] !c
 
-[ "/component/channel_member", { "@e":21, "channel": 4, "client": 12, "username":"lhill", "cname":"ms-rap"] !c
+[ "/component/channel_member", { "@e":21, "channel": 4, "client": 12, "username":"lhill", "cname":"ms-rap" }] !c
 
-[ "/component/channel_member", { "@e":22, "channel": 4, "client": 13, "username":"koolgrap", "cname":"mr-rap" ] !c
+[ "/component/channel_member", { "@e":22, "channel": 4, "client": 13, "username":"koolgrap", "cname":"mr-rap"} ] !c
 
-[ "/component/channel_member", { "channel": 2, "client": 13, "username":"mdiamond", "cname":"chat" {"@e":23}] !c
-[ "/component/mode/channel_op" {"@e":23}] !c
-[ "/component/channel_member", { "channel": 2, "client": 5, "username":"kfareed", "cname":"chat" {"@e":24}] !c
-[ "/component/channel_member", { "channel": 2, "client": 10, "username":"kthornton", "cname":"chat" {"@e":25}] !c
-[ "/component/channel_member", { "channel": 2, "client": 13, "username":"aveenendaal", "cname":"chat" {"@e":26}] !c
+[ "/component/channel_member", { "@e":23, "channel": 2, "client": 13, "username":"mdiamond", "cname":"chat"} ] !c
+[ "/component/mode/channel_op" { "@e":23 }] !c
+[ "/component/channel_member", { "@e":24, "channel": 2, "client": 5, "username":"kfareed", "cname":"chat"}] !c
+[ "/component/channel_member", { "@e":25, "channel": 2, "client": 10, "username":"kthornton", "cname":"chat"}] !c
+[ "/component/channel_member", { "@e":26, "channel": 2, "client": 13, "username":"gza", "cname":"chat"}] !c
 
 // gather components into an array and add to the es
 concat +
@@ -192,3 +166,33 @@ concat +
 //     "@select_by_id"
 //     // the result is a list of entity ids which are members of the same channels as 'client_id'
 //  ] }
+
+
+
+
+// [ "@q", "select_channel_id", [
+//     // the include filter only selects the specified components
+//     [ "@include", "/component/channel", "@where", "name", "=", "@$0" ],
+//     // 2nd arg is null, because we only have a single component type selected
+//     [ "@pluck", null, "@e" ],
+//     // select first attribute
+//     [ "@first" ]
+// ]]
+
+// ["@q", "select_user_id", [
+//     // the include filter only selects the specified components
+//     [ "@include", "/component/username", "@where", "username", "=", "@$0" ],
+//     // 2nd arg is null, because we only have a single component type selected
+//     [ "@pluck", null, "@e" ],
+//     [ "@first" ]
+// ]]
+
+
+// channel members
+
+// [ "@c", "/component/channel_member", { "@e":14, 
+//     "channel": [ "@rq", "select_channel_id", [ "ecs" ] ], 
+//     "client": [ "@rq", "select_user_id", ["aveenendaal"] ], 
+//     "username":"aveenendaal", "cname":"ecs" } ]
+
+// [ "@c", "/component/mode/channel_op", { "@e":14 } ]

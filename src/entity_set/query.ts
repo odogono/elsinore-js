@@ -23,8 +23,9 @@ import {
     find as findValue,
     StackError,
     isStackValue,
+    DLog,
 } from "../query/stack";
-import { unpackStackValue, unpackStackValueR, onPluck, onFilter } from "../query/words";
+import { unpackStackValue, unpackStackValueR, onPluck, onFilter, onDefine } from "../query/words";
 import { stackToString } from "../query/util";
 import { ComponentDef, ComponentDefId, getDefId } from "../component_def";
 import { onLogicalFilter, parseFilterQuery } from './filter';
@@ -41,17 +42,19 @@ interface ESMemQueryStack extends QueryStack {
  * @param es 
  * @param query 
  */
-export async function select(es: EntitySetMem, query: StackValue[]): Promise<StackValue[]> {
+export async function select(es: EntitySetMem, query: StackValue[], options = {} ): Promise<StackValue[]> {
     let stack = createStack() as ESMemQueryStack;
     stack.es = es;
-
-    // Log.debug('[select]', stackToString(stack) );
-
+    if( 'stack' in options ){
+        stack._root = stack._parent = options['stack'];
+    }
+    
     // add first pass words
     stack = addWords<ESMemQueryStack>(stack, [
         ['!bf', buildBitfield, SType.Array],
         ['!bf', buildBitfield, SType.Value],
         ['!ca', onComponentAttr],
+        ['define', onDefine],
         
         ['and', onLogicalFilter, SType.Any, SType.Any],
         ['or', onLogicalFilter, SType.Any, SType.Any],
@@ -60,6 +63,9 @@ export async function select(es: EntitySetMem, query: StackValue[]): Promise<Sta
         ['!=', onLogicalFilter, SType.Any, SType.Any],
     ]);
 
+
+    // Log.debug('[select]', query );
+
     [stack] = await pushValues(stack, query);
 
     // reset stack items and words
@@ -67,7 +73,6 @@ export async function select(es: EntitySetMem, query: StackValue[]): Promise<Sta
     stack.items = [];
     stack.words = {};
 
-    // Log.debug('[select]', stackToString(stack) );
 
     stack = addWords<ESMemQueryStack>(stack, [
         ['@e', fetchEntity],
@@ -100,8 +105,11 @@ export function applyFilter(stack:ESMemQueryStack): InstResult<ESMemQueryStack> 
     let filter;
     const {es} = stack;
     [stack, [,filter]] = pop(stack);
-
+    
+    // DLog(stack._root, 'bugger', filter);
+    // ilog(filter);
     let result = parseFilterQuery( es, filter[0], filter[1], filter[2] );
+
     
     let eids = walkFilterQuery( es, Array.from(es.entities.keys()), ...result ).sort();
     // ilog( eids );
@@ -130,12 +138,17 @@ function walkFilterQuery( es:EntitySetMem, eids:EntityId[], cmd?, ...args ){
     else if( cmd === '==' ){
         let {def} = args[0];
         const did = getDefId(def);
-        // let tbl = defToTbl(def);
         let [key,val] = args[1];
         eids = matchEntities(es, eids, new BitField([did]));
         eids = eids.reduce( (out,eid) => {
             const cid = toComponentId(eid,did);
             const com = es.components.get(cid);
+            // Log.debug('[walkFQ]','==', key, com[key], val);
+            // if the value is an array, we look whether it exists
+            if( Array.isArray(val) ){
+                return val.indexOf( com[key] ) !== -1 ? [...out,eid] : out;
+            }
+            // otherwise a straight compare
             return com[key] === val ? [...out,eid] : out;
         },[]);
 
@@ -210,9 +223,12 @@ export function fetchComponents(stack: ESMemQueryStack): InstResult<ESMemQuerySt
             eids = [unpackStackValueR(from)];
         } else if( from[0] === SType.Array ){
             eids = from[1].map( it => {
-                return isStackValue(it) && it[0] === SType.Entity ? it[1] 
+                // Log.debug('[fetchComponent]', from[1]);            
+                return isStackValue(it) ? getEntityId(it[1])
                 : isEntity(it) ? getEntityId(it) : undefined;
             }).filter(Boolean);
+        } else {
+            Log.debug('[fetchComponent]', 'unhandled', from);
         }
     }
 
@@ -232,83 +248,6 @@ export function fetchComponents(stack: ESMemQueryStack): InstResult<ESMemQuerySt
     return [stack, [SType.Array, coms]];
 }
 
-
-// export function esEquals(stack: ESMemQueryStack, val:StackValue): InstResult<ESMemQueryStack> {
-//     const {es} = stack;
-//     let left, right;
-//     const [op] = val;
-
-//     [stack, right] = pop(stack);
-//     [stack, left] = pop(stack);
-
-//     let lType = left[0];
-//     // let rType = right[0];
-//     let lVal = unpackStackValue(left, SType.Any, false)
-//     // let rVal = unpackStackValue(right, SType.Any)
-
-//     // Log.debug('[esComponentValueEquals]', 'left', lType, lVal);
-//     // Log.debug('[esComponentValueEquals]', 'right', right);
-
-//     if (lType == SType.Array) {
-//         // lVal = lVal.reduce((out, val) => {
-//         //     let cmp = compareStackValues(val, right);
-//         //     if (op === '!=') {
-//         //         cmp = !cmp;
-//         //     }
-//         //     return cmp ? [...out, val] : out;
-//         // }, [])
-
-//         return [stack, [SType.Array, false]];
-//     } else if (lType === SType.ComponentAttr) {
-//         const [bf, attr] = lVal;
-//         let rVal = unpackStackValue(right);
-//         let eids: EntityId[] = matchEntities(es, undefined, bf);
-//         let did = bf.toValues()[0];
-
-//         Log.debug('[esEquals]',eids, did);
-
-//         let coms = eids.map(eid => getComponent(es, toComponentId(eid, did)))
-//             .filter(com => com[attr] === rVal)
-//             .map(com => ([SType.Component, com]));
-
-//         return [stack, [SType.Array, coms]];
-//         // Log.debug('[esComValueEquals]', left );
-
-//     } else {
-
-//         throw new StackError(`esEquals: unhandled type ${lType}`);
-//     }
-
-
-//     return [stack];
-// }
-
-// function compareStackValues(left: StackValue, right: StackValue) {
-//     // if (left[0] === SType.ComponentValue) {
-//     //     if (right[0] === SType.Value) {
-//     //         let val = right[1];
-//     //         return right[1] === unpackStackValue(left, SType.ComponentValue);
-//     //     }
-//     //     if (right[0] === SType.Entity) {
-//     //         let eids = right[1];
-//     //         eids = Array.isArray(eids) ? eids : [eids];
-//     //         let [eid, did] = fromComponentId(left[1][0]);
-//     //         return eids.indexOf(eid) !== -1;
-//     //     }
-//     // }
-//     throw new StackError(`compare : unhandled types ${left[0]} vs ${right[0]}`);
-// }
-
-
-// function selectComAttribute(com: Component, attr) {
-//     let { "@e": e, "@d": d, [attr]: val, ...rest } = com;
-//     return [toComponentId(e, d), attr, val];
-//     // return {"@e":e, "@d":d, [attr]:val };
-// }
-
-const cid = (v) => [SType.Component, v];
-const cat = (v) => [SType.ComponentAttr, v];
-const sv = (v) => [SType.Value, v];
 
 /**
  * Builds a ComponentAttr value - [Bitfield,string]
@@ -342,9 +281,11 @@ export function buildBitfield(stack: ESMemQueryStack): InstResult<ESMemQueryStac
     let arg: StackValue;
     [stack, arg] = pop(stack);
 
-    let dids = unpackStackValue(arg, SType.Any);
+    let dids = unpackStackValueR(arg, SType.Any);
 
     dids = isString(dids) ? [dids] : dids;
+
+    // Log.debug('[buildBitField]', dids);
 
     let bf = resolveComponentDefIds(es, dids);
 
@@ -366,7 +307,7 @@ export function fetchEntity(stack: ESMemQueryStack): InstResult<ESMemQueryStack>
     let bf: BitField;
     let eids: number[];
 
-    // Log.debug('[fetchEntity]', 'eh?', data, eid);
+    // Log.debug('[fetchEntity]', 'eh?', data);
 
     if (data[0] === SType.Bitfield) {
         bf = eid as BitField;

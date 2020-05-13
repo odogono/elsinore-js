@@ -1,6 +1,6 @@
 import { BitField } from 'odgn-bitfield';
 import { Component, getComponentDefId, setEntityId as setComponentEntityId } from "./component";
-import { isObject } from './util/is';
+import { isObject, isInteger } from './util/is';
 
 export const Type = '@e';
 
@@ -102,8 +102,8 @@ export function addComponentUnsafe( entity:Entity, defId: number, component:Comp
  * 
  * @param entity 
  */
-export function getEntityId( entity:Entity ): number {
-    return entity ? entity[Type] : 0;
+export function getEntityId( entity:Entity ): EntityId {
+    return isEntity(entity) ? entity[Type] : isInteger(entity as any) ? entity as any : 0;
 }
 
 export function setEntityId( entity:Entity, id:number ): Entity {

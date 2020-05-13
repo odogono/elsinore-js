@@ -68,7 +68,9 @@ import {
     unpackStackValue,
     onBuildMap,
     onSelect,
-    unpackStackValueR
+    unpackStackValueR,
+    onDup,
+    fetchComponentDef
 } from '../../src/query/words';
 import {
     stackToString,
@@ -241,14 +243,17 @@ describe('Select', () => {
     })
 
     it('or condition', async () => {
-        let query = `[
+        let query = `
+        // create an es with the defs
+        dup @d {} !es swap + swap
+        [
             /component/position file !ca a ==
             /component/position file !ca f ==
             or
             /component/colour colour !ca white ==
             and
-            // @c
-        ] select`;
+            @c
+        ] select +`;
 
         let [stack,es] = await prep(query, 'chess.insts');
         console.log('\n');
@@ -266,6 +271,10 @@ describe('Select', () => {
             ['cls', onClear],
             ['select', onSelect, SType.EntitySet, SType.Array],
             ['spread', onArraySpread, SType.Array ],
+            ['dup', onDup],
+            ['!es', onEntitySet, SType.Map],
+            ['+', onAddToEntitySet, SType.EntitySet, SType.Any],
+            ['over', onDup],
             ['[', onArrayOpen],
         ]);
 
@@ -284,12 +293,15 @@ async function loadEntitySetFromFixture(name: string): Promise<[QueryStack, Enti
     stack = addWords(stack, [
         ['assert_type', onAssertType],
         ['swap', onSwap],
+        ['dup', onDup],
+        ['over', onDup],
         ['concat', onConcat],
         ['[', onArrayOpen],
         ['{', onMapOpen],
         ['!e', onEntity],
         // ['@e', onEntityFetch, SType.Value],
         ['!d', onComponentDef, SType.Array],
+        ['@d', fetchComponentDef, SType.EntitySet],
         ['!c', onComponent, SType.Array],
         ['!es', onEntitySet, SType.Map],
         ['+', onAddArray, SType.Array, SType.Any],

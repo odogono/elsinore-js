@@ -2,6 +2,7 @@ import { QueryStack, InstResult, pop, SType, StackValue, pushRaw } from "../quer
 import { BitField } from "odgn-bitfield";
 import { EntitySet } from ".";
 import { getByDefId } from "./registry";
+import { unpackStackValue, unpackStackValueR } from "../query/words";
 
 
 
@@ -36,11 +37,16 @@ function prEquals( es:EntitySet, cmd, left, right ){
     let val;
     if( left[0] === SType.Value ){
         val = left[1];
+        // console.log('[prEquals]', 'left', val);
+        key = parseFilterQuery(es,...right);
+    } else if( left[0] === SType.Array ){
+        val = unpackStackValueR(left);
         key = parseFilterQuery(es,...right);
     } else if( right[0] === SType.Value ){
         val = right[1];
         key = parseFilterQuery(es, ...left);
     } else {
+        // console.log('[prEquals]', [left,right]);
         return {eq:[ parseFilterQuery(es,...left), parseFilterQuery(es,...right)]};
     }
     if( 'key' in key ){
