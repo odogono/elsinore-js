@@ -96,6 +96,7 @@ export function createFromObj({id, name, uri, properties, ...extra}): ComponentD
     // name = name || uri |> String.split("/") |> List.last() |> Macro.camelize()
 
     if( extra['@d'] !== undefined ){
+    // if( '@d' in extra ){
         // console.log('[createFromObj]', 'have @d', extra['@d']);
         let {['@d']: did, ...res} = extra;
         id = extra['@d'];

@@ -1,6 +1,7 @@
 import { QueryStack, StackValue, SType } from "./stack";
 import { getComponentId } from "../component";
 import { getEntityId } from "../entity";
+import { size as entitySetSize } from "../entity_set";
 import { stringify } from "../util/json";
 
 export function stackToString( stack:QueryStack ):string {
@@ -13,7 +14,7 @@ export function valueToString( val:StackValue ):string {
     // Log.debug('[valueToString]', type, value);
     switch( type ){
         case SType.EntitySet:
-            return type;
+            return `${type}.${value.type}`;//(${value.esSize(value)})`;
         case SType.ComponentAttr:
             return `(${type}, ${stringify(value)})`;
         case SType.ComponentDef:

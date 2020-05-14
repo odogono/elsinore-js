@@ -1,16 +1,16 @@
+if( process.env.JS_ENV !== 'browser' ){
+    require('fake-indexeddb/auto');
+}
 import { assert } from 'chai';
 import Path from 'path';
 import Fs from 'fs-extra';
 import { createLog } from '../../src/util/log';
-import { tokenize, tokenizeString } from '../../src/query/tokenizer';
+import { tokenizeString } from '../../src/query/tokenizer';
 
-import { 
-    // EntitySet, 
-    EntitySetSQL,
+import {
+    EntitySetIDB,
     create as createEntitySet,
     register,
-    getByUri,
-    getByHash,
     size as entitySetSize,
     add as esAdd, 
     createComponent, 
@@ -26,10 +26,11 @@ import {
     markComponentAdd,
     // getComponent,
     addComponents,
+    clearIDB,
     // EntitySetMem,
     // ESQuery,
     // compileQueryPart
-} from '../../src/entity_set_sql';
+} from '../../src/entity_set_idb';
 
 import {
     create as createStack,
@@ -79,35 +80,33 @@ import {
 import {
     Entity, create as createEntityInstance, isEntity,
     addComponent as addComponentToEntity,
-    getEntityId
+    getEntityId,
+    size as entitySize,
+    getComponent as getEntityComponent,
 } from '../../src/entity';
 import { sqlClear } from '../../src/entity_set_sql/sqlite';
 import { fetchComponents } from '../../src/entity_set/query';
 
 
+const Log = createLog('TestIDBQuery');
 
-
-
-const Log = createLog('TestSQLQuery');
-
-const liveDB = {uuid:'test.sqlite', isMemory:false};
 
 const parse = (data) => tokenizeString(data, { returnValues: true });
 const sv = (v): StackValue => [SType.Value, v];
 
 
-describe('Select', () => {
+describe('Query IDB', () => {
 
     beforeEach( async () => {
-        await sqlClear('test.sqlite');
+        await clearIDB();
     })
 
     it('fetches entities by id', async () => {
         let query = `[ 102 @e ] select`;
-        let [stack] = await prep(query, 'todo.ldjson');
+        let [stack, es] = await prep(query, 'todo.ldjson');
 
         // Log.debug('stack:', stackToString(stack) );
-        // Log.debug('stack:', stack.items );
+        // Log.debug('es:', es );
         let [,result] = pop(stack);
 
         // the return value is an entity
@@ -211,7 +210,7 @@ describe('Select', () => {
         let ents = unpackStackValueR(result);
         // Log.debug('stack:', ents );
         
-        assert.deepEqual( ents.map(e => getEntityId(e)), [101, 100] );
+        assert.deepEqual( ents.map(e => getEntityId(e)), [100, 101] );
     });
 
     it('uses mulit conditions', async () => {
@@ -230,11 +229,13 @@ describe('Select', () => {
         // /component/piece/pawn !bf @e
         // [/component/position /component/colour] !bf
         @c
-        ] select`
+        ] select !e`
         
         let [stack,es] = await prep(query, 'chess.insts');
-        // console.log('\n');
-        // ilog( stack.items );
+        let [,result] = pop(stack);
+        let e:Entity = unpackStackValue(result, SType.Entity);
+        assert.equal( entitySize(e), 3);
+        assert.equal( getEntityComponent(e, 2).colour, 'white' );
     })
 
     it('or condition', async () => {
@@ -248,13 +249,20 @@ describe('Select', () => {
             /component/colour colour !ca white ==
             and
             @c
-        ] select +`;
+        ] select 
+        // true dlog let
+        +
+        `;
 
         let [stack] = await prep(query, 'chess.insts');
+        // console.log('\n');
+        // Log.debug('stack:', stackToString(stack) );
         let [,result] = pop(stack);
         let es = unpackStackValue(result, SType.EntitySet);
 
         assert.equal( await es.esSize(es), 4 );
+        // Log.debug('stack:', stringify(stack.items,1) );
+        // ilog( es );
 
     })
 
@@ -287,7 +295,7 @@ describe('Select', () => {
         `, 'irc.ldjson');
 
         // Log.debug( stackToString(stack) );
-        // ilog(stack.items);
+        ilog(stack.items);
         assert.equal( stackToString(stack), '[/component/channel_member, {@e: 14,channel: (%e 3),client: (%e 11)}]' );
         // ilog( es );
     })
@@ -296,9 +304,9 @@ describe('Select', () => {
 });
 
 
-async function prep(insts?: string, fixture?: string): Promise<[QueryStack, EntitySetSQL]> {
+async function prep(insts?: string, fixture?: string): Promise<[QueryStack, EntitySetIDB]> {
     let stack = createStack();
-    let es: EntitySetSQL;
+    let es: EntitySetIDB;
 
     stack = addWords(stack, [
         ['+', onAddComponentToEntity, SType.Entity, SType.Component],
@@ -347,11 +355,11 @@ async function prep(insts?: string, fixture?: string): Promise<[QueryStack, Enti
         ['!es', onEntitySet, SType.Map],
         ['!c', onComponent, SType.Array],
         ['@c', fetchComponents],
-        ['!e', onEntity, SType.Value],
+        ['!e', onEntity, SType.Any],
         ['assert_type', onAssertType],
     ]);
     if (fixture) {
-        es = createEntitySet({...liveDB, debug:false});
+        es = createEntitySet();
         [stack] = await push(stack, [SType.EntitySet, es]);
 
         let todoInsts = await loadFixture(fixture);
@@ -367,40 +375,6 @@ async function prep(insts?: string, fixture?: string): Promise<[QueryStack, Enti
     }
     return [stack, es];
 }
-
-// async function loadEntitySetFromFixture(name: string): Promise<[QueryStack, EntitySetSQL]> {
-//     let insts = await loadFixture(name);
-//     // Log.debug(insts);
-//     let stack = createStack();
-//     stack = addWords(stack, [
-//         ['assert_type', onAssertType],
-//         ['swap', onSwap],
-//         ['dup', onDup],
-//         ['over', onDup],
-//         ['concat', onConcat],
-//         ['[', onArrayOpen],
-//         ['{', onMapOpen],
-//         ['!e', onEntity],
-//         // ['@e', onEntityFetch, SType.Value],
-//         ['!d', onComponentDef, SType.Array],
-//         ['@d', fetchComponentDef, SType.EntitySet],
-//         ['!c', onComponent, SType.Array],
-//         ['!es', onEntitySet, SType.Map],
-//         ['+', onAddArray, SType.Array, SType.Any],
-//         ['+', onAddComponentToEntity, SType.Entity, SType.Any],
-//         ['+', onAddToEntitySet, SType.EntitySet, SType.Any],
-//     ]);
-
-//     let es = createEntitySet({...liveDB, debug:false});
-//     [stack] = await push(stack, [SType.EntitySet, es]);
-
-//     [stack] = await pushValues(stack, insts);
-
-//     let esValue = findValue(stack, SType.EntitySet);
-//     es = esValue ? esValue[1]: undefined;
-
-//     return [stack, es];
-// }
 
 async function loadFixture(name: string) {
     const path = Path.resolve(__dirname, `../fixtures/${name}`);

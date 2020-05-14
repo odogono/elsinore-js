@@ -152,7 +152,6 @@ export function register<ES extends EntitySet>( registry:ES, value:ComponentDef|
 export function createComponent<ES extends EntitySet>( registry:ES, defId:(string|number|ComponentDef), attributes = {} ): Component {
     let def:ComponentDef = undefined;
 
-    // Log.debug('[createComponent]', defId, attributes, registry );
     if( isString(defId) ){
         def = getByUri(registry,  defId as string );
     } else if( isInteger(defId) ){
@@ -160,7 +159,8 @@ export function createComponent<ES extends EntitySet>( registry:ES, defId:(strin
     } else if( isComponentDef(defId) ){
         def = defId as any as ComponentDef;
     }
-
+    
+    // Log.debug('[createComponent]', defId, attributes, def );
     if( def === undefined ){
         // Log.debug('[createComponent]', registry.byUri.get( defId as string ), registry.componentDefs );
         throw new Error(`component def not found: ${defId}`);

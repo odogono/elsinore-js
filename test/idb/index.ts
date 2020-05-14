@@ -1,41 +1,11 @@
-import { assert } from 'chai';
-
 if( process.env.JS_ENV !== 'browser' ){
     require('fake-indexeddb/auto');
+} else {
+    (mocha.checkLeaks as any)(false);
 }
-
+import { assert } from 'chai';
 import { createLog } from '../../src/util/log';
-import {ComponentRegistry, 
-    Type as ComponentRegistryT,
-    resolveComponentDefIds, 
-    getByUri,
-    getByHash,
-    } from '../../src/component_registry';
-import {  
-    pushValues,
-    create as createStack,
-    findV,
-    QueryStack,
-    StackValue,
-    addWords,
-    SType,
-    push
-} from '../../src/query/stack';
-import { Entity,
-    create as createEntityInstance, 
-    addComponent as addComponentToEntity,
-    getComponent as getEntityComponent,
-    size as entitySize, 
-    isEntity,
-    EntityList} from '../../src/entity';
-import { 
-    toObject as defToObject, 
-    hash as hashDef, 
-    isComponentDef, 
-    ComponentDef, 
-    Type
-} from '../../src/component_def';
-import { ComponentList, getComponentEntityId } from '../../src/component';
+import { tokenizeString } from '../../src/query/tokenizer';
 import { 
     // EntitySet, 
     EntitySetIDB,
@@ -60,16 +30,65 @@ import {
     // ESQuery,
     // compileQueryPart
 } from '../../src/entity_set_idb';
-import { 
-    assertHasComponents, 
-    } from '../util/assert';
+import {
+    create as createStack,
+    SType,
+    addWords,
+    pushValues,
+    QueryStack,
+    StackValue,
+    push, pop,
+    find as findValue,
+
+} from '../../src/query/stack';
+import {     
+    getByUri, getByHash, getByDefId, resolveComponentDefIds,
+} from '../../src/entity_set/registry';
+import {
+    onSwap, onArrayOpen, 
+    onAddArray, 
+    onArraySpread,
+    onAdd, onConcat, onMapOpen, 
+    onEntity,
+    onArgError,
+    onComponentDef, onComponent, 
+    onEntitySet, onAddComponentToEntity,
+    onMap,
+    onReduce,
+    onFilter,
+    onClear,
+    onValue,
+    onDefine,
+    onAddToEntitySet,
+    onAssertType,
+    unpackStackValue,
+    onBuildMap,
+    onSelect,
+    unpackStackValueR,
+    onDup,
+    fetchComponentDef,
+    onPrint,
+    onDrop,
+    onPluck,
+    onFetchArray,
+    onUnexpectedError,
+    onUnique
+} from '../../src/query/words';
+import {
+    stackToString,
+} from '../../src/query/util';
+import { Entity,
+    create as createEntityInstance, 
+    getComponent as getEntityComponent,
+    addComponent as addComponentToEntity,
+    size as entitySize, 
+    isEntity,
+    EntityList} from '../../src/entity';
 import { BuildQueryFn } from '../../src/query/build';
+import { isComponentDef, hash as hashDef, ComponentDef } from '../../src/component_def';
 import { getChanges, ChangeSetOp } from '../../src/entity_set/change_set';
-import { Type as ComponentT, fromComponentId, getComponentDefId, Component } from '../../src/component';
-import { onMapOpen, onAdd, onClear, onEntitySet, onEntity, onAddToEntitySet, onComponentDef } from '../../src/query/words';
-import { stringify } from '../../src/util/json';
-import { stackToString, parse } from '../util/stack';
-import { isEntitySet } from '../../src/entity_set';
+import { assertHasComponents } from '../util/assert';
+import { getComponentDefId, Component } from '../../src/component';
 
 const Log = createLog('TestEntitySetIDB');
 
@@ -240,7 +259,7 @@ describe('Entity Set (IndexedDB)', () => {
             // Log.debug('stack', es )
         });
 
-        it('overwrites an entity', async () => {
+        it.only('overwrites an entity', async () => {
             let e:Entity;
             let [es, buildEntity] = await buildEntitySet();
 
@@ -277,7 +296,7 @@ describe('Entity Set (IndexedDB)', () => {
             assertHasComponents( es, e, 
                 ['/component/username', '/component/status', '/component/channel_member' ] );
 
-            const did = getByUri( es, '/component/channel_member')[Type]
+            const did = resolveComponentDefIds(es, ['/component/channel_member']).toValues()[0];
             let com = getEntityComponent(e, did)
             assert.equal( com.channel, 3 );
             // Log.debug('e', com);
@@ -326,66 +345,7 @@ describe('Entity Set (IndexedDB)', () => {
         });
     });
 
-    describe('Query', () => {
-        it('adds a def to an EntitySet', async () => {
-            let data = parse(`/component/text !d +`);
-            // Log.debug('data', stringify(data));
     
-            let stack = createStack();
-            stack = addWords(stack, [
-                ['{', onMapOpen],
-                ['+', onAdd, SType.Value, SType.Value ],
-                ['+', onAddToEntitySet, SType.EntitySet, SType.Any ],
-                [ 'cls', onClear ],
-                [ '!d', onComponentDef, SType.Value ],
-                [ '!es', onEntitySet, SType.Map ],
-            ]);
-
-            let es = createEntitySet();
-
-            [stack] = await push(stack, [SType.EntitySet, es]);
-            // Log.debug('es', es );
-
-            [stack] = await pushValues( stack, data );
-            // Log.debug('stack', stringify(stack.items,1) );
-
-            es = stack.items[0][1];
-
-            assert.lengthOf( es.esGetComponentDefs(es), 1 );
-    
-            assert.ok( isEntitySet(es));
-        })
-
-        it('adds an entity', async () => {
-            let data = parse('+');
-
-            let e:Entity;
-            let [es, buildEntity] = await buildEntitySet();
-
-            e = buildEntity( es, ({component}) => {
-                component('/component/channel', {name: 'chat'});
-                component('/component/status', {status: 'inactive'});
-                component('/component/topic', {topic: 'data-structures'});
-            });
-
-            let stack = createStack();
-            stack = addWords(stack, [
-                ['!e', onEntity],
-                ['+', onAddToEntitySet, SType.EntitySet, SType.Any ],
-            ]);
-
-            [stack] = await push(stack, [SType.EntitySet, es]);
-            [stack] = await push(stack, [SType.Entity, e]);
-
-            [stack] = await pushValues(stack,data);
-
-            // Log.debug('stack', stringify(stack.items,1) );
-            // Log.debug('stack', stackToString(stack) );
-
-            assert.equal( stack.items.length, 1 );
-
-        });
-    })
 
 });
 

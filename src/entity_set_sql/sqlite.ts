@@ -370,7 +370,7 @@ export function sqlRetrieveComponents(ref:SqlRef, eids:EntityId[], defs:Componen
 
         for( let rr=0;rr<rows.length;rr++ ){
             let { created_at: ca, updated_at: ua, id: id, eid: ee, ...rest } = rows[rr];
-            result.push( [SType.Component, { '@e': ee, '@d': def[ComponentDefT], ...rest }] );
+            result.push( { '@e': ee, '@d': def[ComponentDefT], ...rest } );
         }
     }
     
@@ -446,7 +446,7 @@ export function sqlRetrieveDefByHash(ref: SqlRef, id: number): ComponentDef {
     return createComponentDef(did, JSON.parse(schema));;
 }
 
-export function sqlRetrieveEntities(ref:SqlRef){
+export function sqlRetrieveEntities(ref:SqlRef):Entity[]{
     const { db } = ref;
     let stmt = db.prepare(`SELECT eid,did FROM tbl_entity_component ORDER BY eid;`);
     let rows = stmt.all();
@@ -461,7 +461,7 @@ export function sqlRetrieveEntities(ref:SqlRef){
     return Object.values(result);
 }
 
-export function sqlRetrieveEntityIdByDefId(ref: SqlRef, did: number[]): Entity[] {
+export function sqlRetrieveEntityByDefId(ref: SqlRef, did: number[]): Entity[] {
     const { db } = ref;
     let stmt = db.prepare(`
     SELECT 

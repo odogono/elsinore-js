@@ -116,6 +116,7 @@ export function create(options:CreateEntitySetFSParams={}):EntitySetFS {
     const db = fsCreateRef( `${prefix}${uuid}`, path);
 
     return {
+        type: 'fs',
         isEntitySet:true,
         isAsync: true,
         isOpen: false,
@@ -136,7 +137,8 @@ export function create(options:CreateEntitySetFSParams={}):EntitySetFS {
         esEntities: async (es:EntitySetFS) => await getEntities(es),
         esGetEntity: (es:EntitySetFS, eid:EntityId) => getEntity(es,eid),
         esSelect: (es:EntitySetFS, query:StackValue[]) => null,
-        esClone: clone
+        esClone: clone,
+        esSize: (es) => size(es),
     }
 }
 
@@ -346,9 +348,12 @@ export async function addComponents(es: EntitySetFS, components: Component[]): P
     es.comChanges = createChangeSet<ComponentId>();
 
     // mark incoming components as either additions or updates
-    es = await components.reduce( (pes, com) => {
-        return pes.then( (es) => markComponentAdd(es, com));
-    }, Promise.resolve(es));
+    for( const com of components ){
+        es = await markComponentAdd(es,com);
+    }
+    // es = await components.reduce( (pes, com) => {
+    //     return pes.then( (es) => markComponentAdd(es, com));
+    // }, Promise.resolve(es));
 
     // gather the components that have been added or updated and apply
     const changedCids = getChanges(es.comChanges, ChangeSetOp.Add | ChangeSetOp.Update)
@@ -356,7 +361,11 @@ export async function addComponents(es: EntitySetFS, components: Component[]): P
     // combine the new changes with the existing
     es.comChanges = mergeCS( changes, es.comChanges );
 
-    return changedCids.reduce((pes, cid) => pes.then( es => applyUpdatedComponents(es, cid) ), Promise.resolve(es));
+    // return changedCids.reduce((pes, cid) => pes.then( es => applyUpdatedComponents(es, cid) ), Promise.resolve(es));
+    for( const cid of changedCids ){
+        es = await applyUpdatedComponents(es,cid);
+    }
+    return es;
 }
 
 export function createComponent( registry:EntitySetFS, defId:(string|number|ComponentDef), attributes = {} ): Component {

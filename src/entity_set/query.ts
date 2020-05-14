@@ -24,6 +24,8 @@ import {
     StackError,
     isStackValue,
     DLog,
+    entityIdFromValue,
+    popBitField,
 } from "../query/stack";
 import { unpackStackValue, unpackStackValueR, onPluck, onFilter, onDefine } from "../query/words";
 import { stackToString } from "../query/util";
@@ -184,23 +186,7 @@ export function fetchValue(stack: ESMemQueryStack): InstResult<ESMemQueryStack> 
     return [stack, value];
 }
 
-function popBitField<ST extends QueryStack>(stack:ST): [ST,ComponentDefId[]]{
-    const {es} = stack;
-    let val;
-    let dids:ComponentDefId[];
-    val = peek(stack);
 
-    let [type, bf] = val;
-    if( type === SType.Bitfield ){
-        dids = bf.toValues();
-    } else if( type === SType.Value && bf === 'all' ){
-        dids = [];
-    }
-    if( dids !== undefined ){
-        [stack] = pop(stack);
-    }
-    return [stack,dids];
-}
 
 
 export function fetchComponents(stack: ESMemQueryStack): InstResult<ESMemQueryStack> {
@@ -211,7 +197,7 @@ export function fetchComponents(stack: ESMemQueryStack): InstResult<ESMemQuerySt
     let coms = [];
 
     // get the bitfield
-    [stack, dids] = popBitField(stack);
+    [stack, dids] = popBitField(stack,false) as [ESMemQueryStack, ComponentDefId[]];
 
     
     left = peek(stack);
@@ -255,14 +241,13 @@ export function fetchComponents(stack: ESMemQueryStack): InstResult<ESMemQuerySt
  * @param es 
  * @param stack 
  */
-export function onComponentAttr(stack: ESMemQueryStack): InstResult<ESMemQueryStack> {
+export function onComponentAttr<QS extends QueryStack>(stack: QS): InstResult<QS> {
     const {es} = stack;
     let left, right: StackValue;
     [stack, right] = pop(stack);
     [stack, left] = pop(stack);
 
     let attr = unpackStackValue(right, SType.Value);
-    // let did = unpackStackValue(left, SType.Value);
     let dids = unpackStackValue(left, SType.Any);
     dids = isString(dids) ? [dids] : dids;
 
@@ -276,17 +261,13 @@ export function onComponentAttr(stack: ESMemQueryStack): InstResult<ESMemQuerySt
     return [stack, [SType.ComponentAttr, [bf, attr]]];
 }
 
-export function buildBitfield(stack: ESMemQueryStack): InstResult<ESMemQueryStack> {
+export function buildBitfield<QS extends QueryStack>(stack: QS): InstResult<QS> {
     const {es} = stack;
     let arg: StackValue;
     [stack, arg] = pop(stack);
 
     let dids = unpackStackValueR(arg, SType.Any);
-
     dids = isString(dids) ? [dids] : dids;
-
-    // Log.debug('[buildBitField]', dids);
-
     let bf = resolveComponentDefIds(es, dids);
 
     return [stack, [SType.Bitfield, bf]];
@@ -303,13 +284,14 @@ export function fetchEntity(stack: ESMemQueryStack): InstResult<ESMemQueryStack>
     let data: StackValue;
     [stack, data] = pop(stack);
 
+    const type = data[0];
     let eid = unpackStackValueR(data, SType.Any);
     let bf: BitField;
     let eids: number[];
 
     // Log.debug('[fetchEntity]', 'eh?', data);
 
-    if (data[0] === SType.Bitfield) {
+    if (type === SType.Bitfield) {
         bf = eid as BitField;
         eids = matchEntities(es, undefined, bf);
     } else if (isInteger(eid)) {
@@ -323,12 +305,15 @@ export function fetchEntity(stack: ESMemQueryStack): InstResult<ESMemQueryStack>
     else if( Array.isArray(eid) ){
         eids = eid;
     }
-    else if (data[0] === SType.Array) {
+    else if (type === SType.Array) {
         let arr = unpackStackValue(data, SType.Array, false);
         eids = arr.map(row => entityIdFromValue(row)).filter(Boolean);
     }
-    else {
-        throw new StackError(`@e unknown type ${data[0]}`)
+    else if( eid === 'all' ){
+        let ents = matchEntities(es, undefined, 'all');
+        return [stack, [SType.Array, ents]];
+    } else {
+        throw new StackError(`@e unknown type ${type}`)
     }
 
     let result = eids.map(eid => getEntity(es,eid, false) )
@@ -337,29 +322,18 @@ export function fetchEntity(stack: ESMemQueryStack): InstResult<ESMemQueryStack>
     return [stack, [SType.Array, result]];
 }
 
-function entityIdFromValue( value:StackValue ):EntityId {
-    const [type,val] = value;
-    switch( type ){
-        case SType.Entity:
-        case SType.Component:
-            return getEntityId(val);
-        case SType.Value:
-            return isInteger(val) ? val : undefined;
-        default:
-            return undefined;
-    }
-}
 
-function matchEntities(es:EntitySetMem, eids: EntityId[], mbf: BitField): EntityId[] {
+
+function matchEntities(es:EntitySetMem, eids: EntityId[], mbf: BitField|'all'): EntityId[] {
     let matches: number[] = [];
-    const isAll = BitField.isAllSet(mbf);// bf.toString() === 'all';
+    const isAll = mbf === 'all' || BitField.isAllSet(mbf);// bf.toString() === 'all';
     if( isAll ){
         return eids !== undefined ? eids : Array.from(es.entities.keys());
     }
     if( eids === undefined ){
         // let es = from as EntitySetMem;
         for (let [eid, ebf] of es.entities) {
-            if (BitField.and(mbf, ebf)) {
+            if (BitField.and(mbf as BitField, ebf)) {
                 matches.push(eid);
             }
         }
@@ -367,7 +341,7 @@ function matchEntities(es:EntitySetMem, eids: EntityId[], mbf: BitField): Entity
         for( let ii=0;ii<eids.length;ii++ ){
             let eid = eids[ii];
             let ebf = es.entities.get(eid);
-            if( BitField.and( mbf, ebf) ){
+            if( BitField.and( mbf as BitField, ebf) ){
                 matches.push(eid);
             }
         }

@@ -111,15 +111,21 @@ export function onEntity<QS extends QueryStack>(stack: QS): Result<QS> {
     let [type, val] = data;
 
     if (type === SType.Array) {
-        // val.reduce( (acc,val) => {
-        //     Log.debug('[onEntity]', val);
-        //     let type = val[0];
-        //     if( type === SType.Component ){
-
-        //     } else if( isInteger(val[1]) ){
-        //         return [SType.Entity,createEntityInstance(val[1]) ];
-        //     }
-        // },[]);
+        let e = val.reduce( (acc,val) => {
+            // Log.debug('[onEntity]', val);
+            let type = val[0];
+            if( type === SType.Component ){
+                if( !acc ){
+                    acc = createEntityInstance();
+                }
+                return addComponentToEntity( acc, val[1] );
+            } else if( isInteger(val[1]) ){
+                return createEntityInstance(val[1]);
+            }
+        },null);
+        if( isEntity(e) ){
+            return [stack, [SType.Entity, e]];
+        }
     } else {
         let e = createEntityInstance(val);
         return [stack, [SType.Entity, e]];
@@ -202,13 +208,13 @@ export async function onAddToEntitySet<QS extends QueryStack>(stack: QS): AsyncI
     [stack, left] = pop(stack);
     [stack, right] = pop(stack);
 
-    // DLog(stack, "here we go");
-    // DLog(stack, '[onAddToEntitySet]', left );
-    // DLog(stack, '[onAddToEntitySet]', isComponentDef(value), value );
+    DLog(stack, "here we go");
+    DLog(stack, '[onAddToEntitySet]', left );
     let value = unpackStackValue(left);
+    DLog(stack, '[onAddToEntitySet]', isComponentDef(value), value );
     let es: EntitySet = unpackStackValueR(right, SType.EntitySet);
 
-    try {
+    // try {
         const { esAdd, esRegister, isAsync } = es;
 
         let values: StackValue[] = left[0] === SType.Array ? left[1] : [left];
@@ -226,6 +232,7 @@ export async function onAddToEntitySet<QS extends QueryStack>(stack: QS): AsyncI
                 }
                 defs.push(inner);
             } else if (isEntity(inner) || isComponent(inner)) {
+                // Log.debug('[onAddToEntitySet]', inner);
                 coms.push(inner);
             }
         }
@@ -236,9 +243,10 @@ export async function onAddToEntitySet<QS extends QueryStack>(stack: QS): AsyncI
 
         es = isAsync ? await esAdd(es, coms) : esAdd(es, coms);
 
-    } catch (err) {
-        Log.warn('[onAddToEntitySet]', 'error', value, err.stack);
-    }
+    // } 
+    // catch (err) {
+    //     Log.warn('[onAddToEntitySet]', 'error', value, err.stack);
+    // }
     return [stack, [SType.EntitySet, es]];
 }
 

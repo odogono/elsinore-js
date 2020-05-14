@@ -58,6 +58,7 @@ const Log = createLog('ESMem');
 
 
 export interface EntitySet {
+    type: string;
     isAsync: boolean;
 
     isEntitySet: boolean;
@@ -82,6 +83,7 @@ export interface EntitySet {
     esGetEntity: (es,eid:EntityId, populate?:boolean) => Promise<Entity>;
     esSelect: (es, query:StackValue[], options) => Promise<StackValue[]>;
     esClone: (es) => Promise<EntitySet>;
+    esSize: (es:this) => Promise<number>;
 }
 
 export interface EntitySetMem extends EntitySet {
@@ -106,6 +108,7 @@ export function create(options: CreateEntitySetParams = {}): EntitySetMem {
     const comChanges = createChangeSet<ComponentId>();
 
     return {
+        type: 'mem',
         isEntitySet: true,
         isAsync: false,
         isEntitySetMem: true,
@@ -122,6 +125,7 @@ export function create(options: CreateEntitySetParams = {}): EntitySetMem {
         esGetEntity: (es:EntitySetMem, eid:EntityId, populate:boolean) => Promise.resolve( getEntity(es,eid, populate) ),
         esSelect: select,
         esClone: clone,
+        esSize: (es:EntitySetMem) => Promise.resolve(size(es)),
     }
 }
 
@@ -385,7 +389,10 @@ function addComponents(es: EntitySetMem, components: Component[]): EntitySetMem 
     // clearChanges()
 
     // mark incoming components as either additions or updates
-    es = components.reduce((es, com) => markComponentAdd(es, com), es);
+    for( const com of components ){
+        es = markComponentAdd(es,com);
+    }
+    // es = components.reduce((es, com) => markComponentAdd(es, com), es);
 
     // gather the components that have been added or updated and apply
     let changedCids = getChanges(es.comChanges, ChangeSetOp.Add | ChangeSetOp.Update)
@@ -398,7 +405,11 @@ function addComponents(es: EntitySetMem, components: Component[]): EntitySetMem 
     // Log.debug('[addComponents]', 'merge', changes, es.comChanges );
     es.comChanges = mergeCS( changes, es.comChanges );
 
-    return changedCids.reduce((es, cid) => applyUpdatedComponents(es, cid), es);
+    // return changedCids.reduce((es, cid) => applyUpdatedComponents(es, cid), es);
+    for( const cid of changedCids ){
+        es = applyUpdatedComponents(es,cid);
+    }
+    return es;
 }
 
 

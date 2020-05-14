@@ -2,8 +2,7 @@ import { assert } from 'chai';
 import Path from 'path';
 import Fs from 'fs-extra';
 import { createLog } from '../../src/util/log';
-import { tokenize, tokenizeString } from '../../src/query/tokenizer';
-import * as Tokenizer from '../../src/query/tokenizer';
+import { tokenizeString } from '../../src/query/tokenizer';
 import {
     create as createStack,
     SType,
@@ -11,10 +10,9 @@ import {
     pushValues,
     QueryStack,
     StackValue,
-    InstResult, AsyncInstResult,
+    AsyncInstResult,
     push, pop,
     find as findValue,
-    assertStackValueType,
     StackError,
 
 } from '../../src/query/stack';

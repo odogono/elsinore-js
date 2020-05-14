@@ -55,20 +55,23 @@ import { idbOpen, idbDeleteDB,
     idbPut, idbLastKey, 
     idbGetAllKeys, 
     idbGetRange, 
-    idbCount 
+    idbCount,
+    STORE_COMPONENT_DEFS,
+    STORE_COMPONENTS,
+    STORE_ENTITIES,
+    STORE_ENTITY_SETS,
+    STORE_META,
+    PREFIX,
+    idbRetrieveComponent
 } from "./idb";
 import { isString, isInteger } from "../util/is";
 import { getByUri, getByHash } from "../entity_set/registry";
 import { StackValue } from "../query/stack";
+import { select } from "./query";
 
 const Log = createLog('EntitySetIDB');
 
-const PREFIX = 'ecs';
-const STORE_META = 'meta';
-const STORE_ENTITY_SETS = 'entity_sets';
-const STORE_COMPONENT_DEFS = 'defs';
-const STORE_COMPONENTS = 'component';
-const STORE_ENTITIES = 'entity';
+
 
 /**
  * As a storage backed ES, this entityset has functions
@@ -88,11 +91,15 @@ export interface EntitySetIDB extends EntitySet {
     comChanges: ChangeSet<ComponentId>;
 
     // cached component defs
-    componentDefs: ComponentDef[];
+    componentDefs: ComponentDefIDB[];
     byUri: Map<string, number>;
     byHash: Map<number, number>;
 }
 
+export interface ComponentDefIDB extends ComponentDef {
+    tblName?: string;
+    hash?: number;
+}
 
 export function create(options?:CreateEntitySetParams):EntitySetIDB {
     const uuid = createUUID();
@@ -101,6 +108,7 @@ export function create(options?:CreateEntitySetParams):EntitySetIDB {
     const comChanges = createChangeSet<ComponentId>();
 
     return {
+        type: 'idb',
         isEntitySet:true,
         isAsync: true,
         db: undefined,
@@ -115,8 +123,9 @@ export function create(options?:CreateEntitySetParams):EntitySetIDB {
         esGetComponentDefs: (es:EntitySetIDB) => es.componentDefs,
         esEntities: async (es:EntitySetIDB) => getEntities(es),
         esGetEntity: (es:EntitySetIDB, eid:EntityId) => getEntity(es,eid),
-        esSelect: (es:EntitySetIDB, query:StackValue[]) => null,
-        esClone: clone
+        esSelect: select,
+        esClone: clone,
+        esSize: (es) => size(es),
     }
 }
 
@@ -144,6 +153,7 @@ export async function register( es: EntitySetIDB, value:ComponentDef|ComponentDe
     did = did === undefined ? 1 : did + 1;
     
     let def = createComponentDef( did, value );
+    // Log.debug('[register]', did, def );
     let record = defToObject( def );
     let hash = hashDef( def );
 
@@ -152,6 +162,7 @@ export async function register( es: EntitySetIDB, value:ComponentDef|ComponentDe
     es.componentDefs[did-1] = def;
     es.byUri.set( def.uri, did );
     es.byHash.set( hash, did );
+
 
     return [es, def];
 }
@@ -306,11 +317,15 @@ export async function removeEntity(es: EntitySetIDB, item: (number | Entity), op
  * @param es 
  * @param eid 
  */
-export async function getEntity(es:EntitySetIDB, eid:EntityId): Promise<Entity> {
+export async function getEntity(es:EntitySetIDB, eid:EntityId, populate:boolean = true): Promise<Entity> {
     es = await openEntitySet(es);
     let e = await _getEntity(es, eid);
     if( e === undefined ){
         return undefined;
+    }
+
+    if( !populate ){
+        return e;
     }
 
     const store = es.db.transaction(STORE_COMPONENTS, 'readonly').objectStore(STORE_COMPONENTS);
@@ -352,19 +367,21 @@ export async function addComponents(es: EntitySetIDB, components: Component[]): 
     es.comChanges = createChangeSet<ComponentId>();
 
     // mark incoming components as either additions or updates
-    es = await components.reduce( (pes, com) => {
-        return pes.then( (es) => markComponentAdd(es, com));
-    }, Promise.resolve(es));
-
+    for( const com of components ){
+        es = await markComponentAdd(es,com);
+    }
+    
     // gather the components that have been added or updated and apply
     const changedCids = getChanges(es.comChanges, ChangeSetOp.Add | ChangeSetOp.Update)
 
     // combine the new changes with the existing
     es.comChanges = mergeCS( changes, es.comChanges );
 
-    return changedCids.reduce((pes, cid) => pes.then( es => applyUpdatedComponents(es, cid) ), Promise.resolve(es));
-
-    // return es;
+    for( const cid of changedCids ){
+        es = await applyUpdatedComponents(es,cid);
+    }
+    // return changedCids.reduce((pes, cid) => pes.then( es => applyUpdatedComponents(es, cid) ), Promise.resolve(es));
+    return es;
 }
 
 async function applyUpdatedComponents(es: EntitySetIDB, cid: ComponentId): Promise<EntitySetIDB> {
@@ -448,9 +465,9 @@ export async function markComponentAdd(es: EntitySetIDB, com: Component): Promis
     // adds the component to the entityset if it is unknown,
     // otherwise marks as an update
     const cid = getComponentId(com);
+    // Log.debug('[markComponentAdd]', cid, com );
     const existing = await getComponent(es, cid);
 
-    // Log.debug('[markComponentAdd]', cid, existing );
 
     if (existing !== undefined) {
         return Promise.resolve( markComponentUpdate(es as EntitySet, cid) as EntitySetIDB );
@@ -635,26 +652,8 @@ export async function getComponent(es: EntitySetIDB, id: ComponentId | Component
     let cid:ComponentId = isComponentId(id) ? id as ComponentId : getComponentId(id as Component);
     
     es = await openEntitySet(es);
-
-    let [eid,did] = fromComponentId(cid);
-
-    const store = es.db.transaction(STORE_COMPONENTS, 'readonly').objectStore(STORE_COMPONENTS);
-    // const idx = store.index('by_cid');
-
     
-    let result = await idbGetRange(store, IDBKeyRange.bound([eid,did], [eid,did]) );
-    // Log.debug('[getComponent]', eid, did, result);
-
-    if( result.length === 0 ){
-        return undefined;
-    }
-
-    let {'_e':ceid, '_d':cdid, ...rest} = result[0].value;
-    let com = {'@e':ceid, '@d':cdid, ...rest};
-
-    return com;
-
-    // return Promise.resolve(undefined); //es.components.get(cid);
+    return await idbRetrieveComponent(es.db, cid);
 }
 
 
@@ -748,7 +747,7 @@ function onEntitySetUpgrade(db:IDBDatabase, ev:IDBVersionChangeEvent) {
     
     // store component data
     store = db.createObjectStore(STORE_COMPONENTS, {keyPath:['_e', '_d']});
-    // store.createIndex('by_cid', ['@e', '@d'], {unique:true});
+    store.createIndex('by_did', ['_d', '_e'], {unique:true});
     
     store = db.createObjectStore(STORE_COMPONENT_DEFS, {autoIncrement:true});
     store.createIndex('by_uri', 'uri', {unique:false});
@@ -763,7 +762,7 @@ export function clearIDB() {
     // get a list of all the entityset uuids
     return getEntitySetIDs()
         .then(uuids => {
-            // Log.debug('[deleteIDB]', 'existing entitysets', uuids);
+            Log.debug('[deleteIDB]', 'existing entitysets', uuids);
             return Promise.all(uuids.map(uuid => deleteEntitySet( {uuid} as EntitySet) ));
         })
         .then(() => idbDeleteDB(STORE_META));

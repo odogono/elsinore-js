@@ -1,4 +1,4 @@
-import { isObject, isString, isPromise, isFunction } from "../util/is";
+import { isObject, isString, isPromise, isFunction, isInteger } from "../util/is";
 import { stringify } from "../util/json";
 import { createLog } from "../util/log";
 import { deepExtend } from "../util/deep_extend";
@@ -6,6 +6,9 @@ import { unpackStackValue } from "./words";
 import { EntitySet } from "../entity_set";
 import { stackToString } from "./util";
 import { toInteger } from "../util/to";
+import { EntityId, getEntityId } from "../entity";
+import { ComponentDefId, ComponentDef, getDefId } from "../component_def";
+import { getByDefId } from "../entity_set/registry";
 
 export enum SType {
     Value = '%v',
@@ -465,6 +468,50 @@ export function find<QS extends QueryStack>(stack: QS, type: StackOp): StackValu
 }
 
 
+// export function popBitField<ST extends QueryStack>(stack:ST): [ST,ComponentDefId[]]{
+//     const {es} = stack;
+//     let val;
+//     let dids:ComponentDefId[];
+//     val = peek(stack);
+
+//     let [type, bf] = val;
+//     if( type === SType.Bitfield ){
+//         dids = bf.toValues();
+//     } else if( type === SType.Value && bf === 'all' ){
+//         dids = [];
+//     }
+//     if( dids !== undefined ){
+//         [stack] = pop(stack);
+//     }
+//     return [stack,dids];
+// }
+
+export function popBitField<ST extends QueryStack, CD extends ComponentDef>(stack:ST, asObj:boolean = true): [ST,CD[] | ComponentDefId[]] {
+    const {es} = stack;
+    let val;
+    let dids:ComponentDefId[];
+    let defs:CD[];
+    val = peek(stack);
+
+    let [type, bf] = val;
+    // Log.debug('[popBitField]', 'yes', stack.items);
+    if( type === SType.Bitfield ){
+        dids = bf.toValues();
+        defs = asObj ? dids.map( d => getByDefId(es, d) as CD ) : [];
+    } else if( type === SType.Value && bf === 'all' ){
+        // get all def ids
+        if( asObj ){
+            defs = es.componentDefs as CD[];
+        } else {
+            dids = es.componentDefs.map(d => getDefId(d));
+        }
+    }
+    if( dids !== undefined || defs !== undefined ){
+        [stack] = pop(stack);
+    }
+    return [stack, asObj ? defs : dids ];
+}
+
 export interface ExecuteOptions {
     pushResult?: boolean;
 }
@@ -512,6 +559,20 @@ function getWord<QS extends QueryStack>(stack: QS, value: StackValue): WordFn<QS
     Log.debug('[getWord]', 'match', `'${wval}'`, patterns.map(p => p.slice(1)) );
     Log.debug('[getWord]', 'match', `'${wval}'`, stackToString(stack));
     throw new StackError(`invalid params for ${wval}`);
+}
+
+
+export function entityIdFromValue( value:StackValue ):EntityId {
+    const [type,val] = value;
+    switch( type ){
+        case SType.Entity:
+        case SType.Component:
+            return getEntityId(val);
+        case SType.Value:
+            return isInteger(val) ? val : undefined;
+        default:
+            return undefined;
+    }
 }
 
 function matchStack(stackItems: StackValue[], pattern: SType[]) {

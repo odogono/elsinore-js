@@ -120,6 +120,7 @@ export function create(options?:CreateEntitySetSQLParams):EntitySetSQL {
 
     // Log.debug('[create]');
     return {
+        type: 'sql',
         isEntitySet:true,
         isAsync: false,
         db: undefined,
@@ -138,6 +139,7 @@ export function create(options?:CreateEntitySetSQLParams):EntitySetSQL {
         esGetEntity: (es:EntitySetSQL, eid:EntityId) => Promise.resolve(getEntity(es,eid)),
         esSelect: select,
         esClone: clone,
+        esSize: (es) => Promise.resolve(size(es)),
     }
 }
 
@@ -367,7 +369,10 @@ export function addComponents( es: EntitySetSQL, components: Component[]): Entit
     es.comChanges = createChangeSet<ComponentId>();
 
     // mark incoming components as either additions or updates
-    es = components.reduce( (es, com) => markComponentAdd(es, com), es);
+    for( const com of components ){
+        es = markComponentAdd(es,com);
+    }
+    // es = components.reduce( (es, com) => markComponentAdd(es, com), es);
     
     // gather the components that have been added or updated and apply
     let changedCids = getChanges(es.comChanges, ChangeSetOp.Add | ChangeSetOp.Update)
@@ -376,8 +381,11 @@ export function addComponents( es: EntitySetSQL, components: Component[]): Entit
     // combine the new changes with the existing
     es.comChanges = mergeCS( changes, es.comChanges );
 
-
-    return changedCids.reduce((es, cid) => applyUpdatedComponents(es, cid), es);
+    // return changedCids.reduce((es, cid) => applyUpdatedComponents(es, cid), es);
+    for( const cid of changedCids ){
+        es = applyUpdatedComponents(es,cid);
+    }
+    return es;
 }
 
 
