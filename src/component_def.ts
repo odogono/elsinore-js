@@ -1,5 +1,5 @@
 import {hash as hashValue} from './util/hash';
-import { isObject, isString, isFunction } from './util/is';
+import { isObject, isString, isFunction, isInteger } from './util/is';
 import { toCamelCase, toCapitalized } from './util/to';
 
 
@@ -49,20 +49,18 @@ const propertyDefaults = {
  */
 export function create( ...args:any[] ): ComponentDef {
     if( args.length === 0 ){
-
         throw new Error('invalid create params');
     }
 
     const first = args[0];
-    let id = 0;
-    let uri = '';
-    let name = '';
-    let properties = [];
+    // let id = 0;
+    // let uri = '';
+    // let name = '';
+    // let properties = [];
     let params:any = {};
 
-    // console.log('[create]', first, args );
-
-    if( Number.isInteger(first) ){
+    
+    if( isInteger(first) ){
         params.id = first;
     } else if( isObject(first) ){
         return createFromObj(first);
@@ -70,7 +68,8 @@ export function create( ...args:any[] ): ComponentDef {
     else if( isString(first) ){
         params.name = first;
     }
-
+    // console.log('[create]', params );
+    
     let second = args[1];
     if( isString(second) ){
         params.uri = second;
@@ -96,7 +95,8 @@ export function createFromObj({id, name, uri, properties, ...extra}): ComponentD
     // # use the provided or extract from the last part of the uri
     // name = name || uri |> String.split("/") |> List.last() |> Macro.camelize()
 
-    if( '@d' in extra ){
+    if( extra['@d'] !== undefined ){
+        // console.log('[createFromObj]', 'have @d', extra['@d']);
         let {['@d']: did, ...res} = extra;
         id = extra['@d'];
         extra = res;
