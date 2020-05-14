@@ -49,21 +49,21 @@ type AsyncResult<QS extends QueryStack> = Promise<InstResult<QS>>;
  */
 export async function onDup<QS extends QueryStack>(stack: QS, op): AsyncResult<QS> {
     let val = peek(stack);
-    if( op === 'over' ){
-        val = peek(stack,1);
+    if (op === 'over') {
+        val = peek(stack, 1);
     }
 
     let out;
-    if( val[0] === SType.EntitySet ){
+    if (val[0] === SType.EntitySet) {
         let es: EntitySet = unpackStackValue(val, SType.EntitySet);
         let dup = await es.esClone(es);
-        out = [SType.EntitySet,dup];
+        out = [SType.EntitySet, dup];
     } else {
         // let o = unpackStackValue(val);
         out = [...val];
     }
 
-    return [stack,out];
+    return [stack, out];
 }
 
 
@@ -89,7 +89,7 @@ export async function onSelect<QS extends QueryStack>(stack: QS): AsyncResult<QS
     //     return out;
     // },[]);
 
-    let result = await es.esSelect(es, query, {stack} );
+    let result = await es.esSelect(es, query, { stack });
 
     if (result) {
         // append output stack
@@ -108,9 +108,9 @@ export function onArgError<QS extends QueryStack>(stack: QS, val: StackValue): R
 export function onEntity<QS extends QueryStack>(stack: QS): Result<QS> {
     let data: StackValue;
     [stack, data] = pop(stack);
-    let [type,val] = data;
+    let [type, val] = data;
 
-    if( type === SType.Array ){
+    if (type === SType.Array) {
         // val.reduce( (acc,val) => {
         //     Log.debug('[onEntity]', val);
         //     let type = val[0];
@@ -207,37 +207,32 @@ export async function onAddToEntitySet<QS extends QueryStack>(stack: QS): AsyncI
     // DLog(stack, '[onAddToEntitySet]', isComponentDef(value), value );
     let value = unpackStackValue(left);
     let es: EntitySet = unpackStackValueR(right, SType.EntitySet);
-    
+
     try {
         const { esAdd, esRegister, isAsync } = es;
-        
-        let values:StackValue[] = left[0] === SType.Array ? left[1] : [ left ];
-        // let values: any[] = left[0] !== SType.Array ? [value] : value;
+
+        let values: StackValue[] = left[0] === SType.Array ? left[1] : [left];
         
         // Log.debug('[onAddToEntitySet]', values );
         // sort into defs and e/com
-        let [defs, coms] = values.reduce(([defs, coms], value) => {
-            let [type,inner] = value;
+        let defs = [];
+        let coms = [];
+        for( const value of values ){
+            let [type, inner] = value;
 
-            if ( type === SType.ComponentDef) {
-                if( !isComponentDef(inner) ){
+            if (type === SType.ComponentDef) {
+                if (!isComponentDef(inner)) {
                     inner = parseComponentDef(inner);
                 }
                 defs.push(inner);
             } else if (isEntity(inner) || isComponent(inner)) {
                 coms.push(inner);
             }
-            return [defs, coms];
-        }, [[], []]);
-        // Log.debug('[onAddToEntitySet]', 'coms', coms);
+        }
 
-        es = await defs.reduce(async (es, def) => {
-            es = await es;
-            
+        for( const def of defs ){
             [es] = isAsync ? await esRegister(es, def) : esRegister(es, def);
-            
-            return es;
-        }, Promise.resolve(es));
+        }
 
         es = isAsync ? await esAdd(es, coms) : esAdd(es, coms);
 
@@ -252,11 +247,11 @@ export async function fetchComponentDef<QS extends QueryStack>(stack: QS): Async
     let val = peek(stack);
     let es = stack.es;
 
-    if( val[0] === SType.EntitySet ){
+    if (val[0] === SType.EntitySet) {
         es = unpackStackValue(val, SType.EntitySet);
     }
 
-    return [stack, [SType.Array, es.componentDefs.map( def => [SType.ComponentDef, defToObject(def)] )]];
+    return [stack, [SType.Array, es.componentDefs.map(def => [SType.ComponentDef, defToObject(def)])]];
 }
 
 
@@ -285,30 +280,30 @@ export function onComponentDef<QS extends QueryStack>(stack: QS): Result<QS> {
     let data: StackValue;
     // try {
 
-        [stack, data] = pop(stack);
+    [stack, data] = pop(stack);
 
-        let raw;// = unpackStackValue(data);
-        const [type] = data;
-        if (type === SType.Array) {
-            raw = unpackStackValueR(data, SType.Array);
-        } else if (type === SType.Map) {
-            raw = [unpackStackValueR(data, SType.Map)];
-        } else if (type === SType.Value) {
-            raw = unpackStackValueR(data, SType.Any);
-            raw = [raw];
-        }
+    let raw;// = unpackStackValue(data);
+    const [type] = data;
+    if (type === SType.Array) {
+        raw = unpackStackValueR(data, SType.Array);
+    } else if (type === SType.Map) {
+        raw = [unpackStackValueR(data, SType.Map)];
+    } else if (type === SType.Value) {
+        raw = unpackStackValueR(data, SType.Any);
+        raw = [raw];
+    }
 
-        return [stack, [SType.ComponentDef, parseComponentDef(raw)]];
+    return [stack, [SType.ComponentDef, parseComponentDef(raw)]];
     // } catch (err) {
     //     Log.debug('[onComponentDef]', err.message);
     //     return [stack];
     // }
 }
 
-function parseComponentDef(data:any[]){
+function parseComponentDef(data: any[]) {
     // ensure props are wrapped in an array
     let [uri, props] = data;
-    if( props !== undefined && !Array.isArray(props) ){
+    if (props !== undefined && !Array.isArray(props)) {
         Log.debug('[onComponentDef]', data);
         throw new StackError(`onComponentDef : properties should be wrapped in array: ${uri}`);
     }
@@ -319,14 +314,14 @@ function parseComponentDef(data:any[]){
 
 
 
-export function onDefine<QS extends QueryStack>(stack: QS, [,op]: StackValue): Result<QS> {
+export function onDefine<QS extends QueryStack>(stack: QS, [, op]: StackValue): Result<QS> {
     let wordVal: StackValue, wordFn, value: StackValue;
     [stack, wordVal] = pop(stack);
     [stack, value] = pop(stack);
-    let [,word] = wordVal;
+    let [, word] = wordVal;
 
-    
-    if( value[0] === SType.Array && op !== 'let'  ){
+
+    if (value[0] === SType.Array && op !== 'let') {
         // Log.debug('[onDefine]', op, word, 'values', value );
         wordFn = async <QS extends QueryStack>(stack: QS): AsyncInstResult<QS> => {
             [stack] = await pushValues(stack, value[1]);
@@ -337,20 +332,20 @@ export function onDefine<QS extends QueryStack>(stack: QS, [,op]: StackValue): R
         wordFn = value;
     }
 
-    stack = addWords<QS>(stack, [[word, wordFn]] );
-    
+    stack = addWords<QS>(stack, [[word, wordFn]]);
+
     return [stack];
 };
 
 
-export function onPrint<QS extends QueryStack>(stack: QS, val:StackValue): Result<QS> {
+export function onPrint<QS extends QueryStack>(stack: QS, val: StackValue): Result<QS> {
     let msg;
-    const [,op] = val;
-    if( op === '..' ){
-        console.info( '[onPrint][stack]', '(', stackToString(stack), ')' );
+    const [, op] = val;
+    if (op === '..') {
+        console.info('[onPrint][stack]', '(', stackToString(stack), ')');
     } else {
-        [stack,msg] = pop(stack);
-        console.info( '[onPrint]', unpackStackValueR(msg) );
+        [stack, msg] = pop(stack);
+        console.info('[onPrint]', unpackStackValueR(msg));
     }
     return [stack];
 }
@@ -365,10 +360,10 @@ export function onAddArray<QS extends QueryStack>(stack: QS, val: StackValue): R
 }
 
 export function onFetchArray<QS extends QueryStack>(stack: QS, val: StackValue): Result<QS> {
-    let left,right;
+    let left, right;
     [stack, left] = pop(stack);
     [stack, right] = pop(stack);
-    let arr = unpackStackValue(right,SType.Array);
+    let arr = unpackStackValue(right, SType.Array);
     let idx = unpackStackValue(left, SType.Value);
     return [stack, arr[idx]];
 }
@@ -402,17 +397,17 @@ export function onMapOpen<QS extends QueryStack>(stack: QS): Result<QS> {
     let sub = createQuery<QS>();
     // Log.debug('[onMapOpen]', stack.items);//Object.keys(stack.words));
     // DLog(stack, '[onMapOpen]', stack.items );
-    
+
     sub._parent = stack;
     sub._root = stack._root ? stack._root : stack;
     // Log.debug('[onMapOpen]', {id:sub.id, parent:sub._parent?.id,root:sub._root?.id}, stackToString(stack) );
-    
+
     // add something which will interpret each push
     sub = addWords<QS>(sub, [
         ['{', onMapOpen],
         ['[', onArrayOpen],
         ['}', onMapClose],
-        [']', onUnexpectedError ],
+        [']', onUnexpectedError],
     ], true);
     // throw 'stop';
     // (sub as any)._stack = stack;
@@ -615,8 +610,8 @@ export async function onReduce<QS extends QueryStack>(stack: QS): AsyncResult<QS
 export function onUnique<QS extends QueryStack>(stack: QS): Result<QS> {
     let val;
     [stack, val] = pop(stack);
-    let array = unpackStackValueR(val,SType.Array);
-    return [stack, [SType.Array, [...new Set([...array].sort())].map(v => [SType.Value,v]) ]];
+    let array = unpackStackValueR(val, SType.Array);
+    return [stack, [SType.Array, [...new Set([...array].sort())].map(v => [SType.Value, v])]];
 }
 
 export async function onPluck<QS extends QueryStack>(stack: QS): AsyncResult<QS> {
@@ -635,31 +630,31 @@ export async function onPluck<QS extends QueryStack>(stack: QS): AsyncResult<QS>
     // return Object.keys(obj).filter(k => whitelist.indexOf(k) !== -1)
     //     .reduce( (accum, key) => Object.assign(accum, { [key]: obj[key] }), {} );
     let out;
-    if( Array.isArray(key) ){
-        out = array.map( it => {
+    if (Array.isArray(key)) {
+        out = array.map(it => {
             let obj = unpackStackValue(it);
-            if( !isObject(obj) ){
+            if (!isObject(obj)) {
                 throw new StackError(`expected map, got ${it[0]}`);
             }
-            
+
             return [SType.Map, Object.keys(obj).filter(k => key.indexOf(k) !== -1)
-                .reduce( (acc,key) => Object.assign(acc, { [key]: obj[key] }), {} )];
+                .reduce((acc, key) => Object.assign(acc, { [key]: obj[key] }), {})];
         })
     }
     else {
         // Log.debug('[onPluck]', array);
-        out = array.map( it => {
+        out = array.map(it => {
             let obj = unpackStackValue(it);
-            if( !isObject(obj) ){
+            if (!isObject(obj)) {
                 throw new StackError(`expected map, got ${it[0]}`);
             }
             let val = obj[key];
-            return isStackValue(val) ? val : [SType.Value,val];
+            return isStackValue(val) ? val : [SType.Value, val];
         });
     }
 
 
-    return [stack, [SType.Array,out]];
+    return [stack, [SType.Array, out]];
 }
 
 
