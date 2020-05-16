@@ -75,7 +75,7 @@ export interface EntitySet {
 
     // ugh, this is turning into a class, but query demands
     // a neutral way of accessing entitysets
-    esAdd: (es,data) => any;
+    esAdd: (es,data,options) => any;
     esRegister: (es,def) => any;
     esGetComponentDefs: (es) => ComponentDef[];
     esGetComponent: (es,cid:(ComponentId|Component)) => any;
@@ -150,6 +150,7 @@ export function isEntitySet(value: any): boolean {
 
 
 export interface AddOptions {
+    debug?:boolean;
     retain?: boolean;
 }
 

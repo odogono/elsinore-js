@@ -13,7 +13,8 @@ import {
     assertStackValueType,
     isStackValue,
     DLog,
-    popOfType
+    popOfType,
+    isDLogEnabled
 } from './stack';
 import { create as createComponentDef, isComponentDef, toShortObject as defToObject } from '../../src/component_def';
 import { isString, isBoolean, isObject, isInteger } from '../../src/util/is';
@@ -208,10 +209,9 @@ export async function onAddToEntitySet<QS extends QueryStack>(stack: QS): AsyncI
     [stack, left] = pop(stack);
     [stack, right] = pop(stack);
 
-    DLog(stack, "here we go");
-    DLog(stack, '[onAddToEntitySet]', left );
+    // DLog(stack, '[onAddToEntitySet]', left );
     let value = unpackStackValue(left);
-    DLog(stack, '[onAddToEntitySet]', isComponentDef(value), value );
+    // DLog(stack, '[onAddToEntitySet]', isComponentDef(value), value );
     let es: EntitySet = unpackStackValueR(right, SType.EntitySet);
 
     // try {
@@ -241,7 +241,11 @@ export async function onAddToEntitySet<QS extends QueryStack>(stack: QS): AsyncI
             [es] = isAsync ? await esRegister(es, def) : esRegister(es, def);
         }
 
-        es = isAsync ? await esAdd(es, coms) : esAdd(es, coms);
+        if( coms.length > 0 ){
+            const debug = isDLogEnabled(stack);
+            // DLog(stack, '[onAddToEntitySet]', coms.length, 'coms', isDLogEnabled(stack) );
+            es = isAsync ? await esAdd(es, coms, {debug}) : esAdd(es, coms, {debug});
+        }
 
     // } 
     // catch (err) {
@@ -336,7 +340,7 @@ export function onDefine<QS extends QueryStack>(stack: QS, [, op]: StackValue): 
             return [stack];
         }
     } else {
-        // Log.debug('[onDefine]', op, word, 'value', value );
+        // Log.debug('[onDefine][let]', op, word, 'value', value );
         wordFn = value;
     }
 

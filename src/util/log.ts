@@ -8,6 +8,8 @@ export interface Log {
     log: Function;
     warn: Function;
     error: Function;
+    time: Function;
+    timeEnd: Function;
 }
 
 interface LogOptions {
@@ -20,7 +22,9 @@ export function createLog(name, options: LogOptions = {}) {
         info: () => {},
         log: () => {},
         warn: () => {},
-        error: () => {}
+        error: () => {},
+        time: () => {},
+        timeEnd: () => {},
     };
 
     if (!logActive) {
@@ -46,7 +50,7 @@ export function createLog(name, options: LogOptions = {}) {
         let format = '';
 
         if (options.time) {
-            format += formatNow();
+            format += '['+(Date.now()-1589490000000)+']';// formatNow();
         }
 
         format += '[' + name + '] ';

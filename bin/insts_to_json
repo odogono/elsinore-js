@@ -1,0 +1,33 @@
+#!/usr/bin/env node
+const Path = require('path');
+const Fs = require('fs-extra');
+const { tokenizeString } = require('../src/query/tokenizer');
+const parse = (data) => tokenizeString(data, { returnValues: true });
+
+let args = process.argv.slice(2);
+let [name] = args;
+
+name = Path.resolve(name);
+
+let out = Path.join( 
+    Path.dirname(name), 
+    Path.basename(name).replace(/\.[^/.]+$/, "") + '.json' 
+);
+
+console.log('from', name, 'to', out );
+
+// name = '../test/fixtures/todo.ldjson'
+// out = '../test/fixtures/todo.json';
+
+
+const path = Path.resolve(__dirname, name);
+Fs.readFile(path, 'utf8').then( data => {
+    let tokens = parse(data);
+    // console.log( tokens );
+    Fs.writeFile( Path.resolve(__dirname,out), JSON.stringify(tokens) )
+    .then( () => {
+        console.log('wrote to', out);
+
+        });
+})
+

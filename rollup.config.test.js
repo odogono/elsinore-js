@@ -5,13 +5,14 @@ import Replace from '@rollup/plugin-replace';
 import Typescript from "rollup-plugin-typescript2";
 import MultiEntry from '@rollup/plugin-multi-entry';
 import NodePolyfills from 'rollup-plugin-node-polyfills';
+import Json from '@rollup/plugin-json';
 
 // import pkg from './package.json';
 // import { readFileSync } from 'fs';
 
 const environment = process.env.NODE_ENV || 'development';
 const jsEnv = process.env.JS_ENV || 'browser';
-const isProduction = false; //environment === 'production';
+const isProduction = false //environment === 'production';
 
 const tsconfigOverride = { compilerOptions: { declaration: false, sourceMap: true, module: "es2015" } };
 
@@ -28,7 +29,7 @@ const typescriptPlugin = Typescript({
 export default [
     // browser-friendly UMD build
     {
-        input: 'test/entity_set_idb.ts',
+        input: 'test/index.ts',
         output: {
             name: 'test',
             file: 'dist/elsinore.tests.js',
@@ -48,9 +49,10 @@ export default [
             NodeResolve({ browser: true, preferBuiltins: false }),
             typescriptPlugin,
             CommonJS(), // so Rollup can convert `ms` to an ES module
+            Json(),
             // MultiEntry(),
             // NodePolyfills({ buffer: true, process: true }),
-            // isProduction && Minify()
+            isProduction && Minify()
             // Minify()
         ]
     }

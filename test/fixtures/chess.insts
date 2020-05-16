@@ -212,4 +212,5 @@ concat 0 !e swap +
 // add entities to an array
 concat
 // add to EntitySet
+true trace let
 +

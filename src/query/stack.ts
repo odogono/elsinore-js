@@ -1,3 +1,4 @@
+
 import { isObject, isString, isPromise, isFunction, isInteger } from "../util/is";
 import { stringify } from "../util/json";
 import { createLog } from "../util/log";
@@ -269,14 +270,26 @@ export async function pushValues<QS extends QueryStack>(stack: QS, values: Stack
     let ovalues: StackValue[] = [];
 
     try {
-
     for( const value of values ){
         let ovalue;
-        DLog(stack, '[pushValues]', value);
-        if( options.debug ){
-            Log.debug('[pushValues!]', value);
-        }
+        // let perf;
+        // if( process.env.JS_ENV !== 'browser' ){
+        //     const pf = require('perf_hooks');
+        //     perf = pf.performance;
+        // } else {
+        //     perf = performance;
+        // }
+        // DLog(stack, '[pushValues]', value);
+        // if( options.debug ){
+        //     Log.debug('[pushValues!]', value);
+        // }
+        // let pre = stack;
+        // let st = perf.now();
         [stack, ovalue] = await push(stack, value);
+        // let end = perf.now() - st;
+        // if( end > 10 ){
+        //     Log.debug('[pushValues]', value, stackToString(pre), end );
+        // }
         ovalues.push(ovalue);
     }
 
@@ -624,8 +637,13 @@ export function assertStackValueType(stack: QueryStack, index: number, opType: s
 }
 
 
-export async function DLog<QS extends QueryStack>(stack:QS, ...args) {
-    const wordFn = getWord(stack,[SType.Value,'dlog']);
+
+export function isDLogEnabled<QS extends QueryStack>(stack:QS) {
+    const wordFn = getWord(stack,[SType.Value,'trace']);
+    return ( wordFn !== undefined && isStackValue(wordFn) && wordFn[1] === true );
+}
+export function DLog<QS extends QueryStack>(stack:QS, ...args) {
+    const wordFn = getWord(stack,[SType.Value,'trace']);
     if( wordFn === undefined || !isStackValue(wordFn) ){
         return;
     }

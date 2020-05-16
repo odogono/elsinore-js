@@ -1,11 +1,10 @@
-import { Type as EntityT } from './entity';
 import { Type as DefT } from './component_def';
 import { isObject, isString } from './util/is';
-
 
 export type ComponentProperties = Map<string, any>;
 
 export const Type = '@c';
+export const EntityT = '@e';
 
 // made up of entityId,defId
 export type ComponentId = string; //[number, number];

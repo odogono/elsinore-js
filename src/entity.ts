@@ -1,5 +1,9 @@
 import { BitField } from 'odgn-bitfield';
-import { Component, getComponentDefId, setEntityId as setComponentEntityId } from "./component";
+import { 
+    Component, 
+    getComponentDefId, 
+    setEntityId as setComponentEntityId 
+} from "./component";
 import { isObject, isInteger } from './util/is';
 
 export const Type = '@e';

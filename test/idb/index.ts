@@ -14,7 +14,8 @@ import {
     size as entitySetSize,
     add as esAdd, 
     createComponent, 
-    removeComponent, 
+    removeComponent,
+    removeComponents, 
     removeEntity,
     getEntity,
     // getComponent,
@@ -23,12 +24,7 @@ import {
     getComponentDefs,
     createEntity,
     clearIDB,
-    markComponentAdd,
     getComponent,
-    addComponents,
-    // EntitySetMem,
-    // ESQuery,
-    // compileQueryPart
 } from '../../src/entity_set_idb';
 import {
     create as createStack,
@@ -259,7 +255,7 @@ describe('Entity Set (IndexedDB)', () => {
             // Log.debug('stack', es )
         });
 
-        it.only('overwrites an entity', async () => {
+        it('overwrites an entity', async () => {
             let e:Entity;
             let [es, buildEntity] = await buildEntitySet();
 
@@ -322,6 +318,7 @@ describe('Entity Set (IndexedDB)', () => {
             assert.equal( await entitySetSize(es), 0 );
 
         });
+        
         it('removes an entity and all its components', async () => {
             let e:Entity;
             let [es, buildEntity] = await buildEntitySet();
@@ -336,11 +333,15 @@ describe('Entity Set (IndexedDB)', () => {
 
             const eid = getChanges( es.entChanges, ChangeSetOp.Add )[0];
 
-            // Log.debug('es', eid);
             assert.exists( eid, 'entity should have been added' );
-            
-            es = await removeEntity( es, eid );
 
+            // const ae = await getEntity(es,eid);
+            // let coms = Array.from( ae.components.values() ).slice(0,2)
+            // Log.debug('added e', coms );
+            
+            // es = await removeComponents( es, coms );
+            es = await removeEntity( es, eid );
+            
             assert.equal( await entitySetSize(es), 0, 'no entities should exist' );
         });
     });
