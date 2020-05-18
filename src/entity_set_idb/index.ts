@@ -76,7 +76,6 @@ import { idbOpen, idbDeleteDB,
 } from "./idb";
 import { isString, isInteger } from "../util/is";
 import { getByUri, getByHash, resolveComponent } from "../entity_set/registry";
-import { StackValue, StackError } from "../query/stack";
 import { select } from "./query";
 
 const Log = createLog('EntitySetIDB');
@@ -243,14 +242,6 @@ export function createComponent( registry:EntitySetIDB, defId:(string|number|Com
 
     return component;
 }
-
-// export function getByDefId( registry, defId:number ): ComponentDef {
-//     return registry.componentDefs[defId-1];
-// }
-
-// export function getComponentDefs( registry ): ComponentDef[] {
-//     return registry.componentDefs;
-// }
 
 
 export async function add(es: EntitySetIDB, item: AddType, options: AddOptions = {}): Promise<EntitySetIDB> {
@@ -617,22 +608,6 @@ async function markEntityComponentsRemove(es: EntitySetIDB, eid: number): Promis
     }
 
     return es;
-    // Log.debug('[markEntityComponentsRemove]', eid, 'dids', cids);
-
-    // const store = es.db.transaction(STORE_COMPONENTS, 'readonly').objectStore(STORE_COMPONENTS);
-    // let result = await idbGetRange(store, IDBKeyRange.bound([eid,0], [eid,Number.MAX_SAFE_INTEGER] ) );
-
-    // Log.debug('[markEntityComponentsRemove]', 'remove coms', eid, result);
-
-    // return result.reduce( (prev, {key}) => {
-    //     return prev.then( es => {
-    //         const [eid,did] = key as number[];
-    //         return markComponentRemove(es, toComponentId(eid,did)) as EntitySetIDB
-    //     })
-    // }, Promise.resolve(es) );
-
-    // return ebf.toValues().reduce((es, did) =>
-    //     markComponentRemove(es, toComponentId(eid, did)), es as EntitySet) as EntitySetIDB;
 }
 
 /**
@@ -659,70 +634,6 @@ async function getOrAddEntityBitfield(es: EntitySetIDB, eid: number): Promise<[E
 }
 
 
-// /**
-//  * Assigns entity ids to an array of components
-//  * 
-//  * @param es 
-//  * @param components 
-//  */
-// function assignEntityIds(es: EntitySetIDB, components: Component[]): [EntitySetIDB, Component[]] {
-//     let coms = [];
-//     let eids = new Set();
-//     let eid = 0;
-//     let comEid = 0;
-//     for( let com of components ){
-//         // ensure the component did is resolved
-//         com = resolveComponent(es, com);
-
-//         let did = getComponentDefId(com);
-
-//         comEid = getComponentEntityId(com);
-        
-//         // component already has an id - add it to the list of components
-//         if ( comEid !== 0 ) {
-//             coms.push(com);
-//             continue;
-//         }
-
-        
-//         // not yet assigned an entity, or we have already seen this com type
-//         if ( eid === 0 || eids.has(did) ) {
-//             // create a new entity - this also applies if we encounter a component
-//             // of a type we have seen before
-//             [es,eid] = createEntityAlt(es);// await createEntity(es);
-//             comEid = eid;
-            
-//             // Log.debug('[assignEntityIds]', 'new e', eid);
-
-//             eids = new Set();
-//             // mark the def as having been seen, store the new entity, add the component
-//             eids.add(did);
-//         } else {
-//             comEid = eid;
-//         }
-
-//         // Log.debug('[assignEntityIds]', 'com eid', {comEid, eid}, eids);
-
-//         com = setComponentEntityId(com, comEid);
-//         // Log.debug('[aei]', 'eid was', eid, com);
-//         coms.push(com);
-//     }
-
-//     return [es, coms];
-// }
-
-// function setEntity(es:EntitySetIDB, e:Entity): Entity {
-//     let eid = getEntityId(e);
-
-//     if( eid === 0 ){
-//         eid = createEntityId();
-//     }
-//     let bf = e.bitField !== undefined ? e.bitField.toValues() : [];
-
-//     es.entUpdates.set(eid, {bf});
-    
-//     return setEntityId(e,eid);
-// }
 
 function _getEntity(es:EntitySetIDB, eid:EntityId): Promise<Entity|undefined> {
     let store = es.db.transaction(STORE_ENTITIES, 'readonly').objectStore(STORE_ENTITIES);
@@ -737,32 +648,6 @@ function _getEntity(es:EntitySetIDB, eid:EntityId): Promise<Entity|undefined> {
         return e;
     })
 }
-
-// export function createEntity(es: EntitySetIDB): [EntitySetIDB, number] {
-    
-//     let e = createEntityInstance();
-
-//     e = setEntity( es, e );
-
-//     const eid = getEntityId(e);
-
-//     es = markEntityAdd(es, eid ) as EntitySetIDB;
-
-//     return [es, eid];
-// }
-
-// const ESEpoch = 1577836800000; // 2020-01-01T00:00:00.000Z
-// let idSequence = 0;
-
-// function createEntityId(){
-//     return buildFlake53({timestamp:Date.now(), workerId:0, epoch:ESEpoch, sequence:idSequence++} );
-// }
-
-// export function createEntityAlt<ES extends EntitySet>(es: ES): [ES, EntityId] {
-//     let eid = createEntityId();
-//     es = markEntityAdd(es, eid) as ES;
-//     return [es,eid];
-// }
 
 
 /**
