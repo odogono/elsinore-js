@@ -109,46 +109,46 @@ describe('Query', () => {
     describe('Reference Words', () => {
         it('references an earlier word', async () => {
             let [stack] = await prep(`planet world hello $1`);
-            assert.equal( stackToString(stack), 'planet hello world' );
+            assert.equal(stackToString(stack), 'planet hello world');
         });
         it('works within a list', async () => {
             let [stack] = await prep(`planet world [ hello $0 ]`);
-            assert.equal( stackToString(stack), 'planet world [hello]' );
+            assert.equal(stackToString(stack), 'planet world [hello]');
         });
         it('references above a list', async () => {
             let [stack] = await prep(`planet [ world [ hello ^^$0 ]]`);
-            assert.equal( stackToString(stack), '[world, [hello, planet]]' );
-            
+            assert.equal(stackToString(stack), '[world, [hello, planet]]');
+
             [stack] = await prep(`planet world [ hello ^$1 ]`);
-            assert.equal( stackToString(stack), 'world [hello, planet]' );
+            assert.equal(stackToString(stack), 'world [hello, planet]');
         });
         it('not evaluated the first time', async () => {
             // the * char means that the ref will not be evaled until spread is called
             let [stack] = await prep(`planet world [ hello *$1 ] spread`);
-            assert.equal( stackToString(stack), 'planet hello world' );
+            assert.equal(stackToString(stack), 'planet hello world');
         });
         it('accesses words in parent', async () => {
             let [stack] = await prep(`
             active status let
             [ status is ^status ]
             `);
-            assert.equal( stackToString(stack), '[status, is, active]' );
+            assert.equal(stackToString(stack), '[status, is, active]');
         })
     })
 
     describe('Defining words', () => {
         it('defines a word', async () => {
             let [stack] = await prep(`1974 year define year`);
-    
+
             assert.deepEqual(stack.items, [[SType.Value, 1974]]);
             // Log.debug('stack:', stackToString(stack));
         });
-    
+
         it('defines a word that is a function', async () => {
             let [stack] = await prep(`cls [100, +] plus1k define`);
-    
+
             let data = parse(` 13 plus1k`);
-    
+
             [stack] = await pushValues(stack, data);
             let [, result] = pop(stack);
             assert.deepEqual(unpackStackValueR(result), 113);
@@ -156,11 +156,11 @@ describe('Query', () => {
 
         it('pushes values with define', async () => {
             let [stack] = await prep(`[ 2 3 + ] fn define fn`);
-            assert.equal( stackToString(stack), '5' );
+            assert.equal(stackToString(stack), '5');
         })
         it('pushes single value with let', async () => {
             let [stack] = await prep(`[ 2 3 + ] fn let fn`);
-            assert.equal( stackToString(stack), '[2, 3, +]' );
+            assert.equal(stackToString(stack), '[2, 3, +]');
         })
     })
 
@@ -206,7 +206,7 @@ describe('Query', () => {
             // let [stack] = ;
             try {
                 await prep(`[ 1st 2nd 3rd { name: 4th ]`)
-            }catch(err){
+            } catch (err) {
                 assert.instanceOf(err, StackError);
                 // Log.debug('umm', assert.instanceOf(err, StackError));
             }
@@ -222,14 +222,14 @@ describe('Query', () => {
             [ 1900 ^$0 ^$0 2018 ]
             `);
             // ilog(stack.items);
-            let [,result] = pop(stack);
-            assert.deepEqual( unpackStackValueR(result), [1900, 1974,1977, 2018] );
+            let [, result] = pop(stack);
+            assert.deepEqual(unpackStackValueR(result), [1900, 1974, 1977, 2018]);
         })
 
     });
 
 
-    
+
 
     it('creates a ComponentDef', async () => {
         let [stack] = await prep(`[ /component/title, [text] ] !d`);
@@ -354,7 +354,7 @@ describe('Query', () => {
             // swap // move defs to top
             // true dlog define
             // + // add defs to es
-            `, 'todo.ldjson');
+            `, 'todo');
 
             // ilog(stack.words);
             let [, defs] = pop(stack);
@@ -398,8 +398,8 @@ describe('Query', () => {
     });
 
     it('loads from file', async () => {
-        // let insts = await loadFixture('todo.ldjson');
-        let insts = await loadFixture('chess.insts');
+        // let insts = await loadFixture('todo');
+        let insts = await loadFixture('chess');
         // Log.debug(insts);
         let [stack] = await prep();
 
@@ -477,7 +477,7 @@ describe('Query', () => {
 
         it('fetches entities by id', async () => {
             let query = `[ 102 @e ] select`;
-            let [stack] = await prep(query, 'todo.ldjson');
+            let [stack] = await prep(query, 'todo');
 
             // ilog(stack.items);
             let [, result] = pop(stack);
@@ -489,7 +489,7 @@ describe('Query', () => {
 
         it('fetches entities by did', async () => {
             let query = `[ "/component/completed" !bf @e] select`;
-            let [stack] = await prep(query, 'todo.ldjson');
+            let [stack] = await prep(query, 'todo');
 
             // Log.debug('stack:', stringify(stack.items) );
             // Log.debug('stack:', stackToString(stack) );
@@ -506,7 +506,7 @@ describe('Query', () => {
                 /component/title !bf
                 @c
                 text pluck
-            ] select`, 'todo.ldjson');
+            ] select`, 'todo');
 
             // ilog(stack.words);
             // ilog(stack.items);
@@ -529,7 +529,7 @@ describe('Query', () => {
                 /component/title !bf
                 @c
                 text pluck
-            ] select`, 'todo.ldjson');
+            ] select`, 'todo');
 
             // ilog(stack.items);
             let [, result] = pop(stack);
@@ -547,7 +547,7 @@ describe('Query', () => {
                 /component/title !bf
                 @c
             ] select
-            `, 'todo.ldjson');
+            `, 'todo');
 
             // ilog(stack.items);
             // Log.debug('stack:', stackToString(stack) );
@@ -568,14 +568,13 @@ describe('Query', () => {
                 // its result will be components
                 ==
                 @e
-            ] select`, 'todo.ldjson');
+            ] select`, 'todo');
 
             // ilog(stack.items);
 
             let [, result] = pop(stack);
             let ents = unpackStackValueR(result);
-            // Log.debug('stack:', ents );
-
+            
             assert.deepEqual(ents.map(e => getEntityId(e)), [100, 101]);
         });
 
@@ -592,7 +591,7 @@ describe('Query', () => {
             ] select
             `;
 
-            let [stack, es] = await prep(query, 'chess.insts');
+            let [stack, es] = await prep(query, 'chess');
             // console.log('\n');
             // Log.debug('stack:', stackToString(stack) );
             // Log.debug('stack:', stringify(stack.items,1) );
@@ -626,13 +625,14 @@ describe('Query', () => {
             // compose a new component which belongs to the 'mr-rap' channel
             [ /component/channel_member { "@e":14, channel: ^^$0, client: ^^$0 } ]
 
-            `, 'irc.ldjson');
+            `, 'irc');
 
             // Log.debug( stackToString(stack) );
             // ilog(stack.items);
-            assert.equal( stackToString(stack), '[/component/channel_member, {@e: 14,channel: (%e 3),client: (%e 11)}]' );
+            assert.equal(stackToString(stack), '[/component/channel_member, {@e: 14,channel: (%e 3),client: (%e 11)}]');
             // ilog( es );
         })
+
         it('multi fn query', async () => {
             let [stack, es] = await prep(`
             es let
@@ -685,14 +685,14 @@ describe('Query', () => {
             // the same channel as 9 (roxanne)
             9 selectChannelMembersByClientId
 
-            `, 'irc.ldjson');
+            `, 'irc');
 
             // Log.debug( stackToString(stack) );
             let result;
-            [,result] = pop(stack);
-            result = unpackStackValue(result,SType.Array);
-            let nicknames = result.map( v => v[1].nickname ).filter(Boolean);
-            assert.deepEqual(nicknames, ['koolgrap', 'lauryn', 'missy']);
+            [, result] = pop(stack);
+            result = unpackStackValue(result, SType.Array);
+            let nicknames = result.map(v => v[1].nickname).filter(Boolean);
+            assert.includeMembers(nicknames, ['koolgrap', 'lauryn', 'missy']);
         })
 
     });
@@ -700,11 +700,7 @@ describe('Query', () => {
 });
 
 
-async function loadFixture(name: string) {
-    const path = Path.resolve(__dirname, `../fixtures/${name}`);
-    const data = await Fs.readFile(path, 'utf8');
-    return parse(data);
-}
+
 
 export async function buildEntitySet(stack: QueryStack): Promise<[QueryStack, EntitySet]> {
     let es = createEntitySet();
@@ -738,7 +734,7 @@ async function prep(insts?: string, fixture?: string): Promise<[QueryStack, Enti
         ['!=', onAdd, SType.Value, SType.Value],
         ['.', onPrint, SType.Any],
         ['..', onPrint],
-        ['@', onFetchArray, SType.Array,SType.Value],
+        ['@', onFetchArray, SType.Array, SType.Value],
 
         ['[', onArrayOpen],
         ['{', onMapOpen],
@@ -792,23 +788,22 @@ async function prep(insts?: string, fixture?: string): Promise<[QueryStack, Enti
     return [stack, es];
 }
 
+async function loadFixture(name: string) {
+    if (process.env.JS_ENV !== 'browser') {
+        const Path = require('path');
+        const Fs = require('fs-extra');
+        const path = Path.resolve(__dirname, `../fixtures/${name}.insts`);
+        const data = await Fs.readFile(path, 'utf8');
+        const parsed = parse(data);
+        // Log.debug(parsed);
+        // Log.debug(chessData);
+        // assert.deepEqual(parsed, chessData);
+        return parsed;
+    } else {
+        return (window as any).testData[name];
+    }
+}
 
-
-// async function prep(insts?:string): Promise<[QueryStack,EntitySet]> {
-//     let [stack, es] = await loadEntitySetFromFixture('todo.ldjson');
-
-//     stack = addWords(stack, [
-//         ['cls', onClear],
-
-//         ['[', onArrayOpen],
-//     ]);
-
-//     if( insts ){
-//         [stack] = await pushValues(stack, parse(insts) );
-//     }
-
-//     return [stack, es];
-// }
 
 function ilog(...args) {
     const util = require('util');

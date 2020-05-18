@@ -111,10 +111,10 @@ export function applyFilter(stack:ESMemQueryStack): InstResult<ESMemQueryStack> 
     // DLog(stack._root, 'bugger', filter);
     // ilog(filter);
     let result = parseFilterQuery( es, filter[0], filter[1], filter[2] );
-
+    // Log.debug('[applyFilter]', result );
     
     let eids = walkFilterQuery( es, Array.from(es.entities.keys()), ...result ).sort();
-    // ilog( eids );
+    // Log.debug('[applyFilter]', 'result eids', eids );
 
     return [stack, [SType.Array,eids.map(eid => [SType.Entity,eid])] ];
 }
@@ -145,7 +145,9 @@ function walkFilterQuery( es:EntitySetMem, eids:EntityId[], cmd?, ...args ){
         eids = eids.reduce( (out,eid) => {
             const cid = toComponentId(eid,did);
             const com = es.components.get(cid);
-            // Log.debug('[walkFQ]','==', key, com[key], val);
+            
+            // if( com[key] === val )
+            // Log.debug('[walkFQ]','==', key, val, com[key], com);
             // if the value is an array, we look whether it exists
             if( Array.isArray(val) ){
                 return val.indexOf( com[key] ) !== -1 ? [...out,eid] : out;
@@ -208,8 +210,8 @@ export function fetchComponents(stack: ESMemQueryStack): InstResult<ESMemQuerySt
         if( from[0] === SType.Entity ){
             eids = [unpackStackValueR(from)];
         } else if( from[0] === SType.Array ){
+            // Log.debug('[fetchComponent]', from[1]);          
             eids = from[1].map( it => {
-                // Log.debug('[fetchComponent]', from[1]);            
                 return isStackValue(it) ? getEntityId(it[1])
                 : isEntity(it) ? getEntityId(it) : undefined;
             }).filter(Boolean);
@@ -218,7 +220,12 @@ export function fetchComponents(stack: ESMemQueryStack): InstResult<ESMemQuerySt
         }
     }
 
-    // Log.debug('[fetchComponent]', dids, eids );
+    // Log.debug('[fetchComponent]', eids, dids );
+
+    // if an empty eid array has been passed, then no coms can be selected
+    if( eids !== undefined && eids.length === 0 ){
+        return [stack, [SType.Array, coms] ];
+    }
 
     coms = Array.from( es.components.values() );
     if( dids !== undefined && dids.length > 0 ){

@@ -9,19 +9,6 @@ import { tokenizeString } from '../../src/query/tokenizer';
 import {
     EntitySetIDB,
     create as createEntitySet,
-    register,
-    size as entitySetSize,
-    add as esAdd, 
-    createComponent, 
-    // removeComponent, 
-    // removeEntity,
-    getEntity,
-    getComponent,
-    // getComponents as esGetComponents,
-    // getEntities as esGetEntities,
-    getComponentDefs,
-    createEntity,
-    addComponents,
     clearIDB,
 } from '../../src/entity_set_idb';
 
@@ -295,6 +282,68 @@ describe('Query IDB', () => {
         // ilog(stack.items);
         assert.equal( stackToString(stack), '[/component/channel_member, {@e: 14,channel: (%e 3),client: (%e 11)}]' );
         // ilog( es );
+    });
+
+    it('multi fn query', async () => {
+        let [stack, es] = await prep(`
+        es let
+        [
+            client_id let
+            ^es [
+                /component/channel_member client !ca *^client_id ==
+                /component/channel_member !bf
+                @c
+            ] select
+
+            // pick the channel attributes
+            channel pluck 
+        ] selectChannelsFromMember define
+
+        [
+            channel_ids let
+            ^es [
+                /component/channel_member channel !ca *^channel_ids ==
+                /component/channel_member !bf
+                @c
+            ] select
+
+            // select client attr, and make sure there are no duplicates
+            client pluck unique 
+            
+            // make sure this list of clients doesnt include the client_id
+            [ ^client_id != ] filter
+
+        ] selectChannelMemberComs define
+
+        [
+            eids let
+            ^es [ *^eids [/component/name /component/nickname] !bf @c ] select
+        ] selectNames define
+
+        [
+            // 1. select channel ids which 'client_id' belongs to
+            selectChannelsFromMember
+
+            // 2. select channel members which belong to channel_ids
+            selectChannelMemberComs
+         
+            // 3. using the channel_member client ids select the entities
+            selectNames
+
+        ] selectChannelMembersByClientId define
+
+        // selects the nicknames of other entities who share
+        // the same channel as 9 (roxanne)
+        9 selectChannelMembersByClientId
+
+        `, 'irc');
+
+        // Log.debug( stackToString(stack) );
+        let result;
+        [,result] = pop(stack);
+        result = unpackStackValue(result,SType.Array);
+        let nicknames = result.map( v => v[1].nickname ).filter(Boolean);
+        assert.includeMembers(nicknames, ['koolgrap', 'lauryn', 'missy']);
     })
 
 
@@ -362,22 +411,22 @@ async function prep(insts?: string, fixture?: string): Promise<[QueryStack, Enti
         es = createEntitySet();
         [stack] = await push(stack, [SType.EntitySet, es]);
 
-        console.time("loadFixture");
+        // console.time("loadFixture");
         let insts = await loadFixture(fixture);
-        console.timeEnd("loadFixture");
+        // console.timeEnd("loadFixture");
         // Log.debug('pushing insts', fixture, insts);
-        console.time("pushValues(fixture)");
+        // console.time("pushValues(fixture)");
         [stack] = await pushValues(stack, insts as any, {debug:true});
-        console.timeEnd("pushValues(fixture)");
+        // console.timeEnd("pushValues(fixture)");
         let esValue = findValue(stack, SType.EntitySet);
         es = esValue ? esValue[1] : undefined;
     }
     if (insts) {
-        console.time("run query")
+        // console.time("run query")
         const words = parse(insts);
         // Log.debug('[parse]', words );
         [stack] = await pushValues(stack, words);
-        console.timeEnd("run query")
+        // console.timeEnd("run query")
     }
     return [stack, es];
 }

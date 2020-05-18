@@ -7,7 +7,8 @@ import { ComponentId, Component,
     getComponentDefId,
     getComponentEntityId,
     isComponent,
-    toComponentId
+    toComponentId,
+    isComponentLike
 } from "../component";
 import { ComponentDef, 
     ComponentDefObj, 
@@ -26,6 +27,7 @@ import { EntitySet,
     clearChanges, 
     markEntityRemove, 
     markComponentRemove, 
+    assignEntityIds,
     RemoveType } from "../entity_set";
 import { 
     Type as EntityT,
@@ -211,7 +213,7 @@ export function add(es: EntitySetSQL, item: AddType, options: AddOptions = {}): 
     if (Array.isArray(item)) {
         // sort the incoming items into entities and components
         let [ents, coms] = (item as any[]).reduce(([ents, coms], item) => {
-            if (isComponent(item)) {
+            if (isComponentLike(item)) {
                 coms.push(item);
             } else if (isEntity(item)) {
                 ents.push(item);
@@ -233,7 +235,7 @@ export function add(es: EntitySetSQL, item: AddType, options: AddOptions = {}): 
 
         es = applyRemoveChanges(es)
     }
-    else if (isComponent(item)) {
+    else if (isComponentLike(item)) {
         es = addComponents(es, [item as Component]);
     }
     else if (isEntity(item)) {
@@ -412,23 +414,10 @@ function applyRemoveChanges(es: EntitySetSQL): EntitySetSQL {
 function applyRemoveComponent(es: EntitySetSQL, cid: ComponentId): EntitySetSQL {
     let [eid, did] = fromComponentId(cid);
 
-    // let e = _getEntity(es, eid);
-    // if( e === undefined ){
-    //     throw new Error(`entity ${eid} not found`);
-    // }
-
-    // // remove the component id from the entity
-    // e.bitField.set(did, false);
-
     const def = getByDefId( es, did );
     // remove component
     // Log.debug('[applyRemoveComponent]', eid, did );
     let e = sqlDeleteComponent( es.db, eid, def );
-
-    // const store = es.db.transaction(STORE_COMPONENTS, 'readwrite').objectStore(STORE_COMPONENTS);
-    // await idbDelete(store, [eid,did] );
-
-    // Log.debug('[applyRemoveComponent]', cid, ebf.count() );
 
     if (e.bitField.count() === 0) {
         return markEntityRemove(es, eid) as EntitySetSQL;
@@ -513,73 +502,9 @@ export function getComponent(es: EntitySetSQL, id: ComponentId | Component): Com
     const def = getByDefId(es, did);
     let com = sqlRetrieveComponent( es.db, eid, def );
 
-    // const store = es.db.transaction(STORE_COMPONENTS, 'readonly').objectStore(STORE_COMPONENTS);
-    // const idx = store.index('by_cid');
-
-    
-    // let result = await idbGetRange(store, IDBKeyRange.bound([eid,did], [eid,did]) );
-    // Log.debug('[getComponent]', eid, did, result);
-
-    // if( result.length === 0 ){
-    //     return undefined;
-    // }
-
-    // let {'_e':ceid, '_d':cdid, ...rest} = result[0].value;
-    // let com = {'@e':ceid, '@d':cdid, ...rest};
-
     return com;
 }
 
-
-/**
- * Assigns entity ids to an array of components
- * 
- * @param es 
- * @param components 
- */
-function assignEntityIds(es: EntitySetSQL, components: Component[]): [EntitySetSQL, Component[]] {
-    let set;
-    let eid;
-    type Memo = [ EntitySetSQL,Set<number>,number,Component[] ];
-    const initial:Memo = [es, new Set(), 0, []];
-
-    [es, set, eid, components] = components.reduce( (last, com) => {
-
-        let [es, set, eid, components] = last;
-
-        let did = getComponentDefId(com);
-        // Log.debug('[assignEntityIds]', 'com', did );
-
-        // component already has an id - add it to the list of components
-        if (getComponentEntityId(com) !== 0) {
-            return [es, set, eid, [...components, com]];
-        }
-
-        // not yet assigned an entity, or we have already seen this com type
-        if (eid === 0 || set.has(did)) {
-            // create a new entity - this also applies if we encounter a component
-            // of a type we have seen before
-            [es, eid] = createEntity(es);
-
-            // Log.debug('[assignEntityIds]', 'new entity', did, set.has(did), eid );
-
-            com = setComponentEntityId(com, eid);
-
-            // # mark the def as having been seen, store the new entity, add the component
-            // {es, MapSet.put(set, def_id), entity_id, [com | components]}
-            return [es, set.add(did), eid, [...components, com]];
-        } else {
-            // Log.debug('[assignEntityIds]', 'already have', did, eid);
-            // we have a new entity_id already
-            com = setComponentEntityId(com, eid);
-            return [es, set, eid, [...components, com]];
-        }
-    }, initial) as Memo;
-
-    // Log.debug('[assignEntityIds]', 'coms', components );
-
-    return [es, components];
-}
 
 
 function setEntity(es:EntitySetSQL, e:Entity): Entity {  
@@ -626,10 +551,6 @@ export function getEntity(es:EntitySetSQL, eid:EntityId, populate:boolean = true
     let defs = dids.map( did => getByDefId(es,did) );
 
     let coms = sqlRetrieveEntityComponents( es.db, eid, defs );
-
-    // const store = es.db.transaction(STORE_COMPONENTS, 'readonly').objectStore(STORE_COMPONENTS);
-
-    // let result = await idbGetRange(store, IDBKeyRange.bound([eid,0], [eid,Number.MAX_SAFE_INTEGER] ) );
 
     // Log.debug('[getEntity]', coms );
     e = coms.reduce( (e,com) => {

@@ -39,7 +39,7 @@ import {
     isComponentDef,
     ComponentDef,
 } from '../../src/component_def';
-import { getComponentDefId, Component } from '../../src/component';
+import { getComponentDefId, Component, OrphanComponent } from '../../src/component';
 import {
     assertHasComponents,
 } from '../util/assert';
@@ -308,6 +308,32 @@ describe('Entity Set (SQL)', () => {
             assertHasComponents(es, e,
                 ['/component/username', '/component/status', '/component/channel_member']);
 
+        });
+
+        it('updates an entity', async () => {
+            let [es] = await buildEntitySet({ ...liveDB, debug: false} );
+
+            let com:OrphanComponent = { "@d": "/component/topic", topic: 'chat' };
+
+            es = await esAdd( es, com );
+
+            const cid = getChanges(es.comChanges, ChangeSetOp.Add)[0];
+
+            // Log.debug('changes', es);
+
+            com = await getComponent(es, cid );
+            
+            com = {...com, topic:'discussion'};
+
+            // Log.debug('🦄', 'updating here');
+            
+            es = await esAdd(es, com);
+
+            com = await getComponent(es, cid );
+
+            // Log.debug('final com', com );
+
+            assert.equal( com.topic, 'discussion' );
         });
     });
 

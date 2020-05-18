@@ -60,13 +60,17 @@ async function walkFilterQuery(db: IDBDatabase, eids: EntityId[], cmd?, ...args)
     } else if (cmd === '==') {
         let { def } = args[0];
         let [key, val] = args[1];
-        // Log.debug('[walkFilterQuery]', '==', key,val);
-        if (Array.isArray(val)) {
-            Log.debug('[walkFilterQuery]', 'might want to do this', val);
-        }
-
+        
         let coms = await idbRetrieveComponents(db, undefined, [getDefId(def)]);
+        
+        // Log.debug('[walkFilterQuery]', '==', key,val, coms);
+        
         let ceids = coms.reduce((eids, com) => {
+
+            if( Array.isArray(val) ){
+                return val.indexOf( com[key] ) !== -1 ? [...eids,com["@e"] ] : eids;
+            }
+
             // Log.debug('[walkFilterQuery]', '==', key,val, com[key]);
             return com[key] === val ? [...eids, com["@e"]] : eids
         }, []);
@@ -287,12 +291,16 @@ async function idbUpdateEntities(db: IDBDatabase, eids: EntityId[]): Promise<Ent
  * @param returnKey 
  */
 function idbGetAllOf(store: IDBObjectStore | IDBIndex, keys: number[], returnKey: boolean = true): Promise<any[]> {
-    keys.sort();
+    
+    // sort by default works alphanumerical, so provide numeric sort fn
+    keys.sort((a,b) => a-b);
+
     const lo = keys[0];
     const hi = keys[keys.length - 1];
 
     let lowerBound = [lo, 0];
     let upperBound = [hi, Number.MAX_VALUE];
+    // Log.debug('[idbGetAllOf]', lowerBound, upperBound, keys.sort() );
     const key = IDBKeyRange.bound(lowerBound, upperBound);
 
     return new Promise((res, rej) => {
@@ -325,6 +333,10 @@ function idbGetAllOf(store: IDBObjectStore | IDBIndex, keys: number[], returnKey
 export async function idbRetrieveComponents(db: IDBDatabase, eids: EntityId[], dids: ComponentDefId[]): Promise<Component[]> {
     let result: Component[] = [];
 
+    if( eids !== undefined && eids.length === 0 ){
+        return result;
+    }
+
     // Log.debug('[idbRetrieveComponents]', eids, dids);
 
     let store = db.transaction(STORE_COMPONENTS, 'readonly').objectStore(STORE_COMPONENTS);
@@ -335,6 +347,7 @@ export async function idbRetrieveComponents(db: IDBDatabase, eids: EntityId[], d
     if (eids === undefined) {
         coms = await idbGetAllOf(index, dids, false);
     } else {
+        // Log.debug('[idbRetrieveComponents]', 'get eids', eids);
         coms = await idbGetAllOf(store, eids, false);
     }
 

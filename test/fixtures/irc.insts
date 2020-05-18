@@ -123,18 +123,18 @@ concat +
 
 [ "/component/channel_member", { "@e":20, "channel": 3, "client": 11, "username":"ggrice", "cname":"mr-rap" }] !c
 
-[ "/component/channel_member", { "@e":20, "channel": 4, "client": 9, "username":"rshante", "cname":"ms-rap"} ] !c
+[ "/component/channel_member", { "@e":21, "channel": 4, "client": 9, "username":"rshante", "cname":"ms-rap"} ] !c
 [ "/component/mode/channel_op" {"@e":21}] !c
 
-[ "/component/channel_member", { "@e":21, "channel": 4, "client": 12, "username":"lhill", "cname":"ms-rap" }] !c
+[ "/component/channel_member", { "@e":22, "channel": 4, "client": 12, "username":"lhill", "cname":"ms-rap" }] !c
 
-[ "/component/channel_member", { "@e":22, "channel": 4, "client": 13, "username":"koolgrap", "cname":"mr-rap"} ] !c
+[ "/component/channel_member", { "@e":23, "channel": 4, "client": 13, "username":"koolgrap", "cname":"mr-rap"} ] !c
 
-[ "/component/channel_member", { "@e":23, "channel": 2, "client": 13, "username":"mdiamond", "cname":"chat"} ] !c
-[ "/component/mode/channel_op" { "@e":23 }] !c
-[ "/component/channel_member", { "@e":24, "channel": 2, "client": 5, "username":"kfareed", "cname":"chat"}] !c
-[ "/component/channel_member", { "@e":25, "channel": 2, "client": 10, "username":"kthornton", "cname":"chat"}] !c
-[ "/component/channel_member", { "@e":26, "channel": 2, "client": 13, "username":"gza", "cname":"chat"}] !c
+[ "/component/channel_member", { "@e":24, "channel": 2, "client": 13, "username":"mdiamond", "cname":"chat"} ] !c
+[ "/component/mode/channel_op" { "@e":24 }] !c
+[ "/component/channel_member", { "@e":25, "channel": 2, "client": 5, "username":"kfareed", "cname":"chat"}] !c
+[ "/component/channel_member", { "@e":26, "channel": 2, "client": 10, "username":"kthornton", "cname":"chat"}] !c
+[ "/component/channel_member", { "@e":27, "channel": 2, "client": 13, "username":"gza", "cname":"chat"}] !c
 
 // gather components into an array and add to the es
 concat +

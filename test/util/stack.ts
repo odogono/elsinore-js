@@ -21,7 +21,6 @@ import { omit } from '../../src/util/omit';
 //     Type as ComponentRegistryT, getByDefId} from '../../src/component_registry';
 
 import { create as createQueryStack, 
-    peekV as peekQueryStack,
     QueryStack, 
     StackOp,
     SType,

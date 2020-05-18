@@ -114,13 +114,14 @@ export async function applyFilter(stack:IDBQueryStack): AsyncInstResult<IDBQuery
     // Log.debug('[applyFilter]', filter[2] );
     
     let result = parseFilterQuery( es, filter[0], filter[1], filter[2] );
-    
-    
-    result = await idbRetrieveByQuery( es.db, result );
-    // Log.debug('[applyFilter]', 'result' );
-    // ilog( result );
 
-    return [stack, [SType.Array, result.map(r => [SType.Entity,r]) ]];
+    // Log.debug('[applyFilter]', result );
+    
+    let eids = await idbRetrieveByQuery( es.db, result );
+    // Log.debug('[applyFilter]', 'result eids', eids );
+    
+
+    return [stack, [SType.Array, eids.map(e => [SType.Entity,e]) ]];
 }
 
 

@@ -63,7 +63,7 @@ export function sqlClear(name: string): Promise<boolean> {
 export function sqlOpen(name: string, options: OpenOptions): SqlRef {
     const isMemory = options.isMemory ?? true;
     const { verbose } = options;
-    const db = new BetterSqlite3(name, { memory: isMemory, verbose });
+    const db = new BetterSqlite3( isMemory ? ":memory:" : name, { verbose });
 
     db.pragma('journal_mode = WAL');
 
@@ -354,6 +354,10 @@ export function sqlRetrieveComponents(ref:SqlRef, eids:EntityId[], defs:Componen
     // let tblName, did;
     let result = [];
 
+    if( eids !== undefined && eids.length === 0 ){
+        return result;
+    }
+
     for(let ii=0;ii<defs.length;ii++ ){
         let def = defs[ii];
         let rows;
@@ -582,9 +586,9 @@ function walkFilterQuery(out:string[], params:any[], cmd?, ...args ){
         let {def} = args[0];
         let tbl = defToTbl(def);
         let [key,val] = args[1];
-        if( Array.isArray(val) ){
-            Log.debug('[walkFilterQuery]', 'might want to do this', val);
-        }
+        // if( Array.isArray(val) ){
+        //     Log.debug('[walkFilterQuery]', 'might want to do this', val);
+        // }
         out.push(`SELECT eid from ${tbl} WHERE ${key} = ?`);
         params.push( valueToSQL(val) );
     }
