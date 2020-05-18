@@ -1,7 +1,8 @@
 import { createLog } from "../util/log";
-import { Entity, create as createEntityInstance, EntityId } from "../entity";
+import { Entity, create as createEntityInstance, EntityId, createBitfield } from "../entity";
 import { ComponentId, Component, fromComponentId, toComponentId } from "../component";
 import { ComponentDef, ComponentDefId, getDefId } from "../component_def";
+import { BitField } from "odgn-bitfield";
 
 
 const Log = createLog('IDB', { time: false });
@@ -76,6 +77,15 @@ async function walkFilterQuery(db: IDBDatabase, eids: EntityId[], cmd?, ...args)
         // out.push(`SELECT eid from ${tbl} WHERE ${key} = ?`);
         // params.push( valueToSQL(val) );
     }
+}
+
+export async function idbRetrieveEntityBitField(db: IDBDatabase, eid:EntityId): Promise<BitField> {
+    const store = db.transaction(STORE_ENTITIES, 'readonly').objectStore(STORE_ENTITIES);
+    const dids = await idbGet(store, eid);
+    if( dids === undefined ){
+        return undefined;
+    }
+    return createBitfield( dids );
 }
 
 /**
@@ -186,7 +196,7 @@ export async function idbDeleteComponents(db: IDBDatabase, cids: ComponentId[]):
 
     eids = await idbUpdateEntities(db, eids);
 
-    Log.debug('[idbDeleteComponents]', eids);
+    // Log.debug('[idbDeleteComponents]', eids);
 
     return eids;
 
@@ -219,7 +229,7 @@ async function idbUpdateEntities(db: IDBDatabase, eids: EntityId[]): Promise<Ent
     let deleted = eids.filter(eid => ents.get(eid) === undefined);
     // let deleted = eids.reduce( (accum,eid) => ents.get(eid) === undefined  , []);
 
-    Log.debug('[idbUpdateEntities]', 'affected', ents, deleted);
+    // Log.debug('[idbUpdateEntities]', 'affected', ents, deleted);
 
     // update the entity records
     store = db.transaction(STORE_ENTITIES, 'readwrite').objectStore(STORE_ENTITIES);
@@ -237,7 +247,7 @@ async function idbUpdateEntities(db: IDBDatabase, eids: EntityId[]): Promise<Ent
         
         await new Promise(async (res, rej) => {
             for (let ii = 0; ii < len; ii++) {
-                const req = store.put({ bf: values[ii] }, keys[ii]);
+                const req = store.put( values[ii], keys[ii]);
                 req.onerror = rejectHandler(rej);
                 if (ii === last) {
                     req.onsuccess = successHandler(res);
@@ -246,7 +256,7 @@ async function idbUpdateEntities(db: IDBDatabase, eids: EntityId[]): Promise<Ent
         });
     }
 
-    Log.debug('[idbUpdateEntities]', 'deleted', deleted);
+    // Log.debug('[idbUpdateEntities]', 'deleted', deleted);
 
     // delete entities
     if (deleted.length === 0) {
@@ -366,23 +376,29 @@ export async function idbRetrieveComponent(db: IDBDatabase, cid: ComponentId): P
 
 export async function idbComponentExists(db: IDBDatabase, eid: number, did: number): Promise<boolean> {
     const store = db.transaction(STORE_COMPONENTS, 'readonly').objectStore(STORE_COMPONENTS);
-
     const row = await idbGet(store, [eid, did]);
-
-    // let stmt = db.prepare('SELECT cid FROM tbl_entity_component WHERE eid = ? AND did = ? LIMIT 1');
-    // let row = stmt.get(eid, did);
     return row !== undefined;
 }
 
 
 export async function idbPutComponents(db: IDBDatabase, comUpdates: Map<ComponentId, any>): Promise<any> {
     const store = db.transaction(STORE_COMPONENTS, 'readwrite').objectStore(STORE_COMPONENTS);
+    // Log.debug('[idbPutComponents]', comUpdates );
     return idbPutCollection(store, comUpdates);
 }
 
-export async function idbPutEntities(db: IDBDatabase, entUpdates: Map<EntityId, any>): Promise<any> {
+export async function idbPutEntities(db: IDBDatabase, entUpdates: Map<EntityId, BitField>): Promise<any> {
     const store = db.transaction(STORE_ENTITIES, 'readwrite').objectStore(STORE_ENTITIES);
-    return idbPutCollection(store, entUpdates, true);
+
+    // convert bitfields to maps
+    let updates = new Map<EntityId,any>();
+    for( const [eid,bf] of entUpdates ){
+        updates.set(eid, bf.toValues());
+    }
+
+    // Log.debug('[idbPutEntities]', updates );
+
+    return idbPutCollection(store, updates, true);
 }
 
 async function idbPutCollection(store: IDBObjectStore, updates: Map<any, any>, putKey: boolean = false): Promise<any> {

@@ -9,7 +9,7 @@ import { ComponentDef,
 import { createUUID } from "../util/uuid";
 import { createLog } from "../util/log";
 import { isString, isInteger } from "../util/is";
-import { create as createComponentInstance, Component } from '../component';
+import { create as createComponentInstance, Component, OrphanComponent, isExternalComponent, getComponentDefId } from '../component';
 import { BitField } from "odgn-bitfield";
 import { EntitySet } from "./index";
 
@@ -67,6 +67,19 @@ export function resolveComponentDefIds<ES extends EntitySet>( registry:ES, dids:
     });
 
     return defs.reduce( (bf,def) => def === undefined ? bf : bf.set( getDefId(def) ), bf );
+}
+
+export function resolveComponent<ES extends EntitySet>( registry:ES, com:(OrphanComponent|Component) ): Component {
+    if(!isExternalComponent(com) ){
+        return com as any;
+    }
+    const sdid = com[DefT] as string;
+    const def = getByUri( registry, sdid );
+    if( def === undefined ){
+        throw new Error(`def id not found ${sdid}`);
+    }
+    const did = def[DefT];
+    return {...com, [DefT]:did } as any;
 }
 
 /**

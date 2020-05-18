@@ -44,8 +44,7 @@ export function assertHasComponents<ES extends EntitySet>(registry:ES, entity:En
         }
     })
     
-    const coms = getComponents( entity );
-    coms.forEach( com => {
+    for( const com of getComponents(entity) ){
         const did = getComponentDefId(com);
         const def = getByDefId(registry, did);
 
@@ -53,5 +52,5 @@ export function assertHasComponents<ES extends EntitySet>(registry:ES, entity:En
         // if( defs.find( def => getDefId(def) === did ) === undefined ){
             assert.fail(`entity has component ${def.uri}`);
         }
-    })
+    }
 }

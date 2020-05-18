@@ -1,5 +1,5 @@
 import { Type as DefT } from './component_def';
-import { isObject, isString } from './util/is';
+import { isObject, isString, isInteger } from './util/is';
 
 export type ComponentProperties = Map<string, any>;
 
@@ -11,6 +11,11 @@ export type ComponentId = string; //[number, number];
 
 export interface ComponentList {
     cids: ComponentId[];
+}
+
+export interface OrphanComponent {
+    [key: string]: any;
+    [DefT]: number | string;
 }
 
 export interface Component {
@@ -83,7 +88,8 @@ export function getComponentDefId( component:Component ): number {
 }
 
 export function getComponentEntityId( component:Component ): number {
-    return component[EntityT];
+    let eid = component[EntityT];
+    return !isInteger(eid) ? 0 : eid;
 }
 
 export function setEntityId( component:Component, entityId:number ): Component {
@@ -104,8 +110,16 @@ export function toObject( component:Component ): ComponentObj {
     return result;
 }
 
+export function isComponentLike( item:any ): boolean {
+    return isObject(item) && DefT in item;
+}
+
 export function isComponent( item:any ): boolean {
     return isObject(item) && DefT in item && EntityT in item;
+}
+
+export function isExternalComponent( item:any ): boolean {
+    return isObject(item) && isString(item[DefT]);
 }
 
 // export class Component {

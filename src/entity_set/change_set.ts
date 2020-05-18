@@ -23,7 +23,7 @@ export function create<T>( set?:ChangeSet<T> ):ChangeSet<T> {
 }
 
 
-export function getChanges<T>( set:ChangeSet<T>, ops:ChangeSetOp ): Array<T> {
+export function getChanges<T>( set:ChangeSet<T>, ops:ChangeSetOp = ChangeSetOp.All ): Array<T> {
     let result = new Set<T>();
     if( (ops & ChangeSetOp.Add) === ChangeSetOp.Add ){
         result = new Set([...set.added]);

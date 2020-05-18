@@ -26,8 +26,8 @@
 const TwitterEpoch: number = 1413370800000;
 const Epoch: number = 1546333200000;
 
-const Flake53WorkerIdBits = 8;
-const Flake53SequenceBits = 4;
+const Flake53WorkerIdBits = 4;
+const Flake53SequenceBits = 8;
 const Flake53TimestampLeftShift = Flake53SequenceBits + Flake53WorkerIdBits;
 
 export interface Flake53Params {
@@ -41,7 +41,7 @@ export interface Flake53Params {
  * a 53 bit flake, which helps in IEEE 754 environments, particularly javascript
  * Thankyou to https://github.com/cablehead/python-fity3 for not having to think about this
  * timestamp | workerId | sequence
- * 41 bits  |  8 bits   |  4 bits
+ * 41 bits  |  4 bits   |  8 bits
  *
  */
 export function buildFlake53({
@@ -51,11 +51,10 @@ export function buildFlake53({
     epoch = Epoch
 }: Flake53Params = {}): number {
     const workerIdShift = Flake53SequenceBits;
-
     return (
         lshift(timestamp - epoch, Flake53TimestampLeftShift) +
-        lshift(workerId, workerIdShift) +
-        sequence
+        lshift(workerId & 0xf, workerIdShift) +
+        (sequence & 0xff)
     );
 }
 
@@ -73,8 +72,8 @@ export function parseFlake53(
         timestamp:
             rshift(flake53,  Flake53TimestampLeftShift) +
             epoch,
-        workerId: rshift(flake53, Flake53SequenceBits) & 0xff,
-        sequence: flake53 & 0xf,
+        workerId: rshift(flake53, Flake53SequenceBits) & 0xf,
+        sequence: flake53 & 0xff,
         epoch
     };
 }

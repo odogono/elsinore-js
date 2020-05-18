@@ -25,7 +25,7 @@ import { EntitySet,
     removeEntity} from '../src/entity_set';
 import { assertHasComponents } from './util/assert';
 import { getChanges, ChangeSetOp } from '../src/entity_set/change_set';
-import { fromComponentId, getComponentDefId, Component } from '../src/component';
+import { fromComponentId, getComponentDefId, Component, OrphanComponent } from '../src/component';
 import { isComponentDef, hash as hashDef } from '../src/component_def';
 import { BuildQueryFn } from '../src/query/build';
 
@@ -99,19 +99,21 @@ describe('Entity Set (Mem)', () => {
                 component('/component/topic', {topic: 'data-structures'});
             });
             
-            // Log.debug('es', es);
-
+            
             assert.equal( entitySize(e), 3 );
             
             es = esAdd( es, e );
             
+            // Log.debug('es', es);
             
             assert.equal( entitySetSize(es), 1 );
             
             // get the entity added changes to find the entity id
             const [eid] = getChanges( es.entChanges, ChangeSetOp.Add );
             
-            e = getEntity( es, eid );
+            e = getEntity( es, eid, true );
+
+            // Log.debug('result', e);
 
             assertHasComponents(
                 es,
@@ -204,10 +206,13 @@ describe('Entity Set (Mem)', () => {
                 component('/component/channel_member', {channel: 3});
             }, 15);
 
+            // Log.debug('>----');
             es = esAdd( es, e );
 
+            // Log.debug('e', es.entChanges, es.comChanges);
+
             e = getEntity(es, 15);
-            // Log.debug('e', es.components);
+            // Log.debug('e', e);
 
             assertHasComponents( es, e, 
                 ['/component/username', '/component/status', '/component/channel_member' ] );
@@ -220,6 +225,32 @@ describe('Entity Set (Mem)', () => {
             e = getEntity(es, 15);
 
             assertHasComponents( es, e, ['/component/channel']);
+        });
+
+        it('updates an entity', async () => {
+            let [es] = await buildEntitySet();
+
+            let com:OrphanComponent = { "@d": "/component/topic", topic: 'chat' };
+
+            es = await esAdd( es, com );
+
+            const cid = getChanges(es.comChanges, ChangeSetOp.Add)[0];
+
+            // Log.debug('changes', es);
+
+            com = await getComponent(es, cid );
+            
+            com = {...com, topic:'discussion'};
+
+            // Log.debug('🦄', 'updating here');
+            
+            es = await esAdd(es, com);
+
+            com = await getComponent(es, cid );
+
+            // Log.debug('final com', com );
+
+            assert.equal( com.topic, 'discussion' );
         });
 
     });

@@ -112,6 +112,8 @@ export function create(options:CreateEntitySetFSParams={}):EntitySetFS {
     
     const entChanges = createChangeSet<number>();
     const comChanges = createChangeSet<ComponentId>();
+    const entUpdates = new Map<number,BitField>();
+    const comUpdates = new Map<ComponentId,any>();
 
     const db = fsCreateRef( `${prefix}${uuid}`, path);
 
@@ -125,7 +127,9 @@ export function create(options:CreateEntitySetFSParams={}):EntitySetFS {
         lineSep: '\n',
         prefix,
         debug,
-        uuid, entChanges, comChanges,
+        uuid, 
+        entChanges, comChanges,
+        entUpdates, comUpdates,
         componentDefs: [],
         byUri: new Map<string, number>(),
         byHash: new Map<number, number>(),

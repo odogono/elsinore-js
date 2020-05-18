@@ -1,4 +1,4 @@
-import './component_def';
+// import './component_def';
 
-import './idb/index';
-// import './idb/query';
+// import './idb/index';
+import './idb/query';

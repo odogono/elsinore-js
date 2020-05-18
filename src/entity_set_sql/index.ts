@@ -117,6 +117,8 @@ export function create(options?:CreateEntitySetSQLParams):EntitySetSQL {
     
     const entChanges = createChangeSet<number>();
     const comChanges = createChangeSet<ComponentId>();
+    const entUpdates = new Map<number,BitField>();
+    const comUpdates = new Map<ComponentId,any>();
 
     // Log.debug('[create]');
     return {
@@ -126,7 +128,9 @@ export function create(options?:CreateEntitySetSQLParams):EntitySetSQL {
         db: undefined,
         isMemory,
         debug,
-        uuid, entChanges, comChanges,
+        uuid, 
+        entChanges, comChanges,
+        entUpdates, comUpdates,
         componentDefs: [],
         byUri: new Map<string, number>(),
         byHash: new Map<number, number>(),

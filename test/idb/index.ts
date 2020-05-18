@@ -18,11 +18,6 @@ import {
     removeComponents, 
     removeEntity,
     getEntity,
-    // getComponent,
-    // getComponents as esGetComponents,
-    // getEntities as esGetEntities,
-    getComponentDefs,
-    createEntity,
     clearIDB,
     getComponent,
 } from '../../src/entity_set_idb';
@@ -84,7 +79,8 @@ import { BuildQueryFn } from '../../src/query/build';
 import { isComponentDef, hash as hashDef, ComponentDef } from '../../src/component_def';
 import { getChanges, ChangeSetOp } from '../../src/entity_set/change_set';
 import { assertHasComponents } from '../util/assert';
-import { getComponentDefId, Component } from '../../src/component';
+import { getComponentDefId, Component, OrphanComponent } from '../../src/component';
+import { createEntity } from '../../src/entity_set';
 
 const Log = createLog('TestEntitySetIDB');
 
@@ -184,7 +180,7 @@ describe('Entity Set (IndexedDB)', () => {
             
             es = await esAdd( es, e );
             
-            // Log.debug('es');
+            // Log.debug('es', es);
             
             assert.equal( await entitySetSize(es), 1 );
             
@@ -259,13 +255,13 @@ describe('Entity Set (IndexedDB)', () => {
             let e:Entity;
             let [es, buildEntity] = await buildEntitySet();
 
-            await register( es, // component def is a component
-                { name:'ComponentDef', uri:'/def', properties:[
-                    { name:'@d', type:'integer' },
-                    { name:'uri', type:'string' },
-                    { name:'name' },
-                    { name:'properties', type:'array' }
-                ] } );
+            // await register( es, // component def is a component
+            //     { name:'ComponentDef', uri:'/def', properties:[
+            //         { name:'@d', type:'integer' },
+            //         { name:'uri', type:'string' },
+            //         { name:'name' },
+            //         { name:'properties', type:'array' }
+            //     ] } );
 
             e = buildEntity( es, ({component}) => {
                 component('/component/channel', {name: 'chat'});
@@ -273,9 +269,12 @@ describe('Entity Set (IndexedDB)', () => {
                 component('/component/topic', {topic: 'data-structures'});
             }, 15);
 
+            
             es = await esAdd( es, e );
 
             e = await getEntity(es, 15);
+
+            // Log.debug('e', es.comChanges );// getChanges(es.comChanges) );
 
             assert.ok( isEntity( e ) );
 
@@ -285,9 +284,13 @@ describe('Entity Set (IndexedDB)', () => {
                 component('/component/channel_member', {channel: 3});
             }, 15);
 
+            // Log.debug('>----');
+
             es = await esAdd( es, e );
 
             e = await getEntity(es, 15);
+
+            // Log.debug('e', es.entChanges, es.comChanges);
 
             assertHasComponents( es, e, 
                 ['/component/username', '/component/status', '/component/channel_member' ] );
@@ -296,6 +299,30 @@ describe('Entity Set (IndexedDB)', () => {
             let com = getEntityComponent(e, did)
             assert.equal( com.channel, 3 );
             // Log.debug('e', com);
+        });
+
+        it('updates an entity', async () => {
+            let [es] = await buildEntitySet();
+
+            let com:OrphanComponent = { "@d": "/component/topic", topic: 'chat' };
+
+            es = await esAdd( es, com );
+
+            const cid = getChanges(es.comChanges, ChangeSetOp.Add)[0];
+
+            com = await getComponent(es, cid );
+            
+            com = {...com, topic:'discussion'};
+
+            // Log.debug('🦄', 'updating here');
+            
+            es = await esAdd(es, com);
+
+            com = await getComponent(es, cid );
+
+            // Log.debug('final com', com );
+
+            assert.equal( com.topic, 'discussion' );
         });
 
     });

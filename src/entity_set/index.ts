@@ -1,5 +1,7 @@
 import {
-    Component, isComponent,
+    Component, 
+    isComponent,
+    isComponentLike,
     ComponentId,
     getComponentId,
     getComponentDefId,
@@ -10,13 +12,15 @@ import {
     fromComponentId,
     createComponentList,
     ComponentList,
-    isComponentList
+    isComponentList,
+    OrphanComponent
 } from "../component";
 import { BitField } from "odgn-bitfield";
 import { createUUID } from "../util/uuid";
 import {
     resolveComponentDefIds as registryResolve,
-    register
+    register,
+    resolveComponent
 } from "./registry";
 import {
     Entity,
@@ -30,7 +34,8 @@ import {
     EntityList,
     createEntityList,
     isEntityList,
-    EntityId
+    EntityId,
+    setEntityId
 } from "../entity";
 import { Type as ComponentDefT, ComponentDef } from '../component_def';
 import {
@@ -49,6 +54,7 @@ import { isInteger, isObject, isString } from "../util/is";
 import { MatchOptions } from '../constants';
 import { select } from "./query";
 import { StackValue } from "../query/stack";
+import { buildFlake53 } from "../util/id";
 
 export const Type = '@es';
 
@@ -66,8 +72,10 @@ export interface EntitySet {
     uuid: string;
 
     entChanges: ChangeSet<number>;
-
     comChanges: ChangeSet<ComponentId>;
+
+    comUpdates: Map<ComponentId,any>;
+    entUpdates: Map<number,BitField>;
 
     componentDefs: ComponentDef[];
     byUri: Map<string, number>;
@@ -106,13 +114,17 @@ export function create(options: CreateEntitySetParams = {}): EntitySetMem {
     const entities = new Map<EntityId, BitField>();
     const entChanges = createChangeSet<number>();
     const comChanges = createChangeSet<ComponentId>();
+    const comUpdates = new Map<ComponentId,any>();
+    const entUpdates = new Map<number,BitField>();
 
     return {
         type: 'mem',
         isEntitySet: true,
         isAsync: false,
         isEntitySetMem: true,
-        uuid, components, entities, entChanges, comChanges,
+        uuid, components, entities, 
+        entChanges, comChanges,
+        entUpdates, comUpdates,
         componentDefs: [],
         byUri: new Map<string, number>(),
         byHash: new Map<number, number>(),
@@ -155,7 +167,7 @@ export interface AddOptions {
 }
 
 export type AddArrayType = (Entity | Component)[];// Entity[] | Component[];
-export type AddType = Entity | Component | AddArrayType;
+export type AddType = Entity | Component | OrphanComponent | AddArrayType;
 export type RemoveType = ComponentId | Entity | Component;
 
 
@@ -173,7 +185,7 @@ export function add(es: EntitySetMem, item: AddType, options: AddOptions = {}): 
     if (Array.isArray(item)) {
         // sort the incoming items into entities and components
         let [ents, coms] = (item as any[]).reduce(([ents, coms], item) => {
-            if (isComponent(item)) {
+            if (isComponentLike(item)) {
                 coms.push(item);
             } else if (isEntity(item)) {
                 ents.push(item);
@@ -181,16 +193,17 @@ export function add(es: EntitySetMem, item: AddType, options: AddOptions = {}): 
             return [ents, coms];
         }, [[], []]);
 
-        // Log.debug('[add]', ents)
+        // Log.debug('[add]', coms);
 
         // add components on entities
-        es = ents.reduce((es, e) => addComponents(es, getEntityComponents(e)), es);
+        for( const e of ents ){
+            es = addComponents(es, getEntityComponents(e) );
+        }
 
         // add components
         es = addComponents(es, coms);
-        es = applyRemoveChanges(es)
     }
-    else if (isComponent(item)) {
+    else if (isComponentLike(item)) {
         es = addComponents(es, [item as Component]);
     }
     else if (isEntity(item)) {
@@ -199,7 +212,33 @@ export function add(es: EntitySetMem, item: AddType, options: AddOptions = {}): 
         es = addComponents(es, getEntityComponents(e));
     }
 
-    es = applyRemoveChanges(es)
+    es = applyRemoveChanges(es);
+
+    if( es.entUpdates.size > 0 ){
+        // Log.debug('[add]', 'applying entity updates', es.entUpdates );
+
+        const entities = new Map<number, BitField>(es.entities);
+
+        for( const [eid,bf] of es.entUpdates ){
+            entities.set( eid, bf );
+        }
+        es = { ...es, entities };
+        es.entUpdates.clear();
+    }
+
+    if( es.comUpdates.size > 0 ){
+        // Log.debug('[add]', 'applying com updates', es.comUpdates );
+
+        const components = new Map<ComponentId, Component>(es.components);
+        
+        for( const [cid,com] of es.comUpdates ){
+            components.set(cid, com);
+        }
+
+        es = {...es, components};
+
+        es.comUpdates.clear();
+    }
 
     return es;
 }
@@ -210,9 +249,9 @@ export function removeComponent(es: EntitySetMem, item: RemoveType, options: Add
     if (cid === undefined) {
         return es;
     }
-    es = markComponentRemove(es, cid) as EntitySetMem;
+    es = markComponentRemove(es, cid);
 
-    // Log.debug('[removeComponent]', es );
+    // Log.debug('[removeComponent]', cid );
     return applyRemoveChanges(es);
 }
 
@@ -248,10 +287,19 @@ export function getEntity(es: EntitySetMem, eid: number, populate:boolean = true
         return e;
     }
 
-    return ebf.toValues().reduce((e, did) => {
+    // Log.debug('[getEntity]', eid, ebf.toValues() );
+
+    for( const did of ebf.toValues() ){
         const com = es.components.get(toComponentId(eid, did));
-        return addComponentUnsafe(e, did, com);
-    }, e);
+        // Log.debug('[getEntity]', eid, did, com );
+        e = addComponentUnsafe(e, did, com);
+    }
+
+    return e;
+    // return ebf.toValues().reduce((e, did) => {
+    //     const com = es.components.get(toComponentId(eid, did));
+    //     return addComponentUnsafe(e, did, com);
+    // }, e);
 }
 
 
@@ -261,6 +309,7 @@ export function getEntity(es: EntitySetMem, eid: number, populate:boolean = true
  * @param id 
  */
 export function getComponent(es: EntitySetMem, id: ComponentId | Component): Component {
+    // Log.debug('[getComponent]', id);
     if (isComponentId(id)) {
         return es.components.get(id as ComponentId);
     }
@@ -344,20 +393,20 @@ export function clearChanges<ES extends EntitySet>(entitySet: ES): ES {
     };
 }
 
-function markRemoveComponents(es: EntitySetMem, id: number): EntitySetMem {
-    if (id === 0) {
+function markRemoveComponents(es: EntitySetMem, eid: number): EntitySetMem {
+    if (eid === 0) {
         return es;
     }
 
-    const ebf = es.entities.get(id);
+    const ebf = es.entities.get(eid);
     if (ebf === undefined) {
         return es;
     }
 
-    const dids = ebf.toValues();
+    // Log.debug('[markRemoveComponents]', eid, ebf.toValues() );
 
-    for (let ii = 0; ii < dids.length; ii++) {
-        es = markComponentRemove(es, toComponentId(id, dids[ii])) as EntitySetMem;
+    for( const did of ebf.toValues() ){
+        es = markComponentRemove(es, toComponentId(eid, did) );
     }
 
     return es;
@@ -378,11 +427,6 @@ function addComponents(es: EntitySetMem, components: Component[]): EntitySetMem 
     [es, components] = assignEntityIds(es, components)
 
     // Log.debug('[addComponents]', components);
-    // let changedCids = getChanges(es.comChanges, ChangeSetOp.Add | ChangeSetOp.Update)
-    // Log.debug('[addComponents]', 'pre', changedCids);
-    // Log.debug('[addComponents]', 'add', getChanges(es.comChanges,ChangeSetOp.Add) );
-    // Log.debug('[addComponents]', 'upd', getChanges(es.comChanges,ChangeSetOp.Update) );
-    // Log.debug('[addComponents]', 'rem', getChanges(es.comChanges,ChangeSetOp.Remove) );
 
     // to keep track of changes only in this function, we must temporarily replace
     let changes = es.comChanges;
@@ -397,13 +441,7 @@ function addComponents(es: EntitySetMem, components: Component[]): EntitySetMem 
 
     // gather the components that have been added or updated and apply
     let changedCids = getChanges(es.comChanges, ChangeSetOp.Add | ChangeSetOp.Update)
-    // Log.debug('[addComponents]', 'post', changedCids);
     
-    // combine the new changes with the existing
-    // Log.debug('[addComponents]', 'add', getChanges(es.comChanges,ChangeSetOp.Add) );
-    // Log.debug('[addComponents]', 'upd', getChanges(es.comChanges,ChangeSetOp.Update) );
-    // Log.debug('[addComponents]', 'rem', getChanges(es.comChanges,ChangeSetOp.Remove) );
-    // Log.debug('[addComponents]', 'merge', changes, es.comChanges );
     es.comChanges = mergeCS( changes, es.comChanges );
 
     // return changedCids.reduce((es, cid) => applyUpdatedComponents(es, cid), es);
@@ -422,15 +460,23 @@ function applyUpdatedComponents(es: EntitySetMem, cid: ComponentId): EntitySetMe
 
     const isNew = findCS( es.entChanges, eid ) === ChangeSetOp.Add;
 
-    // Log.debug('[applyUpdatedComponents]', eid, isNew, ebf.get(did) === false );
+    // Log.debug('[applyUpdatedComponents]', eid, did, isNew, ebf.get(did) === false );
 
     // does the component already belong to this entity?
     if (ebf.get(did) === false) {
-        ebf = createBitfield(ebf);
-        ebf.set(did);
-        const entities = new Map<number, BitField>(es.entities);
-        entities.set(eid, ebf);
-        es = { ...es, entities };
+        let e = createEntityInstance(eid);
+        e.bitField = ebf;
+        e.bitField.set(did);
+        // Log.debug('[applyUpdatedComponents]', eid, cid, did, ebf.toValues() );
+
+        // ebf = createBitfield(ebf);
+        // ebf.set(did);
+
+        e = setEntity(es, e);
+
+        // const entities = new Map<number, BitField>(es.entities);
+        // entities.set(eid, ebf);
+        // es = { ...es, entities };
         return isNew ? es : markEntityUpdate(es as EntitySet, eid) as EntitySetMem;
     }
 
@@ -445,9 +491,12 @@ function applyRemoveChanges(es: EntitySetMem): EntitySetMem {
     // applies any removal changes that have previously been marked
     const removedComs = getChanges(es.comChanges, ChangeSetOp.Remove);
 
-    es = removedComs.reduce((es, cid) => applyRemoveComponent(es, cid), es);
+    for( const cid of removedComs ){
+        es = applyRemoveComponent(es,cid);
+    }
+    // es = removedComs.reduce((es, cid) => applyRemoveComponent(es, cid), es);
 
-    // Log.debug('[applyRemoveChanges]', es.entChanges );
+    // Log.debug('[applyRemoveChanges]', removedComs );
 
     const removedEnts = getChanges(es.entChanges, ChangeSetOp.Remove);
 
@@ -461,10 +510,20 @@ function applyRemoveComponent(es: EntitySetMem, cid: ComponentId): EntitySetMem 
     let [eid, did] = fromComponentId(cid);
 
     // remove the component id from the entity
-    let entities = new Map<number, BitField>(es.entities);
-    let ebf = createBitfield(entities.get(eid));
-    ebf.set(did, false);
-    entities.set(eid, ebf);
+    let ebf = es.entUpdates.get(eid);
+    // Log.debug('[applyRemoveComponent]', eid, did, ebf !== undefined ? ebf.toValues() : [] );
+
+    if( ebf === undefined ){
+        ebf = createBitfield( es.entities.get(eid) );
+    }
+    // if( ebf !== undefined ){
+        ebf.set(did, false);
+    // }
+
+    // let entities = new Map<number, BitField>(es.entities);
+    // let ebf = createBitfield(entities.get(eid));
+    // ebf.set(did, false);
+    // entities.set(eid, ebf);
 
     // remove component
     let components = new Map<ComponentId, Component>(es.components);
@@ -472,7 +531,7 @@ function applyRemoveComponent(es: EntitySetMem, cid: ComponentId): EntitySetMem 
 
     es = {
         ...es,
-        entities,
+        // entities,
         components
     }
 
@@ -480,6 +539,8 @@ function applyRemoveComponent(es: EntitySetMem, cid: ComponentId): EntitySetMem 
 
     if (ebf.count() === 0) {
         return markEntityRemove(es, eid) as EntitySetMem;
+    } else {
+        es.entUpdates.set(eid, ebf);
     }
 
     return es;
@@ -502,18 +563,25 @@ export function markComponentAdd(es: EntitySetMem, com: Component): EntitySetMem
     // adds the component to the entityset if it is unknown,
     // otherwise marks as an update
     const cid = getComponentId(com);
-    const existing = getComponent(es, cid);
+    let existing;
+    
+    // try for already updated
+    existing = es.comUpdates.get(cid);
+
+    if( existing === undefined ){
+        // hit the store
+        existing = getComponent(es, cid);
+    }
 
     // Log.debug('[markComponentAdd]', cid, existing );
+    es.comUpdates.set( cid, com );
 
     if (existing !== undefined) {
         return markComponentUpdate(es as EntitySet, cid) as EntitySetMem;
     }
 
-    const components = new Map<ComponentId, Component>(es.components);
-    components.set(cid, com);
-
-    return { ...es, components, comChanges: addCS(es.comChanges, cid) };
+    
+    return { ...es, comChanges: addCS(es.comChanges, cid) };
 }
 
 export function markComponentUpdate(es: EntitySet, cid: ComponentId): EntitySet {
@@ -522,7 +590,7 @@ export function markComponentUpdate(es: EntitySet, cid: ComponentId): EntitySet 
     return { ...es, comChanges };
 }
 
-export function markComponentRemove(es: EntitySet, cid: ComponentId): EntitySet {
+export function markComponentRemove<ES extends EntitySet>(es: ES, cid: ComponentId): ES {
     // Log.debug('[markComponentRemove]', cid);
     return { ...es, comChanges: removeCS(es.comChanges, cid) };
 }
@@ -546,8 +614,13 @@ export function markEntityComponentsRemove(es: EntitySetMem, eid: number): Entit
         return es;
     }
 
-    return e.bitField.toValues().reduce((es, did) =>
-        markComponentRemove(es, toComponentId(eid, did)), es as EntitySet) as EntitySetMem;
+    // Log.debug('[markEntityComponentsRemove]', eid, e.bitField.toValues() );
+    for( const did of e.bitField.toValues() ){
+        es = markComponentRemove(es, toComponentId(eid,did));
+    }
+    return es;
+    // return e.bitField.toValues().reduce((es, did) =>
+    //     markComponentRemove(es, toComponentId(eid, did)), es as EntitySet) as EntitySetMem;
 }
 
 
@@ -558,11 +631,22 @@ export function markEntityComponentsRemove(es: EntitySetMem, eid: number): Entit
  * @param eid 
  */
 function getOrAddEntityBitfield(es: EntitySetMem, eid: number): [EntitySetMem, BitField] {
-    let ebf = es.entities.get(eid);
-    if (ebf === undefined) {
-        // {mark_entity(es, :add, eid), Entity.ebf()}
-        return [markEntityAdd(es, eid) as EntitySetMem, createBitfield()];
+    let record;
+
+    record = es.entUpdates.get(eid);
+
+    if( record === undefined ){
+        record = es.entities.get(eid);
+
+        if (record === undefined) {
+            // {mark_entity(es, :add, eid), Entity.ebf()}
+            return [markEntityAdd(es, eid) as EntitySetMem, createBitfield()];
+        }
     }
+
+    // Log.debug('[getOrAddEntityBitfield]', record.toValues() );
+
+    let ebf = createBitfield(record);
 
     return [es, ebf];
 }
@@ -573,60 +657,106 @@ function getOrAddEntityBitfield(es: EntitySetMem, eid: number): [EntitySetMem, B
  * @param es 
  * @param components 
  */
-function assignEntityIds(es: EntitySetMem, coms: Component[]): [EntitySetMem, Component[]] {
-    let set;
-    let eid;
-
-    [es, set, eid, coms] = coms.reduce(([es, set, eid, coms], com) => {
+export function assignEntityIds<ES extends EntitySet>(es: ES, components: Component[]): [ES, Component[]] {
+    let coms = [];
+    let eids = new Set();
+    let eid = 0;
+    let comEid = 0;
+    for( let com of components ){
+        // ensure the component did is resolved
+        com = resolveComponent(es, com);
 
         let did = getComponentDefId(com);
-        // Log.debug('[assignEntityIds]', 'com', did );
 
+        comEid = getComponentEntityId(com);
+        
         // component already has an id - add it to the list of components
-        if (getComponentEntityId(com) !== 0) {
-            return [es, set, eid, [...coms, com]];
+        if ( comEid !== 0 ) {
+            coms.push(com);
+            continue;
         }
 
+        
         // not yet assigned an entity, or we have already seen this com type
-        if (eid === 0 || set.has(did)) {
+        if ( eid === 0 || eids.has(did) ) {
             // create a new entity - this also applies if we encounter a component
             // of a type we have seen before
-            [es, eid] = createEntity(es);
+            [es,eid] = createEntityAlt(es);// await createEntity(es);
+            comEid = eid;
+            
+            // Log.debug('[assignEntityIds]', 'new e', eid);
 
-            // Log.debug('[assignEntityIds]', 'new entity', did, set.has(did), eid );
-
-            com = setComponentEntityId(com, eid);
-
-            // # mark the def as having been seen, store the new entity, add the component
-            // {es, MapSet.put(set, def_id), entity_id, [com | coms]}
-            return [es, set.add(did), eid, [...coms, com]];
+            eids = new Set();
+            // mark the def as having been seen, store the new entity, add the component
+            eids.add(did);
         } else {
-            // Log.debug('[assignEntityIds]', 'already have', did, eid);
-            // we have a new entity_id already
-            com = setComponentEntityId(com, eid);
-            return [es, set, eid, [...coms, com]];
+            comEid = eid;
         }
 
-        // return [es, set, eid, coms];
-    }, [es, new Set(), 0, []]);
+        // Log.debug('[assignEntityIds]', 'com eid', {comEid, eid}, eids);
 
-    // Log.debug('[assignEntityIds]', 'coms', coms );
+        com = setComponentEntityId(com, comEid);
+        // Log.debug('[aei]', 'eid was', eid, com);
+        coms.push(com);
+    }
 
     return [es, coms];
 }
 
-export function createEntity(es: EntitySetMem): [EntitySetMem, number] {
-    const eid = generateId();
+export function createEntity<ES extends EntitySet>(es: ES): [ES, number] {
+    
+    let e = createEntityInstance();
 
-    const entities = new Map<number, BitField>(es.entities);
-    entities.set(eid, createBitfield());
+    e = setEntity( es, e );
 
-    es = { ...es, entities };
+    const eid = getEntityId(e);
 
-    es = markEntityAdd(es, eid) as EntitySetMem;
+    es = markEntityAdd(es, eid ) as ES;
 
     return [es, eid];
 }
+
+// export function createEntity(es: EntitySetMem): [EntitySetMem, number] {
+//     const eid = generateId();
+
+//     const entities = new Map<number, BitField>(es.entities);
+//     entities.set(eid, createBitfield());
+
+//     es = { ...es, entities };
+
+//     es = markEntityAdd(es, eid) as EntitySetMem;
+
+//     return [es, eid];
+// }
+
+export function setEntity<ES extends EntitySet>(es:ES, e:Entity): Entity {
+    let eid = getEntityId(e);
+    let bf = e.bitField || createBitfield();
+
+    if( eid === 0 ){
+        eid = createEntityId();
+    }
+    // let bf = e.bitField !== undefined ? e.bitField.toValues() : [];
+
+    // Log.debug('[setEntity]', eid, bf.toValues() );
+    es.entUpdates.set(eid, bf);
+    
+    return setEntityId(e,eid);
+}
+
+const ESEpoch = 1577836800000; // 2020-01-01T00:00:00.000Z
+let idSequence = 0;
+
+function createEntityId(){
+    return buildFlake53({timestamp:Date.now(), workerId:0, epoch:ESEpoch, sequence:idSequence++} );
+}
+
+export function createEntityAlt<ES extends EntitySet>(es: ES): [ES, EntityId] {
+    let eid = createEntityId();
+    es = markEntityAdd(es, eid) as ES;
+    return [es,eid];
+}
+
 
 
 /**
