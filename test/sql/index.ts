@@ -14,30 +14,22 @@ import {
     removeEntity,
     getEntity,
     getComponent,
-    // getComponents as esGetComponents,
-    // getEntities as esGetEntities,
     getComponentDefs,
     createEntity,
-    // clearIDB,
-    markComponentAdd,
-    // getComponent,
-    addComponents,
-    // EntitySetMem,
-    // ESQuery,
-    // compileQueryPart
 } from '../../src/entity_set_sql';
 import {
     getComponent as getEntityComponent,
     create as createEntityInstance, Entity,
-    addComponent as addComponentToEntity,
     size as entitySize,
     isEntity,
+    addComponentUnsafe,
 } from '../../src/entity';
 import {
     toObject as defToObject,
     hash as hashDef,
     isComponentDef,
     ComponentDef,
+    getDefId,
 } from '../../src/component_def';
 import { getComponentDefId, Component, OrphanComponent } from '../../src/component';
 import {
@@ -406,7 +398,7 @@ function buildEntitySet(options): [EntitySetSQL, Function] {
         const component = (uri: string, props: object) => {
             let def = getByUri(es, uri);
             let com = createComponent(es as any, def, props);
-            e = addComponentToEntity(e, com);
+            e = addComponentUnsafe(e, getDefId(def), com, def.name );
         };
 
         buildFn({ component });

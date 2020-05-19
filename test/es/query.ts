@@ -51,8 +51,6 @@ import {
 import {
     stackToString,
 } from '../../src/query/util';
-// import { VL, valueOf } from '../../src/query/insts/value';
-import { stringify } from '../../src/util/json';
 import { create as createComponentDef, isComponentDef } from '../../src/component_def';
 import {
     create as createEntitySet,
@@ -66,8 +64,7 @@ import {
 import { isString } from '../../src/util/is';
 import { register, createComponent } from '../../src/entity_set/registry';
 import {
-    Entity, create as createEntityInstance, isEntity,
-    addComponent as addComponentToEntity,
+    isEntity,
     getEntityId
 } from '../../src/entity';
 import { isComponent, Component, isComponentList } from '../../src/component';

@@ -61,8 +61,7 @@ import {
     toValues as bfToValues,
 } from '../../src/util/bitfield';
 import {
-    Entity, create as createEntityInstance, isEntity,
-    addComponent as addComponentToEntity,
+    Entity,
     getEntityId,
     size as entitySize,
     getComponent as getEntityComponent,

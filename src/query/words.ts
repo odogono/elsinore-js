@@ -18,19 +18,20 @@ import {
 } from './stack';
 import { create as createComponentDef, isComponentDef, toShortObject as defToObject } from '../../src/component_def';
 import { isString, isBoolean, isObject, isInteger } from '../../src/util/is';
-import { register, createComponent } from '../../src/entity_set/registry';
+import { register, createComponent, getByDefId } from '../../src/entity_set/registry';
 import {
     Entity, create as createEntityInstance, isEntity,
-    addComponent as addComponentToEntity
+    addComponentUnsafe
 } from '../../src/entity';
-import { isComponent, Component, isComponentList } from '../../src/component';
+import { isComponent, Component, isComponentList, getComponentDefId } from '../../src/component';
 import {
     create as createEntitySet,
     add as addToES,
     isEntitySet,
     createEntity,
     EntitySet,
-    size as entitySetSize
+    size as entitySetSize,
+    addComponentToEntity
 } from '../../src/entity_set';
 
 import { createLog } from "../util/log";
@@ -119,7 +120,9 @@ export function onEntity<QS extends QueryStack>(stack: QS): Result<QS> {
                 if( !acc ){
                     acc = createEntityInstance();
                 }
-                return addComponentToEntity( acc, val[1] );
+                const did = getComponentDefId(val[1]);
+                const def = getByDefId(stack.es, did);
+                return addComponentUnsafe( acc, did, val[1], def.name );
             } else if( isInteger(val[1]) ){
                 return createEntityInstance(val[1]);
             }
@@ -147,6 +150,8 @@ export function onComponent<QS extends QueryStack>(stack: QS, val: StackValue): 
     if (es === undefined) {
         throw new Error('EntitySet not found on stack');
     }
+    // cache a reference to the last entityset
+    stack.es = es;
 
     let raw = unpackStackValue(data, SType.Array, true);
     let [uri, attrs] = raw;
@@ -191,11 +196,18 @@ export function onAddComponentToEntity<QS extends QueryStack>(stack: QS, val: St
 
     let e: Entity = unpackStackValue(ev, SType.Entity);
     let c: Component = unpackStackValueR(cv, SType.Any);
+    const es = stack.es;
 
     if (Array.isArray(c)) {
-        e = c.reduce((e, c) => addComponentToEntity(e, c), e);
+        for( const com of c ){
+            // const did = getComponentDefId(com);
+            // const def = getByDefId(es,did);
+            // e = addComponentUnsafe(e, did, com, def.name );
+            e = addComponentToEntity(es, e, com);
+        }
+        // e = c.reduce((e, c) => addComponentToEntity(e, c), e);
     } else {
-        e = addComponentToEntity(e, c);
+        e = addComponentToEntity(es, e, c);
     }
     // Log.debug('[onAddComponentToEntity]', c );
 

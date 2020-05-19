@@ -5,30 +5,8 @@ import { createLog } from '../../src/util/log';
 import { tokenize, tokenizeString } from '../../src/query/tokenizer';
 
 import {
-    // EntitySet, 
     EntitySetSQL,
     create as createEntitySet,
-    register,
-    getByUri,
-    getByHash,
-    size as entitySetSize,
-    add as esAdd,
-    createComponent,
-    // removeComponent, 
-    // removeEntity,
-    getEntity,
-    getComponent,
-    // getComponents as esGetComponents,
-    // getEntities as esGetEntities,
-    getComponentDefs,
-    createEntity,
-    // clearIDB,
-    markComponentAdd,
-    // getComponent,
-    addComponents,
-    // EntitySetMem,
-    // ESQuery,
-    // compileQueryPart
 } from '../../src/entity_set_sql';
 
 import {
@@ -80,8 +58,6 @@ import {
     toValues as bfToValues,
 } from '../../src/util/bitfield';
 import {
-    Entity, create as createEntityInstance, isEntity,
-    addComponent as addComponentToEntity,
     getEntityId
 } from '../../src/entity';
 import { sqlClear } from '../../src/entity_set_sql/sqlite';

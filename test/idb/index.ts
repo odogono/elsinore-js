@@ -31,12 +31,11 @@ import {
 import { Entity,
     create as createEntityInstance, 
     getComponent as getEntityComponent,
-    addComponent as addComponentToEntity,
     size as entitySize, 
     isEntity,
-    EntityList} from '../../src/entity';
+    addComponentUnsafe} from '../../src/entity';
 import { BuildQueryFn } from '../../src/query/build';
-import { isComponentDef, hash as hashDef, ComponentDef } from '../../src/component_def';
+import { isComponentDef, hash as hashDef, ComponentDef, getDefId } from '../../src/component_def';
 import { getChanges, ChangeSetOp } from '../../src/entity_set/change_set';
 import { assertHasComponents } from '../util/assert';
 import { getComponentDefId, Component, OrphanComponent } from '../../src/component';
@@ -359,8 +358,8 @@ async function buildEntitySet(): Promise<[EntitySetIDB,Function]> {
         let e = createEntityInstance(eid);
         const component = (uri:string, props:object) => {
             let def = getByUri(es, uri);
-            let com = createComponent( es as any, def, props );
-            e = addComponentToEntity(e, com);
+            let com = createComponent(es as any, def, props);
+            e = addComponentUnsafe(e, getDefId(def), com, def.name );
         };
 
         buildFn( {component} );

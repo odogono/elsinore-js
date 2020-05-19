@@ -302,7 +302,7 @@ export async function getEntity(es:EntitySetFS, eid:EntityId): Promise<Entity> {
         // const cid = toComponentId(eid, did);
         let coms = await readComponents(es, def);
         let com = coms.find( com => com["@d"] === did && com["@e"] === eid );
-        return addComponentUnsafe( await e,did,com);
+        return addComponentUnsafe( await e,did,com,def.name);
     }, Promise.resolve(e) );
     
 }

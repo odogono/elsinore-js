@@ -65,44 +65,67 @@ export function isEntityList(value: any): boolean {
     return isObject(value) && 'entityIds' in value;
 }
 
-/**
- * 
- * @param entity 
- * @param component 
- */
-export function addComponent(entity: Entity, com: Component): Entity {
-    const defId = getComponentDefId(com);
+// /**
+//  * 
+//  * @param entity 
+//  * @param component 
+//  */
+// export function addComponent(e: Entity, com: Component): Entity {
+//     const did = getComponentDefId(com);
 
-    if (defId === 0) {
-        return entity;
-    }
+//     if (did === 0) {
+//         return e;
+//     }
 
-    const entityId = getEntityId(entity);
+//     const entityId = getEntityId(e);
 
-    com = setComponentEntityId(com, entityId);
+//     com = setComponentEntityId(com, entityId);
 
-    let components = new Map<number, Component>(entity.components);
-    components.set(defId, com);
+//     let components = new Map<number, Component>(e.components);
+//     // components.set(did, com);
 
-    let bitField = createBitField(entity.bitField);
-    bitField = bfSet(bitField,defId);
+//     let bitField = createBitField(e.bitField);
+//     // bitField = bfSet(bitField,did);
 
-    return {
-        [Type]: entityId,
-        components,
-        bitField
-    };
-}
+//     e = {
+//         [Type]: entityId,
+//         components,
+//         bitField
+//     };
+
+//     return addComponentUnsafe( e, did, com );
+// }
 
 /**
  * A direct means of adding an already owned component to the entity
  * @param entity 
  * @param component 
  */
-export function addComponentUnsafe(entity: Entity, defId: number, component: Component): Entity {
-    entity.components.set(defId, component);
-    entity.bitField = bfSet(entity.bitField,defId);
-    return entity;
+export function addComponentUnsafe( e: Entity, did: number, com: Component, name?:string): Entity {
+    const eid = getEntityId(e);
+
+    if( com === undefined ){
+        e.components.delete(did);
+        e.bitField = bfSet(e.bitField,did, false);
+    } else {
+        com = setComponentEntityId(com, eid);
+        e.components.set(did, com);
+        e.bitField = bfSet(e.bitField,did);
+    }
+
+    if( name !== undefined ){
+        Object.defineProperty(e, name, { 
+            get: () => e.components.get(did),
+            set: (com:Component) => {
+                if( getComponentDefId(com) === did ){
+                    e.components.set(did,com);
+                }
+            }
+        });
+        
+        
+    }
+    return e;
 }
 
 /**

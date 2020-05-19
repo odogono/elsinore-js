@@ -7,10 +7,10 @@ import {
 import { Entity,
     create as createEntityInstance, 
     getComponent as getEntityComponent,
-    addComponent as addComponentToEntity,
     size as entitySize, 
     isEntity,
-    EntityList} from '../../src/entity';
+    addComponentUnsafe
+} from '../../src/entity';
 import { EntitySet, 
     create as createEntitySet,
     size as entitySetSize,
@@ -26,7 +26,7 @@ import { EntitySet,
 import { assertHasComponents } from '../util/assert';
 import { getChanges, ChangeSetOp } from '../../src/entity_set/change_set';
 import { fromComponentId, getComponentDefId, Component, OrphanComponent } from '../../src/component';
-import { isComponentDef, hash as hashDef } from '../../src/component_def';
+import { isComponentDef, hash as hashDef, getDefId } from '../../src/component_def';
 import { BuildQueryFn } from '../../src/query/build';
 
 const Log = createLog('TestEntitySet');
@@ -113,7 +113,8 @@ describe('Entity Set (Mem)', () => {
             
             e = getEntity( es, eid, true );
 
-            // Log.debug('result', e);
+            // e.Channel = {...e.Channel, name: 'bbc1' };
+            
 
             assertHasComponents(
                 es,
@@ -196,9 +197,14 @@ describe('Entity Set (Mem)', () => {
                 component('/component/topic', {topic: 'data-structures'});
             }, 15);
 
+            // Log.debug('e', e );
+
             es = esAdd( es, e );
 
-            assert.ok( isEntity( getEntity(es, 15)) );
+            e = getEntity(es,15);
+            // Log.debug('e', es );
+
+            assert.ok( isEntity( e ) );
 
             e = buildEntity( es, ({component}) => {
                 component('/component/username', {username: 'alex'});
@@ -322,7 +328,7 @@ function buildEntitySet(options?): [EntitySetMem, Function] {
         const component = (uri: string, props: object) => {
             let def = getByUri(es, uri);
             let com = createComponent(es as any, def, props);
-            e = addComponentToEntity(e, com);
+            e = addComponentUnsafe(e, getDefId(def), com, def.name );
         };
 
         buildFn({ component });

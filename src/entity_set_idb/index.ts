@@ -81,7 +81,7 @@ import { idbOpen, idbDeleteDB,
     idbRetrieveEntityBitField
 } from "./idb";
 import { isString, isInteger } from "../util/is";
-import { getByUri, getByHash, resolveComponent } from "../entity_set/registry";
+import { getByUri, getByHash, resolveComponent, getByDefId } from "../entity_set/registry";
 import { select } from "./query";
 
 const Log = createLog('EntitySetIDB');
@@ -398,12 +398,21 @@ export async function getEntity(es:EntitySetIDB, eid:EntityId, populate:boolean 
 
     let result = await idbGetRange(store, IDBKeyRange.bound([eid,0], [eid,Number.MAX_SAFE_INTEGER] ) );
 
-    e = result.reduce( (e,{value:cdat}) => {
-        let {'_e':ceid, '_d':cdid, ...rest} = cdat;
+    for( const row of result ){
+        let {'_e':ceid, '_d':cdid, ...rest} = row.value;
         let com = {'@e':ceid, '@d':cdid, ...rest};
+        const def = getByDefId(es,cdid);
 
-        return addComponentUnsafe(e,cdid,com);
-    }, e);
+        e = addComponentUnsafe(e,cdid,com,def.name);
+    }
+
+    // e = result.reduce( (e,{value:cdat}) => {
+    //     let {'_e':ceid, '_d':cdid, ...rest} = cdat;
+    //     let com = {'@e':ceid, '@d':cdid, ...rest};
+    //     const def = getByDefId(es,cdid);
+
+    //     return addComponentUnsafe(e,cdid,com,def.name);
+    // }, e);
 
     return e;
 }

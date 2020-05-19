@@ -1,4 +1,4 @@
-import { Type as DefT } from './component_def';
+import { Type as DefT, ComponentDefId } from './component_def';
 import { isObject, isString, isInteger } from './util/is';
 
 export type ComponentProperties = Map<string, any>;
@@ -83,7 +83,7 @@ export function fromComponentId( id:ComponentId ): [number,number] {
     // return id.split(',');
 }
 
-export function getComponentDefId( component:Component ): number {
+export function getComponentDefId( component:Component ): ComponentDefId {
     return component[DefT];
 }
 

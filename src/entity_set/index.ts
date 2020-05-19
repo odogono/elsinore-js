@@ -28,7 +28,8 @@ import { createUUID } from "../util/uuid";
 import {
     resolveComponentDefIds as registryResolve,
     register,
-    resolveComponent
+    resolveComponent,
+    getByDefId
 } from "./registry";
 import {
     Entity,
@@ -44,7 +45,7 @@ import {
     EntityId,
     setEntityId
 } from "../entity";
-import { Type as ComponentDefT, ComponentDef } from '../component_def';
+import { Type as ComponentDefT, ComponentDef, ComponentDefId } from '../component_def';
 import {
     ChangeSet,
     create as createChangeSet,
@@ -287,22 +288,28 @@ export function size(es: EntitySetMem): number {
 export function getEntity(es: EntitySetMem, eid: number, populate:boolean = true): Entity {
     let ebf = es.entities.get(eid);
     if (ebf === undefined) {
+        Log.debug('[getEntity]', 'nope', eid );
         return undefined;
     }
     let e = createEntityInstance(eid,ebf);
+    
     if( !populate ){
         return e;
     }
 
     for( const did of bfToValues(ebf) ){
         const com = es.components.get(toComponentId(eid, did));
-        // Log.debug('[getEntity]', eid, did, com );
-        e = addComponentUnsafe(e, did, com);
+        e = addComponentToEntity(es, e, com, did );
     }
 
     return e;
 }
 
+export function addComponentToEntity<ES extends EntitySet>(es: ES, e:Entity, com:Component, did?:ComponentDefId ): Entity {
+    did = did === undefined ? getComponentDefId(com) : did;
+    const def = getByDefId(es,did);
+    return addComponentUnsafe(e, did, com, def.name);
+}
 
 /**
  * Returns a Component by its id

@@ -559,10 +559,15 @@ export function getEntity(es:EntitySetSQL, eid:EntityId, populate:boolean = true
     let coms = sqlRetrieveEntityComponents( es.db, eid, defs );
 
     // Log.debug('[getEntity]', coms );
-    e = coms.reduce( (e,com) => {
+    for( const com of coms ){
         const did = getComponentDefId(com);
-        return addComponentUnsafe(e,did,com);
-    }, e);
+        const def = getByDefId(es,did);
+        e = addComponentUnsafe(e,did,com, def.name);
+    }
+
+    // e = coms.reduce( (e,com) => {
+    //     return addComponentUnsafe(e,did,com, def.name);
+    // }, e);
 
     return e;
 }

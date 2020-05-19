@@ -27,17 +27,18 @@ import {
 } from '../../src/query/words';
 import { Entity,
     create as createEntityInstance, 
-    addComponent as addComponentToEntity,
     getComponent as getEntityComponent,
     size as entitySize, 
     isEntity,
-    EntityList} from '../../src/entity';
+    EntityList,
+    addComponentUnsafe} from '../../src/entity';
 import { 
     toObject as defToObject, 
     hash as hashDef, 
     isComponentDef, 
     ComponentDef, 
-    Type
+    Type,
+    getDefId
 } from '../../src/component_def';
 import { ComponentList, getComponentEntityId } from '../../src/component';
 import { 
@@ -373,8 +374,8 @@ async function buildEntitySet(options = esOptions): Promise<[EntitySetFS,Functio
         let e = createEntityInstance(eid);
         const component = (uri:string, props:object) => {
             let def = getByUri(es, uri);
-            let com = createComponent( es as any, def, props );
-            e = addComponentToEntity(e, com);
+            let com = createComponent(es as any, def, props);
+            e = addComponentUnsafe(e, getDefId(def), com, def.name );
         };
 
         buildFn( {component} );
