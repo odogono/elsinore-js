@@ -1,10 +1,18 @@
-import { EntityId, EntityList, createEntityList, createBitfield, isEntityList, Entity, getEntityId, isEntity } from "../entity";
+import { EntityId,  getEntityId, isEntity } from "../entity";
 import { ComponentId, ComponentList, toComponentId, isComponentList, createComponentList, fromComponentId, Component, isComponent, getComponentDefId, getComponentEntityId } from "../component";
-import { BitField } from "odgn-bitfield";
 import { EntitySet, EntitySetMem, getEntity, getComponent, isEntitySet } from ".";
 import { createLog } from "../util/log";
 import { isObject, isInteger, isString, isBoolean } from "../util/is";
-import { MatchOptions } from '../constants';
+import { 
+    BitField,
+    create as createBitField,
+    get as bfGet,
+    set as bfSet,
+    count as bfCount,
+    and as bfAnd,
+    or as bfOr,
+    toValues as bfToValues
+} from "../util/bitfield";
 import {
     resolveComponentDefIds, getByDefId
 } from "./registry";
@@ -141,7 +149,7 @@ function walkFilterQuery( es:EntitySetMem, eids:EntityId[], cmd?, ...args ){
         let {def} = args[0];
         const did = getDefId(def);
         let [key,val] = args[1];
-        eids = matchEntities(es, eids, new BitField([did]));
+        eids = matchEntities(es, eids, createBitField([did]));
         eids = eids.reduce( (out,eid) => {
             const cid = toComponentId(eid,did);
             const com = es.components.get(cid);
@@ -260,7 +268,7 @@ export function onComponentAttr<QS extends QueryStack>(stack: QS): InstResult<QS
 
     let bf = resolveComponentDefIds(es, dids );
 
-    if( bf.size() === 0 ){
+    if( bfCount(bf) === 0 ){
         throw new StackError(`def not found: ${left}`);
     }
 
@@ -333,14 +341,14 @@ export function fetchEntity(stack: ESMemQueryStack): InstResult<ESMemQueryStack>
 
 function matchEntities(es:EntitySetMem, eids: EntityId[], mbf: BitField|'all'): EntityId[] {
     let matches: number[] = [];
-    const isAll = mbf === 'all' || BitField.isAllSet(mbf);// bf.toString() === 'all';
+    const isAll = mbf === 'all' || mbf.isAllSet;// bf.toString() === 'all';
     if( isAll ){
         return eids !== undefined ? eids : Array.from(es.entities.keys());
     }
     if( eids === undefined ){
         // let es = from as EntitySetMem;
         for (let [eid, ebf] of es.entities) {
-            if (BitField.and(mbf as BitField, ebf)) {
+            if (bfAnd(mbf as BitField, ebf)) {
                 matches.push(eid);
             }
         }
@@ -348,7 +356,7 @@ function matchEntities(es:EntitySetMem, eids: EntityId[], mbf: BitField|'all'): 
         for( let ii=0;ii<eids.length;ii++ ){
             let eid = eids[ii];
             let ebf = es.entities.get(eid);
-            if( BitField.and( mbf as BitField, ebf) ){
+            if( bfAnd( mbf as BitField, ebf) ){
                 matches.push(eid);
             }
         }

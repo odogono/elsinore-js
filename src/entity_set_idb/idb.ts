@@ -1,8 +1,13 @@
 import { createLog } from "../util/log";
-import { Entity, create as createEntityInstance, EntityId, createBitfield } from "../entity";
+import { Entity, create as createEntityInstance, EntityId } from "../entity";
 import { ComponentId, Component, fromComponentId, toComponentId } from "../component";
 import { ComponentDef, ComponentDefId, getDefId } from "../component_def";
-import { BitField } from "odgn-bitfield";
+import { 
+    BitField,
+    create as createBitField,
+    toValues as bfToValues,
+    set as bfSet,
+} from "../util/bitfield";
 
 
 const Log = createLog('IDB', { time: false });
@@ -89,7 +94,7 @@ export async function idbRetrieveEntityBitField(db: IDBDatabase, eid:EntityId): 
     if( dids === undefined ){
         return undefined;
     }
-    return createBitfield( dids );
+    return createBitField( dids );
 }
 
 /**
@@ -122,7 +127,7 @@ export async function idbRetrieveEntityByDefId(db: IDBDatabase, dids: number[]):
         if (e === undefined) {
             e = createEntityInstance(eid);
         }
-        e.bitField.set(did);
+        e.bitField = bfSet(e.bitField,did);
         return { ...result, [eid]: e };
     }, {});
 
@@ -164,7 +169,7 @@ export async function idbRetrieveEntities(db: IDBDatabase, eids: number[]): Prom
         if (e === undefined) {
             e = createEntityInstance(eid);
         }
-        e.bitField.set(did);
+        e.bitField = bfSet(e.bitField,did);
         return { ...result, [eid]: e };
     }, {});
 
@@ -406,7 +411,7 @@ export async function idbPutEntities(db: IDBDatabase, entUpdates: Map<EntityId, 
     // convert bitfields to maps
     let updates = new Map<EntityId,any>();
     for( const [eid,bf] of entUpdates ){
-        updates.set(eid, bf.toValues());
+        updates.set(eid, bfToValues(bf));
     }
 
     // Log.debug('[idbPutEntities]', updates );

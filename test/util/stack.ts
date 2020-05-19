@@ -33,7 +33,7 @@ import {
     // buildAndExecute as buildQuery,
     BuildQueryFn,
 } from '../../src/query/build';
-import { Entity, getComponent, getComponents, createBitfield, getEntityId, EntityList } from '../../src/entity';
+import { Entity } from '../../src/entity';
 import { EntitySet, Type as EntitySetT, 
     
     create as createEntitySet,

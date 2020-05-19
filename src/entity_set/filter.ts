@@ -1,8 +1,12 @@
 import { QueryStack, InstResult, pop, SType, StackValue, pushRaw } from "../query/stack";
-import { BitField } from "odgn-bitfield";
+
 import { EntitySet } from ".";
 import { getByDefId } from "./registry";
 import { unpackStackValue, unpackStackValueR } from "../query/words";
+import { 
+    BitField,
+    toValues as bfToValues
+} from "../util/bitfield";
 
 
 
@@ -13,7 +17,7 @@ export function parseFilterQuery( es:EntitySet, cmd?, left?, right? ){
         case 'or':
             return prAnd( es, cmd, left, right );
         case SType.Bitfield:
-            return [ 'dids', (left as BitField).toValues() ];
+            return [ 'dids', bfToValues(left as BitField) ];
         case '==':
             return prEquals( es, cmd, left, right );
         case SType.ComponentAttr:
@@ -25,7 +29,7 @@ export function parseFilterQuery( es:EntitySet, cmd?, left?, right? ){
 }
 
 function prCA( es:EntitySet,dids, attr ){
-    const did = dids.toValues()[0];
+    const did = bfToValues(dids)[0];
     const def = getByDefId(es, did );
     // Log.debug('[prCA]', did, def)
     return { def:def, key:attr };

@@ -15,7 +15,15 @@ import {
     isComponentList,
     OrphanComponent
 } from "../component";
-import { BitField } from "odgn-bitfield";
+import { 
+    BitField,
+    create as createBitField,
+    get as bfGet,
+    set as bfSet,
+    count as bfCount,
+    or as bfOr,
+    toValues as bfToValues
+} from "../util/bitfield";
 import { createUUID } from "../util/uuid";
 import {
     resolveComponentDefIds as registryResolve,
@@ -28,7 +36,6 @@ import {
     getComponents as getEntityComponents,
     Type as EntityT,
     create as createEntityInstance,
-    createBitfield,
     addComponentUnsafe,
     getEntityId,
     EntityList,
@@ -287,19 +294,13 @@ export function getEntity(es: EntitySetMem, eid: number, populate:boolean = true
         return e;
     }
 
-    // Log.debug('[getEntity]', eid, ebf.toValues() );
-
-    for( const did of ebf.toValues() ){
+    for( const did of bfToValues(ebf) ){
         const com = es.components.get(toComponentId(eid, did));
         // Log.debug('[getEntity]', eid, did, com );
         e = addComponentUnsafe(e, did, com);
     }
 
     return e;
-    // return ebf.toValues().reduce((e, did) => {
-    //     const com = es.components.get(toComponentId(eid, did));
-    //     return addComponentUnsafe(e, did, com);
-    // }, e);
 }
 
 
@@ -331,7 +332,7 @@ export function getComponent(es: EntitySetMem, id: ComponentId | Component): Com
 
 export function getComponentsByDefId(es: EntitySetMem, bf: BitField, options: MatchOptions = {}): Component[] {
     let el = matchEntities(es, bf, { ...options, returnEntities: false }) as EntityList;
-    const dids = bf.toValues();
+    const dids = bfToValues(bf);
 
     return el.entityIds.reduce((memo, eid) =>
         memo.concat(
@@ -348,7 +349,7 @@ export function getComponents(es: EntitySet, list: EntityList | ComponentList): 
 
     if (isEntityList(list)) {
         const el = list as EntityList;
-        const dids = el.bf ? el.bf.toValues() : [];
+        const dids = el.bf ? bfToValues(el.bf) : [];
 
         return el.entityIds.reduce((list, eid) => {
             return dids.reduce((list, did) => {
@@ -403,9 +404,7 @@ function markRemoveComponents(es: EntitySetMem, eid: number): EntitySetMem {
         return es;
     }
 
-    // Log.debug('[markRemoveComponents]', eid, ebf.toValues() );
-
-    for( const did of ebf.toValues() ){
+    for( const did of bfToValues(ebf) ){
         es = markComponentRemove(es, toComponentId(eid, did) );
     }
 
@@ -446,7 +445,9 @@ function addComponents(es: EntitySetMem, components: Component[]): EntitySetMem 
 
     // return changedCids.reduce((es, cid) => applyUpdatedComponents(es, cid), es);
     for( const cid of changedCids ){
+        // Log.debug('[applyUpdatedComponents]', 'pre', es.entUpdates);
         es = applyUpdatedComponents(es,cid);
+        // Log.debug('[applyUpdatedComponents]', 'fin', es.entUpdates);
     }
     return es;
 }
@@ -460,19 +461,19 @@ function applyUpdatedComponents(es: EntitySetMem, cid: ComponentId): EntitySetMe
 
     const isNew = findCS( es.entChanges, eid ) === ChangeSetOp.Add;
 
-    // Log.debug('[applyUpdatedComponents]', eid, did, isNew, ebf.get(did) === false );
+    // Log.debug('[applyUpdatedComponents]', eid, did, isNew, bfGet(ebf,did) === false );
 
     // does the component already belong to this entity?
-    if (ebf.get(did) === false) {
+    if (bfGet(ebf,did) === false) {
         let e = createEntityInstance(eid);
-        e.bitField = ebf;
-        e.bitField.set(did);
-        // Log.debug('[applyUpdatedComponents]', eid, cid, did, ebf.toValues() );
+        // Log.debug('[applyUpdatedComponents]', eid, did, bfToValues(e.bitField) );
+        e.bitField = bfSet(ebf,did);
 
-        // ebf = createBitfield(ebf);
-        // ebf.set(did);
+        // Log.debug('[applyUpdatedComponents]', eid, did, bfToValues(e.bitField) );
 
         e = setEntity(es, e);
+
+        
 
         // const entities = new Map<number, BitField>(es.entities);
         // entities.set(eid, ebf);
@@ -511,13 +512,12 @@ function applyRemoveComponent(es: EntitySetMem, cid: ComponentId): EntitySetMem 
 
     // remove the component id from the entity
     let ebf = es.entUpdates.get(eid);
-    // Log.debug('[applyRemoveComponent]', eid, did, ebf !== undefined ? ebf.toValues() : [] );
 
     if( ebf === undefined ){
-        ebf = createBitfield( es.entities.get(eid) );
+        ebf = createBitField( es.entities.get(eid) );
     }
     // if( ebf !== undefined ){
-        ebf.set(did, false);
+        ebf = bfSet(ebf, did, false);
     // }
 
     // let entities = new Map<number, BitField>(es.entities);
@@ -537,7 +537,7 @@ function applyRemoveComponent(es: EntitySetMem, cid: ComponentId): EntitySetMem 
 
     // Log.debug('[applyRemoveComponent]', cid, ebf.count() );
 
-    if (ebf.count() === 0) {
+    if (bfCount(ebf) === 0) {
         return markEntityRemove(es, eid) as EntitySetMem;
     } else {
         es.entUpdates.set(eid, ebf);
@@ -614,13 +614,10 @@ export function markEntityComponentsRemove(es: EntitySetMem, eid: number): Entit
         return es;
     }
 
-    // Log.debug('[markEntityComponentsRemove]', eid, e.bitField.toValues() );
-    for( const did of e.bitField.toValues() ){
+    for( const did of bfToValues(e.bitField) ){
         es = markComponentRemove(es, toComponentId(eid,did));
     }
     return es;
-    // return e.bitField.toValues().reduce((es, did) =>
-    //     markComponentRemove(es, toComponentId(eid, did)), es as EntitySet) as EntitySetMem;
 }
 
 
@@ -633,22 +630,24 @@ export function markEntityComponentsRemove(es: EntitySetMem, eid: number): Entit
 function getOrAddEntityBitfield(es: EntitySetMem, eid: number): [EntitySetMem, BitField] {
     let record;
 
+    
     record = es.entUpdates.get(eid);
+    
+    // Log.debug('[getOrAddEntityBitfield]', bfToValues(record), bfToValues(es.entities.get(eid)) );
 
     if( record === undefined ){
         record = es.entities.get(eid);
 
         if (record === undefined) {
             // {mark_entity(es, :add, eid), Entity.ebf()}
-            return [markEntityAdd(es, eid) as EntitySetMem, createBitfield()];
+            return [markEntityAdd(es, eid) as EntitySetMem, createBitField()];
         }
     }
 
-    // Log.debug('[getOrAddEntityBitfield]', record.toValues() );
-
-    let ebf = createBitfield(record);
-
-    return [es, ebf];
+    // let ebf = createBitField(record);
+    // Log.debug('[getOrAddEntityBitfield]!', bfToValues(record), bfToValues(ebf) );
+    
+    return [es, record];
 }
 
 /**
@@ -716,29 +715,14 @@ export function createEntity<ES extends EntitySet>(es: ES): [ES, number] {
     return [es, eid];
 }
 
-// export function createEntity(es: EntitySetMem): [EntitySetMem, number] {
-//     const eid = generateId();
-
-//     const entities = new Map<number, BitField>(es.entities);
-//     entities.set(eid, createBitfield());
-
-//     es = { ...es, entities };
-
-//     es = markEntityAdd(es, eid) as EntitySetMem;
-
-//     return [es, eid];
-// }
 
 export function setEntity<ES extends EntitySet>(es:ES, e:Entity): Entity {
     let eid = getEntityId(e);
-    let bf = e.bitField || createBitfield();
+    let bf = e.bitField || createBitField();
 
     if( eid === 0 ){
         eid = createEntityId();
     }
-    // let bf = e.bitField !== undefined ? e.bitField.toValues() : [];
-
-    // Log.debug('[setEntity]', eid, bf.toValues() );
     es.entUpdates.set(eid, bf);
     
     return setEntityId(e,eid);
@@ -773,10 +757,9 @@ export function matchEntities(es: EntitySetMem, mbf: BitField, options: MatchOpt
     let { returnEntities, limit } = options;
     limit = limit !== undefined ? limit : Number.MAX_SAFE_INTEGER;
 
-    const isAll = BitField.isAllSet(mbf);// mbf.toString() === 'all';
     for (let [eid, ebf] of es.entities) {
         // console.log('[matchEntities]', 'limit', eid, mbf.toString(), ebf.toString(), BitField.or( mbf, ebf ));
-        if (isAll || BitField.or(mbf, ebf)) {
+        if (mbf.isAllSet || bfOr(mbf, ebf)) {
             if (returnEntities) {
                 matches.push(getEntity(es, eid));
             } else {

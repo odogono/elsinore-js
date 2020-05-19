@@ -58,6 +58,9 @@ import {
     stackToString,
 } from '../../src/query/util';
 import {
+    toValues as bfToValues,
+} from '../../src/util/bitfield';
+import {
     Entity, create as createEntityInstance, isEntity,
     addComponent as addComponentToEntity,
     getEntityId,
@@ -74,7 +77,7 @@ const Log = createLog('TestIDBQuery');
 
 
 
-describe('Query IDB', () => {
+describe('Query (IDB)', () => {
 
     beforeEach( async () => {
         await clearIDB();
@@ -90,16 +93,12 @@ describe('Query IDB', () => {
 
         // the return value is an entity
         assert.equal( unpackStackValue(result), 102 );
-        // Log.debug('stack:', unpackStackValue(stack.items[0]).map(e => e.bitField.toValues()) );
     });
 
 
     it('fetches entities by did', async () => {
         let query = `[ "/component/completed" !bf @e] select`;
         let [stack] = await prep(query, 'todo');
-
-        // Log.debug('stack:', stackToString(stack) );
-        // Log.debug('stack:', unpackStackValue(stack.items[0]).map(e => e.bitField.toValues()) );
         let [,result] = pop(stack);
 
 
@@ -108,7 +107,7 @@ describe('Query IDB', () => {
             [ 100, 101, 102 ] );
 
         assert.deepEqual( 
-            unpackStackValue(result).map(e => e.bitField.toValues()), 
+            unpackStackValue(result).map(e => bfToValues(e.bitField) ), 
             [ [ 1, 2, 3 ], [ 1, 2 ], [ 1, 2 ] ] );
     });
 

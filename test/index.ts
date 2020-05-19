@@ -1,4 +1,13 @@
-// import './component_def';
+import './bitfield';
+import './change_set';
+import './component_def';
+import './entity';
 
-// import './idb/index';
+import './es/index';
+import './es/query';
+
+import './idb/index';
 import './idb/query';
+
+import './sql/index';
+import './sql/query';

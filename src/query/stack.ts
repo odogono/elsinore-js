@@ -10,6 +10,7 @@ import { toInteger } from "../util/to";
 import { EntityId, getEntityId } from "../entity";
 import { ComponentDefId, ComponentDef, getDefId } from "../component_def";
 import { getByDefId } from "../entity_set/registry";
+import { toValues as bfToValues } from '../util/bitfield';
 
 export enum SType {
     Value = '%v',
@@ -481,24 +482,6 @@ export function find<QS extends QueryStack>(stack: QS, type: StackOp): StackValu
 }
 
 
-// export function popBitField<ST extends QueryStack>(stack:ST): [ST,ComponentDefId[]]{
-//     const {es} = stack;
-//     let val;
-//     let dids:ComponentDefId[];
-//     val = peek(stack);
-
-//     let [type, bf] = val;
-//     if( type === SType.Bitfield ){
-//         dids = bf.toValues();
-//     } else if( type === SType.Value && bf === 'all' ){
-//         dids = [];
-//     }
-//     if( dids !== undefined ){
-//         [stack] = pop(stack);
-//     }
-//     return [stack,dids];
-// }
-
 export function popBitField<ST extends QueryStack, CD extends ComponentDef>(stack:ST, asObj:boolean = true): [ST,CD[] | ComponentDefId[]] {
     const {es} = stack;
     let val;
@@ -509,7 +492,7 @@ export function popBitField<ST extends QueryStack, CD extends ComponentDef>(stac
     let [type, bf] = val;
     // Log.debug('[popBitField]', 'yes', stack.items);
     if( type === SType.Bitfield ){
-        dids = bf.toValues();
+        dids = bfToValues(bf);
         defs = asObj ? dids.map( d => getByDefId(es, d) as CD ) : [];
     } else if( type === SType.Value && bf === 'all' ){
         // get all def ids

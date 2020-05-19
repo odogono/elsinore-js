@@ -21,7 +21,16 @@ import {
 import { onComponentAttr, buildBitfield } from "../entity_set/query";
 import { onDefine, onPluck, unpackStackValueR, unpackStackValue } from "../query/words";
 import { onLogicalFilter, parseFilterQuery } from "../entity_set/filter";
-import { BitField } from "odgn-bitfield";
+import { 
+    BitField,
+    create as createBitField,
+    get as bfGet,
+    set as bfSet,
+    count as bfCount,
+    and as bfAnd,
+    or as bfOr,
+    toValues as bfToValues
+} from "../util/bitfield";
 import { isInteger } from "../util/is";
 import { Entity, EntityId, getEntityId, isEntity } from "../entity";
 import { idbRetrieveEntityByDefId, idbRetrieveComponent, idbRetrieveComponents, idbRetrieveByQuery, idbRetrieveEntities } from "./idb";
@@ -239,9 +248,9 @@ function matchEntities(es: EntitySetIDB, mbf?: BitField): Promise<Entity[]> {
         return Promise.resolve([]);
         // return sqlRetrieveEntities(es.db);
     }
-    // Log.debug('[matchEntities]', mbf.toValues());
+    // Log.debug('[matchEntities]', bfToValues(mbf));
     // return [];
-    return idbRetrieveEntityByDefId(es.db, mbf.toValues());
+    return idbRetrieveEntityByDefId(es.db, bfToValues(mbf));
 }
 
 function ilog(...args){

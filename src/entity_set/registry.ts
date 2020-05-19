@@ -10,7 +10,16 @@ import { createUUID } from "../util/uuid";
 import { createLog } from "../util/log";
 import { isString, isInteger } from "../util/is";
 import { create as createComponentInstance, Component, OrphanComponent, isExternalComponent, getComponentDefId } from '../component';
-import { BitField } from "odgn-bitfield";
+import { 
+    BitField,
+    create as createBitField,
+    get as bfGet,
+    set as bfSet,
+    count as bfCount,
+    and as bfAnd,
+    or as bfOr,
+    toValues as bfToValues
+} from "../util/bitfield";
 import { EntitySet } from "./index";
 
 export type ComponentDefs = Array<ComponentDef>;
@@ -49,7 +58,7 @@ type ResolveDefIds = string | string[] | number | number[];
  * @param dids array of def ids as strings or numbers 
  */
 export function resolveComponentDefIds<ES extends EntitySet>( registry:ES, dids:ResolveDefIds ): BitField {
-    const bf = new BitField();
+    const bf = createBitField();
     
     if( !Array.isArray(dids) || dids.length === 0 ){
         return bf;
@@ -66,7 +75,7 @@ export function resolveComponentDefIds<ES extends EntitySet>( registry:ES, dids:
         return undefined;
     });
 
-    return defs.reduce( (bf,def) => def === undefined ? bf : bf.set( getDefId(def) ), bf );
+    return defs.reduce( (bf,def) => def === undefined ? bf : bfSet( bf, getDefId(def) ), bf );
 }
 
 export function resolveComponent<ES extends EntitySet>( registry:ES, com:(OrphanComponent|Component) ): Component {
@@ -101,14 +110,14 @@ export function resolveComponentDefAttribute<ES extends EntitySet>( registry:ES,
 
     if( !def ){
         Log.debug('[resolveComponentDefAttribute]', 'def not found', did);
-        return [new BitField(), undefined];
+        return [createBitField(), undefined];
     }
 
     // Log.debug('[resolveComponentDefAttribute]', 'getting prop', def, attrName );
 
     const prop = getProperty( def, attrName );
 
-    const bf = BitField.create([getDefId(def)])
+    const bf = createBitField([getDefId(def)])
 
     // console.log('[resolveComponentDefAttribute]', did, isAttr, attrName, def.properties );
 

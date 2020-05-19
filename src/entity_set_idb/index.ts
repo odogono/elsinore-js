@@ -44,17 +44,23 @@ import {
     isEntity,
     create as createEntityInstance,
     getComponents as getEntityComponents,
-    createBitfield,
     Entity,
     getEntityId,
-    setEntityId,
     EntityId,
     addComponentUnsafe,
     EntityList,
     createEntityList,
 } from "../entity";
-import { BitField } from "odgn-bitfield";
-import { buildFlake53 } from '../util/id';
+import { 
+    BitField,
+    create as createBitField,
+    get as bfGet,
+    set as bfSet,
+    count as bfCount,
+    and as bfAnd,
+    or as bfOr,
+    toValues as bfToValues
+} from "../util/bitfield";
 import { idbOpen, idbDeleteDB, 
     idbDelete, idbGet, 
     idbPut, idbLastKey, 
@@ -297,7 +303,7 @@ export async function add(es: EntitySetIDB, item: AddType, options: AddOptions =
 
     // console.time('[ESIDB][add][bulk]');
     if( es.entUpdates.size > 0 ){
-        // Log.debug('[add][entUpdates]', Array.from( es.entUpdates.values() ).map( bf => bf.toValues() ) );
+        // Log.debug('[add][entUpdates]', Array.from( es.entUpdates.values() ).map( bf => bfToValues(bf) ) );
         await idbPutEntities( es.db, es.entUpdates );
         // console.timeEnd('[ESIDB][add][bulkEnt]');
         // Log.debug('[add]', 'bulk result', result );
@@ -467,11 +473,10 @@ async function applyUpdatedComponents(es: EntitySetIDB, cid: ComponentId, option
 
     // if(options.debug) console.time(`[applyUpdatedComponents] ${cid}`);
     // does the component already belong to this entity?
-    if (ebf.get(did) === false) {
+    if (bfGet(ebf,did) === false) {
         let e = createEntityInstance(eid);
-        e.bitField = ebf;
-        e.bitField.set(did);
-        // Log.debug('[applyUpdatedComponents]', eid, cid, did, ebf.toValues() );
+        e.bitField = bfSet(ebf,did);
+        // Log.debug('[applyUpdatedComponents]', eid, cid, did, bfToValues(ebf) );
         
         e = setEntity(es, e);
         
@@ -516,7 +521,7 @@ async function applyRemoveComponent(es: EntitySetIDB, cid: ComponentId): Promise
     }
 
     // remove the component id from the entity
-    e.bitField.set(did, false);
+    e.bitField = bfSet(e.bitField,did, false);
 
     // remove component
 
@@ -525,7 +530,7 @@ async function applyRemoveComponent(es: EntitySetIDB, cid: ComponentId): Promise
 
     // Log.debug('[applyRemoveComponent]', cid, ebf.count() );
 
-    if (e.bitField.count() === 0) {
+    if (bfCount(e.bitField) === 0) {
         return markEntityRemove(es, eid) as EntitySetIDB;
     } else {
         e = setEntity(es, e);
@@ -585,13 +590,13 @@ async function markRemoveComponents(es: EntitySetIDB, eid: number): Promise<Enti
     }
     const {bitField} = e;
 
-    if (bitField.count() === 0) {
+    if (bfCount(bitField) === 0) {
         return es;
     }
 
     // Log.debug('[markRemoveComponents]', eid, bitField.toValues() );
 
-    for( const did of bitField.toValues() ){
+    for( const did of bfToValues(bitField) ){
         es = markComponentRemove(es, toComponentId(eid, did ));
     }
 
@@ -624,11 +629,11 @@ async function getOrAddEntityBitfield(es: EntitySetIDB, eid: number): Promise<[E
     if( record === undefined ){
         record = await idbRetrieveEntityBitField( es.db, eid );
         if( record === undefined ){
-            return [markEntityAdd(es,eid) as EntitySetIDB, createBitfield()];
+            return [markEntityAdd(es,eid) as EntitySetIDB, createBitField()];
         }
     }
 
-    let ebf = createBitfield( record );
+    let ebf = createBitField( record );
 
     return [es, ebf];
 }
@@ -644,7 +649,7 @@ function _getEntity(es:EntitySetIDB, eid:EntityId): Promise<Entity|undefined> {
         }
         
         let e = createEntityInstance(eid);
-        e.bitField.set( data );
+        e.bitField = bfSet( e.bitField, data );
         return e;
     })
 }

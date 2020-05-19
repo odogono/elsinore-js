@@ -18,6 +18,10 @@ import {
 } from '../../src/query/stack';
 
 import {
+    toValues as bfToValues
+} from '../../src/util/bitfield';
+
+import {
     onSwap, onArrayOpen,
     onPrint,
     onAddArray,
@@ -80,7 +84,7 @@ const Log = createLog('TestQuery');
 const parse = (data) => tokenizeString(data, { returnValues: true });
 const sv = (v): StackValue => [SType.Value, v];
 
-describe('Query', () => {
+describe('Query (Mem)', () => {
 
 
     it('executes an async word', async () => {
@@ -484,19 +488,15 @@ describe('Query', () => {
 
             // the return value is an entity
             assert.equal(unpackStackValueR(result), 102);
-            // Log.debug('stack:', unpackStackValueR(stack.items[0]).map(e => e.bitField.toValues()) );
         });
 
         it('fetches entities by did', async () => {
             let query = `[ "/component/completed" !bf @e] select`;
             let [stack] = await prep(query, 'todo');
 
-            // Log.debug('stack:', stringify(stack.items) );
-            // Log.debug('stack:', stackToString(stack) );
-            // Log.debug('stack:', unpackStackValueR(stack.items[0]).map(e => e.bitField.toValues()) );
             let [, result] = pop(stack);
             assert.deepEqual(
-                unpackStackValueR(result).map(e => e.bitField.toValues()),
+                unpackStackValueR(result).map(e => bfToValues(e.bitField)),
                 [[1, 2], [1, 2], [1, 2, 3]]);
         });
 

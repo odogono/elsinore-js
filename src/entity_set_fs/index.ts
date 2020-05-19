@@ -1,6 +1,15 @@
-import { BitField } from 'odgn-bitfield';
-import { EntitySet, CreateEntitySetParams, markEntityAdd, clearChanges, markEntityUpdate, AddType, AddOptions, markComponentRemove, markComponentUpdate, markEntityRemove, RemoveType } from "../entity_set";
 
+import { EntitySet, CreateEntitySetParams, markEntityAdd, clearChanges, markEntityUpdate, AddType, AddOptions, markComponentRemove, markComponentUpdate, markEntityRemove, RemoveType } from "../entity_set";
+import { 
+    BitField,
+    create as createBitField,
+    get as bfGet,
+    set as bfSet,
+    count as bfCount,
+    and as bfAnd,
+    or as bfOr,
+    toValues as bfToValues
+} from "../util/bitfield";
 import { ComponentId, Component,
     create as createComponentInstance,
     setEntityId as setComponentEntityId,
@@ -17,7 +26,6 @@ import {
     isEntity,
     create as createEntityInstance,
     getComponents as getEntityComponents,
-    createBitfield,
     Entity,
     getEntityId,
     setEntityId,
@@ -287,7 +295,7 @@ export async function getEntity(es:EntitySetFS, eid:EntityId): Promise<Entity> {
         return undefined;
     }
 
-    let defs = e.bitField.toValues().map( did => getByDefId(es,did) );
+    let defs = bfToValues(e.bitField).map( did => getByDefId(es,did) );
 
     return defs.reduce( async (e,def) => {
         const did = getDefId(def);
@@ -413,10 +421,9 @@ async function applyUpdatedComponents(es: EntitySetFS, cid: ComponentId): Promis
     // Log.debug('[applyUpdatedComponents]', eid, isNew, es.entChanges );
 
     // does the component already belong to this entity?
-    if (ebf.get(did) === false) {
+    if (bfGet(ebf,did) === false) {
         let e = createEntityInstance(eid);
-        e.bitField = ebf;
-        e.bitField.set(did);
+        e.bitField = bfSet(ebf,did);
         
         e = await setEntity(es, e);
 
@@ -451,7 +458,7 @@ async function applyRemoveComponent(es: EntitySetFS, cid: ComponentId): Promise<
     }
 
     // remove the component id from the entity
-    e.bitField.set(did, false);
+    e.bitField = bfSet(e.bitField, did, false);
 
     // remove component
     let def = getByDefId(es, did);
@@ -466,7 +473,7 @@ async function applyRemoveComponent(es: EntitySetFS, cid: ComponentId): Promise<
 
     // Log.debug('[applyRemoveComponent]', cid, ebf.count() );
 
-    if (e.bitField.count() === 0) {
+    if (bfCount(e.bitField) === 0) {
         return markEntityRemove(es, eid) as EntitySetFS;
     } else {
         e = await setEntity(es, e);
@@ -531,11 +538,11 @@ async function markRemoveComponents(es: EntitySetFS, eid: number): Promise<Entit
     }
 
     // const ebf = es.entities.get(id);
-    if (e.bitField.count() === 0) {
+    if (bfCount(e.bitField) === 0) {
         return es;
     }
 
-    const dids = e.bitField.toValues();
+    const dids = bfToValues(e.bitField);
 
     for (let ii = 0; ii < dids.length; ii++) {
         es = markComponentRemove(es, toComponentId(eid, dids[ii])) as EntitySetFS;
@@ -553,33 +560,9 @@ async function markEntityComponentsRemove(es: EntitySetFS, eid: number): Promise
         return es;
     }
 
-    let dids = e.bitField.toValues();
+    let dids = bfToValues(e.bitField);
 
     return dids.reduce( (es,did) => markComponentRemove(es, toComponentId(eid,did)), es ) as EntitySetFS;
-
-    // let defs = e.bitField.toValues().map( did => getByDefId(es,did) );
-
-    // defs.forEach( async def => {
-    //     let coms = await readComponents( es, def );
-
-    // })
-
-    // look up each did and remove from component file
-
-    // readComponents(es, def);
-
-    // const store = es.db.transaction(STORE_COMPONENTS, 'readonly').objectStore(STORE_COMPONENTS);
-    // let result = await idbGetRange(store, IDBKeyRange.bound([eid,0], [eid,Number.MAX_SAFE_INTEGER] ) );
-
-    // return result.reduce( (prev, {key}) => {
-    //     return prev.then( es => {
-    //         const [eid,did] = key as number[];
-    //         return markComponentRemove(es, toComponentId(eid,did)) as EntitySetFS
-    //     })
-    // }, Promise.resolve(es) );
-
-    // return ebf.toValues().reduce((es, did) =>
-    //     markComponentRemove(es, toComponentId(eid, did)), es as EntitySet) as EntitySetFS;
 }
 
 /**
@@ -593,10 +576,10 @@ async function getOrAddEntityBitfield(es: EntitySetFS, eid: number): Promise<[En
     let e = await _getEntity(es, eid);
     // let record = await idbGet(store, eid);
     if( e === undefined ){
-        return [markEntityAdd(es,eid) as EntitySetFS, createBitfield()];
+        return [markEntityAdd(es,eid) as EntitySetFS, createBitField()];
     }
 
-    let ebf = createBitfield( e.bitField );
+    let ebf = createBitField( e.bitField );
 
     return [es, ebf];
 }
@@ -721,24 +704,6 @@ export async function getComponent(es: EntitySetFS, id: ComponentId | Component)
 
     return coms.find( com => com["@d"] === did && com["@e"] === eid );
     
-
-    // // const store = es.db.transaction(STORE_COMPONENTS, 'readonly').objectStore(STORE_COMPONENTS);
-    // // const idx = store.index('by_cid');
-
-    
-    // let result = await idbGetRange(store, IDBKeyRange.bound([eid,did], [eid,did]) );
-    // // Log.debug('[getComponent]', eid, did, result);
-
-    // if( result.length === 0 ){
-    //     return undefined;
-    // }
-
-    // let {'_e':ceid, '_d':cdid, ...rest} = result[0].value;
-    // let com = {'@e':ceid, '@d':cdid, ...rest};
-
-    // return com;
-
-    // return Promise.resolve(undefined); //es.components.get(cid);
 }
 
 
@@ -868,7 +833,7 @@ async function writeEntityFile( es:EntitySetFS, ents:Entity[] ){
         if( isNaN( getEntityId(e) ) ){
             throw new Error(`illegal eid`);
         }
-        return [ getEntityId(e), stringify( e.bitField.toValues() ) ]
+        return [ getEntityId(e), stringify( bfToValues(e.bitField) ) ]
     })
 
     let lines = [ header, ...records ];
@@ -896,7 +861,7 @@ async function readEntityFile( es:EntitySetFS ): Promise<Entity[]>{
     
     let header = records.shift();
     return records.map( ([eid,dids]) => {
-        const bf = new BitField( parseJSON( dids ) );
+        const bf = createBitField( parseJSON( dids ) );
         return createEntityInstance( parseInt(eid), bf );
     })
 }

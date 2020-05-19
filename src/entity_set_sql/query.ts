@@ -1,6 +1,15 @@
-import { EntityId, EntityList, createEntityList, createBitfield, isEntityList, Entity, getEntityId, isEntity } from "../entity";
+import { EntityId, Entity, getEntityId, isEntity } from "../entity";
 import { ComponentId, ComponentList, toComponentId, isComponentList, createComponentList, fromComponentId, Component, isComponent } from "../component";
-import { BitField } from "odgn-bitfield";
+import { 
+    BitField,
+    create as createBitField,
+    get as bfGet,
+    set as bfSet,
+    count as bfCount,
+    and as bfAnd,
+    or as bfOr,
+    toValues as bfToValues
+} from "../util/bitfield";
 import { EntitySetSQL, getEntity, getComponent, ComponentDefSQL } from ".";
 import { createLog } from "../util/log";
 import { isInteger, isString, isBoolean } from "../util/is";
@@ -271,7 +280,7 @@ function matchEntities(es: EntitySetSQL, mbf?: BitField): Entity[] {
     if( mbf === undefined ){
         return sqlRetrieveEntities(es.db);
     }
-    return sqlRetrieveEntityByDefId(es.db, mbf.toValues());
+    return sqlRetrieveEntityByDefId(es.db, bfToValues(mbf));
 }
 
 function ilog(...args){

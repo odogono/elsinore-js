@@ -34,10 +34,8 @@ import {
     isEntity,
     create as createEntityInstance,
     getComponents as getEntityComponents,
-    createBitfield,
     Entity,
     getEntityId,
-    setEntityId,
     EntityId,
     addComponentUnsafe,
     EntityList,
@@ -51,7 +49,16 @@ import { ChangeSet,
     merge as mergeCS,
     remove as removeCS, ChangeSetOp, getChanges 
 } from "../entity_set/change_set";
-import { BitField } from "odgn-bitfield";
+import { 
+    BitField,
+    create as createBitField,
+    get as bfGet,
+    set as bfSet,
+    count as bfCount,
+    and as bfAnd,
+    or as bfOr,
+    toValues as bfToValues
+} from "../util/bitfield";
 import { createUUID } from "../util/uuid";
 import { SqlRef, 
     sqlOpen, sqlIsOpen, 
@@ -331,7 +338,7 @@ export function markEntityComponentsRemove(es: EntitySetSQL, eid: number): Entit
         return es;
     }
 
-    return e.bitField.toValues().reduce((es, did) =>
+    return bfToValues(e.bitField).reduce((es, did) =>
         markComponentRemove(es, toComponentId(eid, did)), es as EntitySet) as EntitySetSQL;
 }
 
@@ -348,11 +355,11 @@ function markRemoveComponents(es: EntitySetSQL, eid: number): EntitySetSQL {
     }
 
     // const ebf = es.entities.get(id);
-    if (e.bitField.count() === 0) {
+    if (bfCount(e.bitField) === 0) {
         return es;
     }
 
-    const dids = e.bitField.toValues();
+    const dids = bfToValues(e.bitField);
 
     for (let ii = 0; ii < dids.length; ii++) {
         es = markComponentRemove(es, toComponentId(eid, dids[ii])) as EntitySetSQL;
@@ -419,7 +426,7 @@ function applyRemoveComponent(es: EntitySetSQL, cid: ComponentId): EntitySetSQL 
     // Log.debug('[applyRemoveComponent]', eid, did );
     let e = sqlDeleteComponent( es.db, eid, def );
 
-    if (e.bitField.count() === 0) {
+    if (bfCount(e.bitField) === 0) {
         return markEntityRemove(es, eid) as EntitySetSQL;
     } else {
         // e = setEntity(es, e);
@@ -450,10 +457,9 @@ function applyUpdatedComponents(es: EntitySetSQL, cid: ComponentId): EntitySetSQ
     // Log.debug('[applyUpdatedComponents]', eid, isNew, ebf.get(did) === false );
 
     // does the component already belong to this entity?
-    if (ebf.get(did) === false) {
+    if (bfGet(ebf,did) === false) {
         let e = createEntityInstance(eid);
-        e.bitField = ebf;
-        e.bitField.set(did);
+        e.bitField = bfSet(ebf,did);
         
         e = setEntity(es, e);
 
@@ -479,10 +485,10 @@ function getOrAddEntityBitfield(es: EntitySetSQL, eid: number): [EntitySetSQL, B
         // e = createEntityInstance(eid, createBitfield() );
         // e = setEntity( es, e );
         
-        return [markEntityAdd(es,eid) as EntitySetSQL, createBitfield() ];
+        return [markEntityAdd(es,eid) as EntitySetSQL, createBitField() ];
     }
 
-    // let ebf = createBitfield( record.bf );
+    // let ebf = createBitField( record.bf );
 
     return [es, e.bitField];
 }
@@ -547,7 +553,7 @@ export function getEntity(es:EntitySetSQL, eid:EntityId, populate:boolean = true
         return e;
     }
 
-    let dids = e.bitField.toValues()
+    let dids = bfToValues(e.bitField);
     let defs = dids.map( did => getByDefId(es,did) );
 
     let coms = sqlRetrieveEntityComponents( es.db, eid, defs );

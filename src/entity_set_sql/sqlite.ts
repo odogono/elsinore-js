@@ -17,7 +17,16 @@ import {
     setEntityId,
     EntityId
 } from '../entity';
-import { BitField } from 'odgn-bitfield';
+import { 
+    BitField,
+    create as createBitField,
+    get as bfGet,
+    set as bfSet,
+    count as bfCount,
+    and as bfAnd,
+    or as bfOr,
+    toValues as bfToValues
+} from "../util/bitfield";
 import { Component, toComponentId } from '../component';
 import { SType } from '../query/stack';
 import { isBoolean } from '../util/is';
@@ -181,7 +190,7 @@ export function sqlUpdateEntity(ref: SqlRef, e: Entity): Entity {
         update = false;
     }
 
-    let bf = e.bitField !== undefined ? e.bitField.toValues() : [];
+    let bf = e.bitField !== undefined ? bfToValues(e.bitField) : [];
 
     // Log.debug('[sqlUpdateEntity]', eid, update );
 
@@ -226,7 +235,7 @@ export function sqlRetrieveEntity(ref: SqlRef, eid: number): Entity {
     rows = stmt.all(eid);
 
     let dids = rows.map(r => r.did);
-    const bf = new BitField(dids);
+    const bf = createBitField(dids);
 
     return createEntityInstance(eid, bf);
 }
@@ -459,7 +468,7 @@ export function sqlRetrieveEntities(ref:SqlRef):Entity[]{
         if (e === undefined) {
             e = createEntityInstance(eid);
         }
-        e.bitField.set(did);
+        e.bitField = bfSet(e.bitField,did);
         return { ...result, [eid]: e };
     }, {});
     return Object.values(result);
@@ -491,7 +500,7 @@ export function sqlRetrieveEntityByDefId(ref: SqlRef, did: number[]): Entity[] {
         if (e === undefined) {
             e = createEntityInstance(eid);
         }
-        e.bitField.set(did);
+        e.bitField = bfSet(e.bitField,did);
         return { ...result, [eid]: e };
     }, {});
 

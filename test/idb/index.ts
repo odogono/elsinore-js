@@ -21,53 +21,13 @@ import {
     clearIDB,
     getComponent,
 } from '../../src/entity_set_idb';
-import {
-    create as createStack,
-    SType,
-    addWords,
-    pushValues,
-    QueryStack,
-    StackValue,
-    push, pop,
-    find as findValue,
 
-} from '../../src/query/stack';
 import {     
     getByUri, getByHash, getByDefId, resolveComponentDefIds,
 } from '../../src/entity_set/registry';
 import {
-    onSwap, onArrayOpen, 
-    onAddArray, 
-    onArraySpread,
-    onAdd, onConcat, onMapOpen, 
-    onEntity,
-    onArgError,
-    onComponentDef, onComponent, 
-    onEntitySet, onAddComponentToEntity,
-    onMap,
-    onReduce,
-    onFilter,
-    onClear,
-    onValue,
-    onDefine,
-    onAddToEntitySet,
-    onAssertType,
-    unpackStackValue,
-    onBuildMap,
-    onSelect,
-    unpackStackValueR,
-    onDup,
-    fetchComponentDef,
-    onPrint,
-    onDrop,
-    onPluck,
-    onFetchArray,
-    onUnexpectedError,
-    onUnique
-} from '../../src/query/words';
-import {
-    stackToString,
-} from '../../src/query/util';
+    toValues as bfToValues
+} from '../../src/util/bitfield';
 import { Entity,
     create as createEntityInstance, 
     getComponent as getEntityComponent,
@@ -295,7 +255,7 @@ describe('Entity Set (IndexedDB)', () => {
             assertHasComponents( es, e, 
                 ['/component/username', '/component/status', '/component/channel_member' ] );
 
-            const did = resolveComponentDefIds(es, ['/component/channel_member']).toValues()[0];
+            const did = bfToValues(resolveComponentDefIds(es, ['/component/channel_member']))[0];
             let com = getEntityComponent(e, did)
             assert.equal( com.channel, 3 );
             // Log.debug('e', com);
