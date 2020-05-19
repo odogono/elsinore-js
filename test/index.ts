@@ -9,5 +9,7 @@ import './es/query';
 import './idb/index';
 import './idb/query';
 
-import './sql/index';
-import './sql/query';
+if( process.env.JS_ENV !== 'browser' ){
+    require('./sql/index');
+    require('./sql/query');
+}

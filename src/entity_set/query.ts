@@ -382,6 +382,7 @@ function matchEntities(es:EntitySetMem, eids: EntityId[], mbf: BitField|'all'): 
 // }
 
 function ilog(...args){
+    if( process.env.JS_ENV === 'browser' ){ return; }
     const util = require('util');
     console.log( util.inspect( ...args, {depth:null} ) );
 }

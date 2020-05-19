@@ -254,6 +254,7 @@ function matchEntities(es: EntitySetIDB, mbf?: BitField): Promise<Entity[]> {
 }
 
 function ilog(...args){
+    if( process.env.JS_ENV === 'browser' ){ return; }
     const util = require('util');
     console.log( util.inspect( ...args, {depth:null} ) );
 }

@@ -803,6 +803,8 @@ async function loadFixture(name: string) {
 
 
 function ilog(...args) {
-    const util = require('util');
-    console.log(util.inspect(...args, { depth: null }));
+    if( process.env.JS_ENV !== 'browser' ){
+        const util = require('util');
+        console.log(util.inspect(...args, { depth: null }));
+    }
 }

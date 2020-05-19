@@ -1,72 +1,71 @@
 import CommonJS from '@rollup/plugin-commonjs';
-import { terser as Minify } from 'rollup-plugin-terser';
+import { terser } from 'rollup-plugin-terser';
 import NodeResolve from '@rollup/plugin-node-resolve';
 import Replace from '@rollup/plugin-replace';
 import Typescript from "rollup-plugin-typescript2";
 import MultiEntry from '@rollup/plugin-multi-entry';
 import NodePolyfills from 'rollup-plugin-node-polyfills';
-import pkg from './package.json';
-import { readFileSync } from 'fs';
+import Json from '@rollup/plugin-json';
+import OMT from "@surma/rollup-plugin-off-main-thread";
+
+// import pkg from './package.json';
+// import { readFileSync } from 'fs';
 
 const environment = process.env.NODE_ENV || 'development';
-const isProduction = environment === 'production';
+const jsEnv = process.env.JS_ENV || 'browser';
+const isProduction = false //environment === 'production';
 
-const banner = readFileSync('./banner.txt', 'utf-8')
-    .replace('${version}', pkg.version)
-    .replace('${time}', new Date());
+const tsconfigOverride = { compilerOptions: { declaration: false, sourceMap: true, module: "es2015" } };
 
 const typescriptPlugin = Typescript({
-    tsconfigOverride: { compilerOptions : { module: "es2015" } },
+    // Disable type checking during the build
+    // to increase the build speed.
+    check: false,
     tsconfig: './tsconfig.json',
+    tsconfigOverride,
     typescript: require('typescript'),
     useTsconfigDeclarationDir: true
 });
 
-const sourcemap = isProduction;
+
+function config({ format, minify, input, ext = "js", globals }) {
+    const dir = `dist/${format}/`;
+    const minifierSuffix = minify ? ".min" : "";
+    const base = input.replace(/\.[^/.]+$/, "");
+    return {
+      input, //: `./src/${input}.ts`,
+      output: {
+        name: "odgn-entity",
+        file: `${dir}/${base}${minifierSuffix}.${ext}`,
+        format,
+        sourcemap: true,
+        globals
+      },
+      plugins: [
+        Replace({ 'process.env.NODE_ENV': JSON.stringify(environment) }),
+        Replace({ 'process.env.JS_ENV': JSON.stringify(jsEnv) }),
+        NodePolyfills(),
+        NodeResolve({ browser: true, preferBuiltins: false }),
+        typescriptPlugin,
+        CommonJS({
+            exclude: ['node_modules/type-detect/*.js'],
+        }), // so Rollup can convert `ms` to an ES module
+        minify
+          ? terser({
+              sourcemap: true,
+              compress: true,
+              mangle: true,
+            })
+          : undefined,
+      ].filter(Boolean),
+    };
+}
+
+const globals = {};
 
 export default [
-    // browser-friendly UMD build
-    {
-        input: 'src/index.ts',
-        output: {
-            name: 'elsinore',
-            file: pkg.browser,
-            format: 'umd',
-            sourcemap
-        },
-        plugins: [
-            Replace({ 'process.env.NODE_ENV': JSON.stringify(environment) }),
-            typescriptPlugin,
-            NodeResolve(),
-            CommonJS(), // so Rollup can convert `ms` to an ES module
-            isProduction && Minify()
-        ]
-    },
-
-    // CommonJS (for Node) and ES module (for bundlers) build.
-    // (We could have three entries in the configuration array
-    // instead of two, but it's quicker to generate multiple
-    // builds from a single configuration where possible, using
-    // an array for the `output` option, where we can specify
-    // `file` and `format` for each target)
-    {
-        input: 'src/index.ts',
-        // external: ['ms'],
-        output: [
-            { file: pkg.main, format: 'cjs', sourcemap },
-            { file: pkg.module, format: 'es', sourcemap }
-        ],
-        plugins: [
-            Replace({ 'process.env.NODE_ENV': JSON.stringify(environment) }),
-            typescriptPlugin,
-            NodeResolve(),
-            CommonJS(),
-            // CommonJS({
-            //     namedExports: {
-            //         'node_modules/odgn-bitfield/index.js': ['BitField']
-            //     }
-            // }),
-            isProduction && Minify()
-        ]
-    }
-];
+    {input: 'src/index.ts', globals, format: 'esm', minify:false, ext:'mjs'},
+    {input: 'src/index.ts', globals, format: 'esm', minify:true, ext:'mjs'},
+    {input: 'src/index.ts', globals, format: 'amd', minify:false},
+    {input: 'src/index.ts', globals, format: 'amd', minify:true},
+].map(config);

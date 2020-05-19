@@ -33,9 +33,10 @@ function config({ format, minify, input, ext = "js", globals }) {
     const minifierSuffix = minify ? ".min" : "";
     const base = input.replace(/\.[^/.]+$/, "");
     return {
-      input, //: `./src/${input}.ts`,
+      input,
       output: {
-        name: "odgn-entity",
+        name: "odgn_entity",
+        // dir,
         file: `${dir}/${base}${minifierSuffix}.${ext}`,
         format,
         sourcemap: true,
@@ -63,43 +64,14 @@ function config({ format, minify, input, ext = "js", globals }) {
 }
 
 const testGlobals = {chai: 'chai', it: 'it', describe: 'describe' };
-
+const config = {input:'test/index.ts', globals:testGlobals};
 export default [
-    {input: 'test/index.ts', globals:testGlobals, format: 'esm', minify:false, ext:'mjs'},
-    {input: 'test/index.ts', globals:testGlobals, format: 'esm', minify:true, ext:'mjs'},
-    {input: 'test/index.ts', globals:testGlobals, format: 'amd', minify:false},
-    {input: 'test/index.ts', globals:testGlobals, format: 'amd', minify:true},
+    {...config, format: 'esm', minify:false, ext:'mjs'},
+    {...config, format: 'esm', minify:true, ext:'mjs'},
+    {...config, format: 'amd', minify:false},
+    {...config, format: 'amd', minify:true},
+    {...config, format: 'iife', minify:false},
+    {...config, format: 'iife', minify:true},
+    {...config, format: 'umd', minify:false},
+    {...config, format: 'umd', minify:true},
 ].map(config);
-
-// export default [
-//     // browser-friendly UMD build
-//     {
-//         input: 'test/index.ts',
-//         output: {
-//             name: 'test',
-//             file: 'dist/elsinore.tests.js',
-//             format: 'amd',
-//             sourcemap: true,
-//             globals: {
-//                 chai: 'chai',
-//                 it: 'it',
-//                 describe: 'describe'
-//             }
-//         },
-//         external: ['chai', 'it', 'describe'],
-//         plugins: [
-//             Replace({ 'process.env.NODE_ENV': JSON.stringify(environment) }),
-//             Replace({ 'process.env.JS_ENV': JSON.stringify(jsEnv) }),
-//             NodePolyfills(),
-//             NodeResolve({ browser: true, preferBuiltins: false }),
-//             typescriptPlugin,
-//             CommonJS(), // so Rollup can convert `ms` to an ES module
-//             Json(),
-//             OMT(),
-//             // MultiEntry(),
-//             // NodePolyfills({ buffer: true, process: true }),
-//             isProduction && Minify()
-//             // Minify()
-//         ]
-//     }
-// ];
