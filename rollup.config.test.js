@@ -28,7 +28,7 @@ const typescriptPlugin = Typescript({
 });
 
 
-function config({ format, minify, input, ext = "js", globals }) {
+function build({ format, minify, input, ext = "js", globals }) {
     const dir = `dist/${format}/`;
     const minifierSuffix = minify ? ".min" : "";
     const base = input.replace(/\.[^/.]+$/, "");
@@ -65,6 +65,7 @@ function config({ format, minify, input, ext = "js", globals }) {
 
 const testGlobals = {chai: 'chai', it: 'it', describe: 'describe' };
 const config = {input:'test/index.ts', globals:testGlobals};
+
 export default [
     {...config, format: 'esm', minify:false, ext:'mjs'},
     {...config, format: 'esm', minify:true, ext:'mjs'},
@@ -74,4 +75,4 @@ export default [
     {...config, format: 'iife', minify:true},
     {...config, format: 'umd', minify:false},
     {...config, format: 'umd', minify:true},
-].map(config);
+].map(build);

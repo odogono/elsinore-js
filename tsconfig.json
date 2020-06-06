@@ -4,16 +4,16 @@
         "esModuleInterop": true,
         "downlevelIteration": true,
         "baseUrl": ".",
-        "module": "commonjs",
+        "module": "esnext",
         "moduleResolution": "node",
 
-        "lib": ["es2018", "dom"],
+        "lib": ["es2018", "es2019", "es2020", "esnext", "dom"],
         "target": "es2018",
-        "declaration": true,
-        "outDir": "lib"
+        "declaration": true
     },
     "include": [ "./src/**/*" ],
     "exclude":[
+        "dist",
         "node_modules",
         "test-old"
     ]

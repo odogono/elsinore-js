@@ -133,7 +133,6 @@ describe('Entity Set (Mem)', () => {
 
             const cid = getChanges( es.comChanges, ChangeSetOp.Add )[0];
 
-            
             com = getComponent( es, cid );
             // Log.debug('es', com);
 
