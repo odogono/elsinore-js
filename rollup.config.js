@@ -29,6 +29,7 @@ const typescriptPlugin = Typescript({
     useTsconfigDeclarationDir: true
 });
 
+const nameCache = { vars: {} };
 
 function build({ external, format, minify, input, ext = "js", globals }) {
     const dir = `dist/${format}/`;
@@ -63,8 +64,34 @@ function build({ external, format, minify, input, ext = "js", globals }) {
         }), // so Rollup can convert `ms` to an ES module
         minify
           ? terser({
-              compress: true,
+              // compress: false,
+              compress: {
+                defaults: false,
+                dead_code: true,
+                inline: true,
+                join_vars: true,
+                keep_classnames: true,
+                keep_fargs: false,
+                keep_fnames: false,
+                loops: true,
+                module: true,
+                properties: true,
+                reduce_vars: true,
+                sequences: true,
+                toplevel: true
+              },
+              //   "properties": false,
+              //   "pure_getters": false,
+              //   "toplevel": false,
+              // },
+              // "mangle": {
+              //   "properties": {
+              //     "regex": /^_|_$/
+              //   },
+              //   "toplevel": true,
+              // },
               mangle: true,
+              // nameCache: { vars: {}, props: {} }
             })
           : undefined,
       ].filter(Boolean),
@@ -85,6 +112,9 @@ export default [
   {...config, format: 'esm', minify:true, ext:'mjs'},
   {...config, format: 'cjs', minify:false, ext:'js'},
   {...config, format: 'cjs', minify:true, ext:'js'},
+
+
+
   // {...config, format: 'amd', minify:false},
   // {...config, format: 'amd', minify:true},
   // {...config, format: 'iife', minify:false},

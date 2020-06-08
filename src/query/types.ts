@@ -1,4 +1,4 @@
-import { EntitySet } from "../entity_set/types";
+import { EntitySet } from "../entity_set";
 
 export enum SType {
     Value = '%v',

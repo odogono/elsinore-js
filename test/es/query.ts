@@ -50,14 +50,8 @@ import {
     stackToString, unpackStackValueR, unpackStackValue,
 } from '../../src/query/util';
 import { create as createComponentDef, isComponentDef } from '../../src/component_def';
-import {
-    create as createEntitySet,
-    add as addToES,
-    isEntitySet,
-    size as entitySetSize
-} from '../../src/entity_set';
+
 import { isString } from '../../src/util/is';
-import { register, createComponent } from '../../src/entity_set/registry';
 import {
     isEntity,
     getEntityId
@@ -66,18 +60,18 @@ import { isComponent, Component, isComponentList } from '../../src/component';
 import { esToInsts } from '../util/stack';
 import { getChanges, ChangeSetOp } from '../../src/entity_set/change_set';
 import { fetchComponents, buildBitfield } from '../../src/entity_set/query';
-import { EntitySetMem, EntitySet } from '../../src/entity_set/types';
 import { onPluck } from '../../src/query/words/pluck';
 import { onDefine } from '../../src/query/words/define';
-
-
-
+import { isEntitySet, EntitySetMem, EntitySet } from '../../src/entity_set';
 
 
 const Log = createLog('TestQuery');
 
 const parse = (data) => tokenizeString(data, { returnValues: true });
 const sv = (v): StackValue => [SType.Value, v];
+const createEntitySet = (options?) => new EntitySetMem(options);
+
+
 
 describe('Query (Mem)', () => {
 
@@ -283,7 +277,7 @@ describe('Query (Mem)', () => {
             // Log.debug('stack', stack.items );
             let es = unpackStackValueR(result);
             let def;
-            [es, def] = register(es, { uri: "/component/title", properties: ["text"] });
+            def = await es.register({ uri: "/component/title", properties: ["text"] });
             [stack] = await push(stack, [SType.EntitySet, es]);
 
             [stack] = await pushValues(stack, parse(query));
@@ -307,11 +301,11 @@ describe('Query (Mem)', () => {
 
             // Log.debug('es:', es );
 
-            assert.equal(entitySetSize(es), 1);
+            assert.equal(await es.size(), 1);
 
             const cid = getChanges(es.comChanges, ChangeSetOp.Add)[0];
 
-            let com = es.esGetComponent(es, cid);
+            let com = await es.getComponent(cid);
 
             assert.equal(com.isComplete, true);
         });
@@ -342,7 +336,7 @@ describe('Query (Mem)', () => {
             assert.ok(isEntitySet(es));
 
             // Log.debug('es:', es );
-            assert.equal(entitySetSize(es), 2);
+            assert.equal(await es.size(), 2);
         });
 
 
@@ -358,12 +352,12 @@ describe('Query (Mem)', () => {
             [stack, result] = pop(stack);
             let es = unpackStackValueR(result);
             assert.ok(isEntitySet(es));
-            assert.equal(entitySetSize(es), 1);
+            assert.equal(await es.size(), 1);
 
             [stack, result] = pop(stack);
             es = unpackStackValueR(result);
             assert.ok(isEntitySet(es));
-            assert.equal(entitySetSize(es), 1);
+            assert.equal(await es.size(), 1);
         });
 
         it('retrieves component defs', async () => {
@@ -425,6 +419,7 @@ describe('Query (Mem)', () => {
 
 
         let es = createEntitySet();
+
         [stack] = await push(stack, [SType.EntitySet, es]);
 
         [stack] = await pushValues(stack, insts);
@@ -433,7 +428,7 @@ describe('Query (Mem)', () => {
         es = unpackStackValueR(stack.items[0]);
 
         // Log.debug('es', es);
-        assert.equal(entitySetSize(es), 32);
+        assert.equal(await es.size(), 32);
 
         // get entity 102
         // insts = parse(`102 @e`);
@@ -727,19 +722,22 @@ describe('Query (Mem)', () => {
 
 
 
+async function buildEntitySet(stack:QueryStack, options?): Promise<[QueryStack, EntitySet]> {
+    let es = createEntitySet(options);
 
-export async function buildEntitySet(stack: QueryStack): Promise<[QueryStack, EntitySet]> {
-    let es = createEntitySet();
-    let def;
-    [es, def] = register(es,
-        { uri: "/component/title", properties: ["text"] });
-    [es, def] = register(es,
-        { uri: "/component/completed", properties: [{ "name": "isComplete", "type": "boolean", "default": false }] });
-    [es, def] = register(es,
-        { uri: "/component/priority", properties: [{ "name": "priority", "type": "integer", "default": 0 }] });
+    const defs = [
+        { uri: "/component/title", properties: ["text"] },
+        { uri: "/component/completed", properties: [{ "name": "isComplete", "type": "boolean", "default": false }] },
+        { uri: "/component/priority", properties: [{ "name": "priority", "type": "integer", "default": 0 }] },
+    ];
+
+    await defs.reduce( (p,def) => p.then( () => es.register(def)), Promise.resolve() );
+
+
     [stack] = await push(stack, [SType.EntitySet, es]);
     return [stack, es];
 }
+
 
 
 async function prep(insts?: string, fixture?: string): Promise<[QueryStack, EntitySet]> {

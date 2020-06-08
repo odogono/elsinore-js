@@ -1,9 +1,6 @@
 import { assert } from 'chai';
 import { createLog } from '../../src/util/log';
-import {
-    createComponent, 
-    getByUri, getByHash, getByDefId,
-    register } from '../../src/entity_set/registry';
+
 import { Entity,
     create as createEntityInstance, 
     getComponent as getEntityComponent,
@@ -11,110 +8,104 @@ import { Entity,
     isEntity,
     addComponentUnsafe
 } from '../../src/entity';
-import { 
-    create as createEntitySet,
-    size as entitySetSize,
-    add as esAdd, 
-    removeComponent, 
-    getComponent,
-    getComponents as esGetComponents,
-    getEntities as esGetEntities,
-    createEntity,
-    removeEntity} from '../../src/entity_set';
+
 import { assertHasComponents } from '../util/assert';
 import { getChanges, ChangeSetOp } from '../../src/entity_set/change_set';
 import { fromComponentId, getComponentDefId, Component, OrphanComponent } from '../../src/component';
-import { isComponentDef, hash as hashDef, getDefId } from '../../src/component_def';
+import { isComponentDef, hash as hashDef, getDefId, Type } from '../../src/component_def';
 import { BuildQueryFn } from '../../src/query/build';
-import { EntitySetMem, EntitySet } from '../../src/entity_set/types';
-import { getEntity } from '../../src/entity_set/util';
+// import { EntitySetMem, EntitySet } from '../../src/entity_set/types';
+import { EntitySet, EntitySetMem } from '../../src/entity_set';
+import {
+    toValues as bfToValues
+} from '../../src/util/bitfield';
 
 const Log = createLog('TestEntitySet');
 
+const createEntitySet = () => new EntitySetMem();
 
 describe('Entity Set (Mem)', () => {
     
     describe('Component Defs', () => {
         it('registers', async () => {
             let def;
-            let es = createEntitySet({});
-            const data = { uri: '/component/position', properties:[ {name:'rank',type:'integer'}, 'file' ] };
-    
-            [es, def] = register<EntitySetMem>( es, data );
+            let es = createEntitySet();
+            const data = { uri: '/component/position', properties: [{ name: 'rank', type: 'integer' }, 'file'] };
+            // Log.debug('ok', (Date.now()-start));
+            
+            def = await es.register(data);
 
-            // Log.debug('es', es);
+            // Log.debug('ok', (Date.now()-start));
 
-            [es,def] = register( es, "/component/piece/king" );
-            [es,def] = register( es, "/component/piece/queen" );
+            def = await es.register("/component/piece/king");
+            def = await es.register("/component/piece/queen");
 
-            def = getByUri(es, '/component/position');
+            def = es.getByUri('/component/position');
 
-            assert.ok( isComponentDef(def) );
+            assert.ok(isComponentDef(def));
 
-            def = getByHash(es, hashDef(def) );
+            def = es.getByHash(hashDef(def));
 
-            assert.equal( def.uri, '/component/position' );
+            assert.equal(def.uri, '/component/position');
         })
     })
 
 
     describe('Adding', () => {
 
-        it('should create an entity (id)', () => {
-            let es = createEntitySet({});
+        it('should create an entity (id)', async () => {
+            let es = createEntitySet();
             let id = 0;
 
-            [es, id] = createEntity(es);
+            id = es.createEntity();
 
-            assert.isAtLeast( id, 1 );
+            assert.isAtLeast(id, 1);
         });
 
-        it('should ignore an entity without an id', () => {
-            let es = createEntitySet({});
+        it('should ignore an entity without an id', async () => {
+            let es = new EntitySetMem();
             let e = createEntityInstance();
 
-            es = esAdd(es, e);
+            es.add(e);
 
-            assert.equal( entitySetSize(es), 0 );
+            assert.equal( await es.size(), 0 );
         })
 
-        it('should ignore an entity with an id, but without any components', () => {
-            let es = createEntitySet({});
+        it('should ignore an entity with an id, but without any components', async () => {
+            let es = createEntitySet();
             let e = createEntityInstance(2);
 
-            es = esAdd(es, e);
+            await es.add(e);
 
-            assert.equal( entitySetSize(es), 0 );
-
-            // Log.debug('es', e);
-        })
+            assert.equal(await es.size(), 0);
+        });
 
         it('adds an entity with components', async () => {
-            let e:Entity;
-            let [es,buildEntity] = buildEntitySet();
+            let e: Entity;
+            let [es, buildEntity] = await buildEntitySet();
 
-            e = buildEntity( es, ({component}) => {
-                component('/component/channel', {name: 'chat'});
-                component('/component/status', {status: 'inactive'});
-                component('/component/topic', {topic: 'data-structures'});
+            e = buildEntity(es, ({ component }) => {
+                component('/component/channel', { name: 'chat' });
+                component('/component/status', { status: 'inactive' });
+                component('/component/topic', { topic: 'data-structures' });
             });
-            
-            
-            assert.equal( entitySize(e), 3 );
-            
-            es = esAdd( es, e );
-            
-            // Log.debug('es', es);
-            
-            assert.equal( entitySetSize(es), 1 );
-            
-            // get the entity added changes to find the entity id
-            const [eid] = getChanges( es.entChanges, ChangeSetOp.Add );
-            
-            e = getEntity( es, eid, true );
 
-            // e.Channel = {...e.Channel, name: 'bbc1' };
-            
+            // Log.debug('ok!', e );
+
+            assert.equal(entitySize(e), 3);
+
+            await es.add(e);
+
+            // Log.debug('es', es);
+
+            assert.equal(await es.size(), 1);
+
+            // get the entity added changes to find the entity id
+            const [eid] = getChanges(es.entChanges, ChangeSetOp.Add);
+
+            e = await es.getEntity(eid);
+
+            // Log.debug( e );
 
             assertHasComponents(
                 es,
@@ -124,190 +115,226 @@ describe('Entity Set (Mem)', () => {
         });
 
         it('adds a component', async () => {
-            let [es] = buildEntitySet();
-            let com = createComponent(es, '/component/channel', {name: 'chat'} );
+            let [es] = await buildEntitySet();
+            let com = es.createComponent('/component/channel', {name: 'chat'} );
 
-            es = esAdd( es, com );
+            await es.add( com );
 
-            assert.equal( entitySetSize(es), 1 );
+            assert.equal( await es.size(), 1 );
 
             const cid = getChanges( es.comChanges, ChangeSetOp.Add )[0];
 
-            com = getComponent( es, cid );
+            com = await es.getComponent( cid );
             // Log.debug('es', com);
 
             assert.equal( com.name, 'chat' );
         });
         
+        it('adds a component', async () => {
+            // Log.debug('registry', registry);
+            let [es] = await buildEntitySet();
+            let com = es.createComponent('/component/channel', { name: 'chat' });
+
+            await es.add(com);
+
+            assert.equal(await es.size(), 1);
+
+            const cid = getChanges(es.comChanges, ChangeSetOp.Add)[0];
+
+
+            com = await es.getComponent(cid);
+            // Log.debug('es', com);
+
+            assert.equal(com.name, 'chat');
+        });
+
+        it('updates a component', async () => {
+            // Log.debug('registry', registry);
+            let [es] = await buildEntitySet();
+            let com = es.createComponent('/component/channel', { name: 'chat' });
+
+            await es.add(com);
+
+            assert.equal(await es.size(), 1);
+
+            const cid = getChanges(es.comChanges, ChangeSetOp.Add)[0];
+
+            com = await es.getComponent(cid);
+
+            com.name = 'chat and laughter';
+
+            es = await es.add(com);
+
+            com = await es.getComponent(cid);
+
+            assert.equal(com.name, 'chat and laughter');
+        });
+
         it('adds a component with an entity id', async () => {
-            let [es] = buildEntitySet();
-            let com = createComponent(es, '/component/channel', {'@e':23, name: 'discussion'} );
+            let [es] = await buildEntitySet();
+            let com = es.createComponent('/component/channel', { '@e': 23, name: 'discussion' });
 
-            es = esAdd( es, com );
+            await es.add(com);
 
-            assert.equal( entitySetSize(es), 1 );
+            assert.equal(await es.size(), 1);
 
-            let e = getEntity(es, 23);
+            let e = await es.getEntity(23);
 
-            assertHasComponents( es, e, ['/component/channel'] );
+            // Log.debug( e );
 
-            com = getEntityComponent( e, getComponentDefId(com) );
+            assertHasComponents(es, e, ['/component/channel']);
 
-            assert.equal( com.name, 'discussion' );
+            com = getEntityComponent(e, getComponentDefId(com));
 
-            // Log.debug('es', es);
+            assert.equal(com.name, 'discussion');
         });
 
         it('adds a single entity from two different components', async () => {
-            let [es] = buildEntitySet();
+            let [es] = await buildEntitySet();
             let coms = [
-                createComponent(es, '/component/channel', {name: 'discussion'} ),
-                createComponent(es, '/component/status', {status:'active'} )
+                es.createComponent('/component/channel', { name: 'discussion' }),
+                es.createComponent('/component/status', { status: 'active' })
             ];
 
-            es = esAdd( es, coms );
-            assert.equal( entitySetSize(es), 1 );
-        })
+            await es.add(coms);
+            assert.equal(await es.size(), 1);
+        });
 
-        it('adds a number of components of the same type', () => {
-            let e:Entity;
-            let coms:Component[];
-            let [es] = buildEntitySet();
+        it('adds a number of components of the same type', async () => {
+            // let e:Entity;
+            let coms: Component[];
+            let [es] = await buildEntitySet();
 
             // create a number of components
-            coms = ['chat', 'dev', 'politics'].map( name => 
-                createComponent(es, '/component/channel', {name}));
+            coms = ['chat', 'dev', 'politics'].map(name =>
+                es.createComponent('/component/channel', { name }));
 
-            es = esAdd( es, coms );
+            await es.add(coms);
 
-            assert.equal( entitySetSize(es), 3 );
+            assert.equal(await es.size(), 3);
 
             // Log.debug('stack', es )
         });
 
-        it('overwrites an entity', () => {
-            let e:Entity;
-            // let es = createEntitySet({});
-            let [es,buildEntity] = buildEntitySet();
+        it('overwrites an entity', async () => {
+            let e: Entity;
+            let [es, buildEntity] = await buildEntitySet();
 
-            e = buildEntity( es, ({component}) => {
-                component('/component/channel', {name: 'chat'});
-                component('/component/status', {status: 'inactive'});
-                component('/component/topic', {topic: 'data-structures'});
+            e = buildEntity(es, ({ component }) => {
+                component('/component/channel', { name: 'chat' });
+                component('/component/status', { status: 'inactive' });
+                component('/component/topic', { topic: 'data-structures' });
             }, 15);
 
-            // Log.debug('e', e );
 
-            es = esAdd( es, e );
+            await es.add(e);
 
-            e = getEntity(es,15);
-            // Log.debug('e', es );
+            e = await es.getEntity(15);
 
-            assert.ok( isEntity( e ) );
+            // Log.debug('e', es.comChanges );// getChanges(es.comChanges) );
 
-            e = buildEntity( es, ({component}) => {
-                component('/component/username', {username: 'alex'});
-                component('/component/status', {status: 'inactive'});
-                component('/component/channel_member', {channel: 3});
+            assert.ok(isEntity(e));
+
+            e = buildEntity(es, ({ component }) => {
+                component('/component/username', { name: 'alex' });
+                component('/component/status', { status: 'inactive' });
+                component('/component/channel_member', { channel: 3 });
             }, 15);
 
             // Log.debug('>----');
-            es = esAdd( es, e );
+
+            await es.add(e);
+
+            e = await es.getEntity(15);
 
             // Log.debug('e', es.entChanges, es.comChanges);
 
-            e = getEntity(es, 15);
-            // Log.debug('e', e);
+            assertHasComponents(es, e,
+                ['/component/username', '/component/status', '/component/channel_member']);
 
-            assertHasComponents( es, e, 
-                ['/component/username', '/component/status', '/component/channel_member' ] );
-
-            
-            e = buildEntity( es, ({component}) => {
-                component('/component/channel', {name: 'general'});
-            }, 15);
-            es = esAdd( es, e );
-            e = getEntity(es, 15);
-
-            assertHasComponents( es, e, ['/component/channel']);
+            const did = bfToValues(es.resolveComponentDefIds( ['/component/channel_member']))[0];
+            let com = getEntityComponent(e, did)
+            assert.equal(com.channel, 3);
+            // Log.debug('e', com);
         });
 
         it('updates an entity', async () => {
             let [es] = await buildEntitySet();
 
-            let com:OrphanComponent = { "@d": "/component/topic", topic: 'chat' };
+            let com: OrphanComponent = { "@d": "/component/topic", topic: 'chat' };
 
-            es = await esAdd( es, com );
+            await es.add(com);
 
             const cid = getChanges(es.comChanges, ChangeSetOp.Add)[0];
 
-            // Log.debug('changes', es);
+            com = await es.getComponent(cid);
 
-            com = await getComponent(es, cid );
-            
-            com = {...com, topic:'discussion'};
+            com = { ...com, topic: 'discussion' };
 
             // Log.debug('🦄', 'updating here');
-            
-            es = await esAdd(es, com);
 
-            com = await getComponent(es, cid );
+            await es.add(com);
+
+            com = await es.getComponent(cid);
 
             // Log.debug('final com', com );
 
-            assert.equal( com.topic, 'discussion' );
+            assert.equal(com.topic, 'discussion');
         });
 
     });
 
 
     describe('Removing', () => {
-        it('removes a component', () => {
-            let [es] = buildEntitySet();
-            let com = createComponent(es, '/component/channel', {name: 'chat'} );
+        it('removes a component', async () => {
+            let [es] = await buildEntitySet();
+            let com = es.createComponent('/component/channel', { name: 'chat' });
 
-            es = esAdd( es, com );
+            await es.add(com);
 
-            assert.equal( entitySetSize(es), 1 );
-            
-            const cid = getChanges( es.comChanges, ChangeSetOp.Add )[0];
-            
-            es = removeComponent( es, cid );
+            assert.equal(await es.size(), 1);
+
+            const cid = getChanges(es.comChanges, ChangeSetOp.Add)[0];
+
+            await es.removeComponent(cid);
 
             // Log.debug('es', es);
-            
-            assert.equal( entitySetSize(es), 0 );
+
+            assert.equal(await es.size(), 0);
 
         });
-        
-        it('removes an entity and all its components', () => {
-            let e:Entity;
-            let [es,buildEntity] = buildEntitySet();
 
-            e = buildEntity( es, ({component}) => {
-                component('/component/channel', {name: 'chat'});
-                component('/component/status', {status: 'inactive'});
-                component('/component/topic', {topic: 'data-structures'});
+        it('removes an entity and all its components', async () => {
+            let e: Entity;
+            let [es, buildEntity] = await buildEntitySet();
+
+            e = buildEntity(es, ({ component }) => {
+                component('/component/channel', { name: 'chat' });
+                component('/component/status', { status: 'inactive' });
+                component('/component/topic', { topic: 'data-structures' });
             }, 15);
 
-            es = esAdd( es, e );
+            await es.add(e);
 
-            assert.equal( entitySetSize(es), 1 );
-            
-            const eid = getChanges( es.entChanges, ChangeSetOp.Add )[0];
-            
-            assert.exists( eid, 'entity should have been added' );
+            const eid = getChanges(es.entChanges, ChangeSetOp.Add)[0];
 
-            es = removeEntity( es, eid );
+            assert.exists(eid, 'entity should have been added');
 
-            assert.equal( entitySetSize(es), 0 );
+            // const ae = await es.getEntity(id);
+            // let coms = Array.from( ae.components.values() ).slice(0,2)
+            // Log.debug('added e', coms );
+
+            // es = await removeComponents( es, coms );
+            await es.removeEntity(eid);
+
+            assert.equal(await es.size(), 0, 'no entities should exist');
         });
     });
 
 })
 
-function buildEntitySet(options?): [EntitySetMem, Function] {
-    let es = createEntitySet(options);
+async function buildEntitySet(options?): Promise<[EntitySetMem, Function]> {
+    let es = new EntitySetMem(options);
 
     const defs = [
         { uri: '/component/channel', properties: ['name'] },
@@ -317,17 +344,15 @@ function buildEntitySet(options?): [EntitySetMem, Function] {
         { uri: '/component/channel_member', properties: ['channel_member'] },
     ]
 
-    es = defs.reduce((es, dspec) => {
-        [es] = register(es, dspec);
-        return es;
-    }, es);
+    await defs.reduce( (p,def) => p.then( () => es.register(def)), Promise.resolve() );
+
 
     const buildEntity = (es: EntitySet, buildFn: BuildQueryFn, eid: number = 0) => {
         let e = createEntityInstance(eid);
         const component = (uri: string, props: object) => {
-            let def = getByUri(es, uri);
-            let com = createComponent(es as any, def, props);
-            e = addComponentUnsafe(e, getDefId(def), com, def.name );
+            let def = es.getByUri(uri);
+            let com = es.createComponent(def, props);
+            es.addComponentToEntity(e, com, getDefId(def));
         };
 
         buildFn({ component });

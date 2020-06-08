@@ -1,4 +1,5 @@
-import { ComponentId, Component,
+import {
+    ComponentId, Component,
     create as createComponentInstance,
     setEntityId as setComponentEntityId,
     getComponentId,
@@ -10,26 +11,17 @@ import { ComponentId, Component,
     toComponentId,
     isComponentLike
 } from "../component";
-import { ComponentDef, 
-    ComponentDefObj, 
-    create as createComponentDef, 
+import {
+    ComponentDef,
+    ComponentDefObj,
+    create as createComponentDef,
     toObject as defToObject,
-    hash as hashDef, 
+    hash as hashDef,
     isComponentDef,
-    Type as ComponentDefT} from '../component_def';
-import { getByUri, getByHash, getByDefId } from "../entity_set/registry";
-import { 
-    CreateEntitySetParams, 
-    markEntityAdd, 
-    markComponentUpdate, 
-    markEntityUpdate, 
-    AddType, AddOptions, 
-    clearChanges, 
-    markEntityRemove, 
-    markComponentRemove, 
-    assignEntityIds,
-    RemoveType } from "../entity_set";
-import { 
+    Type as ComponentDefT
+} from '../component_def';
+
+import {
     Type as EntityT,
     isEntity,
     create as createEntityInstance,
@@ -41,15 +33,16 @@ import {
     EntityList,
     createEntityList,
 } from "../entity";
-import { ChangeSet,
+import {
+    ChangeSet,
     create as createChangeSet,
-    add as addCS, 
-    update as updateCS, 
+    add as addCS,
+    update as updateCS,
     find as findCS,
     merge as mergeCS,
-    remove as removeCS, ChangeSetOp, getChanges 
+    remove as removeCS, ChangeSetOp, getChanges
 } from "../entity_set/change_set";
-import { 
+import {
     BitField,
     create as createBitField,
     get as bfGet,
@@ -60,545 +53,504 @@ import {
     toValues as bfToValues
 } from "../util/bitfield";
 import { createUUID } from "../util/uuid";
-import { SqlRef, 
-    sqlOpen, sqlIsOpen, 
-    sqlInsertDef, sqlRetrieveDefByUri, sqlRetrieveDefByHash, 
-    sqlRetrieveDefs, 
-    getLastEntityId, 
-    sqlUpdateEntity, 
-    sqlRetrieveEntity, 
-    sqlRetrieveComponent, 
-    sqlUpdateComponent, 
-    sqlCount, 
-    sqlDeleteComponent, sqlDeleteEntity, 
-    sqlRetrieveEntityComponents, 
+import {
+    SqlRef,
+    sqlOpen, sqlIsOpen,
+    sqlInsertDef, sqlRetrieveDefByUri, sqlRetrieveDefByHash,
+    sqlRetrieveDefs,
+    getLastEntityId,
+    sqlUpdateEntity,
+    sqlRetrieveEntity,
+    sqlRetrieveComponent,
+    sqlUpdateComponent,
+    sqlCount,
+    sqlDeleteComponent, sqlDeleteEntity,
+    sqlRetrieveEntityComponents,
     sqlComponentExists,
     sqlGetEntities
 } from "./sqlite";
 import { createLog } from "../util/log";
 import { isString, isInteger } from "../util/is";
 import { select } from "./query";
-import { EntitySet } from "../entity_set/types";
-export { getByHash, getByUri } from '../entity_set/registry';
+import { EntitySetMem, AddType, AddOptions, RemoveType, ESOptions, EntitySet } from "../entity_set";
+import { StackValue } from "../query/types";
 
 const Log = createLog('EntitySetSQL');
 
-/**
- * As a storage backed ES, this entityset has functions
- * as a ComponentRegistry
- */
-export interface EntitySetSQL extends EntitySet {
-    
-    // keep a reference to the open es db
-    db?: SqlRef;
-
-    isMemory: boolean;
-
-    debug: boolean;
-
-    // records entity changes from the last op
-    entChanges: ChangeSet<number>;
-    
-    // records component changes from the last op
-    comChanges: ChangeSet<ComponentId>;
-
-    // cached component defs
-    componentDefs: ComponentDefSQL[];
-    byUri: Map<string, number>;
-    byHash: Map<number, number>;
-}
 
 export interface ComponentDefSQL extends ComponentDef {
     tblName?: string;
     hash?: number;
 }
 
+interface CreateEntitySetParams {
+
+}
+
 export interface CreateEntitySetSQLParams extends CreateEntitySetParams {
-    // name: string;
+    name?: string;
     isMemory?: boolean;
     clearDb?: boolean;
     debug?: boolean;
 }
 
-export function create(options?:CreateEntitySetSQLParams):EntitySetSQL {
-    const uuid = options.uuid || createUUID();
-    const isMemory = options.isMemory ?? true;
-    const debug = options.debug ?? false;
-    
-    const entChanges = createChangeSet<number>();
-    const comChanges = createChangeSet<ComponentId>();
-    const entUpdates = new Map<number,BitField>();
-    const comUpdates = new Map<ComponentId,any>();
-
-    // Log.debug('[create]');
-    return {
-        type: 'sql',
-        isEntitySet:true,
-        isAsync: false,
-        db: undefined,
-        isMemory,
-        debug,
-        uuid, 
-        entChanges, comChanges,
-        entUpdates, comUpdates,
-        componentDefs: [],
-        byUri: new Map<string, number>(),
-        byHash: new Map<number, number>(),
-
-        esAdd: add,
-        esRegister: register,
-        esGetComponent: getComponent,
-        esGetComponentDefs: (es:EntitySetSQL) => getComponentDefs(es),
-        esEntities: (es:EntitySetSQL) => getEntities(es),
-        esGetEntity: (es:EntitySetSQL, eid:EntityId) => Promise.resolve(getEntity(es,eid)),
-        esSelect: select,
-        esClone: clone,
-        esSize: (es) => Promise.resolve(size(es)),
-    }
-}
-
-async function clone(es:EntitySetSQL):Promise<EntitySetSQL>{
-    return {
-        ...es
-    };
-}
 
 
 /**
- * Registers a new ComponentDef in the entityset
- * @param es 
- * @param value 
+ * As a storage backed ES, this entityset has functions
+ * as a ComponentRegistry
  */
-export function register( es: EntitySetSQL, value:ComponentDef|ComponentDefObj|any ): [EntitySetSQL, ComponentDef] {
-    es = openEntitySet(es);    
-    let def = createComponentDef( 0, value );
+export class EntitySetSQL extends EntitySetMem {
+
+    // keep a reference to the open es db
+    db?: SqlRef;
+
+    name: string;
+    isMemory: boolean;
+    debug: boolean;
+
+    type: string = 'sql';
+    isAsync: boolean = true;
 
 
-    // insert the def into the def tbl
-    def = sqlInsertDef( es.db, def );
+    constructor(options: CreateEntitySetSQLParams = {}) {
+        super(options as any);
+        this.isMemory = options.isMemory ?? true;
+        this.debug = options.debug ?? false;
+        this.name = options.name ?? 'ecs.sqlite';
+    }
 
-    // Log.debug('[register]', def);
-
-    const did = def[ComponentDefT];
-    const {hash,tblName} = (def as ComponentDefSQL);
-
-    es.componentDefs[did-1] = def;
-    es.byUri.set( def.uri, did );
-    es.byHash.set( hash, did );
-
-    return [es, def];
-}
-
-export function getComponentDefs( es:EntitySetSQL ): ComponentDef[] {
-    es = openEntitySet(es);
-    return sqlRetrieveDefs(es.db);
-}
-
-
-export function size(es:EntitySetSQL): number {
-    es = openEntitySet(es);
-    return sqlCount(es.db);
-    // const store = es.db.transaction(STORE_ENTITIES, 'readonly').objectStore(STORE_ENTITIES);
-    // return idbCount(store);
-}
-
-// export function getByUri( es:EntitySetSQL, uri:string ) {
-//     es = openEntitySet(es);
-//     let def = sqlRetrieveDefByUri(es.db, uri);
-//     return def;
-// }
-
-// export function getByHash( es:EntitySetSQL, id:number ) {
-//     es = openEntitySet(es);
-//     let def = sqlRetrieveDefByHash(es.db, id);
-//     return def;
-// }
-
-export function add(es: EntitySetSQL, item: AddType, options: AddOptions = {}): EntitySetSQL {
-    es = openEntitySet(es);
-    es = options.retain ? es : clearChanges(es as EntitySet) as EntitySetSQL;
-
-    if (Array.isArray(item)) {
-        // sort the incoming items into entities and components
-        let [ents, coms] = (item as any[]).reduce(([ents, coms], item) => {
-            if (isComponentLike(item)) {
-                coms.push(item);
-            } else if (isEntity(item)) {
-                ents.push(item);
-            }
-            return [ents, coms];
-        }, [[], []]);
-
-        // Log.debug('[add]', ents)
-
-        // add components from entity
-        es = ents.reduce((pes, e) => {
-            let coms = getEntityComponents(e);
-            // Log.debug('[add]', '🐦coms from e', getEntityId(e), coms.length);
-            return addComponents(pes, coms );
-        }, es);
+    clone(){
+        const {byUri,byHash,entChanges,comChanges} = this;
+        let componentDefs = this.componentDefs.map(d => ({...d}) );
         
-        // adds lone components
-        es = addComponents(es, coms);
+        let props = {
+            ...this,
+            componentDefs,
+            uuid: createUUID(),
+            byUri: new Map<string,number>(byUri),
+            byHash: new Map<number,number>(byHash),
+            entChanges: createChangeSet(entChanges),
+            comChanges: createChangeSet(comChanges),
+        }
 
-        es = applyRemoveChanges(es)
-    }
-    else if (isComponentLike(item)) {
-        es = addComponents(es, [item as Component]);
-    }
-    else if (isEntity(item)) {
-        let e = item as Entity
-        es = markRemoveComponents(es, e[EntityT]);
-        es = addComponents(es, getEntityComponents(e));
-    }
-
-    es = applyRemoveChanges(es)
-
-    return es;
-}
-
-
-export function removeComponent(es: EntitySetSQL, item: RemoveType, options: AddOptions = {}): EntitySetSQL {
-    es = options.retain ? es : clearChanges(es) as EntitySetSQL;
-    let cid = isComponentId(item) ? item as ComponentId : isComponent(item) ? getComponentId(item as Component) : undefined;
-    if (cid === undefined) {
-        return es;
-    }
-    es = markComponentRemove(es, cid) as EntitySetSQL;
-
-    // Log.debug('[removeComponent]', es );
-    return applyRemoveChanges(es);
-}
-
-export function removeEntity(es: EntitySetSQL, item: (number | Entity), options: AddOptions = {}): EntitySetSQL {
-    es = options.retain ? es : clearChanges(es) as EntitySetSQL;
-    let eid = isInteger(item) ? item as number : isEntity(item) ? getEntityId(item as Entity) : 0;
-    if (eid === 0) {
-        return es;
-    }
-    es = markEntityComponentsRemove(es, eid);
-    return applyRemoveChanges(es);
-}
-
-export function createComponent( registry:EntitySetSQL, defId:(string|number|ComponentDef), attributes = {} ): Component {
-    let def:ComponentDef = undefined;
-
-    // Log.debug('[createComponent]', defId, attributes, registry );
-    if( isString(defId) ){
-        def = getByUri(registry,  defId as string );
-    } else if( isInteger(defId) ){
-        def = getByHash(registry, defId as number) || registry.componentDefs[(defId as number)-1];
-    } else if( isComponentDef(defId) ){
-        def = defId as any as ComponentDef;
+        return new EntitySetSQL(props as any);
     }
 
-    if( def === undefined ){
-        // Log.debug('[createComponent]', registry.byUri.get( defId as string ), registry.componentDefs );
-        throw new Error(`component def not found: ${defId}`);
+    select( query:StackValue[], options ): Promise<StackValue[]> {
+        return select(this, query, options);
     }
 
-    let params = {
-        ...attributes,
-        '@d': def[ComponentDefT]
-    };
+    async add<ES extends EntitySet>(item: AddType, options: AddOptions = {}): Promise<ES> {
+        this.openEntitySet();
 
-    // Log.debug('[createComponent]', 'def', def[DefT] );
+        if (options.retain !== true) {
+            this.clearChanges();
+        }
+        const {debug} = options;
 
-    // create a component instance
-    const component = createComponentInstance(params);
+        if (Array.isArray(item)) {
+            let initial:[Entity[],Component[]] = [[], []];
+            // sort the incoming items into entities and components
+            let [ents, coms] = (item as any[]).reduce(([ents, coms], item) => {
+                if (isComponentLike(item)) {
+                    coms.push(item);
+                } else if (isEntity(item)) {
+                    ents.push(item);
+                }
+                return [ents, coms];
+            }, initial);
 
-    return component;
-}
+            // Log.debug('[add]', ents)
 
+            // add components on entities
+            await ents.reduce( (p,e) => p.then( () => this.addComponents(getEntityComponents(e))), Promise.resolve() );
 
-export function markComponentAdd(es: EntitySetSQL, com: Component): EntitySetSQL {
-    // adds the component to the entityset if it is unknown,
-    // otherwise marks as an update
-    const cid = getComponentId(com);
-    const [eid,did] = fromComponentId(cid);
-    const existing = sqlComponentExists(es.db, eid, did);// getComponent(es, cid);
+            // adds lone components
+            await this.addComponents(coms);
+        }
+        else if (isComponentLike(item)) {
+            await this.addComponents([item as Component]);
+        }
+        else if (isEntity(item)) {
+            let e = item as Entity
+            await this.markRemoveComponents(e[EntityT]);
+            await this.addComponents(getEntityComponents(e));
+        }
 
-    // Log.debug('[markComponentAdd]', cid, existing );
+        await this.applyRemoveChanges();
 
-    const def = getByDefId(es, did) as ComponentDefSQL;
-    
-    // Log.debug('[markComponentAdd]', com );
+        await this.applyUpdates();
 
-    sqlUpdateComponent( es.db, com, def );
-
-    if (existing) {
-        return markComponentUpdate(es as EntitySet, cid) as EntitySetSQL;
+        return this as unknown as ES;
     }
 
-    return { ...es, comChanges: addCS(es.comChanges, cid) };
-}
-
-export function markEntityComponentsRemove(es: EntitySetSQL, eid: number): EntitySetSQL {
-    const e = getEntity(es, eid, false);
-    if (e === undefined) {
-        return es;
+    async applyUpdates(){
     }
 
-    return bfToValues(e.bitField).reduce((es, did) =>
-        markComponentRemove(es, toComponentId(eid, did)), es as EntitySet) as EntitySetSQL;
-}
+    async removeComponent(item: RemoveType, options: AddOptions = {}): Promise<EntitySetSQL> {
+        if (options.retain !== true) {
+            this.clearChanges();
+        }
 
-function markRemoveComponents(es: EntitySetSQL, eid: number): EntitySetSQL {
-    if (eid === 0) {
-        return es;
+        let cid = isComponentId(item) ? item as ComponentId : isComponent(item) ? getComponentId(item as Component) : undefined;
+        if (cid === undefined) {
+            return this;
+        }
+        this.markComponentRemove(cid);
+
+        // Log.debug('[removeComponent]', es );
+        return this.applyRemoveChanges();
     }
 
-    const {db} = es;
+    // async removeEntity(item: (number | Entity), options: AddOptions = {}): Promise<EntitySetSQL> {
+    //     if (options.retain !== true) {
+    //         this.clearChanges();
+    //     }
 
-    let e = _getEntity(es, eid);
-    if( e === undefined ){
-        return es;
-    }
-
-    // const ebf = es.entities.get(id);
-    if (bfCount(e.bitField) === 0) {
-        return es;
-    }
-
-    const dids = bfToValues(e.bitField);
-
-    for (let ii = 0; ii < dids.length; ii++) {
-        es = markComponentRemove(es, toComponentId(eid, dids[ii])) as EntitySetSQL;
-    }
-
-    return es;
-}
-
-export function addComponents( es: EntitySetSQL, components: Component[]): EntitySetSQL {
-    // set a new (same) entity id on all orphaned components
-    [es, components] = assignEntityIds(es, components)
+    //     let eid = isInteger(item) ? item as number : isEntity(item) ? getEntityId(item as Entity) : 0;
+    //     if (eid === 0) {
+    //         return this;
+    //     }
+    //     await this.markEntityComponentsRemove(eid);
+    //     return this.applyRemoveChanges();
+    // }
 
 
-    
-    // let changedCids = getChanges(es.comChanges, ChangeSetOp.Add | ChangeSetOp.Update)
-    // Log.debug('[addComponents]', 'pre', changedCids);
-    
-    // to keep track of changes only in this function, we must temporarily replace
-    let changes = es.comChanges;
-    es.comChanges = createChangeSet<ComponentId>();
+    async markComponentAdd(com: Component): Promise<EntitySetSQL> {
+        // adds the component to the entityset if it is unknown,
+        // otherwise marks as an update
+        const cid = getComponentId(com);
+        const [eid, did] = fromComponentId(cid);
+        const existing = sqlComponentExists(this.db, eid, did);
 
-    // mark incoming components as either additions or updates
-    for( const com of components ){
-        es = markComponentAdd(es,com);
-    }
-    // es = components.reduce( (es, com) => markComponentAdd(es, com), es);
-    
-    // gather the components that have been added or updated and apply
-    let changedCids = getChanges(es.comChanges, ChangeSetOp.Add | ChangeSetOp.Update)
-    // Log.debug('[addComponents]', 'post', changedCids);
+        // Log.debug('[markComponentAdd]', cid, existing );
 
-    // combine the new changes with the existing
-    es.comChanges = mergeCS( changes, es.comChanges );
+        const def = this.getByDefId(did) as ComponentDefSQL;
 
-    // return changedCids.reduce((es, cid) => applyUpdatedComponents(es, cid), es);
-    for( const cid of changedCids ){
-        es = applyUpdatedComponents(es,cid);
-    }
-    return es;
-}
-
-
-function applyRemoveChanges(es: EntitySetSQL): EntitySetSQL {
-    // Log.debug('[applyRemoveChanges]', es.comChanges );
-    // applies any removal changes that have previously been marked
-    const removedComs = getChanges(es.comChanges, ChangeSetOp.Remove);
-
-    es = removedComs.reduce((es, cid) => applyRemoveComponent(es, cid), es);
-
-    // Log.debug('[applyRemoveChanges]', es.entChanges );
-
-    const removedEnts = getChanges(es.entChanges, ChangeSetOp.Remove);
-
-    es = removedEnts.reduce((es, eid) => applyRemoveEntity(es, eid), es);
-
-    return es;
-}
-
-function applyRemoveComponent(es: EntitySetSQL, cid: ComponentId): EntitySetSQL {
-    let [eid, did] = fromComponentId(cid);
-
-    const def = getByDefId( es, did );
-    // remove component
-    // Log.debug('[applyRemoveComponent]', eid, did );
-    let e = sqlDeleteComponent( es.db, eid, def );
-
-    if (bfCount(e.bitField) === 0) {
-        return markEntityRemove(es, eid) as EntitySetSQL;
-    } else {
-        // e = setEntity(es, e);
-    }
-
-    return es;
-}
-
-/**
- * Removes an entity from the store
- * @param es 
- * @param eid 
- */
-function applyRemoveEntity(es: EntitySetSQL, eid: number): EntitySetSQL {
-    sqlDeleteEntity( es.db, eid );
-    return es;
-}
-
-
-function applyUpdatedComponents(es: EntitySetSQL, cid: ComponentId): EntitySetSQL {
-    const [eid, did] = fromComponentId(cid);
-    let ebf: BitField;
-
-    [es, ebf] = getOrAddEntityBitfield(es, eid);
-
-    const isNew = findCS( es.entChanges, eid ) === ChangeSetOp.Add;
-
-    // Log.debug('[applyUpdatedComponents]', eid, isNew, ebf.get(did) === false );
-
-    // does the component already belong to this entity?
-    if (bfGet(ebf,did) === false) {
-        let e = createEntityInstance(eid);
-        e.bitField = bfSet(ebf,did);
+        // Log.debug('[markComponentAdd]', existing, com );
         
-        e = setEntity(es, e);
-
-        return isNew ? es : markEntityUpdate(es as EntitySetSQL, eid) as EntitySetSQL;
-    }
-
-    return isNew ? es : markEntityUpdate(es, eid) as EntitySetSQL;
-}
-
-/**
- * 
- * @param es 
- * @param eid 
- */
-function getOrAddEntityBitfield(es: EntitySetSQL, eid: number): [EntitySetSQL, BitField] {
-    // const store = es.db.transaction(STORE_ENTITIES, 'readonly').objectStore(STORE_ENTITIES);
-
-    let e = sqlRetrieveEntity(es.db, eid);
-
-    // Log.debug('[getOrAddEntityBitfield]', eid, e );
-    // let record = await idbGet(store, eid);
-    if( e === undefined ){
-        // e = createEntityInstance(eid, createBitfield() );
-        // e = setEntity( es, e );
+        sqlUpdateComponent(this.db, com, def);
         
-        return [markEntityAdd(es,eid) as EntitySetSQL, createBitField() ];
+        if (existing === true ) {
+            return this.markComponentUpdate(cid);
+        }
+        
+        this.comChanges = addCS(this.comChanges, cid);
+
+        return this;
     }
 
-    // let ebf = createBitField( record.bf );
+    async markEntityComponentsRemove(eid: number): Promise<EntitySetSQL> {
+        const e = await this.getEntity(eid, false);
+        if (e === undefined) {
+            return this;
+        }
 
-    return [es, e.bitField];
-}
+        for (const did of bfToValues(e.bitField)) {
+            this.markComponentRemove(toComponentId(eid, did));
+        }
 
-
-/**
- * Returns a Component by its id
- * @param es 
- * @param id 
- */
-export function getComponent(es: EntitySetSQL, id: ComponentId | Component): Component {
-    let cid:ComponentId = isComponentId(id) ? id as ComponentId : getComponentId(id as Component);
-    
-    es = openEntitySet(es);
-
-    let [eid,did] = fromComponentId(cid);
-    const def = getByDefId(es, did);
-    let com = sqlRetrieveComponent( es.db, eid, def );
-
-    return com;
-}
-
-
-
-function setEntity(es:EntitySetSQL, e:Entity): Entity {  
-    // Log.debug('[setEntity]', e);  
-    return sqlUpdateEntity(es.db, e);
-}
-
-function _getEntity(es:EntitySetSQL, eid:EntityId): Entity {
-    return sqlRetrieveEntity(es.db, eid);
-}
-
-export function createEntity(es: EntitySetSQL): [EntitySetSQL, number] {
-    es = openEntitySet(es);
-
-    let e = createEntityInstance();
-
-    e = setEntity( es, e );
-    const eid = getEntityId(e);
-    // Log.debug('[createEntity]', es);
-
-    es = markEntityAdd(es, eid ) as EntitySetSQL;
-
-    return [es, eid];
-}
-
-/**
- * Returns an entity instance with components
- * 
- * @param es 
- * @param eid 
- */
-export function getEntity(es:EntitySetSQL, eid:EntityId, populate:boolean = true): Entity {
-    es = openEntitySet(es);
-    let e = _getEntity(es, eid);
-    if( e === undefined ){
-        return undefined;
+        return this;
     }
 
-    if( !populate ){
+    async markRemoveComponents(eid: number): Promise<EntitySetSQL> {
+        if (eid === 0) {
+            return this;
+        }
+
+        let e = await this._getEntity(eid);
+        if (e === undefined) {
+            return this;
+        }
+        const { bitField } = e;
+
+        if (bfCount(bitField) === 0) {
+            return this;
+        }
+
+        // Log.debug('[markRemoveComponents]', eid, bitField.toValues() );
+
+        for (const did of bfToValues(bitField)) {
+            this.markComponentRemove(toComponentId(eid, did));
+        }
+
+        return this;
+    }
+
+    async addComponents(components: Component[], options: ESOptions = {}): Promise<EntitySetSQL> {
+        // set a new (same) entity id on all orphaned components
+        components = this.assignEntityIds(components)
+
+        // let changedCids = getChanges(es.comChanges, ChangeSetOp.Add | ChangeSetOp.Update)
+        // Log.debug('[addComponents]', 'pre', changedCids);
+
+        // to keep track of changes only in this function, we must temporarily replace
+        let changes = this.comChanges;
+        this.comChanges = createChangeSet<ComponentId>();
+
+        // mark incoming components as either additions or updates
+        await components.reduce( (p,com) => p.then( () => this.markComponentAdd(com)), Promise.resolve() );
+        
+        // gather the components that have been added or updated and apply
+        const changedCids = getChanges(this.comChanges, ChangeSetOp.Add | ChangeSetOp.Update);
+        // Log.debug('[addComponents]', 'post', changedCids);
+
+        // combine the new changes with the existing
+        this.comChanges = mergeCS(changes, this.comChanges);
+
+        // sequentially apply
+        await changedCids.reduce( (p,cid) => p.then( () => this.applyUpdatedComponents(cid)), Promise.resolve() );
+
+        return this;
+    }
+
+
+    async applyRemoveChanges(): Promise<EntitySetSQL> {
+        // applies any removal changes that have previously been marked
+        const removedComs = getChanges(this.comChanges, ChangeSetOp.Remove);
+
+        for (const cid of removedComs) {
+            this.applyRemoveComponent(cid);
+        }
+
+        // Log.debug('[applyRemoveChanges]', es.entChanges );
+
+        const removedEnts = getChanges(this.entChanges, ChangeSetOp.Remove);
+
+        for (const eid of removedEnts) {
+            this.applyRemoveEntity(eid);
+        }
+
+        return this;
+    }
+
+    async applyRemoveComponent(cid: ComponentId): Promise<EntitySetSQL> {
+        let [eid, did] = fromComponentId(cid);
+
+        const def = this.getByDefId(did);
+        // remove component
+        // Log.debug('[applyRemoveComponent]', eid, did );
+        let e = sqlDeleteComponent(this.db, eid, def);
+
+        if (bfCount(e.bitField) === 0) {
+            return this.markEntityRemove(eid);
+        } else {
+            // e = setEntity(es, e);
+        }
+
+        return this;
+    }
+
+    /**
+     * Removes an entity from the store
+     * @param es 
+     * @param eid 
+     */
+    async applyRemoveEntity(eid: number): Promise<EntitySetSQL> {
+        sqlDeleteEntity(this.db, eid);
+        return this;
+    }
+
+
+    async applyUpdatedComponents(cid: ComponentId, options: ESOptions = {}): Promise<EntitySetSQL> {
+        const [eid, did] = fromComponentId(cid);
+        let ebf: BitField;
+
+        ebf = await this.getOrAddEntityBitfield(eid);
+
+        const isNew = findCS(this.entChanges, eid) === ChangeSetOp.Add;
+
+        // Log.debug('[applyUpdatedComponents]', eid, isNew, ebf.get(did) === false );
+
+        // does the component already belong to this entity?
+        if (bfGet(ebf, did) === false) {
+            let e = createEntityInstance(eid);
+            e.bitField = bfSet(ebf, did);
+
+            e = this.setEntity(e);
+        }
+
+        if (isNew) {
+            this.markEntityUpdate(eid);
+        }
+
+        return this;
+    }
+
+    /**
+     * 
+     * @param es 
+     * @param eid 
+     */
+    async getOrAddEntityBitfield(eid: number): Promise<BitField> {
+        // const store = es.db.transaction(STORE_ENTITIES, 'readonly').objectStore(STORE_ENTITIES);
+
+        let e = sqlRetrieveEntity(this.db, eid);
+
+        // Log.debug('[getOrAddEntityBitfield]', eid, e );
+        // let record = await idbGet(store, eid);
+        if (e === undefined) {
+            // e = createEntityInstance(eid, createBitfield() );
+            // e = setEntity( es, e );
+            this.markEntityAdd(eid);
+            return createBitField();
+        }
+
+        return e.bitField;
+    }
+
+
+    /**
+     * Returns a Component by its id
+     * @param es 
+     * @param id 
+     */
+    async getComponent(id: ComponentId | Component): Promise<Component> {
+        let cid: ComponentId = isComponentId(id) ? 
+            id as ComponentId 
+            : getComponentId(id as Component);
+
+        this.openEntitySet();
+
+        let [eid, did] = fromComponentId(cid);
+        const def = this.getByDefId(did);
+        let com = sqlRetrieveComponent(this.db, eid, def);
+
+        return com;
+    }
+
+
+
+    setEntity(e: Entity): Entity {
+        // Log.debug('[setEntity]', e);  
+        return sqlUpdateEntity(this.db, e);
+    }
+
+    _getEntity(eid: EntityId): Entity {
+        return sqlRetrieveEntity(this.db, eid);
+    }
+
+    createEntity(): number {
+        this.openEntitySet();
+
+        let e = createEntityInstance();
+
+        e = this.setEntity(e);
+        const eid = getEntityId(e);
+        // Log.debug('[createEntity]', es);
+
+        this.markEntityAdd(eid);
+
+        return eid;
+    }
+
+    /**
+     * Returns an entity instance with components
+     * 
+     * @param es 
+     * @param eid 
+     */
+    async getEntity(eid: EntityId, populate: boolean = true): Promise<Entity> {
+        this.openEntitySet();
+        let e = this._getEntity(eid);
+        if (e === undefined) {
+            return undefined;
+        }
+
+        if (!populate) {
+            return e;
+        }
+
+        let dids = bfToValues(e.bitField);
+        let defs = dids.map(did => this.getByDefId(did));
+
+        let coms = sqlRetrieveEntityComponents(this.db, eid, defs);
+
+        // Log.debug('[getEntity]', coms );
+        for (const com of coms) {
+            const did = getComponentDefId(com);
+            const def = this.getByDefId(did);
+            e = addComponentUnsafe(e, did, com, def.name);
+        }
+
         return e;
     }
 
-    let dids = bfToValues(e.bitField);
-    let defs = dids.map( did => getByDefId(es,did) );
+    getEntities(): Promise<EntityList> {
+        this.openEntitySet();
 
-    let coms = sqlRetrieveEntityComponents( es.db, eid, defs );
+        let eids = sqlGetEntities(this.db);
 
-    // Log.debug('[getEntity]', coms );
-    for( const com of coms ){
-        const did = getComponentDefId(com);
-        const def = getByDefId(es,did);
-        e = addComponentUnsafe(e,did,com, def.name);
+        return Promise.resolve(createEntityList(eids));
     }
 
-    return e;
-}
 
-export async function getEntities(es:EntitySetSQL): Promise<EntityList> {
-    es = openEntitySet(es);
+    /**
+     * Registers a new ComponentDef in the entityset
+     * @param es 
+     * @param value 
+     */
+    async register(value: ComponentDef | ComponentDefObj | any): Promise<ComponentDef> {
+        this.openEntitySet();
+        let def = createComponentDef(0, value);
 
-    let eids = sqlGetEntities( es.db );
 
-    return Promise.resolve( createEntityList(eids) );
+        // insert the def into the def tbl
+        def = sqlInsertDef(this.db, def);
+
+        // Log.debug('[register]', def);
+
+        const did = def[ComponentDefT];
+        const { hash, tblName } = (def as ComponentDefSQL);
+
+        this.componentDefs[did - 1] = def;
+        this.byUri.set(def.uri, did);
+        this.byHash.set(hash, did);
+
+        return def;
+    }
+
+    async getComponentDefs(): Promise<ComponentDef[]> {
+        this.openEntitySet();
+        return sqlRetrieveDefs(this.db);
+    }
+
+
+    async size(): Promise<number> {
+        this.openEntitySet();
+        return sqlCount(this.db);
+    }
+
+
+
+    openEntitySet(options: OpenEntitySetOptions = {}): EntitySetSQL {
+        if (sqlIsOpen(this.db)) {
+            return this;
+        }
+        const readDefs = options.readDefs ?? true;
+        const { isMemory } = this;
+        const verbose = this.debug ? console.log : undefined;
+        const name = options.name ?? this.uuid;
+
+        // Log.debug('[constructor]', name, { ...options, isMemory, verbose });
+        this.db = sqlOpen(name, { ...options, isMemory, verbose });
+
+        // read component defs into local cache
+
+        return this;
+    }
+
+    closeEntitySet(es: EntitySetSQL) {
+
+    }
+
 }
 
 interface OpenEntitySetOptions {
+    name?: string;
     readDefs?: boolean;
     isMemory?: boolean;
     clearDb?: boolean;
-}
-
-function openEntitySet( es:EntitySetSQL, options:OpenEntitySetOptions = {} ): EntitySetSQL{
-    if( sqlIsOpen(es.db) ){
-        return es;
-    }
-    const readDefs = options.readDefs ?? true;
-    const {isMemory} = es;
-    const verbose = es.debug ? console.log : undefined;
-    
-    es.db = sqlOpen(es.uuid, {...options, isMemory, verbose});
-
-    // read component defs into local cache
-    
-    return es;
-}
-
-function closeEntitySet( es:EntitySetSQL ){
-
 }
 

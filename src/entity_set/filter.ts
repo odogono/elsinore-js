@@ -1,13 +1,11 @@
 import { pop, pushRaw } from "../query/stack";
 import { QueryStack, InstResult, SType, StackValue } from "../query/types";
-
-import { getByDefId } from "./registry";
 import { 
     BitField,
     toValues as bfToValues
 } from "../util/bitfield";
-import { EntitySet } from "./types";
 import { unpackStackValueR } from "../query/util";
+import { EntitySet } from ".";
 
 
 
@@ -31,7 +29,7 @@ export function parseFilterQuery( es:EntitySet, cmd?, left?, right? ){
 
 function prCA( es:EntitySet,dids, attr ){
     const did = bfToValues(dids)[0];
-    const def = getByDefId(es, did );
+    const def = es.getByDefId( did );
     // Log.debug('[prCA]', did, def)
     return { def:def, key:attr };
 }

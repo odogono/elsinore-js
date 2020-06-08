@@ -5,8 +5,7 @@ import { createLog } from '../../src/util/log';
 import { tokenize, tokenizeString } from '../../src/query/tokenizer';
 
 import {
-    EntitySetSQL,
-    create as createEntitySet,
+    EntitySetSQL
 } from '../../src/entity_set_sql';
 
 import {
@@ -70,6 +69,9 @@ import { onDefine } from '../../src/query/words/define';
 const Log = createLog('TestSQLQuery');
 
 const liveDB = { uuid: 'test.sqlite', isMemory: false };
+const testDB = { uuid: 'TEST-1', isMemory: true };
+
+const createEntitySet = () => new EntitySetSQL(testDB);
 
 const parse = (data) => tokenizeString(data, { returnValues: true });
 const sv = (v): StackValue => [SType.Value, v];
@@ -226,8 +228,7 @@ describe('Query (SQL)', () => {
         let [, result] = pop(stack);
         let es = unpackStackValue(result, SType.EntitySet);
 
-        assert.equal(await es.esSize(es), 4);
-
+        assert.equal(await es.size(), 4);
     })
 
     it('super select', async () => {
@@ -384,7 +385,7 @@ async function prep(insts?: string, fixture?: string): Promise<[QueryStack, Enti
         ['assert_type', onAssertType],
     ]);
     if (fixture) {
-        es = createEntitySet({ ...liveDB, debug: false });
+        es = createEntitySet();
         [stack] = await push(stack, [SType.EntitySet, es]);
 
         let todoInsts = await loadFixture(fixture);

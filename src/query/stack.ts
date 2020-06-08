@@ -6,7 +6,6 @@ import { stackToString } from "./util";
 import { toInteger } from "../util/to";
 import { EntityId, getEntityId } from "../entity";
 import { ComponentDefId, ComponentDef, getDefId } from "../component_def";
-import { getByDefId } from "../entity_set/registry";
 import { toValues as bfToValues } from '../util/bitfield';
 import { QueryStack, StackValue, WordFn, SType, 
     StackError, InstResult, AsyncInstResult, WordSpec, WordEntry 
@@ -416,7 +415,7 @@ export function popBitField<ST extends QueryStack, CD extends ComponentDef>(stac
     // Log.debug('[popBitField]', 'yes', stack.items);
     if( type === SType.Bitfield ){
         dids = bfToValues(bf);
-        defs = asObj ? dids.map( d => getByDefId(es, d) as CD ) : [];
+        defs = asObj ? dids.map( d => es.getByDefId(d) as CD ) : [];
     } else if( type === SType.Value && bf === 'all' ){
         // get all def ids
         if( asObj ){

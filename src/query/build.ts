@@ -1,5 +1,4 @@
-import { EntitySet } from "../entity_set/types";
-
+import { EntitySet } from "../entity_set";
 
 
 export type buildDefFn = (uri: string, ...args: any[]) => void;

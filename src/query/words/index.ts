@@ -24,23 +24,17 @@ import {
 import {
     isBoolean, isObject, isInteger
 } from '../../../src/util/is';
-import {
-    createComponent, getByDefId
-} from '../../../src/entity_set/registry';
+
 import {
     Entity, create as createEntityInstance, isEntity,
     addComponentUnsafe
 } from '../../../src/entity';
 import { isComponent, Component, isComponentList, getComponentDefId } from '../../../src/component';
-import {
-    create as createEntitySet,
-} from '../../../src/entity_set';
 
-import { EntitySet } from '../../../src/entity_set/types';
 
 import { createLog } from "../../util/log";
 import { stackToString, unpackStackValue, unpackStackValueR } from '../util';
-import { addComponentToEntity } from '../../entity_set/util';
+import { EntitySet, EntitySetMem } from '../../entity_set';
 
 const Log = createLog('QueryWords');
 
@@ -62,7 +56,7 @@ export async function onDup<QS extends QueryStack>(stack: QS, op): AsyncInstResu
     let out;
     if (val[0] === SType.EntitySet) {
         let es: EntitySet = unpackStackValue(val, SType.EntitySet);
-        let dup = await es.esClone(es);
+        let dup = await es.clone();
         out = [SType.EntitySet, dup];
     } else {
         // let o = unpackStackValue(val);
@@ -95,7 +89,7 @@ export async function onSelect<QS extends QueryStack>(stack: QS): AsyncInstResul
     //     return out;
     // },[]);
 
-    let result = await es.esSelect(es, query, { stack });
+    let result = await es.select(query, { stack });
 
     if (result) {
         // append output stack
@@ -125,7 +119,7 @@ export function onEntity<QS extends QueryStack>(stack: QS): InstResult<QS> {
                     acc = createEntityInstance();
                 }
                 const did = getComponentDefId(val[1]);
-                const def = getByDefId(stack.es, did);
+                const def = stack.es.getByDefId(did);
                 return addComponentUnsafe(acc, did, val[1], def.name);
             } else if (isInteger(val[1])) {
                 return createEntityInstance(val[1]);
@@ -163,7 +157,7 @@ export function onComponent<QS extends QueryStack>(stack: QS): InstResult<QS> {
     // Log.debug('[onComponent]', uri, attrs);
     // Log.debug('[onComponent]', es );
 
-    let com = createComponent(es, uri, attrs);
+    let com = es.createComponent(uri, attrs);
     // let def = createComponentDef( undefined, ...raw );
 
     return [stack, [SType.Component, com]];
@@ -185,11 +179,11 @@ export function onAddComponentToEntity<QS extends QueryStack>(stack: QS): InstRe
             // const did = getComponentDefId(com);
             // const def = getByDefId(es,did);
             // e = addComponentUnsafe(e, did, com, def.name );
-            e = addComponentToEntity(es, e, com);
+            e = es.addComponentToEntity(e, com);
         }
         // e = c.reduce((e, c) => addComponentToEntity(e, c), e);
     } else {
-        e = addComponentToEntity(es, e, c);
+        e = es.addComponentToEntity(e, c);
     }
     // Log.debug('[onAddComponentToEntity]', c );
 
@@ -208,8 +202,6 @@ export async function onAddToEntitySet<QS extends QueryStack>(stack: QS): AsyncI
     // DLog(stack, '[onAddToEntitySet]', isComponentDef(value), value );
     let es: EntitySet = unpackStackValueR(right, SType.EntitySet);
 
-    // try {
-    const { esAdd, esRegister, isAsync } = es;
 
     let values: StackValue[] = left[0] === SType.List ? left[1] : [left];
 
@@ -232,13 +224,14 @@ export async function onAddToEntitySet<QS extends QueryStack>(stack: QS): AsyncI
     }
 
     for (const def of defs) {
-        [es] = isAsync ? await esRegister(es, def) : esRegister(es, def);
+        await es.register(def);
     }
 
     if (coms.length > 0) {
         const debug = isDLogEnabled(stack);
         // DLog(stack, '[onAddToEntitySet]', coms.length, 'coms', isDLogEnabled(stack) );
-        es = isAsync ? await esAdd(es, coms, { debug }) : esAdd(es, coms, { debug });
+        await es.add( coms, {debug} );
+        // es = isAsync ? await esAdd(es, coms, { debug }) : esAdd(es, coms, { debug });
     }
 
     // } 
@@ -277,7 +270,7 @@ export function onEntitySet<QS extends QueryStack>(stack: QS): InstResult<QS> {
     [stack, data] = pop(stack);
 
     let options = unpackStackValueR(data, SType.Map);
-    let es = createEntitySet(options);
+    let es = new EntitySetMem(options);
 
     return [stack, [SType.EntitySet, es]];
 }

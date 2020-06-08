@@ -10,7 +10,7 @@ import {
     or as bfOr,
     toValues as bfToValues
 } from "../util/bitfield";
-import { EntitySetSQL, getEntity, getComponent, ComponentDefSQL } from ".";
+import { EntitySetSQL, ComponentDefSQL } from ".";
 import { createLog } from "../util/log";
 import { isInteger, isString, isBoolean } from "../util/is";
 
@@ -31,7 +31,6 @@ import {
     StackError,
 } from '../query/types';
 import { stackToString, unpackStackValue, unpackStackValueR } from "../query/util";
-import { resolveComponentDefIds, getByDefId } from "../entity_set/registry";
 import { sqlRetrieveEntityByDefId, 
     sqlRetrieveByQuery, 
     sqlRetrieveEntityComponents, 
@@ -233,8 +232,7 @@ export function fetchComponents(stack: SQLQueryStack): InstResult<SQLQueryStack>
  */
 export async function fetchEntity(stack: SQLQueryStack): AsyncInstResult<SQLQueryStack> {
     const {es} = stack;
-    const {esGetEntity} = es;
-
+    
     let data: StackValue;
     [stack, data] = pop(stack);
 
@@ -252,7 +250,7 @@ export async function fetchEntity(stack: SQLQueryStack): AsyncInstResult<SQLQuer
         return [stack, [SType.List, ents]];
 
     } else if (isInteger(eid)) {
-        let e = await esGetEntity(es,eid,false);
+        let e = await es.getEntity(eid,false);
         if (e === undefined) {
             return [stack, [SType.Value, false]];
         }

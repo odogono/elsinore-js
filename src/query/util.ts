@@ -1,7 +1,6 @@
 import { QueryStack, StackValue, SType } from "./types";
 import { getComponentId } from "../component";
 import { getEntityId } from "../entity";
-import { size as entitySetSize } from "../entity_set";
 import { stringify } from "../util/json";
 
 export function stackToString( stack:QueryStack ):string {

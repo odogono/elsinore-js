@@ -8,7 +8,6 @@ import { tokenizeString } from '../../src/query/tokenizer';
 
 import {
     EntitySetIDB,
-    create as createEntitySet,
     clearIDB,
 } from '../../src/entity_set_idb';
 
@@ -62,7 +61,6 @@ import {
     size as entitySize,
     getComponent as getEntityComponent,
 } from '../../src/entity';
-import { sqlClear } from '../../src/entity_set_sql/sqlite';
 import { fetchComponents } from '../../src/entity_set/query';
 import { onPluck } from '../../src/query/words/pluck';
 import { onDefine } from '../../src/query/words/define';
@@ -70,7 +68,7 @@ import { onDefine } from '../../src/query/words/define';
 
 const Log = createLog('TestIDBQuery');
 
-
+const createEntitySet = (options?) => new EntitySetIDB(options);
 
 
 
@@ -240,7 +238,8 @@ describe('Query (IDB)', () => {
         let [,result] = pop(stack);
         let es = unpackStackValue(result, SType.EntitySet);
 
-        assert.equal( await es.esSize(es), 4 );
+        // Log.debug('es', es);
+        assert.equal( await es.size(), 4 );
         // Log.debug('stack:', stringify(stack.items,1) );
         // ilog( es );
 
@@ -407,6 +406,7 @@ async function prep(insts?: string, fixture?: string): Promise<[QueryStack, Enti
         es = createEntitySet();
         [stack] = await push(stack, [SType.EntitySet, es]);
 
+        
         // console.time("loadFixture");
         let insts = await loadFixture(fixture);
         // console.timeEnd("loadFixture");
@@ -424,6 +424,7 @@ async function prep(insts?: string, fixture?: string): Promise<[QueryStack, Enti
         [stack] = await pushValues(stack, words);
         // console.timeEnd("run query")
     }
+    
     return [stack, es];
 }
 
