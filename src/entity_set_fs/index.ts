@@ -1,5 +1,16 @@
 
-import { EntitySet, CreateEntitySetParams, markEntityAdd, clearChanges, markEntityUpdate, AddType, AddOptions, markComponentRemove, markComponentUpdate, markEntityRemove, RemoveType } from "../entity_set";
+import { 
+    CreateEntitySetParams, 
+    markEntityAdd, 
+    clearChanges, 
+    markEntityUpdate, 
+    AddType, 
+    AddOptions, 
+    markComponentRemove, 
+    markComponentUpdate, 
+    markEntityRemove, 
+    RemoveType 
+} from "../entity_set";
 import { 
     BitField,
     create as createBitField,
@@ -60,7 +71,8 @@ import { buildFlake53, parseFlake53 } from '../util/id';
 import { getByDefId, getByUri, getByHash } from '../entity_set/registry';
 import { fchmodSync } from 'fs-extra';
 import { isString, isInteger, isEmpty } from '../util/is';
-import { StackValue } from '../query/stack';
+import { StackValue } from '../query/types';
+import { EntitySet } from "../entity_set/types";
 export { getByHash, getByUri } from '../entity_set/registry';
 
 const Log = createLog('EntitySetFS');

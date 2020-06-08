@@ -16,22 +16,21 @@ import { isInteger, isString, isBoolean } from "../util/is";
 
 import {
     create as createStack,
-    SType,
     addWords,
     pushValues,
-    QueryStack,
-    StackValue,
-    InstResult, AsyncInstResult,
-    push, pop, peek, pushRaw,
-    findV,
-    find as findValue,
-    StackError,
+    pop, peek,
     isStackValue,
     entityIdFromValue,
     popBitField,
 } from "../query/stack";
-import { unpackStackValue, unpackStackValueR, onPluck, onDefine } from "../query/words";
-import { stackToString } from "../query/util";
+import {
+    SType,
+    QueryStack,
+    StackValue,
+    InstResult, AsyncInstResult,
+    StackError,
+} from '../query/types';
+import { stackToString, unpackStackValue, unpackStackValueR } from "../query/util";
 import { resolveComponentDefIds, getByDefId } from "../entity_set/registry";
 import { sqlRetrieveEntityByDefId, 
     sqlRetrieveByQuery, 
@@ -41,6 +40,8 @@ import { sqlRetrieveEntityByDefId,
 import { Type, ComponentDefId, ComponentDef } from "../component_def";
 import { onLogicalFilter, parseFilterQuery } from "../entity_set/filter";
 import { onComponentAttr, buildBitfield } from "../entity_set/query";
+import { onDefine } from "../query/words/define";
+import { onPluck } from "../query/words/pluck";
 
 const Log = createLog('SQLQuery');
 
@@ -230,8 +231,10 @@ export function fetchComponents(stack: SQLQueryStack): InstResult<SQLQueryStack>
  * @param es 
  * @param stack 
  */
-export function fetchEntity(stack: SQLQueryStack): InstResult<SQLQueryStack> {
+export async function fetchEntity(stack: SQLQueryStack): AsyncInstResult<SQLQueryStack> {
     const {es} = stack;
+    const {esGetEntity} = es;
+
     let data: StackValue;
     [stack, data] = pop(stack);
 
@@ -249,7 +252,7 @@ export function fetchEntity(stack: SQLQueryStack): InstResult<SQLQueryStack> {
         return [stack, [SType.List, ents]];
 
     } else if (isInteger(eid)) {
-        let e = getEntity(es,eid,false);
+        let e = await esGetEntity(es,eid,false);
         if (e === undefined) {
             return [stack, [SType.Value, false]];
         }
@@ -269,8 +272,14 @@ export function fetchEntity(stack: SQLQueryStack): InstResult<SQLQueryStack> {
         throw new StackError(`@e unknown type ${type}`)
     }
 
-    let result = eids.map(eid => getEntity(es,eid, false) )
-    .map(eid => eid === undefined ? [SType.Value, false] : [SType.Entity,eid]);
+    let ents = await sqlRetrieveEntities( es.db, eids );
+    let result = ents.map( e => [SType.Entity, getEntityId(e)] );
+
+    // let result = [];
+    // for( const eid of eids ){
+    //     const e = await esGetEntity(es, eid, false);
+    //     result.push( e === undefined ? [SType.Value,false] : [SType.Entity,e] );
+    // }
 
     return [stack, [SType.List, result]];
 }

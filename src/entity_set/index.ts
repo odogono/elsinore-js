@@ -56,60 +56,19 @@ import {
     merge as mergeCS,
     ChangeSetOp, getChanges
 } from "./change_set";
-import { generateId } from './simple_id';
 import { createLog } from "../util/log";
 import { isInteger, isObject, isString } from "../util/is";
 import { MatchOptions } from '../constants';
 import { select } from "./query";
-import { StackValue } from "../query/stack";
 import { buildFlake53 } from "../util/id";
+import { EntitySetMem, EntitySet } from "./types";
+import { getEntity } from "./util";
 
 export const Type = '@es';
 
 
 
 const Log = createLog('ESMem');
-
-
-export interface EntitySet {
-    type: string;
-    isAsync: boolean;
-
-    isEntitySet: boolean;
-
-    uuid: string;
-
-    entChanges: ChangeSet<number>;
-    comChanges: ChangeSet<ComponentId>;
-
-    comUpdates: Map<ComponentId,any>;
-    entUpdates: Map<number,BitField>;
-
-    componentDefs: ComponentDef[];
-    byUri: Map<string, number>;
-    byHash: Map<number, number>;
-
-    // ugh, this is turning into a class, but query demands
-    // a neutral way of accessing entitysets
-    esAdd: (es,data,options) => any;
-    esRegister: (es,def) => any;
-    esGetComponentDefs: (es) => ComponentDef[];
-    esGetComponent: (es,cid:(ComponentId|Component)) => any;
-    esEntities: (es:EntitySet, bf?:BitField) => Promise<EntityList>;
-    esGetEntity: (es,eid:EntityId, populate?:boolean) => Promise<Entity>;
-    esSelect: (es, query:StackValue[], options) => Promise<StackValue[]>;
-    esClone: (es) => Promise<EntitySet>;
-    esSize: (es:this) => Promise<number>;
-}
-
-export interface EntitySetMem extends EntitySet {
-    isEntitySetMem: boolean;
-
-    // a map of {entity_id, def_id} to Component.t
-    components: Map<ComponentId, Component>;
-
-    entities: Map<EntityId, BitField>;
-}
 
 
 export interface CreateEntitySetParams {
@@ -278,38 +237,6 @@ export function size(es: EntitySetMem): number {
 }
 
 
-
-
-/**
- * 
- * @param es 
- * @param eid 
- */
-export function getEntity(es: EntitySetMem, eid: number, populate:boolean = true): Entity {
-    let ebf = es.entities.get(eid);
-    if (ebf === undefined) {
-        Log.debug('[getEntity]', 'nope', eid );
-        return undefined;
-    }
-    let e = createEntityInstance(eid,ebf);
-    
-    if( !populate ){
-        return e;
-    }
-
-    for( const did of bfToValues(ebf) ){
-        const com = es.components.get(toComponentId(eid, did));
-        e = addComponentToEntity(es, e, com, did );
-    }
-
-    return e;
-}
-
-export function addComponentToEntity<ES extends EntitySet>(es: ES, e:Entity, com:Component, did?:ComponentDefId ): Entity {
-    did = did === undefined ? getComponentDefId(com) : did;
-    const def = getByDefId(es,did);
-    return addComponentUnsafe(e, did, com, def.name);
-}
 
 /**
  * Returns a Component by its id

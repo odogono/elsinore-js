@@ -18,7 +18,7 @@ import { ComponentDef,
     isComponentDef,
     Type as ComponentDefT} from '../component_def';
 import { getByUri, getByHash, getByDefId } from "../entity_set/registry";
-import { EntitySet, 
+import { 
     CreateEntitySetParams, 
     markEntityAdd, 
     markComponentUpdate, 
@@ -78,6 +78,7 @@ import { SqlRef,
 import { createLog } from "../util/log";
 import { isString, isInteger } from "../util/is";
 import { select } from "./query";
+import { EntitySet } from "../entity_set/types";
 export { getByHash, getByUri } from '../entity_set/registry';
 
 const Log = createLog('EntitySetSQL');
@@ -564,10 +565,6 @@ export function getEntity(es:EntitySetSQL, eid:EntityId, populate:boolean = true
         const def = getByDefId(es,did);
         e = addComponentUnsafe(e,did,com, def.name);
     }
-
-    // e = coms.reduce( (e,com) => {
-    //     return addComponentUnsafe(e,did,com, def.name);
-    // }, e);
 
     return e;
 }

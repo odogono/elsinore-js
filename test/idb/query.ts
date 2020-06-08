@@ -12,16 +12,18 @@ import {
     clearIDB,
 } from '../../src/entity_set_idb';
 
+import { 
+    SType, 
+    QueryStack, 
+    StackValue
+} from '../../src/query/types';
+
 import {
     create as createStack,
-    SType,
     addWords,
     pushValues,
-    QueryStack,
-    StackValue,
     push, pop,
     find as findValue,
-
 } from '../../src/query/stack';
 
 import {
@@ -30,32 +32,26 @@ import {
     onArraySpread,
     onAdd, onConcat, onMapOpen, 
     onEntity,
-    onArgError,
     onComponentDef, onComponent, 
     onEntitySet, onAddComponentToEntity,
     onMap,
     onReduce,
     onFilter,
     onClear,
-    onValue,
-    onDefine,
     onAddToEntitySet,
     onAssertType,
-    unpackStackValue,
     onBuildMap,
     onSelect,
-    unpackStackValueR,
     onDup,
     fetchComponentDef,
     onPrint,
     onDrop,
-    onPluck,
     onFetchArray,
     onUnexpectedError,
     onUnique
 } from '../../src/query/words';
 import {
-    stackToString,
+    stackToString, unpackStackValue, unpackStackValueR,
 } from '../../src/query/util';
 import {
     toValues as bfToValues,
@@ -68,6 +64,8 @@ import {
 } from '../../src/entity';
 import { sqlClear } from '../../src/entity_set_sql/sqlite';
 import { fetchComponents } from '../../src/entity_set/query';
+import { onPluck } from '../../src/query/words/pluck';
+import { onDefine } from '../../src/query/words/define';
 
 
 const Log = createLog('TestIDBQuery');

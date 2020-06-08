@@ -1,12 +1,13 @@
-import { QueryStack, InstResult, pop, SType, StackValue, pushRaw } from "../query/stack";
+import { pop, pushRaw } from "../query/stack";
+import { QueryStack, InstResult, SType, StackValue } from "../query/types";
 
-import { EntitySet } from ".";
 import { getByDefId } from "./registry";
-import { unpackStackValue, unpackStackValueR } from "../query/words";
 import { 
     BitField,
     toValues as bfToValues
 } from "../util/bitfield";
+import { EntitySet } from "./types";
+import { unpackStackValueR } from "../query/util";
 
 
 

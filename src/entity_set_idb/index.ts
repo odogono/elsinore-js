@@ -3,7 +3,6 @@ import {
     AddType,
     clearChanges,
     CreateEntitySetParams, 
-    EntitySet,
     assignEntityIds,
     markEntityAdd,
     markComponentUpdate,
@@ -83,6 +82,7 @@ import { idbOpen, idbDeleteDB,
 import { isString, isInteger } from "../util/is";
 import { getByUri, getByHash, resolveComponent, getByDefId } from "../entity_set/registry";
 import { select } from "./query";
+import { EntitySet } from "../entity_set/types";
 
 const Log = createLog('EntitySetIDB');
 
@@ -406,13 +406,6 @@ export async function getEntity(es:EntitySetIDB, eid:EntityId, populate:boolean 
         e = addComponentUnsafe(e,cdid,com,def.name);
     }
 
-    // e = result.reduce( (e,{value:cdat}) => {
-    //     let {'_e':ceid, '_d':cdid, ...rest} = cdat;
-    //     let com = {'@e':ceid, '@d':cdid, ...rest};
-    //     const def = getByDefId(es,cdid);
-
-    //     return addComponentUnsafe(e,cdid,com,def.name);
-    // }, e);
 
     return e;
 }

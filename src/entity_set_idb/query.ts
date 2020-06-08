@@ -1,24 +1,24 @@
 import { createLog } from "../util/log";
-import { EntitySetIDB, ComponentDefIDB, getEntity } from ".";
+import { EntitySetIDB } from ".";
 
 import {
     create as createStack,
-    SType,
     addWords,
     pushValues,
-    QueryStack,
-    StackValue,
-    InstResult, AsyncInstResult,
-    push, pop, peek, pushRaw,
-    findV,
-    find as findValue,
-    StackError,
+    pop, peek,
     isStackValue,
     entityIdFromValue,
     popBitField,
 } from "../query/stack";
+import {
+    SType,
+    QueryStack,
+    StackValue,
+    InstResult, AsyncInstResult,
+    StackError,
+} from '../query/types';
+
 import { onComponentAttr, buildBitfield } from "../entity_set/query";
-import { onDefine, onPluck, unpackStackValueR, unpackStackValue } from "../query/words";
 import { onLogicalFilter, parseFilterQuery } from "../entity_set/filter";
 import { 
     BitField,
@@ -32,8 +32,11 @@ import {
 } from "../util/bitfield";
 import { isInteger } from "../util/is";
 import { Entity, EntityId, getEntityId, isEntity } from "../entity";
-import { idbRetrieveEntityByDefId, idbRetrieveComponent, idbRetrieveComponents, idbRetrieveByQuery, idbRetrieveEntities } from "./idb";
+import { idbRetrieveEntityByDefId, idbRetrieveComponents, idbRetrieveByQuery, idbRetrieveEntities } from "./idb";
 import { ComponentDefId } from "../component_def";
+import { unpackStackValueR, unpackStackValue } from "../query/util";
+import { onPluck } from "../query/words/pluck";
+import { onDefine } from "../query/words/define";
 
 const Log = createLog('IDBQuery');
 
@@ -195,7 +198,8 @@ export async function fetchEntity(stack: IDBQueryStack): AsyncInstResult<IDBQuer
         let ents = await matchEntities(es, bf);
         return [stack, [SType.List, ents]];
     } else if (isInteger(eid)) {
-        let e = getEntity(es,eid,false);
+        let ents = await idbRetrieveEntities(es.db,[eid]);
+        let e = ents.length > 0 ? ents[0] : undefined;
         // Log.debug('[fetchEntity]', es.entities);
         if (e === undefined) {
             return [stack, [SType.Value, false]];
@@ -219,15 +223,6 @@ export async function fetchEntity(stack: IDBQueryStack): AsyncInstResult<IDBQuer
     let ents = await idbRetrieveEntities( es.db, eids );
 
     let result = ents.map( e => [SType.Entity, getEntityId(e)] );
-
-    // let result = [];
-    // for(const eid of eids ){
-    //     let e = await getEntity(es, eid, false);
-    //     result.push( e === undefined ? [SType.Value, false] : [SType.Entity,eid]);
-    // }
-
-    // let result = eids.map(eid => getEntity(es,eid, false) )
-    // .map(eid => eid === undefined ? [SType.Value, false] : [SType.Entity,eid]);
 
     return [stack, [SType.List, result]];
 }

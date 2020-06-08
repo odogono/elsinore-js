@@ -28,7 +28,7 @@ import {
     toValues as bfToValues
 } from "../util/bitfield";
 import { Component, toComponentId } from '../component';
-import { SType } from '../query/stack';
+import { SType } from '../query/types';
 import { isBoolean } from '../util/is';
 
 const Log = createLog('Sqlite');
@@ -459,10 +459,19 @@ export function sqlRetrieveDefByHash(ref: SqlRef, id: number): ComponentDef {
     return createComponentDef(did, JSON.parse(schema));;
 }
 
-export function sqlRetrieveEntities(ref:SqlRef):Entity[]{
+export function sqlRetrieveEntities(ref:SqlRef, eids?:EntityId[] ):Entity[]{
     const { db } = ref;
-    let stmt = db.prepare(`SELECT eid,did FROM tbl_entity_component ORDER BY eid;`);
-    let rows = stmt.all();
+    let rows, stmt;
+    if( eids !== undefined ){
+        const params = buildInParamString(eids);
+        stmt = db.prepare(`SELECT eid,did FROM tbl_entity_component WHERE eid IN (${params}) ORDER BY eid`);
+        rows = stmt.all( ...eids );
+        // rows = stmt.all( ...eids );
+    } else {
+        stmt = db.prepare(`SELECT eid,did FROM tbl_entity_component ORDER BY eid;`);
+        rows = stmt.all();
+    }
+
     let result = rows.reduce((result, { eid, did }) => {
         let e = result[eid];
         if (e === undefined) {

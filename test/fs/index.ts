@@ -3,17 +3,13 @@ import { assert } from 'chai';
 import { createLog } from '../../src/util/log';
 import { 
     create as createStack, 
-    SType, 
     addWords, 
     pushValues, 
-    QueryStack, 
-    StackValue, 
-    InstResult, AsyncInstResult, 
-    push, pop, peek, pushRaw, 
-    findV, 
-    popOfType,
-    assertStackValueType 
+    push
 } from '../../src/query/stack';
+import { 
+    SType
+} from '../../src/query/types';
 import {
     onComponentDef,
     onAddToEntitySet,
@@ -24,7 +20,6 @@ import { Entity,
     getComponent as getEntityComponent,
     size as entitySize, 
     isEntity,
-    EntityList,
     addComponentUnsafe} from '../../src/entity';
 import { 
     toObject as defToObject, 
@@ -34,7 +29,6 @@ import {
     Type,
     getDefId
 } from '../../src/component_def';
-import { ComponentList, getComponentEntityId } from '../../src/component';
 import { 
     // EntitySet, 
     EntitySetFS,
@@ -44,23 +38,11 @@ import {
     size as entitySetSize,
     add as esAdd, 
     createComponent, 
-    // removeComponent, 
-    // removeEntity,
     getByUri,
     getByHash,
     getEntity,
     getComponent,
-    // getComponents as esGetComponents,
-    // getEntities as esGetEntities,
-    // getComponentDefs,
     createEntity,
-    // clearIDB,
-    // markComponentAdd,
-    // getComponent,
-    // addComponents,
-    // EntitySetMem,
-    // ESQuery,
-    // compileQueryPart
 } from '../../src/entity_set_fs';
 import { 
     assertHasComponents, 

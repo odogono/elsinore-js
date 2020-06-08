@@ -1,49 +1,33 @@
 
-import { omit } from '../../src/util/omit';
-
-// import * as InstCDef from '../../src/query/insts/component_def';
-// import * as InstComC from '../../src/query/insts/component';
-// import {COM,COMs} from '../../src/query/insts/component';
-// import * as InstEnt from '../../src/query/insts/entity';
-// import * as InstES from '../../src/query/insts/entity_set';
-// import * as InstVal from '../../src/query/insts/value';
-// import * as InstEq from '../../src/query/insts/equals';
-// import * as InstAd from '../../src/query/insts/add';
-// import * as InstAttr from '../../src/query/insts/attribute';
-// import * as InstSelect from '../../src/query/insts/select';
-// import * as InstStack from '../../src/query/insts/stack';
-// import * as InstBf from '../../src/query/insts/bitfield';
-// import * as InstCR from '../../src/query/insts/component_registry';
-// import {VL} from '../../src/query/insts/value';
-// import {
-//     ComponentRegistry,
-//     resolveComponentDefIds,
-//     Type as ComponentRegistryT, getByDefId} from '../../src/component_registry';
-
-import { create as createQueryStack, 
-    QueryStack, 
-    SType,
-    StackValue,
+import {
+    create as createQueryStack,
     addWords,
     push,
     pushValues,
-    pop} from '../../src/query/stack';
+    pop
+} from '../../src/query/stack';
 import {
-    // buildAndExecute as buildQuery,
+    SType,
+    QueryStack,
+    StackValue,
+} from '../../src/query/types';
+import {
     BuildQueryFn,
 } from '../../src/query/build';
 import { Entity } from '../../src/entity';
-import { EntitySet, Type as EntitySetT, 
-    
-    create as createEntitySet,
-    getEntity,
-    EntitySetMem} from '../../src/entity_set';
-import { getDefId, toObject as defToObject, ComponentDef, Type } from '../../src/component_def';
-import{ getComponentId, getComponentDefId, toObject as componentToObject } from '../../src/component';
+import { getDefId, toObject as defToObject } from '../../src/component_def';
+import { toObject as componentToObject } from '../../src/component';
 import { createLog } from '../../src/util/log';
 import { tokenizeString } from '../../src/query/tokenizer';
 import { stringify } from '../../src/util/json';
-import { onSwap, onConcat, onListOpen, onMapOpen, onEntity, onComponentDef, onComponent, onEntitySet, onAddArray, onAddComponentToEntity, onAddToEntitySet, unpackStackValue } from '../../src/query/words';
+import {
+    onSwap, onConcat, onListOpen, onMapOpen, onEntity, 
+    onComponentDef, onComponent, onEntitySet, 
+    onAddArray, onAddComponentToEntity,
+    onAddToEntitySet
+} from '../../src/query/words';
+import { EntitySet, EntitySetMem } from '../../src/entity_set/types';
+import { unpackStackValue } from '../../src/query/util';
 
 const Log = createLog('StackUtils');
 
@@ -53,46 +37,46 @@ const Log = createLog('StackUtils');
 
 
 
-export const parse = (data) => tokenizeString( data, {returnValues:true} );
-export const sv = (v):StackValue => [SType.Value,v];
+export const parse = (data) => tokenizeString(data, { returnValues: true });
+export const sv = (v): StackValue => [SType.Value, v];
 
 
 /**
  * Exports the contents of an entityset as a series of instructions
  * @param es 
  */
-export async function esToInsts( es:EntitySet ):Promise<string> {
-    let result:string[] = [];
-    const {esGetComponentDefs, esEntities, esGetEntity} = es;
+export async function esToInsts(es: EntitySet): Promise<string> {
+    let result: string[] = [];
+    const { esGetComponentDefs, esEntities, esGetEntity } = es;
 
     let defs = esGetComponentDefs(es);
 
-    result = defs.reduce( (result,def) => {
-        let obj = defToObject(def,false);
+    result = defs.reduce((result, def) => {
+        let obj = defToObject(def, false);
         // Log.debug('def', def);
-        result.push( `${stringify(obj)} !d` );
+        result.push(`${stringify(obj)} !d`);
         return result;
-    },result);
+    }, result);
     result.push('concat +');
 
     let eids = await esEntities(es);
 
-    result = await eids.entityIds.reduce( async (result,eid) => {
+    result = await eids.entityIds.reduce(async (result, eid) => {
         let buffer = await result;
         let e = await esGetEntity(es, eid);
         let inst = ``;
         let coms = Array.from(e.components.values());
-        if( coms.length === 0 ){
+        if (coms.length === 0) {
             return buffer;
         }
-        inst = inst + coms.map( com => {
-            let {"@d":did, "@e":eid, ...obj} = componentToObject(com);
-            let def = defs.find( d => getDefId(d) === did );
+        inst = inst + coms.map(com => {
+            let { "@d": did, "@e": eid, ...obj } = componentToObject(com);
+            let def = defs.find(d => getDefId(d) === did);
             obj = [def.uri, obj];
             return `${stringify(obj)} !c`
         }).join('\n');
         return [...buffer, inst + '\n' + 'concat +'];
-    }, Promise.resolve(result) );
+    }, Promise.resolve(result));
 
     // if( eids.entityIds.length > 0 ){
     //     result.push('concat +');
@@ -109,14 +93,14 @@ export interface PrepareFixtureOptions {
     allowOps?: string[];
 }
 
-export async function loadFixtureDefs( name:string ) {
-    return prepareFixture(name, {allowOps:['!d']});
+export async function loadFixtureDefs(name: string) {
+    return prepareFixture(name, { allowOps: ['!d'] });
 }
 
-export async function prepareFixture( name:string, options:PrepareFixtureOptions = {} ): Promise<[ QueryStack, EntitySet ]> {
+export async function prepareFixture(name: string, options: PrepareFixtureOptions = {}): Promise<[QueryStack, EntitySet]> {
     let stack = buildQueryStack();
-    let op:SType;
-    let es:EntitySet;// = options.addToEntitySet ? createEntitySet({}) : undefined;
+    let op: SType;
+    let es: EntitySet;// = options.addToEntitySet ? createEntitySet({}) : undefined;
 
     // // add the registry to the stack
     // [stack] = push( stack, [ComponentRegistryT, es] );
@@ -157,11 +141,11 @@ export async function prepareFixture( name:string, options:PrepareFixtureOptions
 
     // registry = findV( stack, ComponentRegistryT );
 
-    return [ stack, es ];
+    return [stack, es];
 }
 
 
-export function buildQueryStack(){
+export function buildQueryStack() {
     // const insts:InstModuleDef[] = [
     //     InstStack, InstCDef,
     //     InstComC,
@@ -195,17 +179,17 @@ export function buildQueryStack(){
 //     return [stack, registry];
 // }
 
-export function buildAndExecuteQuery( stack:QueryStack, buildFn:BuildQueryFn ): [QueryStack,Entity] {
-    let entity:Entity;
+export function buildAndExecuteQuery(stack: QueryStack, buildFn: BuildQueryFn): [QueryStack, Entity] {
+    let entity: Entity;
 
     // stack = buildQuery( stack, buildFn );
 
     // [stack, [,entity]] = push( stack, InstEnt.ENTs );
 
-    return [stack,entity];
+    return [stack, entity];
 }
 
-export async function buildEntity( es:EntitySet, query:string, entityId:number = 0 ): Promise<Entity> {
+export async function buildEntity(es: EntitySet, query: string, entityId: number = 0): Promise<Entity> {
 
     let stack = createQueryStack();
     stack = addWords(stack, [
@@ -223,16 +207,16 @@ export async function buildEntity( es:EntitySet, query:string, entityId:number =
         ['+', onAddToEntitySet, SType.EntitySet, SType.Any],
     ]);
 
-    
+
     [stack] = await push(stack, [SType.EntitySet, es]);
-    
+
     let insts = parse(`${query} concat ${entityId} !e swap +`);
     [stack] = await pushValues(stack, insts);
 
     let ev;
-    [stack,ev] = pop(stack);
+    [stack, ev] = pop(stack);
 
-    let e = unpackStackValue(ev,SType.Entity);
+    let e = unpackStackValue(ev, SType.Entity);
 
     return e;
 }
@@ -241,7 +225,7 @@ export async function buildEntity( es:EntitySet, query:string, entityId:number =
 
 
 
-export function serialiseStack(stack:QueryStack): any[] {
+export function serialiseStack(stack: QueryStack): any[] {
     let result = [];
     // let registry:ComponentRegistry;
 
@@ -278,7 +262,7 @@ export function serialiseStack(stack:QueryStack): any[] {
 //     })
 // }
 
-export function serialiseEntitySet( es:EntitySetMem ): any[] {
+export function serialiseEntitySet(es: EntitySetMem): any[] {
     // const list = matchEntitySetEntities(es, createBitfield('all') ) as EntityList;
     // return list.entityIds.reduce( (res,eid) => {
     //     const e = getEntity(es, eid );
@@ -296,7 +280,7 @@ export function serialiseEntitySet( es:EntitySetMem ): any[] {
     return [];
 }
 
-export function serialiseEntity( es:EntitySet, e:Entity ): any[] {
+export function serialiseEntity(es: EntitySet, e: Entity): any[] {
     // const eid = getEntityId(e);
     // const coms = getComponents(e);
     // let res = coms.reduce( (res,com) => {

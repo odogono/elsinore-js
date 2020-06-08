@@ -1,6 +1,12 @@
 import { EntityId,  getEntityId, isEntity } from "../entity";
-import { ComponentId, ComponentList, toComponentId, isComponentList, createComponentList, fromComponentId, Component, isComponent, getComponentDefId, getComponentEntityId } from "../component";
-import { EntitySet, EntitySetMem, getEntity, getComponent, isEntitySet } from ".";
+import {
+    toComponentId, 
+    getComponentDefId, 
+    getComponentEntityId 
+} from "../component";
+// import { 
+//     EntitySetMem, getEntity, 
+// } from ".";
 import { createLog } from "../util/log";
 import { isObject, isInteger, isString, isBoolean } from "../util/is";
 import { 
@@ -16,29 +22,30 @@ import {
 import {
     resolveComponentDefIds, getByDefId
 } from "./registry";
-import { Type as EntityT } from '../entity';
-import { getComponentId } from '../component';
 import {
     create as createStack,
-    SType,
     addWords,
     pushValues,
-    QueryStack,
-    StackValue,
-    InstResult, AsyncInstResult,
-    push, pop, peek, pushRaw,
-    findV,
+    pop, peek,
     find as findValue,
-    StackError,
     isStackValue,
-    DLog,
     entityIdFromValue,
     popBitField,
 } from "../query/stack";
-import { unpackStackValue, unpackStackValueR, onPluck, onFilter, onDefine } from "../query/words";
-import { stackToString } from "../query/util";
-import { ComponentDef, ComponentDefId, getDefId } from "../component_def";
+import {
+    SType,
+    QueryStack,
+    StackValue,
+    InstResult, AsyncInstResult,
+    StackError,
+} from "../query/types";
+import { onPluck } from "../query/words/pluck";
+import { onDefine } from "../query/words/define";
+import { ComponentDefId, getDefId } from "../component_def";
 import { onLogicalFilter, parseFilterQuery } from './filter';
+import { EntitySetMem } from "./types";
+import { getEntity } from "./util";
+import { unpackStackValue, unpackStackValueR } from "../query/util";
 
 const Log = createLog('ESMemQuery');
 
@@ -296,6 +303,7 @@ export function buildBitfield<QS extends QueryStack>(stack: QS): InstResult<QS> 
  */
 export function fetchEntity(stack: ESMemQueryStack): InstResult<ESMemQueryStack> {
     const {es} = stack;
+    const {esGetEntity} = es;
     let data: StackValue;
     [stack, data] = pop(stack);
 
@@ -310,7 +318,7 @@ export function fetchEntity(stack: ESMemQueryStack): InstResult<ESMemQueryStack>
         bf = eid as BitField;
         eids = matchEntities(es, undefined, bf);
     } else if (isInteger(eid)) {
-        let e = getEntity(es,eid,false);
+        let e = esGetEntity(es,eid,false);
         // Log.debug('[fetchEntity]', es.entities);
         if (e === undefined) {
             return [stack, [SType.Value, false]];
@@ -331,8 +339,11 @@ export function fetchEntity(stack: ESMemQueryStack): InstResult<ESMemQueryStack>
         throw new StackError(`@e unknown type ${type}`)
     }
 
-    let result = eids.map(eid => getEntity(es,eid, false) )
-    .map(eid => eid === undefined ? [SType.Value, false] : [SType.Entity,eid]);
+    let result = [];
+    for( const eid of eids ){
+        const e = getEntity(es, eid, false);
+        result.push( e === undefined ? [SType.Value,false] : [SType.Entity,e] );
+    }
 
     return [stack, [SType.List, result]];
 }

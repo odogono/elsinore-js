@@ -146,12 +146,8 @@ export async function idbRetrieveEntityComponentIds(db: IDBDatabase, eid: Entity
 
 export async function idbRetrieveEntities(db: IDBDatabase, eids: number[]): Promise<Entity[]> {
 
-    // Log.debug('[idbRetrieveEntityIdByDefId]', dids);
-
     let store = db.transaction(STORE_COMPONENTS, 'readonly').objectStore(STORE_COMPONENTS);
-    // const index = store.index('by_did');
-
-
+    
     let result;
     result = await idbGetAllOf(store, eids, true);
 

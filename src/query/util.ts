@@ -1,4 +1,4 @@
-import { QueryStack, StackValue, SType } from "./stack";
+import { QueryStack, StackValue, SType } from "./types";
 import { getComponentId } from "../component";
 import { getEntityId } from "../entity";
 import { size as entitySetSize } from "../entity_set";
@@ -45,4 +45,35 @@ export function valueToString( val:StackValue ):string {
         default:
             return val.length === 2 ? `(${type}, ${stringify(value)})` : stringify(val);
     }
+}
+
+
+
+
+export function unpackStackValue(val: StackValue, assertType: (SType | SType[]) = SType.Any, recursive: boolean = false): any {
+    let [type, value] = val;
+    if (!Array.isArray(assertType)) {
+        assertType = [assertType];
+    }
+
+    if (assertType.indexOf(SType.Any) === -1 && assertType.indexOf(type) === -1) {
+        throw new Error(`expected type ${assertType}, got ${type}`);
+    }
+
+    // Log.debug('[unpackStackValue]', type, val);
+    if (type === SType.List) {
+        return recursive ? value.map(av => unpackStackValue(av, SType.Any, true)) : value;
+    }
+    if (type === SType.Map) {
+        return recursive ? Object.keys(value).reduce((res, key) => {
+            return { ...res, [key]: unpackStackValue(value[key], SType.Any, true) }
+        }, {}) : value;
+    } else {
+        // Log.debug('[unpackStackValue]', 'wat', value);
+        return value;
+    }
+}
+
+export function unpackStackValueR(val: StackValue, assertType: SType = SType.Any) {
+    return unpackStackValue(val, assertType, true);
 }

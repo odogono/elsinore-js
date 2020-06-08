@@ -1,81 +1,20 @@
 
 import { isObject, isString, isPromise, isFunction, isInteger } from "../util/is";
-import { stringify } from "../util/json";
 import { createLog } from "../util/log";
 import { deepExtend } from "../util/deep_extend";
-import { unpackStackValue } from "./words";
-import { EntitySet } from "../entity_set";
 import { stackToString } from "./util";
 import { toInteger } from "../util/to";
 import { EntityId, getEntityId } from "../entity";
 import { ComponentDefId, ComponentDef, getDefId } from "../component_def";
 import { getByDefId } from "../entity_set/registry";
 import { toValues as bfToValues } from '../util/bitfield';
-
-export enum SType {
-    Value = '%v',
-    List = '%[]',
-    Map = '%{}',
-    Function = '%()',
-    Bitfield = '%bf',
-    Entity = '%e',
-    EntitySet = '%es',
-    Component = '%c',
-    ComponentDef = '%d',
-    ComponentAttr = '%ca',
-    // ComponentValue = '%cv',
-    Any = '%*',
-    Filter = '%|'
-    // Undefined = '%un'
-};
-
+import { QueryStack, StackValue, WordFn, SType, 
+    StackError, InstResult, AsyncInstResult, WordSpec, WordEntry 
+} from "./types";
 const Log = createLog('QueryStack');
 
-export interface InstDefMeta {
-    op: string | string[];
-}
 
 
-/**
- * http://wiki.laptop.org/go/Forth_Lesson_1
- */
-
-
-export type InstResult<QS extends QueryStack> = [
-    QS, StackValue?, boolean?
-];
-export type AsyncInstResult<QS extends QueryStack> = Promise<InstResult<QS>>;
-
-export type StackValue = [SType] | [SType, any];
-
-export const Type = '@qs';
-
-type WordFn<QS extends QueryStack> = SyncWordFn<QS> | AsyncWordFn<QS>;
-type SyncWordFn<QS extends QueryStack> = (stack: QS, val: StackValue) => InstResult<QS>;
-type AsyncWordFn<QS extends QueryStack> = (stack: QS, val: StackValue) => Promise<InstResult<QS>>;
-
-type WordSpec<QS extends QueryStack> = [string, WordFn<QS>|StackValue, ...(SType|string)[] ];
-
-type WordEntry<QS extends QueryStack> = [ WordFn<QS>, SType[] ];
-
-interface Words<QS extends QueryStack> {
-    [name: string]: WordEntry<QS>[]
-}
-
-
-export interface QueryStackDefs {
-    [def: string]: StackValue;
-}
-
-export interface QueryStack {
-    id: number;
-    es?:EntitySet;
-    items: StackValue[];
-    words: Words<this>;
-    _root: this;
-    _parent: this;
-    _child: this;
-}
 let stackId = 0;
 
 export function create<QS extends QueryStack>(): QS {
@@ -86,21 +25,6 @@ export function create<QS extends QueryStack>(): QS {
     } as QS;
 }
 
-export interface StackError {
-    original?: any;
-}
-export class StackError extends Error {
-    constructor(...args) {
-        super(...args)
-        Object.setPrototypeOf(this, StackError.prototype);
-        // Log.debug('StackError!', args, this);
-        // Maintains proper stack trace for where our error was thrown (only available on V8)
-        if (Error.captureStackTrace) {
-            Error.captureStackTrace(this, StackError)
-        }
-        this.name = 'StackError';
-    }
-}
 
 
 export function isStackValue(value: any): boolean {

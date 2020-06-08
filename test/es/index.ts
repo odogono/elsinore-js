@@ -11,23 +11,23 @@ import { Entity,
     isEntity,
     addComponentUnsafe
 } from '../../src/entity';
-import { EntitySet, 
+import { 
     create as createEntitySet,
     size as entitySetSize,
     add as esAdd, 
     removeComponent, 
-    getEntity,
     getComponent,
     getComponents as esGetComponents,
     getEntities as esGetEntities,
     createEntity,
-    EntitySetMem,
     removeEntity} from '../../src/entity_set';
 import { assertHasComponents } from '../util/assert';
 import { getChanges, ChangeSetOp } from '../../src/entity_set/change_set';
 import { fromComponentId, getComponentDefId, Component, OrphanComponent } from '../../src/component';
 import { isComponentDef, hash as hashDef, getDefId } from '../../src/component_def';
 import { BuildQueryFn } from '../../src/query/build';
+import { EntitySetMem, EntitySet } from '../../src/entity_set/types';
+import { getEntity } from '../../src/entity_set/util';
 
 const Log = createLog('TestEntitySet');
 

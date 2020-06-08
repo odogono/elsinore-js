@@ -5,17 +5,18 @@ import { createLog } from '../../src/util/log';
 import { tokenizeString } from '../../src/query/tokenizer';
 import {
     create as createStack,
-    SType,
     addWords,
     pushValues,
+    push, pop,
+    find as findValue,
+} from '../../src/query/stack';
+import {
+    SType,
     QueryStack,
     StackValue,
     AsyncInstResult,
-    push, pop,
-    find as findValue,
     StackError,
-
-} from '../../src/query/stack';
+} from '../../src/query/types';
 
 import {
     toValues as bfToValues
@@ -37,30 +38,23 @@ import {
     onMap,
     onReduce,
     onPush, onPop,
-    onPluck,
     onUnique,
     onFilter,
     onClear,
-    onValue,
-    onDefine,
     onAddToEntitySet,
     onAssertType,
-    unpackStackValue,
-    unpackStackValueR,
     onBuildMap
-} from '../../src/query/words';
+} from '../../src/query/words'
+
 import {
-    stackToString,
+    stackToString, unpackStackValueR, unpackStackValue,
 } from '../../src/query/util';
 import { create as createComponentDef, isComponentDef } from '../../src/component_def';
 import {
     create as createEntitySet,
     add as addToES,
     isEntitySet,
-    createEntity,
-    EntitySet,
-    size as entitySetSize,
-    EntitySetMem
+    size as entitySetSize
 } from '../../src/entity_set';
 import { isString } from '../../src/util/is';
 import { register, createComponent } from '../../src/entity_set/registry';
@@ -72,6 +66,9 @@ import { isComponent, Component, isComponentList } from '../../src/component';
 import { esToInsts } from '../util/stack';
 import { getChanges, ChangeSetOp } from '../../src/entity_set/change_set';
 import { fetchComponents, buildBitfield } from '../../src/entity_set/query';
+import { EntitySetMem, EntitySet } from '../../src/entity_set/types';
+import { onPluck } from '../../src/query/words/pluck';
+import { onDefine } from '../../src/query/words/define';
 
 
 

@@ -20,7 +20,7 @@ import {
     or as bfOr,
     toValues as bfToValues
 } from "../util/bitfield";
-import { EntitySet } from "./index";
+import { EntitySet } from "./types";
 
 export type ComponentDefs = Array<ComponentDef>;
 
