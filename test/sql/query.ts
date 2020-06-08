@@ -22,7 +22,7 @@ import {
 } from '../../src/query/stack';
 
 import {
-    onSwap, onArrayOpen,
+    onSwap, onListOpen,
     onAddArray,
     onArraySpread,
     onAdd, onConcat, onMapOpen,
@@ -160,7 +160,7 @@ describe('Query (SQL)', () => {
         // console.log( util.inspect( stack.items, {depth:null} ) );
 
         let [, result] = pop(stack);
-        assert.equal(result[0], SType.Array);
+        assert.equal(result[0], SType.List);
         let coms = unpackStackValueR(result);
         assert.equal(coms[0].text, "do some shopping");
     });
@@ -320,7 +320,7 @@ describe('Query (SQL)', () => {
 
         let result;
         [, result] = pop(stack);
-        result = unpackStackValue(result, SType.Array);
+        result = unpackStackValue(result, SType.List);
         let nicknames = result.map(v => v[1].nickname).filter(Boolean);
         assert.includeMembers(nicknames, ['koolgrap', 'lauryn', 'missy']);
     })
@@ -335,10 +335,10 @@ async function prep(insts?: string, fixture?: string): Promise<[QueryStack, Enti
 
     stack = addWords(stack, [
         ['+', onAddComponentToEntity, SType.Entity, SType.Component],
-        ['+', onAddComponentToEntity, SType.Entity, SType.Array],
+        ['+', onAddComponentToEntity, SType.Entity, SType.List],
         ['+', onAddToEntitySet, SType.EntitySet, SType.Any],
         // pattern match stack args
-        ['+', onAddArray, SType.Array, SType.Any],
+        ['+', onAddArray, SType.List, SType.Any],
         // important that this is after more specific case
         ['+', onAdd, SType.Value, SType.Value],
         ['*', onAdd, SType.Value, SType.Value],
@@ -347,38 +347,38 @@ async function prep(insts?: string, fixture?: string): Promise<[QueryStack, Enti
         ['!=', onAdd, SType.Value, SType.Value],
         ['.', onPrint, SType.Any],
         ['..', onPrint],
-        ['@', onFetchArray, SType.Array, SType.Value],
+        ['@', onFetchArray, SType.List, SType.Value],
 
-        ['[', onArrayOpen],
+        ['[', onListOpen],
         ['{', onMapOpen],
         ['}', onUnexpectedError],
         [']', onUnexpectedError],
         ['to_map', onBuildMap],
         ['drop', onDrop, SType.Any],
         ['swap', onSwap, SType.Any, SType.Any],
-        ['map', onMap, SType.Array, SType.Array],
-        ['pluck', onPluck, SType.Array, SType.Value],
-        ['pluck', onPluck, SType.Array, SType.Array],
-        ['unique', onUnique, SType.Array],
-        ['filter', onFilter, SType.Array, SType.Array],
-        ['reduce', onReduce, SType.Array, SType.Value, SType.Array],
+        ['map', onMap, SType.List, SType.List],
+        ['pluck', onPluck, SType.List, SType.Value],
+        ['pluck', onPluck, SType.List, SType.List],
+        ['unique', onUnique, SType.List],
+        ['filter', onFilter, SType.List, SType.List],
+        ['reduce', onReduce, SType.List, SType.Value, SType.List],
         ['define', onDefine, SType.Any, SType.Value],
         ['let', onDefine, SType.Any, SType.Value],
         ['concat', onConcat],
         ['cls', onClear],
         ['dup', onDup, SType.Any],
         ['over', onDup, SType.Any],
-        ['select', onSelect, SType.EntitySet, SType.Array],
-        ['spread', onArraySpread, SType.Array],
+        ['select', onSelect, SType.EntitySet, SType.List],
+        ['spread', onArraySpread, SType.List],
         ['!d', onComponentDef, SType.Map],
-        ['!d', onComponentDef, SType.Array],
+        ['!d', onComponentDef, SType.List],
         ['!d', onComponentDef, SType.Value],
         ['@d', fetchComponentDef, SType.EntitySet],
         ['@d', fetchComponentDef, SType.EntitySet, SType.Value],
-        // ['!bf', buildBitfield, SType.Array],
+        // ['!bf', buildBitfield, SType.List],
         // ['!bf', buildBitfield, SType.Value],
         ['!es', onEntitySet, SType.Map],
-        ['!c', onComponent, SType.Array],
+        ['!c', onComponent, SType.List],
         ['@c', fetchComponents],
         ['!e', onEntity, SType.Value],
         ['assert_type', onAssertType],
@@ -415,11 +415,11 @@ async function prep(insts?: string, fixture?: string): Promise<[QueryStack, Enti
 //         ['{', onMapOpen],
 //         ['!e', onEntity],
 //         // ['@e', onEntityFetch, SType.Value],
-//         ['!d', onComponentDef, SType.Array],
+//         ['!d', onComponentDef, SType.List],
 //         ['@d', fetchComponentDef, SType.EntitySet],
-//         ['!c', onComponent, SType.Array],
+//         ['!c', onComponent, SType.List],
 //         ['!es', onEntitySet, SType.Map],
-//         ['+', onAddArray, SType.Array, SType.Any],
+//         ['+', onAddArray, SType.List, SType.Any],
 //         ['+', onAddComponentToEntity, SType.Entity, SType.Any],
 //         ['+', onAddToEntitySet, SType.EntitySet, SType.Any],
 //     ]);

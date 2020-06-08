@@ -61,7 +61,7 @@ export async function select(es: EntitySetMem, query: StackValue[], options = {}
     
     // add first pass words
     stack = addWords<ESMemQueryStack>(stack, [
-        ['!bf', buildBitfield, SType.Array],
+        ['!bf', buildBitfield, SType.List],
         ['!bf', buildBitfield, SType.Value],
         ['!ca', onComponentAttr],
         ['define', onDefine],
@@ -124,7 +124,7 @@ export function applyFilter(stack:ESMemQueryStack): InstResult<ESMemQueryStack> 
     let eids = walkFilterQuery( es, Array.from(es.entities.keys()), ...result ).sort();
     // Log.debug('[applyFilter]', 'result eids', eids );
 
-    return [stack, [SType.Array,eids.map(eid => [SType.Entity,eid])] ];
+    return [stack, [SType.List,eids.map(eid => [SType.Entity,eid])] ];
 }
 
 function walkFilterQuery( es:EntitySetMem, eids:EntityId[], cmd?, ...args ){
@@ -187,10 +187,10 @@ export function fetchValue(stack: ESMemQueryStack): InstResult<ESMemQueryStack> 
     let type = arg[0];
     let value;
 
-    if (type === SType.Array) {
+    if (type === SType.List) {
         value = unpackStackValue(arg);
         value = value.map(v => [SType.Value, v]);
-        value = [SType.Array, value];
+        value = [SType.List, value];
     }
 
     return [stack, value];
@@ -217,7 +217,7 @@ export function fetchComponents(stack: ESMemQueryStack): InstResult<ESMemQuerySt
         [stack,from] = pop(stack);
         if( from[0] === SType.Entity ){
             eids = [unpackStackValueR(from)];
-        } else if( from[0] === SType.Array ){
+        } else if( from[0] === SType.List ){
             // Log.debug('[fetchComponent]', from[1]);          
             eids = from[1].map( it => {
                 return isStackValue(it) ? getEntityId(it[1])
@@ -232,7 +232,7 @@ export function fetchComponents(stack: ESMemQueryStack): InstResult<ESMemQuerySt
 
     // if an empty eid array has been passed, then no coms can be selected
     if( eids !== undefined && eids.length === 0 ){
-        return [stack, [SType.Array, coms] ];
+        return [stack, [SType.List, coms] ];
     }
 
     coms = Array.from( es.components.values() );
@@ -246,7 +246,7 @@ export function fetchComponents(stack: ESMemQueryStack): InstResult<ESMemQuerySt
 
     coms = coms.map(c => [SType.Component, c]);
    
-    return [stack, [SType.Array, coms]];
+    return [stack, [SType.List, coms]];
 }
 
 
@@ -320,13 +320,13 @@ export function fetchEntity(stack: ESMemQueryStack): InstResult<ESMemQueryStack>
     else if( Array.isArray(eid) ){
         eids = eid;
     }
-    else if (type === SType.Array) {
-        let arr = unpackStackValue(data, SType.Array, false);
+    else if (type === SType.List) {
+        let arr = unpackStackValue(data, SType.List, false);
         eids = arr.map(row => entityIdFromValue(row)).filter(Boolean);
     }
     else if( eid === 'all' ){
         let ents = matchEntities(es, undefined, 'all');
-        return [stack, [SType.Array, ents]];
+        return [stack, [SType.List, ents]];
     } else {
         throw new StackError(`@e unknown type ${type}`)
     }
@@ -334,7 +334,7 @@ export function fetchEntity(stack: ESMemQueryStack): InstResult<ESMemQueryStack>
     let result = eids.map(eid => getEntity(es,eid, false) )
     .map(eid => eid === undefined ? [SType.Value, false] : [SType.Entity,eid]);
 
-    return [stack, [SType.Array, result]];
+    return [stack, [SType.List, result]];
 }
 
 

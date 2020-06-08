@@ -26,7 +26,6 @@ import {
     findV,
     find as findValue,
     StackError,
-    StackOp,
     isStackValue,
     entityIdFromValue,
     popBitField,
@@ -64,7 +63,7 @@ export async function select(es: EntitySetSQL, query: StackValue[], options = {}
 
     // add first pass words
     stack = addWords<SQLQueryStack>(stack, [
-        ['!bf', buildBitfield, SType.Array],
+        ['!bf', buildBitfield, SType.List],
         ['!bf', buildBitfield, SType.Value],
         ['!ca', onComponentAttr],
         ['define', onDefine],
@@ -88,11 +87,11 @@ export async function select(es: EntitySetSQL, query: StackValue[], options = {}
     stack = addWords<SQLQueryStack>(stack, [
         ['@e', fetchEntity],
         ['@c', fetchComponents, SType.Entity, 'all' ],
-        ['@c', fetchComponents, SType.Array, SType.Bitfield ],
+        ['@c', fetchComponents, SType.List, SType.Bitfield ],
         ['@c', fetchComponents, SType.Entity, SType.Bitfield ],
         ['@c', fetchComponents, 'all' ],
         ['@c', fetchComponents, SType.Bitfield ],
-        ['@c', fetchComponents, SType.Array ],
+        ['@c', fetchComponents, SType.List ],
         ['@c', fetchComponents, SType.Entity ],
         ['@v', fetchValue],
         // ['@cv', fetchComponentValues, SType.Entity ],
@@ -101,8 +100,8 @@ export async function select(es: EntitySetSQL, query: StackValue[], options = {}
         ['!fil', applyFilter, SType.Filter],
 
         ['limit', applyLimit],
-        ['pluck', onPluck, SType.Array, SType.Value],
-        ['pluck', onPluck, SType.Array, SType.Array],
+        ['pluck', onPluck, SType.List, SType.Value],
+        ['pluck', onPluck, SType.List, SType.List],
     ]);
 
     // make sure any filter values have a following cmd
@@ -176,10 +175,10 @@ export function fetchValue(stack: SQLQueryStack): InstResult<SQLQueryStack> {
     let type = arg[0];
     let value;
 
-    if (type === SType.Array) {
+    if (type === SType.List) {
         value = unpackStackValue(arg);
         value = value.map(v => [SType.Value, v]);
-        value = [SType.Array, value];
+        value = [SType.List, value];
     }
 
     return [stack, value];
@@ -206,7 +205,7 @@ export function fetchComponents(stack: SQLQueryStack): InstResult<SQLQueryStack>
         // Log.debug('[fetchComponents]', from );
         if( from[0] === SType.Entity ){
             eids = [unpackStackValueR(from)];
-        } else if( from[0] === SType.Array ){
+        } else if( from[0] === SType.List ){
             eids = from[1].map( it => {
                 return isStackValue(it) ? getEntityId(it[1])
                 : isEntity(it) ? getEntityId(it) : undefined;
@@ -219,7 +218,7 @@ export function fetchComponents(stack: SQLQueryStack): InstResult<SQLQueryStack>
     
     coms = sqlRetrieveComponents(es.db, eids, defs || es.componentDefs);
 
-    return [stack, [SType.Array, coms.map(c => [SType.Component,c] )]];
+    return [stack, [SType.List, coms.map(c => [SType.Component,c] )]];
 }
 
 
@@ -247,7 +246,7 @@ export function fetchEntity(stack: SQLQueryStack): InstResult<SQLQueryStack> {
         bf = eid as BitField;
         let ents = matchEntities(es, bf);
 
-        return [stack, [SType.Array, ents]];
+        return [stack, [SType.List, ents]];
 
     } else if (isInteger(eid)) {
         let e = getEntity(es,eid,false);
@@ -259,13 +258,13 @@ export function fetchEntity(stack: SQLQueryStack): InstResult<SQLQueryStack> {
     else if( Array.isArray(eid) ){
         eids = eid;
     }
-    else if (type === SType.Array) {
-        let arr = unpackStackValue(data, SType.Array, false);
+    else if (type === SType.List) {
+        let arr = unpackStackValue(data, SType.List, false);
         eids = arr.map(row => entityIdFromValue(row)).filter(Boolean);
     }
     else if( eid === 'all' ){
         let ents = matchEntities(es);
-        return [stack, [SType.Array, ents]];
+        return [stack, [SType.List, ents]];
     } else {
         throw new StackError(`@e unknown type ${type}`)
     }
@@ -273,7 +272,7 @@ export function fetchEntity(stack: SQLQueryStack): InstResult<SQLQueryStack> {
     let result = eids.map(eid => getEntity(es,eid, false) )
     .map(eid => eid === undefined ? [SType.Value, false] : [SType.Entity,eid]);
 
-    return [stack, [SType.Array, result]];
+    return [stack, [SType.List, result]];
 }
 
 function matchEntities(es: EntitySetSQL, mbf?: BitField): Entity[] {

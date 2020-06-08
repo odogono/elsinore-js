@@ -22,7 +22,6 @@ import { omit } from '../../src/util/omit';
 
 import { create as createQueryStack, 
     QueryStack, 
-    StackOp,
     SType,
     StackValue,
     addWords,
@@ -44,7 +43,7 @@ import{ getComponentId, getComponentDefId, toObject as componentToObject } from 
 import { createLog } from '../../src/util/log';
 import { tokenizeString } from '../../src/query/tokenizer';
 import { stringify } from '../../src/util/json';
-import { onSwap, onConcat, onArrayOpen, onMapOpen, onEntity, onComponentDef, onComponent, onEntitySet, onAddArray, onAddComponentToEntity, onAddToEntitySet, unpackStackValue } from '../../src/query/words';
+import { onSwap, onConcat, onListOpen, onMapOpen, onEntity, onComponentDef, onComponent, onEntitySet, onAddArray, onAddComponentToEntity, onAddToEntitySet, unpackStackValue } from '../../src/query/words';
 
 const Log = createLog('StackUtils');
 
@@ -116,7 +115,7 @@ export async function loadFixtureDefs( name:string ) {
 
 export async function prepareFixture( name:string, options:PrepareFixtureOptions = {} ): Promise<[ QueryStack, EntitySet ]> {
     let stack = buildQueryStack();
-    let op:StackOp;
+    let op:SType;
     let es:EntitySet;// = options.addToEntitySet ? createEntitySet({}) : undefined;
 
     // // add the registry to the stack
@@ -212,14 +211,14 @@ export async function buildEntity( es:EntitySet, query:string, entityId:number =
     stack = addWords(stack, [
         ['swap', onSwap],
         ['concat', onConcat],
-        ['[', onArrayOpen],
+        ['[', onListOpen],
         ['{', onMapOpen],
         ['!e', onEntity],
         // ['@e', onEntityFetch, SType.Value],
-        ['!d', onComponentDef, SType.Array],
-        ['!c', onComponent, SType.Array],
+        ['!d', onComponentDef, SType.List],
+        ['!c', onComponent, SType.List],
         ['!es', onEntitySet, SType.Map],
-        ['+', onAddArray, SType.Array, SType.Any],
+        ['+', onAddArray, SType.List, SType.Any],
         ['+', onAddComponentToEntity, SType.Entity, SType.Any],
         ['+', onAddToEntitySet, SType.EntitySet, SType.Any],
     ]);

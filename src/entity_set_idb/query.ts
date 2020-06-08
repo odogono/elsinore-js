@@ -13,7 +13,6 @@ import {
     findV,
     find as findValue,
     StackError,
-    StackOp,
     isStackValue,
     entityIdFromValue,
     popBitField,
@@ -60,7 +59,7 @@ export async function select(es: EntitySetIDB, query: StackValue[], options = {}
 
     // add first pass words
     stack = addWords<IDBQueryStack>(stack, [
-        ['!bf', buildBitfield, SType.Array],
+        ['!bf', buildBitfield, SType.List],
         ['!bf', buildBitfield, SType.Value],
         ['!ca', onComponentAttr],
         ['define', onDefine],
@@ -86,17 +85,17 @@ export async function select(es: EntitySetIDB, query: StackValue[], options = {}
         ['@e', fetchEntity],
         // ['@v', fetchValue],
         ['@c', fetchComponents, SType.Entity, 'all' ],
-        ['@c', fetchComponents, SType.Array, SType.Bitfield ],
+        ['@c', fetchComponents, SType.List, SType.Bitfield ],
         ['@c', fetchComponents, SType.Entity, SType.Bitfield ],
         ['@c', fetchComponents, 'all' ],
         ['@c', fetchComponents, SType.Bitfield ],
-        ['@c', fetchComponents, SType.Array ],
+        ['@c', fetchComponents, SType.List ],
         ['@c', fetchComponents, SType.Entity ],
         ['!fil', applyFilter, SType.Filter],
 
         ['limit', applyLimit],
-        ['pluck', onPluck, SType.Array, SType.Value],
-        ['pluck', onPluck, SType.Array, SType.Array],
+        ['pluck', onPluck, SType.List, SType.Value],
+        ['pluck', onPluck, SType.List, SType.List],
     ]);
 
     // make sure any filter values have a following cmd
@@ -130,7 +129,7 @@ export async function applyFilter(stack:IDBQueryStack): AsyncInstResult<IDBQuery
     // Log.debug('[applyFilter]', 'result eids', eids );
     
 
-    return [stack, [SType.Array, eids.map(e => [SType.Entity,e]) ]];
+    return [stack, [SType.List, eids.map(e => [SType.Entity,e]) ]];
 }
 
 
@@ -153,7 +152,7 @@ export async function fetchComponents(stack: IDBQueryStack): AsyncInstResult<IDB
         // Log.debug('[fetchComponents]', from );
         if( from[0] === SType.Entity ){
             eids = [unpackStackValueR(from)];
-        } else if( from[0] === SType.Array ){
+        } else if( from[0] === SType.List ){
             eids = from[1].map( it => {
                 return isStackValue(it) ? getEntityId(it[1])
                 : isEntity(it) ? getEntityId(it) : undefined;
@@ -169,7 +168,7 @@ export async function fetchComponents(stack: IDBQueryStack): AsyncInstResult<IDB
 
     // Log.debug('[fetchComponent]', 'coms', coms );
 
-    return [stack, [SType.Array, coms.map(c => [SType.Component,c] )]];
+    return [stack, [SType.List, coms.map(c => [SType.Component,c] )]];
 }
 
 
@@ -194,7 +193,7 @@ export async function fetchEntity(stack: IDBQueryStack): AsyncInstResult<IDBQuer
     if (type === SType.Bitfield) {
         bf = eid as BitField;
         let ents = await matchEntities(es, bf);
-        return [stack, [SType.Array, ents]];
+        return [stack, [SType.List, ents]];
     } else if (isInteger(eid)) {
         let e = getEntity(es,eid,false);
         // Log.debug('[fetchEntity]', es.entities);
@@ -206,13 +205,13 @@ export async function fetchEntity(stack: IDBQueryStack): AsyncInstResult<IDBQuer
     else if( Array.isArray(eid) ){
         eids = eid;
     }
-    else if (type === SType.Array) {
-        let arr = unpackStackValue(data, SType.Array, false);
+    else if (type === SType.List) {
+        let arr = unpackStackValue(data, SType.List, false);
         eids = arr.map(row => entityIdFromValue(row)).filter(Boolean);
     }
     else if( eid === 'all' ){
         let ents = await matchEntities(es);
-        return [stack, [SType.Array, ents]];
+        return [stack, [SType.List, ents]];
     } else {
         throw new StackError(`@e unknown type ${type}`)
     }
@@ -230,7 +229,7 @@ export async function fetchEntity(stack: IDBQueryStack): AsyncInstResult<IDBQuer
     // let result = eids.map(eid => getEntity(es,eid, false) )
     // .map(eid => eid === undefined ? [SType.Value, false] : [SType.Entity,eid]);
 
-    return [stack, [SType.Array, result]];
+    return [stack, [SType.List, result]];
 }
 
 

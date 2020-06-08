@@ -3,5 +3,8 @@
     "ts"
   ],
   "spec": "src/**/*.ts",
-  "require": "ts-node/register"
+  "require": [
+    "test/mocha.env",
+    "ts-node/register"
+  ]
 }

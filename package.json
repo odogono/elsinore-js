@@ -22,17 +22,26 @@
     "url": "https://github.com/odogono/elsinore-js.git"
   },
   "main": "./dist/cjs/index.js",
-  "module": "./dist/esm/index.mjs",
-  "exports": {
-    "import": "./dist/esm/index.mjs",
-    "require": "./dist/cjs/index.js",
+  "exports-o": {
+    ".": "./dist/esm/index.mjs",
+    "./dist/esm/sql": "./dist/esm/sql",
+    "./idb": "./dist/esm/idb.mjs",
+    "./sql": "./dist/esm/sql.mjs"
+  },
+  "exports-e": {
+    ".": {
+      "import": "./dist/esm/index.mjs",
+      "require": "./dist/cjs/index.js"
+    },
+    
     "./idb": {
       "import": "./dist/esm/idb.mjs",
       "require": "./dist/cjs/idb.js"
     },
     "./sql": {
       "import": "./dist/esm/sql.mjs",
-      "require": "./dist/cjs/sql.js"
+      "require": "./dist/cjs/sql.js",
+      "types": "./dist/esm/sql.d.ts"
     }
   },
   "files": [

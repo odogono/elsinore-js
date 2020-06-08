@@ -22,7 +22,7 @@ import {
 } from '../../src/util/bitfield';
 
 import {
-    onSwap, onArrayOpen,
+    onSwap, onListOpen,
     onPrint,
     onAddArray,
     onFetchArray,
@@ -36,6 +36,7 @@ import {
     onEntitySet, onAddComponentToEntity,
     onMap,
     onReduce,
+    onPush, onPop,
     onPluck,
     onUnique,
     onFilter,
@@ -178,6 +179,27 @@ describe('Query (Mem)', () => {
             let [stack] = await prep(`[] hello +`);
             let [, result] = pop(stack);
             assert.deepEqual(unpackStackValueR(result), ['hello']);
+        })
+
+        it('push', async () => {
+            let [stack] = await prep(`[] hello push`);
+            let [, result] = pop(stack);
+            assert.deepEqual(unpackStackValueR(result), ['hello']);
+        });
+
+        it('pop', async () => {
+            let [stack] = await prep(`[ hello world ] pop`);
+            let [, result] = pop(stack);
+            assert.deepEqual(unpackStackValueR(result), 'world');
+        });
+
+        it('pop empty', async () => {
+            try {
+                await prep(`[] pop`);
+            } catch (err) {
+                assert.instanceOf(err, StackError);
+                assert.equal(err.message, 'stack underflow: ([])' );
+            }
         })
 
         it('builds maps', async () => {
@@ -435,6 +457,16 @@ describe('Query (Mem)', () => {
         })
 
         it('plucks values', async () => {
+            let [stack] = await prep(`
+            {text: hello} text pluck
+            `);
+
+            // ilog(stack.items);
+            let [, result] = pop(stack);
+            assert.deepEqual(unpackStackValueR(result), ['hello']);
+        });
+
+        it('plucks value from multiple maps', async () => {
             let [stack] = await prep(`[
                 {text: hello} {text: world}
             ] text pluck`);
@@ -551,7 +583,7 @@ describe('Query (Mem)', () => {
             // Log.debug('stack:', stringify(stack.items,1) );
 
             let [, result] = pop(stack);
-            assert.equal(result[0], SType.Array);
+            assert.equal(result[0], SType.List);
             let coms = unpackStackValueR(result);
             assert.equal(coms[0].text, "do some shopping");
         });
@@ -687,7 +719,7 @@ describe('Query (Mem)', () => {
             // Log.debug( stackToString(stack) );
             let result;
             [, result] = pop(stack);
-            result = unpackStackValue(result, SType.Array);
+            result = unpackStackValue(result, SType.List);
             let nicknames = result.map(v => v[1].nickname).filter(Boolean);
             assert.includeMembers(nicknames, ['koolgrap', 'lauryn', 'missy']);
         })
@@ -719,10 +751,10 @@ async function prep(insts?: string, fixture?: string): Promise<[QueryStack, Enti
 
     stack = addWords(stack, [
         ['+', onAddComponentToEntity, SType.Entity, SType.Component],
-        ['+', onAddComponentToEntity, SType.Entity, SType.Array],
+        ['+', onAddComponentToEntity, SType.Entity, SType.List],
         ['+', onAddToEntitySet, SType.EntitySet, SType.Any],
         // pattern match stack args
-        ['+', onAddArray, SType.Array, SType.Any],
+        ['+', onAddArray, SType.List, SType.Any],
         // important that this is after more specific case
         ['+', onAdd, SType.Value, SType.Value],
         ['*', onAdd, SType.Value, SType.Value],
@@ -731,38 +763,41 @@ async function prep(insts?: string, fixture?: string): Promise<[QueryStack, Enti
         ['!=', onAdd, SType.Value, SType.Value],
         ['.', onPrint, SType.Any],
         ['..', onPrint],
-        ['@', onFetchArray, SType.Array, SType.Value],
+        ['@', onFetchArray, SType.List, SType.Value],
 
-        ['[', onArrayOpen],
+        ['[', onListOpen],
         ['{', onMapOpen],
         ['}', onUnexpectedError],
         [']', onUnexpectedError],
         ['to_map', onBuildMap],
         ['drop', onDrop, SType.Any],
         ['swap', onSwap, SType.Any, SType.Any],
-        ['map', onMap, SType.Array, SType.Array],
-        ['pluck', onPluck, SType.Array, SType.Value],
-        ['pluck', onPluck, SType.Array, SType.Array],
-        ['unique', onUnique, SType.Array],
-        ['filter', onFilter, SType.Array, SType.Array],
-        ['reduce', onReduce, SType.Array, SType.Value, SType.Array],
+        ['push', onPush, SType.List, SType.Any],
+        ['pop', onPop, SType.List],
+        ['map', onMap, SType.List, SType.List],
+        ['pluck', onPluck, SType.Map, SType.Value],
+        ['pluck', onPluck, SType.List, SType.Value],
+        ['pluck', onPluck, SType.List, SType.List],
+        ['unique', onUnique, SType.List],
+        ['filter', onFilter, SType.List, SType.List],
+        ['reduce', onReduce, SType.List, SType.Value, SType.List],
         ['define', onDefine, SType.Any, SType.Value],
         ['let', onDefine, SType.Any, SType.Value],
         ['concat', onConcat],
         ['cls', onClear],
         ['dup', onDup, SType.Any],
         ['over', onDup, SType.Any],
-        ['select', onSelect, SType.EntitySet, SType.Array],
-        ['spread', onArraySpread, SType.Array],
+        ['select', onSelect, SType.EntitySet, SType.List],
+        ['spread', onArraySpread, SType.List],
         ['!d', onComponentDef, SType.Map],
-        ['!d', onComponentDef, SType.Array],
+        ['!d', onComponentDef, SType.List],
         ['!d', onComponentDef, SType.Value],
         ['@d', fetchComponentDef, SType.EntitySet],
         ['@d', fetchComponentDef, SType.EntitySet, SType.Value],
-        // ['!bf', buildBitfield, SType.Array],
+        // ['!bf', buildBitfield, SType.List],
         // ['!bf', buildBitfield, SType.Value],
         ['!es', onEntitySet, SType.Map],
-        ['!c', onComponent, SType.Array],
+        ['!c', onComponent, SType.List],
         ['@c', fetchComponents],
         ['!e', onEntity, SType.Value],
         ['assert_type', onAssertType],

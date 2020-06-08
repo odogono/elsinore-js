@@ -1,12 +1,6 @@
 import { assert } from 'chai';
 
 import { createLog } from '../../src/util/log';
-import {ComponentRegistry, 
-    Type as ComponentRegistryT,
-    resolveComponentDefIds, 
-    getByUri,
-    getByHash,
-    } from '../../src/component_registry';
 import { 
     create as createStack, 
     SType, 
@@ -52,6 +46,8 @@ import {
     createComponent, 
     // removeComponent, 
     // removeEntity,
+    getByUri,
+    getByHash,
     getEntity,
     getComponent,
     // getComponents as esGetComponents,
@@ -76,7 +72,7 @@ import { Type as ComponentT, fromComponentId, getComponentDefId, Component } fro
 import { isEntitySet } from '../../src/entity_set';
 import { onMapOpen, onAdd, onClear, onEntitySet } from '../../src/query/words';
 import { stringify } from '../../src/util/json';
-import { stackToString, parse } from '../util/stack';
+import { parse } from '../util/stack';
 
 const Log = createLog('TestEntitySetFS');
 
@@ -342,7 +338,7 @@ describe('Entity Set (IndexedDB)', () => {
             [stack] = await pushValues(stack,data);
 
             // Log.debug('stack', stringify(stack.items,1) );
-            Log.debug('stack', stackToString(stack) );
+            // Log.debug('stack', stackToString(stack) );
 
             assert.equal( stack.items.length, 1 );
 

@@ -29,7 +29,7 @@ export function valueToString( val:StackValue ):string {
                 return `(${type} ${stringify(value)})`;
             }
             return `(${type} ${getEntityId(value)})`;
-        case SType.Array:
+        case SType.List:
             return `[` + value.map(v => valueToString(v) ).join(', ') + ']';
         case SType.Map:
             return '{' + Object.keys(value).reduce( (res,key) => {

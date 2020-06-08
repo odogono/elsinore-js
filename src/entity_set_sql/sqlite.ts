@@ -573,7 +573,7 @@ export function sqlRetrieveByQuery( ref:SqlRef, query:any[] ){
     let rows = stmt.all(...params);
     
 
-    return [SType.Array, rows.map(r => [SType.Entity,r.eid]) ];
+    return [SType.List, rows.map(r => [SType.Entity,r.eid]) ];
 
 }
 

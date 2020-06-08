@@ -43,7 +43,7 @@ function prEquals( es:EntitySet, cmd, left, right ){
         val = left[1];
         // console.log('[prEquals]', 'left', val);
         key = parseFilterQuery(es,...right);
-    } else if( left[0] === SType.Array ){
+    } else if( left[0] === SType.List ){
         val = unpackStackValueR(left);
         key = parseFilterQuery(es,...right);
     } else if( right[0] === SType.Value ){

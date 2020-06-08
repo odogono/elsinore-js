@@ -61,6 +61,8 @@ import { getByDefId, getByUri, getByHash } from '../entity_set/registry';
 import { fchmodSync } from 'fs-extra';
 import { isString, isInteger, isEmpty } from '../util/is';
 import { StackValue } from '../query/stack';
+export { getByHash, getByUri } from '../entity_set/registry';
+
 const Log = createLog('EntitySetFS');
 
 /**

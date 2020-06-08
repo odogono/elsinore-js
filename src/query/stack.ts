@@ -14,7 +14,7 @@ import { toValues as bfToValues } from '../util/bitfield';
 
 export enum SType {
     Value = '%v',
-    Array = '%[]',
+    List = '%[]',
     Map = '%{}',
     Function = '%()',
     Bitfield = '%bf',
@@ -46,8 +46,7 @@ export type InstResult<QS extends QueryStack> = [
 ];
 export type AsyncInstResult<QS extends QueryStack> = Promise<InstResult<QS>>;
 
-export type StackOp = string;
-export type StackValue = [StackOp] | [StackOp, any];
+export type StackValue = [SType] | [SType, any];
 
 export const Type = '@qs';
 
@@ -447,7 +446,7 @@ export function replace(stack: QueryStack, index: number, newItem: StackValue): 
 /**
  * 
  */
-export function findWithIndex<QS extends QueryStack>(stack: QS, type: StackOp): [number, StackValue] {
+export function findWithIndex<QS extends QueryStack>(stack: QS, type: SType): [number, StackValue] {
     for (let ii = stack.items.length - 1; ii >= 0; ii--) {
         const item = stack.items[ii];
         if (type === item[0]) {
@@ -458,7 +457,7 @@ export function findWithIndex<QS extends QueryStack>(stack: QS, type: StackOp): 
     return [-1, undefined];
 }
 
-export function findWithIndexV(stack: QueryStack, type: StackOp): [number, any] {
+export function findWithIndexV(stack: QueryStack, type: SType): [number, any] {
     let [index, [_, value]] = findWithIndex(stack, type);
     if (index === -1) {
         throw new Error(`type ${type} missing on stack`);
@@ -472,11 +471,11 @@ export function findWithIndexV(stack: QueryStack, type: StackOp): [number, any] 
  * @param stack 
  * @param type 
  */
-export function findV(stack: QueryStack, type: StackOp): any {
+export function findV(stack: QueryStack, type: SType): any {
     const [_, value] = findWithIndex(stack, type);
     return value ? value[1] : undefined;
 }
-export function find<QS extends QueryStack>(stack: QS, type: StackOp): StackValue {
+export function find<QS extends QueryStack>(stack: QS, type: SType): StackValue {
     const [_, value] = findWithIndex(stack, type);
     return value;
 }
