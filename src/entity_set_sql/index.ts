@@ -141,67 +141,67 @@ export class EntitySetSQL extends EntitySetMem {
         return select(this, query, options);
     }
 
-    async add<ES extends EntitySet>(item: AddType, options: AddOptions = {}): Promise<ES> {
-        this.openEntitySet();
+    // async add<ES extends EntitySet>(item: AddType, options: AddOptions = {}): Promise<ES> {
+    //     this.openEntitySet();
 
-        if (options.retain !== true) {
-            this.clearChanges();
-        }
-        const {debug} = options;
+    //     if (options.retain !== true) {
+    //         this.clearChanges();
+    //     }
+    //     const {debug} = options;
 
-        if (Array.isArray(item)) {
-            let initial:[Entity[],Component[]] = [[], []];
-            // sort the incoming items into entities and components
-            let [ents, coms] = (item as any[]).reduce(([ents, coms], item) => {
-                if (isComponentLike(item)) {
-                    coms.push(item);
-                } else if (isEntity(item)) {
-                    ents.push(item);
-                }
-                return [ents, coms];
-            }, initial);
+    //     if (Array.isArray(item)) {
+    //         let initial:[Entity[],Component[]] = [[], []];
+    //         // sort the incoming items into entities and components
+    //         let [ents, coms] = (item as any[]).reduce(([ents, coms], item) => {
+    //             if (isComponentLike(item)) {
+    //                 coms.push(item);
+    //             } else if (isEntity(item)) {
+    //                 ents.push(item);
+    //             }
+    //             return [ents, coms];
+    //         }, initial);
 
-            // Log.debug('[add]', ents)
+    //         // Log.debug('[add]', ents)
 
-            // add components on entities
-            await ents.reduce( (p,e) => p.then( () => this.addComponents(getEntityComponents(e))), Promise.resolve() );
+    //         // add components on entities
+    //         await ents.reduce( (p,e) => p.then( () => this.addComponents(getEntityComponents(e))), Promise.resolve() );
 
-            // adds lone components
-            await this.addComponents(coms);
-        }
-        else if (isComponentLike(item)) {
-            await this.addComponents([item as Component]);
-        }
-        else if (isEntity(item)) {
-            let e = item as Entity
-            await this.markRemoveComponents(e[EntityT]);
-            await this.addComponents(getEntityComponents(e));
-        }
+    //         // adds lone components
+    //         await this.addComponents(coms);
+    //     }
+    //     else if (isComponentLike(item)) {
+    //         await this.addComponents([item as Component]);
+    //     }
+    //     else if (isEntity(item)) {
+    //         let e = item as Entity
+    //         await this.markRemoveComponents(e[EntityT]);
+    //         await this.addComponents(getEntityComponents(e));
+    //     }
 
-        await this.applyRemoveChanges();
+    //     await this.applyRemoveChanges();
 
-        await this.applyUpdates();
+    //     await this.applyUpdates();
 
-        return this as unknown as ES;
-    }
+    //     return this as unknown as ES;
+    // }
 
     async applyUpdates(){
     }
 
-    async removeComponent(item: RemoveType, options: AddOptions = {}): Promise<EntitySetSQL> {
-        if (options.retain !== true) {
-            this.clearChanges();
-        }
+    // async removeComponent(item: RemoveType, options: AddOptions = {}): Promise<EntitySetSQL> {
+    //     if (options.retain !== true) {
+    //         this.clearChanges();
+    //     }
 
-        let cid = isComponentId(item) ? item as ComponentId : isComponent(item) ? getComponentId(item as Component) : undefined;
-        if (cid === undefined) {
-            return this;
-        }
-        this.markComponentRemove(cid);
+    //     let cid = isComponentId(item) ? item as ComponentId : isComponent(item) ? getComponentId(item as Component) : undefined;
+    //     if (cid === undefined) {
+    //         return this;
+    //     }
+    //     this.markComponentRemove(cid);
 
-        // Log.debug('[removeComponent]', es );
-        return this.applyRemoveChanges();
-    }
+    //     // Log.debug('[removeComponent]', es );
+    //     return this.applyRemoveChanges();
+    // }
 
     // async removeEntity(item: (number | Entity), options: AddOptions = {}): Promise<EntitySetSQL> {
     //     if (options.retain !== true) {
@@ -278,32 +278,32 @@ export class EntitySetSQL extends EntitySetMem {
         return this;
     }
 
-    async addComponents(components: Component[], options: ESOptions = {}): Promise<EntitySetSQL> {
-        // set a new (same) entity id on all orphaned components
-        components = this.assignEntityIds(components)
+    // async addComponents(components: Component[], options: ESOptions = {}): Promise<EntitySetSQL> {
+    //     // set a new (same) entity id on all orphaned components
+    //     components = this.assignEntityIds(components)
 
-        // let changedCids = getChanges(es.comChanges, ChangeSetOp.Add | ChangeSetOp.Update)
-        // Log.debug('[addComponents]', 'pre', changedCids);
+    //     // let changedCids = getChanges(es.comChanges, ChangeSetOp.Add | ChangeSetOp.Update)
+    //     // Log.debug('[addComponents]', 'pre', changedCids);
 
-        // to keep track of changes only in this function, we must temporarily replace
-        let changes = this.comChanges;
-        this.comChanges = createChangeSet<ComponentId>();
+    //     // to keep track of changes only in this function, we must temporarily replace
+    //     let changes = this.comChanges;
+    //     this.comChanges = createChangeSet<ComponentId>();
 
-        // mark incoming components as either additions or updates
-        await components.reduce( (p,com) => p.then( () => this.markComponentAdd(com)), Promise.resolve() );
+    //     // mark incoming components as either additions or updates
+    //     await components.reduce( (p,com) => p.then( () => this.markComponentAdd(com)), Promise.resolve() );
         
-        // gather the components that have been added or updated and apply
-        const changedCids = getChanges(this.comChanges, ChangeSetOp.Add | ChangeSetOp.Update);
-        // Log.debug('[addComponents]', 'post', changedCids);
+    //     // gather the components that have been added or updated and apply
+    //     const changedCids = getChanges(this.comChanges, ChangeSetOp.Add | ChangeSetOp.Update);
+    //     // Log.debug('[addComponents]', 'post', changedCids);
 
-        // combine the new changes with the existing
-        this.comChanges = mergeCS(changes, this.comChanges);
+    //     // combine the new changes with the existing
+    //     this.comChanges = mergeCS(changes, this.comChanges);
 
-        // sequentially apply
-        await changedCids.reduce( (p,cid) => p.then( () => this.applyUpdatedComponents(cid)), Promise.resolve() );
+    //     // sequentially apply
+    //     await changedCids.reduce( (p,cid) => p.then( () => this.applyUpdatedComponents(cid)), Promise.resolve() );
 
-        return this;
-    }
+    //     return this;
+    // }
 
 
     async applyRemoveChanges(): Promise<EntitySetSQL> {
@@ -353,30 +353,30 @@ export class EntitySetSQL extends EntitySetMem {
     }
 
 
-    async applyUpdatedComponents(cid: ComponentId, options: ESOptions = {}): Promise<EntitySetSQL> {
-        const [eid, did] = fromComponentId(cid);
-        let ebf: BitField;
+    // async applyUpdatedComponents(cid: ComponentId, options: ESOptions = {}): Promise<EntitySetSQL> {
+    //     const [eid, did] = fromComponentId(cid);
+    //     let ebf: BitField;
 
-        ebf = await this.getOrAddEntityBitfield(eid);
+    //     ebf = await this.getOrAddEntityBitfield(eid);
 
-        const isNew = findCS(this.entChanges, eid) === ChangeSetOp.Add;
+    //     const isNew = findCS(this.entChanges, eid) === ChangeSetOp.Add;
 
-        // Log.debug('[applyUpdatedComponents]', eid, isNew, ebf.get(did) === false );
+    //     // Log.debug('[applyUpdatedComponents]', eid, isNew, ebf.get(did) === false );
 
-        // does the component already belong to this entity?
-        if (bfGet(ebf, did) === false) {
-            let e = createEntityInstance(eid);
-            e.bitField = bfSet(ebf, did);
+    //     // does the component already belong to this entity?
+    //     if (bfGet(ebf, did) === false) {
+    //         let e = createEntityInstance(eid);
+    //         e.bitField = bfSet(ebf, did);
 
-            e = this.setEntity(e);
-        }
+    //         e = this.setEntity(e);
+    //     }
 
-        if (isNew) {
-            this.markEntityUpdate(eid);
-        }
+    //     if (isNew) {
+    //         this.markEntityUpdate(eid);
+    //     }
 
-        return this;
-    }
+    //     return this;
+    // }
 
     /**
      * 
@@ -524,7 +524,7 @@ export class EntitySetSQL extends EntitySetMem {
 
 
 
-    openEntitySet(options: OpenEntitySetOptions = {}): EntitySetSQL {
+    async openEntitySet(options: OpenEntitySetOptions = {}): Promise<EntitySetSQL> {
         if (sqlIsOpen(this.db)) {
             return this;
         }

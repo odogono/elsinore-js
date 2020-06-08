@@ -67,7 +67,7 @@ import { idbOpen, idbDeleteDB,
 } from "./idb";
 import { isString, isInteger } from "../util/is";
 import { select } from "./query";
-import { EntitySet, EntitySetMem, ESOptions, AddType, AddOptions, RemoveType } from "../entity_set";
+import { EntitySet, EntitySetMem, ESOptions, AddType, AddOptions, RemoveType, OpenEntitySetOptions } from "../entity_set";
 import { StackValue } from "../query/types";
 
 const Log = createLog('EntitySetIDB');
@@ -129,55 +129,55 @@ export class EntitySetIDB extends EntitySetMem {
         return select(this, query, options);
     }
 
-    async add<ES extends EntitySet>( item: AddType, options: AddOptions = {}): Promise<ES> {
-        await this.openEntitySet();
+    // async add<ES extends EntitySet>( item: AddType, options: AddOptions = {}): Promise<ES> {
+    //     await this.openEntitySet();
 
-        if( options.retain !== true ){
-            this.clearChanges();
-        }
+    //     if( options.retain !== true ){
+    //         this.clearChanges();
+    //     }
 
-        const {debug} = options;
+    //     const {debug} = options;
         
-        // Log.debug('[add]', item);
+    //     // Log.debug('[add]', item);
     
-        // console.time('[ESIDB][add]');
-        if (Array.isArray(item)) {
-            let initial:[Entity[],Component[]] = [[], []];
-            // sort the incoming items into entities and components
-            let [ents, coms] = (item as any[]).reduce(([ents, coms], item) => {
-                if (isComponentLike(item)) {
-                    coms.push(item);
-                } else if (isEntity(item)) {
-                    ents.push(item);
-                }
-                return [ents, coms];
-            }, initial);
+    //     // console.time('[ESIDB][add]');
+    //     if (Array.isArray(item)) {
+    //         let initial:[Entity[],Component[]] = [[], []];
+    //         // sort the incoming items into entities and components
+    //         let [ents, coms] = (item as any[]).reduce(([ents, coms], item) => {
+    //             if (isComponentLike(item)) {
+    //                 coms.push(item);
+    //             } else if (isEntity(item)) {
+    //                 ents.push(item);
+    //             }
+    //             return [ents, coms];
+    //         }, initial);
             
-            // add components on entities
-            await ents.reduce( (p,e) => p.then( () => this.addComponents(getEntityComponents(e))), Promise.resolve() );
+    //         // add components on entities
+    //         await ents.reduce( (p,e) => p.then( () => this.addComponents(getEntityComponents(e))), Promise.resolve() );
 
-            // if(debug) console.timeEnd('[add][addComponents]');
+    //         // if(debug) console.timeEnd('[add][addComponents]');
     
-            // console.time('[add][addComponents]2');
-            await this.addComponents(coms);
-            // es = await applyRemoveChanges(es)
-            // console.timeEnd('[add][addComponents]2');
-        }
-        else if (isComponentLike(item)) {
-            await this.addComponents([item as Component]);
-        }
-        else if (isEntity(item)) {
-            let e = item as Entity
-            await this.markRemoveComponents( e[EntityT]);
-            await this.addComponents(getEntityComponents(e));
-        }
+    //         // console.time('[add][addComponents]2');
+    //         await this.addComponents(coms);
+    //         // es = await applyRemoveChanges(es)
+    //         // console.timeEnd('[add][addComponents]2');
+    //     }
+    //     else if (isComponentLike(item)) {
+    //         await this.addComponents([item as Component]);
+    //     }
+    //     else if (isEntity(item)) {
+    //         let e = item as Entity
+    //         await this.markRemoveComponents( e[EntityT]);
+    //         await this.addComponents(getEntityComponents(e));
+    //     }
     
-        await this.applyRemoveChanges();
+    //     await this.applyRemoveChanges();
 
-        await this.applyUpdates();
+    //     await this.applyUpdates();
     
-        return this as unknown as ES;
-    }
+    //     return this as unknown as ES;
+    // }
 
     async applyUpdates(){
         // console.timeEnd('[ESIDB][add]');
@@ -210,35 +210,35 @@ export class EntitySetIDB extends EntitySetMem {
         // es.comUpdates.clear();
     }
 
-    async addComponents(components: Component[], options:ESOptions = {}): Promise<EntitySetIDB> {
-        // set a new (same) entity id on all orphaned components
-        components = this.assignEntityIds(components)
+    // async addComponents(components: Component[], options:ESOptions = {}): Promise<EntitySetIDB> {
+    //     // set a new (same) entity id on all orphaned components
+    //     components = this.assignEntityIds(components)
     
-        // Log.debug('[addComponents]', components);
-        // to keep track of changes only in this function, we must temporarily replace
-        let changes = this.comChanges;
-        this.comChanges = createChangeSet<ComponentId>();
+    //     // Log.debug('[addComponents]', components);
+    //     // to keep track of changes only in this function, we must temporarily replace
+    //     let changes = this.comChanges;
+    //     this.comChanges = createChangeSet<ComponentId>();
     
-        // mark incoming components as either additions or updates
-        await components.reduce( (p,com) => p.then( () => this.markComponentAdd(com)), Promise.resolve() );
+    //     // mark incoming components as either additions or updates
+    //     await components.reduce( (p,com) => p.then( () => this.markComponentAdd(com)), Promise.resolve() );
         
-        // gather the components that have been added or updated and apply
-        const changedCids = getChanges(this.comChanges, ChangeSetOp.Add | ChangeSetOp.Update);
+    //     // gather the components that have been added or updated and apply
+    //     const changedCids = getChanges(this.comChanges, ChangeSetOp.Add | ChangeSetOp.Update);
     
-        // combine the new changes with the existing
-        this.comChanges = mergeCS( changes, this.comChanges );
+    //     // combine the new changes with the existing
+    //     this.comChanges = mergeCS( changes, this.comChanges );
     
-        // console.time('[addComponents][applyUpdatedComponents]');
+    //     // console.time('[addComponents][applyUpdatedComponents]');
     
-        // Log.debug('[addComponents]', 'applying updated components', changedCids)
+    //     // Log.debug('[addComponents]', 'applying updated components', changedCids)
         
-        // sequentially apply
-        await changedCids.reduce( (p,cid) => p.then( () => this.applyUpdatedComponents(cid)), Promise.resolve() );
+    //     // sequentially apply
+    //     await changedCids.reduce( (p,cid) => p.then( () => this.applyUpdatedComponents(cid)), Promise.resolve() );
     
-        // console.timeEnd('[addComponents][applyUpdatedComponents]');
-        // return changedCids.reduce((pes, cid) => pes.then( es => applyUpdatedComponents(es, cid) ), Promise.resolve(es));
-        return this;
-    }
+    //     // console.timeEnd('[addComponents][applyUpdatedComponents]');
+    //     // return changedCids.reduce((pes, cid) => pes.then( es => applyUpdatedComponents(es, cid) ), Promise.resolve(es));
+    //     return this;
+    // }
 
     async getEntity(eid:EntityId, populate:boolean = true): Promise<Entity> {
         this.openEntitySet();
@@ -292,25 +292,25 @@ export class EntitySetIDB extends EntitySetMem {
     }
 
 
-    async removeComponent(item: RemoveType, options: AddOptions = {}): Promise<EntitySetIDB> {
-        if( options.retain !== true ){
-            this.clearChanges();
-        }
+    // async removeComponent(item: RemoveType, options: AddOptions = {}): Promise<EntitySetIDB> {
+    //     if( options.retain !== true ){
+    //         this.clearChanges();
+    //     }
 
-        let cid = isComponentId(item) ? 
-            item as ComponentId 
-            : isComponent(item) ? 
-                getComponentId(item as Component) 
-                : undefined;
+    //     let cid = isComponentId(item) ? 
+    //         item as ComponentId 
+    //         : isComponent(item) ? 
+    //             getComponentId(item as Component) 
+    //             : undefined;
         
-        if (cid === undefined) {
-            return this;
-        }
-        this.markComponentRemove(cid);
+    //     if (cid === undefined) {
+    //         return this;
+    //     }
+    //     this.markComponentRemove(cid);
     
-        // Log.debug('[removeComponent]', es );
-        return this.applyRemoveChanges();
-    }
+    //     // Log.debug('[removeComponent]', es );
+    //     return this.applyRemoveChanges();
+    // }
 
     async markComponentAdd(com: Component): Promise<EntitySetIDB> {
         // adds the component to the entityset if it is unknown,
@@ -366,34 +366,34 @@ export class EntitySetIDB extends EntitySetMem {
         return this;
     }
 
-    async applyUpdatedComponents(cid: ComponentId, options:ESOptions = {}): Promise<EntitySetIDB> {
-        const [eid, did] = fromComponentId(cid);
-        let ebf: BitField;
+    // async applyUpdatedComponents(cid: ComponentId, options:ESOptions = {}): Promise<EntitySetIDB> {
+    //     const [eid, did] = fromComponentId(cid);
+    //     let ebf: BitField;
     
-        ebf = await this.getOrAddEntityBitfield(eid);
+    //     ebf = await this.getOrAddEntityBitfield(eid);
     
-        const isNew = findCS( this.entChanges, eid ) === ChangeSetOp.Add;
+    //     const isNew = findCS( this.entChanges, eid ) === ChangeSetOp.Add;
     
-        // Log.debug('[applyUpdatedComponents]', eid, did, isNew );
-        // if(options.debug) Log.debug('[applyUpdatedComponents]', eid, did, isNew );
+    //     // Log.debug('[applyUpdatedComponents]', eid, did, isNew );
+    //     // if(options.debug) Log.debug('[applyUpdatedComponents]', eid, did, isNew );
     
-        // if(options.debug) console.time(`[applyUpdatedComponents] ${cid}`);
-        // does the component already belong to this entity?
-        if (bfGet(ebf,did) === false) {
-            let e = createEntityInstance(eid);
-            e.bitField = bfSet(ebf,did);
-            // Log.debug('[applyUpdatedComponents]', eid, cid, did, bfToValues(ebf) );
+    //     // if(options.debug) console.time(`[applyUpdatedComponents] ${cid}`);
+    //     // does the component already belong to this entity?
+    //     if (bfGet(ebf,did) === false) {
+    //         let e = createEntityInstance(eid);
+    //         e.bitField = bfSet(ebf,did);
+    //         // Log.debug('[applyUpdatedComponents]', eid, cid, did, bfToValues(ebf) );
             
-            e = this.setEntity(e);
+    //         e = this.setEntity(e);
             
-        }
+    //     }
     
-        if( isNew ){
-            this.markEntityUpdate(eid);
-        }
+    //     if( isNew ){
+    //         this.markEntityUpdate(eid);
+    //     }
 
-        return this;
-    }
+    //     return this;
+    // }
     
     
     async applyRemoveComponent(cid: ComponentId): Promise<EntitySetIDB> {
@@ -609,9 +609,7 @@ export class EntitySetIDB extends EntitySetMem {
     }
 }
 
-interface OpenEntitySetOptions {
-    readDefs?: boolean;
-}
+
 
 
 function closeEntitySet( es:EntitySet ){

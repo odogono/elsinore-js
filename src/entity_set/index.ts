@@ -82,6 +82,9 @@ export function isEntitySet(value: any): boolean {
     return isObject(value) && value.isEntitySet === true;
 }
 
+export interface OpenEntitySetOptions {
+    readDefs?: boolean;
+}
 
 export type ResolveComponentDefIdResult = [Component, string][] | [BitField, string][];
 
@@ -131,6 +134,10 @@ export abstract class EntitySet {
     abstract removeEntity(item: (number | Entity), options?: AddOptions): Promise<EntitySet>;
 
     abstract removeComponent(item: RemoveType, options?: AddOptions): Promise<EntitySet>;
+
+    async openEntitySet(options:OpenEntitySetOptions = {} ): Promise<EntitySet>{
+        return this;
+    }
 
     createEntity(): EntityId {
         return createEntityId();
@@ -338,9 +345,13 @@ export class EntitySetMem extends EntitySet {
     }
 
     async add<ES extends EntitySet>(item: AddType, options: AddOptions = {}): Promise<ES> {
+        await this.openEntitySet();
+
         if (options.retain !== true) {
             this.clearChanges();
         }
+
+        const {debug} = options;
 
         if (Array.isArray(item)) {
             let initial:[Entity[],Component[]] = [[], []];
@@ -372,7 +383,6 @@ export class EntitySetMem extends EntitySet {
         this.applyRemoveChanges();
         
         await this.applyUpdates();
-        
 
         return this as unknown as ES;
     }
