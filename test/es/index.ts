@@ -15,6 +15,7 @@ import { EntitySet, EntitySetMem } from '../../src/entity_set';
 import {
     toValues as bfToValues
 } from '../../src/util/bitfield';
+import { createUUID } from '../../src/util/uuid';
 // import { pronounceableEncode, pronounceableDecode } from '../../src/util/pronouncable';
 
 const Log = createLog('TestEntitySet');
@@ -91,23 +92,26 @@ describe('Entity Set (Mem)', () => {
             // Log.debug('registry', registry);
             let [es] = await buildEntitySet();
 
-            // let eid = es.createEntityId();
-
-            // let peid = toQuint(eid);// pronounceableEncode(eid);
-
             let e = es.createEntity(3110);
 
             e.Channel = { name: 'discussion' };
             e.Status = { status:'inactive' };
 
+            // you can do this, but the component will not be saved
+            // todo : add checking
+            e.Bogus = { msg:'nope' };
+
             await es.add(e);
 
-            // Log.debug( eid, e );
+            
             // Log.debug( eid, peid, pronounceableDecode(peid),  e );
 
             assert.equal(await es.size(), 1);
 
             let ese = await es.getEntity(3110);
+
+            // bogus did not get saved
+            assert.isUndefined( ese.Bogus );
 
             assert.equal( ese.Channel.name, 'discussion' );
             assert.equal( ese.Status.status, 'inactive' );

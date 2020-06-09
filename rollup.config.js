@@ -4,10 +4,10 @@ import NodeResolve from '@rollup/plugin-node-resolve';
 import Replace from '@rollup/plugin-replace';
 import Typescript from "rollup-plugin-typescript2";
 import ts from "@wessberg/rollup-plugin-ts";
-import MultiEntry from '@rollup/plugin-multi-entry';
+// import MultiEntry from '@rollup/plugin-multi-entry';
 import NodePolyfills from 'rollup-plugin-node-polyfills';
-import Json from '@rollup/plugin-json';
-import OMT from "@surma/rollup-plugin-off-main-thread";
+// import Json from '@rollup/plugin-json';
+// import OMT from "@surma/rollup-plugin-off-main-thread";
 import Path from 'path';
 
 // import pkg from './package.json';
@@ -31,26 +31,76 @@ const typescriptPlugin = Typescript({
 
 const nameCache = { vars: {} };
 
-function build({ external, format, minify, input, ext = "js", globals }) {
-    const dir = `dist/${format}/`;
+function build({ external, format, minify, input, output:outputFile, ext = "js", globals }) {
+    
     const minifierSuffix = minify ? ".min" : "";
-    const entryFileNames = `[name]${minifierSuffix}.${ext}`;
-    const chunkFileNames = `[name]-[hash]${minifierSuffix}.${ext}`
-    // const base = Path.basename(input).replace(/\.[^/.]+$/, "");
-    // console.log('[build]', format, base );
-    return {
-      input, //: `./src/${input}.ts`,
-      output: {
+    
+    let compress = true;
+
+    let output = {
+      format,
+      esModule: format === 'cjs' ? false : true,
+      sourcemap: true,
+      globals
+    }
+
+    if( typeof input === 'string' ){
+      const base = Path.basename(outputFile || input).replace(/\.[^/.]+$/, "");
+      output = {
+        ...output,
+        name: "odgn_entity",
+        file: `dist/${format}/${base}${minifierSuffix}.${ext}`
+      }
+    } else {
+      const entryFileNames = `[name]${minifierSuffix}.${ext}`;
+      const chunkFileNames = `[name]-[hash]${minifierSuffix}.${ext}`
+      output = {...output, 
         name: "odgn-entity",
-        // file: `${dir}/${base}${minifierSuffix}.${ext}`,
-        dir,
+        dir: `dist/${format}/`,
         entryFileNames,
         chunkFileNames,
-        format,
-        esModule: format === 'cjs' ? false : true,
-        sourcemap: true,
-        globals
-      },
+      };
+    }
+
+    // note: terser does not handle ts classes seemingly
+    // [!] (plugin terser) TypeError: Cannot read property 'references' of undefined
+    compress = {
+      defaults: false,
+      arrows: true,
+      booleans: true,
+      collapse_vars: false, // <- this causes the typeerror!
+      comparisons: true,
+      computed_props: true,
+      conditionals: true,
+      dead_code: true,
+      directives: true,
+      // drop_console: true,
+      drop_debugger: true,
+      evaluate: true,
+      hoist_props: true,
+      if_return: true,
+      inline: true,
+      join_vars: true,
+      keep_classnames: true,
+      keep_fargs: true,
+      keep_fnames: false,
+      loops: true,
+      module: true,
+      negate_iife: true,
+      properties: true,
+      reduce_vars: true,
+      sequences: true,
+      side_effects: true,
+      switches: true,
+      toplevel: true,
+      typeofs: true,
+      unused: true,
+      warnings: true
+    };
+
+    return {
+      input, //: `./src/${input}.ts`,
+      output,
       external,
       plugins: [
         Replace({ 'process.env.NODE_ENV': JSON.stringify(environment) }),
@@ -64,34 +114,8 @@ function build({ external, format, minify, input, ext = "js", globals }) {
         }), // so Rollup can convert `ms` to an ES module
         minify
           ? terser({
-              // compress: false,
-              compress: {
-                defaults: false,
-                dead_code: true,
-                inline: true,
-                join_vars: true,
-                keep_classnames: true,
-                keep_fargs: false,
-                keep_fnames: false,
-                loops: true,
-                module: true,
-                properties: true,
-                reduce_vars: true,
-                sequences: true,
-                toplevel: true
-              },
-              //   "properties": false,
-              //   "pure_getters": false,
-              //   "toplevel": false,
-              // },
-              // "mangle": {
-              //   "properties": {
-              //     "regex": /^_|_$/
-              //   },
-              //   "toplevel": true,
-              // },
+              compress,
               mangle: true,
-              // nameCache: { vars: {}, props: {} }
             })
           : undefined,
       ].filter(Boolean),
@@ -107,18 +131,22 @@ const config = {
     idb:'src/entity_set_idb/index.ts',
     sql:'src/entity_set_sql/index.ts'
 }};
+
+const singleConfig = {
+  input: 'src/index.browser.ts',
+  output: 'index.ts',
+};
+
 export default [
   {...config, format: 'esm', minify:false, ext:'mjs'},
   {...config, format: 'esm', minify:true, ext:'mjs'},
   {...config, format: 'cjs', minify:false, ext:'js'},
   {...config, format: 'cjs', minify:true, ext:'js'},
 
-
-
-  // {...config, format: 'amd', minify:false},
-  // {...config, format: 'amd', minify:true},
-  // {...config, format: 'iife', minify:false},
-  // {...config, format: 'iife', minify:true},
-  // {...config, format: 'umd', minify:false},
-  // {...config, format: 'umd', minify:true},
+  {...singleConfig, format: 'amd', minify:false},
+  {...singleConfig, format: 'amd', minify:true},
+  {...singleConfig, format: 'iife', minify:false},
+  {...singleConfig, format: 'iife', minify:true},
+  {...singleConfig, format: 'umd', minify:false},
+  {...singleConfig, format: 'umd', minify:true},
 ].map(build);
