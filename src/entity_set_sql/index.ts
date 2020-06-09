@@ -24,14 +24,10 @@ import {
 import {
     Type as EntityT,
     isEntity,
-    create as createEntityInstance,
-    getComponents as getEntityComponents,
     Entity,
     getEntityId,
     EntityId,
-    addComponentUnsafe,
-    EntityList,
-    createEntityList,
+    EntityList
 } from "../entity";
 import {
     ChangeSet,
@@ -140,50 +136,6 @@ export class EntitySetSQL extends EntitySetMem {
     select( query:StackValue[], options ): Promise<StackValue[]> {
         return select(this, query, options);
     }
-
-    // async add<ES extends EntitySet>(item: AddType, options: AddOptions = {}): Promise<ES> {
-    //     this.openEntitySet();
-
-    //     if (options.retain !== true) {
-    //         this.clearChanges();
-    //     }
-    //     const {debug} = options;
-
-    //     if (Array.isArray(item)) {
-    //         let initial:[Entity[],Component[]] = [[], []];
-    //         // sort the incoming items into entities and components
-    //         let [ents, coms] = (item as any[]).reduce(([ents, coms], item) => {
-    //             if (isComponentLike(item)) {
-    //                 coms.push(item);
-    //             } else if (isEntity(item)) {
-    //                 ents.push(item);
-    //             }
-    //             return [ents, coms];
-    //         }, initial);
-
-    //         // Log.debug('[add]', ents)
-
-    //         // add components on entities
-    //         await ents.reduce( (p,e) => p.then( () => this.addComponents(getEntityComponents(e))), Promise.resolve() );
-
-    //         // adds lone components
-    //         await this.addComponents(coms);
-    //     }
-    //     else if (isComponentLike(item)) {
-    //         await this.addComponents([item as Component]);
-    //     }
-    //     else if (isEntity(item)) {
-    //         let e = item as Entity
-    //         await this.markRemoveComponents(e[EntityT]);
-    //         await this.addComponents(getEntityComponents(e));
-    //     }
-
-    //     await this.applyRemoveChanges();
-
-    //     await this.applyUpdates();
-
-    //     return this as unknown as ES;
-    // }
 
     async applyUpdates(){
     }
@@ -434,7 +386,7 @@ export class EntitySetSQL extends EntitySetMem {
     createEntity(): number {
         this.openEntitySet();
 
-        let e = createEntityInstance();
+        let e = new Entity();
 
         e = this.setEntity(e);
         const eid = getEntityId(e);
@@ -471,7 +423,7 @@ export class EntitySetSQL extends EntitySetMem {
         for (const com of coms) {
             const did = getComponentDefId(com);
             const def = this.getByDefId(did);
-            e = addComponentUnsafe(e, did, com, def.name);
+            e = e.addComponentUnsafe(did, com, def.name);
         }
 
         return e;
@@ -482,7 +434,7 @@ export class EntitySetSQL extends EntitySetMem {
 
         let eids = sqlGetEntities(this.db);
 
-        return Promise.resolve(createEntityList(eids));
+        return Promise.resolve(new EntityList(eids));
     }
 
 

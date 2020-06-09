@@ -40,16 +40,11 @@ import {
 import {
     Entity,
     isEntity,
-    getComponents as getEntityComponents,
     Type as EntityT,
-    create as createEntityInstance,
-    addComponentUnsafe,
     getEntityId,
     EntityList,
-    createEntityList,
     isEntityList,
     EntityId,
-    setEntityId
 } from "../entity";
 import { StackValue } from "../query/types";
 import { createUUID } from "../util/uuid";
@@ -194,7 +189,7 @@ export abstract class EntitySet {
     addComponentToEntity(e: Entity, com: Component, did?: ComponentDefId): Entity {
         did = did === undefined ? getComponentDefId(com) : did;
         const def = this.getByDefId(did);
-        return addComponentUnsafe(e, did, com, def.name);
+        return e.addComponentUnsafe(did, com, def.name);
     }
 
     async register(value: ComponentDef | ComponentDefObj | any): Promise<ComponentDef> {
@@ -293,8 +288,12 @@ export abstract class EntitySet {
     }
 }
 
+
+/**
+ * 
+ */
 export class EntitySetMem extends EntitySet {
-    type: string = 'memt';
+    type: string = 'mem';
 
 
     isEntitySetMem: boolean = true;
@@ -366,7 +365,7 @@ export class EntitySetMem extends EntitySet {
             }, initial);
 
             // add components on entities
-            await ents.reduce( (p,e) => p.then( () => this.addComponents(getEntityComponents(e))), Promise.resolve() );
+            await ents.reduce( (p,e) => p.then( () => this.addComponents(e.getComponents())), Promise.resolve() );
 
             // add components
             await this.addComponents(coms);
@@ -376,8 +375,8 @@ export class EntitySetMem extends EntitySet {
         }
         else if (isEntity(item)) {
             let e = item as Entity
-            this.markRemoveComponents(e[EntityT]);
-            await this.addComponents(getEntityComponents(e));
+            this.markRemoveComponents(e.id);
+            await this.addComponents(e.getComponents());
         }
         
         this.applyRemoveChanges();
@@ -434,8 +433,9 @@ export class EntitySetMem extends EntitySet {
         // gather the components that have been added or updated and apply
         let changedCids = getChanges(this.comChanges, ChangeSetOp.Add | ChangeSetOp.Update)
         // console.log('[addComponents]', 'pre', changedCids);
-
+        
         this.comChanges = mergeCS(changes, this.comChanges);
+        // console.log('[addComponents]', 'changes', this.comChanges);
 
         // sequentially apply
         await changedCids.reduce( (p,cid) => p.then( () => this.applyUpdatedComponents(cid)), Promise.resolve() );
@@ -489,7 +489,7 @@ export class EntitySetMem extends EntitySet {
         if (ebf === undefined) {
             return undefined;
         }
-        let e = createEntityInstance(eid, ebf);
+        let e = new Entity(eid, ebf);
 
         if (!populate) {
             return e;
@@ -531,7 +531,7 @@ export class EntitySetMem extends EntitySet {
         }
 
         // Log.debug('[matchEntities]', 'dammit', entities );
-        return createEntityList(matches, mbf);
+        return new EntityList(matches, mbf);
     }
 
     async getOrAddEntityBitfield(eid: number): Promise<BitField> {
@@ -566,8 +566,8 @@ export class EntitySetMem extends EntitySet {
         }
         
         this.entUpdates.set(eid, bf);
-
-        return setEntityId(e, eid);
+        e.id = eid;
+        return e;
     }
 
 
@@ -758,7 +758,7 @@ export class EntitySetMem extends EntitySet {
 
         // does the component already belong to this entity?
         if (bfGet(ebf, did) === false) {
-            let e = createEntityInstance(eid);
+            let e = new Entity(eid);
             // console.log('[applyUpdatedComponents]', eid, did, bfToValues(e.bitField) );
             e.bitField = bfSet(ebf, did);
 

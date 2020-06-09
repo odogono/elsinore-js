@@ -1,5 +1,5 @@
 import { createLog } from "../util/log";
-import { Entity, create as createEntityInstance, EntityId } from "../entity";
+import { Entity, EntityId } from "../entity";
 import { ComponentId, Component, fromComponentId, toComponentId } from "../component";
 import { ComponentDef, ComponentDefId, getDefId } from "../component_def";
 import { 
@@ -125,7 +125,7 @@ export async function idbRetrieveEntityByDefId(db: IDBDatabase, dids: number[]):
     let ents = result.reduce((result, [eid, did]) => {
         let e = result[eid];
         if (e === undefined) {
-            e = createEntityInstance(eid);
+            e = new Entity(eid);
         }
         e.bitField = bfSet(e.bitField,did);
         return { ...result, [eid]: e };
@@ -163,7 +163,7 @@ export async function idbRetrieveEntities(db: IDBDatabase, eids: number[]): Prom
     let ents = result.reduce((result, [eid, did]) => {
         let e = result[eid];
         if (e === undefined) {
-            e = createEntityInstance(eid);
+            e = new Entity(eid);
         }
         e.bitField = bfSet(e.bitField,did);
         return { ...result, [eid]: e };

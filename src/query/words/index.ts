@@ -26,8 +26,7 @@ import {
 } from '../../../src/util/is';
 
 import {
-    Entity, create as createEntityInstance, isEntity,
-    addComponentUnsafe
+    Entity, isEntity,
 } from '../../../src/entity';
 import { isComponent, Component, isComponentList, getComponentDefId } from '../../../src/component';
 
@@ -116,20 +115,20 @@ export function onEntity<QS extends QueryStack>(stack: QS): InstResult<QS> {
             let type = val[0];
             if (type === SType.Component) {
                 if (!acc) {
-                    acc = createEntityInstance();
+                    acc = new Entity();
                 }
                 const did = getComponentDefId(val[1]);
                 const def = stack.es.getByDefId(did);
-                return addComponentUnsafe(acc, did, val[1], def.name);
+                return acc.addComponentUnsafe(did, val[1], def.name);
             } else if (isInteger(val[1])) {
-                return createEntityInstance(val[1]);
+                return new Entity(val[1]);
             }
         }, null);
         if (isEntity(e)) {
             return [stack, [SType.Entity, e]];
         }
     } else {
-        let e = createEntityInstance(val);
+        let e = new Entity(val);
         return [stack, [SType.Entity, e]];
     }
 

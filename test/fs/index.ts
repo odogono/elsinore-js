@@ -16,11 +16,7 @@ import {
     onEntity,
 } from '../../src/query/words';
 import { Entity,
-    create as createEntityInstance, 
-    getComponent as getEntityComponent,
-    size as entitySize, 
-    isEntity,
-    addComponentUnsafe} from '../../src/entity';
+    isEntity} from '../../src/entity';
 import { 
     toObject as defToObject, 
     hash as hashDef, 

@@ -25,16 +25,11 @@ import { ComponentDef,
     Type as ComponentDefT} from '../component_def';
 import { createLog } from "../util/log";
 import { 
-    Type as EntityT,
     isEntity,
-    create as createEntityInstance,
-    getComponents as getEntityComponents,
     Entity,
     getEntityId,
     EntityId,
-    addComponentUnsafe,
     EntityList,
-    createEntityList,
 } from "../entity";
 import { 
     BitField,
@@ -129,55 +124,6 @@ export class EntitySetIDB extends EntitySetMem {
         return select(this, query, options);
     }
 
-    // async add<ES extends EntitySet>( item: AddType, options: AddOptions = {}): Promise<ES> {
-    //     await this.openEntitySet();
-
-    //     if( options.retain !== true ){
-    //         this.clearChanges();
-    //     }
-
-    //     const {debug} = options;
-        
-    //     // Log.debug('[add]', item);
-    
-    //     // console.time('[ESIDB][add]');
-    //     if (Array.isArray(item)) {
-    //         let initial:[Entity[],Component[]] = [[], []];
-    //         // sort the incoming items into entities and components
-    //         let [ents, coms] = (item as any[]).reduce(([ents, coms], item) => {
-    //             if (isComponentLike(item)) {
-    //                 coms.push(item);
-    //             } else if (isEntity(item)) {
-    //                 ents.push(item);
-    //             }
-    //             return [ents, coms];
-    //         }, initial);
-            
-    //         // add components on entities
-    //         await ents.reduce( (p,e) => p.then( () => this.addComponents(getEntityComponents(e))), Promise.resolve() );
-
-    //         // if(debug) console.timeEnd('[add][addComponents]');
-    
-    //         // console.time('[add][addComponents]2');
-    //         await this.addComponents(coms);
-    //         // es = await applyRemoveChanges(es)
-    //         // console.timeEnd('[add][addComponents]2');
-    //     }
-    //     else if (isComponentLike(item)) {
-    //         await this.addComponents([item as Component]);
-    //     }
-    //     else if (isEntity(item)) {
-    //         let e = item as Entity
-    //         await this.markRemoveComponents( e[EntityT]);
-    //         await this.addComponents(getEntityComponents(e));
-    //     }
-    
-    //     await this.applyRemoveChanges();
-
-    //     await this.applyUpdates();
-    
-    //     return this as unknown as ES;
-    // }
 
     async applyUpdates(){
         // console.timeEnd('[ESIDB][add]');
@@ -260,7 +206,7 @@ export class EntitySetIDB extends EntitySetMem {
             let com = {'@e':ceid, '@d':cdid, ...rest};
             const def = this.getByDefId(cdid);
     
-            e = addComponentUnsafe(e,cdid,com,def.name);
+            e.addComponentUnsafe(cdid,com,def.name);
         }
     
         return e;
@@ -272,7 +218,7 @@ export class EntitySetIDB extends EntitySetMem {
     
         let result = await idbGetAllKeys(store);
     
-        return createEntityList(result);
+        return new EntityList(result);
     }
 
 
@@ -602,7 +548,7 @@ export class EntitySetIDB extends EntitySetMem {
                 return undefined;
             }
             
-            let e = createEntityInstance(eid);
+            let e = new Entity(eid);
             e.bitField = bfSet( e.bitField, data );
             return e;
         })

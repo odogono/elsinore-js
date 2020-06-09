@@ -57,9 +57,7 @@ import {
 } from '../../src/util/bitfield';
 import {
     Entity,
-    getEntityId,
-    size as entitySize,
-    getComponent as getEntityComponent,
+    getEntityId
 } from '../../src/entity';
 import { fetchComponents } from '../../src/entity_set/query';
 import { onPluck } from '../../src/query/words/pluck';
@@ -208,8 +206,8 @@ describe('Query (IDB)', () => {
 
         let [,result] = pop(stack);
         let e:Entity = unpackStackValue(result, SType.Entity);
-        assert.equal( entitySize(e), 3);
-        assert.equal( getEntityComponent(e, 2).colour, 'white' );
+        assert.equal( e.size, 3);
+        assert.equal( e.getComponent(2).colour, 'white' );
 
         // Log.debug( e );
 

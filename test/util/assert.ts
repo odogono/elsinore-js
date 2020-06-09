@@ -1,12 +1,12 @@
 import { assert } from 'chai';
 
-import { Entity, getComponent, getComponents } from '../../src/entity';
+import { Entity } from '../../src/entity';
 import{ getComponentDefId } from '../../src/component';
 import{ get as bfGet, toValues as bfToValues } from '../../src/util/bitfield';
 import { EntitySet } from '../../src/entity_set';
 
 
-export function assertIncludesComponents<ES extends EntitySet>(es:ES, entity:Entity, dids:any[]) {
+export function assertIncludesComponents<ES extends EntitySet>(es:ES, e:Entity, dids:any[]) {
     const bf = es.resolveComponentDefIds(dids );
     // const defs = resolveComponentDefIds( registry, dids ) as ComponentDef[];
 
@@ -15,7 +15,7 @@ export function assertIncludesComponents<ES extends EntitySet>(es:ES, entity:Ent
         //     assert.fail(`unknown component def ${dids[ii]}`);
         //     return;
         // }
-        const com = getComponent(entity, did );
+        const com = e.getComponent(did );
         
         if( com === undefined ){
             assert.fail(`missing component ${dids[ii]} on entity`);
@@ -23,7 +23,7 @@ export function assertIncludesComponents<ES extends EntitySet>(es:ES, entity:Ent
     })
 }
 
-export function assertHasComponents<ES extends EntitySet>(es:ES, entity:Entity, dids:any[]){
+export function assertHasComponents<ES extends EntitySet>(es:ES, e:Entity, dids:any[]){
     const bf = es.resolveComponentDefIds(dids );
     
     bfToValues(bf).forEach( (did,ii) => {
@@ -31,14 +31,14 @@ export function assertHasComponents<ES extends EntitySet>(es:ES, entity:Entity, 
         //     assert.fail(`unknown component def ${dids[ii]}`);
         //     return;
         // }
-        const com = getComponent(entity, did );
+        const com = e.getComponent(did );
         
         if( com === undefined ){
             assert.fail(`missing component ${dids[ii]} on entity`);
         }
     })
     
-    for( const com of getComponents(entity) ){
+    for( const com of e.getComponents() ){
         const did = getComponentDefId(com);
         const def = es.getByDefId(did);
 

@@ -10,6 +10,7 @@ import {
     set as bfSet,
     toValues as bfToValues
 } from "./util/bitfield";
+import { ComponentDefId } from "./component_def";
 
 export const Type = '@e';
 
@@ -20,141 +21,100 @@ export type EntityId = number;
 // type EntityMap = Map<number, BitField>;
 export type EntityMap = Map<EntityId, BitField>;
 
-export interface EntityList {
-    entityIds: EntityId[];
+export class EntityList {
+    eids: EntityId[];
     // a map of entityId to comDef ids
     // NO - only entityIds, anything else runs the risk of becoming stale
     // entities: EntityMap;
     // used to record the bitfield that compiled this list
     // this enables the list to be used as an index
     bf?: BitField;
-}
 
-export interface Entity {
-    [key: string]: any;
-    
-    [Type]: EntityId;
-
-    // maps component defId to Component
-    components: Map<number, Component>;
-
-    // tracks component defIds contained on this entity
-    bitField: BitField;
-}
-
-export function Entity(id: number = 0, bitField: BitField = createBitField()) {
-    this.id = id;
-    this.bitField = bitField;
-    this.components = new Map<number, Component>();
-}
-
-
-export function create(id: number = 0, bitField: BitField = createBitField()): Entity {
-    return {
-        [Type]: id,
-        components: new Map<number, Component>(),
-        bitField
+    constructor( eids:EntityId[] = [], bf?: BitField){
+        this.eids = eids;
+        this.bf = bf;
     }
-}
-
-export function createEntityList(entityIds: number[] = [], bf?: BitField): EntityList {
-    return { entityIds, bf };
 }
 
 export function isEntityList(value: any): boolean {
     return isObject(value) && 'entityIds' in value;
 }
 
-// /**
-//  * 
-//  * @param entity 
-//  * @param component 
-//  */
-// export function addComponent(e: Entity, com: Component): Entity {
-//     const did = getComponentDefId(com);
 
-//     if (did === 0) {
-//         return e;
-//     }
 
-//     const entityId = getEntityId(e);
+export class Entity {
+    id: EntityId = 0;
+    
+    // maps component defId to Component
+    components: Map<ComponentDefId, Component> = new Map<ComponentDefId,Component>();
 
-//     com = setComponentEntityId(com, entityId);
+    // tracks component defIds contained on this entity
+    bitField: BitField;
 
-//     let components = new Map<number, Component>(e.components);
-//     // components.set(did, com);
+    isEntity:boolean = true;
 
-//     let bitField = createBitField(e.bitField);
-//     // bitField = bfSet(bitField,did);
-
-//     e = {
-//         [Type]: entityId,
-//         components,
-//         bitField
-//     };
-
-//     return addComponentUnsafe( e, did, com );
-// }
-
-/**
- * A direct means of adding an already owned component to the entity
- * @param entity 
- * @param component 
- */
-export function addComponentUnsafe( e: Entity, did: number, com: Component, name?:string): Entity {
-    const eid = getEntityId(e);
-
-    if( com === undefined ){
-        e.components.delete(did);
-        e.bitField = bfSet(e.bitField,did, false);
-    } else {
-        com = setComponentEntityId(com, eid);
-        e.components.set(did, com);
-        e.bitField = bfSet(e.bitField,did);
+    constructor(id:EntityId = 0, bitField:BitField = createBitField()){
+        this.id = id;
+        this.bitField = bitField;
     }
 
-    if( name !== undefined ){
-        Object.defineProperty(e, name, { 
-            get: () => e.components.get(did),
-            set: (com:Component) => {
-                if( getComponentDefId(com) === did ){
-                    e.components.set(did,com);
+    /**
+     * A direct means of adding an already owned component to the entity
+     * @param entity 
+     * @param component 
+     */
+    addComponentUnsafe( did: number, com: Component, name?:string): Entity {
+        const eid = getEntityId(this);
+    
+        if( com === undefined ){
+            this.components.delete(did);
+            this.bitField = bfSet(this.bitField,did, false);
+        } else {
+            com = setComponentEntityId(com, eid);
+            this.components.set(did, com);
+            this.bitField = bfSet(this.bitField,did);
+        }
+    
+        if( name !== undefined ){
+            Object.defineProperty(this, name, { 
+                get: () => this.components.get(did),
+                set: (com:Component) => {
+                    if( getComponentDefId(com) === did ){
+                        this.components.set(did,com);
+                    }
                 }
-            }
-        });
-        
-        
+            });
+        }
+        return this;
     }
-    return e;
+
+    getComponent(defId: ComponentDefId): Component {
+        return this.components.get(defId);
+    }
+
+    getComponents(bf?: BitField): Component[] {
+        if (bf !== undefined) {
+            return bfToValues(bf).map(did => this.components.get(did)).filter(Boolean);
+        }
+        return Array.from(this.components.values());
+    }
+
+    get size():number {
+        return this.components.size;
+    }
+
 }
+
 
 /**
  * 
  * @param entity 
  */
 export function getEntityId(entity: Entity): EntityId {
-    return isEntity(entity) ? entity[Type] : isInteger(entity as any) ? entity as any : 0;
-}
-
-export function setEntityId(entity: Entity, id: number): Entity {
-    return { ...entity, [Type]: id };
-}
-
-export function getComponent(entity: Entity, defId: number): Component {
-    return entity.components.get(defId);
-}
-
-export function getComponents(entity: Entity, bf?: BitField): Component[] {
-    if (bf !== undefined) {
-        return bfToValues(bf).map(did => entity.components.get(did)).filter(Boolean);
-    }
-    return Array.from(entity.components.values());
+    return isEntity(entity) ? entity.id : isInteger(entity as any) ? entity as any : 0;
 }
 
 export function isEntity(item: any): boolean {
-    return isObject(item) && Type in item;
+    return isObject(item) && item['isEntity'] === true;
 }
 
-export function size(entity: Entity): number {
-    return entity.components.size;
-}

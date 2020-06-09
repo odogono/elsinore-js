@@ -4,11 +4,7 @@ import {
     EntitySetSQL
 } from '../../src/entity_set_sql';
 import {
-    getComponent as getEntityComponent,
-    create as createEntityInstance, Entity,
-    size as entitySize,
-    isEntity,
-    addComponentUnsafe,
+    Entity, isEntity,
 } from '../../src/entity';
 import {
     toObject as defToObject,
@@ -91,7 +87,7 @@ describe('Entity Set (SQL)', () => {
 
         it('should ignore an entity without an id', async () => {
             let es = createEntitySet();
-            let e = createEntityInstance();
+            let e = new Entity();
             
             await es.add(e);
 
@@ -100,7 +96,7 @@ describe('Entity Set (SQL)', () => {
 
         it('should ignore an entity with an id, but without any components', async () => {
             let es = createEntitySet();
-            let e = createEntityInstance(2);
+            let e = new Entity(2);
 
             await es.add(e);
 
@@ -121,7 +117,7 @@ describe('Entity Set (SQL)', () => {
 
             // Log.debug('ok!', e );
 
-            assert.equal(entitySize(e), 3);
+            assert.equal(e.size, 3);
 
             await es.add(e);
 
@@ -198,7 +194,7 @@ describe('Entity Set (SQL)', () => {
 
             assertHasComponents(es, e, ['/component/channel']);
 
-            com = getEntityComponent(e, getComponentDefId(com));
+            com = e.getComponent(getComponentDefId(com));
 
             assert.equal(com.name, 'discussion');
         });
@@ -267,7 +263,7 @@ describe('Entity Set (SQL)', () => {
                 ['/component/username', '/component/status', '/component/channel_member']);
 
             const did = bfToValues(es.resolveComponentDefIds( ['/component/channel_member']))[0];
-            let com = getEntityComponent(e, did)
+            let com = e.getComponent(did)
             assert.equal(com.channel, 3);
             // Log.debug('e', com);
         });
@@ -362,7 +358,7 @@ async function buildEntitySet(): Promise<[EntitySet, Function]> {
     await defs.reduce( (p,def) => p.then( () => es.register(def)), Promise.resolve() );
 
     const buildEntity = (es: EntitySet, buildFn: BuildQueryFn, eid: number = 0) => {
-        let e = createEntityInstance(eid);
+        let e = new Entity(eid);
         const component = (uri: string, props: object) => {
             let def = es.getByUri(uri);
             let com = es.createComponent(def, props);

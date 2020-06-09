@@ -12,9 +12,7 @@ import {
 } from '../component_def';
 import {
     Entity,
-    create as createEntityInstance,
     getEntityId,
-    setEntityId,
     EntityId
 } from '../entity';
 import { 
@@ -214,8 +212,9 @@ export function sqlUpdateEntity(ref: SqlRef, e: Entity): Entity {
         // })
     }
     // });
+    e.id = eid;
 
-    return setEntityId(e, eid);
+    return e;
 }
 
 export function sqlRetrieveEntity(ref: SqlRef, eid: number): Entity {
@@ -237,7 +236,7 @@ export function sqlRetrieveEntity(ref: SqlRef, eid: number): Entity {
     let dids = rows.map(r => r.did);
     const bf = createBitField(dids);
 
-    return createEntityInstance(eid, bf);
+    return new Entity(eid, bf);
 }
 
 export function sqlUpdateComponent(ref: SqlRef, com: Component, def: ComponentDefSQL): Component {
@@ -475,7 +474,7 @@ export function sqlRetrieveEntities(ref:SqlRef, eids?:EntityId[] ):Entity[]{
     let result = rows.reduce((result, { eid, did }) => {
         let e = result[eid];
         if (e === undefined) {
-            e = createEntityInstance(eid);
+            e = new Entity(eid);
         }
         e.bitField = bfSet(e.bitField,did);
         return { ...result, [eid]: e };
@@ -507,7 +506,7 @@ export function sqlRetrieveEntityByDefId(ref: SqlRef, did: number[]): Entity[] {
     let result = rows.reduce((result, { eid, did }) => {
         let e = result[eid];
         if (e === undefined) {
-            e = createEntityInstance(eid);
+            e = new Entity(eid);
         }
         e.bitField = bfSet(e.bitField,did);
         return { ...result, [eid]: e };

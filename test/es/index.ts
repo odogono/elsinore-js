@@ -1,12 +1,8 @@
 import { assert } from 'chai';
 import { createLog } from '../../src/util/log';
 
-import { Entity,
-    create as createEntityInstance, 
-    getComponent as getEntityComponent,
-    size as entitySize, 
-    isEntity,
-    addComponentUnsafe
+import { 
+    Entity, isEntity
 } from '../../src/entity';
 
 import { assertHasComponents } from '../util/assert';
@@ -26,30 +22,6 @@ const createEntitySet = () => new EntitySetMem();
 
 describe('Entity Set (Mem)', () => {
     
-    describe('Component Defs', () => {
-        it('registers', async () => {
-            let def;
-            let es = createEntitySet();
-            const data = { uri: '/component/position', properties: [{ name: 'rank', type: 'integer' }, 'file'] };
-            // Log.debug('ok', (Date.now()-start));
-            
-            def = await es.register(data);
-
-            // Log.debug('ok', (Date.now()-start));
-
-            def = await es.register("/component/piece/king");
-            def = await es.register("/component/piece/queen");
-
-            def = es.getByUri('/component/position');
-
-            assert.ok(isComponentDef(def));
-
-            def = es.getByHash(hashDef(def));
-
-            assert.equal(def.uri, '/component/position');
-        })
-    })
-
 
     describe('Adding', () => {
 
@@ -64,7 +36,7 @@ describe('Entity Set (Mem)', () => {
 
         it('should ignore an entity without an id', async () => {
             let es = new EntitySetMem();
-            let e = createEntityInstance();
+            let e = new Entity();
 
             es.add(e);
 
@@ -73,7 +45,7 @@ describe('Entity Set (Mem)', () => {
 
         it('should ignore an entity with an id, but without any components', async () => {
             let es = createEntitySet();
-            let e = createEntityInstance(2);
+            let e = new Entity(2);
 
             await es.add(e);
 
@@ -92,7 +64,7 @@ describe('Entity Set (Mem)', () => {
 
             // Log.debug('ok!', e );
 
-            assert.equal(entitySize(e), 3);
+            assert.equal( e.size, 3);
 
             await es.add(e);
 
@@ -184,7 +156,7 @@ describe('Entity Set (Mem)', () => {
 
             assertHasComponents(es, e, ['/component/channel']);
 
-            com = getEntityComponent(e, getComponentDefId(com));
+            com = e.getComponent(getComponentDefId(com));
 
             assert.equal(com.name, 'discussion');
         });
@@ -231,8 +203,6 @@ describe('Entity Set (Mem)', () => {
 
             e = await es.getEntity(15);
 
-            // Log.debug('e', es.comChanges );// getChanges(es.comChanges) );
-
             assert.ok(isEntity(e));
 
             e = buildEntity(es, ({ component }) => {
@@ -247,15 +217,13 @@ describe('Entity Set (Mem)', () => {
 
             e = await es.getEntity(15);
 
-            // Log.debug('e', es.entChanges, es.comChanges);
-
             assertHasComponents(es, e,
                 ['/component/username', '/component/status', '/component/channel_member']);
 
             const did = bfToValues(es.resolveComponentDefIds( ['/component/channel_member']))[0];
-            let com = getEntityComponent(e, did)
+            let com = e.getComponent(did);
+
             assert.equal(com.channel, 3);
-            // Log.debug('e', com);
         });
 
         it('updates an entity', async () => {
@@ -331,6 +299,30 @@ describe('Entity Set (Mem)', () => {
         });
     });
 
+    describe('Component Defs', () => {
+        it('registers', async () => {
+            let def;
+            let es = createEntitySet();
+            const data = { uri: '/component/position', properties: [{ name: 'rank', type: 'integer' }, 'file'] };
+            // Log.debug('ok', (Date.now()-start));
+            
+            def = await es.register(data);
+
+            // Log.debug('ok', (Date.now()-start));
+
+            def = await es.register("/component/piece/king");
+            def = await es.register("/component/piece/queen");
+
+            def = es.getByUri('/component/position');
+
+            assert.ok(isComponentDef(def));
+
+            def = es.getByHash(hashDef(def));
+
+            assert.equal(def.uri, '/component/position');
+        })
+    })
+
 })
 
 async function buildEntitySet(options?): Promise<[EntitySetMem, Function]> {
@@ -348,7 +340,7 @@ async function buildEntitySet(options?): Promise<[EntitySetMem, Function]> {
 
 
     const buildEntity = (es: EntitySet, buildFn: BuildQueryFn, eid: number = 0) => {
-        let e = createEntityInstance(eid);
+        let e = new Entity(eid);
         const component = (uri: string, props: object) => {
             let def = es.getByUri(uri);
             let com = es.createComponent(def, props);
