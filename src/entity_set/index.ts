@@ -44,7 +44,7 @@ import {
     getEntityId,
     EntityList,
     isEntityList,
-    EntityId,
+    EntityId
 } from "../entity";
 import { StackValue } from "../query/types";
 import { createUUID } from "../util/uuid";
@@ -89,6 +89,11 @@ export type AddArrayType = (Entity | Component)[];// Entity[] | Component[];
 export type AddType = Entity | Component | OrphanComponent | AddArrayType;
 export type RemoveType = ComponentId | Entity | Component;
 
+
+const ESEpoch = 1577836800000; // 2020-01-01T00:00:00.000Z
+
+
+
 export abstract class EntitySet {
     isEntitySet: boolean = true;
     isAsync: boolean = false;
@@ -103,6 +108,8 @@ export abstract class EntitySet {
     comChanges = createChangeSet<ComponentId>();
     comUpdates = new Map<ComponentId, any>();
     entUpdates = new Map<number, BitField>();
+
+    eidSeq:EntityId = 0;
 
     constructor(data?: EntitySet) {
         if (data !== undefined) {
@@ -134,8 +141,17 @@ export abstract class EntitySet {
         return this;
     }
 
-    createEntity(): EntityId {
-        return createEntityId();
+    createEntity(eid:EntityId = 0): Entity {
+        let e = new Entity(eid);
+        // return createEntityId();
+
+        e = e.defineComponentProperties( this.componentDefs );
+
+        return e;
+    }
+
+    createEntityId() {
+        return buildFlake53({ timestamp: Date.now(), workerId: 0, epoch: ESEpoch, sequence: this.eidSeq++ });
     }
 
     createComponent(defId: (string | number | ComponentDef), attributes = {}): Component {
@@ -375,6 +391,7 @@ export class EntitySetMem extends EntitySet {
         }
         else if (isEntity(item)) {
             let e = item as Entity
+            // if( debug ){ console.log('add', e)}
             this.markRemoveComponents(e.id);
             await this.addComponents(e.getComponents());
         }
@@ -562,7 +579,7 @@ export class EntitySetMem extends EntitySet {
         let bf = e.bitField || createBitField();
 
         if (eid === 0) {
-            eid = createEntityId();
+            eid = this.createEntityId();
         }
         
         this.entUpdates.set(eid, bf);
@@ -819,7 +836,7 @@ export class EntitySetMem extends EntitySet {
 
 
     createEntityAlt(): EntityId {
-        let eid = createEntityId();
+        let eid = this.createEntityId();
         this.markEntityAdd(eid);
         return eid;
     }
@@ -828,9 +845,3 @@ export class EntitySetMem extends EntitySet {
 }
 
 
-const ESEpoch = 1577836800000; // 2020-01-01T00:00:00.000Z
-let idSequence = 0;
-
-function createEntityId() {
-    return buildFlake53({ timestamp: Date.now(), workerId: 0, epoch: ESEpoch, sequence: idSequence++ });
-}

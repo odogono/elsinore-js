@@ -439,3 +439,4 @@ function StringToBinary(string) {
 //     }
 //     return chars;
 // }
+

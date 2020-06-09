@@ -10,7 +10,7 @@ import {
     set as bfSet,
     toValues as bfToValues
 } from "./util/bitfield";
-import { ComponentDefId } from "./component_def";
+import { ComponentDefId, ComponentDef, getDefId } from "./component_def";
 
 export const Type = '@e';
 
@@ -30,6 +30,8 @@ export class EntityList {
     // this enables the list to be used as an index
     bf?: BitField;
 
+    [key:string]: any;
+
     constructor( eids:EntityId[] = [], bf?: BitField){
         this.eids = eids;
         this.bf = bf;
@@ -40,6 +42,10 @@ export function isEntityList(value: any): boolean {
     return isObject(value) && 'entityIds' in value;
 }
 
+
+// export interface EntityU extends Entity {
+//     [key:string]: any;
+// }
 
 
 export class Entity {
@@ -52,6 +58,9 @@ export class Entity {
     bitField: BitField;
 
     isEntity:boolean = true;
+
+    // to allow Component direct access and modification
+    [key:string]: any;
 
     constructor(id:EntityId = 0, bitField:BitField = createBitField()){
         this.id = id;
@@ -101,6 +110,39 @@ export class Entity {
 
     get size():number {
         return this.components.size;
+    }
+
+
+    /**
+     * Alters the Entity instance to allow convenient setting
+     * and retrieval of components directly using their names.
+     * 
+     * the component data need not contain did, but there is no
+     * checking on the validity of the data 
+     * 
+     * @param defs 
+     */
+    defineComponentProperties( defs:ComponentDef[] ):Entity {
+        const eid = this.id;
+        const props = defs.reduce( (props,def) => {
+            const did = getDefId(def);
+            return {...props, [ def.name ]:{
+                set: (com) => {
+                    let cdid = getComponentDefId(com);
+                    if( cdid !== undefined && cdid !== did ){
+                        throw new Error(`invalid set component on ${def.name}`);
+                    }
+                    com = { '@e':eid, '@d':did, ...com };
+                    this.components.set(did,com);
+                },
+                get: () => this.components.get(did),
+                // writable: true
+            }};
+        }, {});
+
+        Object.defineProperties(this, props);
+
+        return this;
     }
 
 }

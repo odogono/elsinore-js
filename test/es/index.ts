@@ -15,6 +15,7 @@ import { EntitySet, EntitySetMem } from '../../src/entity_set';
 import {
     toValues as bfToValues
 } from '../../src/util/bitfield';
+// import { pronounceableEncode, pronounceableDecode } from '../../src/util/pronouncable';
 
 const Log = createLog('TestEntitySet');
 
@@ -27,11 +28,11 @@ describe('Entity Set (Mem)', () => {
 
         it('should create an entity (id)', async () => {
             let es = createEntitySet();
-            let id = 0;
+            let eid = 0;
 
-            id = es.createEntity();
+            eid = es.createEntityId();
 
-            assert.isAtLeast(id, 1);
+            assert.isAtLeast(eid, 1);
         });
 
         it('should ignore an entity without an id', async () => {
@@ -86,6 +87,45 @@ describe('Entity Set (Mem)', () => {
             );
         });
 
+        it('adds unqualified components from an entity', async () => {
+            // Log.debug('registry', registry);
+            let [es] = await buildEntitySet();
+
+            // let eid = es.createEntityId();
+
+            // let peid = toQuint(eid);// pronounceableEncode(eid);
+
+            let e = es.createEntity(3110);
+
+            e.Channel = { name: 'discussion' };
+            e.Status = { status:'inactive' };
+
+            await es.add(e);
+
+            // Log.debug( eid, e );
+            // Log.debug( eid, peid, pronounceableDecode(peid),  e );
+
+            assert.equal(await es.size(), 1);
+
+            let ese = await es.getEntity(3110);
+
+            assert.equal( ese.Channel.name, 'discussion' );
+            assert.equal( ese.Status.status, 'inactive' );
+
+            ese.Channel.name = '(closed)';
+
+            ese = await es.getEntity(3110);
+            assert.equal( ese.Channel.name, 'discussion' );
+
+            ese.Channel.name = '(closed)';
+
+            await es.add(ese, {debug:true});
+            ese = await es.getEntity(3110);
+            assert.equal( ese.Channel.name, '(closed)' );
+
+            // Log.debug( es );
+        });
+
         it('adds a component', async () => {
             let [es] = await buildEntitySet();
             let com = es.createComponent('/component/channel', {name: 'chat'} );
@@ -102,23 +142,7 @@ describe('Entity Set (Mem)', () => {
             assert.equal( com.name, 'chat' );
         });
         
-        it('adds a component', async () => {
-            // Log.debug('registry', registry);
-            let [es] = await buildEntitySet();
-            let com = es.createComponent('/component/channel', { name: 'chat' });
-
-            await es.add(com);
-
-            assert.equal(await es.size(), 1);
-
-            const cid = getChanges(es.comChanges, ChangeSetOp.Add)[0];
-
-
-            com = await es.getComponent(cid);
-            // Log.debug('es', com);
-
-            assert.equal(com.name, 'chat');
-        });
+        
 
         it('updates a component', async () => {
             // Log.debug('registry', registry);

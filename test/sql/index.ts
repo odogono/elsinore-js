@@ -80,7 +80,7 @@ describe('Entity Set (SQL)', () => {
             let es = createEntitySet();
             let id = 0;
 
-            id = es.createEntity();
+            id = es.createEntityId();
 
             assert.isAtLeast(id, 1);
         });
@@ -137,6 +137,45 @@ describe('Entity Set (SQL)', () => {
                 e,
                 ["/component/channel", "/component/status", "/component/topic"]
             );
+        });
+
+        it('adds unqualified components from an entity', async () => {
+            // Log.debug('registry', registry);
+            let [es] = await buildEntitySet();
+
+            // let eid = es.createEntityId();
+
+            // let peid = toQuint(eid);// pronounceableEncode(eid);
+
+            let e = es.createEntity(3110);
+
+            e.Channel = { name: 'discussion' };
+            e.Status = { status:'inactive' };
+
+            await es.add(e);
+
+            // Log.debug( eid, e );
+            // Log.debug( eid, peid, pronounceableDecode(peid),  e );
+
+            assert.equal(await es.size(), 1);
+
+            let ese = await es.getEntity(3110);
+
+            assert.equal( ese.Channel.name, 'discussion' );
+            assert.equal( ese.Status.status, 'inactive' );
+
+            ese.Channel.name = '(closed)';
+
+            ese = await es.getEntity(3110);
+            assert.equal( ese.Channel.name, 'discussion' );
+
+            ese.Channel.name = '(closed)';
+
+            await es.add(ese, {debug:true});
+            ese = await es.getEntity(3110);
+            assert.equal( ese.Channel.name, '(closed)' );
+
+            // Log.debug( es );
         });
 
         it('adds a component', async () => {

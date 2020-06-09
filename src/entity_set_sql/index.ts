@@ -383,19 +383,19 @@ export class EntitySetSQL extends EntitySetMem {
         return sqlRetrieveEntity(this.db, eid);
     }
 
-    createEntity(): number {
-        this.openEntitySet();
+    // createEntity(): number {
+    //     this.openEntitySet();
 
-        let e = new Entity();
+    //     let e = new Entity();
 
-        e = this.setEntity(e);
-        const eid = getEntityId(e);
-        // Log.debug('[createEntity]', es);
+    //     e = this.setEntity(e);
+    //     const eid = getEntityId(e);
+    //     // Log.debug('[createEntity]', es);
 
-        this.markEntityAdd(eid);
+    //     this.markEntityAdd(eid);
 
-        return eid;
-    }
+    //     return eid;
+    // }
 
     /**
      * Returns an entity instance with components
