@@ -1,4 +1,5 @@
 import { EntitySet } from "../entity_set";
+import { QueryStack } from "./stack";
 
 export enum SType {
     Value = '%v',
@@ -50,15 +51,7 @@ export interface QueryStackDefs {
     [def: string]: StackValue;
 }
 
-export interface QueryStack {
-    id: number;
-    es?:EntitySet;
-    items: StackValue[];
-    words: Words<this>;
-    _root: this;
-    _parent: this;
-    _child: this;
-}
+
 
 export interface StackError {
     original?: any;

@@ -17,18 +17,15 @@ import {
     toValues as bfToValues
 } from "../util/bitfield";
 import {
-    create as createStack,
     addWords,
-    pushValues,
-    pop, peek,
     find as findValue,
     isStackValue,
     entityIdFromValue,
     popBitField,
+    QueryStack,
 } from "../query/stack";
 import {
     SType,
-    QueryStack,
     StackValue,
     InstResult, AsyncInstResult,
     StackError,
@@ -43,7 +40,7 @@ import { EntitySetMem } from ".";
 const Log = createLog('ESMemQuery');
 
 
-interface ESMemQueryStack extends QueryStack {
+class ESMemQueryStack extends QueryStack {
     es: EntitySetMem
 }
 
@@ -53,7 +50,7 @@ interface ESMemQueryStack extends QueryStack {
  * @param query 
  */
 export async function select(es: EntitySetMem, query: StackValue[], options = {} ): Promise<StackValue[]> {
-    let stack = createStack() as ESMemQueryStack;
+    let stack = new ESMemQueryStack();
     stack.es = es;
     if( 'stack' in options ){
         stack._root = stack._parent = options['stack'];
@@ -76,7 +73,7 @@ export async function select(es: EntitySetMem, query: StackValue[], options = {}
 
     // Log.debug('[select]', query );
 
-    [stack] = await pushValues(stack, query);
+    await stack.pushValues(query);
 
     // reset stack items and words
     let {items} = stack;
@@ -102,7 +99,7 @@ export async function select(es: EntitySetMem, query: StackValue[], options = {}
     },[]);
 
     // Log.debug('pushing ', items);
-    [stack] = await pushValues(stack, items);
+    await stack.pushValues(items);
 
     // Log.debug('[select]', stackToString(stack) );
 
@@ -114,7 +111,7 @@ export async function select(es: EntitySetMem, query: StackValue[], options = {}
 export function applyFilter(stack:ESMemQueryStack): InstResult<ESMemQueryStack> {
     let filter;
     const {es} = stack;
-    [stack, [,filter]] = pop(stack);
+    [,filter] = stack.pop();
     
     // DLog(stack._root, 'bugger', filter);
     // ilog(filter);
@@ -174,16 +171,14 @@ function walkFilterQuery( es:EntitySetMem, eids:EntityId[], cmd?, ...args ){
 
 
 export function applyLimit(stack: ESMemQueryStack): InstResult<ESMemQueryStack> {
-    let limit, offset;
-    [stack, limit] = pop(stack);
-    [stack, offset] = pop(stack);
+    let limit = stack.pop();
+    let offset = stack.pop();
 
     return [stack];
 }
 
 export function fetchValue(stack: ESMemQueryStack): InstResult<ESMemQueryStack> {
-    let arg: StackValue;
-    [stack, arg] = pop(stack);
+    let arg: StackValue = stack.pop();
     let type = arg[0];
     let value;
 
@@ -210,11 +205,10 @@ export function fetchComponents(stack: ESMemQueryStack): InstResult<ESMemQuerySt
     [stack, dids] = popBitField(stack,false) as [ESMemQueryStack, ComponentDefId[]];
 
     
-    left = peek(stack);
+    left = stack.peek();
 
     if( left !== undefined ){
-        let from;
-        [stack,from] = pop(stack);
+        let from = stack.pop();
         if( from[0] === SType.Entity ){
             eids = [unpackStackValueR(from)];
         } else if( from[0] === SType.List ){
@@ -235,14 +229,25 @@ export function fetchComponents(stack: ESMemQueryStack): InstResult<ESMemQuerySt
         return [stack, [SType.List, coms] ];
     }
 
-    coms = Array.from( es.components.values() );
+    // Log.debug('[fetchComponent]', eids, dids );
+    
+    
     if( dids !== undefined && dids.length > 0 ){
-        coms = coms.filter(com => dids.indexOf( getComponentDefId(com) ) !== -1 );
+        for( const [,com] of es.components ){
+            if( dids.indexOf( getComponentDefId(com) ) !== -1 ){
+                coms.push(com);
+            }
+        }
+    } else {
+        coms = Array.from( es.components.values() );
     }
 
     if( eids !== undefined && eids.length > 0 ){
         coms = coms.filter(com => eids.indexOf( getComponentEntityId(com)) !== -1 );
     }
+
+    // sort by entityId
+    coms.sort( (a,b) => a['@e'] - b['@e'] );
 
     coms = coms.map(c => [SType.Component, c]);
    
@@ -258,9 +263,8 @@ export function fetchComponents(stack: ESMemQueryStack): InstResult<ESMemQuerySt
  */
 export function onComponentAttr<QS extends QueryStack>(stack: QS): InstResult<QS> {
     const {es} = stack;
-    let left, right: StackValue;
-    [stack, right] = pop(stack);
-    [stack, left] = pop(stack);
+    let right:StackValue = stack.pop();
+    let left:StackValue = stack.pop();
 
     let attr = unpackStackValue(right, SType.Value);
     let dids = unpackStackValue(left, SType.Any);
@@ -278,9 +282,8 @@ export function onComponentAttr<QS extends QueryStack>(stack: QS): InstResult<QS
 
 export function buildBitfield<QS extends QueryStack>(stack: QS): InstResult<QS> {
     const {es} = stack;
-    let arg: StackValue;
-    [stack, arg] = pop(stack);
-
+    let arg: StackValue = stack.pop();
+    
     let dids = unpackStackValueR(arg, SType.Any);
     dids = isString(dids) ? [dids] : dids;
     let bf = es.resolveComponentDefIds(dids);
@@ -296,9 +299,8 @@ export function buildBitfield<QS extends QueryStack>(stack: QS): InstResult<QS> 
  */
 export async function fetchEntity(stack: ESMemQueryStack): AsyncInstResult<ESMemQueryStack> {
     const {es} = stack;
-    let data: StackValue;
-    [stack, data] = pop(stack);
-
+    let data: StackValue = stack.pop();
+    
     const type = data[0];
     let eid = unpackStackValueR(data, SType.Any);
     let bf: BitField;
@@ -331,11 +333,14 @@ export async function fetchEntity(stack: ESMemQueryStack): AsyncInstResult<ESMem
         throw new StackError(`@e unknown type ${type}`)
     }
 
-    let result = [];
-    for( const eid of eids ){
-        const e = await es.getEntity(eid, false);
-        result.push( e === undefined ? [SType.Value,false] : [SType.Entity,e] );
-    }
+    let ents = es.getEntitiesMem(eids);
+    let result = ents.filter(Boolean).map( e => [SType.Entity,e] );
+
+    // let result = [];
+    // for( const eid of eids ){
+    //     const e = await es.getEntity(eid, false);
+    //     result.push( e === undefined ? [SType.Value,false] : [SType.Entity,e] );
+    // }
 
     return [stack, [SType.List, result]];
 }
@@ -364,6 +369,10 @@ function matchEntities(es:EntitySetMem, eids: EntityId[], mbf: BitField|'all'): 
             }
         }
     }
+    
+    // sort ascending
+    matches.sort();
+    
     return matches;
 }
 

@@ -15,17 +15,14 @@ import { createLog } from "../util/log";
 import { isInteger, isString, isBoolean } from "../util/is";
 
 import {
-    create as createStack,
     addWords,
-    pushValues,
-    pop, peek,
     isStackValue,
     entityIdFromValue,
     popBitField,
+    QueryStack,
 } from "../query/stack";
 import {
     SType,
-    QueryStack,
     StackValue,
     InstResult, AsyncInstResult,
     StackError,
@@ -45,7 +42,7 @@ import { onPluck } from "../query/words/pluck";
 const Log = createLog('SQLQuery');
 
 
-interface SQLQueryStack extends QueryStack {
+class SQLQueryStack extends QueryStack {
     es: EntitySetSQL
 }
 
@@ -55,7 +52,7 @@ interface SQLQueryStack extends QueryStack {
  * @param query 
  */
 export async function select(es: EntitySetSQL, query: StackValue[], options = {}): Promise<StackValue[]> {
-    let stack = createStack() as SQLQueryStack;
+    let stack = new SQLQueryStack();
     stack.es = es;
     if( 'stack' in options ){
         stack._root = stack._parent = options['stack'];
@@ -75,7 +72,7 @@ export async function select(es: EntitySetSQL, query: StackValue[], options = {}
         ['!=', onLogicalFilter, SType.Any, SType.Any],
     ]);
 
-    [stack] = await pushValues(stack, query);
+    await stack.pushValues(query);
 
     // reset stack items and words
     let {items} = stack;
@@ -113,7 +110,7 @@ export async function select(es: EntitySetSQL, query: StackValue[], options = {}
     },[]);
 
     // Log.debug('pushing ', items);
-    [stack] = await pushValues(stack, items);
+    await stack.pushValues(items);
 
     return stack.items;
 }
@@ -145,7 +142,7 @@ export async function select(es: EntitySetSQL, query: StackValue[], options = {}
 export function applyFilter(stack:SQLQueryStack): InstResult<SQLQueryStack> {
     let filter;
     const {es} = stack;
-    [stack, [,filter]] = pop(stack);
+    [,filter] = stack.pop();
 
     // Log.debug('[applyFilter]', filter[2] );
     
@@ -162,16 +159,14 @@ export function applyFilter(stack:SQLQueryStack): InstResult<SQLQueryStack> {
 
 
 export function applyLimit(stack: SQLQueryStack): InstResult<SQLQueryStack> {
-    let limit, offset;
-    [stack, limit] = pop(stack);
-    [stack, offset] = pop(stack);
+    let limit = stack.pop();
+    let offset = stack.pop();
 
     return [stack];
 }
 
 export function fetchValue(stack: SQLQueryStack): InstResult<SQLQueryStack> {
-    let arg: StackValue;
-    [stack, arg] = pop(stack);
+    let arg: StackValue = stack.pop();
     let type = arg[0];
     let value;
 
@@ -197,11 +192,10 @@ export function fetchComponents(stack: SQLQueryStack): InstResult<SQLQueryStack>
     // get the bitfield
     [stack, defs] = popBitField(stack,true) as [SQLQueryStack, ComponentDefSQL[]];
     
-    left = peek(stack);
+    left = stack.peek();
     
     if( left !== undefined ){
-        let from;
-        [stack,from] = pop(stack);
+        let from = stack.pop();
         // Log.debug('[fetchComponents]', from );
         if( from[0] === SType.Entity ){
             eids = [unpackStackValueR(from)];
@@ -233,9 +227,8 @@ export function fetchComponents(stack: SQLQueryStack): InstResult<SQLQueryStack>
 export async function fetchEntity(stack: SQLQueryStack): AsyncInstResult<SQLQueryStack> {
     const {es} = stack;
     
-    let data: StackValue;
-    [stack, data] = pop(stack);
-
+    let data: StackValue = stack.pop();
+    
     const type = data[0];
     let eid = unpackStackValueR(data, SType.Any);
     let bf: BitField;

@@ -521,6 +521,23 @@ export class EntitySetMem extends EntitySet {
         return e;
     }
 
+    /**
+     * Returns Entity instances for the supplied list of EntityIds
+     * 
+     * @param eids 
+     */
+    getEntitiesMem( eids:EntityId[] ): Entity[] {
+        const entities = this.entities;
+        return eids.map( eid => {
+            let ebf = entities.get(eid);
+            return ebf === undefined ? undefined : new Entity(eid,ebf);
+        });
+    }
+
+    // getEntityMem(eid:EntityId, populate:boolean = false):Entity {
+        
+    // }
+
     async getEntities(bf?: BitField) {
         return this.matchEntities(bf);
     }

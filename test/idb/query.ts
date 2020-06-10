@@ -13,16 +13,14 @@ import {
 
 import { 
     SType, 
-    QueryStack, 
     StackValue
 } from '../../src/query/types';
 
 import {
-    create as createStack,
     addWords,
-    pushValues,
-    push, pop,
+    push,
     find as findValue,
+    QueryStack,
 } from '../../src/query/stack';
 
 import {
@@ -78,29 +76,29 @@ describe('Query (IDB)', () => {
 
     it('fetches entities by id', async () => {
         let query = `[ 102 @e ] select`;
-        let [stack, es] = await prep(query, 'todo');
+        let [stack] = await prep(query, 'todo');
 
-        // Log.debug('stack:', stackToString(stack) );
-        // Log.debug('es:', es );
-        let [,result] = pop(stack);
+        // ilog(stack.items);
+        let result = stack.pop();
 
         // the return value is an entity
-        assert.equal( unpackStackValue(result), 102 );
+        assert.equal(unpackStackValueR(result), 102);
     });
 
 
     it('fetches entities by did', async () => {
         let query = `[ "/component/completed" !bf @e] select`;
         let [stack] = await prep(query, 'todo');
-        let [,result] = pop(stack);
-
-
+        
+        // the result will be a list value of entities
+        let result = stack.pop();
+        
         assert.deepEqual( 
-            unpackStackValue(result).map(e => getEntityId(e)), 
+            unpackStackValueR(result).map(e => getEntityId(e)), 
             [ 100, 101, 102 ] );
 
         assert.deepEqual( 
-            unpackStackValue(result).map(e => bfToValues(e.bitField) ), 
+            unpackStackValueR(result).map(e => bfToValues(e.bitField) ), 
             [ [ 1, 2, 3 ], [ 1, 2 ], [ 1, 2 ] ] );
     });
 
@@ -111,17 +109,13 @@ describe('Query (IDB)', () => {
             text pluck
         ] select`, 'todo');
 
-        // ilog(stack.items);
-        // Log.debug('stack:', stackToString(stack) );
-        // Log.debug('stack:', stack.items );
-
-        let [,result] = pop(stack);
-        assert.deepEqual( unpackStackValueR(result), [
+        let result = stack.pop();
+        assert.deepEqual(unpackStackValueR(result), [
             'get out of bed',
-            'phone up friend', 
-            'turn on the news', 
-            'drink some tea', 
-            'do some shopping', 
+            'phone up friend',
+            'turn on the news',
+            'drink some tea',
+            'do some shopping'
         ])
     })
 
@@ -134,11 +128,9 @@ describe('Query (IDB)', () => {
         ] select`, 'todo');
 
         // ilog(stack.items);
-        // Log.debug('stack:', stackToString(stack) );
-        // Log.debug('stack:', stack.items );
-        let [,result] = pop(stack);
-        assert.equal(unpackStackValueR(result), 'drink some tea' );
-    })
+        let result = stack.pop();
+        assert.equal(unpackStackValueR(result), 'drink some tea');
+    });
 
     it('fetches matching component attribute', async () => {
         let [stack] = await prep(`[ 
@@ -150,17 +142,17 @@ describe('Query (IDB)', () => {
             ==
             /component/title !bf
             @c
-        ] select`, 'todo');
-        
+        ] select
+        `, 'todo');
+
+        // ilog(stack.items);
         // Log.debug('stack:', stackToString(stack) );
         // Log.debug('stack:', stringify(stack.items,1) );
-        // const util = require('util');
-        // console.log( util.inspect( stack.items, {depth:null} ) );
 
-        let [,result] = pop(stack);
-        assert.equal( result[0], SType.List );
+        let result = stack.pop();
+        assert.equal(result[0], SType.List);
         let coms = unpackStackValueR(result);
-        assert.equal( coms[0].text, "do some shopping" );
+        assert.equal(coms[0].text, "do some shopping");
     });
 
     it('fetches entities matching component attribute', async () => {
@@ -177,7 +169,7 @@ describe('Query (IDB)', () => {
         // Log.debug('stack:', stackToString(stack) );
         // Log.debug('stack:', stringify(stack.items,1) );
         
-        let [,result] = pop(stack);
+        let result = stack.pop();
         let ents = unpackStackValueR(result);
         // Log.debug('stack:', ents );
         
@@ -204,7 +196,7 @@ describe('Query (IDB)', () => {
 
         let [stack,es] = await prep(query, 'chess');
 
-        let [,result] = pop(stack);
+        let result = stack.pop();
         let e:Entity = unpackStackValue(result, SType.Entity);
         assert.equal( e.size, 3);
         assert.equal( e.getComponent(2).colour, 'white' );
@@ -233,7 +225,7 @@ describe('Query (IDB)', () => {
         let [stack] = await prep(query, 'chess');
         // console.log('\n');
         // Log.debug('stack:', stackToString(stack) );
-        let [,result] = pop(stack);
+        let result = stack.pop();
         let es = unpackStackValue(result, SType.EntitySet);
 
         // Log.debug('es', es);
@@ -333,7 +325,7 @@ describe('Query (IDB)', () => {
 
         // Log.debug( stackToString(stack) );
         let result;
-        [,result] = pop(stack);
+        result = stack.pop();
         result = unpackStackValue(result,SType.List);
         let nicknames = result.map( v => v[1].nickname ).filter(Boolean);
         assert.includeMembers(nicknames, ['koolgrap', 'lauryn', 'missy']);
@@ -347,7 +339,7 @@ const parse = (data) => tokenizeString(data, { returnValues: true });
 const sv = (v): StackValue => [SType.Value, v];
 
 async function prep(insts?: string, fixture?: string): Promise<[QueryStack, EntitySetIDB]> {
-    let stack = createStack();
+    let stack = new QueryStack();
     let es: EntitySetIDB;
 
     stack = addWords(stack, [
@@ -410,7 +402,7 @@ async function prep(insts?: string, fixture?: string): Promise<[QueryStack, Enti
         // console.timeEnd("loadFixture");
         // Log.debug('pushing insts', fixture, insts);
         // console.time("pushValues(fixture)");
-        [stack] = await pushValues(stack, insts as any, {debug:true});
+        await stack.pushValues(insts as any, {debug:true});
         // console.timeEnd("pushValues(fixture)");
         let esValue = findValue(stack, SType.EntitySet);
         es = esValue ? esValue[1] : undefined;
@@ -419,7 +411,7 @@ async function prep(insts?: string, fixture?: string): Promise<[QueryStack, Enti
         // console.time("run query")
         const words = parse(insts);
         // Log.debug('[parse]', words );
-        [stack] = await pushValues(stack, words);
+        await stack.pushValues(words);
         // console.timeEnd("run query")
     }
     

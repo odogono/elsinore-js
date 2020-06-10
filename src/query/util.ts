@@ -1,7 +1,8 @@
-import { QueryStack, StackValue, SType } from "./types";
+import { StackValue, SType } from "./types";
 import { getComponentId } from "../component";
 import { getEntityId } from "../entity";
 import { stringify } from "../util/json";
+import { QueryStack } from "./stack";
 
 export function stackToString( stack:QueryStack ):string {
     let parts = stack.items.map( val => valueToString(val) );

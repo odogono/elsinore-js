@@ -1,5 +1,5 @@
-import { pop, pushRaw } from "../query/stack";
-import { QueryStack, InstResult, SType, StackValue } from "../query/types";
+import { pushRaw, QueryStack } from "../query/stack";
+import { InstResult, SType, StackValue } from "../query/types";
 import { 
     BitField,
     toValues as bfToValues
@@ -69,13 +69,10 @@ function prAnd( es:EntitySet, cmd, left, right ){
 
 
 export function onLogicalFilter<QS extends QueryStack>(stack:QS, value:StackValue): InstResult<QS> {
-    let left, right;
     const [,op] = value;
 
-    // Log.debug('[onFilter]', value);
-    
-    [stack, right] = pop(stack);
-    [stack, left] = pop(stack);
+    let right = stack.pop();
+    let left = stack.pop();
     if( left[0] === SType.Filter ){
         left = left[1];
     }

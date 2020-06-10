@@ -1,12 +1,12 @@
 
 /**
- * Returns a copy of the object only containing the whitelisted properties.
+ * Returns a copy of the object only containing the allowed properties.
  * 
  * @param {*} obj 
- * @param {*} whitelist 
+ * @param {*} allowlist 
  */
-export function pick(obj, ...whitelist) {
+export function pick(obj, ...allowlist) {
     return Object.keys(obj)
-        .filter(key => whitelist.indexOf(key) >= 0)
+        .filter(key => allowlist.indexOf(key) >= 0)
         .reduce((newObj, key) => Object.assign(newObj, { [key]: obj[key] }), {});
 }

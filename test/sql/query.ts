@@ -9,16 +9,14 @@ import {
 } from '../../src/entity_set_sql';
 
 import {
-    create as createStack,
     addWords,
-    pushValues,
-    push, pop,
+    push,
     find as findValue,
+    QueryStack,
 } from '../../src/query/stack';
 
 import { 
     SType, 
-    QueryStack, 
     StackValue, 
     InstResult, AsyncInstResult, 
 } from '../../src/query/types';
@@ -86,7 +84,7 @@ describe('Query (SQL)', () => {
     it('fetches entities by id', async () => {
         let query = `[ 102 @e ] select`;
         let [stack] = await prep(query, 'todo');
-        let [, result] = pop(stack);
+        let result = stack.pop();
 
         // the return value is an entity
         assert.equal(unpackStackValue(result), 102);
@@ -96,7 +94,7 @@ describe('Query (SQL)', () => {
     it('fetches entities by did', async () => {
         let query = `[ "/component/completed" !bf @e] select`;
         let [stack] = await prep(query, 'todo');
-        let [, result] = pop(stack);
+        let result = stack.pop();
 
 
         assert.deepEqual(
@@ -119,7 +117,7 @@ describe('Query (SQL)', () => {
         // Log.debug('stack:', stackToString(stack) );
         // Log.debug('stack:', stack.items );
 
-        let [, result] = pop(stack);
+        let result = stack.pop();
         assert.deepEqual(unpackStackValueR(result), [
             'get out of bed',
             'phone up friend',
@@ -140,7 +138,7 @@ describe('Query (SQL)', () => {
         // ilog(stack.items);
         // Log.debug('stack:', stackToString(stack) );
         // Log.debug('stack:', stack.items );
-        let [, result] = pop(stack);
+        let result = stack.pop();
         assert.equal(unpackStackValueR(result), 'drink some tea');
     })
 
@@ -161,7 +159,7 @@ describe('Query (SQL)', () => {
         // const util = require('util');
         // console.log( util.inspect( stack.items, {depth:null} ) );
 
-        let [, result] = pop(stack);
+        let result = stack.pop();
         assert.equal(result[0], SType.List);
         let coms = unpackStackValueR(result);
         assert.equal(coms[0].text, "do some shopping");
@@ -181,7 +179,7 @@ describe('Query (SQL)', () => {
         // Log.debug('stack:', stackToString(stack) );
         // Log.debug('stack:', stringify(stack.items,1) );
 
-        let [, result] = pop(stack);
+        let result = stack.pop();
         let ents = unpackStackValueR(result);
         // Log.debug('stack:', ents );
 
@@ -225,7 +223,7 @@ describe('Query (SQL)', () => {
         ] select +`;
 
         let [stack] = await prep(query, 'chess');
-        let [, result] = pop(stack);
+        let result = stack.pop();
         let es = unpackStackValue(result, SType.EntitySet);
 
         assert.equal(await es.size(), 4);
@@ -320,7 +318,7 @@ describe('Query (SQL)', () => {
         `, 'irc');
 
         let result;
-        [, result] = pop(stack);
+        result = stack.pop();
         result = unpackStackValue(result, SType.List);
         let nicknames = result.map(v => v[1].nickname).filter(Boolean);
         assert.includeMembers(nicknames, ['koolgrap', 'lauryn', 'missy']);
@@ -331,7 +329,7 @@ describe('Query (SQL)', () => {
 
 
 async function prep(insts?: string, fixture?: string): Promise<[QueryStack, EntitySetSQL]> {
-    let stack = createStack();
+    let stack = new QueryStack();
     let es: EntitySetSQL;
 
     stack = addWords(stack, [
@@ -389,7 +387,7 @@ async function prep(insts?: string, fixture?: string): Promise<[QueryStack, Enti
         [stack] = await push(stack, [SType.EntitySet, es]);
 
         let todoInsts = await loadFixture(fixture);
-        [stack] = await pushValues(stack, todoInsts);
+        await stack.pushValues(todoInsts);
 
         let esValue = findValue(stack, SType.EntitySet);
         es = esValue ? esValue[1] : undefined;
@@ -397,7 +395,7 @@ async function prep(insts?: string, fixture?: string): Promise<[QueryStack, Enti
     if (insts) {
         const words = parse(insts);
         // Log.debug('[parse]', words );
-        [stack] = await pushValues(stack, words);
+        await stack.pushValues(words);
     }
     return [stack, es];
 }

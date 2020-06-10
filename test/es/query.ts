@@ -4,15 +4,13 @@ import Fs from 'fs-extra';
 import { createLog } from '../../src/util/log';
 import { tokenizeString } from '../../src/query/tokenizer';
 import {
-    create as createStack,
     addWords,
-    pushValues,
-    push, pop,
+    push,
     find as findValue,
+    QueryStack,
 } from '../../src/query/stack';
 import {
     SType,
-    QueryStack,
     StackValue,
     AsyncInstResult,
     StackError,
@@ -77,10 +75,11 @@ describe('Query (Mem)', () => {
 
 
     it('executes an async word', async () => {
-        let stack = createStack();
+        let stack = new QueryStack();
         let data = parse('100 doubleit');
+        // Log.debug('ok', stack.pop);
         const onDoubleIt = async (stack: QueryStack, v: StackValue): AsyncInstResult<QueryStack> => {
-            [stack, v] = pop(stack);
+            v = stack.pop();
             let result = sv(v[1] * 2);
             return Promise.resolve([stack, result]);
         }
@@ -88,7 +87,7 @@ describe('Query (Mem)', () => {
         stack = addWords(stack, [['doubleit', onDoubleIt]]);
 
         // let values;
-        [stack] = await pushValues(stack, data);
+        await stack.pushValues(data);
 
         assert.deepEqual(stack.items[0], sv(200));
     })
@@ -100,14 +99,17 @@ describe('Query (Mem)', () => {
     })
 
     describe('Reference Words', () => {
+        
         it('references an earlier word', async () => {
             let [stack] = await prep(`planet world hello $1`);
             assert.equal(stackToString(stack), 'planet hello world');
         });
+        
         it('works within a list', async () => {
             let [stack] = await prep(`planet world [ hello $0 ]`);
             assert.equal(stackToString(stack), 'planet world [hello]');
         });
+        
         it('references above a list', async () => {
             let [stack] = await prep(`planet [ world [ hello ^^$0 ]]`);
             assert.equal(stackToString(stack), '[world, [hello, planet]]');
@@ -115,11 +117,13 @@ describe('Query (Mem)', () => {
             [stack] = await prep(`planet world [ hello ^$1 ]`);
             assert.equal(stackToString(stack), 'world [hello, planet]');
         });
+        
         it('not evaluated the first time', async () => {
             // the * char means that the ref will not be evaled until spread is called
             let [stack] = await prep(`planet world [ hello *$1 ] spread`);
             assert.equal(stackToString(stack), 'planet hello world');
         });
+        
         it('accesses words in parent', async () => {
             let [stack] = await prep(`
             active status let
@@ -142,8 +146,8 @@ describe('Query (Mem)', () => {
 
             let data = parse(` 13 plus1k`);
 
-            [stack] = await pushValues(stack, data);
-            let [, result] = pop(stack);
+            await stack.pushValues(data);
+            let result = stack.pop();
             assert.deepEqual(unpackStackValueR(result), 113);
         });
 
@@ -162,25 +166,25 @@ describe('Query (Mem)', () => {
 
         it('builds lists', async () => {
             let [stack] = await prep(`[ hello, world ]`);
-            let [, result] = pop(stack);
+            let result = stack.pop();
             assert.deepEqual(unpackStackValueR(result), ['hello', 'world']);
         });
 
         it('adds to an list', async () => {
             let [stack] = await prep(`[] hello +`);
-            let [, result] = pop(stack);
+            let result = stack.pop();
             assert.deepEqual(unpackStackValueR(result), ['hello']);
         })
 
         it('push', async () => {
             let [stack] = await prep(`[] hello push`);
-            let [, result] = pop(stack);
+            let result = stack.pop();
             assert.deepEqual(unpackStackValueR(result), ['hello']);
         });
 
         it('pop', async () => {
             let [stack] = await prep(`[ hello world ] pop`);
-            let [, result] = pop(stack);
+            let result = stack.pop();
             assert.deepEqual(unpackStackValueR(result), 'world');
         });
 
@@ -189,7 +193,7 @@ describe('Query (Mem)', () => {
                 await prep(`[] pop`);
             } catch (err) {
                 assert.instanceOf(err, StackError);
-                assert.equal(err.message, 'stack underflow: ([])' );
+                assert.equal(err.message, 'stack underflow: ()' );
             }
         })
 
@@ -198,7 +202,7 @@ describe('Query (Mem)', () => {
 
             // stack = addWord(stack, ']', onArrayClose );
             // Log.debug('stack', stringify(stack.items,1) );
-            let [, result] = pop(stack);
+            let result = stack.pop();
 
             assert.deepEqual(result,
                 [SType.Map, {
@@ -211,7 +215,7 @@ describe('Query (Mem)', () => {
         it('builds a map from an array', async () => {
             let [stack] = await prep(`[ name alex age 45 ] to_map`);
 
-            let [, result] = pop(stack);
+            let result = stack.pop();
             let map = unpackStackValueR(result, SType.Map);
             assert.deepEqual(map, { name: 'alex', age: 45 });
         })
@@ -236,7 +240,7 @@ describe('Query (Mem)', () => {
             [ 1900 ^$0 ^$0 2018 ]
             `);
             // ilog(stack.items);
-            let [, result] = pop(stack);
+            let result = stack.pop();
             assert.deepEqual(unpackStackValueR(result), [1900, 1974, 1977, 2018]);
         })
 
@@ -248,7 +252,12 @@ describe('Query (Mem)', () => {
     it('creates a ComponentDef', async () => {
         let [stack] = await prep(`[ /component/title, [text] ] !d`);
 
-        let [, result] = pop(stack);
+        // Log.debug( stack );
+        
+        let result = stack.pop();
+        
+        // Log.debug( result );
+
         assert.ok(isComponentDef(unpackStackValueR(result)));
     })
 
@@ -257,14 +266,14 @@ describe('Query (Mem)', () => {
         it('creates an EntitySet', async () => {
             let [stack] = await prep(`{} !es`);
 
-            let [, result] = pop(stack);
+            let result = stack.pop();
             assert.ok(isEntitySet(unpackStackValueR(result)));
         })
 
         it('adds a def to an EntitySet', async () => {
             let [stack] = await prep(`{} !es /component/text !d +`);
 
-            let [, result] = pop(stack);
+            let result = stack.pop();
             assert.ok(isEntitySet(unpackStackValueR(result)));
         })
 
@@ -272,15 +281,14 @@ describe('Query (Mem)', () => {
             let query = `[ /component/title { text:introduction } ] !c`;
             let [stack] = await prep(`{} !es`);
 
-            let result;
-            [stack, result] = pop(stack);
+            let result = stack.pop();
             // Log.debug('stack', stack.items );
             let es = unpackStackValueR(result);
             let def;
             def = await es.register({ uri: "/component/title", properties: ["text"] });
             [stack] = await push(stack, [SType.EntitySet, es]);
 
-            [stack] = await pushValues(stack, parse(query));
+            await stack.pushValues(parse(query));
             // Log.debug('stack', stringify(stack.items,1) );
 
             assert.ok(isComponent(stack.items[1][1]));
@@ -331,7 +339,7 @@ describe('Query (Mem)', () => {
             // Log.debug('stack>>>:', stack.items );
             // Log.debug('stack>>>:', stackToString(stack) );
 
-            let [, result] = pop(stack);
+            let result = stack.pop();
             let es = unpackStackValueR(result);
             assert.ok(isEntitySet(es));
 
@@ -348,13 +356,12 @@ describe('Query (Mem)', () => {
             dup`);
 
             // ilog(stack.items);
-            let result;
-            [stack, result] = pop(stack);
+            let result = stack.pop();
             let es = unpackStackValueR(result);
             assert.ok(isEntitySet(es));
             assert.equal(await es.size(), 1);
 
-            [stack, result] = pop(stack);
+            result = stack.pop();
             es = unpackStackValueR(result);
             assert.ok(isEntitySet(es));
             assert.equal(await es.size(), 1);
@@ -371,7 +378,7 @@ describe('Query (Mem)', () => {
             `, 'todo');
 
             // ilog(stack.words);
-            let [, defs] = pop(stack);
+            let defs = stack.pop();
             // ilog( unpackStackValueR(defs) );
             assert.deepEqual(unpackStackValueR(defs), [
                 ['/component/title', [{ name: 'text' }]],
@@ -388,7 +395,7 @@ describe('Query (Mem)', () => {
 
     it('creates an entity', async () => {
         let [stack] = await prep(`100 !e`);
-        let [, result] = pop(stack);
+        let result = stack.pop();
         assert.ok(isEntity(unpackStackValueR(result)));
     });
 
@@ -402,9 +409,10 @@ describe('Query (Mem)', () => {
         `;
         let [stack] = await prep();
         [stack] = await buildEntitySet(stack);
-        [stack] = await pushValues(stack, parse(query));
+        await stack.pushValues(parse(query));
+        // Log.debug( stack );
 
-        let [, result] = pop(stack);
+        let result = stack.pop();
         let e = unpackStackValueR(result);
 
         assert.ok(isEntity(e));
@@ -422,7 +430,7 @@ describe('Query (Mem)', () => {
 
         [stack] = await push(stack, [SType.EntitySet, es]);
 
-        [stack] = await pushValues(stack, insts);
+        await stack.pushValues(insts);
 
 
         es = unpackStackValueR(stack.items[0]);
@@ -444,7 +452,7 @@ describe('Query (Mem)', () => {
         it('maps values', async () => {
             let [stack] = await prep(`[1 2 3 4] [10 *] map`);
 
-            let [, result] = pop(stack);
+            let result = stack.pop();
             assert.deepEqual(unpackStackValueR(result), [10, 20, 30, 40]);
         })
 
@@ -454,7 +462,7 @@ describe('Query (Mem)', () => {
             `);
 
             // ilog(stack.items);
-            let [, result] = pop(stack);
+            let result = stack.pop();
             assert.deepEqual(unpackStackValueR(result), ['hello']);
         });
 
@@ -464,7 +472,7 @@ describe('Query (Mem)', () => {
             ] text pluck`);
 
             // ilog(stack.items);
-            let [, result] = pop(stack);
+            let result = stack.pop();
             assert.deepEqual(unpackStackValueR(result), ['hello', 'world']);
         });
 
@@ -475,7 +483,7 @@ describe('Query (Mem)', () => {
             ] [@e, text, status] pluck`);
 
             // ilog(stack.items);
-            let [, result] = pop(stack);
+            let result = stack.pop();
             assert.deepEqual(unpackStackValueR(result), [
                 { '@e': 3, text: 'hello' },
                 { '@e': 4, text: 'world', status: 'active' }
@@ -484,7 +492,7 @@ describe('Query (Mem)', () => {
 
         it('reduces values', async () => {
             let [stack] = await prep(`[1 2 3 4] 0 [+] reduce`);
-            let [, result] = pop(stack);
+            let result = stack.pop();
             assert.equal(unpackStackValueR(result), 10);
         })
 
@@ -492,7 +500,7 @@ describe('Query (Mem)', () => {
             // applies an is-even filter
             let [stack] = await prep(`[1 2 3 4] [ 2 swap % 0 == ] filter`);
             // Log.debug('stack:', stackToString(stack) );
-            let [, result] = pop(stack);
+            let result = stack.pop();
             assert.deepEqual(unpackStackValueR(result), [2, 4]);
         })
 
@@ -505,7 +513,7 @@ describe('Query (Mem)', () => {
             let [stack] = await prep(query, 'todo');
 
             // ilog(stack.items);
-            let [, result] = pop(stack);
+            let result = stack.pop();
 
             // the return value is an entity
             assert.equal(unpackStackValueR(result), 102);
@@ -514,11 +522,18 @@ describe('Query (Mem)', () => {
         it('fetches entities by did', async () => {
             let query = `[ "/component/completed" !bf @e] select`;
             let [stack] = await prep(query, 'todo');
-
-            let [, result] = pop(stack);
-            assert.deepEqual(
-                unpackStackValueR(result).map(e => bfToValues(e.bitField)),
-                [[1, 2], [1, 2], [1, 2, 3]]);
+            
+            // the result will be a list value of entities
+            let result = stack.pop();
+            
+    
+            assert.deepEqual( 
+                unpackStackValueR(result).map(e => getEntityId(e)), 
+                [ 100, 101, 102 ] );
+    
+            assert.deepEqual( 
+                unpackStackValueR(result).map(e => bfToValues(e.bitField) ), 
+                [ [ 1, 2, 3 ], [ 1, 2 ], [ 1, 2 ] ] );
         });
 
 
@@ -528,21 +543,16 @@ describe('Query (Mem)', () => {
                 @c
                 text pluck
             ] select`, 'todo');
-
-            // ilog(stack.words);
-            // ilog(stack.items);
-            // Log.debug('stack:', stackToString(stack) );
-            // Log.debug('stack:', stack.items );
-
-            let [, result] = pop(stack);
+    
+            let result = stack.pop();
             assert.deepEqual(unpackStackValueR(result), [
-                'do some shopping',
-                'drink some tea',
-                'turn on the news',
+                'get out of bed',
                 'phone up friend',
-                'get out of bed'
+                'turn on the news',
+                'drink some tea',
+                'do some shopping'
             ])
-        })
+        });
 
         it('fetches entity component attribute', async () => {
             let [stack] = await prep(`[ 
@@ -553,7 +563,7 @@ describe('Query (Mem)', () => {
             ] select`, 'todo');
 
             // ilog(stack.items);
-            let [, result] = pop(stack);
+            let result = stack.pop();
             assert.equal(unpackStackValueR(result), 'drink some tea');
         })
 
@@ -574,7 +584,7 @@ describe('Query (Mem)', () => {
             // Log.debug('stack:', stackToString(stack) );
             // Log.debug('stack:', stringify(stack.items,1) );
 
-            let [, result] = pop(stack);
+            let result = stack.pop();
             assert.equal(result[0], SType.List);
             let coms = unpackStackValueR(result);
             assert.equal(coms[0].text, "do some shopping");
@@ -593,7 +603,7 @@ describe('Query (Mem)', () => {
 
             // ilog(stack.items);
 
-            let [, result] = pop(stack);
+            let result = stack.pop();
             let ents = unpackStackValueR(result);
             
             assert.deepEqual(ents.map(e => getEntityId(e)), [100, 101]);
@@ -709,9 +719,8 @@ describe('Query (Mem)', () => {
             `, 'irc');
 
             // Log.debug( stackToString(stack) );
-            let result;
-            [, result] = pop(stack);
-            result = unpackStackValue(result, SType.List);
+            
+            let result:any[] = unpackStackValue( stack.pop(), SType.List);
             let nicknames = result.map(v => v[1].nickname).filter(Boolean);
             assert.includeMembers(nicknames, ['koolgrap', 'lauryn', 'missy']);
         })
@@ -733,15 +742,15 @@ async function buildEntitySet(stack:QueryStack, options?): Promise<[QueryStack, 
 
     await defs.reduce( (p,def) => p.then( () => es.register(def)), Promise.resolve() );
 
-
     [stack] = await push(stack, [SType.EntitySet, es]);
+
     return [stack, es];
 }
 
 
 
 async function prep(insts?: string, fixture?: string): Promise<[QueryStack, EntitySet]> {
-    let stack = createStack();
+    let stack = new QueryStack();
     let es: EntitySet;
 
     stack = addWords(stack, [
@@ -793,7 +802,7 @@ async function prep(insts?: string, fixture?: string): Promise<[QueryStack, Enti
         // ['!bf', buildBitfield, SType.Value],
         ['!es', onEntitySet, SType.Map],
         ['!c', onComponent, SType.List],
-        ['@c', fetchComponents],
+        // ['@c', fetchComponents],
         ['!e', onEntity, SType.Value],
         ['assert_type', onAssertType],
     ]);
@@ -802,7 +811,7 @@ async function prep(insts?: string, fixture?: string): Promise<[QueryStack, Enti
         [stack] = await push(stack, [SType.EntitySet, es]);
 
         let todoInsts = await loadFixture(fixture);
-        [stack] = await pushValues(stack, todoInsts);
+        await stack.pushValues(todoInsts);
 
         let esValue = findValue(stack, SType.EntitySet);
         es = esValue ? esValue[1] : undefined;
@@ -810,7 +819,7 @@ async function prep(insts?: string, fixture?: string): Promise<[QueryStack, Enti
     if (insts) {
         const words = parse(insts);
         // Log.debug('[parse]', words );
-        [stack] = await pushValues(stack, words);
+        await stack.pushValues(words);
     }
     return [stack, es];
 }
