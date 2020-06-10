@@ -4,6 +4,11 @@ import { getEntityId } from "../entity";
 import { stringify } from "../util/json";
 import { QueryStack } from "./stack";
 
+
+export interface ToStringOptions {
+    flat?: boolean;
+}
+
 export function stackToString( stack:QueryStack ):string {
     let parts = stack.items.map( val => valueToString(val) );
     return parts.join(' ');
@@ -11,6 +16,8 @@ export function stackToString( stack:QueryStack ):string {
 
 export function valueToString( val:StackValue ):string {
     const [type,value] = val;
+    const strCheck = /^[a-z0-9\/_]+$/i;
+
     // Log.debug('[valueToString]', type, value);
     switch( type ){
         case SType.EntitySet:
@@ -28,15 +35,16 @@ export function valueToString( val:StackValue ):string {
             if( Array.isArray(value) ){
                 return `(${type} ${stringify(value)})`;
             }
-            return `(${type} ${getEntityId(value)})`;
+            return String(getEntityId(value));
+            // return `(${type} ${getEntityId(value)})`;
         case SType.List:
             return `[` + value.map(v => valueToString(v) ).join(', ') + ']';
         case SType.Map:
             return '{' + Object.keys(value).reduce( (res,key) => {
-                return [...res, `${key}: ${valueToString(value[key])}`];
+                return [...res, `"${key}": ${valueToString(value[key])}`];
             },[]).join(',') + '}';
         case SType.Value:
-            return `${(value)}`;
+            return strCheck.test(value) ? JSON.stringify(value) : value;
         case SType.Filter:
             let [op,left,right] = value;
             return `${op} ${valueToString(left)} ${valueToString(right)}`;

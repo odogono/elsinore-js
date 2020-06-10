@@ -4,9 +4,6 @@ import Fs from 'fs-extra';
 import { createLog } from '../../src/util/log';
 import { tokenizeString } from '../../src/query/tokenizer';
 import {
-    addWords,
-    push,
-    find as findValue,
     QueryStack,
 } from '../../src/query/stack';
 import {
@@ -20,29 +17,7 @@ import {
     toValues as bfToValues
 } from '../../src/util/bitfield';
 
-import {
-    onSwap, onListOpen,
-    onPrint,
-    onAddArray,
-    onFetchArray,
-    onArraySpread,
-    onUnexpectedError,
-    onAdd, onConcat, onMapOpen,
-    onEntity, onSelect, onDup, onDrop,
-    onArgError,
-    onComponentDef, onComponent,
-    fetchComponentDef,
-    onEntitySet, onAddComponentToEntity,
-    onMap,
-    onReduce,
-    onPush, onPop,
-    onUnique,
-    onFilter,
-    onClear,
-    onAddToEntitySet,
-    onAssertType,
-    onBuildMap
-} from '../../src/query/words'
+import { createStdLibStack } from '../../src/query';
 
 import {
     stackToString, unpackStackValueR, unpackStackValue,
@@ -52,7 +27,8 @@ import { create as createComponentDef, isComponentDef } from '../../src/componen
 import { isString } from '../../src/util/is';
 import {
     isEntity,
-    getEntityId
+    getEntityId,
+    Entity
 } from '../../src/entity';
 import { isComponent, Component, isComponentList } from '../../src/component';
 import { esToInsts } from '../util/stack';
@@ -78,13 +54,13 @@ describe('Query (Mem)', () => {
         let stack = new QueryStack();
         let data = parse('100 doubleit');
         // Log.debug('ok', stack.pop);
-        const onDoubleIt = async (stack: QueryStack, v: StackValue): AsyncInstResult<QueryStack> => {
+        const onDoubleIt = async (stack: QueryStack, v: StackValue): AsyncInstResult => {
             v = stack.pop();
             let result = sv(v[1] * 2);
-            return Promise.resolve([stack, result]);
+            return Promise.resolve([result]);
         }
 
-        stack = addWords(stack, [['doubleit', onDoubleIt]]);
+        stack = stack.addWords([['doubleit', onDoubleIt]]);
 
         // let values;
         await stack.pushValues(data);
@@ -102,26 +78,26 @@ describe('Query (Mem)', () => {
         
         it('references an earlier word', async () => {
             let [stack] = await prep(`planet world hello $1`);
-            assert.equal(stackToString(stack), 'planet hello world');
+            assert.equal( stack.toString(), '"planet" "hello" "world"');
         });
         
         it('works within a list', async () => {
             let [stack] = await prep(`planet world [ hello $0 ]`);
-            assert.equal(stackToString(stack), 'planet world [hello]');
+            assert.equal(stack.toString(), '"planet" "world" ["hello"]');
         });
         
         it('references above a list', async () => {
             let [stack] = await prep(`planet [ world [ hello ^^$0 ]]`);
-            assert.equal(stackToString(stack), '[world, [hello, planet]]');
+            assert.equal(stack.toString(), '["world", ["hello", "planet"]]');
 
-            [stack] = await prep(`planet world [ hello ^$1 ]`);
-            assert.equal(stackToString(stack), 'world [hello, planet]');
+            // [stack] = await prep(`planet world [ hello ^$1 ]`);
+            // assert.equal(stack.toString(), 'world [hello, planet]');
         });
         
         it('not evaluated the first time', async () => {
             // the * char means that the ref will not be evaled until spread is called
             let [stack] = await prep(`planet world [ hello *$1 ] spread`);
-            assert.equal(stackToString(stack), 'planet hello world');
+            assert.equal(stack.toString(), '"planet" "hello" "world"');
         });
         
         it('accesses words in parent', async () => {
@@ -129,7 +105,7 @@ describe('Query (Mem)', () => {
             active status let
             [ status is ^status ]
             `);
-            assert.equal(stackToString(stack), '[status, is, active]');
+            assert.equal(stack.toString(), '["status", "is", "active"]');
         })
     })
 
@@ -153,11 +129,11 @@ describe('Query (Mem)', () => {
 
         it('pushes values with define', async () => {
             let [stack] = await prep(`[ 2 3 + ] fn define fn`);
-            assert.equal(stackToString(stack), '5');
+            assert.equal(stack.toString(), '5');
         })
         it('pushes single value with let', async () => {
             let [stack] = await prep(`[ 2 3 + ] fn let fn`);
-            assert.equal(stackToString(stack), '[2, 3, +]');
+            assert.equal(stack.toString(), '[2, 3, +]');
         })
     })
 
@@ -286,7 +262,7 @@ describe('Query (Mem)', () => {
             let es = unpackStackValueR(result);
             let def;
             def = await es.register({ uri: "/component/title", properties: ["text"] });
-            [stack] = await push(stack, [SType.EntitySet, es]);
+            await stack.push([SType.EntitySet, es]);
 
             await stack.pushValues(parse(query));
             // Log.debug('stack', stringify(stack.items,1) );
@@ -305,7 +281,7 @@ describe('Query (Mem)', () => {
             // Log.debug('stack:', stackToString(stack) );
 
             let es: EntitySetMem;
-            [, es] = findValue(stack, SType.EntitySet);
+            [, es] = stack.find(SType.EntitySet);
 
             // Log.debug('es:', es );
 
@@ -428,7 +404,7 @@ describe('Query (Mem)', () => {
 
         let es = createEntitySet();
 
-        [stack] = await push(stack, [SType.EntitySet, es]);
+        await stack.push([SType.EntitySet, es]);
 
         await stack.pushValues(insts);
 
@@ -609,9 +585,29 @@ describe('Query (Mem)', () => {
             assert.deepEqual(ents.map(e => getEntityId(e)), [100, 101]);
         });
 
-        it('or condition', async () => {
+        it('uses multi conditions', async () => {
+            // get pawn where colour = black and file = a
+            let query = `[
+            /component/position file !ca a ==
+            /component/position rank !ca 2 ==
+            and
+            all
+            @c
+            ] select !e`
+    
+            let [stack] = await prep(query, 'chess');
+
+            let e:Entity = stack.popValue();
+
+            assert.equal( e.size, 3);
+            assert.equal( e.Colour.colour, 'white' );
+    
+        });
+
+        it('and/or condition', async () => {
             let query = `
-            // dup // copy es ref
+            // create an es with the defs
+            dup @d {} !es swap + swap
             [
                 /component/position file !ca a ==
                 /component/position file !ca f ==
@@ -620,15 +616,20 @@ describe('Query (Mem)', () => {
                 and
                 @c
             ] select
+            +
             `;
-
-            let [stack, es] = await prep(query, 'chess');
-            // console.log('\n');
-            // Log.debug('stack:', stackToString(stack) );
+    
+            let [stack] = await prep(query, 'chess');
+            
+            let es = stack.popValue();
+            // let es = unpackStackValue(result, SType.EntitySet);
+    
+            // Log.debug('es', es);
+            assert.equal( await es.size(), 4 );
             // Log.debug('stack:', stringify(stack.items,1) );
-            ilog(stack.items.splice(1));
-        })
-
+            // ilog( es );
+    
+        });
 
         it('super select', async () => {
             let [stack, es] = await prep(`
@@ -653,14 +654,19 @@ describe('Query (Mem)', () => {
             
             "mr-rap" selectChannelId
             
+            
             // compose a new component which belongs to the 'mr-rap' channel
-            [ /component/channel_member { "@e":14, channel: ^^$0, client: ^^$0 } ]
+            [ "/component/channel_member" { "@e":14, channel: ^^$0, client: ^^$0 } ]
 
+            to_str
             `, 'irc');
 
             // Log.debug( stackToString(stack) );
             // ilog(stack.items);
-            assert.equal(stackToString(stack), '[/component/channel_member, {@e: 14,channel: (%e 3),client: (%e 11)}]');
+            // let result = stack.popValue();
+            // Log.debug( result );
+            assert.equal( stack.popValue(), 
+                '["/component/channel_member", {"@e": 14,"channel": 3,"client": 11}]');
             // ilog( es );
         })
 
@@ -742,7 +748,7 @@ async function buildEntitySet(stack:QueryStack, options?): Promise<[QueryStack, 
 
     await defs.reduce( (p,def) => p.then( () => es.register(def)), Promise.resolve() );
 
-    [stack] = await push(stack, [SType.EntitySet, es]);
+    await stack.push([SType.EntitySet, es]);
 
     return [stack, es];
 }
@@ -750,70 +756,18 @@ async function buildEntitySet(stack:QueryStack, options?): Promise<[QueryStack, 
 
 
 async function prep(insts?: string, fixture?: string): Promise<[QueryStack, EntitySet]> {
-    let stack = new QueryStack();
+    
     let es: EntitySet;
+    let stack = createStdLibStack();
 
-    stack = addWords(stack, [
-        ['+', onAddComponentToEntity, SType.Entity, SType.Component],
-        ['+', onAddComponentToEntity, SType.Entity, SType.List],
-        ['+', onAddToEntitySet, SType.EntitySet, SType.Any],
-        // pattern match stack args
-        ['+', onAddArray, SType.List, SType.Any],
-        // important that this is after more specific case
-        ['+', onAdd, SType.Value, SType.Value],
-        ['*', onAdd, SType.Value, SType.Value],
-        ['%', onAdd, SType.Value, SType.Value],
-        ['==', onAdd, SType.Value, SType.Value],
-        ['!=', onAdd, SType.Value, SType.Value],
-        ['.', onPrint, SType.Any],
-        ['..', onPrint],
-        ['@', onFetchArray, SType.List, SType.Value],
-
-        ['[', onListOpen],
-        ['{', onMapOpen],
-        ['}', onUnexpectedError],
-        [']', onUnexpectedError],
-        ['to_map', onBuildMap],
-        ['drop', onDrop, SType.Any],
-        ['swap', onSwap, SType.Any, SType.Any],
-        ['push', onPush, SType.List, SType.Any],
-        ['pop', onPop, SType.List],
-        ['map', onMap, SType.List, SType.List],
-        ['pluck', onPluck, SType.Map, SType.Value],
-        ['pluck', onPluck, SType.List, SType.Value],
-        ['pluck', onPluck, SType.List, SType.List],
-        ['unique', onUnique, SType.List],
-        ['filter', onFilter, SType.List, SType.List],
-        ['reduce', onReduce, SType.List, SType.Value, SType.List],
-        ['define', onDefine, SType.Any, SType.Value],
-        ['let', onDefine, SType.Any, SType.Value],
-        ['concat', onConcat],
-        ['cls', onClear],
-        ['dup', onDup, SType.Any],
-        ['over', onDup, SType.Any],
-        ['select', onSelect, SType.EntitySet, SType.List],
-        ['spread', onArraySpread, SType.List],
-        ['!d', onComponentDef, SType.Map],
-        ['!d', onComponentDef, SType.List],
-        ['!d', onComponentDef, SType.Value],
-        ['@d', fetchComponentDef, SType.EntitySet],
-        ['@d', fetchComponentDef, SType.EntitySet, SType.Value],
-        // ['!bf', buildBitfield, SType.List],
-        // ['!bf', buildBitfield, SType.Value],
-        ['!es', onEntitySet, SType.Map],
-        ['!c', onComponent, SType.List],
-        // ['@c', fetchComponents],
-        ['!e', onEntity, SType.Value],
-        ['assert_type', onAssertType],
-    ]);
     if (fixture) {
         es = createEntitySet();
-        [stack] = await push(stack, [SType.EntitySet, es]);
+        await stack.push([SType.EntitySet, es]);
 
         let todoInsts = await loadFixture(fixture);
         await stack.pushValues(todoInsts);
 
-        let esValue = findValue(stack, SType.EntitySet);
+        let esValue = stack.find(SType.EntitySet);
         es = esValue ? esValue[1] : undefined;
     }
     if (insts) {

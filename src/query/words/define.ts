@@ -1,8 +1,8 @@
 import { StackValue, InstResult, AsyncInstResult, SType } from "../types";
-import { addWords, QueryStack } from "../stack";
+import { QueryStack } from "../stack";
 
 
-export function onDefine<QS extends QueryStack>(stack: QS, [, op]: StackValue): InstResult<QS> {
+export function onDefine(stack: QueryStack, [, op]: StackValue): InstResult {
     // let wordVal: StackValue, wordFn, value: StackValue;
     let wordFn;
     let wordVal = stack.pop();
@@ -10,18 +10,19 @@ export function onDefine<QS extends QueryStack>(stack: QS, [, op]: StackValue): 
     let [, word] = wordVal;
 
 
+    // console.log('[onDefine]', stack.id, op, word, 'values' );
     if (value[0] === SType.List && op !== 'let') {
-        // Log.debug('[onDefine]', op, word, 'values', value );
-        wordFn = async <QS extends QueryStack>(stack: QS): AsyncInstResult<QS> => {
+        wordFn = async <QS extends QueryStack>(stack: QS): AsyncInstResult => {
+            // console.log('[onDefine]', 'pushValues to', stack.id);
             await stack.pushValues(value[1]);
-            return [stack];
+            return [];
         }
     } else {
         // Log.debug('[onDefine][let]', op, word, 'value', value );
         wordFn = value;
     }
 
-    stack = addWords<QS>(stack, [[word, wordFn]]);
+    stack.addWords([[word, wordFn]]);
 
-    return [stack];
+    return [];
 };

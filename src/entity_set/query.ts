@@ -17,11 +17,8 @@ import {
     toValues as bfToValues
 } from "../util/bitfield";
 import {
-    addWords,
-    find as findValue,
     isStackValue,
     entityIdFromValue,
-    popBitField,
     QueryStack,
 } from "../query/stack";
 import {
@@ -32,7 +29,7 @@ import {
 } from "../query/types";
 import { onPluck } from "../query/words/pluck";
 import { onDefine } from "../query/words/define";
-import { ComponentDefId, getDefId } from "../component_def";
+import { ComponentDefId, getDefId, ComponentDef } from "../component_def";
 import { onLogicalFilter, parseFilterQuery } from './filter';
 import { unpackStackValue, unpackStackValueR } from "../query/util";
 import { EntitySetMem } from ".";
@@ -57,7 +54,7 @@ export async function select(es: EntitySetMem, query: StackValue[], options = {}
     }
     
     // add first pass words
-    stack = addWords<ESMemQueryStack>(stack, [
+    stack.addWords([
         ['!bf', buildBitfield, SType.List],
         ['!bf', buildBitfield, SType.Value],
         ['!ca', onComponentAttr],
@@ -81,7 +78,7 @@ export async function select(es: EntitySetMem, query: StackValue[], options = {}
     stack.words = {};
 
 
-    stack = addWords<ESMemQueryStack>(stack, [
+    stack.addWords([
         ['@e', fetchEntity],
         ['@c', fetchComponents],
         ['!fil', applyFilter, SType.Filter],
@@ -108,7 +105,7 @@ export async function select(es: EntitySetMem, query: StackValue[], options = {}
 }
 
 
-export function applyFilter(stack:ESMemQueryStack): InstResult<ESMemQueryStack> {
+export function applyFilter(stack:ESMemQueryStack): InstResult {
     let filter;
     const {es} = stack;
     [,filter] = stack.pop();
@@ -121,7 +118,7 @@ export function applyFilter(stack:ESMemQueryStack): InstResult<ESMemQueryStack> 
     let eids = walkFilterQuery( es, Array.from(es.entities.keys()), ...result ).sort();
     // Log.debug('[applyFilter]', 'result eids', eids );
 
-    return [stack, [SType.List,eids.map(eid => [SType.Entity,eid])] ];
+    return [[SType.List,eids.map(eid => [SType.Entity,eid])] ];
 }
 
 function walkFilterQuery( es:EntitySetMem, eids:EntityId[], cmd?, ...args ){
@@ -170,14 +167,14 @@ function walkFilterQuery( es:EntitySetMem, eids:EntityId[], cmd?, ...args ){
 }
 
 
-export function applyLimit(stack: ESMemQueryStack): InstResult<ESMemQueryStack> {
+export function applyLimit(stack: ESMemQueryStack): InstResult {
     let limit = stack.pop();
     let offset = stack.pop();
 
-    return [stack];
+    return [];
 }
 
-export function fetchValue(stack: ESMemQueryStack): InstResult<ESMemQueryStack> {
+export function fetchValue(stack: ESMemQueryStack): InstResult {
     let arg: StackValue = stack.pop();
     let type = arg[0];
     let value;
@@ -188,13 +185,13 @@ export function fetchValue(stack: ESMemQueryStack): InstResult<ESMemQueryStack> 
         value = [SType.List, value];
     }
 
-    return [stack, value];
+    return [value];
 }
 
 
 
 
-export function fetchComponents(stack: ESMemQueryStack): InstResult<ESMemQueryStack> {
+export function fetchComponents(stack: ESMemQueryStack): InstResult {
     const {es} = stack;
     let left: StackValue;
     let eids:EntityId[];
@@ -202,7 +199,7 @@ export function fetchComponents(stack: ESMemQueryStack): InstResult<ESMemQuerySt
     let coms = [];
 
     // get the bitfield
-    [stack, dids] = popBitField(stack,false) as [ESMemQueryStack, ComponentDefId[]];
+    dids = stack.popBitField<ComponentDef>(false) as ComponentDefId[];
 
     
     left = stack.peek();
@@ -226,7 +223,7 @@ export function fetchComponents(stack: ESMemQueryStack): InstResult<ESMemQuerySt
 
     // if an empty eid array has been passed, then no coms can be selected
     if( eids !== undefined && eids.length === 0 ){
-        return [stack, [SType.List, coms] ];
+        return [ [SType.List, coms] ];
     }
 
     // Log.debug('[fetchComponent]', eids, dids );
@@ -251,7 +248,7 @@ export function fetchComponents(stack: ESMemQueryStack): InstResult<ESMemQuerySt
 
     coms = coms.map(c => [SType.Component, c]);
    
-    return [stack, [SType.List, coms]];
+    return [[SType.List, coms]];
 }
 
 
@@ -261,7 +258,7 @@ export function fetchComponents(stack: ESMemQueryStack): InstResult<ESMemQuerySt
  * @param es 
  * @param stack 
  */
-export function onComponentAttr<QS extends QueryStack>(stack: QS): InstResult<QS> {
+export function onComponentAttr(stack: QueryStack): InstResult {
     const {es} = stack;
     let right:StackValue = stack.pop();
     let left:StackValue = stack.pop();
@@ -277,10 +274,10 @@ export function onComponentAttr<QS extends QueryStack>(stack: QS): InstResult<QS
     }
 
 
-    return [stack, [SType.ComponentAttr, [bf, attr]]];
+    return [ [SType.ComponentAttr, [bf, attr]]];
 }
 
-export function buildBitfield<QS extends QueryStack>(stack: QS): InstResult<QS> {
+export function buildBitfield(stack: QueryStack): InstResult {
     const {es} = stack;
     let arg: StackValue = stack.pop();
     
@@ -288,7 +285,7 @@ export function buildBitfield<QS extends QueryStack>(stack: QS): InstResult<QS> 
     dids = isString(dids) ? [dids] : dids;
     let bf = es.resolveComponentDefIds(dids);
 
-    return [stack, [SType.Bitfield, bf]];
+    return [ [SType.Bitfield, bf] ];
 }
 
 /**
@@ -297,7 +294,7 @@ export function buildBitfield<QS extends QueryStack>(stack: QS): InstResult<QS> 
  * @param es 
  * @param stack 
  */
-export async function fetchEntity(stack: ESMemQueryStack): AsyncInstResult<ESMemQueryStack> {
+export async function fetchEntity(stack: ESMemQueryStack): AsyncInstResult {
     const {es} = stack;
     let data: StackValue = stack.pop();
     
@@ -315,9 +312,9 @@ export async function fetchEntity(stack: ESMemQueryStack): AsyncInstResult<ESMem
         let e = await es.getEntity(eid,false);
         // Log.debug('[fetchEntity]', es.entities);
         if (e === undefined) {
-            return [stack, [SType.Value, false]];
+            return [[SType.Value, false]];
         }
-        return [stack, [SType.Entity, eid]];
+        return [[SType.Entity, eid]];
     }
     else if( Array.isArray(eid) ){
         eids = eid;
@@ -328,7 +325,7 @@ export async function fetchEntity(stack: ESMemQueryStack): AsyncInstResult<ESMem
     }
     else if( eid === 'all' ){
         let ents = matchEntities(es, undefined, 'all');
-        return [stack, [SType.List, ents]];
+        return [[SType.List, ents]];
     } else {
         throw new StackError(`@e unknown type ${type}`)
     }
@@ -342,7 +339,7 @@ export async function fetchEntity(stack: ESMemQueryStack): AsyncInstResult<ESMem
     //     result.push( e === undefined ? [SType.Value,false] : [SType.Entity,e] );
     // }
 
-    return [stack, [SType.List, result]];
+    return [[SType.List, result]];
 }
 
 

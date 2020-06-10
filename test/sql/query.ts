@@ -8,12 +8,7 @@ import {
     EntitySetSQL
 } from '../../src/entity_set_sql';
 
-import {
-    addWords,
-    push,
-    find as findValue,
-    QueryStack,
-} from '../../src/query/stack';
+import { QueryStack } from '../../src/query/stack';
 
 import { 
     SType, 
@@ -21,31 +16,7 @@ import {
     InstResult, AsyncInstResult, 
 } from '../../src/query/types';
 
-import {
-    onSwap, onListOpen,
-    onAddArray,
-    onArraySpread,
-    onAdd, onConcat, onMapOpen,
-    onEntity,
-    onArgError,
-    onComponentDef, onComponent,
-    onEntitySet, onAddComponentToEntity,
-    onMap,
-    onReduce,
-    onFilter,
-    onClear,
-    onAddToEntitySet,
-    onAssertType,
-    onBuildMap,
-    onSelect,
-    onDup,
-    fetchComponentDef,
-    onPrint,
-    onDrop,
-    onFetchArray,
-    onUnexpectedError,
-    onUnique
-} from '../../src/query/words';
+import { createStdLibStack } from '../../src/query';
 import {
     stackToString, unpackStackValue, unpackStackValueR,
 } from '../../src/query/util';
@@ -53,7 +24,7 @@ import {
     toValues as bfToValues,
 } from '../../src/util/bitfield';
 import {
-    getEntityId
+    getEntityId, Entity
 } from '../../src/entity';
 import { sqlClear } from '../../src/entity_set_sql/sqlite';
 import { fetchComponents } from '../../src/entity_set/query';
@@ -186,30 +157,26 @@ describe('Query (SQL)', () => {
         assert.deepEqual(ents.map(e => getEntityId(e)), [100, 101]);
     });
 
-    it('uses mulit conditions', async () => {
+    it('uses multi conditions', async () => {
         // get pawn where colour = black and file = a
         let query = `[
         /component/position file !ca a ==
         /component/position rank !ca 2 ==
-        // // /component/colour colour !ca white ==
-        // // and
-        // /component/piece/pawn !bf
-        // // 2 2 =
         and
-        // this results in a list of entity ids
-        // fetch components
         all
-        // /component/piece/pawn !bf @e
-        // [/component/position /component/colour] !bf
         @c
-        ] select`
+        ] select !e`
 
-        let [stack, es] = await prep(query, 'chess');
-        // console.log('\n');
-        // ilog( stack.items );
-    })
+        let [stack] = await prep(query, 'chess');
 
-    it('or condition', async () => {
+        let e:Entity = stack.popValue();
+
+        assert.equal( e.size, 3);
+        assert.equal( e.Colour.colour, 'white' );
+
+    });
+
+    it('and/or condition', async () => {
         let query = `
         // create an es with the defs
         dup @d {} !es swap + swap
@@ -220,14 +187,22 @@ describe('Query (SQL)', () => {
             /component/colour colour !ca white ==
             and
             @c
-        ] select +`;
+        ] select
+        +
+        `;
 
         let [stack] = await prep(query, 'chess');
-        let result = stack.pop();
-        let es = unpackStackValue(result, SType.EntitySet);
+        
+        let es = stack.popValue();
+        // let es = unpackStackValue(result, SType.EntitySet);
 
-        assert.equal(await es.size(), 4);
-    })
+        // Log.debug('es', es);
+        assert.equal( await es.size(), 4 );
+        // Log.debug('stack:', stringify(stack.items,1) );
+        // ilog( es );
+
+    });
+
 
     it('super select', async () => {
         let [stack, es] = await prep(`
@@ -252,16 +227,16 @@ describe('Query (SQL)', () => {
         
         "mr-rap" selectChannelId
         
+        
         // compose a new component which belongs to the 'mr-rap' channel
-        [ /component/channel_member { "@e":14, channel: ^^$0, client: ^^$0 } ]
+        [ "/component/channel_member" { "@e":14, channel: ^^$0, client: ^^$0 } ]
 
+        to_str
         `, 'irc');
 
-        // Log.debug( stackToString(stack) );
-        // ilog(stack.items);
-        assert.equal(stackToString(stack), '[/component/channel_member, {@e: 14,channel: (%e 3),client: (%e 11)}]');
-        // ilog( es );
-    });
+        assert.equal( stack.popValue(), 
+            '["/component/channel_member", {"@e": 14,"channel": 3,"client": 11}]');
+    })
 
     it('multi fn query', async () => {
         let [stack, es] = await prep(`
@@ -329,67 +304,18 @@ describe('Query (SQL)', () => {
 
 
 async function prep(insts?: string, fixture?: string): Promise<[QueryStack, EntitySetSQL]> {
-    let stack = new QueryStack();
+    let stack = createStdLibStack();
     let es: EntitySetSQL;
 
-    stack = addWords(stack, [
-        ['+', onAddComponentToEntity, SType.Entity, SType.Component],
-        ['+', onAddComponentToEntity, SType.Entity, SType.List],
-        ['+', onAddToEntitySet, SType.EntitySet, SType.Any],
-        // pattern match stack args
-        ['+', onAddArray, SType.List, SType.Any],
-        // important that this is after more specific case
-        ['+', onAdd, SType.Value, SType.Value],
-        ['*', onAdd, SType.Value, SType.Value],
-        ['%', onAdd, SType.Value, SType.Value],
-        ['==', onAdd, SType.Value, SType.Value],
-        ['!=', onAdd, SType.Value, SType.Value],
-        ['.', onPrint, SType.Any],
-        ['..', onPrint],
-        ['@', onFetchArray, SType.List, SType.Value],
-
-        ['[', onListOpen],
-        ['{', onMapOpen],
-        ['}', onUnexpectedError],
-        [']', onUnexpectedError],
-        ['to_map', onBuildMap],
-        ['drop', onDrop, SType.Any],
-        ['swap', onSwap, SType.Any, SType.Any],
-        ['map', onMap, SType.List, SType.List],
-        ['pluck', onPluck, SType.List, SType.Value],
-        ['pluck', onPluck, SType.List, SType.List],
-        ['unique', onUnique, SType.List],
-        ['filter', onFilter, SType.List, SType.List],
-        ['reduce', onReduce, SType.List, SType.Value, SType.List],
-        ['define', onDefine, SType.Any, SType.Value],
-        ['let', onDefine, SType.Any, SType.Value],
-        ['concat', onConcat],
-        ['cls', onClear],
-        ['dup', onDup, SType.Any],
-        ['over', onDup, SType.Any],
-        ['select', onSelect, SType.EntitySet, SType.List],
-        ['spread', onArraySpread, SType.List],
-        ['!d', onComponentDef, SType.Map],
-        ['!d', onComponentDef, SType.List],
-        ['!d', onComponentDef, SType.Value],
-        ['@d', fetchComponentDef, SType.EntitySet],
-        ['@d', fetchComponentDef, SType.EntitySet, SType.Value],
-        // ['!bf', buildBitfield, SType.List],
-        // ['!bf', buildBitfield, SType.Value],
-        ['!es', onEntitySet, SType.Map],
-        ['!c', onComponent, SType.List],
-        ['@c', fetchComponents],
-        ['!e', onEntity, SType.Value],
-        ['assert_type', onAssertType],
-    ]);
+    
     if (fixture) {
         es = createEntitySet();
-        [stack] = await push(stack, [SType.EntitySet, es]);
+        await stack.push([SType.EntitySet, es]);
 
         let todoInsts = await loadFixture(fixture);
         await stack.pushValues(todoInsts);
 
-        let esValue = findValue(stack, SType.EntitySet);
+        let esValue = stack.find(SType.EntitySet);
         es = esValue ? esValue[1] : undefined;
     }
     if (insts) {

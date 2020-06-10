@@ -11,17 +11,18 @@ import {
     onUnique, onFilter, onReduce, onConcat, 
     onClear, 
     onDup, onSelect, 
-    onArraySpread, 
+    onListSpread, 
     onComponentDef, 
     fetchComponentDef, 
     onEntitySet, 
     onComponent, onEntity, 
-    onAssertType 
+    onAssertType, 
+    onToString
 } from "./words";
 import { onPluck } from "./words/pluck";
 import { onDefine } from "./words/define";
 import {
-    addWords, QueryStack,
+    QueryStack,
 } from './stack';
 
 
@@ -29,7 +30,7 @@ export function createStdLibStack( stack?:QueryStack ){
 
     stack = stack ?? new QueryStack();
 
-    stack = addWords( stack, [
+    stack = stack.addWords([
         ['+', onAddComponentToEntity, SType.Entity, SType.Component],
         ['+', onAddComponentToEntity, SType.Entity, SType.List],
         ['+', onAddToEntitySet, SType.EntitySet, SType.Any],
@@ -50,6 +51,7 @@ export function createStdLibStack( stack?:QueryStack ){
         ['}', onUnexpectedError],
         [']', onUnexpectedError],
         ['to_map', onBuildMap],
+        ['to_str', onToString],
         ['drop', onDrop, SType.Any],
         ['swap', onSwap, SType.Any, SType.Any],
         ['push', onPush, SType.List, SType.Any],
@@ -68,7 +70,7 @@ export function createStdLibStack( stack?:QueryStack ){
         ['dup', onDup, SType.Any],
         ['over', onDup, SType.Any],
         ['select', onSelect, SType.EntitySet, SType.List],
-        ['spread', onArraySpread, SType.List],
+        ['spread', onListSpread, SType.List],
         ['!d', onComponentDef, SType.Map],
         ['!d', onComponentDef, SType.List],
         ['!d', onComponentDef, SType.Value],
@@ -78,6 +80,7 @@ export function createStdLibStack( stack?:QueryStack ){
         // ['!bf', buildBitfield, SType.Value],
         ['!es', onEntitySet, SType.Map],
         ['!c', onComponent, SType.List],
+        ['!e', onEntity, SType.List],
         ['!e', onEntity, SType.Value],
         ['assert_type', onAssertType],
     ]);

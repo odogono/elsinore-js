@@ -1,6 +1,6 @@
 import { EntityId, Entity, getEntityId, isEntity } from "../entity";
 import { ComponentId, ComponentList, toComponentId, isComponentList, createComponentList, fromComponentId, Component, isComponent } from "../component";
-import { 
+import {
     BitField,
     create as createBitField,
     get as bfGet,
@@ -15,10 +15,8 @@ import { createLog } from "../util/log";
 import { isInteger, isString, isBoolean } from "../util/is";
 
 import {
-    addWords,
     isStackValue,
     entityIdFromValue,
-    popBitField,
     QueryStack,
 } from "../query/stack";
 import {
@@ -28,11 +26,13 @@ import {
     StackError,
 } from '../query/types';
 import { stackToString, unpackStackValue, unpackStackValueR } from "../query/util";
-import { sqlRetrieveEntityByDefId, 
-    sqlRetrieveByQuery, 
-    sqlRetrieveEntityComponents, 
-    sqlRetrieveComponents, 
-    sqlRetrieveEntities } from "./sqlite";
+import {
+    sqlRetrieveEntityByDefId,
+    sqlRetrieveByQuery,
+    sqlRetrieveEntityComponents,
+    sqlRetrieveComponents,
+    sqlRetrieveEntities
+} from "./sqlite";
 import { Type, ComponentDefId, ComponentDef } from "../component_def";
 import { onLogicalFilter, parseFilterQuery } from "../entity_set/filter";
 import { onComponentAttr, buildBitfield } from "../entity_set/query";
@@ -54,17 +54,17 @@ class SQLQueryStack extends QueryStack {
 export async function select(es: EntitySetSQL, query: StackValue[], options = {}): Promise<StackValue[]> {
     let stack = new SQLQueryStack();
     stack.es = es;
-    if( 'stack' in options ){
+    if ('stack' in options) {
         stack._root = stack._parent = options['stack'];
     }
 
     // add first pass words
-    stack = addWords<SQLQueryStack>(stack, [
+    stack.addWords([
         ['!bf', buildBitfield, SType.List],
         ['!bf', buildBitfield, SType.Value],
         ['!ca', onComponentAttr],
         ['define', onDefine],
-        
+
         ['and', onLogicalFilter, SType.Any, SType.Any],
         ['or', onLogicalFilter, SType.Any, SType.Any],
         ['not', onLogicalFilter, SType.Any, SType.Any],
@@ -75,21 +75,21 @@ export async function select(es: EntitySetSQL, query: StackValue[], options = {}
     await stack.pushValues(query);
 
     // reset stack items and words
-    let {items} = stack;
+    let { items } = stack;
     stack.items = [];
     stack.words = {};
 
     // Log.debug('[select]', stack );
     // add 2nd pass words
-    stack = addWords<SQLQueryStack>(stack, [
+    stack.addWords([
         ['@e', fetchEntity],
-        ['@c', fetchComponents, SType.Entity, 'all' ],
-        ['@c', fetchComponents, SType.List, SType.Bitfield ],
-        ['@c', fetchComponents, SType.Entity, SType.Bitfield ],
-        ['@c', fetchComponents, 'all' ],
-        ['@c', fetchComponents, SType.Bitfield ],
-        ['@c', fetchComponents, SType.List ],
-        ['@c', fetchComponents, SType.Entity ],
+        ['@c', fetchComponents, SType.Entity, 'all'],
+        ['@c', fetchComponents, SType.List, SType.Bitfield],
+        ['@c', fetchComponents, SType.Entity, SType.Bitfield],
+        ['@c', fetchComponents, 'all'],
+        ['@c', fetchComponents, SType.Bitfield],
+        ['@c', fetchComponents, SType.List],
+        ['@c', fetchComponents, SType.Entity],
         ['@v', fetchValue],
         // ['@cv', fetchComponentValues, SType.Entity ],
         // ['@cv', fetchComponentValues, SType.ComponentAttr ],
@@ -102,12 +102,12 @@ export async function select(es: EntitySetSQL, query: StackValue[], options = {}
     ]);
 
     // make sure any filter values have a following cmd
-    items = items.reduce( (result, value, ii, items) => {
-        if( value[0] === SType.Filter ){
+    items = items.reduce((result, value, ii, items) => {
+        if (value[0] === SType.Filter) {
             return [...result, value, '!fil'];
         }
-        return [...result,value];
-    },[]);
+        return [...result, value];
+    }, []);
 
     // Log.debug('pushing ', items);
     await stack.pushValues(items);
@@ -139,33 +139,33 @@ export async function select(es: EntitySetSQL, query: StackValue[], options = {}
 
 */
 
-export function applyFilter(stack:SQLQueryStack): InstResult<SQLQueryStack> {
+export function applyFilter(stack: SQLQueryStack): InstResult {
     let filter;
-    const {es} = stack;
-    [,filter] = stack.pop();
+    const { es } = stack;
+    [, filter] = stack.pop();
 
     // Log.debug('[applyFilter]', filter[2] );
-    
-    let result = parseFilterQuery( es, filter[0], filter[1], filter[2] );
-    
+
+    let result = parseFilterQuery(es, filter[0], filter[1], filter[2]);
+
     // Log.debug('[applyFilter]', 'result' );
     // ilog( result );
 
-    result = sqlRetrieveByQuery( es.db, result );
+    result = sqlRetrieveByQuery(es.db, result);
 
-    return [stack, result];
+    return [result];
 }
 
 
 
-export function applyLimit(stack: SQLQueryStack): InstResult<SQLQueryStack> {
+export function applyLimit(stack: SQLQueryStack): InstResult {
     let limit = stack.pop();
     let offset = stack.pop();
 
-    return [stack];
+    return [];
 }
 
-export function fetchValue(stack: SQLQueryStack): InstResult<SQLQueryStack> {
+export function fetchValue(stack: SQLQueryStack): InstResult {
     let arg: StackValue = stack.pop();
     let type = arg[0];
     let value;
@@ -176,43 +176,43 @@ export function fetchValue(stack: SQLQueryStack): InstResult<SQLQueryStack> {
         value = [SType.List, value];
     }
 
-    return [stack, value];
+    return [value];
 }
 
 
 
 
-export function fetchComponents(stack: SQLQueryStack): InstResult<SQLQueryStack> {
-    const {es} = stack;
+export function fetchComponents(stack: SQLQueryStack): InstResult {
+    const { es } = stack;
     let left, right: StackValue;
-    let eids:EntityId[];
-    let defs:ComponentDefSQL[];
+    let eids: EntityId[];
+    let defs: ComponentDefSQL[];
 
-    
+
     // get the bitfield
-    [stack, defs] = popBitField(stack,true) as [SQLQueryStack, ComponentDefSQL[]];
-    
+    defs = stack.popBitField(true) as ComponentDefSQL[];
+
     left = stack.peek();
-    
-    if( left !== undefined ){
+
+    if (left !== undefined) {
         let from = stack.pop();
         // Log.debug('[fetchComponents]', from );
-        if( from[0] === SType.Entity ){
+        if (from[0] === SType.Entity) {
             eids = [unpackStackValueR(from)];
-        } else if( from[0] === SType.List ){
-            eids = from[1].map( it => {
+        } else if (from[0] === SType.List) {
+            eids = from[1].map(it => {
                 return isStackValue(it) ? getEntityId(it[1])
-                : isEntity(it) ? getEntityId(it) : undefined;
+                    : isEntity(it) ? getEntityId(it) : undefined;
             }).filter(Boolean);
         }
     }
-    
+
     let coms = [];
     // Log.debug('[fetchComponent]', 'good', eids, defs );
-    
+
     coms = sqlRetrieveComponents(es.db, eids, defs || es.componentDefs);
 
-    return [stack, [SType.List, coms.map(c => [SType.Component,c] )]];
+    return [[SType.List, coms.map(c => [SType.Component, c])]];
 }
 
 
@@ -224,11 +224,11 @@ export function fetchComponents(stack: SQLQueryStack): InstResult<SQLQueryStack>
  * @param es 
  * @param stack 
  */
-export async function fetchEntity(stack: SQLQueryStack): AsyncInstResult<SQLQueryStack> {
-    const {es} = stack;
-    
+export async function fetchEntity(stack: SQLQueryStack): AsyncInstResult {
+    const { es } = stack;
+
     let data: StackValue = stack.pop();
-    
+
     const type = data[0];
     let eid = unpackStackValueR(data, SType.Any);
     let bf: BitField;
@@ -240,31 +240,31 @@ export async function fetchEntity(stack: SQLQueryStack): AsyncInstResult<SQLQuer
         bf = eid as BitField;
         let ents = matchEntities(es, bf);
 
-        return [stack, [SType.List, ents]];
+        return [[SType.List, ents]];
 
     } else if (isInteger(eid)) {
-        let e = await es.getEntity(eid,false);
+        let e = await es.getEntity(eid, false);
         if (e === undefined) {
-            return [stack, [SType.Value, false]];
+            return [[SType.Value, false]];
         }
-        return [stack, [SType.Entity, eid]];
+        return [[SType.Entity, eid]];
     }
-    else if( Array.isArray(eid) ){
+    else if (Array.isArray(eid)) {
         eids = eid;
     }
     else if (type === SType.List) {
         let arr = unpackStackValue(data, SType.List, false);
         eids = arr.map(row => entityIdFromValue(row)).filter(Boolean);
     }
-    else if( eid === 'all' ){
+    else if (eid === 'all') {
         let ents = matchEntities(es);
-        return [stack, [SType.List, ents]];
+        return [[SType.List, ents]];
     } else {
         throw new StackError(`@e unknown type ${type}`)
     }
 
-    let ents = await sqlRetrieveEntities( es.db, eids );
-    let result = ents.map( e => [SType.Entity, getEntityId(e)] );
+    let ents = await sqlRetrieveEntities(es.db, eids);
+    let result = ents.map(e => [SType.Entity, getEntityId(e)]);
 
     // let result = [];
     // for( const eid of eids ){
@@ -272,17 +272,17 @@ export async function fetchEntity(stack: SQLQueryStack): AsyncInstResult<SQLQuer
     //     result.push( e === undefined ? [SType.Value,false] : [SType.Entity,e] );
     // }
 
-    return [stack, [SType.List, result]];
+    return [[SType.List, result]];
 }
 
 function matchEntities(es: EntitySetSQL, mbf?: BitField): Entity[] {
-    if( mbf === undefined ){
+    if (mbf === undefined) {
         return sqlRetrieveEntities(es.db);
     }
     return sqlRetrieveEntityByDefId(es.db, bfToValues(mbf));
 }
 
-function ilog(...args){
+function ilog(...args) {
     const util = require('util');
-    console.log( util.inspect( ...args, {depth:null} ) );
+    console.log(util.inspect(...args, { depth: null }));
 }

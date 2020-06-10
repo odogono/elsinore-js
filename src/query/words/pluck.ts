@@ -3,7 +3,7 @@ import { unpackStackValue, unpackStackValueR } from "../util";
 import { isObject } from "../../util/is";
 import { isStackValue, QueryStack } from "../stack";
 
-export async function onPluck<QS extends QueryStack>(stack: QS): AsyncInstResult<QS> {
+export async function onPluck(stack: QueryStack): AsyncInstResult {
     let right = stack.pop();
     let left = stack.pop();
 
@@ -43,5 +43,5 @@ export async function onPluck<QS extends QueryStack>(stack: QS): AsyncInstResult
     }
 
     // console.log('[onPluck]', out);
-    return [stack, [SType.List, out]];
+    return [ [SType.List, out] ];
 }

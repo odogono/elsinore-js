@@ -24,23 +24,22 @@ export interface InstDefMeta {
     op: string | string[];
 }
 
-export type InstResult<QS extends QueryStack> = [
-    QS, StackValue?, boolean?
-];
-export type AsyncInstResult<QS extends QueryStack> = Promise<InstResult<QS>>;
+export type InstResult = [StackValue?, boolean?];
+
+export type AsyncInstResult = Promise<InstResult>;
 
 // export type Result<QS extends QueryStack> = InstResult<QS>;
 // export type AsyncResult<QS extends QueryStack> = Promise<InstResult<QS>>;
 
 export type StackValue = [SType] | [SType, any];
 
-export type WordFn<QS extends QueryStack> = SyncWordFn<QS> | AsyncWordFn<QS>;
-export type SyncWordFn<QS extends QueryStack> = (stack: QS, val: StackValue) => InstResult<QS>;
-export type AsyncWordFn<QS extends QueryStack> = (stack: QS, val: StackValue) => Promise<InstResult<QS>>;
+export type WordFn = SyncWordFn | AsyncWordFn;
+export type SyncWordFn = (stack: QueryStack, val: StackValue) => InstResult;
+export type AsyncWordFn = (stack: QueryStack, val: StackValue) => Promise<InstResult>;
 
-export type WordSpec<QS extends QueryStack> = [string, WordFn<QS>|StackValue, ...(SType|string)[] ];
+export type WordSpec<QS extends QueryStack> = [string, WordFn|StackValue, ...(SType|string)[] ];
 
-export type WordEntry<QS extends QueryStack> = [ WordFn<QS>, SType[] ];
+export type WordEntry<QS extends QueryStack> = [ WordFn, SType[] ];
 
 export interface Words<QS extends QueryStack> {
     [name: string]: WordEntry<QS>[]
