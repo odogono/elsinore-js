@@ -72,6 +72,7 @@ export async function select(es: EntitySetSQL, query: StackValue[], options = {}
         ['!=', onLogicalFilter, SType.Any, SType.Any],
     ]);
 
+    
     await stack.pushValues(query);
 
     // reset stack items and words
@@ -108,6 +109,8 @@ export async function select(es: EntitySetSQL, query: StackValue[], options = {}
         }
         return [...result, value];
     }, []);
+
+    // console.log('[select]', items );
 
     // Log.debug('pushing ', items);
     await stack.pushValues(items);
@@ -232,22 +235,27 @@ export async function fetchEntity(stack: SQLQueryStack): AsyncInstResult {
     const type = data[0];
     let eid = unpackStackValueR(data, SType.Any);
     let bf: BitField;
-    let eids: number[];
+    
+    let eids: EntityId[];
+    let ents: Entity[];
+    let returnSingle = false;
 
     // Log.debug('[fetchEntity]', data, eid);
 
     if (type === SType.Bitfield) {
+        
         bf = eid as BitField;
-        let ents = matchEntities(es, bf);
-
-        return [[SType.List, ents]];
+        ents = matchEntities(es, bf);
 
     } else if (isInteger(eid)) {
-        let e = await es.getEntity(eid, false);
-        if (e === undefined) {
-            return [[SType.Value, false]];
-        }
-        return [[SType.Entity, eid]];
+        returnSingle = true;
+        eids = [eid];
+
+        // let e = await es.getEntity(eid, false);
+        // if (e === undefined) {
+        //     return [[SType.Value, false]];
+        // }
+        // return [[SType.Entity, eid]];
     }
     else if (Array.isArray(eid)) {
         eids = eid;
@@ -257,22 +265,27 @@ export async function fetchEntity(stack: SQLQueryStack): AsyncInstResult {
         eids = arr.map(row => entityIdFromValue(row)).filter(Boolean);
     }
     else if (eid === 'all') {
-        let ents = matchEntities(es);
-        return [[SType.List, ents]];
+        ents = matchEntities(es);
+        // return [[SType.List, ents]];
     } else {
         throw new StackError(`@e unknown type ${type}`)
     }
 
-    let ents = await sqlRetrieveEntities(es.db, eids);
-    let result = ents.map(e => [SType.Entity, getEntityId(e)]);
+    if( ents === undefined ){
+        ents = await sqlRetrieveEntities(es.db, eids);
+    }
 
-    // let result = [];
-    // for( const eid of eids ){
-    //     const e = await esGetEntity(es, eid, false);
-    //     result.push( e === undefined ? [SType.Value,false] : [SType.Entity,e] );
-    // }
+    if( returnSingle ){
+        let e = ents.length > 0 ? ents[0] : undefined;
+        if (e === undefined) {
+            return [ [SType.Value, false]];
+        }
+        return [ [SType.Entity, eid]];
+    }
 
-    return [[SType.List, result]];
+    let result = ents.map( e => [SType.Entity, e] );
+    // Log.debug('[fetchEntity]', 'by bf', ents);
+    return [ [SType.List, result]];
 }
 
 function matchEntities(es: EntitySetSQL, mbf?: BitField): Entity[] {

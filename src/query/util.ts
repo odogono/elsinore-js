@@ -57,7 +57,12 @@ export function valueToString( val:StackValue ):string {
 
 
 
-
+/**
+ * 
+ * @param val 
+ * @param assertType 
+ * @param recursive 
+ */
 export function unpackStackValue(val: StackValue, assertType: (SType | SType[]) = SType.Any, recursive: boolean = false): any {
     let [type, value] = val;
     if (!Array.isArray(assertType)) {
@@ -68,8 +73,8 @@ export function unpackStackValue(val: StackValue, assertType: (SType | SType[]) 
         throw new Error(`expected type ${assertType}, got ${type}`);
     }
 
-    // Log.debug('[unpackStackValue]', type, val);
     if (type === SType.List) {
+        // console.log('[unpackStackValue]', type, value);
         return recursive ? value.map(av => unpackStackValue(av, SType.Any, true)) : value;
     }
     if (type === SType.Map) {
@@ -82,6 +87,11 @@ export function unpackStackValue(val: StackValue, assertType: (SType | SType[]) 
     }
 }
 
+/**
+ * 
+ * @param val 
+ * @param assertType 
+ */
 export function unpackStackValueR(val: StackValue, assertType: SType = SType.Any) {
     return unpackStackValue(val, assertType, true);
 }

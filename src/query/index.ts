@@ -1,4 +1,4 @@
-import { SType } from "./types";
+import { SType, StackValue } from "./types";
 
 import { 
     onAddComponentToEntity, onAddToEntitySet, onAddArray, onAdd, 
@@ -14,7 +14,7 @@ import {
     onListSpread, 
     onComponentDef, 
     fetchComponentDef, 
-    onEntitySet, 
+    // onEntitySet, 
     onComponent, onEntity, 
     onAssertType, 
     onToString
@@ -24,7 +24,29 @@ import { onDefine } from "./words/define";
 import {
     QueryStack,
 } from './stack';
+import { tokenizeString } from "./tokenizer";
 
+
+export interface QueryOptions {
+    stack?:QueryStack;
+    values?:StackValue[];
+}
+
+export async function query( q:string, options:QueryOptions = {} ): Promise<QueryStack> {
+    let stack = options.stack ?? createStdLibStack();
+    const values = options.values;
+
+    if( values ){
+        await stack.pushValues( values );
+    }
+
+    if( q ){
+        const insts = tokenizeString(q, {returnValues:true});
+        await stack.pushValues(insts);
+    }
+
+    return stack;
+}
 
 export function createStdLibStack( stack?:QueryStack ){
 
@@ -78,7 +100,7 @@ export function createStdLibStack( stack?:QueryStack ){
         ['@d', fetchComponentDef, SType.EntitySet, SType.Value],
         // ['!bf', buildBitfield, SType.List],
         // ['!bf', buildBitfield, SType.Value],
-        ['!es', onEntitySet, SType.Map],
+        // ['!es', onEntitySet, SType.Map],
         ['!c', onComponent, SType.List],
         ['!e', onEntity, SType.List],
         ['!e', onEntity, SType.Value],

@@ -381,48 +381,6 @@ function trimRight(str:string, ch:string = ' ') {
  * @param {*} str
  */
 function parseValue(str:string) {
-    return parseNumber(str);
-    const c = str.charAt(0);
-    switch (c) {
-        case 't':
-            if (str.length === 4 && str === 'true') {
-                return true;
-            }
-            break;
-        case 'f':
-            if (str.length === 5 && str === 'false') {
-                return false;
-            }
-            break;
-        case 'n':
-            if (str.length == 4 && str === 'null') {
-                return null;
-            }
-            break;
-        case '-':
-        case '0':
-        case '1':
-        case '2':
-        case '3':
-        case '4':
-        case '5':
-        case '6':
-        case '7':
-        case '8':
-        case '9':
-            return parseNumber(str);
-
-        default:
-            break;
-    }
-    return str;
-}
-
-/**
- *
- * @param {*} str
- */
-function parseNumber(str:any) {
     // I'm not proud...
     try {
         return JSON.parse(str);
@@ -430,15 +388,4 @@ function parseNumber(str:any) {
         // Log('parseNumber', err.message, str );
     }
     return str;
-}
-
-/**
- *
- * @param {*} cat
- * @param {*} args
- */
-function Log(cat:string, ...args:any[]) {
-    if (debugLog) {
-        console.log(`[${cat}]`, ...args);
-    }
 }

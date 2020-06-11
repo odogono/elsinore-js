@@ -62,7 +62,7 @@ import { idbOpen, idbDeleteDB,
 } from "./idb";
 import { isString, isInteger } from "../util/is";
 import { select } from "./query";
-import { EntitySet, EntitySetMem, ESOptions, AddType, AddOptions, RemoveType, OpenEntitySetOptions } from "../entity_set";
+import { EntitySet, EntitySetMem, ESOptions, AddType, AddOptions, RemoveType, EntitySetOptions } from "../entity_set";
 import { StackValue } from "../query/types";
 
 const Log = createLog('EntitySetIDB');
@@ -474,7 +474,7 @@ export class EntitySetIDB extends EntitySetMem {
     }
 
 
-    async openEntitySet(options:OpenEntitySetOptions = {} ): Promise<EntitySetIDB>{
+    async openEntitySet(options:EntitySetOptions = {} ): Promise<EntitySetIDB>{
         if( this.db !== undefined ){
             return Promise.resolve(this);
         }

@@ -1,4 +1,3 @@
-// import { AddType, AddOptions, clearChanges, RemoveType } from ".";
 import {
     Component,
     isComponent,
@@ -12,8 +11,6 @@ import {
     isComponentId,
     fromComponentId,
     create as createComponentInstance,
-    ComponentList,
-    isComponentList,
     isExternalComponent,
     OrphanComponent
 } from "../component";
@@ -40,14 +37,13 @@ import {
 import {
     Entity,
     isEntity,
-    Type as EntityT,
     getEntityId,
     EntityList,
-    isEntityList,
     EntityId
 } from "../entity";
-import { StackValue } from "../query/types";
+import { StackValue, SType, InstResult } from "../query/types";
 import { createUUID } from "../util/uuid";
+import { query, QueryOptions, createStdLibStack } from '../query';
 import {
     ChangeSet,
     create as createChangeSet,
@@ -62,6 +58,8 @@ import { isInteger, isObject, isString } from "../util/is";
 import { MatchOptions } from '../constants';
 import { select } from "./query";
 import { buildFlake53 } from "../util/id";
+import { QueryStack } from "../query/stack";
+import { unpackStackValueR } from "../query/util";
 
 export interface ESOptions {
     debug?: boolean;
@@ -77,8 +75,9 @@ export function isEntitySet(value: any): boolean {
     return isObject(value) && value.isEntitySet === true;
 }
 
-export interface OpenEntitySetOptions {
+export interface EntitySetOptions {
     readDefs?: boolean;
+    debug?: boolean;
 }
 
 export type ResolveComponentDefIdResult = [Component, string][] | [BitField, string][];
@@ -111,17 +110,13 @@ export abstract class EntitySet {
 
     eidSeq:EntityId = 0;
 
-    constructor(data?: EntitySet) {
+    constructor(data?: EntitySet, options:EntitySetOptions = {}) {
         if (data !== undefined) {
             Object.assign(this, data);
         }
     }
 
     abstract clone();
-
-    // clone<ES extends EntitySet>( es:ES ):ES {
-    //     return new EntitySet(es) as ES;
-    // }
 
     abstract select( query:StackValue[], options ): Promise<StackValue[]>;
 
@@ -137,7 +132,22 @@ export abstract class EntitySet {
 
     abstract removeComponent(item: RemoveType, options?: AddOptions): Promise<EntitySet>;
 
-    async openEntitySet(options:OpenEntitySetOptions = {} ): Promise<EntitySet>{
+    async query( q:string, options:QueryOptions = {} ): Promise<QueryStack> {
+        let stack = createStdLibStack();
+        let values:StackValue[] = options.values ?? [];
+        stack.addWords([
+            ['!es', onEntitySet, SType.Map]
+        ]);
+        values = [
+            [SType.EntitySet, this],
+            ...values,
+
+        ];
+
+        return await query( q, {stack, values} );
+    }
+
+    async openEntitySet(options:EntitySetOptions = {} ): Promise<EntitySet>{
         return this;
     }
 
@@ -324,7 +334,7 @@ export class EntitySetMem extends EntitySet {
     // esGetComponent = this.getComponent;
     // esEntities = this.getEntities;
 
-    constructor(data?: EntitySet) {
+    constructor(data?: EntitySet, options:EntitySetOptions = {}) {
         super();
         if (data !== undefined) {
             Object.assign(this, data);
@@ -862,3 +872,14 @@ export class EntitySetMem extends EntitySet {
 }
 
 
+
+
+
+function onEntitySet<QS extends QueryStack>(stack: QS): InstResult {
+    let data = stack.pop();
+
+    let options = unpackStackValueR(data, SType.Map);
+    let es = new EntitySetMem(options);
+
+    return [ [SType.EntitySet, es]];
+}

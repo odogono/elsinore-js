@@ -68,7 +68,7 @@ import {
 import { createLog } from "../util/log";
 import { isString, isInteger } from "../util/is";
 import { select } from "./query";
-import { EntitySetMem, AddType, AddOptions, RemoveType, ESOptions, EntitySet } from "../entity_set";
+import { EntitySetMem, AddType, AddOptions, RemoveType, ESOptions, EntitySet, EntitySetOptions } from "../entity_set";
 import { StackValue } from "../query/types";
 
 const Log = createLog('EntitySetSQL');
@@ -79,16 +79,15 @@ export interface ComponentDefSQL extends ComponentDef {
     hash?: number;
 }
 
-interface CreateEntitySetParams {
 
-}
 
-export interface CreateEntitySetSQLParams extends CreateEntitySetParams {
+export interface SQLEntitySetOptions extends EntitySetOptions {
     name?: string;
+    readDefs?: boolean;
     isMemory?: boolean;
     clearDb?: boolean;
-    debug?: boolean;
 }
+
 
 
 
@@ -109,7 +108,7 @@ export class EntitySetSQL extends EntitySetMem {
     isAsync: boolean = true;
 
 
-    constructor(options: CreateEntitySetSQLParams = {}) {
+    constructor(options: SQLEntitySetOptions = {}) {
         super(options as any);
         this.isMemory = options.isMemory ?? true;
         this.debug = options.debug ?? false;
@@ -139,35 +138,6 @@ export class EntitySetSQL extends EntitySetMem {
 
     async applyUpdates(){
     }
-
-    // async removeComponent(item: RemoveType, options: AddOptions = {}): Promise<EntitySetSQL> {
-    //     if (options.retain !== true) {
-    //         this.clearChanges();
-    //     }
-
-    //     let cid = isComponentId(item) ? item as ComponentId : isComponent(item) ? getComponentId(item as Component) : undefined;
-    //     if (cid === undefined) {
-    //         return this;
-    //     }
-    //     this.markComponentRemove(cid);
-
-    //     // Log.debug('[removeComponent]', es );
-    //     return this.applyRemoveChanges();
-    // }
-
-    // async removeEntity(item: (number | Entity), options: AddOptions = {}): Promise<EntitySetSQL> {
-    //     if (options.retain !== true) {
-    //         this.clearChanges();
-    //     }
-
-    //     let eid = isInteger(item) ? item as number : isEntity(item) ? getEntityId(item as Entity) : 0;
-    //     if (eid === 0) {
-    //         return this;
-    //     }
-    //     await this.markEntityComponentsRemove(eid);
-    //     return this.applyRemoveChanges();
-    // }
-
 
     async markComponentAdd(com: Component): Promise<EntitySetSQL> {
         // adds the component to the entityset if it is unknown,
@@ -230,33 +200,6 @@ export class EntitySetSQL extends EntitySetMem {
         return this;
     }
 
-    // async addComponents(components: Component[], options: ESOptions = {}): Promise<EntitySetSQL> {
-    //     // set a new (same) entity id on all orphaned components
-    //     components = this.assignEntityIds(components)
-
-    //     // let changedCids = getChanges(es.comChanges, ChangeSetOp.Add | ChangeSetOp.Update)
-    //     // Log.debug('[addComponents]', 'pre', changedCids);
-
-    //     // to keep track of changes only in this function, we must temporarily replace
-    //     let changes = this.comChanges;
-    //     this.comChanges = createChangeSet<ComponentId>();
-
-    //     // mark incoming components as either additions or updates
-    //     await components.reduce( (p,com) => p.then( () => this.markComponentAdd(com)), Promise.resolve() );
-        
-    //     // gather the components that have been added or updated and apply
-    //     const changedCids = getChanges(this.comChanges, ChangeSetOp.Add | ChangeSetOp.Update);
-    //     // Log.debug('[addComponents]', 'post', changedCids);
-
-    //     // combine the new changes with the existing
-    //     this.comChanges = mergeCS(changes, this.comChanges);
-
-    //     // sequentially apply
-    //     await changedCids.reduce( (p,cid) => p.then( () => this.applyUpdatedComponents(cid)), Promise.resolve() );
-
-    //     return this;
-    // }
-
 
     async applyRemoveChanges(): Promise<EntitySetSQL> {
         // applies any removal changes that have previously been marked
@@ -305,30 +248,6 @@ export class EntitySetSQL extends EntitySetMem {
     }
 
 
-    // async applyUpdatedComponents(cid: ComponentId, options: ESOptions = {}): Promise<EntitySetSQL> {
-    //     const [eid, did] = fromComponentId(cid);
-    //     let ebf: BitField;
-
-    //     ebf = await this.getOrAddEntityBitfield(eid);
-
-    //     const isNew = findCS(this.entChanges, eid) === ChangeSetOp.Add;
-
-    //     // Log.debug('[applyUpdatedComponents]', eid, isNew, ebf.get(did) === false );
-
-    //     // does the component already belong to this entity?
-    //     if (bfGet(ebf, did) === false) {
-    //         let e = createEntityInstance(eid);
-    //         e.bitField = bfSet(ebf, did);
-
-    //         e = this.setEntity(e);
-    //     }
-
-    //     if (isNew) {
-    //         this.markEntityUpdate(eid);
-    //     }
-
-    //     return this;
-    // }
 
     /**
      * 
@@ -383,20 +302,7 @@ export class EntitySetSQL extends EntitySetMem {
         return sqlRetrieveEntity(this.db, eid);
     }
 
-    // createEntity(): number {
-    //     this.openEntitySet();
-
-    //     let e = new Entity();
-
-    //     e = this.setEntity(e);
-    //     const eid = getEntityId(e);
-    //     // Log.debug('[createEntity]', es);
-
-    //     this.markEntityAdd(eid);
-
-    //     return eid;
-    // }
-
+    
     /**
      * Returns an entity instance with components
      * 
@@ -476,7 +382,7 @@ export class EntitySetSQL extends EntitySetMem {
 
 
 
-    async openEntitySet(options: OpenEntitySetOptions = {}): Promise<EntitySetSQL> {
+    async openEntitySet(options: SQLEntitySetOptions = {}): Promise<EntitySetSQL> {
         if (sqlIsOpen(this.db)) {
             return this;
         }
@@ -497,12 +403,5 @@ export class EntitySetSQL extends EntitySetMem {
 
     }
 
-}
-
-interface OpenEntitySetOptions {
-    name?: string;
-    readDefs?: boolean;
-    isMemory?: boolean;
-    clearDb?: boolean;
 }
 

@@ -247,14 +247,6 @@ export async function fetchComponentDef<QS extends QueryStack>(stack: QS): Async
 //     return [ [SType.EntitySet, es] ];
 // }
 
-export function onEntitySet<QS extends QueryStack>(stack: QS): InstResult {
-    let data = stack.pop();
-
-    let options = unpackStackValueR(data, SType.Map);
-    let es = new EntitySetMem(options);
-
-    return [ [SType.EntitySet, es]];
-}
 
 export function onComponentDef<QS extends QueryStack>(stack: QS): InstResult {
     let data: StackValue = stack.pop();

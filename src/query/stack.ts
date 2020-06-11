@@ -2,7 +2,7 @@
 import { isObject, isString, isPromise, isFunction, isInteger } from "../util/is";
 import { createLog } from "../util/log";
 import { deepExtend } from "../util/deep_extend";
-import { stackToString } from "./util";
+import { stackToString, unpackStackValueR } from "./util";
 import { toInteger } from "../util/to";
 import { EntityId, getEntityId } from "../entity";
 import { ComponentDefId, ComponentDef, getDefId } from "../component_def";
@@ -245,9 +245,9 @@ export class QueryStack {
         return ovalues;
     }
 
-    popValue(offset:number = 0):any {
+    popValue(offset:number = 0, recursive:boolean = false):any {
         const sv = this.pop(offset);
-        return sv === undefined ? undefined : sv[1];
+        return sv === undefined ? undefined : recursive ? unpackStackValueR(sv) : sv[1];
     }
 
     /**

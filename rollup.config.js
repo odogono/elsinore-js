@@ -143,8 +143,8 @@ export default [
   {...config, format: 'cjs', minify:false, ext:'js'},
   {...config, format: 'cjs', minify:true, ext:'js'},
 
-  {...singleConfig, format: 'amd', minify:false},
-  {...singleConfig, format: 'amd', minify:true},
+  // {...singleConfig, format: 'amd', minify:false},
+  // {...singleConfig, format: 'amd', minify:true},
   {...singleConfig, format: 'iife', minify:false},
   {...singleConfig, format: 'iife', minify:true},
   {...singleConfig, format: 'umd', minify:false},
