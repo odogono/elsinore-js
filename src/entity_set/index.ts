@@ -78,6 +78,7 @@ export function isEntitySet(value: any): boolean {
 export interface EntitySetOptions {
     readDefs?: boolean;
     debug?: boolean;
+    eidEpoch?: number;
 }
 
 export type ResolveComponentDefIdResult = [Component, string][] | [BitField, string][];
@@ -87,9 +88,6 @@ export type ResolveDefIds = string | string[] | number | number[];
 export type AddArrayType = (Entity | Component)[];// Entity[] | Component[];
 export type AddType = Entity | Component | OrphanComponent | AddArrayType;
 export type RemoveType = ComponentId | Entity | Component;
-
-
-const ESEpoch = 1577836800000; // 2020-01-01T00:00:00.000Z
 
 
 
@@ -110,10 +108,14 @@ export abstract class EntitySet {
 
     eidSeq:EntityId = 0;
 
+    // for generation of entityids
+    readonly eidEpoch:number = 1577836800000; // 2020-01-01T00:00:00.000Z
+
     constructor(data?: EntitySet, options:EntitySetOptions = {}) {
         if (data !== undefined) {
             Object.assign(this, data);
         }
+        this.eidEpoch = options.eidEpoch ?? 1577836800000; // 2020-01-01T00:00:00.000Z
     }
 
     abstract clone();
@@ -153,7 +155,6 @@ export abstract class EntitySet {
 
     createEntity(eid:EntityId = 0): Entity {
         let e = new Entity(eid);
-        // return createEntityId();
 
         e = e.defineComponentProperties( this.componentDefs );
 
@@ -161,7 +162,7 @@ export abstract class EntitySet {
     }
 
     createEntityId() {
-        return buildFlake53({ timestamp: Date.now(), workerId: 0, epoch: ESEpoch, sequence: this.eidSeq++ });
+        return buildFlake53({ timestamp: Date.now(), workerId: 0, epoch: this.eidEpoch, sequence: this.eidSeq++ });
     }
 
     createComponent(defId: (string | number | ComponentDef), attributes = {}): Component {
