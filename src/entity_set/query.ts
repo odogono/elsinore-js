@@ -118,7 +118,7 @@ export function applyFilter(stack:ESMemQueryStack): InstResult {
     let eids = walkFilterQuery( es, Array.from(es.entities.keys()), ...result ).sort();
     // Log.debug('[applyFilter]', 'result eids', eids );
 
-    return [[SType.List,eids.map(eid => [SType.Entity,eid])] ];
+    return [SType.List,eids.map(eid => [SType.Entity,eid])];
 }
 
 function walkFilterQuery( es:EntitySetMem, eids:EntityId[], cmd?, ...args ){
@@ -171,7 +171,7 @@ export function applyLimit(stack: ESMemQueryStack): InstResult {
     let limit = stack.pop();
     let offset = stack.pop();
 
-    return [];
+    return undefined;
 }
 
 export function fetchValue(stack: ESMemQueryStack): InstResult {
@@ -185,7 +185,7 @@ export function fetchValue(stack: ESMemQueryStack): InstResult {
         value = [SType.List, value];
     }
 
-    return [value];
+    return value;
 }
 
 
@@ -223,7 +223,7 @@ export function fetchComponents(stack: ESMemQueryStack): InstResult {
 
     // if an empty eid array has been passed, then no coms can be selected
     if( eids !== undefined && eids.length === 0 ){
-        return [ [SType.List, coms] ];
+        return [SType.List, coms];
     }
 
     // Log.debug('[fetchComponent]', eids, dids );
@@ -248,7 +248,7 @@ export function fetchComponents(stack: ESMemQueryStack): InstResult {
 
     coms = coms.map(c => [SType.Component, c]);
    
-    return [[SType.List, coms]];
+    return [SType.List, coms];
 }
 
 
@@ -274,7 +274,7 @@ export function onComponentAttr(stack: QueryStack): InstResult {
     }
 
 
-    return [ [SType.ComponentAttr, [bf, attr]]];
+    return [SType.ComponentAttr, [bf, attr]];
 }
 
 export function buildBitfield(stack: QueryStack): InstResult {
@@ -285,7 +285,7 @@ export function buildBitfield(stack: QueryStack): InstResult {
     dids = isString(dids) ? [dids] : dids;
     let bf = es.resolveComponentDefIds(dids);
 
-    return [ [SType.Bitfield, bf] ];
+    return [SType.Bitfield, bf];
 }
 
 /**
@@ -312,9 +312,9 @@ export async function fetchEntity(stack: ESMemQueryStack): AsyncInstResult {
         let e = await es.getEntity(eid,false);
         // Log.debug('[fetchEntity]', es.entities);
         if (e === undefined) {
-            return [[SType.Value, false]];
+            return [SType.Value, false];
         }
-        return [[SType.Entity, eid]];
+        return [SType.Entity, eid];
     }
     else if( Array.isArray(eid) ){
         eids = eid;
@@ -325,7 +325,7 @@ export async function fetchEntity(stack: ESMemQueryStack): AsyncInstResult {
     }
     else if( eid === 'all' ){
         let ents = matchEntities(es, undefined, 'all');
-        return [[SType.List, ents]];
+        return [SType.List, ents];
     } else {
         throw new StackError(`@e unknown type ${type}`)
     }
@@ -339,7 +339,7 @@ export async function fetchEntity(stack: ESMemQueryStack): AsyncInstResult {
     //     result.push( e === undefined ? [SType.Value,false] : [SType.Entity,e] );
     // }
 
-    return [[SType.List, result]];
+    return [SType.List, result];
 }
 
 

@@ -43,5 +43,5 @@ export async function onPluck(stack: QueryStack): AsyncInstResult {
     }
 
     // console.log('[onPluck]', out);
-    return [ [SType.List, out] ];
+    return [SType.List, out];
 }

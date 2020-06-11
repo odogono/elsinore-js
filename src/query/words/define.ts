@@ -15,7 +15,7 @@ export function onDefine(stack: QueryStack, [, op]: StackValue): InstResult {
         wordFn = async <QS extends QueryStack>(stack: QS): AsyncInstResult => {
             // console.log('[onDefine]', 'pushValues to', stack.id);
             await stack.pushValues(value[1]);
-            return [];
+            return undefined;
         }
     } else {
         // Log.debug('[onDefine][let]', op, word, 'value', value );
@@ -24,5 +24,5 @@ export function onDefine(stack: QueryStack, [, op]: StackValue): InstResult {
 
     stack.addWords([[word, wordFn]]);
 
-    return [];
+    return undefined;
 };

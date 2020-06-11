@@ -57,7 +57,7 @@ describe('Query (Mem)', () => {
         const onDoubleIt = async (stack: QueryStack, v: StackValue): AsyncInstResult => {
             v = stack.pop();
             let result = sv(v[1] * 2);
-            return Promise.resolve([result]);
+            return Promise.resolve(result);
         }
 
         stack = stack.addWords([['doubleit', onDoubleIt]]);

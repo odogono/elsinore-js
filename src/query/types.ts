@@ -24,7 +24,7 @@ export interface InstDefMeta {
     op: string | string[];
 }
 
-export type InstResult = [StackValue?, boolean?];
+export type InstResult = StackValue | undefined;
 
 export type AsyncInstResult = Promise<InstResult>;
 

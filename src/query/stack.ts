@@ -109,7 +109,7 @@ export class QueryStack {
         let handler: WordFn;
         value = isStackValue(input) ? input : [SType.Value, input];
 
-        let doPush = true;
+        // let doPush = true;
         let [type, word] = value;
         let stack = this.focus();
 
@@ -165,7 +165,7 @@ export class QueryStack {
                 else {
                     // Log.debug('[push]', 'pre', this.focus().id, printStackLineage(stack) );//, this.focus().items );
                     let result = handler(stack, value);
-                    [value, doPush] = isPromise(result) ? await result : result as InstResult;
+                    value = isPromise(result) ? await result : result as InstResult;
                     // Log.debug('[push]', 'post', this.focus().id, printStackLineage(stack) );//, this.focus().items );
                     stack = this.focus();
                 }
@@ -180,7 +180,7 @@ export class QueryStack {
             }
         }
 
-        if (value !== undefined && doPush !== false) {
+        if (value !== undefined ){ // && doPush !== false) {
             // Log.debug('[push]', stack.id, value);
             stack.items = [...stack.items, value];
         }

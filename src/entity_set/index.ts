@@ -881,5 +881,5 @@ function onEntitySet<QS extends QueryStack>(stack: QS): InstResult {
     let options = unpackStackValueR(data, SType.Map);
     let es = new EntitySetMem(options);
 
-    return [ [SType.EntitySet, es]];
+    return [SType.EntitySet, es];
 }

@@ -122,7 +122,7 @@ export async function applyFilter(stack:IDBQueryStack): AsyncInstResult {
     // Log.debug('[applyFilter]', 'result eids', eids );
     
 
-    return [ [SType.List, eids.map(e => [SType.Entity,e]) ]];
+    return [SType.List, eids.map(e => [SType.Entity,e]) ];
 }
 
 
@@ -160,7 +160,7 @@ export async function fetchComponents(stack: IDBQueryStack): AsyncInstResult {
 
     // Log.debug('[fetchComponent]', 'coms', coms );
 
-    return [[SType.List, coms.map(c => [SType.Component,c] )]];
+    return [SType.List, coms.map(c => [SType.Component,c] )];
 }
 
 
@@ -211,14 +211,14 @@ export async function fetchEntity(stack: IDBQueryStack): AsyncInstResult {
     if( returnSingle ){
         let e = ents.length > 0 ? ents[0] : undefined;
         if (e === undefined) {
-            return [ [SType.Value, false]];
+            return  [SType.Value, false];
         }
-        return [ [SType.Entity, eid]];
+        return [SType.Entity, eid];
     }
 
     let result = ents.map( e => [SType.Entity, e] );
     // Log.debug('[fetchEntity]', 'by bf', ents);
-    return [ [SType.List, result]];
+    return [SType.List, result];
 }
 
 
@@ -227,7 +227,7 @@ export function applyLimit(stack: IDBQueryStack): InstResult {
     let limit = stack.pop();
     let offset = stack.pop();
 
-    return [];
+    return undefined;
 }
 
 

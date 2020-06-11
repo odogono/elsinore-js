@@ -52,7 +52,7 @@ export async function onDup<QS extends QueryStack>(stack: QS, op): AsyncInstResu
         out = [...val];
     }
 
-    return [ out];
+    return out;
 }
 
 
@@ -85,7 +85,7 @@ export async function onSelect<QS extends QueryStack>(stack: QS): AsyncInstResul
         stack.items = [...stack.items, ...result];
     }
 
-    return [];
+    return undefined;
 }
 
 export function onArgError<QS extends QueryStack>(stack: QS, val: StackValue): InstResult {
@@ -114,16 +114,16 @@ export function onEntity<QS extends QueryStack>(stack: QS): InstResult {
             }
         }, null);
         if (isEntity(e)) {
-            return [ [SType.Entity, e]];
+            return [SType.Entity, e];
         }
     } else {
         let e = new Entity(val);
-        return [ [SType.Entity, e]];
+        return [SType.Entity, e];
     }
 
     // let eid = unpackStackValue(data, SType.Value);
 
-    return [];
+    return undefined;
 }
 
 
@@ -146,7 +146,7 @@ export function onComponent<QS extends QueryStack>(stack: QS): InstResult {
     let com = es.createComponent(uri, attrs);
     // let def = createComponentDef( undefined, ...raw );
 
-    return [ [SType.Component, com]];
+    return [SType.Component, com];
 }
 
 
@@ -171,7 +171,7 @@ export function onAddComponentToEntity<QS extends QueryStack>(stack: QS): InstRe
     }
     // Log.debug('[onAddComponentToEntity]', c );
 
-    return [ [SType.Entity, e]];
+    return [SType.Entity, e];
 }
 
 
@@ -221,7 +221,7 @@ export async function onAddToEntitySet<QS extends QueryStack>(stack: QS): AsyncI
     // catch (err) {
     //     Log.warn('[onAddToEntitySet]', 'error', value, err.stack);
     // }
-    return [ [SType.EntitySet, es]];
+    return [SType.EntitySet, es];
 }
 
 
@@ -233,7 +233,7 @@ export async function fetchComponentDef<QS extends QueryStack>(stack: QS): Async
         es = unpackStackValue(val, SType.EntitySet);
     }
 
-    return [ [SType.List, es.componentDefs.map(def => [SType.ComponentDef, defToObject(def)])]];
+    return [SType.List, es.componentDefs.map(def => [SType.ComponentDef, defToObject(def)])];
 }
 
 
@@ -244,7 +244,7 @@ export async function fetchComponentDef<QS extends QueryStack>(stack: QS): Async
 
 //     [es, def] = register( es, def )
 
-//     return [ [SType.EntitySet, es] ];
+//     return [ SType.EntitySet, es];
 // }
 
 
@@ -262,11 +262,7 @@ export function onComponentDef<QS extends QueryStack>(stack: QS): InstResult {
         raw = [raw];
     }
 
-    return [ [SType.ComponentDef, parseComponentDef(raw)]];
-    // } catch (err) {
-    //     Log.debug('[onComponentDef]', err.message);
-    //     return [];
-    // }
+    return [SType.ComponentDef, parseComponentDef(raw)];
 }
 
 function parseComponentDef(data: any[]) {
@@ -296,7 +292,7 @@ export async function onPrint<QS extends QueryStack>(stack: QS, val: StackValue)
         // console.log( '[onPrint]', msg );
         console.info('[onPrint]', stack.id, unpackStackValueR(msg));
     }
-    return [];
+    return undefined;
 }
 
 export function onAddArray<QS extends QueryStack>(stack: QS, val: StackValue): InstResult {
@@ -305,7 +301,7 @@ export function onAddArray<QS extends QueryStack>(stack: QS, val: StackValue): I
     let right = stack.pop();
     let [type, arr] = right;
     arr = [...arr, left];
-    return [ [type, arr]];
+    return [type, arr];
 }
 
 export function onFetchArray<QS extends QueryStack>(stack: QS, val: StackValue): InstResult {
@@ -313,7 +309,7 @@ export function onFetchArray<QS extends QueryStack>(stack: QS, val: StackValue):
     let right = stack.pop();
     let arr = unpackStackValue(right, SType.List);
     let idx = unpackStackValue(left, SType.Value);
-    return [ arr[idx]];
+    return arr[idx];
 }
 
 
@@ -340,7 +336,7 @@ export function onAdd<QS extends QueryStack>(stack: QS, val: StackValue): InstRe
 
     // Log.debug('[onAdd]', op, left, right, value);
 
-    return [ [SType.Value, value]];
+    return [SType.Value, value];
 }
 
 export function onMapOpen(stack: QueryStack): InstResult {
@@ -348,14 +344,14 @@ export function onMapOpen(stack: QueryStack): InstResult {
     // Log.debug('[onMapOpen]', stack.items);//Object.keys(stack.words));
     // DLog(stack, '[onMapOpen]', stack.items );
 
-    stack.setChild( sub );
+    stack.setChild(sub);
 
     // sub._parent = stack;
     // sub._root = stack._root ? stack._root : stack;
     // Log.debug('[onMapOpen]', {id:sub.id, parent:sub._parent?.id,root:sub._root?.id}, stackToString(stack) );
 
     // add something which will interpret each push
-    sub.addWords( [
+    sub.addWords([
         ['{', onMapOpen],
         ['[', onListOpen],
         ['}', onMapClose],
@@ -364,7 +360,7 @@ export function onMapOpen(stack: QueryStack): InstResult {
     // throw 'stop';
     // (sub as any)._stack = stack;
     // Log.debug('[onMapOpen]', {id:sub.id, parent:stack.id});
-    return [];
+    return undefined;
 }
 
 export function onUnexpectedError<QS extends QueryStack>(stack: QS, val: StackValue): InstResult {
@@ -390,14 +386,14 @@ export function onMapClose<QS extends QueryStack>(stack: QS, val: StackValue): I
     // Log.debug('[onMapClose]', {id:stack.id, parent:stack._parent.id});
     // stack = stack._parent;
     stack.restoreParent();
-    return [ val];
+    return val;
 }
 
 export function onListOpen(stack: QueryStack): InstResult {
     let sub = new QueryStack();
     // sub._parent = stack;
     // sub._root = stack._root ? stack._root : stack;
-    stack.setChild( sub );
+    stack.setChild(sub);
     // Log.debug('[onListOpen]', {id:sub.id, parent:sub._parent?.id,root:sub._root?.id}, stackToString(stack) );
     // Log.debug('[onListOpen]', {id:sub.id});
     // sub.words = {...stack.words};
@@ -408,7 +404,7 @@ export function onListOpen(stack: QueryStack): InstResult {
         ['}', onUnexpectedError],
         // ['arse', onUnexpectedError],
     ], true);
-    return [];
+    return undefined;
 }
 
 export function onListClose<QS extends QueryStack>(stack: QS): InstResult {
@@ -417,7 +413,7 @@ export function onListClose<QS extends QueryStack>(stack: QS): InstResult {
     // stack = stack._parent;
     stack.restoreParent();
     // Log.debug('[onListClose]', val);
-    return [ val];
+    return val;
 }
 
 export async function onListSpread<QS extends QueryStack>(stack: QS): AsyncInstResult {
@@ -430,7 +426,7 @@ export async function onListSpread<QS extends QueryStack>(stack: QS): AsyncInstR
     // Log.debug('[onArraySpread]', value);
     await stack.pushValues(value);
     // }
-    return [];
+    return undefined;
 }
 
 export function onValue<QS extends QueryStack>(stack: QS): InstResult {
@@ -441,7 +437,7 @@ export function onValue<QS extends QueryStack>(stack: QS): InstResult {
         // stack = { ...stack, items: [...stack.items, ...value] };
         stack.items = [...stack.items, ...value];
     }
-    return [];
+    return undefined;
 }
 
 
@@ -461,7 +457,7 @@ export function onConcat<QS extends QueryStack>(stack: QS, val: StackValue): Ins
 
     values = [first, ...values];
 
-    return [ [SType.List, values]];
+    return [SType.List, values];
 }
 
 export function onBuildMap<QS extends QueryStack>(stack: QS): InstResult {
@@ -483,14 +479,14 @@ export function onBuildMap<QS extends QueryStack>(stack: QS): InstResult {
 
     // Log.debug('[onBuildMap]', map );
 
-    return [ [SType.Map, map]];
+    return [SType.Map, map];
 }
 
 export function onToString(stack: QueryStack): InstResult {
     let val = stack.pop();
     let str = valueToString(val);
 
-    return [[SType.Value, str]];
+    return [SType.Value, str];
 }
 
 export async function onFilter<QS extends QueryStack>(stack: QS): AsyncInstResult {
@@ -514,7 +510,7 @@ export async function onFilter<QS extends QueryStack>(stack: QS): AsyncInstResul
         }
     }
 
-    return [ [SType.List, accum]];
+    return [SType.List, accum];
 }
 
 export async function onMap<QS extends QueryStack>(stack: QS): AsyncInstResult {
@@ -537,7 +533,7 @@ export async function onMap<QS extends QueryStack>(stack: QS): AsyncInstResult {
 
     // Log.debug('[onMap]', 'end', mapStack.items );
 
-    return [ [SType.List, mapStack.items]];
+    return [SType.List, mapStack.items];
 }
 
 export async function onReduce<QS extends QueryStack>(stack: QS): AsyncInstResult {
@@ -565,13 +561,13 @@ export async function onReduce<QS extends QueryStack>(stack: QS): AsyncInstResul
     }, Promise.resolve([mapStack, accum]));
 
 
-    return [ accum];
+    return accum;
 }
 
 export function onUnique<QS extends QueryStack>(stack: QS): InstResult {
     let val = stack.pop();
     let array = unpackStackValueR(val, SType.List);
-    return [ [SType.List, [...new Set([...array].sort())].map(v => [SType.Value, v])]];
+    return [SType.List, [...new Set([...array].sort())].map(v => [SType.Value, v])];
 }
 
 export function onPush<QS extends QueryStack>(stack: QS, val: StackValue): InstResult {
@@ -584,7 +580,7 @@ export function onPush<QS extends QueryStack>(stack: QS, val: StackValue): InstR
 
     list = [...list, rv];
 
-    return [ [SType.List, list]];
+    return [SType.List, list];
 }
 
 export function onPop<QS extends QueryStack>(stack: QS, val: StackValue): InstResult {
@@ -596,7 +592,7 @@ export function onPop<QS extends QueryStack>(stack: QS, val: StackValue): InstRe
         throw new StackError('stack underflow');
     }
     let value = list[len - 1];
-    return [ value];
+    return value;
 }
 
 
@@ -610,26 +606,25 @@ export function onSwap<QS extends QueryStack>(stack: QS): InstResult {
     stack.pushRaw(left);
     stack.pushRaw(right);
 
-    return [];
+    return undefined;
 }
 
 export function onDrop<QS extends QueryStack>(stack: QS): InstResult {
     stack.pop();
-    return [];
+    return undefined;
 }
 
 
 export function onClear<QS extends QueryStack>(stack: QS): InstResult {
     stack.items = [];
-    return [];
+    return undefined;
 };
 
-export async function onVersion<QS extends QueryStack>(stack: QS, val: StackValue): AsyncInstResult {
-    val = await stack.push([SType.Value, '1.0.0']);
-    return [ val, false];
+export function onVersion<QS extends QueryStack>(stack: QS): InstResult {
+    return [SType.Value, '1.0.0'];
 };
 
-export function onEquals<QS extends QueryStack>(stack: QS, val: StackValue): InstResult {
+export function onEquals<QS extends QueryStack>(stack: QS): InstResult {
 
     let left = stack.pop();
     let right = stack.pop();
@@ -637,7 +632,7 @@ export function onEquals<QS extends QueryStack>(stack: QS, val: StackValue): Ins
     let equal = compareValues(left, right);
     // Log.debug('[==]', left, right );
 
-    return [ [SType.Value, equal]];
+    return [SType.Value, equal];
 }
 
 export function onAssertType<QS extends QueryStack>(stack: QS): InstResult {
@@ -650,14 +645,14 @@ export function onAssertType<QS extends QueryStack>(stack: QS): InstResult {
     if (value[0] !== type) {
         throw new Error(`[onAssertType] expected type ${type}, got ${value}`);
     }
-    return [];
+    return undefined;
 }
 
 // export function onAssert( stack:QueryStack, val:StackValue ):InstResult {
 //     // Log.debug('[assert]', val);
 //     [stack,val] = pop(stack);
 //     assert( val[1], `failed to assert value ${val}` );
-//     return [];
+//     return undefined;
 // }
 
 

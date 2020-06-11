@@ -84,5 +84,5 @@ export function onLogicalFilter<QS extends QueryStack>(stack:QS, value:StackValu
     
     stack.pushRaw([SType.Filter, [op, right, left]]);
 
-    return [];
+    return undefined;
 }

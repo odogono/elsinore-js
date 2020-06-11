@@ -156,7 +156,7 @@ export function applyFilter(stack: SQLQueryStack): InstResult {
 
     result = sqlRetrieveByQuery(es.db, result);
 
-    return [result];
+    return result;
 }
 
 
@@ -165,7 +165,7 @@ export function applyLimit(stack: SQLQueryStack): InstResult {
     let limit = stack.pop();
     let offset = stack.pop();
 
-    return [];
+    return undefined;
 }
 
 export function fetchValue(stack: SQLQueryStack): InstResult {
@@ -179,7 +179,7 @@ export function fetchValue(stack: SQLQueryStack): InstResult {
         value = [SType.List, value];
     }
 
-    return [value];
+    return value;
 }
 
 
@@ -215,7 +215,7 @@ export function fetchComponents(stack: SQLQueryStack): InstResult {
 
     coms = sqlRetrieveComponents(es.db, eids, defs || es.componentDefs);
 
-    return [[SType.List, coms.map(c => [SType.Component, c])]];
+    return [SType.List, coms.map(c => [SType.Component, c])];
 }
 
 
@@ -278,14 +278,14 @@ export async function fetchEntity(stack: SQLQueryStack): AsyncInstResult {
     if( returnSingle ){
         let e = ents.length > 0 ? ents[0] : undefined;
         if (e === undefined) {
-            return [ [SType.Value, false]];
+            return [SType.Value, false];
         }
-        return [ [SType.Entity, eid]];
+        return [SType.Entity, eid];
     }
 
     let result = ents.map( e => [SType.Entity, e] );
     // Log.debug('[fetchEntity]', 'by bf', ents);
-    return [ [SType.List, result]];
+    return [SType.List, result];
 }
 
 function matchEntities(es: EntitySetSQL, mbf?: BitField): Entity[] {
