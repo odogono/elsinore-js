@@ -81,7 +81,7 @@ describe('Query (SQL)', () => {
 
             assert.deepEqual(
                 result.map(e => bfToValues(e.bitField)),
-                [[1, 2, 3], [1, 2], [1, 2]]);
+                [ [ 1, 2, 3, 4 ], [ 1, 2 ], [ 1, 2 ] ] );
         });
 
         it('fetches component attributes', async () => {
@@ -253,8 +253,8 @@ describe('Query (SQL)', () => {
 
             [
                 eids let
-                ^es [ *^eids [/component/name /component/nickname] !bf @c ] select
-            ] selectNames define
+                ^es [ *^eids [/component/nickname] !bf @c ] select
+            ] selectNicknames define
 
             [
                 // 1. select channel ids which 'client_id' belongs to
@@ -264,7 +264,7 @@ describe('Query (SQL)', () => {
                 selectChannelMemberComs
              
                 // 3. using the channel_member client ids select the entities
-                selectNames
+                selectNicknames
 
             ] selectChannelMembersByClientId define
 
@@ -275,7 +275,7 @@ describe('Query (SQL)', () => {
             `, 'irc');
 
             let result = stack.popValue();
-            let nicknames = result.map(v => v[1].nickname).filter(Boolean);
+            let nicknames = result.map(v => v.nickname);
             assert.includeMembers(nicknames, ['koolgrap', 'lauryn', 'missy']);
         })
 

@@ -341,14 +341,16 @@ describe('Query (Mem)', () => {
             `, 'todo');
 
             // ilog(stack.words);
-            let defs = stack.pop();
+            let defs = stack.popValue();
             // ilog( unpackStackValueR(defs) );
-            assert.deepEqual(unpackStackValueR(defs), [
+            assert.deepEqual(defs, [
                 ['/component/title', [{ name: 'text' }]],
                 ['/component/completed',
                     [{ name: 'isComplete', type: 'boolean', default: false }]],
                 ['/component/priority',
-                    [{ name: 'priority', type: 'integer', default: 0 }]]
+                    [{ name: 'priority', type: 'integer', default: 0 }]],
+                ['/component/meta',
+                    [{ name: 'meta', type: 'json', default: {} }]]
             ])
         })
 
@@ -495,7 +497,7 @@ describe('Query (Mem)', () => {
     
             assert.deepEqual( 
                 result.map(e => bfToValues(e.bitField) ), 
-                [ [ 1, 2, 3 ], [ 1, 2 ], [ 1, 2 ] ] );
+                [ [ 1, 2, 3, 4 ], [ 1, 2 ], [ 1, 2 ] ] );
         });
 
 
@@ -668,8 +670,8 @@ describe('Query (Mem)', () => {
 
             [
                 eids let
-                ^es [ *^eids [/component/name /component/nickname] !bf @c ] select
-            ] selectNames define
+                ^es [ *^eids [/component/nickname] !bf @c ] select
+            ] selectNicknames define
 
             [
                 // 1. select channel ids which 'client_id' belongs to
@@ -679,7 +681,7 @@ describe('Query (Mem)', () => {
                 selectChannelMemberComs
              
                 // 3. using the channel_member client ids select the entities
-                selectNames
+                selectNicknames
 
             ] selectChannelMembersByClientId define
 
@@ -690,8 +692,21 @@ describe('Query (Mem)', () => {
             `, 'irc');
 
             let result = stack.popValue();
-            let nicknames = result.map(v => v[1].nickname).filter(Boolean);
+            let nicknames = result.map(v => v.nickname);
             assert.includeMembers(nicknames, ['koolgrap', 'lauryn', 'missy']);
+        });
+
+
+        describe('!ca Component Attribute', () => {
+
+            it('selects an attribute', async () => {
+
+            });
+
+            // setting a ca? 
+            // /com/example#/meta/isEnabled true !ca
+            // getting a ca?
+            // /com/example#/meta/isEnabled !ca
         })
 
     });

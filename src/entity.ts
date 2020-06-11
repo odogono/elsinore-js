@@ -43,16 +43,11 @@ export function isEntityList(value: any): boolean {
 }
 
 
-// export interface EntityU extends Entity {
-//     [key:string]: any;
-// }
-
-
 export class Entity {
     id: EntityId = 0;
     
     // maps component defId to Component
-    components: Map<ComponentDefId, Component> = new Map<ComponentDefId,Component>();
+    components: Map<ComponentDefId, Component>;// = new Map<ComponentDefId,Component>();
 
     // tracks component defIds contained on this entity
     bitField: BitField;
@@ -74,6 +69,7 @@ export class Entity {
      */
     addComponentUnsafe( did: number, com: Component, name?:string): Entity {
         const eid = getEntityId(this);
+        this.components = this.components ?? new Map<ComponentDefId,Component>();
     
         if( com === undefined ){
             this.components.delete(did);
@@ -102,6 +98,9 @@ export class Entity {
     }
 
     getComponents(bf?: BitField): Component[] {
+        if( this.components === undefined ){
+            return [];
+        }
         if (bf !== undefined) {
             return bfToValues(bf).map(did => this.components.get(did)).filter(Boolean);
         }
@@ -109,7 +108,8 @@ export class Entity {
     }
 
     get size():number {
-        return this.components.size;
+        // return this.components.size;
+        return this.components == undefined ? 0 : this.components.size;
     }
 
 
@@ -124,6 +124,7 @@ export class Entity {
      */
     defineComponentProperties( defs:ComponentDef[] ):Entity {
         const eid = this.id;
+        this.components = this.components ?? new Map<ComponentDefId,Component>();
         const props = defs.reduce( (props,def) => {
             const did = getDefId(def);
             return {...props, [ def.name ]:{

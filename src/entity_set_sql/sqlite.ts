@@ -8,7 +8,9 @@ import {
     toObject as defToObject,
     hash as defHash,
     hashStr as defHashStr,
-    getDefId
+    getDefId,
+    getProperty as getDefProperty,
+    ComponentDefProperty
 } from '../component_def';
 import {
     Entity,
@@ -268,9 +270,10 @@ export function sqlUpdateComponent(ref: SqlRef, com: Component, def: ComponentDe
         // cols = def.properties.reduce( (cols,p) => [...cols,p.name], cols );
         let colString = [...cols, ...names].map(c => `'${c}'`).join(',');
         let vals:any[] = [eid];
-        vals = [...vals, ...names.map(name => valueToSQL( com[name] ))];
+        vals = [...vals, ...names.map(name => valueToSQL( com[name], getDefProperty(def,name) ))];
         let valString = vals.map(v => '?').join(',');
         // Log.debug('[sqlUpdateComponent]',`INSERT INTO ${tblName} (${colString}) VALUES (${valString});`, vals, com);
+        // Log.debug('[sqlUpdateComponent]', 'def', def);
         stmt = db.prepare(`INSERT INTO ${tblName} (${colString}) VALUES (${valString});`)
         stmt.run(vals);
         const cid = sqlLastId(ref);
@@ -283,12 +286,23 @@ export function sqlUpdateComponent(ref: SqlRef, com: Component, def: ComponentDe
     return com;
 }
 
-function valueToSQL(value){
+function valueToSQL(value:any, property?:ComponentDefProperty){
+    if( property !== undefined ){
+        switch(property.type){
+            case 'integer':
+            case 'number':
+            case 'string':
+                return value;
+            default:
+                return JSON.stringify(value);
+            
+        }
+    }
     if( isBoolean(value) ){
         return value+'';
     }
     // if( value === undefined ){
-    //     Log.debug('[valueToSQL]', 'dammit', attr, value, component );
+        // Log.debug('[valueToSQL]', 'dammit', value, property );
     // }
     return value;
 }

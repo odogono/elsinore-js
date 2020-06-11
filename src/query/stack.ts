@@ -245,7 +245,7 @@ export class QueryStack {
         return ovalues;
     }
 
-    popValue(offset:number = 0, recursive:boolean = false):any {
+    popValue(offset:number = 0, recursive:boolean = true):any {
         const sv = this.pop(offset);
         return sv === undefined ? undefined : recursive ? unpackStackValueR(sv) : sv[1];
     }

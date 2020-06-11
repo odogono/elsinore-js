@@ -43,6 +43,13 @@ const propertyDefaults = {
     optional: false,
 };
 
+const typeDefaults = {
+    'json': {},
+    'integer': 0,
+    'boolean': false,
+    'list': [],
+    'map': {}
+}
 
 /**
  * 
@@ -205,8 +212,8 @@ export function createProperty(params:any): ComponentDefProperty {
     } else if( isObject(params) ) {
         name = params.name || name;
         type = params.type || type;
-        defaultValue = params.default !== undefined ? params.default : defaultValue;
-        // console.log('but', name, params.default);
+        defaultValue = params.default ?? typeDefaults[type] ?? undefined;
+        // console.log('but', name, 'type', type, defaultValue);
         
         for( let key of Object.keys(params) ){
             if( key === 'additional' ){
