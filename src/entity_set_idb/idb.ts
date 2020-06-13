@@ -8,7 +8,7 @@ import {
     toValues as bfToValues,
     set as bfSet,
 } from "../util/bitfield";
-
+import Jsonpointer from 'jsonpointer';
 
 const Log = createLog('IDB', { time: false });
 
@@ -64,21 +64,35 @@ async function walkFilterQuery(db: IDBDatabase, eids: EntityId[], cmd?, ...args)
         return Array.from(new Set([...left, ...right]));
     } else if (cmd === '==') {
         let { def } = args[0];
-        let [key, val] = args[1];
+        let [ptr, val] = args[1];
         
         let coms = await idbRetrieveComponents(db, undefined, [getDefId(def)]);
         
         // Log.debug('[walkFilterQuery]', '==', key,val, coms);
-        
-        let ceids = coms.reduce((eids, com) => {
-
-            if( Array.isArray(val) ){
-                return val.indexOf( com[key] ) !== -1 ? [...eids,com["@e"] ] : eids;
+        let ceids = [];
+        for( const com of coms ){
+            let ptrVal;
+            if( ptr.startsWith('/') ){
+                ptrVal = Jsonpointer.get(com,ptr);
+                // console.log('[walk]', ptr, com );
+            } else {
+                ptrVal = com[ptr];
             }
 
-            // Log.debug('[walkFilterQuery]', '==', key,val, com[key]);
-            return com[key] === val ? [...eids, com["@e"]] : eids
-        }, []);
+            if( Array.isArray(val) ){
+                if( val.indexOf( ptrVal ) !== -1 ){
+                    ceids.push( com['@e'] );
+                }
+                // ceids.push( val.indexOf( ptrVal ) !== -1 ? [...eids,com["@e"] ] : eids );
+            } else {
+                if( ptrVal === val ){
+                    ceids.push( com['@e'] );
+                }
+                // ceids.push( ptrVal === val ? [...eids, com["@e"]] : eids );
+            }
+        }
+
+        // console.log('[walk]', ceids );
 
         return [...eids, ...ceids];
 

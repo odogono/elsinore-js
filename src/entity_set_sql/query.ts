@@ -151,10 +151,11 @@ export function applyFilter(stack: SQLQueryStack): InstResult {
 
     let result = parseFilterQuery(es, filter[0], filter[1], filter[2]);
 
+    
+    result = sqlRetrieveByQuery(es.db, result);
+    
     // Log.debug('[applyFilter]', 'result' );
     // ilog( result );
-
-    result = sqlRetrieveByQuery(es.db, result);
 
     return result;
 }

@@ -22,9 +22,6 @@ import {
 
 import { createStdLibStack } from '../../src/query';
 import {
-    stackToString, unpackStackValue, unpackStackValueR,
-} from '../../src/query/util';
-import {
     toValues as bfToValues,
 } from '../../src/util/bitfield';
 import {
@@ -59,7 +56,6 @@ describe('Query (IDB)', () => {
             assert.equal(result, 102);
         });
 
-
         it('fetches entities by did', async () => {
             let query = `[ "/component/completed" !bf @e] select`;
             let [stack] = await prepES(query, 'todo');
@@ -76,11 +72,12 @@ describe('Query (IDB)', () => {
                 [ [ 1, 2, 3, 4 ], [ 1, 2 ], [ 1, 2 ] ] );
         });
 
+
         it('fetches component attributes', async () => {
             let [stack] = await prepES(`[ 
                 /component/title !bf
                 @c
-                text pluck
+                /text pluck
             ] select`, 'todo');
     
             let result = stack.popValue(0,true);
@@ -98,7 +95,7 @@ describe('Query (IDB)', () => {
                 103 @e 
                 /component/title !bf
                 @c
-                text pluck
+                /text pluck
             ] select`, 'todo');
 
             // ilog(stack.items);
@@ -109,7 +106,7 @@ describe('Query (IDB)', () => {
         it('fetches matching component attribute', async () => {
             let [stack] = await prepES(`[ 
                 // fetches values for text from all the entities in the es
-                /component/title text !ca
+                /component/title#/text !ca
                 "do some shopping"
                 // equals in this context means match, rather than equality
                 // its result will be components
@@ -119,14 +116,14 @@ describe('Query (IDB)', () => {
             ] select
             `, 'todo');
 
-            let coms = stack.popValue(0,true);
+            let coms = stack.popValue();
             assert.equal(coms[0].text, "do some shopping");
         });
 
         it('fetches entities matching component attribute', async () => {
             let [stack] = await prepES(`[ 
                 // fetches values for text from all the entities in the es
-                /component/completed isComplete !ca
+                /component/completed#/isComplete !ca
                 true
                 // equals in this context means match, rather than equality
                 // its result will be components
@@ -141,8 +138,8 @@ describe('Query (IDB)', () => {
 
         it('uses multi conditions', async () => {
             let query = `[
-            /component/position file !ca a ==
-            /component/position rank !ca 2 ==
+            /component/position#/file !ca a ==
+            /component/position#/rank !ca 2 ==
             and
             all
             @c
@@ -161,10 +158,10 @@ describe('Query (IDB)', () => {
             // create an es with the defs
             dup @d {} !es swap + swap
             [
-                /component/position file !ca a ==
-                /component/position file !ca f ==
+                /component/position#/file !ca a ==
+                /component/position#/file !ca f ==
                 or
-                /component/colour colour !ca white ==
+                /component/colour#/colour !ca white ==
                 and
                 @c
             ] select
@@ -186,14 +183,14 @@ describe('Query (IDB)', () => {
 
             [
                 uid let
-                ^es [ /component/username username !ca  *^uid == ] select
+                ^es [ /component/username#/username !ca  *^uid == ] select
                 0 @
             ] selectUserId define
             
             [
                 ch_name let
                 // adding * to a ^ stops it from being eval'd the 1st time, but not the 2nd
-                ^es [ /component/channel name !ca *^ch_name == ] select
+                ^es [ /component/channel#/name !ca *^ch_name == ] select
                 0 @
             ] selectChannelId define
             
@@ -218,25 +215,25 @@ describe('Query (IDB)', () => {
             [
                 client_id let
                 ^es [
-                    /component/channel_member client !ca *^client_id ==
+                    /component/channel_member#/client !ca *^client_id ==
                     /component/channel_member !bf
                     @c
                 ] select
 
                 // pick the channel attributes
-                channel pluck 
+                /channel pluck 
             ] selectChannelsFromMember define
 
             [
                 channel_ids let
                 ^es [
-                    /component/channel_member channel !ca *^channel_ids ==
+                    /component/channel_member#/channel !ca *^channel_ids ==
                     /component/channel_member !bf
                     @c
                 ] select
 
                 // select client attr, and make sure there are no duplicates
-                client pluck unique 
+                /client pluck unique 
                 
                 // make sure this list of clients doesnt include the client_id
                 [ ^client_id != ] filter
@@ -269,8 +266,32 @@ describe('Query (IDB)', () => {
             let result = stack.popValue();
             let nicknames = result.map(v => v.nickname);
             assert.includeMembers(nicknames, ['koolgrap', 'lauryn', 'missy']);
-        })
+        });
 
+
+        describe('Component Attribute', () => {
+
+            it('selects a JSON attribute', async () => {
+                let [stack] = await prepES(`
+                [
+                    // where( attr('/component/meta#/meta/author').equals('av') )
+                    /component/meta#/meta/author !ca av ==
+                    /component/meta !bf
+                    @c
+                    /meta/tags/1 pluck
+                ] select
+                `, 'todo');
+
+                // console.log( stack.items );
+                // ilog( stack.items );
+                assert.equal( stack.popValue(), 'action' );
+            });
+
+            // setting a ca? 
+            // /com/example#/meta/isEnabled true !ca
+            // getting a ca?
+            // /com/example#/meta/isEnabled !ca
+        })
     });
 });
 

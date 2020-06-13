@@ -33,7 +33,6 @@
       "import": "./dist/esm/index.mjs",
       "require": "./dist/cjs/index.js"
     },
-    
     "./idb": {
       "import": "./dist/esm/idb.mjs",
       "require": "./dist/cjs/idb.js"
@@ -52,6 +51,7 @@
     "better-sqlite3": "^7.0.1",
     "flake-idgen": "^1.4.0",
     "fs-extra": "^9.0.1",
+    "jsonpointer": "^4.0.1",
     "minivents": "^2.2.0",
     "pull-pushable": "2.2.0",
     "temp-dir": "^2.0.0"

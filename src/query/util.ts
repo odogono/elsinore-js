@@ -9,17 +9,17 @@ export interface ToStringOptions {
     flat?: boolean;
 }
 
-export function stackToString( stack:QueryStack ):string {
-    let parts = stack.items.map( val => valueToString(val) );
+export function stackToString(stack: QueryStack): string {
+    let parts = stack.items.map(val => valueToString(val));
     return parts.join(' ');
 }
 
-export function valueToString( val:StackValue ):string {
-    const [type,value] = val;
+export function valueToString(val: StackValue): string {
+    const [type, value] = val;
     const strCheck = /^[a-z0-9\/_]+$/i;
 
     // Log.debug('[valueToString]', type, value);
-    switch( type ){
+    switch (type) {
         case SType.EntitySet:
             return `${type}.${value.type}`;//(${value.esSize(value)})`;
         case SType.ComponentAttr:
@@ -27,26 +27,26 @@ export function valueToString( val:StackValue ):string {
         case SType.ComponentDef:
             return `(${type} ${value.uri})`;
         case SType.Component:
-            if( Array.isArray(value) ){
-                return `[${type},` + value.map( v => stringify(v) ).join(', ') + ']';
+            if (Array.isArray(value)) {
+                return `[${type},` + value.map(v => stringify(v)).join(', ') + ']';
             }
             return `(${type} ${getComponentId(value)})`;
         case SType.Entity:
-            if( Array.isArray(value) ){
+            if (Array.isArray(value)) {
                 return `(${type} ${stringify(value)})`;
             }
             return String(getEntityId(value));
-            // return `(${type} ${getEntityId(value)})`;
+        // return `(${type} ${getEntityId(value)})`;
         case SType.List:
-            return `[` + value.map(v => valueToString(v) ).join(', ') + ']';
+            return `[` + value.map(v => valueToString(v)).join(', ') + ']';
         case SType.Map:
-            return '{' + Object.keys(value).reduce( (res,key) => {
+            return '{' + Object.keys(value).reduce((res, key) => {
                 return [...res, `"${key}": ${valueToString(value[key])}`];
-            },[]).join(',') + '}';
+            }, []).join(',') + '}';
         case SType.Value:
             return strCheck.test(value) ? JSON.stringify(value) : value;
         case SType.Filter:
-            let [op,left,right] = value;
+            let [op, left, right] = value;
             return `${op} ${valueToString(left)} ${valueToString(right)}`;
         // case SType.Undefined:
         //     return `undefined`;
@@ -73,17 +73,28 @@ export function unpackStackValue(val: StackValue, assertType: (SType | SType[]) 
         throw new Error(`expected type ${assertType}, got ${type}`);
     }
 
-    if (type === SType.List) {
-        // console.log('[unpackStackValue]', type, value);
-        return recursive ? value.map(av => unpackStackValue(av, SType.Any, true)) : value;
-    }
-    if (type === SType.Map) {
-        return recursive ? Object.keys(value).reduce((res, key) => {
-            return { ...res, [key]: unpackStackValue(value[key], SType.Any, true) }
-        }, {}) : value;
-    } else {
-        // Log.debug('[unpackStackValue]', 'wat', value);
-        return value;
+    switch (type) {
+        case SType.List:
+            // console.log('[unpackStackValue]', type, value);
+            // console.log('[unpackStackValue]', type, value);
+            return recursive ? value.map(av => unpackStackValue(av, SType.Any, true)) : value;
+        case SType.Map:
+            return recursive ? Object.keys(value).reduce((res, key) => {
+                return { ...res, [key]: unpackStackValue(value[key], SType.Any, true) }
+            }, {}) : value;
+        case SType.Value:
+        case SType.Any:
+        case SType.Entity:
+        case SType.EntitySet:
+        case SType.Bitfield:
+        case SType.Component:
+        case SType.Function:
+        case SType.Filter:
+        case SType.ComponentAttr:
+        case SType.ComponentDef:
+            return value;
+        default:
+            return val;
     }
 }
 

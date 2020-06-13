@@ -517,21 +517,15 @@ export async function onMap<QS extends QueryStack>(stack: QS): AsyncInstResult {
     let right = stack.pop();
     let left = stack.pop();
 
-    let array = unpackStackValue(left, SType.List);
+    let list = unpackStackValue(left, SType.List);
     let fn = unpackStackValue(right, SType.List);
 
     let mapStack = new QueryStack(stack);
 
-    mapStack = await array.reduce(async (mapStack, val) => {
-        mapStack = await mapStack;
-        // Log.debug('[onMap]','ok', val);
+    for( const val of list ){
         await mapStack.push(val);
         await mapStack.pushValues(fn);
-
-        return mapStack;
-    }, Promise.resolve(mapStack));
-
-    // Log.debug('[onMap]', 'end', mapStack.items );
+    }
 
     return [SType.List, mapStack.items];
 }
@@ -542,24 +536,19 @@ export async function onReduce<QS extends QueryStack>(stack: QS): AsyncInstResul
     let accum = stack.pop();
     let left = stack.pop();
 
-    let array = unpackStackValue(left, SType.List);
+    let list = unpackStackValue(left, SType.List);
     accum = unpackStackValue(accum, SType.Any);
     let fn = unpackStackValue(right, SType.List);
 
     let mapStack = new QueryStack(stack);
 
-    [mapStack, accum] = await array.reduce(async (result, val) => {
-        [mapStack, accum] = await result;
-        // Log.debug('[onMap]','ok', val);
+    for( const val of list ){
         await mapStack.push(val);
         await mapStack.push(accum);
         await mapStack.pushValues(fn);
 
         accum = mapStack.pop();
-
-        return [mapStack, accum];
-    }, Promise.resolve([mapStack, accum]));
-
+    }
 
     return accum;
 }

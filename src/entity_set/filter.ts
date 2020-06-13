@@ -27,10 +27,10 @@ export function parseFilterQuery( es:EntitySet, cmd?, left?, right? ){
     
 }
 
-function prCA( es:EntitySet,dids, attr ){
+function prCA( es:EntitySet, dids, attr ){
+    // console.log('[prCA]', dids, attr );
     const did = bfToValues(dids)[0];
     const def = es.getByDefId( did );
-    // Log.debug('[prCA]', did, def)
     return { def:def, key:attr };
 }
 

@@ -14,7 +14,8 @@
 [ "/component/completed", {"isComplete":true}]  !c
 [ "/component/priority", {"priority":10} ] !c
 [ "/component/meta", { "meta":{ 
-    "author":"av", 
+    "author":"av",
+    "tags": [ "first", "action" ],
     "dates": {
         "ctime":"2020-05-23T09:10:00.000Z", 
         "mtime":"2020-06-11T14:57:06.571Z" 
@@ -42,7 +43,7 @@ concat
 
 [ "/component/title", { "text":"drink some tea"} ] !c
 [ "/component/meta", { "meta": {
-    "author":"av"
+    "author":"jm"
 } } ] !c
 concat
 103 !e swap +

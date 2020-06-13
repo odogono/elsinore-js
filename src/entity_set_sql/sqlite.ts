@@ -10,7 +10,8 @@ import {
     hashStr as defHashStr,
     getDefId,
     getProperty as getDefProperty,
-    ComponentDefProperty
+    ComponentDefProperty,
+    getProperty
 } from '../component_def';
 import {
     Entity,
@@ -382,6 +383,8 @@ export function sqlRetrieveComponents(ref:SqlRef, eids:EntityId[], defs:Componen
 
     for(let ii=0;ii<defs.length;ii++ ){
         let def = defs[ii];
+        const did = def[ComponentDefT];
+
         let rows;
         if( eids === undefined ){
             let stmt = db.prepare(`SELECT * FROM ${def.tblName} ORDER BY eid`);
@@ -394,12 +397,26 @@ export function sqlRetrieveComponents(ref:SqlRef, eids:EntityId[], defs:Componen
         }
         // let rows = stmt.all(eids);
 
+        
         for( let rr=0;rr<rows.length;rr++ ){
-            let { created_at: ca, updated_at: ua, id: id, eid: ee, ...rest } = rows[rr];
-            result.push( { '@e': ee, '@d': def[ComponentDefT], ...rest } );
+            const row = rows[rr];
+            let com:any = { '@e':row.eid, '@d':did };
+            
+            for( const prop of def.properties ){
+                let val = row[prop.name];
+                if( prop.type === 'json' ){
+                    val = JSON.parse(val); 
+                }
+                com[prop.name] = val;
+            }
+            // Log.debug('[sqlRetrieveComponents]',com, row );
+            // let { created_at: ca, updated_at: ua, id: id, eid: ee, ...rest } = rows[rr];
+            // result.push( { '@e': ee, '@d': did, ...rest } );
+            result.push( com );
         }
     }
     
+
     return result;
 }
 
@@ -591,9 +608,9 @@ export function sqlRetrieveByQuery( ref:SqlRef, query:any[] ){
     // Log.debug('[sqlRetrieveByQuery]', sql, params);
     
     let stmt = db.prepare(sql.join(' ') );
-    // Log.debug('[sqlRetrieveByQuery]', sql, params);
     let rows = stmt.all(...params);
     
+    // Log.debug('[sqlRetrieveByQuery]', sql, params, rows);
 
     return [SType.List, rows.map(r => [SType.Entity,r.eid]) ];
 
@@ -616,13 +633,33 @@ function walkFilterQuery(out:string[], params:any[], cmd?, ...args ){
     } else if( cmd === '==' ){
         let {def} = args[0];
         let tbl = defToTbl(def);
-        let [key,val] = args[1];
-        // if( Array.isArray(val) ){
-        //     Log.debug('[walkFilterQuery]', 'might want to do this', val);
-        // }
+        let [ptr,val] = args[1];
+
+        // get the first part of the ptr - the property name
+        // the rest of the ptr is converted to a sqlite json /path/key -> $.path.key
+        let [key, path] = ptrToSQL(ptr);
+
+        const props = getProperty(def, key);
+
+        if( props.type === 'json' ){
+            key = `json_extract( ${key}, '${path}' )`;
+        }
+
+        // console.log(`SELECT eid from ${tbl} WHERE ${key} = ?`, def);
+        // console.log(' ', key, path );
+
         out.push(`SELECT eid from ${tbl} WHERE ${key} = ?`);
         params.push( valueToSQL(val) );
     }
+}
+
+function ptrToSQL( ptr:string ){
+    if( ptr.charAt(0) === '/' ){
+        let parts = ptr.substring(1).split('/');
+        let [prop, ...path] = parts;
+        return [prop, '$.' + path.join('.')];
+    }
+    return [ptr, undefined];
 }
 
 function componentRowToComponent(did, row):Component{

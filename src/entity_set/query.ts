@@ -1,3 +1,4 @@
+import Jsonpointer from 'jsonpointer';
 import { EntityId,  getEntityId, isEntity } from "../entity";
 import {
     toComponentId, 
@@ -142,26 +143,36 @@ function walkFilterQuery( es:EntitySetMem, eids:EntityId[], cmd?, ...args ){
     else if( cmd === '==' ){
         let {def} = args[0];
         const did = getDefId(def);
-        let [key,val] = args[1];
+        let [ptr,val] = args[1];
+        
         eids = matchEntities(es, eids, createBitField([did]));
         eids = eids.reduce( (out,eid) => {
             const cid = toComponentId(eid,did);
             const com = es.components.get(cid);
+
+            let ptrVal;
+            if( ptr.startsWith('/') ){
+                ptrVal = Jsonpointer.get(com,ptr);
+                // console.log('[walk]', ptr, com );
+            } else {
+                ptrVal = com[ptr];
+            }
             
             // if( com[key] === val )
+            // Log.debug('[walkFQ]','==', ptr, ptrVal, val );
             // Log.debug('[walkFQ]','==', key, val, com[key], com);
             // if the value is an array, we look whether it exists
             if( Array.isArray(val) ){
-                return val.indexOf( com[key] ) !== -1 ? [...out,eid] : out;
+                return val.indexOf( ptrVal ) !== -1 ? [...out,eid] : out;
             }
             // otherwise a straight compare
-            return com[key] === val ? [...out,eid] : out;
+            return ptrVal === val ? [...out,eid] : out;
         },[]);
 
-        // Log.debug('[walkFQ]', def.uri, key, '==', val);
+        // Log.debug('[walkFQ]', def.uri, ptr, '==', val, 'eids', eids);
         return eids;
     } else {
-        Log.debug('[walkFQ]', `unhandled ${cmd}`);
+        console.log('[walkFQ]', `unhandled ${cmd}`);
         return eids;
     }
 }
@@ -206,14 +217,18 @@ export function fetchComponents(stack: ESMemQueryStack): InstResult {
 
     if( left !== undefined ){
         let from = stack.pop();
+
         if( from[0] === SType.Entity ){
+        
             eids = [unpackStackValueR(from)];
+        
         } else if( from[0] === SType.List ){
             // Log.debug('[fetchComponent]', from[1]);          
             eids = from[1].map( it => {
                 return isStackValue(it) ? getEntityId(it[1])
                 : isEntity(it) ? getEntityId(it) : undefined;
-            }).filter(Boolean);
+            }).
+            filter(Boolean);
         } else {
             Log.debug('[fetchComponent]', 'unhandled', from);
         }
@@ -260,21 +275,41 @@ export function fetchComponents(stack: ESMemQueryStack): InstResult {
  */
 export function onComponentAttr(stack: QueryStack): InstResult {
     const {es} = stack;
-    let right:StackValue = stack.pop();
-    let left:StackValue = stack.pop();
 
-    let attr = unpackStackValue(right, SType.Value);
-    let dids = unpackStackValue(left, SType.Any);
-    dids = isString(dids) ? [dids] : dids;
+    let right:string = stack.popValue(0,false);
+    
+    
+    const parts:RegExpExecArray = /^(\/.*)#(.*)/.exec(right);
 
-    let bf = es.resolveComponentDefIds(dids );
+    if( parts !== null ){
+        let [,did,pointer] = parts;
+        // console.log('wat', right, did,pointer );
 
-    if( bfCount(bf) === 0 ){
-        throw new StackError(`def not found: ${left}`);
+        const bf = es.resolveComponentDefIds([did]);
+        if( bfCount(bf) === 0 ){
+            throw new StackError(`def not found: ${did}`);
+        }
+
+        return [SType.ComponentAttr, [bf,pointer]];
     }
+    
+    throw new Error(`invalid component attr: #{right}`);
+
+    // let left:StackValue = stack.pop();
+
+    // let attr = unpackStackValue(right, SType.Value);
+    // let dids = unpackStackValue(left, SType.Any);
+    // dids = isString(dids) ? [dids] : dids;
+
+    // let bf = es.resolveComponentDefIds(dids );
+
+    // if( bfCount(bf) === 0 ){
+    //     throw new StackError(`def not found: ${left}`);
+    // }
 
 
-    return [SType.ComponentAttr, [bf, attr]];
+    // return [SType.ComponentAttr, [bf, attr]];
+    // return undefined;
 }
 
 export function buildBitfield(stack: QueryStack): InstResult {
