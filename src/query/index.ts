@@ -17,7 +17,8 @@ import {
     // onEntitySet, 
     onComponent, onEntity, 
     onAssertType, 
-    onToString
+    onToString,
+    onRegex
 } from "./words";
 import { onPluck } from "./words/pluck";
 import { onDefine } from "./words/define";
@@ -58,6 +59,11 @@ export function createStdLibStack( stack?:QueryStack ){
         ['+', onAddToEntitySet, SType.EntitySet, SType.Any],
         // pattern match stack args
         ['+', onAddArray, SType.List, SType.Any],
+
+        ['split', onRegex, SType.Value, SType.Regex],
+        ['==', onRegex, SType.Value, SType.Regex],
+        ['!=', onRegex, SType.Value, SType.Regex],
+
         // important that this is after more specific case
         ['+', onAdd, SType.Value, SType.Value],
         ['*', onAdd, SType.Value, SType.Value],

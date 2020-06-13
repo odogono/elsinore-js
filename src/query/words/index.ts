@@ -12,7 +12,7 @@ import {
     create as createComponentDef, isComponentDef, toShortObject as defToObject
 } from '../../../src/component_def';
 import {
-    isBoolean, isObject, isInteger
+    isBoolean, isObject, isInteger, isString
 } from '../../../src/util/is';
 
 import {
@@ -313,16 +313,29 @@ export function onFetchArray<QS extends QueryStack>(stack: QS, val: StackValue):
 }
 
 
+export function onRegex(stack:QueryStack, [,op]:StackValue): InstResult {
+    let regex:RegExp = stack.popValue();
+    let val = stack.popValue();
 
+    // console.log('[onRegex]', regex, val );
 
-export function onAdd<QS extends QueryStack>(stack: QS, val: StackValue): InstResult {
-    let op = val[1];
+    let value = false;
+    if( op === 'split' ){
+        value = isString(val) ? val.split(regex) : val;
+    }
+    else if( op === '==' ){
+        value = regex.test(val);
+    } else if( op === '!=' ){
+        value = !regex.test(val);
+    }
 
-    let lv = stack.pop();
-    let rv = stack.pop();
+    return [SType.Value, value];
+}
 
-    let left = unpackStackValue(lv, SType.Value);
-    let right = unpackStackValue(rv, SType.Value);
+export function onAdd(stack: QueryStack, [,op]: StackValue): InstResult {
+    
+    let left = stack.popValue();
+    let right = stack.popValue();
 
     let value = left;
     switch (op) {
@@ -333,8 +346,6 @@ export function onAdd<QS extends QueryStack>(stack: QS, val: StackValue): InstRe
         case '==': value = left === right; break;
         case '!=': value = left !== right; break;
     }
-
-    // Log.debug('[onAdd]', op, left, right, value);
 
     return [SType.Value, value];
 }
@@ -613,16 +624,6 @@ export function onVersion<QS extends QueryStack>(stack: QS): InstResult {
     return [SType.Value, '1.0.0'];
 };
 
-export function onEquals<QS extends QueryStack>(stack: QS): InstResult {
-
-    let left = stack.pop();
-    let right = stack.pop();
-
-    let equal = compareValues(left, right);
-    // Log.debug('[==]', left, right );
-
-    return [SType.Value, equal];
-}
 
 export function onAssertType<QS extends QueryStack>(stack: QS): InstResult {
     let value: StackValue = stack.pop();

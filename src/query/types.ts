@@ -12,7 +12,7 @@ export enum SType {
     Component = '%c',
     ComponentDef = '%d',
     ComponentAttr = '%ca',
-    // ComponentValue = '%cv',
+    Regex = '%r',
     Any = '%*',
     Filter = '%|'
     // Undefined = '%un'

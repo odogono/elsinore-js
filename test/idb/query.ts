@@ -326,29 +326,6 @@ async function prepES(insts?: string, fixture?: string, options: EntitySetOption
     return [stack, es];
 }
 
-// async function prep(insts?: string, fixture?: string): Promise<[QueryStack, EntitySetIDB]> {
-
-//     let es: EntitySetIDB;
-//     let stack = createStdLibStack();
-
-//     if (fixture) {
-//         es = createEntitySet();
-//         await stack.push([SType.EntitySet, es]);
-
-//         let todoInsts = await loadFixture(fixture);
-//         await stack.pushValues(todoInsts);
-
-//         let esValue = stack.find(SType.EntitySet);
-//         es = esValue ? esValue[1] : undefined;
-//     }
-//     if (insts) {
-//         const words = parse(insts);
-//         // Log.debug('[parse]', words );
-//         await stack.pushValues(words);
-//     }
-//     return [stack, es];
-// }
-
 async function loadFixture(name: string) {
     if (process.env.JS_ENV !== 'browser') {
         const Path = require('path');

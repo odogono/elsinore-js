@@ -36,7 +36,6 @@ export function valueToString(val: StackValue): string {
                 return `(${type} ${stringify(value)})`;
             }
             return String(getEntityId(value));
-        // return `(${type} ${getEntityId(value)})`;
         case SType.List:
             return `[` + value.map(v => valueToString(v)).join(', ') + ']';
         case SType.Map:
@@ -50,6 +49,8 @@ export function valueToString(val: StackValue): string {
             return `${op} ${valueToString(left)} ${valueToString(right)}`;
         // case SType.Undefined:
         //     return `undefined`;
+        case SType.Regex:
+            return '~r' + value.toString();
         default:
             return val.length === 2 ? `(${type}, ${stringify(value)})` : stringify(val);
     }
@@ -92,6 +93,7 @@ export function unpackStackValue(val: StackValue, assertType: (SType | SType[]) 
         case SType.Filter:
         case SType.ComponentAttr:
         case SType.ComponentDef:
+        case SType.Regex:
             return value;
         default:
             return val;

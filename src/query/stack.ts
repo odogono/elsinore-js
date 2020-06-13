@@ -118,6 +118,13 @@ export class QueryStack {
         if (type === SType.Value && isString(word)) {
             const len = word.length;
 
+            if( len > 1 && word.charAt(0) === '~' && word.charAt(1) === 'r' ){
+                let end = word.lastIndexOf('/');
+                let flags = word.substring(end+1);
+                const regex = new RegExp(word.substring(3, end), flags);
+                value = [SType.Regex, regex ];
+            }
+
             // escape char for values which might otherwise get processed as words
             if (len > 1 && word.charAt(0) === '*') {
                 value = [SType.Value, word.substring(1)] as any;

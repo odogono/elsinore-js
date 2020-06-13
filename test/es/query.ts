@@ -257,6 +257,18 @@ describe('Query (Mem)', () => {
         });
     });
 
+    describe('Regex', () => {
+        it('matches', async () => {
+            let [stack] = await prep(`
+            "foo is bar" ~r/foo/ ==
+            `);
+
+            let result = stack.popValue();
+            assert.equal( result, true );
+        });
+
+    });
+
 
     it('creates a ComponentDef', async () => {
         let [stack] = await prep(`[ /component/title, [text] ] !d`);
