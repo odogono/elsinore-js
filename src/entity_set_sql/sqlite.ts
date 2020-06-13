@@ -30,7 +30,7 @@ import {
 } from "../util/bitfield";
 import { Component, toComponentId } from '../component';
 import { SType } from '../query/types';
-import { isBoolean } from '../util/is';
+import { isBoolean, isRegex } from '../util/is';
 
 const Log = createLog('Sqlite');
 
@@ -75,6 +75,17 @@ export function sqlOpen(name: string, options: OpenOptions): SqlRef {
     const { verbose } = options;
     const db = new BetterSqlite3( isMemory ? ":memory:" : name, { verbose });
 
+    // define our regexp function - so nice!
+    db.function('regexp', { deterministic: true}, (regex, val) => {
+        let end = regex.lastIndexOf('/');
+        let flags = regex.substring(end+1);
+        const re = new RegExp(regex.substring(1, end), flags);
+        
+        // console.log('[sqlOpen][regexp]', regex, val );
+        // const re = new RegExp(regex);
+        return re.test(val) ? 1 : 0;
+    });
+
     db.pragma('journal_mode = WAL');
 
     let begin = db.prepare('BEGIN');
@@ -86,6 +97,10 @@ export function sqlOpen(name: string, options: OpenOptions): SqlRef {
     };
 
     // Log.debug('[sqlOpen]', ref );
+
+    let stmt = db.prepare('PRAGMA compile_options');
+    let rows = stmt.all();
+    // Log.debug('[sqlOpen]', rows.map(r => r.compile_options));
 
     initialiseSchema(ref, options);
 
@@ -299,6 +314,10 @@ function valueToSQL(value:any, property?:ComponentDefProperty){
             
         }
     }
+    if( isRegex(value) ){
+        return value.source;
+    }
+
     if( isBoolean(value) ){
         return value+'';
     }
@@ -645,11 +664,16 @@ function walkFilterQuery(out:string[], params:any[], cmd?, ...args ){
             key = `json_extract( ${key}, '${path}' )`;
         }
 
-        // console.log(`SELECT eid from ${tbl} WHERE ${key} = ?`, def);
         // console.log(' ', key, path );
-
-        out.push(`SELECT eid from ${tbl} WHERE ${key} = ?`);
-        params.push( valueToSQL(val) );
+        
+        if( isRegex(val) ){
+            // console.log(`SELECT eid from ${tbl} WHERE ${key} REGEXP '${val.toString()}'`);
+            out.push(`SELECT eid from ${tbl} WHERE ${key} REGEXP '${val.toString()}'`);
+        } else {
+            out.push(`SELECT eid from ${tbl} WHERE ${key} = ?`);
+            params.push( valueToSQL(val) );
+        }
+        
     }
 }
 

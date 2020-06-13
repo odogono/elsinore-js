@@ -9,6 +9,7 @@ import {
     set as bfSet,
 } from "../util/bitfield";
 import Jsonpointer from 'jsonpointer';
+import { isRegex } from "../util/is";
 
 const Log = createLog('IDB', { time: false });
 
@@ -83,12 +84,15 @@ async function walkFilterQuery(db: IDBDatabase, eids: EntityId[], cmd?, ...args)
                 if( val.indexOf( ptrVal ) !== -1 ){
                     ceids.push( com['@e'] );
                 }
-                // ceids.push( val.indexOf( ptrVal ) !== -1 ? [...eids,com["@e"] ] : eids );
+            } else if( isRegex(val) ){
+                if( val.test(ptrVal) ){
+                    ceids.push( com['@e'] );
+                }
+            
             } else {
                 if( ptrVal === val ){
                     ceids.push( com['@e'] );
                 }
-                // ceids.push( ptrVal === val ? [...eids, com["@e"]] : eids );
             }
         }
 

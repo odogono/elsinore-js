@@ -6,7 +6,7 @@ import {
     getComponentEntityId 
 } from "../component";
 import { createLog } from "../util/log";
-import { isObject, isInteger, isString, isBoolean } from "../util/is";
+import { isRegex, isInteger, isString, isBoolean } from "../util/is";
 import { 
     BitField,
     create as createBitField,
@@ -150,6 +150,8 @@ function walkFilterQuery( es:EntitySetMem, eids:EntityId[], cmd?, ...args ){
             const cid = toComponentId(eid,did);
             const com = es.components.get(cid);
 
+            // console.log('[walk]', ptr, {}.toString.call(val) );
+
             let ptrVal;
             if( ptr.startsWith('/') ){
                 ptrVal = Jsonpointer.get(com,ptr);
@@ -164,6 +166,9 @@ function walkFilterQuery( es:EntitySetMem, eids:EntityId[], cmd?, ...args ){
             // if the value is an array, we look whether it exists
             if( Array.isArray(val) ){
                 return val.indexOf( ptrVal ) !== -1 ? [...out,eid] : out;
+            }
+            if( isRegex(val) ){
+                return val.test(ptrVal) ? [...out,eid] : out;
             }
             // otherwise a straight compare
             return ptrVal === val ? [...out,eid] : out;

@@ -61,7 +61,7 @@ describe('Query (IDB)', () => {
             let [stack] = await prepES(query, 'todo');
             
             // the result will be a list value of entities
-            let result = stack.popValue(0,true);
+            let result = stack.popValue();
     
             assert.deepEqual( 
                 result.map(e => getEntityId(e)), 
@@ -80,7 +80,7 @@ describe('Query (IDB)', () => {
                 /text pluck
             ] select`, 'todo');
     
-            let result = stack.popValue(0,true);
+            let result = stack.popValue();
             assert.deepEqual(result, [
                 'get out of bed',
                 'phone up friend',
@@ -99,7 +99,7 @@ describe('Query (IDB)', () => {
             ] select`, 'todo');
 
             // ilog(stack.items);
-            let result = stack.popValue(0,true);
+            let result = stack.popValue();
             assert.equal(result, 'drink some tea');
         })
 
@@ -131,9 +131,24 @@ describe('Query (IDB)', () => {
                 @e
             ] select`, 'todo');
 
-            let ents = stack.popValue(0,true);
+            let ents = stack.popValue();
             
             assert.deepEqual(ents.map(e => getEntityId(e)), [100, 101]);
+        });
+
+        it('fetches matching attribute with regex', async () => {
+            let [stack] = await prepES(`[ 
+                /component/title#/text !ca ~r/some/ ==
+                /component/title !bf
+                @c
+                /text pluck
+            ] select`, 'todo');
+    
+            let result = stack.popValue();
+            assert.deepEqual(result, [
+                'drink some tea',
+                'do some shopping'
+            ])
         });
 
         it('uses multi conditions', async () => {

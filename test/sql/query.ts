@@ -32,7 +32,7 @@ const Log = createLog('TestSQLQuery');
 const liveDB = { uuid: 'test.sqlite', isMemory: false, debug:false };
 const testDB = { uuid: 'TEST-1', isMemory: true };
 
-const createEntitySet = () => new EntitySetSQL(testDB);
+const createEntitySet = () => new EntitySetSQL(liveDB);
 
 const parse = (data) => tokenizeString(data, { returnValues: true });
 const sv = (v): StackValue => [SType.Value, v];
@@ -135,6 +135,21 @@ describe('Query (SQL)', () => {
             let ents = stack.popValue(0, true);
 
             assert.deepEqual(ents.map(e => getEntityId(e)), [100, 101]);
+        });
+
+        it('fetches matching attribute with regex', async () => {
+            let [stack] = await prepES(`[ 
+                /component/title#/text !ca ~r/some/ ==
+                /component/title !bf
+                @c
+                /text pluck
+            ] select`, 'todo');
+    
+            let result = stack.popValue();
+            assert.deepEqual(result, [
+                'drink some tea',
+                'do some shopping'
+            ])
         });
 
         it('uses multi conditions', async () => {

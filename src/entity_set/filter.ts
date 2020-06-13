@@ -22,6 +22,7 @@ export function parseFilterQuery( es:EntitySet, cmd?, left?, right? ){
         case SType.ComponentAttr:
             return prCA( es, left[0], left[1] );
         case SType.Value:
+        case SType.Regex:
             return left;
     }
     
@@ -38,9 +39,10 @@ function prEquals( es:EntitySet, cmd, left, right ){
     
     let key;
     let val;
-    if( left[0] === SType.Value ){
+    // console.log('[prEquals]', left, right);
+
+    if( left[0] === SType.Value || left[0] === SType.Regex ){
         val = left[1];
-        // console.log('[prEquals]', 'left', val);
         key = parseFilterQuery(es,...right);
     } else if( left[0] === SType.List ){
         val = unpackStackValueR(left);

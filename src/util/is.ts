@@ -23,6 +23,10 @@ export function isString(value:any): boolean {
     return getClass.call(value) === '[object String]';
 }
 
+export function isRegex(value:any): boolean {
+    return getClass.call(value) === '[object RegExp]';
+}
+
 /**
  *
  * @param {*} object
