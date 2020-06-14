@@ -151,6 +151,21 @@ describe('Query (IDB)', () => {
             ])
         });
 
+        it('uses regex for minimum length', async () => {
+            let [stack] = await prepES(`[ 
+                /component/meta#/meta/author !ca ~r/^.{2,}$/ ==
+                /component/title !bf
+                @c
+                /text pluck
+            ] select`, 'todo');
+
+            let result = stack.popValue();
+            assert.deepEqual(result, [
+                'get out of bed',
+                'drink some tea'
+            ])
+        });
+
         it('fetches by comparing a date', async () => {
             let [stack] = await prepES(`[ 
                 // /component/meta#/createdAt !ca ~d/2020-05-23T10:00:00.000Z/ >=

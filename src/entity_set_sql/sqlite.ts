@@ -78,11 +78,14 @@ export function sqlOpen(name: string, options: OpenOptions): SqlRef {
 
     // define our regexp function - so nice!
     db.function('regexp', { deterministic: true }, (regex, val) => {
+        if( val == null ){
+            return 0;
+        }
         let end = regex.lastIndexOf('/');
         let flags = regex.substring(end + 1);
         const re = new RegExp(regex.substring(1, end), flags);
 
-        // console.log('[sqlOpen][regexp]', regex, val );
+        // console.log('[sqlOpen][regexp]', regex, val, re.test(val) ? 1 : 0 );
         // const re = new RegExp(regex);
         return re.test(val) ? 1 : 0;
     });

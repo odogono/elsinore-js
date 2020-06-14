@@ -268,6 +268,15 @@ describe('Query (Mem)', () => {
             assert.equal(result, true);
         });
 
+        it('matches length >', async () => {
+            let [stack] = await prep(`
+            "foo" ~r/^.{3,}$/ ==
+            `);
+
+            let result = stack.popValue();
+            assert.equal(result, true);
+        });
+
     });
 
     describe('Dates', () => {
@@ -567,6 +576,21 @@ describe('Query (Mem)', () => {
             assert.deepEqual(result, [
                 'drink some tea',
                 'do some shopping'
+            ])
+        });
+
+        it('uses regex for minimum length', async () => {
+            let [stack] = await prepES(`[ 
+                /component/meta#/meta/author !ca ~r/^.{2,}$/ ==
+                /component/title !bf
+                @c
+                /text pluck
+            ] select`, 'todo');
+
+            let result = stack.popValue();
+            assert.deepEqual(result, [
+                'get out of bed',
+                'drink some tea'
             ])
         });
 

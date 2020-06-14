@@ -190,7 +190,10 @@ function walkFilterQueryCompare(es: EntitySetMem, eids: EntityId[], cmd?, ...arg
         if (Array.isArray(val)) {
             out = val.indexOf(ptrVal) !== -1 ? [...out, eid] : out;
         }
-        if( isDate(val) ){
+        if( ptrVal === undefined ){
+
+        }
+        else if( isDate(val) ){
             const ptrDte = new Date(ptrVal);
             if( isValidDate(ptrDte) ){
                 if( compareDates(cmd, ptrDte, val ) ){
@@ -200,6 +203,7 @@ function walkFilterQueryCompare(es: EntitySetMem, eids: EntityId[], cmd?, ...arg
             }
         }
         else if (isRegex(val)) {
+            // console.log('[walkFQC]', ptrVal, val, val.test(ptrVal) );
             out = val.test(ptrVal) ? [...out, eid] : out;
         } else {
 

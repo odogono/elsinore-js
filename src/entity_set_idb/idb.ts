@@ -100,7 +100,10 @@ async function walkFilterQueryCompare(db: IDBDatabase, eids: EntityId[], cmd?, .
             ptrVal = com[ptr];
         }
 
-        if (Array.isArray(val)) {
+        if( ptrVal === undefined ){
+
+        }
+        else if (Array.isArray(val)) {
             if (val.indexOf(ptrVal) !== -1) {
                 ceids.push(com['@e']);
             }
