@@ -4,7 +4,7 @@ import { createLog } from "../util/log";
 import { deepExtend } from "../util/deep_extend";
 import { stackToString, unpackStackValueR } from "./util";
 import { toInteger } from "../util/to";
-import { EntityId, getEntityId } from "../entity";
+import { EntityId, getEntityId, Entity } from "../entity";
 import { ComponentDefId, ComponentDef, getDefId } from "../component_def";
 import { toValues as bfToValues } from '../util/bitfield';
 import {
@@ -12,6 +12,7 @@ import {
     StackError, InstResult, AsyncInstResult, WordSpec, WordEntry, Words
 } from "./types";
 import { EntitySet } from "../entity_set";
+import { getComponentEntityId, getComponentDefId } from "../component";
 const Log = createLog('QueryStack');
 
 

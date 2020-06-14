@@ -149,6 +149,56 @@ export abstract class EntitySet {
         return await query( q, {stack, values} );
     }
 
+    /**
+     * Returns the results of a query as an array of entities
+     * 
+     * @param q 
+     * @param options 
+     */
+    async queryEntities( q:string, options:QueryOptions = {}) {
+        const stack = await this.query(q,options);
+        const value = stack.pop();
+        let result:Entity[] = [];
+        if(value === undefined ){ return result; }
+
+        const [type,val] = value;
+        if( type === SType.List ){
+            let e:Entity;
+            for( const [lt,lv] of val ){
+                if( lt === SType.Entity ){
+                    result.push(lv);
+                }
+                else if( lt === SType.Component ){
+                    let eid = getComponentEntityId(lv);
+                    let did = getComponentDefId(lv);
+                    const name = this.getByDefId(did).name;
+                    if( e === undefined || e.id !== eid ){
+                        if( e !== undefined ){
+                            result.push(e);
+                        }
+                        e = new Entity(eid);
+                    }
+                    e.addComponentUnsafe( did, lv, name);
+                }
+            }
+            if( e !== undefined ){
+                result.push(e);
+            }
+        } else if( type === SType.Component ){
+            // result.push( addCom(undefined,val));
+            let eid = getComponentEntityId(val);
+            let did = getComponentDefId(val);
+            const name = this.getByDefId(did).name;
+            let e = new Entity(eid);
+            e.addComponentUnsafe(did,val,name);
+            result.push(e);
+        } else if( type == SType.Entity ){
+            result.push(val);
+        }
+
+        return result;
+    }
+
     async openEntitySet(options:EntitySetOptions = {} ): Promise<EntitySet>{
         return this;
     }

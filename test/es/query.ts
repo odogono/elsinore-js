@@ -419,6 +419,22 @@ describe('Query (Mem)', () => {
                 '/component/priority',
                 '/component/meta'
             ])
+        });
+
+        it('returns query results as components', async () => {
+            const query = `
+            [
+                /component/completed#/isComplete !ca true ==
+                /component/title !bf
+                @c
+            ] select
+            `;
+            let [,es] = await prepES(undefined, 'todo');
+
+            const result = await es.queryEntities(query);
+
+            assert.equal( result[0].Title.text, 'get out of bed' );
+            assert.equal( result[1].id, 101 );
         })
 
     });
@@ -815,6 +831,10 @@ async function prepES(insts?: string, fixture?: string, options: EntitySetOption
     if (fixture) {
         values = await loadFixture(fixture);
     }
+
+    // if( insts === undefined ){
+    //     return [undefined,es];
+    // }
 
     let stack = await es.query(insts, { values });
     return [stack, es];
