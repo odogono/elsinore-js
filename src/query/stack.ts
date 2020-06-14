@@ -30,7 +30,7 @@ export class QueryStack {
     id: number;
     es?: EntitySet;
     items: StackValue[] = [];
-    words: Words<this> = {};
+    words: Words = {};
 
     _root: QueryStack;
     _parent: QueryStack;
@@ -332,14 +332,25 @@ export class QueryStack {
     }
 
 
-    addWords(words: WordSpec<QueryStack>[], replace: boolean = false): QueryStack {
+    addWords(words: WordSpec[], replace: boolean = false): QueryStack {
         
         for (const spec of words) {
             const [word, fn, ...args] = spec;
-            let patterns = replace ? [] : this.words[word] || [];
-            patterns = [...patterns, [fn, (args as (SType[]))]] as WordEntry<this>[];
-            this.words = { ...this.words, [word]: patterns };
-            // return { ...stack, words: { ...stack.words, [word]: patterns } };
+            
+            let patterns = replace ? 
+                [] 
+                : (this.words[word] || []);
+                // : Array.isArray(word) ? this.words[word[0]] : (this.words[word] || []);
+                // : Array.isArray(word) ? word.reduce( (o,w) => [...o,this.words[w]], [] ) : (this.words[word] || []);
+            patterns = [...patterns, [fn, (args as (SType[]))]] as WordEntry[];
+
+            // if( Array.isArray(word) ){
+            //     this.words = word.reduce( (out,w) => ({...out,[w]:patterns }), this.words );
+            //     // console.log('[getWord]', this.words);
+            //     // throw 'stop';
+            // } else {
+                this.words = { ...this.words, [word]: patterns };
+            // }
         }
 
         return this;
@@ -359,6 +370,7 @@ export class QueryStack {
         }
         let pattern = patterns.find(pat => {
             const [, args] = pat;
+            
             return matchStack(this.items, args) ? pat : undefined;
 
             // Log.debug('[getWord]', 'match', `'${wval}'`, args, stack.items );

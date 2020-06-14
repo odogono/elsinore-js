@@ -29,8 +29,8 @@ export type InstResult = StackValue | undefined;
 
 export type AsyncInstResult = Promise<InstResult>;
 
-// export type Result<QS extends QueryStack> = InstResult<QS>;
-// export type AsyncResult<QS extends QueryStack> = Promise<InstResult<QS>>;
+// export type Result = InstResult<QS>;
+// export type AsyncResult = Promise<InstResult<QS>>;
 
 export type StackValue = [SType] | [SType, any];
 
@@ -38,12 +38,13 @@ export type WordFn = SyncWordFn | AsyncWordFn;
 export type SyncWordFn = (stack: QueryStack, val: StackValue) => InstResult;
 export type AsyncWordFn = (stack: QueryStack, val: StackValue) => Promise<InstResult>;
 
-export type WordSpec<QS extends QueryStack> = [string, WordFn|StackValue, ...(SType|string)[] ];
+export type WordSpec = [ string, WordFn|StackValue, ...(SType|string)[] ];
+// export type WordSpec = [ (string|string[]), WordFn|StackValue, ...(SType|string)[] ];
 
-export type WordEntry<QS extends QueryStack> = [ WordFn, SType[] ];
+export type WordEntry = [ WordFn, SType[] ];
 
-export interface Words<QS extends QueryStack> {
-    [name: string]: WordEntry<QS>[]
+export interface Words {
+    [name: string]: WordEntry[]
 }
 
 
