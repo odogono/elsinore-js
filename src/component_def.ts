@@ -34,6 +34,8 @@ export interface ComponentDefProperty {
     type: string;
     default: any;
     optional: boolean;
+    // whether this property should be persisted in storage
+    persist: boolean; 
     additional: Map<string, any>
 }
 
@@ -42,11 +44,13 @@ const propertyDefaults = {
     type: 'string',
     default: undefined,
     optional: false,
+    persist: true,
 };
 
 const typeDefaults = {
     'json': {},
     'integer': 0,
+    'entity': 0,
     'boolean': false,
     'list': [],
     'map': {},
@@ -208,12 +212,14 @@ export function createProperty(params:any): ComponentDefProperty {
     let type = propertyDefaults.type;
     let defaultValue = propertyDefaults.default;
     let optional = propertyDefaults.optional;
+    let persist = true;
 
     if( isString(params) ){
         name = params;
     } else if( isObject(params) ) {
         name = params.name || name;
         type = params.type || type;
+        persist = params.persist ?? persist;
         const tdef = type === 'datetime' ? new Date() : typeDefaults[type] ?? undefined;
         defaultValue = params.default ?? tdef;
         
@@ -230,7 +236,7 @@ export function createProperty(params:any): ComponentDefProperty {
     }
 
     return {
-        name, type, 'default':defaultValue, optional, additional
+        name, type, 'default':defaultValue, optional, persist, additional
     };
 }
 

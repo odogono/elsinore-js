@@ -89,36 +89,37 @@ export async function onSelect<QS extends QueryStack>(stack: QS): AsyncInstResul
     return undefined;
 }
 
-export function onArgError<QS extends QueryStack>(stack: QS, val: StackValue): InstResult {
+export function onArgError(stack: QueryStack, val: StackValue): InstResult {
     Log.debug('[onArgError]', val);
     throw new StackError('invalid argument');
 }
 
 
-export function onEntity<QS extends QueryStack>(stack: QS): InstResult {
+export function onEntity(stack: QueryStack): InstResult {
     let data: StackValue = stack.pop();
     let [type, val] = data;
+    const {es} = stack;
 
     if (type === SType.List) {
         let e = val.reduce((acc, val) => {
-            // Log.debug('[onEntity]', val);
+            // Log.debug('[onEntity]', Object.keys(stack) );
             let type = val[0];
             if (type === SType.Component) {
                 if (!acc) {
-                    acc = new Entity();
+                    acc = es !== undefined ? es.createEntity() : new Entity();
                 }
                 const did = getComponentDefId(val[1]);
-                const def = stack.es.getByDefId(did);
-                return acc.addComponentUnsafe(did, val[1], def.name);
+                // const def = stack.es.getByDefId(did);
+                return acc.addComponentUnsafe(did, val[1]);
             } else if (isInteger(val[1])) {
-                return new Entity(val[1]);
+                return es !== undefined ? es.createEntity(val[1]) : new Entity(val[1]);
             }
         }, null);
         if (isEntity(e)) {
             return [SType.Entity, e];
         }
     } else {
-        let e = new Entity(val);
+        let e = es !== undefined ? es.createEntity(val) : new Entity(val);
         return [SType.Entity, e];
     }
 
@@ -161,12 +162,8 @@ export function onAddComponentToEntity<QS extends QueryStack>(stack: QS): InstRe
 
     if (Array.isArray(c)) {
         for (const com of c) {
-            // const did = getComponentDefId(com);
-            // const def = getByDefId(es,did);
-            // e = addComponentUnsafe(e, did, com, def.name );
             e = es.addComponentToEntity(e, com);
         }
-        // e = c.reduce((e, c) => addComponentToEntity(e, c), e);
     } else {
         e = es.addComponentToEntity(e, c);
     }

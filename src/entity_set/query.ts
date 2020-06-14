@@ -238,6 +238,11 @@ export function fetchValue(stack: ESMemQueryStack): InstResult {
 
 
 
+/**
+ * first argument indicates which components should be fetched
+ * 2nd argument is a list of entity ids
+ * @param stack 
+ */
 export function fetchComponents(stack: ESMemQueryStack): InstResult {
     const { es } = stack;
     let left: StackValue;

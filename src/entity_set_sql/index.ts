@@ -299,7 +299,9 @@ export class EntitySetSQL extends EntitySetMem {
     }
 
     _getEntity(eid: EntityId): Entity {
-        return sqlRetrieveEntity(this.db, eid);
+        let e = sqlRetrieveEntity(this.db, eid);
+        // recreate the entity properly (with com references)
+        return e !== undefined ? this.createEntity(e.id, e.bitField) : undefined;
     }
 
     
@@ -328,8 +330,8 @@ export class EntitySetSQL extends EntitySetMem {
         // Log.debug('[getEntity]', coms );
         for (const com of coms) {
             const did = getComponentDefId(com);
-            const def = this.getByDefId(did);
-            e = e.addComponentUnsafe(did, com, def.name);
+            // const def = this.getByDefId(did);
+            e = e.addComponentUnsafe(did, com);
         }
 
         return e;

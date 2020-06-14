@@ -198,6 +198,7 @@ describe('Query (IDB)', () => {
             let e:Entity = stack.popValue();
 
             assert.equal( e.size, 3);
+            // console.log( e._defined );
             assert.equal( e.Colour.colour, 'white' );
         });
 

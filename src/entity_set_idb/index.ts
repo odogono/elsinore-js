@@ -156,36 +156,6 @@ export class EntitySetIDB extends EntitySetMem {
         // es.comUpdates.clear();
     }
 
-    // async addComponents(components: Component[], options:ESOptions = {}): Promise<EntitySetIDB> {
-    //     // set a new (same) entity id on all orphaned components
-    //     components = this.assignEntityIds(components)
-    
-    //     // Log.debug('[addComponents]', components);
-    //     // to keep track of changes only in this function, we must temporarily replace
-    //     let changes = this.comChanges;
-    //     this.comChanges = createChangeSet<ComponentId>();
-    
-    //     // mark incoming components as either additions or updates
-    //     await components.reduce( (p,com) => p.then( () => this.markComponentAdd(com)), Promise.resolve() );
-        
-    //     // gather the components that have been added or updated and apply
-    //     const changedCids = getChanges(this.comChanges, ChangeSetOp.Add | ChangeSetOp.Update);
-    
-    //     // combine the new changes with the existing
-    //     this.comChanges = mergeCS( changes, this.comChanges );
-    
-    //     // console.time('[addComponents][applyUpdatedComponents]');
-    
-    //     // Log.debug('[addComponents]', 'applying updated components', changedCids)
-        
-    //     // sequentially apply
-    //     await changedCids.reduce( (p,cid) => p.then( () => this.applyUpdatedComponents(cid)), Promise.resolve() );
-    
-    //     // console.timeEnd('[addComponents][applyUpdatedComponents]');
-    //     // return changedCids.reduce((pes, cid) => pes.then( es => applyUpdatedComponents(es, cid) ), Promise.resolve(es));
-    //     return this;
-    // }
-
     async getEntity(eid:EntityId, populate:boolean = true): Promise<Entity> {
         this.openEntitySet();
         let e = await this._getEntity(eid);
@@ -204,9 +174,8 @@ export class EntitySetIDB extends EntitySetMem {
         for( const row of result ){
             let {'_e':ceid, '_d':cdid, ...rest} = row.value;
             let com = {'@e':ceid, '@d':cdid, ...rest};
-            const def = this.getByDefId(cdid);
-    
-            e.addComponentUnsafe(cdid,com,def.name);
+            
+            e.addComponentUnsafe(cdid,com);
         }
     
         return e;
@@ -548,7 +517,7 @@ export class EntitySetIDB extends EntitySetMem {
                 return undefined;
             }
             
-            let e = new Entity(eid);
+            let e = this.createEntity(eid);
             e.bitField = bfSet( e.bitField, data );
             return e;
         })

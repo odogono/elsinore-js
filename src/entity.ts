@@ -67,7 +67,7 @@ export class Entity {
      * @param entity 
      * @param component 
      */
-    addComponentUnsafe( did: number, com: Component, name?:string): Entity {
+    addComponentUnsafe( did: number, com: Component): Entity {
         const eid = getEntityId(this);
         this.components = this.components ?? new Map<ComponentDefId,Component>();
     
@@ -80,16 +80,6 @@ export class Entity {
             this.bitField = bfSet(this.bitField,did);
         }
     
-        if( name !== undefined ){
-            Object.defineProperty(this, name, { 
-                get: () => this.components.get(did),
-                set: (com:Component) => {
-                    if( getComponentDefId(com) === did ){
-                        this.components.set(did,com);
-                    }
-                }
-            });
-        }
         return this;
     }
 
@@ -129,6 +119,7 @@ export class Entity {
             const did = getDefId(def);
             return {...props, [ def.name ]:{
                 set: (com) => {
+                    // console.log('[set]',def.name);
                     let cdid = getComponentDefId(com);
                     if( cdid !== undefined && cdid !== did ){
                         throw new Error(`invalid set component on ${def.name}`);
@@ -142,6 +133,7 @@ export class Entity {
         }, {});
 
         Object.defineProperties(this, props);
+        // this._defined = defs.map(d => d.name);
 
         return this;
     }
