@@ -2,14 +2,15 @@ import { createLog } from "../util/log";
 import { Entity, EntityId } from "../entity";
 import { ComponentId, Component, fromComponentId, toComponentId } from "../component";
 import { ComponentDef, ComponentDefId, getDefId } from "../component_def";
-import { 
+import {
     BitField,
     create as createBitField,
     toValues as bfToValues,
     set as bfSet,
 } from "../util/bitfield";
 import Jsonpointer from 'jsonpointer';
-import { isRegex } from "../util/is";
+import { isRegex, isDate, isValidDate } from "../util/is";
+import { compareDates } from "../query/words/util";
 
 const Log = createLog('IDB', { time: false });
 
@@ -37,8 +38,8 @@ export async function idbRetrieveByQuery(db: IDBDatabase, query: any[]): Promise
 
 async function walkFilterQuery(db: IDBDatabase, eids: EntityId[], cmd?, ...args) {
     if (cmd === 'dids') {
-        let dids = args[0];
-        Log.warn('[walkFilterQuery]', 'unhandled dids');
+        // let dids = args[0];
+        // Log.warn('[walkFilterQuery]', 'unhandled dids');
         // out.push(`SELECT eid from tbl_entity_component WHERE did IN ( ? )`);
         // params.push( dids );
         return eids;
@@ -63,56 +64,77 @@ async function walkFilterQuery(db: IDBDatabase, eids: EntityId[], cmd?, ...args)
         // out.push('UNION');
         let right = await walkFilterQuery(db, eids, ...args[1]);
         return Array.from(new Set([...left, ...right]));
-    } else if (cmd === '==') {
-        let { def } = args[0];
-        let [ptr, val] = args[1];
-        
-        let coms = await idbRetrieveComponents(db, undefined, [getDefId(def)]);
-        
-        // Log.debug('[walkFilterQuery]', '==', key,val, coms);
-        let ceids = [];
-        for( const com of coms ){
-            let ptrVal;
-            if( ptr.startsWith('/') ){
-                ptrVal = Jsonpointer.get(com,ptr);
-                // console.log('[walk]', ptr, com );
-            } else {
-                ptrVal = com[ptr];
-            }
-
-            if( Array.isArray(val) ){
-                if( val.indexOf( ptrVal ) !== -1 ){
-                    ceids.push( com['@e'] );
-                }
-            } else if( isRegex(val) ){
-                if( val.test(ptrVal) ){
-                    ceids.push( com['@e'] );
-                }
-            
-            } else {
-                if( ptrVal === val ){
-                    ceids.push( com['@e'] );
-                }
-            }
-        }
-
-        // console.log('[walk]', ceids );
-
-        return [...eids, ...ceids];
-
-        // let tbl = defToTbl(def);
-        // out.push(`SELECT eid from ${tbl} WHERE ${key} = ?`);
-        // params.push( valueToSQL(val) );
     }
+
+    switch (cmd) {
+        case '==':
+        case '!=':
+        case '>':
+        case '>=':
+        case '<':
+        case '<=':
+            return walkFilterQueryCompare(db, eids, cmd, ...args);
+        default:
+            console.log('[walkFQ]', `unhandled ${cmd}`);
+            return eids;
+    }
+
 }
 
-export async function idbRetrieveEntityBitField(db: IDBDatabase, eid:EntityId): Promise<BitField> {
+async function walkFilterQueryCompare(db: IDBDatabase, eids: EntityId[], cmd?, ...args) {
+
+    let { def } = args[0];
+    let [ptr, val] = args[1];
+
+    let coms = await idbRetrieveComponents(db, undefined, [getDefId(def)]);
+
+    // console.log('[walkFilterQuery]', cmd, ptr, val, coms);
+
+    let ceids = [];
+    for (const com of coms) {
+        let ptrVal;
+        if (ptr.startsWith('/')) {
+            ptrVal = Jsonpointer.get(com, ptr);
+            // console.log('[walk]', ptr, com );
+        } else {
+            ptrVal = com[ptr];
+        }
+
+        if (Array.isArray(val)) {
+            if (val.indexOf(ptrVal) !== -1) {
+                ceids.push(com['@e']);
+            }
+        } else if (isDate(val)) {
+            const ptrDte = new Date(ptrVal);
+            if (isValidDate(ptrDte)) {
+                if (compareDates(cmd, ptrDte, val as any)) {
+                    // console.log('[walk]', cmd, ptrVal, val);
+                    ceids.push(com['@e']);
+                }
+            }
+        } else if (isRegex(val)) {
+            if ((val as any).test(ptrVal)) {
+                ceids.push(com['@e']);
+            }
+
+        } else if (ptrVal === val) {
+            ceids.push(com['@e']);
+        }
+    }
+
+    // console.log('[walk]', ceids );
+
+
+    return [...eids, ...ceids];
+}
+
+export async function idbRetrieveEntityBitField(db: IDBDatabase, eid: EntityId): Promise<BitField> {
     const store = db.transaction(STORE_ENTITIES, 'readonly').objectStore(STORE_ENTITIES);
     const dids = await idbGet(store, eid);
-    if( dids === undefined ){
+    if (dids === undefined) {
         return undefined;
     }
-    return createBitField( dids );
+    return createBitField(dids);
 }
 
 /**
@@ -145,7 +167,7 @@ export async function idbRetrieveEntityByDefId(db: IDBDatabase, dids: number[]):
         if (e === undefined) {
             e = new Entity(eid);
         }
-        e.bitField = bfSet(e.bitField,did);
+        e.bitField = bfSet(e.bitField, did);
         return { ...result, [eid]: e };
     }, {});
 
@@ -165,7 +187,7 @@ export async function idbRetrieveEntityComponentIds(db: IDBDatabase, eid: Entity
 export async function idbRetrieveEntities(db: IDBDatabase, eids: number[]): Promise<Entity[]> {
 
     let store = db.transaction(STORE_COMPONENTS, 'readonly').objectStore(STORE_COMPONENTS);
-    
+
     let result;
     result = await idbGetAllOf(store, eids, true);
 
@@ -183,7 +205,7 @@ export async function idbRetrieveEntities(db: IDBDatabase, eids: number[]): Prom
         if (e === undefined) {
             e = new Entity(eid);
         }
-        e.bitField = bfSet(e.bitField,did);
+        e.bitField = bfSet(e.bitField, did);
         return { ...result, [eid]: e };
     }, {});
 
@@ -261,16 +283,16 @@ async function idbUpdateEntities(db: IDBDatabase, eids: EntityId[]): Promise<Ent
     let values;
     let len;
     let last;
-    
-    if( ents.size > 0 ){
+
+    if (ents.size > 0) {
         keys = Array.from(ents.keys());
         values = Array.from(ents.values());
         len = keys.length;
         last = len - 1;
-        
+
         await new Promise(async (res, rej) => {
             for (let ii = 0; ii < len; ii++) {
-                const req = store.put( values[ii], keys[ii]);
+                const req = store.put(values[ii], keys[ii]);
                 req.onerror = rejectHandler(rej);
                 if (ii === last) {
                     req.onsuccess = successHandler(res);
@@ -310,9 +332,9 @@ async function idbUpdateEntities(db: IDBDatabase, eids: EntityId[]): Promise<Ent
  * @param returnKey 
  */
 function idbGetAllOf(store: IDBObjectStore | IDBIndex, keys: number[], returnKey: boolean = true): Promise<any[]> {
-    
+
     // sort by default works alphanumerical, so provide numeric sort fn
-    keys.sort((a,b) => a-b);
+    keys.sort((a, b) => a - b);
 
     const lo = keys[0];
     const hi = keys[keys.length - 1];
@@ -352,7 +374,7 @@ function idbGetAllOf(store: IDBObjectStore | IDBIndex, keys: number[], returnKey
 export async function idbRetrieveComponents(db: IDBDatabase, eids: EntityId[], dids: ComponentDefId[]): Promise<Component[]> {
     let result: Component[] = [];
 
-    if( eids !== undefined && eids.length === 0 ){
+    if (eids !== undefined && eids.length === 0) {
         return result;
     }
 
@@ -423,8 +445,8 @@ export async function idbPutEntities(db: IDBDatabase, entUpdates: Map<EntityId, 
     const store = db.transaction(STORE_ENTITIES, 'readwrite').objectStore(STORE_ENTITIES);
 
     // convert bitfields to maps
-    let updates = new Map<EntityId,any>();
-    for( const [eid,bf] of entUpdates ){
+    let updates = new Map<EntityId, any>();
+    for (const [eid, bf] of entUpdates) {
         updates.set(eid, bfToValues(bf));
     }
 

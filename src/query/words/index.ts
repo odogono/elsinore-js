@@ -24,6 +24,7 @@ import { isComponent, Component, isComponentList, getComponentDefId } from '../.
 import { createLog } from "../../util/log";
 import { stackToString, valueToString, unpackStackValue, unpackStackValueR } from '../util';
 import { EntitySet, EntitySetMem } from '../../entity_set';
+import { compareDates } from './util';
 
 const Log = createLog('QueryWords');
 
@@ -331,6 +332,17 @@ export function onRegex(stack:QueryStack, [,op]:StackValue): InstResult {
 
     return [SType.Value, value];
 }
+
+export function onDateTime(stack:QueryStack, [,op]:StackValue): InstResult {
+    let dateA = stack.popValue();
+    let dateB = stack.popValue();
+    
+    let value = compareDates(op, dateA, dateB);
+    
+    return [SType.Value, value];
+}
+
+
 
 export function onAdd(stack: QueryStack, [,op]: StackValue): InstResult {
     

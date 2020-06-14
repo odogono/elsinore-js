@@ -46,7 +46,11 @@ export class QueryStack {
         }
     }
 
-    focus():QueryStack {
+    get size(): number {
+        return this.items.length;
+    }
+
+    focus(): QueryStack {
         return this._child ? this._child.focus() : this;
     }
 
@@ -60,7 +64,7 @@ export class QueryStack {
         child._parent = self;
         self._child = child;
         child._root = self._root ?? this._root ?? this;
-        
+
         // Log.debug('[setChild]', this.focus().id, 'focus now', printStackLineage(this.focus()) );
         return this;
     }
@@ -71,7 +75,7 @@ export class QueryStack {
         const root = this._root ?? this;
         let child = root;
         // find current child
-        while( child._child !== undefined ){
+        while (child._child !== undefined) {
             child = child._child;
         };
         let parent = child._parent;
@@ -118,11 +122,21 @@ export class QueryStack {
         if (type === SType.Value && isString(word)) {
             const len = word.length;
 
-            if( len > 1 && word.charAt(0) === '~' && word.charAt(1) === 'r' ){
-                let end = word.lastIndexOf('/');
-                let flags = word.substring(end+1);
-                const regex = new RegExp(word.substring(3, end), flags);
-                value = [SType.Regex, regex ];
+            if (len > 1 && word.charAt(0) === '~') {
+                const sigil = word.charAt(1);
+                const sep = word.charAt(2);
+                const end = word.lastIndexOf(sep);
+                const flags = word.substring(end + 1);
+                const sigilV = word.substring(3, end);
+
+                if (sigil === 'r') {
+                    const regex = new RegExp(sigilV, flags);
+                    value = [SType.Regex, regex];
+                }
+                else if( sigil === 'd' ){
+                    // console.log('new date yo', sigilV, new Date(sigilV) );
+                    value = [SType.DateTime, sigilV == '' ? new Date() : new Date(sigilV) ];
+                }
             }
 
             // escape char for values which might otherwise get processed as words
@@ -187,7 +201,7 @@ export class QueryStack {
             }
         }
 
-        if (value !== undefined ){ // && doPush !== false) {
+        if (value !== undefined) { // && doPush !== false) {
             // Log.debug('[push]', stack.id, value);
             stack.items = [...stack.items, value];
         }
@@ -208,6 +222,8 @@ export class QueryStack {
 
     async pushValues(values: StackValue[], options: PushOptions = {}): Promise<StackValue[]> {
         let ovalues: StackValue[] = [];
+
+        // Log.debug('[pushValues!]', values);
 
         // const stack = this.focus();
         try {
@@ -252,7 +268,7 @@ export class QueryStack {
         return ovalues;
     }
 
-    popValue(offset:number = 0, recursive:boolean = true):any {
+    popValue(offset: number = 0, recursive: boolean = true): any {
         const sv = this.pop(offset);
         return sv === undefined ? undefined : recursive ? unpackStackValueR(sv) : sv[1];
     }
@@ -317,8 +333,7 @@ export class QueryStack {
 
 
     addWords(words: WordSpec<QueryStack>[], replace: boolean = false): QueryStack {
-        // Log.debug('[addWords]', words );//[fn,args]);
-
+        
         for (const spec of words) {
             const [word, fn, ...args] = spec;
             let patterns = replace ? [] : this.words[word] || [];
@@ -444,7 +459,7 @@ export class QueryStack {
         return asObj ? defs : dids;
     }
 
-    toString():string {
+    toString(): string {
         return stackToString(this);
     }
 }
@@ -456,23 +471,23 @@ export function isStackValue(value: any): boolean {
 }
 
 
-function printStackLineage(st:QueryStack, result:string = ''){
+function printStackLineage(st: QueryStack, result: string = '') {
     result += String(st.id);
     let curr = st;
     let pre = '';
 
-    while( curr._parent ){
+    while (curr._parent) {
         pre = `${curr._parent.id} < ` + pre;
         curr = curr._parent;
     }
 
     curr = st;
     let post = '';
-    while( curr._child ){
+    while (curr._child) {
         post = post + `> ${curr._child.id}`;
         curr = curr._child;
     }
-    
+
     return `${pre} (${st.id}) ${post}`;
 }
 

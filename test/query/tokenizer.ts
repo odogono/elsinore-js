@@ -59,17 +59,8 @@ describe('Tokenizer', () => {
         Log.debug( out );
     });
 
-    it.only('parses arrays', () => {
-        // let data = '[29]';
-        // let out = tokenizeString(data);
+    it.only('parses various', () => {
         
-
-        // assert.deepEqual(out, [
-        //     [ '[', 0, 0 ],
-        //     [ 29, 1, 0 ],
-        //     [ ']', 3, 0 ],
-        // ]);
-
         let cases = [
             ['[29]', 
             [
@@ -114,7 +105,11 @@ describe('Tokenizer', () => {
                 [ "]",101,0],
                 [ "}",102,0],
                 [ "!d",104,0],
-            ]]
+            ]],
+            [ `~d|2020-06-04T06:38:12.261Z|`,
+            [
+                [ '~d|2020-06-04T06:38:12.261Z|', 0, 0]
+            ]],
         ];
 
         cases.forEach( ([input,expected]) => {

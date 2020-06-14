@@ -13,6 +13,7 @@ export enum SType {
     ComponentDef = '%d',
     ComponentAttr = '%ca',
     Regex = '%r',
+    DateTime = '%dt',
     Any = '%*',
     Filter = '%|'
     // Undefined = '%un'

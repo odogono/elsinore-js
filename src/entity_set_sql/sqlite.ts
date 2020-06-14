@@ -18,7 +18,7 @@ import {
     getEntityId,
     EntityId
 } from '../entity';
-import { 
+import {
     BitField,
     create as createBitField,
     get as bfGet,
@@ -30,7 +30,8 @@ import {
 } from "../util/bitfield";
 import { Component, toComponentId } from '../component';
 import { SType } from '../query/types';
-import { isBoolean, isRegex } from '../util/is';
+import { isBoolean, isRegex, isDate, isValidDate } from '../util/is';
+import { compareDates } from '../query/words/util';
 
 const Log = createLog('Sqlite');
 
@@ -73,14 +74,14 @@ export function sqlClear(name: string): Promise<boolean> {
 export function sqlOpen(name: string, options: OpenOptions): SqlRef {
     const isMemory = options.isMemory ?? true;
     const { verbose } = options;
-    const db = new BetterSqlite3( isMemory ? ":memory:" : name, { verbose });
+    const db = new BetterSqlite3(isMemory ? ":memory:" : name, { verbose });
 
     // define our regexp function - so nice!
-    db.function('regexp', { deterministic: true}, (regex, val) => {
+    db.function('regexp', { deterministic: true }, (regex, val) => {
         let end = regex.lastIndexOf('/');
-        let flags = regex.substring(end+1);
+        let flags = regex.substring(end + 1);
         const re = new RegExp(regex.substring(1, end), flags);
-        
+
         // console.log('[sqlOpen][regexp]', regex, val );
         // const re = new RegExp(regex);
         return re.test(val) ? 1 : 0;
@@ -285,8 +286,8 @@ export function sqlUpdateComponent(ref: SqlRef, com: Component, def: ComponentDe
         let cols = ['eid'];
         // cols = def.properties.reduce( (cols,p) => [...cols,p.name], cols );
         let colString = [...cols, ...names].map(c => `'${c}'`).join(',');
-        let vals:any[] = [eid];
-        vals = [...vals, ...names.map(name => valueToSQL( com[name], getDefProperty(def,name) ))];
+        let vals: any[] = [eid];
+        vals = [...vals, ...names.map(name => valueToSQL(com[name], getDefProperty(def, name)))];
         let valString = vals.map(v => '?').join(',');
         // Log.debug('[sqlUpdateComponent]',`INSERT INTO ${tblName} (${colString}) VALUES (${valString});`, vals, com);
         // Log.debug('[sqlUpdateComponent]', 'def', def);
@@ -302,27 +303,32 @@ export function sqlUpdateComponent(ref: SqlRef, com: Component, def: ComponentDe
     return com;
 }
 
-function valueToSQL(value:any, property?:ComponentDefProperty){
-    if( property !== undefined ){
-        switch(property.type){
+function valueToSQL(value: any, property?: ComponentDefProperty) {
+    if (property !== undefined) {
+        switch (property.type) {
             case 'integer':
             case 'number':
             case 'string':
                 return value;
+            case 'datetime':
+                const dte = new Date(value);
+                return isValidDate(dte) ? dte.toISOString() : undefined;
+                // console.log('[valueToSQL]', value, isDate(value));
+                return value;
             default:
                 return JSON.stringify(value);
-            
+
         }
     }
-    if( isRegex(value) ){
+    if (isRegex(value)) {
         return value.source;
     }
 
-    if( isBoolean(value) ){
-        return value+'';
+    if (isBoolean(value)) {
+        return value + '';
     }
     // if( value === undefined ){
-        // Log.debug('[valueToSQL]', 'dammit', value, property );
+    // Log.debug('[valueToSQL]', 'dammit', value, property );
     // }
     return value;
 }
@@ -391,55 +397,55 @@ export function sqlRetrieveComponent(ref: SqlRef, eid: number, def: ComponentDef
     return com;
 }
 
-export function sqlRetrieveComponents(ref:SqlRef, eids:EntityId[], defs:ComponentDefSQL[]): Component[] {
+export function sqlRetrieveComponents(ref: SqlRef, eids: EntityId[], defs: ComponentDefSQL[]): Component[] {
     const { db } = ref;
     // let tblName, did;
     let result = [];
 
-    if( eids !== undefined && eids.length === 0 ){
+    if (eids !== undefined && eids.length === 0) {
         return result;
     }
 
-    for(let ii=0;ii<defs.length;ii++ ){
+    for (let ii = 0; ii < defs.length; ii++) {
         let def = defs[ii];
         const did = def[ComponentDefT];
 
         let rows;
-        if( eids === undefined ){
+        if (eids === undefined) {
             let stmt = db.prepare(`SELECT * FROM ${def.tblName} ORDER BY eid`);
             rows = stmt.all();
         } else {
             const params = buildInParamString(eids);
             let stmt = db.prepare(`SELECT * FROM ${def.tblName} WHERE eid IN (${params}) ORDER BY eid`);
             // Log.debug('[sqlRetrieveComponents]', eids, params);
-            rows = stmt.all( ...eids );
+            rows = stmt.all(...eids);
         }
         // let rows = stmt.all(eids);
 
-        
-        for( let rr=0;rr<rows.length;rr++ ){
+
+        for (let rr = 0; rr < rows.length; rr++) {
             const row = rows[rr];
-            let com:any = { '@e':row.eid, '@d':did };
-            
-            for( const prop of def.properties ){
+            let com: any = { '@e': row.eid, '@d': did };
+
+            for (const prop of def.properties) {
                 let val = row[prop.name];
-                if( prop.type === 'json' ){
-                    val = JSON.parse(val); 
+                if (prop.type === 'json') {
+                    val = JSON.parse(val);
                 }
                 com[prop.name] = val;
             }
             // Log.debug('[sqlRetrieveComponents]',com, row );
             // let { created_at: ca, updated_at: ua, id: id, eid: ee, ...rest } = rows[rr];
             // result.push( { '@e': ee, '@d': did, ...rest } );
-            result.push( com );
+            result.push(com);
         }
     }
-    
+
 
     return result;
 }
 
-function buildInParamString(params:any[]):string {
+function buildInParamString(params: any[]): string {
     return '?,'.repeat(params.length).slice(0, -1);;
 }
 export function sqlRetrieveEntityComponents(ref: SqlRef, eid: number, defs: ComponentDefSQL[]): Component[] {
@@ -508,13 +514,13 @@ export function sqlRetrieveDefByHash(ref: SqlRef, id: number): ComponentDef {
     return createComponentDef(did, JSON.parse(schema));;
 }
 
-export function sqlRetrieveEntities(ref:SqlRef, eids?:EntityId[] ):Entity[]{
+export function sqlRetrieveEntities(ref: SqlRef, eids?: EntityId[]): Entity[] {
     const { db } = ref;
     let rows, stmt;
-    if( eids !== undefined ){
+    if (eids !== undefined) {
         const params = buildInParamString(eids);
         stmt = db.prepare(`SELECT eid,did FROM tbl_entity_component WHERE eid IN (${params}) ORDER BY eid`);
-        rows = stmt.all( ...eids );
+        rows = stmt.all(...eids);
         // rows = stmt.all( ...eids );
     } else {
         stmt = db.prepare(`SELECT eid,did FROM tbl_entity_component ORDER BY eid;`);
@@ -526,7 +532,7 @@ export function sqlRetrieveEntities(ref:SqlRef, eids?:EntityId[] ):Entity[]{
         if (e === undefined) {
             e = new Entity(eid);
         }
-        e.bitField = bfSet(e.bitField,did);
+        e.bitField = bfSet(e.bitField, did);
         return { ...result, [eid]: e };
     }, {});
     return Object.values(result);
@@ -558,7 +564,7 @@ export function sqlRetrieveEntityByDefId(ref: SqlRef, did: number[]): Entity[] {
         if (e === undefined) {
             e = new Entity(eid);
         }
-        e.bitField = bfSet(e.bitField,did);
+        e.bitField = bfSet(e.bitField, did);
         return { ...result, [eid]: e };
     }, {});
 
@@ -614,71 +620,104 @@ export function sqlRetrieveEntityByDefId(ref: SqlRef, did: number[]): Entity[] {
 // }
 
 
-export function sqlRetrieveByQuery( ref:SqlRef, query:any[] ){
-    const {db} = ref;
+export function sqlRetrieveByQuery(ref: SqlRef, query: any[]) {
+    const { db } = ref;
 
     let comp;
     let sql = [];
     let params = [];
     // Log.debug('[sqlRetrieveByQuery]', query);
-    walkFilterQuery( sql, params, ...query );
-    
+    walkFilterQuery(sql, params, ...query);
+
     // sql.push('ORDER BY eid')
     // Log.debug('[sqlRetrieveByQuery]', sql, params);
-    
-    let stmt = db.prepare(sql.join(' ') );
+
+    let stmt = db.prepare(sql.join(' '));
     let rows = stmt.all(...params);
-    
+
     // Log.debug('[sqlRetrieveByQuery]', sql, params, rows);
 
-    return [SType.List, rows.map(r => [SType.Entity,r.eid]) ];
+    return [SType.List, rows.map(r => [SType.Entity, r.eid])];
 
 }
 
-function walkFilterQuery(out:string[], params:any[], cmd?, ...args ){
-    if( cmd === 'dids' ){
+function walkFilterQuery(out: string[], params: any[], cmd?, ...args) {
+    if (cmd === 'dids') {
         let dids = args[0];
         out.push(`SELECT eid from tbl_entity_component WHERE did IN ( ? )`);
-        params.push( dids );
+        params.push(dids);
     }
-    else if( cmd === 'and' ){
-        walkFilterQuery(out, params, ...args[1] );
+    else if (cmd === 'and') {
+        walkFilterQuery(out, params, ...args[1]);
         out.push('INTERSECT');
-        walkFilterQuery(out, params, ...args[0] );
-    } else if( cmd === 'or' ){
-        walkFilterQuery(out, params, ...args[0] );
+        walkFilterQuery(out, params, ...args[0]);
+    } else if (cmd === 'or') {
+        walkFilterQuery(out, params, ...args[0]);
         out.push('UNION');
-        walkFilterQuery(out, params, ...args[1] );
-    } else if( cmd === '==' ){
-        let {def} = args[0];
-        let tbl = defToTbl(def);
-        let [ptr,val] = args[1];
-
-        // get the first part of the ptr - the property name
-        // the rest of the ptr is converted to a sqlite json /path/key -> $.path.key
-        let [key, path] = ptrToSQL(ptr);
-
-        const props = getProperty(def, key);
-
-        if( props.type === 'json' ){
-            key = `json_extract( ${key}, '${path}' )`;
+        walkFilterQuery(out, params, ...args[1]);
+    } else {
+        switch (cmd) {
+            case '==':
+            case '!=':
+            case '>':
+            case '>=':
+            case '<':
+            case '<=':
+                return walkFilterQueryCompare(out, params, cmd, ...args);
+            default:
+                console.log('[walkFQ]', `unhandled ${cmd}`);
+                // return eids;
+                break;
         }
-
-        // console.log(' ', key, path );
-        
-        if( isRegex(val) ){
-            // console.log(`SELECT eid from ${tbl} WHERE ${key} REGEXP '${val.toString()}'`);
-            out.push(`SELECT eid from ${tbl} WHERE ${key} REGEXP '${val.toString()}'`);
-        } else {
-            out.push(`SELECT eid from ${tbl} WHERE ${key} = ?`);
-            params.push( valueToSQL(val) );
-        }
-        
     }
 }
 
-function ptrToSQL( ptr:string ){
-    if( ptr.charAt(0) === '/' ){
+function walkFilterQueryCompare(out: string[], params: any[], cmd?, ...args) {
+    let { def } = args[0];
+    let tbl = defToTbl(def);
+    let [ptr, val] = args[1];
+
+    // get the first part of the ptr - the property name
+    // the rest of the ptr is converted to a sqlite json /path/key -> $.path.key
+    let [key, path] = ptrToSQL(ptr);
+
+    const props = getProperty(def, key);
+
+    if (props.type === 'json') {
+        key = `json_extract( ${key}, '${path}' )`;
+    }
+
+    // console.log(' ', key, path );
+    const op = compareOpToSQL(cmd);
+    const prop = getDefProperty(def, key);
+
+    if (isRegex(val)) {
+        // console.log(`SELECT eid from ${tbl} WHERE ${key} REGEXP '${val.toString()}'`);
+        out.push(`SELECT eid from ${tbl} WHERE ${key} REGEXP '${val.toString()}'`);
+    } else {
+        // console.log(`SELECT eid from ${tbl} WHERE ${key} ${op} ?`, valueToSQL(val,prop), isDate(val) );
+        out.push(`SELECT eid from ${tbl} WHERE ${key} ${op} ?`);
+        params.push(valueToSQL(val,prop));
+    }
+}
+
+function compareOpToSQL(op:string){
+    switch (op) {
+        case '==':
+            return '=';
+        case '!=':
+            return '<>';
+        case '>':
+        case '>=':
+        case '<':
+        case '<=':
+        default:
+            return op;
+    }
+}
+
+function ptrToSQL(ptr: string) {
+    if (ptr.charAt(0) === '/') {
         let parts = ptr.substring(1).split('/');
         let [prop, ...path] = parts;
         return [prop, '$.' + path.join('.')];
@@ -686,15 +725,15 @@ function ptrToSQL( ptr:string ){
     return [ptr, undefined];
 }
 
-function componentRowToComponent(did, row):Component{
-    let {eid, ...others} = row;
-    return {'@e':eid, '@d':did, ...others};
+function componentRowToComponent(did, row): Component {
+    let { eid, ...others } = row;
+    return { '@e': eid, '@d': did, ...others };
 }
 
 function defToTbl(def: ComponentDef) {
     return 'tbl' + def.uri.split('/').join('_');
 }
-function getDefColumns(def:ComponentDef){
+function getDefColumns(def: ComponentDef) {
     let properties = def.properties || [];
     return properties.map(p => p.name);
 }

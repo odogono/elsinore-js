@@ -62,6 +62,10 @@ export async function select(es: EntitySetIDB, query: StackValue[], options = {}
         ['not', onLogicalFilter, SType.Any, SType.Any],
         ['==', onLogicalFilter, SType.Any, SType.Any],
         ['!=', onLogicalFilter, SType.Any, SType.Any],
+        ['>', onLogicalFilter, SType.Any, SType.Any],
+        ['>=', onLogicalFilter, SType.Any, SType.Any],
+        ['<', onLogicalFilter, SType.Any, SType.Any],
+        ['<=', onLogicalFilter, SType.Any, SType.Any],
     ]);
 
     await stack.pushValues(query);
@@ -71,7 +75,7 @@ export async function select(es: EntitySetIDB, query: StackValue[], options = {}
     stack.items = [];
     stack.words = {};
 
-    // Log.debug('[select]', stack );
+    // Log.debug('[select]', items );
 
     // add 2nd pass words
     stack.addWords( [

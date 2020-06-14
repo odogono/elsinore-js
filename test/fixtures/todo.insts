@@ -6,7 +6,10 @@
 [ "/component/title", ["text"] ] !d +
 [ "/component/completed", [{"name":"isComplete", "type":"boolean", "default":false}] ] !d +
 [ "/component/priority", [{"name":"priority", "type":"integer"}] ] !d +
-[ "/component/meta", [{"name":"meta", "type":"json"}] ] !d +
+[ "/component/meta", [
+    {"name":"meta", "type":json }, 
+    {"name":"createdAt", type: datetime }
+] ] !d +
 
 
 // create an empty array, add components to it
@@ -15,12 +18,9 @@
 [ "/component/priority", {"priority":10} ] !c
 [ "/component/meta", { "meta":{ 
     "author":"av",
-    "tags": [ "first", "action" ],
-    "dates": {
-        "ctime":"2020-05-23T09:10:00.000Z", 
-        "mtime":"2020-06-11T14:57:06.571Z" 
-    } 
-} } ] !c
+    "tags": [ "first", "action" ] },
+    "createdAt":"2020-05-23T09:00:00.000Z",
+    } ] !c
 
 // add components to array
 concat
@@ -31,12 +31,14 @@ concat
 
 [ "/component/title", { "text":"phone up friend"} ] !c
 [ "/component/completed", {"isComplete":true}] !c
+[ "/component/meta", {"createdAt":"2020-05-23T10:15:00.000Z"} ] !c
 concat
 101 !e swap +
 
 
 [ "/component/title", { "text":"turn on the news"} ] !c
 [ "/component/completed", {"isComplete":false} ] !c
+[ "/component/meta", {"createdAt":"2020-05-23T10:45:00.000Z"} ] !c
 concat
 102 !e swap +
 
@@ -44,13 +46,15 @@ concat
 [ "/component/title", { "text":"drink some tea"} ] !c
 [ "/component/meta", { "meta": {
     "author":"jm"
-} } ] !c
+} },
+    "createdAt":"2020-05-23T13:55:00.000Z" ] !c
 concat
 103 !e swap +
 
 
 [ "/component/title", { "text":"do some shopping"}] !c
 [ "/component/priority", {"priority":-5} ] !c
+[ "/component/meta", {"createdAt":"2020-05-23T15:30:00.000Z"} ] !c
 concat
 104 !e swap +
 

@@ -70,6 +70,10 @@ export async function select(es: EntitySetSQL, query: StackValue[], options = {}
         ['not', onLogicalFilter, SType.Any, SType.Any],
         ['==', onLogicalFilter, SType.Any, SType.Any],
         ['!=', onLogicalFilter, SType.Any, SType.Any],
+        ['>', onLogicalFilter, SType.Any, SType.Any],
+        ['>=', onLogicalFilter, SType.Any, SType.Any],
+        ['<', onLogicalFilter, SType.Any, SType.Any],
+        ['<=', onLogicalFilter, SType.Any, SType.Any],
     ]);
 
     

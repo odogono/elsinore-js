@@ -18,7 +18,8 @@ import {
     onComponent, onEntity, 
     onAssertType, 
     onToString,
-    onRegex
+    onRegex,
+    onDateTime
 } from "./words";
 import { onPluck } from "./words/pluck";
 import { onDefine } from "./words/define";
@@ -63,6 +64,13 @@ export function createStdLibStack( stack?:QueryStack ){
         ['split', onRegex, SType.Value, SType.Regex],
         ['==', onRegex, SType.Value, SType.Regex],
         ['!=', onRegex, SType.Value, SType.Regex],
+        
+        ['==', onDateTime, SType.DateTime, SType.DateTime],
+        ['!=', onDateTime, SType.DateTime, SType.DateTime],
+        ['>', onDateTime, SType.DateTime, SType.DateTime],
+        ['>=', onDateTime, SType.DateTime, SType.DateTime],
+        ['<', onDateTime, SType.DateTime, SType.DateTime],
+        ['<=', onDateTime, SType.DateTime, SType.DateTime],
 
         // important that this is after more specific case
         ['+', onAdd, SType.Value, SType.Value],

@@ -2,12 +2,13 @@ let debugLog = false;
 
 
 const MODE_IDLE = 0;
-const MODE_COMMENT = 1;
-const MODE_MULTI_COMMENT = 2;
-const MODE_MULTI_QUOTE = 4;
-const MODE_QUOTE = 8;
-const MODE_MAYBE_QUOTE = 16;
-const MODE_VALUE = 32;
+const MODE_COMMENT = 1<<0;
+const MODE_MULTI_COMMENT = 1<<1;
+const MODE_MULTI_QUOTE = 1<<2;
+const MODE_QUOTE = 1<<3;
+const MODE_MAYBE_QUOTE = 1<<4;
+const MODE_VALUE = 1<<5;
+// const MODE_MAYBE_VALUE = 1<<6;
 
 function set(flag,val){
     return flag | val;
@@ -31,6 +32,7 @@ interface TokenizerContext {
     linePosition: number;
     charBuffer: string[];
     mode: number;
+    endChar: string;
     // withinQuote: boolean;
     // maybeWithinQuote: boolean;
     // withinMultiQuote: boolean;
@@ -86,7 +88,7 @@ function processAlt(context:TokenizerContext, input:string):TokenizerContext {
     let { pos, length, offset, mode,
         markPosition,
         output, 
-        // maybeWithinQuote, withinComment, withinQuote, withinMultiQuote, withinMultiComment,
+        endChar,
         buffer, charBuffer, line, linePosition = 0 } = context;
     
     let cpos = 0;
@@ -158,7 +160,7 @@ function processAlt(context:TokenizerContext, input:string):TokenizerContext {
                     case ':':
                     case ',':
                     // case '\n':
-                        // console.log('but what', buffer, mode);
+                        // console.log('but what', char, buffer, mode);
                         output.push([
                             parseValue(trimRight(buffer)),
                             markPosition,
@@ -190,10 +192,12 @@ function processAlt(context:TokenizerContext, input:string):TokenizerContext {
             }
         } else if( isSet(mode, MODE_VALUE) ){
             if( char === ' ' || isNewline || char === ',' || char === ':' || char === ']' || char === '}' ){
+                // console.log('end value', mode, pos, char);
+                // mode = set(mode, MODE_MAYBE_VALUE);
                 let value = parseValue(trimRight(buffer));
                 output.push([value,markPosition,line]);
                 mode = unset(mode, MODE_VALUE);
-                // console.log('end val', value, pos);
+                // console.log('end val', char, value, pos);
                 if( char === ']' || char === '}' ){
                     // output.push([ char,markPosition,line]);
                     // buffer = '';
@@ -205,7 +209,8 @@ function processAlt(context:TokenizerContext, input:string):TokenizerContext {
             }
         
         } else if ( isSet(mode, MODE_QUOTE) ) {
-            if (char == '"') {
+            // console.log('mode quote', pos, char, isNewline);
+            if ( endChar.indexOf(char) !== -1 ) {
                 output.push([buffer,markPosition,line]);
                 mode = unset(mode, MODE_QUOTE);
                 buffer = '';
@@ -221,7 +226,7 @@ function processAlt(context:TokenizerContext, input:string):TokenizerContext {
                 // withinComment = false;
             }
         } else {
-            // console.log('hmm', char);
+            // console.log('hmm', mode, char);
             switch (char) {
                 case '{':
                 case '}':
@@ -243,11 +248,16 @@ function processAlt(context:TokenizerContext, input:string):TokenizerContext {
                     // withinQuote = true;
                     markPosition = pos;
                     char = '';
+                    endChar = '"';
+                    break;
+                case '~':
+                    mode = set(mode,MODE_QUOTE);
+                    markPosition = pos;
+                    char = '~';
+                    endChar = ' \n';
                     break;
                 default:
                     mode = set(mode, MODE_MAYBE_QUOTE);
-                    // console.log('well maybe quote', char, pos );
-                    // maybeWithinQuote = true;
                     markPosition = pos;
                     break;
             }
@@ -261,6 +271,7 @@ function processAlt(context:TokenizerContext, input:string):TokenizerContext {
         if (
             isSet(mode, MODE_QUOTE) 
             || isSet(mode, MODE_VALUE) 
+            // || isSet(mode, MODE_MAYBE_VALUE) 
             || isSet(mode, MODE_MAYBE_QUOTE) 
             || isSet(mode, MODE_MULTI_QUOTE)
         ) {
@@ -283,7 +294,7 @@ function processAlt(context:TokenizerContext, input:string):TokenizerContext {
 
 
     return {...context, 
-        pos, buffer, 
+        pos, buffer, endChar,
         offset, markPosition, mode, charBuffer, 
         output, line, linePosition };
 }
@@ -342,6 +353,7 @@ function createContext():TokenizerContext {
         linePosition: 0,
         markPosition: 0,
         charBuffer: ['', '', ''],
+        endChar:''
     };
 }
 

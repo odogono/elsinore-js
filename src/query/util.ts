@@ -50,7 +50,9 @@ export function valueToString(val: StackValue): string {
         // case SType.Undefined:
         //     return `undefined`;
         case SType.Regex:
-            return '~r' + value.toString();
+            return '~r/' + value.toString() + '/';
+        case SType.DateTime:
+            return '~d|' + value.toISOString() + '|';
         default:
             return val.length === 2 ? `(${type}, ${stringify(value)})` : stringify(val);
     }
@@ -94,6 +96,7 @@ export function unpackStackValue(val: StackValue, assertType: (SType | SType[]) 
         case SType.ComponentAttr:
         case SType.ComponentDef:
         case SType.Regex:
+        case SType.DateTime:
             return value;
         default:
             return val;

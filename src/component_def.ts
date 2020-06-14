@@ -17,6 +17,7 @@ export enum PropertyType {
     JSON, // also an object
     Entity,
     BitField,
+    DateTime,
 };
 
 
@@ -48,7 +49,8 @@ const typeDefaults = {
     'integer': 0,
     'boolean': false,
     'list': [],
-    'map': {}
+    'map': {},
+    'datetime': () => new Date()
 }
 
 /**
@@ -212,7 +214,9 @@ export function createProperty(params:any): ComponentDefProperty {
     } else if( isObject(params) ) {
         name = params.name || name;
         type = params.type || type;
-        defaultValue = params.default ?? typeDefaults[type] ?? undefined;
+        const tdef = type === 'datetime' ? new Date() : typeDefaults[type] ?? undefined;
+        defaultValue = params.default ?? tdef;
+        
         // console.log('but', name, 'type', type, defaultValue);
         
         for( let key of Object.keys(params) ){

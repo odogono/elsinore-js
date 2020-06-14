@@ -44,6 +44,10 @@ export function isDate(value:any): boolean {
     return value && getClass.call(value) === '[object Date]';
 }
 
+export function isValidDate(value:any):boolean {
+    return isDate(value) && !isNaN(value.getTime());
+}
+
 
 // taken from underscore-contrib/underscore.function.predicates
 // cannot include directly in node
