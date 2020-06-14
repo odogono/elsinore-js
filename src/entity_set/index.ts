@@ -111,6 +111,8 @@ export abstract class EntitySet {
     // for generation of entityids
     readonly eidEpoch:number = 1577836800000; // 2020-01-01T00:00:00.000Z
 
+    stack:QueryStack;
+
     constructor(data?: EntitySet, options:EntitySetOptions = {}) {
         if (data !== undefined) {
             Object.assign(this, data);
@@ -135,18 +137,18 @@ export abstract class EntitySet {
     abstract removeComponent(item: RemoveType, options?: AddOptions): Promise<EntitySet>;
 
     async query( q:string, options:QueryOptions = {} ): Promise<QueryStack> {
-        let stack = createStdLibStack();
+        const reset = options.reset ?? false;
         let values:StackValue[] = options.values ?? [];
-        stack.addWords([
-            ['!es', onEntitySet, SType.Map]
-        ]);
-        values = [
-            [SType.EntitySet, this],
-            ...values,
+        if( this.stack === undefined || reset ){
+            this.stack = createStdLibStack();
+            this.stack.addWords([
+                ['!es', onEntitySet, SType.Map]
+            ]);
+        }
 
-        ];
+        values = [ [SType.Value,'cls'], [SType.EntitySet, this], ...values ];
 
-        return await query( q, {stack, values} );
+        return await query( q, {stack:this.stack, values} );
     }
 
     /**

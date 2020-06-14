@@ -32,6 +32,7 @@ import { tokenizeString } from "./tokenizer";
 export interface QueryOptions {
     stack?:QueryStack;
     values?:StackValue[];
+    reset?:boolean;
 }
 
 export async function query( q:string, options:QueryOptions = {} ): Promise<QueryStack> {
