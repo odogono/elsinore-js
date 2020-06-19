@@ -65,6 +65,7 @@
     "@types/chai": "^4.2.11",
     "@types/expect": "^24.3.0",
     "@types/fs-extra": "^9.0.1",
+    "@types/jsonpointer": "^4.0.0",
     "@types/mocha": "^7.0.2",
     "@types/shelljs": "^0.8.8",
     "@wessberg/rollup-plugin-ts": "^1.2.25",

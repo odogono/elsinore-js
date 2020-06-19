@@ -2,8 +2,7 @@ import CommonJS from '@rollup/plugin-commonjs';
 import { terser } from 'rollup-plugin-terser';
 import NodeResolve from '@rollup/plugin-node-resolve';
 import Replace from '@rollup/plugin-replace';
-import Typescript from "rollup-plugin-typescript2";
-import ts from "@wessberg/rollup-plugin-ts";
+import Typescript from "@wessberg/rollup-plugin-ts";
 // import MultiEntry from '@rollup/plugin-multi-entry';
 import NodePolyfills from 'rollup-plugin-node-polyfills';
 // import Json from '@rollup/plugin-json';
@@ -17,17 +16,6 @@ const environment = process.env.NODE_ENV || 'development';
 const jsEnv = process.env.JS_ENV || 'browser';
 const isProduction = false //environment === 'production';
 
-const tsconfigOverride = { compilerOptions: { declaration: true, sourceMap: true, module: "es2015" } };
-
-const typescriptPlugin = Typescript({
-    // Disable type checking during the build
-    // to increase the build speed.
-    check: false,
-    tsconfig: './tsconfig.json',
-    tsconfigOverride,
-    typescript: require('typescript'),
-    useTsconfigDeclarationDir: true
-});
 
 const nameCache = { vars: {} };
 
@@ -107,7 +95,7 @@ function build({ external, format, minify, input, output:outputFile, ext = "js",
         Replace({ 'process.env.JS_ENV': JSON.stringify(jsEnv) }),
         NodePolyfills(),
         NodeResolve({ browser: true, preferBuiltins: false }),
-        ts(),
+        Typescript(),
         // typescriptPlugin,
         CommonJS({
             exclude: ['node_modules/type-detect/*.js'],
