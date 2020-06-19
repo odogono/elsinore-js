@@ -13,7 +13,7 @@ import {
     StackError,
 } from '../query/types';
 
-import { onComponentAttr, buildBitfield } from "../entity_set/query";
+import { onComponentAttr, buildBitfield, SelectOptions } from "../entity_set/query";
 import { onLogicalFilter, parseFilterQuery } from "../entity_set/filter";
 import { 
     BitField,
@@ -40,15 +40,15 @@ class IDBQueryStack extends QueryStack {
  * @param es 
  * @param query 
  */
-export async function select(es: EntitySetIDB, query: StackValue[], options = {}): Promise<StackValue[]> {
+export async function select(es: EntitySetIDB, query: StackValue[], options:SelectOptions = {}): Promise<StackValue[]> {
     let stack = new IDBQueryStack();
     stack.es = es;
 
-    // Log.debug('[select]', stack );
-
-    if( 'stack' in options ){
-        stack._root = stack._parent = options['stack'];
+    let parent = options.stack;
+    if (parent !== undefined ) {
+        parent.setChild(stack);
     }
+
 
     // add first pass words
     stack.addWords([
@@ -106,6 +106,8 @@ export async function select(es: EntitySetIDB, query: StackValue[], options = {}
     // Log.debug('pushing ', items);
     await stack.pushValues(items);
 
+    stack.restoreParent();
+    
     return stack.items;
 }
 

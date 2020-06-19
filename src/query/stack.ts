@@ -34,14 +34,18 @@ export class QueryStack {
     words: Words = {};
 
     _root: QueryStack;
-    _parent: QueryStack;
-    _child: QueryStack;
+    _parent: number;// QueryStack;
+    _child: number; //QueryStack;
+
+    _stacks: Map<number,QueryStack>;
 
     // the current operating stack
     // _focus: QueryStack;
 
     constructor(stack?: QueryStack) {
         this.id = ++stackId;
+        this._root = this;
+        // console.log('new stack', this.id, this._root.id);
         if (stack !== undefined) {
             this.words = deepExtend(stack.words);
         }
@@ -51,8 +55,12 @@ export class QueryStack {
         return this.items.length;
     }
 
-    focus(): QueryStack {
-        return this._child ? this._child.focus() : this;
+    focus(id:number = this.id): QueryStack {
+        if( this._child !== undefined ){
+            return this._root._stacks.get( this._child ).focus();
+        }
+        // console.log('[focus]', this.id, id, this._root.id);// this._root._stacks);
+        return this._root.id === id ? this : this._root._stacks.get(id);
     }
 
     peek(offset: number = 0): StackValue {
@@ -60,32 +68,74 @@ export class QueryStack {
         return stack.items[stack.items.length - 1 - offset];
     }
 
+
+    getParent():QueryStack {
+        // console.log('[getParent]', 'parentOf', this.id, this._parent);
+        return this._parent === this._root.id ? this._root : 
+            this._parent !== undefined ? this._root._stacks.get(this._parent) : this;
+    }
+    getChild():QueryStack {
+        return this._child !== undefined ? this._root._stacks.get(this._child) : undefined;
+    }
+
     setChild(child: QueryStack): QueryStack {
         let self = this.focus();
-        child._parent = self;
-        self._child = child;
-        child._root = self._root ?? this._root ?? this;
+        if( this._root._stacks === undefined ){
+            this._root._stacks = new Map<number,QueryStack>()
+        }
+        this._root._stacks.set(child.id, child);
+        child._parent = self.id;
+        self._child = child.id;
+        child._root = this._root;
+
+        // child._parent = self;
+        // self._child = child;
+        // child._root = self._root ?? this._root ?? this;
 
         // Log.debug('[setChild]', this.focus().id, 'focus now', printStackLineage(this.focus()) );
         return this;
     }
 
-
-
     restoreParent(): QueryStack {
-        const root = this._root ?? this;
-        let child = root;
-        // find current child
-        while (child._child !== undefined) {
-            child = child._child;
-        };
-        let parent = child._parent;
-        // Log.debug( '[restoreParent]', 'root', root.id );
-        // Log.debug( '[restoreParent]', 'child', child.id );
-        // Log.debug( '[restoreParent]', 'parent', parent.id );
+        if( this._parent === undefined ){
+            return this;
+        }
+        
+        let parent;
+        if( this._parent === this._root.id ){
+            parent = this._root;
+        } else {
+            // find the parent
+            for( const [id,st] of this._root._stacks ){
+                if( this._parent === id ){
+                    parent = st;
+                    break;
+                }
+            }
+        }
 
-        child._parent = undefined;
-        parent._child = undefined;
+        if( parent !== undefined ){
+            parent._child = undefined;
+            this._parent = undefined;
+            this._root._stacks.delete( this.id );
+        } else {
+            // Log.debug('[restoreParent]', 'no parent for', this.id, this._root._stacks );
+            // throw 'stop';
+        }
+
+        // const root = this._root ?? this;
+        // let child = root;
+        // // find current child
+        // while (child._child !== undefined) {
+        //     child = child._child;
+        // };
+        // let parent = child._parent;
+        // // Log.debug( '[restoreParent]', 'root', root.id );
+        // // Log.debug( '[restoreParent]', 'child', child.id );
+        // // Log.debug( '[restoreParent]', 'parent', parent.id );
+
+        // child._parent = undefined;
+        // parent._child = undefined;
 
         // let self = this.focus();
         // if( self._parent === undefined ){ return this; }
@@ -118,7 +168,9 @@ export class QueryStack {
         let [type, word] = value;
         let stack = this.focus();
 
-        // Log.debug('[push]', stack.id, `(${this.id})`, value );
+        // if( stack === undefined ){
+        //     Log.debug('[push]', stack?.id, `(${this.id})`, this._root.id, this );//, // stack.items );
+        // }
 
         if (type === SType.Value && isString(word)) {
             const len = word.length;
@@ -150,8 +202,9 @@ export class QueryStack {
                 if (len > 1) {
                     let up = word.charAt(0) === '^';
                     while (word.charAt(0) === '^') {
-                        wordStack = wordStack._parent !== undefined ? wordStack._parent : wordStack;
-                        // Log.debug('[push]', '^', 'start at', wordStack.id, wordStack._parent?.id  );
+                        // let st = wordStack.id;
+                        wordStack = wordStack.getParent() ?? wordStack;
+                        // Log.debug('[push]', '^', 'start at', st, wordStack.id  );
                         word = word.substring(1);
                         value = [type, word];
                     }
@@ -172,6 +225,7 @@ export class QueryStack {
                 }
 
                 else {
+                    // Log.debug('[push]', 'word', stack?.id, wordStack?.id );
                     handler = wordStack.getWord(value);
                     // DLog(stack, '[push]', 'word', stack.id, wordStack.id, value );
                     // Log.debug('[push]', 'word', stack.id, wordStack.id, value, handler );
@@ -206,6 +260,7 @@ export class QueryStack {
             // Log.debug('[push]', stack.id, value);
             stack.items = [...stack.items, value];
         }
+        // Log.debug('[push]', stack.id, `(${this.id})`, stack.items );
 
         return value;
     }
@@ -284,6 +339,7 @@ export class QueryStack {
         const length = this.items.length;
         const idx = length - 1 - offset;
         if (idx < 0 || length === 0) {
+            // console.log('[pop]', this);
             throw new StackError('stack underflow');
         }
         const value = stack.items[idx];
@@ -489,16 +545,16 @@ function printStackLineage(st: QueryStack, result: string = '') {
     let curr = st;
     let pre = '';
 
-    while (curr._parent) {
-        pre = `${curr._parent.id} < ` + pre;
-        curr = curr._parent;
+    while (curr.getParent()) {
+        pre = `${curr._parent} < ` + pre;
+        curr = curr.focus(curr._parent);
     }
 
     curr = st;
     let post = '';
-    while (curr._child) {
-        post = post + `> ${curr._child.id}`;
-        curr = curr._child;
+    while (curr.getChild()) {
+        post = post + `> ${curr._child}`;
+        curr = curr.getChild();
     }
 
     return `${pre} (${st.id}) ${post}`;

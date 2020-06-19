@@ -35,7 +35,7 @@ import {
 } from "./sqlite";
 import { Type, ComponentDefId, ComponentDef } from "../component_def";
 import { onLogicalFilter, parseFilterQuery } from "../entity_set/filter";
-import { onComponentAttr, buildBitfield } from "../entity_set/query";
+import { onComponentAttr, buildBitfield, SelectOptions } from "../entity_set/query";
 import { onDefine } from "../query/words/define";
 import { onPluck } from "../query/words/pluck";
 
@@ -51,11 +51,13 @@ class SQLQueryStack extends QueryStack {
  * @param es 
  * @param query 
  */
-export async function select(es: EntitySetSQL, query: StackValue[], options = {}): Promise<StackValue[]> {
+export async function select(es: EntitySetSQL, query: StackValue[], options:SelectOptions = {}): Promise<StackValue[]> {
     let stack = new SQLQueryStack();
     stack.es = es;
-    if ('stack' in options) {
-        stack._root = stack._parent = options['stack'];
+    
+    let parent = options.stack;
+    if (parent !== undefined ) {
+        parent.setChild(stack);
     }
 
     // add first pass words
@@ -118,6 +120,8 @@ export async function select(es: EntitySetSQL, query: StackValue[], options = {}
 
     // Log.debug('pushing ', items);
     await stack.pushValues(items);
+
+    stack.restoreParent();
 
     return stack.items;
 }

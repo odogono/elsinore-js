@@ -61,24 +61,11 @@ export async function onSelect<QS extends QueryStack>(stack: QS): AsyncInstResul
 
     let right = stack.pop();
     let left = stack.pop();
-    // left = peek(stack);
-
+    
     let es: EntitySet = unpackStackValue(left, SType.EntitySet);
     let query = unpackStackValue(right, SType.List, false);
-    // const {words} = stack;
-    // Log.debug('[onSelect]', query );
-    // Log.debug('[onSelect]', stack.words );
-
-    // let words = Object.keys(stack.words).reduce( (out,word) => { 
-    //     let spec = stack.words[word];
-    //     for( let en of spec ){
-    //         let [fn, clauses ] = en;
-    //         out = [...out, [word, fn, ...clauses]];
-    //     }
-    //     return out;
-    // },[]);
-
-    let result = await es.select(query, { stack });
+    
+    let result = await es.select(query, { stack:stack });
 
     if (result) {
         // append output stack
@@ -431,8 +418,11 @@ export function onListClose<QS extends QueryStack>(stack: QS): InstResult {
     // Log.debug('[onListClose]', {id:stack.id, parent:stack._parent?.id}, stackToString(stack) );
     let val: StackValue = [SType.List, stack.items];
     // stack = stack._parent;
+    // let id = stack.id;
+    // if( id === 3 ){
+    //     Log.debug('[onListClose]', 'was', id, 'is', stack._root );
+    // }
     stack.restoreParent();
-    // Log.debug('[onListClose]', val);
     return val;
 }
 

@@ -27,6 +27,7 @@ import {
     QueryStack,
 } from './stack';
 import { tokenizeString } from "./tokenizer";
+export { QueryStack };
 
 
 export interface QueryOptions {

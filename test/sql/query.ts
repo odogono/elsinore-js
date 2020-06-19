@@ -347,20 +347,20 @@ describe('Query (SQL)', () => {
 
 });
 
-async function prep(insts?: string): Promise<[QueryStack, EntitySet]> {
-    let es = createEntitySet();
+// async function prep(insts?: string): Promise<[QueryStack, EntitySet]> {
+//     let es = createEntitySet();
 
-    let stack = createStdLibStack();
+//     let stack = createStdLibStack();
 
-    if (insts) {
-        const words = parse(insts);
-        // Log.debug('[parse]', words );
-        await stack.pushValues(words);
-    }
+//     if (insts) {
+//         const words = parse(insts);
+//         // Log.debug('[parse]', words );
+//         await stack.pushValues(words);
+//     }
 
-    // let stack = await es.query(insts, {values} );
-    return [stack, es];
-}
+//     // let stack = await es.query(insts, {values} );
+//     return [stack, es];
+// }
 
 async function prepES(insts?: string, fixture?: string, options: EntitySetOptions = {}): Promise<[QueryStack, EntitySet]> {
     let es = createEntitySet();

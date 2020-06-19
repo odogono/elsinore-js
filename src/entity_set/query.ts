@@ -43,16 +43,22 @@ class ESMemQueryStack extends QueryStack {
     es: EntitySetMem
 }
 
+
+export interface SelectOptions {
+    stack?: QueryStack;
+}
 /**
  * 
  * @param es 
  * @param query 
  */
-export async function select(es: EntitySetMem, query: StackValue[], options = {}): Promise<StackValue[]> {
+export async function select(es: EntitySetMem, query: StackValue[], options:SelectOptions = {}): Promise<StackValue[]> {
     let stack = new ESMemQueryStack();
     stack.es = es;
-    if ('stack' in options) {
-        stack._root = stack._parent = options['stack'];
+    
+    let parent = options.stack;
+    if (parent !== undefined ) {
+        parent.setChild(stack);
     }
 
     // add first pass words
@@ -106,6 +112,7 @@ export async function select(es: EntitySetMem, query: StackValue[], options = {}
 
     // Log.debug('[select]', stackToString(stack) );
 
+    stack.restoreParent();
 
     return stack.items;
 }
