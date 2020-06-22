@@ -42,7 +42,7 @@ import {
 } from '../../src/entity_set_fs';
 import { 
     assertHasComponents, 
-    } from '../util/assert';
+    } from '../helpers/assert';
 import { BuildQueryFn } from '../../src/query/build';
 import { getChanges, ChangeSetOp } from '../../src/entity_set/change_set';
 import { Type as ComponentT, fromComponentId, getComponentDefId, Component } from '../../src/component';

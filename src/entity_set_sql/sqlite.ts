@@ -271,9 +271,7 @@ export function sqlUpdateComponent(ref: SqlRef, com: Component, def: ComponentDe
     const row = stmt.get(eid);
     const exists = row !== undefined;
 
-    let names = def.properties.map(p => `${p.name}`);
-
-    // Log.debug('[sqlUpdateComponent]', com);
+    let names = def.properties.map(p => p.persist === true ? `${p.name}` : undefined).filter(Boolean);
 
     if (exists) {
         const { id } = row;
@@ -747,8 +745,11 @@ function defToStmt(def: ComponentDef) {
     let properties = def.properties || [];
 
     let props = properties.map(prop => {
+        if( prop.persist === false ){
+            return undefined;
+        }
         return `'${prop.name}' ${propTypeToSQL(prop.type)}`;
-    }).join(',\n');
+    }).filter(Boolean).join(',\n');
     if (props.length > 0) {
         props = props + ',';
     }

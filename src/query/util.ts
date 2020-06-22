@@ -10,7 +10,7 @@ export interface ToStringOptions {
 }
 
 export function stackToString(stack: QueryStack): string {
-    let parts = stack.items.map(val => valueToString(val));
+    let parts = stack.items.map(val => valueToString(val)).reverse();
     return parts.join(' ');
 }
 

@@ -28,7 +28,7 @@ import {
 } from './stack';
 import { tokenizeString } from "./tokenizer";
 export { QueryStack };
-
+export const parse = (q:string) => tokenizeString(q,{returnValues:true});
 
 export interface QueryOptions {
     stack?:QueryStack;
@@ -80,6 +80,10 @@ export function createStdLibStack( stack?:QueryStack ){
         ['%', onAdd, SType.Value, SType.Value],
         ['==', onAdd, SType.Value, SType.Value],
         ['!=', onAdd, SType.Value, SType.Value],
+        ['>', onAdd, SType.Value, SType.Value],
+        ['>=', onAdd, SType.Value, SType.Value],
+        ['<', onAdd, SType.Value, SType.Value],
+        ['<=', onAdd, SType.Value, SType.Value],
         ['.', onPrint, SType.Any],
         ['..', onPrint],
         ['@', onFetchArray, SType.List, SType.Value],

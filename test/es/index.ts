@@ -5,7 +5,7 @@ import {
     Entity, isEntity
 } from '../../src/entity';
 
-import { assertHasComponents } from '../util/assert';
+import { assertHasComponents } from '../helpers/assert';
 import { getChanges, ChangeSetOp } from '../../src/entity_set/change_set';
 import { fromComponentId, getComponentDefId, Component, OrphanComponent } from '../../src/component';
 import { isComponentDef, hash as hashDef, getDefId, Type } from '../../src/component_def';

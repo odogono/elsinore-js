@@ -242,9 +242,22 @@ export class EntitySetIDB extends EntitySetMem {
             existing = await this.getComponent(cid);
         }
         
+        
         // convert the keys
-        let {'@e':eid, '@d':did, ...rest} = com;
-        let scom = {'_e':eid, '_d':did, ...rest};
+        let {'@e':eid, '@d':did} = com;
+        
+        let def = this.getByDefId(did);
+        let props = def.properties.map(p => p.persist === true ? p.name : undefined).filter(Boolean);
+        let scom:any = {'_e':eid, '_d':did};
+        
+        for( let ii=0, len=props.length;ii<len;ii++ ){
+            let name = props[ii];
+            scom[ name ] = com[name];
+        }
+
+        // console.log('[markComponentAdd]', 'props', props);
+
+
     
         // just overwrite the component
         this.comUpdates.set( cid, scom );

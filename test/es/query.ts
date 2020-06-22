@@ -71,12 +71,12 @@ describe('Query (Mem)', () => {
 
         it('references an earlier word', async () => {
             let [stack] = await prep(`planet world hello $1`);
-            assert.equal(stack.toString(), '"planet" "hello" "world"');
+            assert.equal(stack.toString(), '"world" "hello" "planet"');
         });
 
         it('works within a list', async () => {
             let [stack] = await prep(`planet world [ hello $0 ]`);
-            assert.equal(stack.toString(), '"planet" "world" ["hello"]');
+            assert.equal(stack.toString(), '["hello"] "world" "planet"');
         });
 
         it('references above a list', async () => {
@@ -90,7 +90,7 @@ describe('Query (Mem)', () => {
         it('not evaluated the first time', async () => {
             // the * char means that the ref will not be evaled until spread is called
             let [stack] = await prep(`planet world [ hello *$1 ] spread`);
-            assert.equal(stack.toString(), '"planet" "hello" "world"');
+            assert.equal(stack.toString(), '"world" "hello" "planet"');
         });
 
         it('accesses words in parent', async () => {
@@ -419,6 +419,21 @@ describe('Query (Mem)', () => {
                 '/component/priority',
                 '/component/meta'
             ])
+        });
+
+        it('retrieves components by did', async () => {
+            let [stack] = await prepES(`
+            [ /component/title !bf @c ] select
+            `, 'todo');
+
+            // ilog(stack.items);
+            // let defs = stack.popValue().map( d => d[0] );
+            // assert.deepEqual(defs, [
+            //     '/component/title',
+            //     '/component/completed',
+            //     '/component/priority',
+            //     '/component/meta'
+            // ])
         });
 
         it('returns query results as components', async () => {

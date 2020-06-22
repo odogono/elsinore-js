@@ -21,7 +21,7 @@ import {
 import { BuildQueryFn } from '../../src/query/build';
 import { isComponentDef, hash as hashDef, ComponentDef, getDefId } from '../../src/component_def';
 import { getChanges, ChangeSetOp } from '../../src/entity_set/change_set';
-import { assertHasComponents } from '../util/assert';
+import { assertHasComponents } from '../helpers/assert';
 import { getComponentDefId, Component, OrphanComponent } from '../../src/component';
 
 
@@ -39,7 +39,7 @@ describe('Entity Set (IndexedDB)', () => {
         await clearIDB();
     })
 
-    describe('registering component defs', () => {
+    describe('Component Def', () => {
 
         it('registers', async () => {
             let def;
@@ -61,7 +61,30 @@ describe('Entity Set (IndexedDB)', () => {
             def = es.getByHash(hashDef(def));
 
             assert.equal(def.uri, '/component/position');
-        })
+        });
+
+        it('persists only marked properties', async () => {
+            let es = createEntitySet();
+
+            const data = { uri: '/component/position', properties: [
+                {name: 'rank', type:'integer'}, 'file',
+                {name: 'notes', type:'string', persist:false }
+            ]};
+
+            await es.register(data);
+
+            let e = es.createEntity();
+            e.Position = {rank: 3, file:'a', notes:'an example'};
+
+            await es.add(e);
+
+            const [eid] = getChanges(es.entChanges, ChangeSetOp.Add);
+
+            e = await es.getEntity(eid);
+
+            assert.isUndefined(e.Position.notes);
+
+        });
 
     });
 

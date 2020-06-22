@@ -341,6 +341,10 @@ export function onAdd(stack: QueryStack, [,op]: StackValue): InstResult {
         case '%': value = left % right; break;
         case '==': value = left === right; break;
         case '!=': value = left !== right; break;
+        case '>': value = left > right; break;
+        case '>=': value = left >= right; break;
+        case '<': value = left < right; break;
+        case '<=': value = left <= right; break;
     }
 
     return [SType.Value, value];

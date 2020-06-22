@@ -19,12 +19,11 @@ import {
 import { getComponentDefId, Component, OrphanComponent } from '../../src/component';
 import {
     assertHasComponents,
-} from '../util/assert';
+} from '../helpers/assert';
 import { createLog } from "../../src/util/log";
 import { sqlClear } from '../../src/entity_set_sql/sqlite';
 import { BuildQueryFn } from '../../src/query/build';
 import { getChanges, ChangeSetOp } from '../../src/entity_set/change_set';
-import { buildEntity } from '../util/stack';
 import { EntitySet } from '../../src/entity_set';
 
 const Log = createLog('TestEntitySetSQL');
@@ -48,7 +47,7 @@ describe('Entity Set (SQL)', () => {
 
     // });
 
-    describe('registering component defs', () => {
+    describe('Component Def', () => {
 
         it('registers', async () => {
             let def;
@@ -70,6 +69,30 @@ describe('Entity Set (SQL)', () => {
             def = es.getByHash(hashDef(def));
 
             assert.equal(def.uri, '/component/position');
+        });
+
+
+        it('persists only marked properties', async () => {
+            let es = createEntitySet();
+
+            const data = { uri: '/component/position', properties: [
+                {name: 'rank', type:'integer'}, 'file',
+                {name: 'notes', type:'string', persist:false }
+            ]};
+
+            await es.register(data);
+
+            let e = es.createEntity();
+            e.Position = {rank: 3, file:'a', notes:'an example'};
+
+            await es.add(e);
+
+            const [eid] = getChanges(es.entChanges, ChangeSetOp.Add);
+
+            e = await es.getEntity(eid);
+
+            assert.isUndefined(e.Position.notes);
+
         });
 
     });
