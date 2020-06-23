@@ -1,11 +1,14 @@
 import { SType, StackError, AsyncInstResult } from "../types";
-import { unpackStackValue, unpackStackValueR } from "../util";
+import { unpackStackValue, unpackStackValueR, stackToString } from "../util";
 import { isObject } from "../../util/is";
 import { isStackValue, QueryStack } from "../stack";
 import Jsonpointer from 'jsonpointer';
 
 
 export async function onPluck(stack: QueryStack): AsyncInstResult {
+
+    // console.log('[onPluck]', stackToString(stack) );
+
     let right = stack.pop();
     let left = stack.pop();
 

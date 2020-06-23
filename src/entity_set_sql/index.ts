@@ -70,6 +70,7 @@ import { isString, isInteger } from "../util/is";
 import { select } from "./query";
 import { EntitySetMem, AddType, AddOptions, RemoveType, ESOptions, EntitySet, EntitySetOptions } from "../entity_set";
 import { StackValue } from "../query/types";
+import { QueryStack } from "../query";
 
 const Log = createLog('EntitySetSQL');
 
@@ -132,8 +133,9 @@ export class EntitySetSQL extends EntitySetMem {
         return new EntitySetSQL(props as any);
     }
 
-    select( query:StackValue[], options ): Promise<StackValue[]> {
-        return select(this, query, options);
+    select(stack:QueryStack, query: StackValue[]): Promise<StackValue[]> {
+        stack.es = this as unknown as EntitySet;
+        return select(stack, query);
     }
 
     async applyUpdates(){

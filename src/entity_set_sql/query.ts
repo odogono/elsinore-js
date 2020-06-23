@@ -51,15 +51,10 @@ class SQLQueryStack extends QueryStack {
  * @param es 
  * @param query 
  */
-export async function select(es: EntitySetSQL, query: StackValue[], options:SelectOptions = {}): Promise<StackValue[]> {
-    let stack = new SQLQueryStack();
-    stack.es = es;
+export async function select(stack:QueryStack, query: StackValue[], options:SelectOptions = {}): Promise<StackValue[]> {
     
-    let parent = options.stack;
-    if (parent !== undefined ) {
-        parent.setChild(stack);
-    }
-
+    stack.setChild();
+    
     // add first pass words
     stack.addWords([
         ['!bf', buildBitfield, SType.List],
@@ -82,9 +77,8 @@ export async function select(es: EntitySetSQL, query: StackValue[], options:Sele
     await stack.pushValues(query);
 
     // reset stack items and words
-    let { items } = stack;
-    stack.items = [];
-    stack.words = {};
+    let items = stack.items;
+    stack.clear();
 
     // Log.debug('[select]', stack );
     // add 2nd pass words
@@ -121,9 +115,11 @@ export async function select(es: EntitySetSQL, query: StackValue[], options:Sele
     // Log.debug('pushing ', items);
     await stack.pushValues(items);
 
-    stack.restoreParent();
+    let result = stack.items;
 
-    return stack.items;
+    stack.restoreParent();
+    
+    return result;
 }
 /*
     and 

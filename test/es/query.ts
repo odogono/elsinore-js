@@ -436,6 +436,13 @@ describe('Query (Mem)', () => {
             // ])
         });
 
+        // it.only('select performs a subquery', async () => {
+        //     const query = `[ 2 2 + ] select`;
+        //     let [,es] = await prepES(undefined, 'todo');
+        //     let result = await es.query( query );
+        //     ilog( result.items );
+        // });
+
         it('returns query results as components', async () => {
             const query = `
             [

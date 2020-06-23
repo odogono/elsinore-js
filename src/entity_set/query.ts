@@ -32,7 +32,7 @@ import { onPluck } from "../query/words/pluck";
 import { onDefine } from "../query/words/define";
 import { ComponentDefId, getDefId, ComponentDef } from "../component_def";
 import { onLogicalFilter, parseFilterQuery } from './filter';
-import { unpackStackValue, unpackStackValueR } from "../query/util";
+import { unpackStackValue, unpackStackValueR, stackToString } from "../query/util";
 import { EntitySetMem } from ".";
 import { compareDates } from '../query/words/util';
 
@@ -52,14 +52,14 @@ export interface SelectOptions {
  * @param es 
  * @param query 
  */
-export async function select(es: EntitySetMem, query: StackValue[], options:SelectOptions = {}): Promise<StackValue[]> {
-    let stack = new ESMemQueryStack();
-    stack.es = es;
+export async function select(stack:QueryStack, query: StackValue[], options:SelectOptions = {}): Promise<StackValue[]> {
+    // let stack = new ESMemQueryStack();
+    // stack.es = es;
     
-    let parent = options.stack;
-    if (parent !== undefined ) {
-        parent.setChild(stack);
-    }
+    // let parent = options.stack;
+    // if (parent !== undefined ) {
+    stack.setChild();
+    // }
 
     // add first pass words
     stack.addWords([
@@ -85,10 +85,13 @@ export async function select(es: EntitySetMem, query: StackValue[], options:Sele
     await stack.pushValues(query);
 
     // reset stack items and words
-    let { items } = stack;
-    stack.items = [];
-    stack.words = {};
+    let items = stack.items;
+    stack.clear();
+    // stack.items = [];
+    // stack.words = {};
 
+
+    // Log.debug('[select]', items );
 
     stack.addWords([
         ['@e', fetchEntity],
@@ -101,20 +104,23 @@ export async function select(es: EntitySetMem, query: StackValue[], options:Sele
 
     // make sure any filter values have a following cmd
     items = items.reduce((result, value, ii, items) => {
+        result.push(value);
         if (value[0] === SType.Filter) {
-            return [...result, value, '!fil'];
+            result.push('!fil');
+            // return [...result, value, '!fil'];
         }
-        return [...result, value];
+        return result;
+        // return [...result, value];
     }, []);
 
-    // Log.debug('pushing ', items);
     await stack.pushValues(items);
-
-    // Log.debug('[select]', stackToString(stack) );
+    
+    let result = stack.items;
+    // Log.debug('pushing ', result);
 
     stack.restoreParent();
-
-    return stack.items;
+    
+    return result;
 }
 
 

@@ -26,126 +26,99 @@ export interface CloneOptions {
 
 let stackId = 0;
 
+interface QueryStackInst {
+    id: number;
+    items: StackValue[];
+    words: Words;
+}
+
+function createInst():QueryStackInst{
+    return {
+        id: ++stackId,
+        items: [],
+        words: {}
+    };
+}
+
 
 export class QueryStack {
-    id: number;
+    
     es?: EntitySet;
-    items: StackValue[] = [];
-    words: Words = {};
-
-    _root: QueryStack;
-    _parent: number;// QueryStack;
-    _child: number; //QueryStack;
-
-    _stacks: Map<number,QueryStack>;
-
-    // the current operating stack
-    // _focus: QueryStack;
-
+    
+    _idx: number = 0;
+    _stacks: QueryStackInst[];
+    
     constructor(stack?: QueryStack) {
-        this.id = ++stackId;
-        this._root = this;
-        // console.log('new stack', this.id, this._root.id);
-        if (stack !== undefined) {
-            this.words = deepExtend(stack.words);
-        }
+        this._stacks = [ createInst() ];
+    }
+
+    get words(): Words {
+        return this._stacks[ this._idx ].words;
+    }
+    get items(): StackValue[] {
+        return this._stacks[ this._idx ].items;
+    }
+
+    setItems(items:StackValue[]):QueryStack {
+        this._stacks[ this._idx ].items = items;
+        return this;
     }
 
     get size(): number {
-        return this.items.length;
-    }
-
-    focus(id:number = this.id): QueryStack {
-        if( this._child !== undefined ){
-            return this._root._stacks.get( this._child ).focus();
-        }
-        // console.log('[focus]', this.id, id, this._root.id);// this._root._stacks);
-        return this._root.id === id ? this : this._root._stacks.get(id);
+        return this._stacks[ this._idx ].items.length;
     }
 
     peek(offset: number = 0): StackValue {
-        const stack = this.focus();
-        return stack.items[stack.items.length - 1 - offset];
+        let items = this.items;
+        // const stack = this.focus();
+        return items[items.length - 1 - offset];
     }
 
-
-    getParent():QueryStack {
-        // console.log('[getParent]', 'parentOf', this.id, this._parent);
-        return this._parent === this._root.id ? this._root : 
-            this._parent !== undefined ? this._root._stacks.get(this._parent) : this;
-    }
-    getChild():QueryStack {
-        return this._child !== undefined ? this._root._stacks.get(this._child) : undefined;
-    }
-
-    setChild(child: QueryStack): QueryStack {
-        let self = this.focus();
-        if( this._root._stacks === undefined ){
-            this._root._stacks = new Map<number,QueryStack>()
+    clear(clearItems:boolean = true, clearWords:boolean = false):QueryStack {
+        if( clearItems ){
+            this._stacks[this._idx].items = [];
         }
-        this._root._stacks.set(child.id, child);
-        child._parent = self.id;
-        self._child = child.id;
-        child._root = this._root;
+        if( clearWords ){
+            this._stacks[this._idx].words = {};
+        }
+        return this;
+    }
+    
+    focus():QueryStack {
+        this._idx = this._stacks.length-1;
+        return this;
+    }
 
-        // child._parent = self;
-        // self._child = child;
-        // child._root = self._root ?? this._root ?? this;
+    focusParent():QueryStack {
+        this._idx = this._idx > 1 ? this._idx -1 : 0;
+        return this;
+    }
 
-        // Log.debug('[setChild]', this.focus().id, 'focus now', printStackLineage(this.focus()) );
+    // focusChild():QueryStack {
+    //     const len = this._stacks.length-1;
+    //     this._idx = this._idx < len ? this._idx + 1 : len;
+    //     return this;
+    // }
+
+    setChild(stack?:QueryStack): QueryStack {
+        let sub = createInst();
+        if( stack !== undefined ){
+            sub.words = deepExtend(stack.words);
+        }
+        this._stacks.push( sub );
+        this._idx = this._stacks.length-1;
+
         return this;
     }
 
     restoreParent(): QueryStack {
-        if( this._parent === undefined ){
+        if( this._stacks.length <= 1 ){
             return this;
         }
-        
-        let parent;
-        if( this._parent === this._root.id ){
-            parent = this._root;
-        } else {
-            // find the parent
-            for( const [id,st] of this._root._stacks ){
-                if( this._parent === id ){
-                    parent = st;
-                    break;
-                }
-            }
-        }
 
-        if( parent !== undefined ){
-            parent._child = undefined;
-            this._parent = undefined;
-            this._root._stacks.delete( this.id );
-        } else {
-            // Log.debug('[restoreParent]', 'no parent for', this.id, this._root._stacks );
-            // throw 'stop';
-        }
+        this._stacks.pop();
+        this._idx = this._stacks.length-1;
 
-        // const root = this._root ?? this;
-        // let child = root;
-        // // find current child
-        // while (child._child !== undefined) {
-        //     child = child._child;
-        // };
-        // let parent = child._parent;
-        // // Log.debug( '[restoreParent]', 'root', root.id );
-        // // Log.debug( '[restoreParent]', 'child', child.id );
-        // // Log.debug( '[restoreParent]', 'parent', parent.id );
-
-        // child._parent = undefined;
-        // parent._child = undefined;
-
-        // let self = this.focus();
-        // if( self._parent === undefined ){ return this; }
-        // self._parent._child = undefined;
-        // self = this.focus();
-        // Log.debug('[restoreParent]', this.id, this.focus().id, 'focus now', printStackLineage(root) );
-        // Log.debug('[restoreParent]', this.id, this.focus().id, 'focus now', printStackLineage(this) );
-        // Log.debug( this );
-        // Log.debug('[restoreParent]', self._parent.id, self.id, 'focus now', printStackLineage(this.focus()) );
-        // throw 'stop';
         return this;
     }
 
@@ -166,12 +139,7 @@ export class QueryStack {
 
         // let doPush = true;
         let [type, word] = value;
-        let stack = this.focus();
-
-        // if( stack === undefined ){
-        //     Log.debug('[push]', stack?.id, `(${this.id})`, this._root.id, this );//, // stack.items );
-        // }
-
+        
         if (type === SType.Value && isString(word)) {
             const len = word.length;
 
@@ -197,14 +165,15 @@ export class QueryStack {
                 value = [SType.Value, word.substring(1)] as any;
             }
             else {
-                let wordStack: QueryStack = stack;
+                // save the current stack
+                let stackIndex = this._idx;
 
                 if (len > 1) {
-                    let up = word.charAt(0) === '^';
+                    // let up = word.charAt(0) === '^';
                     while (word.charAt(0) === '^') {
                         // let st = wordStack.id;
-                        wordStack = wordStack.getParent() ?? wordStack;
-                        // Log.debug('[push]', '^', 'start at', st, wordStack.id  );
+                        this.focusParent();
+                        // Log.debug('[push]', '^', 'start at', stack._idx );
                         word = word.substring(1);
                         value = [type, word];
                     }
@@ -219,17 +188,20 @@ export class QueryStack {
                     const idx = toInteger(word.substring(1));
                     // Log.debug('[push]', '$ pr', word, wordStack.items, wordStack.id);
                     // value = wordStack.peek(idx);
-                    value = wordStack.pop(idx);
+                    value = this.pop(idx);
                     // Log.debug('[push]', '$ po', word, wordStack.items, wordStack.id);
                     // Log.debug('[push]', '$', idx, 'pop', value, stack.id, wordStack.id);
                 }
 
                 else {
                     // Log.debug('[push]', 'word', stack?.id, wordStack?.id );
-                    handler = wordStack.getWord(value);
+                    handler = this.getWord(value);
                     // DLog(stack, '[push]', 'word', stack.id, wordStack.id, value );
                     // Log.debug('[push]', 'word', stack.id, wordStack.id, value, handler );
                 }
+
+                // restore back to original index
+                this._idx = stackIndex;
             }
         }
 
@@ -240,10 +212,10 @@ export class QueryStack {
                 }
                 else {
                     // Log.debug('[push]', 'pre', this.focus().id, printStackLineage(stack) );//, this.focus().items );
-                    let result = handler(stack, value);
+                    let result = handler(this, value);
                     value = isPromise(result) ? await result : result as InstResult;
                     // Log.debug('[push]', 'post', this.focus().id, printStackLineage(stack) );//, this.focus().items );
-                    stack = this.focus();
+                    this.focus();
                 }
                 // if( value ) Log.debug('[push]', value); 
             } catch (err) {
@@ -258,7 +230,7 @@ export class QueryStack {
 
         if (value !== undefined) { // && doPush !== false) {
             // Log.debug('[push]', stack.id, value);
-            stack.items = [...stack.items, value];
+            this.items.push( value );
         }
         // Log.debug('[push]', stack.id, `(${this.id})`, stack.items );
 
@@ -272,7 +244,8 @@ export class QueryStack {
      */
     pushRaw(value: StackValue): QueryStack {
         const stack = this;//.focus();
-        stack.items = [...stack.items, value];
+        // stack.items = [...stack.items, value];
+        stack.items.push(value);
         return stack;
     }
 
@@ -334,7 +307,7 @@ export class QueryStack {
      * @param offset 
      */
     pop(offset: number = 0): StackValue {
-        const stack = this; //this.focus();
+        // const stack = this; //this.focus();
 
         const length = this.items.length;
         const idx = length - 1 - offset;
@@ -342,18 +315,18 @@ export class QueryStack {
             // console.log('[pop]', this);
             throw new StackError('stack underflow');
         }
-        const value = stack.items[idx];
+        const value = this.items[idx];
         let items;
 
 
         if (offset > 0) {
             // Log.debug('[pop]', idx, value );
-            items = stack.items.filter((val, ii) => idx !== ii)
+            items = this.items.filter((val, ii) => idx !== ii)
             // return [{...stack, items }, value];
         } else {
-            items = stack.items.slice(0, -1);
+            items = this.items.slice(0, -1);
         }
-        stack.items = items;
+        this.setItems(items);// = items;
         return value;
     }
 
@@ -365,8 +338,8 @@ export class QueryStack {
      * @param type 
      */
     popOfType(...types: SType[]): StackValue[] {
-        const stack = this; //this.focus();
-        const length = stack.items.length;
+        // const stack = this; //this.focus();
+        const length = this.items.length;
         if (length === 0) {
             return [];
         }
@@ -375,7 +348,7 @@ export class QueryStack {
         let ii = length - 1;
 
         for (ii; ii >= 0; ii--) {
-            const value = stack.items[ii];
+            const value = this.items[ii];
             if (types.indexOf(value[0] as SType) === -1) {
                 break;
             }
@@ -383,7 +356,7 @@ export class QueryStack {
         }
 
         // cut the stack down to size
-        stack.items = stack.items.slice(0, ii + 1);
+        this.setItems( this.items.slice(0, ii + 1) );
 
         return results;
     }
@@ -406,7 +379,8 @@ export class QueryStack {
             //     // console.log('[getWord]', this.words);
             //     // throw 'stop';
             // } else {
-                this.words = { ...this.words, [word]: patterns };
+                this.words[word] = patterns;
+                // this.words = { ...this.words, [word]: patterns };
             // }
         }
 
@@ -447,12 +421,12 @@ export class QueryStack {
     clone(options: CloneOptions = {}): QueryStack {
         let result = new QueryStack();
 
-        if (options.items ?? true) {
-            result.items = deepExtend(this.items);
-        }
-        if (options.words ?? true) {
-            result.words = deepExtend(this.words);
-        }
+        // if (options.items ?? true) {
+        //     result.items = deepExtend(this.items);
+        // }
+        // if (options.words ?? true) {
+        //     result.words = deepExtend(this.words);
+        // }
 
         return result;
     }
@@ -540,25 +514,25 @@ export function isStackValue(value: any): boolean {
 }
 
 
-function printStackLineage(st: QueryStack, result: string = '') {
-    result += String(st.id);
-    let curr = st;
-    let pre = '';
+// function printStackLineage(st: QueryStack, result: string = '') {
+//     result += String(st.id);
+//     let curr = st;
+//     let pre = '';
 
-    while (curr.getParent()) {
-        pre = `${curr._parent} < ` + pre;
-        curr = curr.focus(curr._parent);
-    }
+//     while (curr.getParent()) {
+//         pre = `${curr._parent} < ` + pre;
+//         curr = curr.focus(curr._parent);
+//     }
 
-    curr = st;
-    let post = '';
-    while (curr.getChild()) {
-        post = post + `> ${curr._child}`;
-        curr = curr.getChild();
-    }
+//     curr = st;
+//     let post = '';
+//     while (curr.getChild()) {
+//         post = post + `> ${curr._child}`;
+//         curr = curr.getChild();
+//     }
 
-    return `${pre} (${st.id}) ${post}`;
-}
+//     return `${pre} (${st.id}) ${post}`;
+// }
 
 export interface PushOptions {
     debug?: boolean;

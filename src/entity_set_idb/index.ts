@@ -64,6 +64,7 @@ import { isString, isInteger } from "../util/is";
 import { select } from "./query";
 import { EntitySet, EntitySetMem, ESOptions, AddType, AddOptions, RemoveType, EntitySetOptions } from "../entity_set";
 import { StackValue } from "../query/types";
+import { QueryStack } from "../query";
 
 const Log = createLog('EntitySetIDB');
 
@@ -120,8 +121,9 @@ export class EntitySetIDB extends EntitySetMem {
         return idbCount(store);
     }
 
-    select( query:StackValue[], options ): Promise<StackValue[]> {
-        return select(this, query, options);
+    select(stack:QueryStack, query: StackValue[]): Promise<StackValue[]> {
+        stack.es = this as unknown as EntitySet;
+        return select(stack, query);
     }
 
 

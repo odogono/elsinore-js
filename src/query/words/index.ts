@@ -65,12 +65,13 @@ export async function onSelect<QS extends QueryStack>(stack: QS): AsyncInstResul
     let es: EntitySet = unpackStackValue(left, SType.EntitySet);
     let query = unpackStackValue(right, SType.List, false);
     
-    let result = await es.select(query, { stack:stack });
+    let result = await es.select(stack, query);
 
     if (result) {
         // append output stack
         // stack = { ...stack, items: [...stack.items, ...result] };
-        stack.items = [...stack.items, ...result];
+        // stack.items = [...stack.items, ...result];
+        stack.setItems( stack.items.concat(result) );
     }
 
     return undefined;
@@ -275,7 +276,7 @@ export async function onPrint<QS extends QueryStack>(stack: QS, val: StackValue)
         //     await stack.pushValues( msg[1] );
         // }
         // console.log( '[onPrint]', msg );
-        console.info('[onPrint]', stack.id, unpackStackValueR(msg));
+        console.info('[onPrint]', stack._idx, unpackStackValueR(msg));
     }
     return undefined;
 }
@@ -351,15 +352,10 @@ export function onAdd(stack: QueryStack, [,op]: StackValue): InstResult {
 }
 
 export function onMapOpen(stack: QueryStack): InstResult {
-    let sub = new QueryStack();
+    
     // Log.debug('[onMapOpen]', stack.items);//Object.keys(stack.words));
-    // DLog(stack, '[onMapOpen]', stack.items );
 
-    stack.setChild(sub);
-
-    // sub._parent = stack;
-    // sub._root = stack._root ? stack._root : stack;
-    // Log.debug('[onMapOpen]', {id:sub.id, parent:sub._parent?.id,root:sub._root?.id}, stackToString(stack) );
+    let sub = stack.setChild();
 
     // add something which will interpret each push
     sub.addWords([
@@ -401,13 +397,8 @@ export function onMapClose<QS extends QueryStack>(stack: QS, val: StackValue): I
 }
 
 export function onListOpen(stack: QueryStack): InstResult {
-    let sub = new QueryStack();
-    // sub._parent = stack;
-    // sub._root = stack._root ? stack._root : stack;
-    stack.setChild(sub);
-    // Log.debug('[onListOpen]', {id:sub.id, parent:sub._parent?.id,root:sub._root?.id}, stackToString(stack) );
-    // Log.debug('[onListOpen]', {id:sub.id});
-    // sub.words = {...stack.words};
+    let sub = stack.setChild();
+    
     sub.addWords([
         ['{', onMapOpen],
         ['[', onListOpen],
@@ -419,13 +410,8 @@ export function onListOpen(stack: QueryStack): InstResult {
 }
 
 export function onListClose<QS extends QueryStack>(stack: QS): InstResult {
-    // Log.debug('[onListClose]', {id:stack.id, parent:stack._parent?.id}, stackToString(stack) );
+    // Log.debug('[onListClose]', stack );
     let val: StackValue = [SType.List, stack.items];
-    // stack = stack._parent;
-    // let id = stack.id;
-    // if( id === 3 ){
-    //     Log.debug('[onListClose]', 'was', id, 'is', stack._root );
-    // }
     stack.restoreParent();
     return val;
 }
@@ -449,7 +435,8 @@ export function onValue<QS extends QueryStack>(stack: QS): InstResult {
     if (val[0] === SType.List) {
         value = value.map(v => [Array.isArray(v) ? SType.List : SType.Value, v]);
         // stack = { ...stack, items: [...stack.items, ...value] };
-        stack.items = [...stack.items, ...value];
+        // stack.items = [...stack.items, ...value];
+        stack.items.push( value );
     }
     return undefined;
 }
@@ -510,7 +497,7 @@ export async function onFilter<QS extends QueryStack>(stack: QS): AsyncInstResul
     list = unpackStackValue(list, SType.List);
     fn = unpackStackValue(fn, SType.List);
 
-    let mapStack = new QueryStack(stack);
+    let mapStack = stack.setChild(stack);
     let accum = [];
 
     for (const val of list) {
@@ -524,6 +511,8 @@ export async function onFilter<QS extends QueryStack>(stack: QS): AsyncInstResul
         }
     }
 
+    stack.restoreParent();
+
     return [SType.List, accum];
 }
 
@@ -534,14 +523,17 @@ export async function onMap<QS extends QueryStack>(stack: QS): AsyncInstResult {
     let list = unpackStackValue(left, SType.List);
     let fn = unpackStackValue(right, SType.List);
 
-    let mapStack = new QueryStack(stack);
-
+    let mapStack = stack.setChild(stack);
+    
     for( const val of list ){
         await mapStack.push(val);
         await mapStack.pushValues(fn);
     }
 
-    return [SType.List, mapStack.items];
+    let result = mapStack.items;
+    stack.restoreParent();
+
+    return [SType.List, result];
 }
 
 export async function onReduce<QS extends QueryStack>(stack: QS): AsyncInstResult {
@@ -554,7 +546,7 @@ export async function onReduce<QS extends QueryStack>(stack: QS): AsyncInstResul
     accum = unpackStackValue(accum, SType.Any);
     let fn = unpackStackValue(right, SType.List);
 
-    let mapStack = new QueryStack(stack);
+    let mapStack = stack.setChild(stack);
 
     for( const val of list ){
         await mapStack.push(val);
@@ -563,6 +555,7 @@ export async function onReduce<QS extends QueryStack>(stack: QS): AsyncInstResul
 
         accum = mapStack.pop();
     }
+    stack.restoreParent();
 
     return accum;
 }
@@ -619,7 +612,7 @@ export function onDrop<QS extends QueryStack>(stack: QS): InstResult {
 
 
 export function onClear<QS extends QueryStack>(stack: QS): InstResult {
-    stack.items = [];
+    stack.clear();
     return undefined;
 };
 

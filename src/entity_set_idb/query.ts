@@ -40,14 +40,10 @@ class IDBQueryStack extends QueryStack {
  * @param es 
  * @param query 
  */
-export async function select(es: EntitySetIDB, query: StackValue[], options:SelectOptions = {}): Promise<StackValue[]> {
-    let stack = new IDBQueryStack();
-    stack.es = es;
-
-    let parent = options.stack;
-    if (parent !== undefined ) {
-        parent.setChild(stack);
-    }
+export async function select(stack:QueryStack, query: StackValue[], options:SelectOptions = {}): Promise<StackValue[]> {
+    
+    // stack.es = es;
+    stack.setChild();
 
 
     // add first pass words
@@ -71,9 +67,8 @@ export async function select(es: EntitySetIDB, query: StackValue[], options:Sele
     await stack.pushValues(query);
 
     // reset stack items and words
-    let {items} = stack;
-    stack.items = [];
-    stack.words = {};
+    let items = stack.items;
+    stack.clear();
 
     // Log.debug('[select]', items );
 
@@ -103,12 +98,14 @@ export async function select(es: EntitySetIDB, query: StackValue[], options:Sele
         return [...result,value];
     },[]);
 
-    // Log.debug('pushing ', items);
     await stack.pushValues(items);
+    
+    let result = stack.items;
+    // Log.debug('pushing ', result);
 
     stack.restoreParent();
     
-    return stack.items;
+    return result;
 }
 
 

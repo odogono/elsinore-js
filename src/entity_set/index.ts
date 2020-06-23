@@ -122,7 +122,7 @@ export abstract class EntitySet {
 
     abstract clone();
 
-    abstract select(query: StackValue[], options): Promise<StackValue[]>;
+    abstract select(stack:QueryStack, query: StackValue[]): Promise<StackValue[]>;
 
     abstract size(): Promise<number>;
 
@@ -410,8 +410,9 @@ export class EntitySetMem extends EntitySet {
         return this.entities.size;
     }
 
-    select(query: StackValue[], options): Promise<StackValue[]> {
-        return select(this, query, options);
+    select(stack:QueryStack, query: StackValue[]): Promise<StackValue[]> {
+        stack.es = this as unknown as EntitySet;
+        return select(stack, query);
     }
 
     /**
