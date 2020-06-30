@@ -26,8 +26,7 @@ import {
     isEntity,
     Entity,
     getEntityId,
-    EntityId,
-    EntityList
+    EntityId
 } from "../entity";
 import {
     ChangeSet,
@@ -339,12 +338,12 @@ export class EntitySetSQL extends EntitySetMem {
         return e;
     }
 
-    getEntities(): Promise<EntityList> {
+    getEntities(): Promise<EntityId[]> {
         this.openEntitySet();
 
         let eids = sqlGetEntities(this.db);
 
-        return Promise.resolve(new EntityList(eids));
+        return Promise.resolve(eids);
     }
 
 

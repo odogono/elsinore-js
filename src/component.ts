@@ -1,5 +1,6 @@
 import { Type as DefT, ComponentDefId } from './component_def';
 import { isObject, isString, isInteger } from './util/is';
+import { EntityId } from './entity';
 
 export type ComponentProperties = Map<string, any>;
 
@@ -70,7 +71,7 @@ export function getComponentId( component:Component ): ComponentId {
     return JSON.stringify( [component[EntityT], component[DefT]] );
     // return [component[EntityT], component[DefT]].join(',');
 }
-export const toComponentId = ( eid:number, did:number ) => JSON.stringify([eid,did]);
+export const toComponentId = ( eid:EntityId, did:ComponentDefId ) => JSON.stringify([eid,did]);
 
 export const isComponentId = (val:any) => isString(val);
 
@@ -78,9 +79,8 @@ export const isComponentId = (val:any) => isString(val);
  * Returns the entityId and defId from a ComponentId
  * @param id 
  */
-export function fromComponentId( id:ComponentId ): [number,number] {
+export function fromComponentId( id:ComponentId ): [EntityId,ComponentDefId] {
     return JSON.parse(id);
-    // return id.split(',');
 }
 
 export function getComponentDefId( component:Component ): ComponentDefId {

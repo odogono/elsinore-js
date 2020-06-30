@@ -287,7 +287,7 @@ describe('Query (Mem)', () => {
 
             // ilog( stackToString(stack) );
             let val = stack.pop();
-            assert.equal( val[0], SType.DateTime );
+            assert.equal(val[0], SType.DateTime);
         });
         it('compares dates', async () => {
             let [stack] = await prep(`
@@ -297,15 +297,30 @@ describe('Query (Mem)', () => {
             // empty date for the current datetime
             ~d|2020-06-13T18:26:59.216Z| ~d|| >
             `);
-            while( stack.size > 0 ) {
-                assert.ok( stack.popValue() );
+            while (stack.size > 0) {
+                assert.ok(stack.popValue());
             };
             // assert.equal( stackToString(stack), 'true true true true' );
             // let val = stack.pop();
             // assert.equal( val[0], SType.DateTime );
         });
 
-    })
+    });
+
+    describe('Conditions', () => {
+
+        it.skip('evaluates a boolean condition', async () => {
+            // WHAT to do - should list conditions be evaled?
+            let [stack] = await prep(`
+            [ 2 3 + ] ok define
+            wet ok true cond
+            // wet hot 2 3 == cond
+        `);
+
+            let result = stack.popValue();
+            assert.equal(result, 'hot');
+        })
+    });
 
     it('creates a ComponentDef', async () => {
         let [stack] = await prep(`[ /component/title, [text] ] !d`);
@@ -412,7 +427,7 @@ describe('Query (Mem)', () => {
             `, 'todo');
 
             // ilog(stack.words);
-            let defs = stack.popValue().map( d => d[0] );
+            let defs = stack.popValue().map(d => d[0]);
             assert.deepEqual(defs, [
                 '/component/title',
                 '/component/completed',
@@ -451,12 +466,12 @@ describe('Query (Mem)', () => {
                 @c
             ] select
             `;
-            let [,es] = await prepES(undefined, 'todo');
+            let [, es] = await prepES(undefined, 'todo');
 
             const result = await es.queryEntities(query);
 
-            assert.equal( result[0].Title.text, 'get out of bed' );
-            assert.equal( result[1].id, 101 );
+            assert.equal(result[0].Title.text, 'get out of bed');
+            assert.equal(result[1].id, 101);
         })
 
     });
@@ -533,8 +548,16 @@ describe('Query (Mem)', () => {
 
             assert.deepEqual(
                 result.map(e => bfToValues(e.bitField)),
-                [[1, 2, 3, 4], [1, 2,4], [1, 2,4]]);
+                [[1, 2, 3, 4], [1, 2, 4], [1, 2, 4]]);
         });
+
+        it('fetches all the entities', async () => {
+            let query = `[ all !bf @e ] select`;
+            let [stack] = await prepES(query, 'todo');
+            let result = stack.popValue();
+
+            assert.deepEqual(result.map(e => e.id), [100, 101, 102, 103, 104]);
+        })
 
 
         it('fetches component attributes', async () => {
@@ -650,7 +673,7 @@ describe('Query (Mem)', () => {
             ])
         });
 
-        
+
 
         it('uses multi conditions', async () => {
             let query = `[
@@ -805,7 +828,7 @@ describe('Query (Mem)', () => {
             });
         })
 
-        
+
 
     });
 

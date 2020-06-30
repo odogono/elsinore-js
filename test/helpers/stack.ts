@@ -256,7 +256,7 @@ export function buildQueryStack() {
 // }
 
 // export function serialiseEntitySet(es: EntitySetMem): any[] {
-//     // const list = matchEntitySetEntities(es, createBitfield('all') ) as EntityList;
+//     // const list = matchEntitySetEntities(es, createBitfield('all') );
 //     // return list.entityIds.reduce( (res,eid) => {
 //     //     const e = getEntity(es, eid );
 //     //     const coms = getComponents(e);

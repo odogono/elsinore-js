@@ -27,6 +27,7 @@ import {
     QueryStack,
 } from './stack';
 import { tokenizeString } from "./tokenizer";
+import { onCondition } from "./words/cond";
 export { QueryStack };
 export const parse = (q:string) => tokenizeString(q,{returnValues:true});
 
@@ -113,6 +114,7 @@ export function createStdLibStack( stack?:QueryStack ){
         ['over', onDup, SType.Any],
         ['select', onSelect, SType.EntitySet, SType.List],
         ['spread', onListSpread, SType.List],
+        ['cond', onCondition, SType.Any, SType.Any, SType.Any], // cond, if, else
         ['!d', onComponentDef, SType.Map],
         ['!d', onComponentDef, SType.List],
         ['!d', onComponentDef, SType.Value],

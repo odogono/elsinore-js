@@ -419,7 +419,7 @@ export async function fetchEntity(stack: ESMemQueryStack): AsyncInstResult {
         throw new StackError(`@e unknown type ${type}`)
     }
 
-    let ents = es.getEntitiesMem(eids);
+    let ents = es.getEntitiesByIdMem(eids);
     let result = ents.filter(Boolean).map(e => [SType.Entity, e]);
 
     // let result = [];
@@ -433,7 +433,7 @@ export async function fetchEntity(stack: ESMemQueryStack): AsyncInstResult {
 
 
 
-function matchEntities(es: EntitySetMem, eids: EntityId[], mbf: BitField | 'all'): EntityId[] {
+export function matchEntities(es: EntitySetMem, eids: EntityId[], mbf: BitField | 'all'): EntityId[] {
     let matches: number[] = [];
     const isAll = mbf === 'all' || mbf.isAllSet;// bf.toString() === 'all';
     if (isAll) {
@@ -461,23 +461,6 @@ function matchEntities(es: EntitySetMem, eids: EntityId[], mbf: BitField | 'all'
 
     return matches;
 }
-
-
-
-// function matchEntitiesII(es: EntitySetMem, mbf: BitField): EntityList {
-//     let matches = [];
-//     // let entities = new Map<number,BitField>();
-//     // let {returnEntities, limit} = options;
-//     // limit = limit !== undefined ? limit : Number.MAX_SAFE_INTEGER;
-
-//     const isAll = BitField.isAllSet(mbf);// mbf.toString() === 'all';
-//     for (let [eid, ebf] of es.entities) {
-//         if (isAll || BitField.and(mbf, ebf)) {
-//             matches.push(eid);
-//         }
-//     }
-//     return createEntityList(matches, mbf);
-// }
 
 function ilog(...args) {
     if (process.env.JS_ENV === 'browser') { return; }

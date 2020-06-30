@@ -29,7 +29,6 @@ import {
     Entity,
     getEntityId,
     EntityId,
-    EntityList,
 } from "../entity";
 import { 
     BitField,
@@ -183,13 +182,13 @@ export class EntitySetIDB extends EntitySetMem {
         return e;
     }
 
-    async getEntities(): Promise<EntityList> {
+    async getEntities(): Promise<EntityId[]> {
         await this.openEntitySet();
         const store = this.db.transaction(STORE_ENTITIES, 'readonly').objectStore(STORE_ENTITIES);
     
         let result = await idbGetAllKeys(store);
     
-        return new EntityList(result);
+        return result;
     }
 
 
