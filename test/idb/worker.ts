@@ -2,7 +2,10 @@ if( process.env.JS_ENV !== 'browser' ){
     require('fake-indexeddb/auto');
 }
 import Worker from 'web-worker';
-import { assert } from 'chai';
+
+import { suite } from 'uvu';
+import assert from 'uvu/assert';
+
 import { createLog } from '../../src/util/log';
 
 

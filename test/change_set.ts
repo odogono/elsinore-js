@@ -1,4 +1,6 @@
-import { assert } from 'chai';
+import { suite } from 'uvu';
+import assert from 'uvu/assert';
+
 import { add, update, remove, getChanges, create as createChangeSet, ChangeSetOp } from '../src/entity_set/change_set';
 
 

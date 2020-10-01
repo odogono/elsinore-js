@@ -1,9 +1,12 @@
 if (process.env.JS_ENV !== 'browser') {
     require('fake-indexeddb/auto');
 } else {
-    (mocha.checkLeaks as any)(false);
+    
 }
-import { assert } from 'chai';
+
+import { suite } from 'uvu';
+import assert from 'uvu/assert';
+
 import { createLog } from '../../src/util/log';
 import { tokenizeString } from '../../src/query/tokenizer';
 import {
@@ -84,6 +87,33 @@ describe('Entity Set (IndexedDB)', () => {
 
             assert.isUndefined(e.Position.notes);
 
+        });
+
+        it('registers same uri, but different properties', async () => {
+            // in effect, the def is overwritten, but existing components are retained
+
+            let es = createEntitySet();
+            await es.register("/component/position");
+
+            let e = es.createEntity();
+            e.Position = {};
+            await es.add( e );
+
+            // no-op
+            await es.register("/component/position");
+            
+            // different, so registered
+            await es.register({uri: '/component/position', properties: ['rank', 'file']});
+            
+            e = es.createEntity();
+            e.Position = {rank:'2', file:'b'};
+            await es.add(e);
+
+            assert.equal( await es.size(), 2 );
+
+            const defs = await es.getComponentDefs();
+
+            assert.lengthOf( defs, 2 );
         });
 
     });

@@ -1,4 +1,5 @@
-import { assert } from 'chai';
+import { suite } from 'uvu';
+import assert from 'uvu/assert';
 
 import {
     EntitySetSQL
@@ -32,10 +33,10 @@ const Log = createLog('TestEntitySetSQL');
 // let registry:ComponentRegistry;
 // let stack:QueryStack;
 
-const liveDB = { uuid: 'test.sqlite', isMemory: false };
+const liveDB = { path: 'test.sqlite', isMemory: false };
 const testDB = { uuid: 'TEST-1', isMemory: true };
 
-const createEntitySet = () => new EntitySetSQL(testDB);
+const createEntitySet = () => new EntitySetSQL(liveDB);
 
 describe('Entity Set (SQL)', () => {
 
@@ -93,6 +94,33 @@ describe('Entity Set (SQL)', () => {
 
             assert.isUndefined(e.Position.notes);
 
+        });
+
+        it('registers same uri, but different properties', async () => {
+            // in effect, the def is overwritten, but existing components are retained
+
+            let es = createEntitySet();
+            await es.register("/component/position");
+
+            let e = es.createEntity();
+            e.Position = {};
+            await es.add( e );
+
+            // no-op
+            await es.register("/component/position");
+            
+            // different, so registered
+            await es.register({uri: '/component/position', properties: ['rank', 'file']});
+            
+            e = es.createEntity();
+            e.Position = {rank:'2', file:'b'};
+            await es.add(e);
+
+            assert.equal( await es.size(), 2 );
+
+            const defs = await es.getComponentDefs();
+
+            assert.lengthOf( defs, 2 );
         });
 
     });

@@ -1,7 +1,10 @@
 // import FlakeId63 from 'flake-idgen-63';
 import intformat from 'biguint-format';
 
-import { assert } from 'chai';
+import { suite } from 'uvu';
+import assert from 'uvu/assert';
+
+const test = suite('Snowflake ids');
 
 /**
  * flake53 (https://github.com/cablehead/python-fity3)
@@ -26,162 +29,164 @@ import { assert } from 'chai';
  *
  */
 
-describe('Snowflake ids', () => {
-    // it('flakeId63', () => {
-    //     const flakeIdGen63 = new FlakeId63({
-    //         processId: 15, // 0 - 15
-    //         worker: 31 // 0 - 31
-    //     });
 
-    //     const flake = flakeIdGen63.next();
+// it('flakeId63', () => {
+//     const flakeIdGen63 = new FlakeId63({
+//         processId: 15, // 0 - 15
+//         worker: 31 // 0 - 31
+//     });
 
-    //     console.info([...flake]);
-    //     console.info(intformat(flake, 'dec'));
-    //     console.info(intformat(flake, 'hex', { groupsize: 2 }));
-    //     console.info(intformat(flake, 'bin', { groupsize: 4 }));
+//     const flake = flakeIdGen63.next();
 
-    //     // 3262265848503439360
-    //     // 3262267454246588416
+//     console.info([...flake]);
+//     console.info(intformat(flake, 'dec'));
+//     console.info(intformat(flake, 'hex', { groupsize: 2 }));
+//     console.info(intformat(flake, 'bin', { groupsize: 4 }));
 
-    //     console.info(parseFlake63(int64_to_str([...flake])));
-    // });
+//     // 3262265848503439360
+//     // 3262267454246588416
 
-    it('flake parsing', () => {
-        const flake = new Uint8Array([45, 69, 229, 129, 70, 239, 144, 0]);
+//     console.info(parseFlake63(int64_to_str([...flake])));
+// });
 
-        const processId = (flake[5] >> 1) & 0xf;
+test('flake parsing', () => {
+    const flake = new Uint8Array([45, 69, 229, 129, 70, 239, 144, 0]);
 
-        assert.equal(processId, 7);
+    const processId = (flake[5] >> 1) & 0xf;
 
-        const worker = ((flake[5] & 0x1) << 4) | ((flake[6] & 0xf0) >> 4);
+    assert.equal(processId, 7);
 
-        assert.equal(worker, 25);
+    const worker = ((flake[5] & 0x1) << 4) | ((flake[6] & 0xf0) >> 4);
 
-        const counter = ((flake[6] & 0xf) << 8) | flake[7];
+    assert.equal(worker, 25);
 
-        assert.equal(counter, 0);
+    const counter = ((flake[6] & 0xf) << 8) | flake[7];
 
-        // const firstSixBytes = 49778226448111;
-        const firstSixBytes =
-            lshift(flake[0], 40) +
-            lshift(flake[1], 32) +
-            lshift(flake[2], 24) +
-            lshift(flake[3], 16) +
-            lshift(flake[4], 8) +
-            flake[5];
-        const timestamp = rshift(firstSixBytes, 5); // shift by 5
+    assert.equal(counter, 0);
 
-        assert.equal(timestamp, 1555569576503);
+    // const firstSixBytes = 49778226448111;
+    const firstSixBytes =
+        lshift(flake[0], 40) +
+        lshift(flake[1], 32) +
+        lshift(flake[2], 24) +
+        lshift(flake[3], 16) +
+        lshift(flake[4], 8) +
+        flake[5];
+    const timestamp = rshift(firstSixBytes, 5); // shift by 5
 
-        // console.log( flake.length );
-        // console.info(  _arrayBufferToBase64(flake) );//  intformat(flake, 'bin', { groupsize: 4 }));
+    assert.equal(timestamp, 1555569576503);
 
-        // (( flake[5] & 0xE0) >> 5)
-    });
+    // console.log( flake.length );
+    // console.info(  _arrayBufferToBase64(flake) );//  intformat(flake, 'bin', { groupsize: 4 }));
 
-    it('flake parse', () => {
-        // see also https://github.com/negezor/snowyflake - uses BigInt though
-        const flake = new Uint8Array([45, 70, 0, 166, 181, 191, 240, 0]);
-        const view = new DataView(flake.buffer);
-
-        // console.info( getBigUint64(view) );
-        // console.info( getUint64(view) );
-        // console.info( int64_to_str( [...flake] ) );
-        // 3262295696090329088
-        // 3262295696090329088n
-        // 3262295696090329000
-
-        assert.equal(int64_to_str([...flake]), '3262295696090329088');
-
-        assert.deepEqual(parseFlake63('3262295696090329088'), {
-            counter: 0,
-            processId: 15,
-            date: new Date('2019-04-18T10:36:48.941Z'),
-            id: 511,
-            timestamp: 1555583808941,
-            worker: 31
-        });
-
-        assert.deepEqual(hexToInt64Array('0x2D4600A6B5BFF000'), [
-            45,
-            70,
-            0,
-            166,
-            181,
-            191,
-            240,
-            0
-        ]);
-        assert.deepEqual(stringToInt64Array('3262295696090329088'), [
-            45,
-            70,
-            0,
-            166,
-            181,
-            191,
-            240,
-            0
-        ]);
-
-        const descr = {
-            counter: 1459,
-            processId: 6,
-            worker: 31,
-            timestamp: 1555594808509
-        };
-
-        assert.equal( buildFlake63(descr), '3262318763855181235');
-
-        // ((data[6] & 0xF) << 8) | data[7];
-        assert.deepEqual(parseFlake63('3262318763855181235', 'arr'), [
-            45,
-            70,
-            21,
-            161,
-            151,
-            173,
-            245,
-            179
-        ]);
-
-        assert.deepEqual(parseFlake63('3262318763855181235'), {
-            counter: 1459,
-            processId: 6,
-            date: new Date('2019-04-18T13:40:08.509Z'),
-            id: 223,
-            timestamp: 1555594808509,
-            worker: 31
-        });
-
-        // expect( parseFlake63('3262318763855061171', 'bin') ).toEqual( '' );
-    });
-
-    it('flake53', () => {
-        const data = {
-            timestamp: 1555608701611,
-            workerId: 14,
-            sequence: 10,
-            epoch: TwitterEpoch
-        };
-
-        assert.equal(buildFlake53(data), 582606444998890);
-
-        assert.deepEqual(parseFlake53(582606444998890, data.epoch), data);
-
-        assert.isOk(Number.isSafeInteger(582606444998890) );
-
-        assert.deepEqual(stringToInt64Array('582606444998890'), [
-            0,
-            2,
-            17,
-            224,
-            162,
-            50,
-            176,
-            234
-        ]);
-    });
+    // (( flake[5] & 0xE0) >> 5)
 });
+
+test('flake parse', () => {
+    // see also https://github.com/negezor/snowyflake - uses BigInt though
+    const flake = new Uint8Array([45, 70, 0, 166, 181, 191, 240, 0]);
+    const view = new DataView(flake.buffer);
+
+    // console.info( getBigUint64(view) );
+    // console.info( getUint64(view) );
+    // console.info( int64_to_str( [...flake] ) );
+    // 3262295696090329088
+    // 3262295696090329088n
+    // 3262295696090329000
+
+    assert.equal(int64_to_str([...flake]), '3262295696090329088');
+
+    assert.equal(parseFlake63('3262295696090329088'), {
+        counter: 0,
+        processId: 15,
+        date: new Date('2019-04-18T10:36:48.941Z'),
+        id: 511,
+        timestamp: 1555583808941,
+        worker: 31
+    });
+
+    assert.equal(hexToInt64Array('0x2D4600A6B5BFF000'), [
+        45,
+        70,
+        0,
+        166,
+        181,
+        191,
+        240,
+        0
+    ]);
+    assert.equal(stringToInt64Array('3262295696090329088'), [
+        45,
+        70,
+        0,
+        166,
+        181,
+        191,
+        240,
+        0
+    ]);
+
+    const descr = {
+        counter: 1459,
+        processId: 6,
+        worker: 31,
+        timestamp: 1555594808509
+    };
+
+    assert.equal(buildFlake63(descr), '3262318763855181235');
+
+    // ((data[6] & 0xF) << 8) | data[7];
+    assert.equal(parseFlake63('3262318763855181235', 'arr'), [
+        45,
+        70,
+        21,
+        161,
+        151,
+        173,
+        245,
+        179
+    ]);
+
+    assert.equal(parseFlake63('3262318763855181235'), {
+        counter: 1459,
+        processId: 6,
+        date: new Date('2019-04-18T13:40:08.509Z'),
+        id: 223,
+        timestamp: 1555594808509,
+        worker: 31
+    });
+
+    // expect( parseFlake63('3262318763855061171', 'bin') ).toEqual( '' );
+});
+
+test('flake53', () => {
+    const data = {
+        timestamp: 1555608701611,
+        workerId: 14,
+        sequence: 10,
+        epoch: TwitterEpoch
+    };
+
+    assert.equal(buildFlake53(data), 582606444998890);
+
+    assert.equal(parseFlake53(582606444998890, data.epoch), data);
+
+    assert.ok(Number.isSafeInteger(582606444998890));
+
+    assert.equal(stringToInt64Array('582606444998890'), [
+        0,
+        2,
+        17,
+        224,
+        162,
+        50,
+        176,
+        234
+    ]);
+});
+
+
+test.run();
 
 const TwitterEpoch: number = 1413370800000;
 const Epoch: number = 1546333200000;
@@ -231,7 +236,7 @@ function parseFlake53(
 ): Flake53Params {
     return {
         timestamp:
-            rshift(flake53,  Flake53TimestampLeftShift) +
+            rshift(flake53, Flake53TimestampLeftShift) +
             epoch,
         workerId: rshift(flake53, Flake53SequenceBits) & 0xff,
         sequence: flake53 & 0xf,
@@ -240,7 +245,7 @@ function parseFlake53(
 }
 
 // https://gist.github.com/lttlrck/4129238
-function hexToInt64Array( str:string) {
+function hexToInt64Array(str: string) {
     let result = new Array(8);
 
     let hiStr = (str + '').replace(/^0x/, '');
@@ -259,7 +264,7 @@ function hexToInt64Array( str:string) {
     return result;
 }
 
-function stringToInt64Array(str:string) {
+function stringToInt64Array(str: string) {
     // because i am lame and cant find a direct means
     // of converting a dec string, i convert to hex
     // first
@@ -311,8 +316,8 @@ function parseToDigitsArray(str, base) {
 // Returns a*x, where x is an array of decimal digits and a is an ordinary
 // JavaScript number. base is the number base of the array x.
 function multiplyByNumber(num, x, base) {
-    if (num < 0){ return null; }
-    if (num === 0){ return []; }
+    if (num < 0) { return null; }
+    if (num === 0) { return []; }
 
     let result = [];
     let power = x;
@@ -442,7 +447,7 @@ function buildFlake63({
     let accum = rshift(timestamp, 42 - 7);
     result[0] = (reservedBit << 7) | (accum & 0x7f);
 
-    accum = rshift( timestamp, 42 - 7 - 8);
+    accum = rshift(timestamp, 42 - 7 - 8);
     result[1] = accum & 0xff;
 
     accum = rshift(timestamp, 42 - 7 - 8 - 8);
@@ -513,7 +518,7 @@ function lshift(num, bits) {
 }
 
 function rshift(num, bits) {
-    return Math.floor( num / Math.pow(2, bits) );
+    return Math.floor(num / Math.pow(2, bits));
 }
 
 // const strBin = str => parseInt(str, 2);

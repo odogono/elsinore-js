@@ -1,4 +1,6 @@
-import { assert } from 'chai';
+import { suite } from 'uvu';
+import assert from 'uvu/assert';
+
 import {
     BitField,
     create,

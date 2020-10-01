@@ -1,4 +1,6 @@
-import { assert } from 'chai';
+import { suite } from 'uvu';
+import assert from 'uvu/assert';
+
 import { createLog } from '../../src/util/log';
 import { tokenize, tokenizeString } from '../../src/query/tokenizer';
 import * as Tokenizer from '../../src/query/tokenizer';

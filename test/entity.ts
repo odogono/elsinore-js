@@ -1,8 +1,7 @@
-import { assert } from 'chai';
+import { suite } from 'uvu';
+import assert from 'uvu/assert';
 
-describe('Entity', () => {
+const test = suite('Entity');
 
-    
-    
 
-});
+test.run();
