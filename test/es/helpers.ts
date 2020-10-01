@@ -42,6 +42,8 @@ export {
 } from '../../src/query/types';
 export { isComponentDef, hash as hashDef, getDefId, Type } from '../../src/component_def';
 
+export { printAll, printEntity } from '../../src/util/print';
+
 
 export function buildComponents( es:EntitySet, data:any[] ):Component[] {
     return data.map( dd => {

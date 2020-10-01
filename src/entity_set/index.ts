@@ -95,6 +95,7 @@ export type AddType = Entity | Component | OrphanComponent | AddArrayType | Enti
 export type RemoveType = ComponentId | Entity | Component | EntitySetMem;
 
 
+let workerIdBase = 0;
 
 export abstract class EntitySet {
     isEntitySet: boolean = true;
@@ -111,7 +112,12 @@ export abstract class EntitySet {
     comUpdates = new Map<ComponentId, any>();
     entUpdates = new Map<number, BitField>();
 
-    eidSeq: EntityId = 0;
+    // to slightly reduce the chance of eid collision, we randomise
+    // the sequence
+    eidSeq: EntityId = Math.random() * 255;
+
+    // by default, make sure the workerId is incremented
+    workerId: number = workerIdBase++;
 
     // for generation of entityids
     readonly eidEpoch: number = 1577836800000; // 2020-01-01T00:00:00.000Z
@@ -221,7 +227,8 @@ export abstract class EntitySet {
     }
 
     createEntityId() {
-        return buildFlake53({ timestamp: Date.now(), workerId: 0, epoch: this.eidEpoch, sequence: this.eidSeq++ });
+        const id = buildFlake53({ timestamp: Date.now(), workerId: this.workerId, epoch: this.eidEpoch, sequence: this.eidSeq++ });
+        return id;
     }
 
     createComponent(defId: (string | number | ComponentDef), attributes = {}): Component {
@@ -343,7 +350,6 @@ export abstract class EntitySet {
 
         // Log.debug('[resolveComponentDefAttribute]', def, attrName );
         return [bf, prop ? attrName : undefined];
-
     }
 
 
@@ -497,7 +503,9 @@ export class EntitySetMem extends EntitySet {
                 // }
                 didTable.set(getDefId(def),getDefId(rdef));
             }
+
             // console.log('[add][es]', 'convert', didTable);
+            // console.log('[add][es]', 'convert', es.components);
 
             // rebuild each of the sender components altering their
             // def id

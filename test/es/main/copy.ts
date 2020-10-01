@@ -18,6 +18,7 @@ import {
     isEntity,
     Log,
     OrphanComponent,
+    printAll,
 } from '../helpers';
 import { assertHasComponents } from '../../helpers/assert';
 
@@ -64,18 +65,25 @@ test('transfers components to a foreign es', async () => {
         {uri:'/component/channel', name:'#off-topic', isOpen:true },
     ]
     coms = buildComponents(es2, data);
-    // Log.debug( coms );
+    
     await es2.add(coms);
-    // Log.debug( es2 );
+    // console.log('\nes2');
+    // printAll( es2 );
 
-    // Log.debug(es1);
-
     
+    // console.log('\n>---');
+    await es2.add(es1, {debug:true});
     
-    await es2.add(es1);
-    
+    // console.log('\nes1');
+    // printAll( es1 );
+    // console.log('\nes2');
+    // printAll( es2 );
     // Log.debug(es2);
 
+    // Log.debug('[TF]', 'es1 size', await es1.size() );
+    // Log.debug('[TF]', 'es2 size', await es2.size() );
+
+    // two entities, because the components have different signatures
     assert.equal( await es2.size(), 2 );
 });
 
