@@ -19,6 +19,7 @@ export async function onPluck(stack: QueryStack): AsyncInstResult {
         list = [[SType.Map, list]];
     }
 
+    // console.log('[onPluck]', {key}, {list});
 
     let out:any[] = [];
     if (Array.isArray(key)) {
@@ -34,7 +35,7 @@ export async function onPluck(stack: QueryStack): AsyncInstResult {
 
             let result = {};
             for( const ptr of key ){
-                // console.log('set', ptr, Jsonpointer.get(obj,ptr) );
+                // console.log('[onPluck]', 'set', ptr, obj, Jsonpointer.get(obj,ptr) );
                 Jsonpointer.set(result, ptr, Jsonpointer.get(obj,ptr) );
                 // console.log('set', result);
             }
@@ -52,8 +53,13 @@ export async function onPluck(stack: QueryStack): AsyncInstResult {
             if (!isObject(obj)) {
                 throw new StackError(`expected map, got ${it[0]}`);
             }
-            let val = Jsonpointer.get(obj,key);// obj[key];
+            let val = Jsonpointer.get(obj,key);
+            // console.log('[onPluck]', 'get', key, obj, val );
             out.push( isStackValue(val) ? val : [SType.Value, val] );
+        }
+
+        if( out.length === 1 ){
+            return out[0];
         }
     }
 
