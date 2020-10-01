@@ -4,7 +4,7 @@
         "esModuleInterop": true,
         "downlevelIteration": true,
         "baseUrl": ".",
-        "module": "esnext",
+        "module": "commonjs",
         "moduleResolution": "node",
         "lib": ["es2018", "es2019", "es2020", "esnext", "dom"],
         "target": "es2018",

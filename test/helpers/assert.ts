@@ -1,4 +1,4 @@
-import { assert } from 'chai';
+import assert from 'uvu/assert';
 
 import { Entity } from '../../src/entity';
 import{ getComponentDefId } from '../../src/component';
@@ -18,7 +18,7 @@ export function assertIncludesComponents<ES extends EntitySet>(es:ES, e:Entity, 
         const com = e.getComponent(did );
         
         if( com === undefined ){
-            assert.fail(`missing component ${dids[ii]} on entity`);
+            throw new Error(`missing component ${dids[ii]} on entity`);
         }
     })
 }
@@ -28,13 +28,13 @@ export function assertHasComponents<ES extends EntitySet>(es:ES, e:Entity, dids:
     
     bfToValues(bf).forEach( (did,ii) => {
         // if( def === undefined ){
-        //     assert.fail(`unknown component def ${dids[ii]}`);
+        //     throw new Error(`unknown component def ${dids[ii]}`);
         //     return;
         // }
         const com = e.getComponent(did );
         
         if( com === undefined ){
-            assert.fail(`missing component ${dids[ii]} on entity`);
+            throw new Error(`missing component ${dids[ii]} on entity`);
         }
     })
     
@@ -44,7 +44,7 @@ export function assertHasComponents<ES extends EntitySet>(es:ES, e:Entity, dids:
 
         if( !bfGet(bf,did) ){
         // if( defs.find( def => getDefId(def) === did ) === undefined ){
-            assert.fail(`entity has component ${def.uri}`);
+            throw new Error(`entity has component ${def.uri}`);
         }
     }
 }
