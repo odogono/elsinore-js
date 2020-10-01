@@ -15,7 +15,10 @@ import {
     count as bfCount,
     and as bfAnd,
     or as bfOr,
-    toValues as bfToValues
+    toValues as bfToValues,
+    TYPE_AND,
+    TYPE_OR,
+    TYPE_NOT
 } from "../util/bitfield";
 import {
     isStackValue,
@@ -273,8 +276,8 @@ export function fetchComponents(stack: ESMemQueryStack): InstResult {
         let from = stack.pop();
 
         if (from[0] === SType.Entity) {
-
             eids = [unpackStackValueR(from)];
+            // Log.debug('[fetchComponent]', 'fetching from entity', eids);
 
         } else if (from[0] === SType.List) {
             // Log.debug('[fetchComponent]', from[1]);          
@@ -436,13 +439,20 @@ export async function fetchEntity(stack: ESMemQueryStack): AsyncInstResult {
 export function matchEntities(es: EntitySetMem, eids: EntityId[], mbf: BitField | 'all'): EntityId[] {
     let matches: number[] = [];
     const isAll = mbf === 'all' || mbf.isAllSet;// bf.toString() === 'all';
+    const type = isAll ? TYPE_AND : (mbf as BitField).type;
+    let cmpFn = bfAnd;
+    if( type === TYPE_OR ){
+        cmpFn = bfOr;
+    } else if( type === TYPE_NOT ){
+        // cmpFn = bfNot;
+    }
     if (isAll) {
         return eids !== undefined ? eids : Array.from(es.entities.keys());
     }
     if (eids === undefined) {
         // let es = from as EntitySetMem;
         for (let [eid, ebf] of es.entities) {
-            if (bfAnd(mbf as BitField, ebf)) {
+            if (cmpFn(mbf as BitField, ebf)) {
                 matches.push(eid);
             }
         }
@@ -450,7 +460,7 @@ export function matchEntities(es: EntitySetMem, eids: EntityId[], mbf: BitField 
         for (let ii = 0; ii < eids.length; ii++) {
             let eid = eids[ii];
             let ebf = es.entities.get(eid);
-            if (bfAnd(mbf as BitField, ebf)) {
+            if (cmpFn(mbf as BitField, ebf)) {
                 matches.push(eid);
             }
         }

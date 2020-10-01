@@ -26,7 +26,11 @@ export function hash /*Fnv32a*/(str: any, asString: boolean = true, seed: number
 
     if (asString) {
         // Convert to 8 digit hex string
-        return ('0000000' + hval.toString(16)).substr(-8);
+        return hashToString(hval);
     }
     return hval;
+}
+
+export function hashToString(val:number){
+    return ('0000000' + val.toString(16)).substr(-8);
 }

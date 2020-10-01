@@ -70,7 +70,6 @@ const Log = createLog('EntitySetIDB');
 
 export interface ComponentDefIDB extends ComponentDef {
     tblName?: string;
-    hash?: number;
 }
 
 
@@ -438,19 +437,25 @@ export class EntitySetIDB extends EntitySetMem {
         const tx = this.db.transaction(STORE_COMPONENT_DEFS, 'readwrite');
         const store = tx.objectStore(STORE_COMPONENT_DEFS);
     
+        let def:ComponentDef = createComponentDef(0, value);
+        const existing = this.getByHash(def.hash);
+
+        if( existing !== undefined ){
+            return existing;
+        }
+
         let did = await idbLastKey( store );
         did = did === undefined ? 1 : did + 1;
-        
-        let def = createComponentDef( did, value );
-        // Log.debug('[register]', did, def );
+
+        def = createComponentDef( did, value );
         let record = defToObject( def );
-        let hash = hashDef( def );
-    
-        await idbPut( store, {...record, '_hash':hash} );
+        // Log.debug('[register]', did, record );
+        
+        await idbPut( store, {...record, '_hash':def.hash} );
     
         this.componentDefs[did-1] = def;
         this.byUri.set( def.uri, did );
-        this.byHash.set( hash, did );
+        this.byHash.set( def.hash, did );
     
     
         return def;

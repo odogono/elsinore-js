@@ -33,6 +33,7 @@ import {
     getProperty,
     getDefId,
     isComponentDef,
+    toObject as defToObject
 } from "../component_def";
 import {
     Entity,
@@ -74,10 +75,15 @@ export function isEntitySet(value: any): boolean {
     return isObject(value) && value.isEntitySet === true;
 }
 
+export function isEntitySetMem(value: any): boolean {
+    return isObject(value) && value.isEntitySetMem === true;
+}
+
 export interface EntitySetOptions {
     readDefs?: boolean;
     debug?: boolean;
     eidEpoch?: number;
+    uuid?: string;
 }
 
 export type ResolveComponentDefIdResult = [Component, string][] | [BitField, string][];
@@ -85,8 +91,8 @@ export type ResolveComponentDefIdResult = [Component, string][] | [BitField, str
 export type ResolveDefIds = string | string[] | number | number[];
 
 export type AddArrayType = (Entity | Component)[];// Entity[] | Component[];
-export type AddType = Entity | Component | OrphanComponent | AddArrayType;
-export type RemoveType = ComponentId | Entity | Component;
+export type AddType = Entity | Component | OrphanComponent | AddArrayType | EntitySetMem;
+export type RemoveType = ComponentId | Entity | Component | EntitySetMem;
 
 
 
@@ -135,6 +141,8 @@ export abstract class EntitySet {
 
     abstract removeComponent(item: RemoveType, options?: AddOptions): Promise<EntitySet>;
 
+    abstract removeComponents( items: RemoveType[], options:AddOptions):Promise<EntitySet>;
+
     async query(q: string, options: QueryOptions = {}): Promise<QueryStack> {
         const reset = options.reset ?? false;
         let values: StackValue[] = options.values ?? [];
@@ -156,7 +164,7 @@ export abstract class EntitySet {
      * @param q 
      * @param options 
      */
-    async queryEntities(q: string, options: QueryOptions = {}) {
+    async queryEntities(q: string, options: QueryOptions = {}):Promise<Entity[]> {
         const stack = await this.query(q, options);
         const value = stack.pop();
         let result: Entity[] = [];
@@ -280,7 +288,8 @@ export abstract class EntitySet {
 
         const existing = this.getByHash(hash);
         if (existing !== undefined) {
-            throw new Error(`component definition already exists (${existing[DefT]}/${existing.uri})`);
+            // throw new Error(`component definition already exists (${existing[DefT]}/${existing.uri})`);
+            return existing;
         }
 
         // seems legit, add it
@@ -438,7 +447,6 @@ export class EntitySetMem extends EntitySet {
 
         const { debug } = options;
 
-
         if (Array.isArray(item)) {
 
             let initial: [Entity[], Component[]] = [[], []];
@@ -469,6 +477,41 @@ export class EntitySetMem extends EntitySet {
             // if( debug ){ console.log('add', e)}
             this.markRemoveComponents(e.id);
             await this.addComponents(e.getComponents());
+        }
+        else if( isEntitySetMem(item) ){
+            let es = item as EntitySetMem;
+            // apply defs
+            let defs = await es.getComponentDefs();
+            let didTable = new Map<ComponentDefId,ComponentDefId>();
+
+            
+            // register sender defs and record their ids
+            for( let ii=0,len=defs.length;ii<len;ii++ ){
+                let def = defs[ii];
+                await this.register(def);
+                let rdef = this.getByHash(def.hash);
+                // let rr = this.getByUri(def.uri);
+                // if( rdef === undefined ){
+                    // console.log('[add][es]', 'convert', def.uri, def.hash, defToObject(rr) );
+                    // console.log( defToObject(def) );
+                // }
+                didTable.set(getDefId(def),getDefId(rdef));
+            }
+            // console.log('[add][es]', 'convert', didTable);
+
+            // rebuild each of the sender components altering their
+            // def id
+            let coms:Component[] = [];
+            for( const [cid,com] of es.components ){
+                let {'@d':did, ...rest} = com;
+                did = didTable.get(did);
+                coms.push( {'@d':did, ...rest} );
+            }
+
+            // console.log('[add][es]', 'convert', coms);
+            await this.addComponents( coms );
+            // build a lookup of src dids to target dids
+            // await this.addComponents( Array.from(es.components.values()) );
         }
 
         this.applyRemoveChanges();
@@ -559,18 +602,6 @@ export class EntitySetMem extends EntitySet {
 
     async removeComponent(item: RemoveType, options: AddOptions = {}): Promise<EntitySet> {
         return this.removeComponents( [item], options );
-        // if (options.retain !== true) {
-        //     this.clearChanges();
-        // }
-
-        // let cid = isComponentId(item) ? item as ComponentId : isComponent(item) ? getComponentId(item as Component) : undefined;
-        // if (cid === undefined) {
-        //     return this;
-        // }
-        // this.markComponentRemove(cid);
-
-        // // Log.debug('[removeComponent]', cid );
-        // return this.applyRemoveChanges();
     }
 
 
@@ -722,7 +753,7 @@ export class EntitySetMem extends EntitySet {
      * @param mbf 
      * @param cb 
      */
-    findComponent(mbf:BitField, cb:(com:Component,eid:EntityId,did:ComponentDefId)=>boolean){
+    findComponent(mbf:BitField, cb:(com:Component,eid:EntityId,did:ComponentDefId)=>boolean):Component {
         for( let [cid, com] of this.components ){
             const [eid,did] = fromComponentId(cid);
             if( mbf.isAllSet || bfGet(mbf,did) === true ){

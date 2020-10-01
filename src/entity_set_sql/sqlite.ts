@@ -32,6 +32,7 @@ import { Component, toComponentId } from '../component';
 import { SType } from '../query/types';
 import { isBoolean, isRegex, isDate, isValidDate } from '../util/is';
 import { compareDates } from '../query/words/util';
+import { hashToString } from '../util/hash';
 
 const Log = createLog('Sqlite');
 
@@ -71,10 +72,10 @@ export function sqlClear(name: string): Promise<boolean> {
     return Promise.resolve(true);
 }
 
-export function sqlOpen(name: string, options: OpenOptions): SqlRef {
+export function sqlOpen(path: string, options: OpenOptions): SqlRef {
     const isMemory = options.isMemory ?? true;
     const { verbose } = options;
-    const db = new BetterSqlite3(isMemory ? ":memory:" : name, { verbose });
+    const db = new BetterSqlite3(isMemory ? ":memory:" : path, { verbose });
 
     // define our regexp function - so nice!
     db.function('regexp', { deterministic: true }, (regex, val) => {
@@ -177,9 +178,9 @@ export function registerEntitySet(ref: SqlRef, es: EntitySetSQL, options = {}) {
 }
 
 
-export function sqlInsertDef(ref: SqlRef, def: ComponentDef): ComponentDefSQL {
+export function sqlInsertDef(ref: SqlRef, def: ComponentDef): ComponentDef {
     const { db } = ref;
-    const hash = defHash(def);
+    const hash = def.hash;// defHash(def);
     const schema = defToObject(def, false);
     let stmt = db.prepare('INSERT INTO tbl_component_def (uri,hash,schema) VALUES (?,?,?)');
 
@@ -194,9 +195,9 @@ export function sqlInsertDef(ref: SqlRef, def: ComponentDef): ComponentDefSQL {
 
     let sdef = createComponentDef(did, schema) as ComponentDefSQL;
     sdef.tblName = tblName;
-    sdef.hash = hash;
+    // sdef.hash = hash;
 
-    return sdef;
+    return sdef as ComponentDef;
 }
 
 export function sqlUpdateEntity(ref: SqlRef, e: Entity): Entity {
@@ -732,7 +733,7 @@ function componentRowToComponent(did, row): Component {
 }
 
 function defToTbl(def: ComponentDef) {
-    return 'tbl' + def.uri.split('/').join('_');
+    return 'tbl' + def.uri.split('/').join('_') + '_' + hashToString(def.hash);
 }
 function getDefColumns(def: ComponentDef) {
     let properties = def.properties || [];
@@ -742,6 +743,7 @@ function getDefColumns(def: ComponentDef) {
 function defToStmt(def: ComponentDef) {
 
     const tblName = defToTbl(def);
+    const hash = hashToString(def.hash);
     let properties = def.properties || [];
 
     let props = properties.map(prop => {
@@ -762,7 +764,9 @@ function defToStmt(def: ComponentDef) {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
-    UPDATE SQLITE_SEQUENCE SET seq = 1 WHERE name = '${tblName}';`
+    UPDATE SQLITE_SEQUENCE SET seq = 1 WHERE name = '${tblName}';
+    CREATE INDEX idx_${hash}_eid ON ${tblName} (eid);
+    `
 
     return [tblName, sql];
 }
@@ -873,6 +877,7 @@ const tblEntitySet = `
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
+    CREATE INDEX idx_entity_component ON tbl_entity_component (eid,did);
 
     COMMIT;
 `;

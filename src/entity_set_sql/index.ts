@@ -76,13 +76,12 @@ const Log = createLog('EntitySetSQL');
 
 export interface ComponentDefSQL extends ComponentDef {
     tblName?: string;
-    hash?: number;
 }
 
 
 
 export interface SQLEntitySetOptions extends EntitySetOptions {
-    name?: string;
+    path?: string;
     readDefs?: boolean;
     isMemory?: boolean;
     clearDb?: boolean;
@@ -100,7 +99,7 @@ export class EntitySetSQL extends EntitySetMem {
     // keep a reference to the open es db
     db?: SqlRef;
 
-    name: string;
+    path: string;
     isMemory: boolean;
     debug: boolean;
 
@@ -110,9 +109,9 @@ export class EntitySetSQL extends EntitySetMem {
 
     constructor(options: SQLEntitySetOptions = {}) {
         super(options as any);
-        this.isMemory = options.isMemory ?? true;
+        this.isMemory = options.isMemory ?? false;
         this.debug = options.debug ?? false;
-        this.name = options.name ?? 'ecs.sqlite';
+        this.path = options.path ?? 'ecs.sqlite';
     }
 
     clone(){
@@ -354,8 +353,15 @@ export class EntitySetSQL extends EntitySetMem {
      */
     async register(value: ComponentDef | ComponentDefObj | any): Promise<ComponentDef> {
         this.openEntitySet();
-        let def = createComponentDef(0, value);
+        let def:ComponentDef = createComponentDef(0, value);
 
+        // Hash the def, and check whether we already have this
+        // let hash = hashComponentDef(def);
+        const existing = this.getByHash(def.hash);
+        if (existing !== undefined) {
+            console.log(`component definition already exists (${existing['@d']}/${existing.uri})`);
+            return existing;
+        }
 
         // insert the def into the def tbl
         def = sqlInsertDef(this.db, def);
@@ -363,11 +369,11 @@ export class EntitySetSQL extends EntitySetMem {
         // Log.debug('[register]', def);
 
         const did = def[ComponentDefT];
-        const { hash, tblName } = (def as ComponentDefSQL);
+        // const { hash, tblName } = (def as ComponentDefSQL);
 
         this.componentDefs[did - 1] = def;
         this.byUri.set(def.uri, did);
-        this.byHash.set(hash, did);
+        this.byHash.set(def.hash, did);
 
         return def;
     }
@@ -392,10 +398,10 @@ export class EntitySetSQL extends EntitySetMem {
         const readDefs = options.readDefs ?? true;
         const { isMemory } = this;
         const verbose = this.debug ? console.log : undefined;
-        const name = options.name ?? this.uuid;
+        const path = this.path ?? this.uuid;
 
-        // Log.debug('[constructor]', name, { ...options, isMemory, verbose });
-        this.db = sqlOpen(name, { ...options, isMemory, verbose });
+        // Log.debug('[constructor]', path, { ...options, isMemory, verbose });
+        this.db = sqlOpen(path, { ...options, isMemory, verbose });
 
         // read component defs into local cache
 

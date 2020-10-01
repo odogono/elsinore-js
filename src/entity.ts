@@ -8,39 +8,18 @@ import {
     BitField,
     create as createBitField,
     set as bfSet,
+    and as bfAnd,
     toValues as bfToValues
 } from "./util/bitfield";
 import { ComponentDefId, ComponentDef, getDefId } from "./component_def";
 
 export const Type = '@e';
 
-export const EntityListType = '@el';
 
 export type EntityId = number;
 
 // type EntityMap = Map<number, BitField>;
 export type EntityMap = Map<EntityId, BitField>;
-
-export class EntityList {
-    eids: EntityId[];
-    // a map of entityId to comDef ids
-    // NO - only entityIds, anything else runs the risk of becoming stale
-    // entities: EntityMap;
-    // used to record the bitfield that compiled this list
-    // this enables the list to be used as an index
-    bf?: BitField;
-
-    [key:string]: any;
-
-    constructor( eids:EntityId[] = [], bf?: BitField){
-        this.eids = eids;
-        this.bf = bf;
-    }
-}
-
-export function isEntityList(value: any): boolean {
-    return isObject(value) && 'entityIds' in value;
-}
 
 
 export class Entity {
@@ -97,6 +76,14 @@ export class Entity {
         return Array.from(this.components.values());
     }
 
+    hasComponents(bf:BitField): boolean {
+        // console.log('[hasComponents]', bfToValues(this.bitField), bfToValues(bf), bfAnd(bf, this.bitField) );
+        // if( !this.bitField ){
+        //     console.log('huh', this);
+        // }
+        return bfAnd(bf, this.bitField);    
+    }
+
     get size():number {
         // return this.components.size;
         return this.components == undefined ? 0 : this.components.size;
@@ -119,7 +106,12 @@ export class Entity {
             const did = getDefId(def);
             return {...props, [ def.name ]:{
                 set: (com) => {
-                    // console.log('[set]',def.name);
+                    if( com === undefined ){
+                        // remove the component
+                        this.components.delete(did);
+                        return;
+                        // console.log('[set]',def.name, com);
+                    }
                     let cdid = getComponentDefId(com);
                     if( cdid !== undefined && cdid !== did ){
                         throw new Error(`invalid set component on ${def.name}`);
