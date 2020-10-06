@@ -98,6 +98,7 @@ export async function select(stack:QueryStack, query: StackValue[], options:Sele
 
     stack.addWords([
         ['@e', fetchEntity],
+        ['@eid', fetchEntity],
         ['@c', fetchComponents],
         ['!fil', applyFilter, SType.Filter],
 
@@ -386,7 +387,7 @@ export function buildBitfield(stack: QueryStack): InstResult {
  * @param es 
  * @param stack 
  */
-export async function fetchEntity(stack: ESMemQueryStack): AsyncInstResult {
+export async function fetchEntity(stack: ESMemQueryStack, [,op]:StackValue): AsyncInstResult {
     const { es } = stack;
     let data: StackValue = stack.pop();
 
@@ -420,6 +421,10 @@ export async function fetchEntity(stack: ESMemQueryStack): AsyncInstResult {
         return [SType.List, ents];
     } else {
         throw new StackError(`@e unknown type ${type}`)
+    }
+
+    if( op === '@eid' ){
+        return [SType.List, eids.map(eid => [SType.Value,eid])];
     }
 
     let ents = es.getEntitiesByIdMem(eids);
