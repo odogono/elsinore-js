@@ -46,8 +46,20 @@ export { printAll, printEntity } from '../../src/util/print';
 
 
 export function buildComponents( es:EntitySet, data:any[] ):Component[] {
-    return data.map( dd => {
-        const {uri, ...props} = dd;
+    return data.map( props => {
+        let uri = '';
+        // let props = dd;
+        if( props['@d'] !== undefined ){
+            uri = props['@d'];
+            delete props['@d'];
+        } else {
+            uri = props.uri;
+            delete props.uri;
+        }
+
+        // let {uri, ...props} = dd;
+        // if( dd['@d'] )
+        // const uri = dd['@d'] ?? dd['uri'];
         const def = es.getByUri(uri);
         // console.log('build with props', props);
         return es.createComponent(def,props);

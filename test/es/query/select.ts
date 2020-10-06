@@ -89,7 +89,7 @@ test('fetches entity component attribute', async () => {
     // ilog(stack.items);
     let result = stack.popValue();
     // ilog( result );
-    assert.equal(result, ['drink some tea']);
+    assert.equal(result, 'drink some tea');
 })
 
 test('fetches matching component attribute', async () => {
@@ -310,7 +310,7 @@ test('multi fn query', async () => {
 
 
 
-test.only('selects a JSON attribute', async () => {
+test('selects a JSON attribute', async () => {
     let [stack] = await prepES(`
         [
             // where( attr('/component/meta#/meta/author').equals('av') )
