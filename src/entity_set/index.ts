@@ -79,11 +79,15 @@ export function isEntitySetMem(value: any): boolean {
     return isObject(value) && value.isEntitySetMem === true;
 }
 
+export type EntityIdGen = () => EntityId;
+
 export interface EntitySetOptions {
     readDefs?: boolean;
     debug?: boolean;
     eidEpoch?: number;
     uuid?: string;
+    // optional id generator
+    idgen?: EntityIdGen;
 }
 
 export type ResolveComponentDefIdResult = [Component, string][] | [BitField, string][];
@@ -119,6 +123,8 @@ export abstract class EntitySet {
     // by default, make sure the workerId is incremented
     workerId: number = workerIdBase++;
 
+    idgen: EntityIdGen;
+
     // for generation of entityids
     readonly eidEpoch: number = 1577836800000; // 2020-01-01T00:00:00.000Z
 
@@ -128,6 +134,7 @@ export abstract class EntitySet {
         if (data !== undefined) {
             Object.assign(this, data);
         }
+        this.idgen = options.idgen;
         this.eidEpoch = options.eidEpoch ?? 1577836800000; // 2020-01-01T00:00:00.000Z
     }
 
@@ -227,8 +234,15 @@ export abstract class EntitySet {
     }
 
     createEntityId() {
-        const id = buildFlake53({ timestamp: Date.now(), workerId: this.workerId, epoch: this.eidEpoch, sequence: this.eidSeq++ });
-        return id;
+        if( this.idgen !== undefined ){
+            return this.idgen();
+        }
+        return buildFlake53({ 
+            timestamp: Date.now(), 
+            workerId: this.workerId, 
+            epoch: this.eidEpoch, 
+            sequence: this.eidSeq++ 
+        });
     }
 
     createComponent(defId: (string | number | ComponentDef), attributes = {}): Component {
@@ -404,7 +418,7 @@ export class EntitySetMem extends EntitySet {
     entities = new Map<EntityId, BitField>();
 
     constructor(data?: EntitySet, options: EntitySetOptions = {}) {
-        super();
+        super(data,options);
         if (data !== undefined) {
             Object.assign(this, data);
         }

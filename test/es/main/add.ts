@@ -23,16 +23,6 @@ import { assertHasComponents } from '../../helpers/assert';
 
 let test = suite('es/mem - adding');
 
-test('should create an entity (id)', async () => {
-    let es = createEntitySet();
-    let eid = 0;
-
-    eid = es.createEntityId();
-
-    // assert.isAtLeast(eid, 1);
-    assert.ok(eid >= 1);
-});
-
 test('should ignore an entity without an id', async () => {
     let es = new EntitySetInst();
     let e = new Entity();
