@@ -12,18 +12,19 @@ import {
 } from '../helpers';
 
 
-let test = suite('es/query/mem - Conditions');
+let test = suite('es/mem/query - Conditions');
 
-test.skip('evaluates a boolean condition', async () => {
+test.only('evaluates a boolean condition', async () => {
     // WHAT to do - should list conditions be evaled?
     let [stack] = await prep(`
             [ 2 3 + ] ok define
-            wet ok true cond
+            wet ok false cond
             // wet hot 2 3 == cond
+            prints
         `);
 
     let result = stack.popValue();
-    assert.equal(result, 'hot');
+    assert.equal(result, 'wet');
 })
 
 test('creates a ComponentDef', async () => {

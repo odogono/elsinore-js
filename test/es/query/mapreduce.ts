@@ -10,7 +10,7 @@ import {
     sv,
 } from '../helpers';
 
-let test = suite('es/query/mem - Map/Reduce/Filter');
+let test = suite('es/mem/query - Map/Reduce/Filter');
 
 test('maps values', async () => {
     let [stack] = await prep(`[1 2 3 4] [10 *] map`);

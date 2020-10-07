@@ -10,7 +10,7 @@ import {
     sv,
 } from '../helpers';
 
-let test = suite('es/query/mem - Regex');
+let test = suite('es/mem/query - Regex');
 
 test('matches', async () => {
     let [stack] = await prep(`

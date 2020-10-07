@@ -18,7 +18,7 @@ import {
 } from '../helpers';
 
 
-let test = suite('es/query/mem');
+let test = suite('es/mem/query');
 
 
 test('executes an async word', async () => {

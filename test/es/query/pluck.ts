@@ -10,7 +10,7 @@ import {
     sv,
 } from '../helpers';
 
-let test = suite('es/query/mem - Pluck');
+let test = suite('es/mem/query - Pluck');
 
 test('plucks values', async () => {
     let [stack] = await prep(`
@@ -19,7 +19,7 @@ test('plucks values', async () => {
 
     // ilog(stack.items);
     let result = stack.popValue();
-    assert.equal(result, ['hello']);
+    assert.equal(result, 'hello');
 });
 
 test('plucks value from multiple maps', async () => {

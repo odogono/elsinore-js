@@ -11,7 +11,7 @@ import {
 } from '../helpers';
 
 
-let test = suite('es/query/mem - Reference Words');
+let test = suite('es/mem/query - Reference Words');
 
 
 

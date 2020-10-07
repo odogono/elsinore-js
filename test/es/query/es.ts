@@ -17,7 +17,7 @@ import {
 } from '../helpers';
 
 
-let test = suite('es/query/mem - EntitySet');
+let test = suite('es/mem/query - EntitySet');
 
 // test('creates an EntitySet', async () => {
 //     let [stack] = await prep(`{} !es`);

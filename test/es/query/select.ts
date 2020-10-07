@@ -22,7 +22,7 @@ import {
 } from '../helpers';
 
 
-let test = suite('es/query/mem - Select');
+let test = suite('es/mem/query - Select');
 
 
 test('fetches entities by id', async () => {
@@ -68,6 +68,21 @@ test('fetches all the entities ids', async () => {
     assert.equal( result, [100, 101, 102, 103, 104] );
 })
 
+
+// test('prepared query', async () => {
+//     let query = `[ 
+//         /component/title !bf
+//         /component/title#text !ca "turn on the news" ==
+//         @e
+//     ] select`;
+//     let [stack,es] = await prepES(undefined, 'todo');
+
+//     stack = await es.query(query);
+//     // ilog( stack );
+//     let result = stack.popValue();
+    
+//     ilog( result );
+// });
 
 test('fetches component attributes', async () => {
     let [stack] = await prepES(`[ 

@@ -10,7 +10,7 @@ import {
     SType,
 } from '../helpers';
 
-let test = suite('es/query/mem - Dates');
+let test = suite('es/mem/query - Dates');
 
 
 test('creates a date', async () => {

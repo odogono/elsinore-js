@@ -14,7 +14,7 @@ import {
 
 
 
-let test = suite('es/query/mem - Maps and Lists');
+let test = suite('es/mem/query - Maps and Lists');
 
 
 

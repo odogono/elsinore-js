@@ -22,7 +22,7 @@ import {
 } from '../helpers';
 import { assertHasComponents } from '../../helpers/assert';
 
-let test = suite('es/query/mem - misc');
+let test = suite('es/mem/query - misc');
 
 
 test('selects using string compare', async () => {
@@ -65,4 +65,4 @@ test.run();
 
 
 
-const log = (...args) => console.log('[es/query/mem/misc]', ...args);
+const log = (...args) => console.log('[es/mem/query/misc]', ...args);

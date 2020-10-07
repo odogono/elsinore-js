@@ -140,8 +140,13 @@ export async function prepES(insts?: string, fixture?: string, options: EntitySe
     //     return [undefined,es];
     // }
 
-    let stack = await es.query(insts, { values });
-    return [stack, es];
+    if( insts !== undefined ){
+        let stack = await es.query(insts, { values });
+        return [stack, es];
+    }
+    
+    let stack = await es.query(undefined, {values});
+    return [stack,es];
 }
 
 
