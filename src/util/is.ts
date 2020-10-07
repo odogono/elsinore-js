@@ -63,8 +63,9 @@ export function isNumeric(n:any): boolean {
 // Objects that can be parsed that way are also considered ints, e.g. "123"
 // Floats that are mathematically equal to integers are considered integers, e.g. 1.0
 // See here for more discussion: http://stackoverflow.com/questions/1019515/javascript-test-for-an-integer
-export function isInteger(i:any): boolean {
-    return !Number.isNaN(parseFloat(i)) && isFinite(i) && i % 1 === 0;
+export function isInteger(val:any): boolean {
+    // return Number.isInteger(val);
+    return !Array.isArray(val) && !Number.isNaN(parseFloat(val)) && isFinite(val) && val % 1 === 0;
 }
 
 
