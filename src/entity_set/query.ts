@@ -56,14 +56,9 @@ export interface SelectOptions {
  * @param query 
  */
 export async function select(stack:QueryStack, query: StackValue[], options:SelectOptions = {}): Promise<StackValue[]> {
-    // let stack = new ESMemQueryStack();
-    // stack.es = es;
     
-    // let parent = options.stack;
-    // if (parent !== undefined ) {
     stack.setChild();
-    // }
-
+    
     // add first pass words
     stack.addWords([
         ['!bf', buildBitfield, SType.List],
@@ -111,10 +106,8 @@ export async function select(stack:QueryStack, query: StackValue[], options:Sele
         result.push(value);
         if (value[0] === SType.Filter) {
             result.push('!fil');
-            // return [...result, value, '!fil'];
         }
         return result;
-        // return [...result, value];
     }, []);
 
     await stack.pushValues(items);
@@ -128,17 +121,40 @@ export async function select(stack:QueryStack, query: StackValue[], options:Sele
 }
 
 
+function readEntityIds( stack:ESMemQueryStack ): EntityId[] {
+    const { es } = stack;
+
+    let bf = stack.popBitFieldOpt();
+    let eids = matchEntities(es, undefined, bf);
+
+    // Log.debug('[readEntityIds]', eids);
+
+    // default to all of the entity ids
+    return eids;
+}
+
+
+/**
+ * 
+ * @param stack 
+ */
 export function applyFilter(stack: ESMemQueryStack): InstResult {
     let filter;
     const { es } = stack;
     [, filter] = stack.pop();
 
-    // DLog(stack._root, 'bugger', filter);
-    // ilog(filter);
-    let result = parseFilterQuery(es, filter[0], filter[1], filter[2]);
-    // Log.debug('[applyFilter]', result );
+    // determine whether the previous stack argument can give us
+    // a set of eids. if not, then the filter is applied to all the entities
+    // in the es
+    let eids = readEntityIds(stack);
 
-    let eids = walkFilterQuery(es, Array.from(es.entities.keys()), ...result).sort();
+    // DLog(stack._root, 'bugger', filter);
+    // ilog(stack.peek());
+    let result = parseFilterQuery(es, filter[0], filter[1], filter[2]);
+    // Log.debug('[applyFilter]', result);
+    // Log.debug('[applyFilter]', Array.from(es.entities.keys()) );
+
+    eids = walkFilterQuery(es, eids, ...result).sort();
     // Log.debug('[applyFilter]', 'result eids', eids );
 
     return [SType.List, eids.map(eid => [SType.Entity, eid])];
@@ -269,7 +285,8 @@ export function fetchComponents(stack: ESMemQueryStack): InstResult {
 
     // get the bitfield
     dids = stack.popBitField<ComponentDef>(false) as ComponentDefId[];
-
+    
+    // ilog(dids);
 
     left = stack.peek();
 
@@ -378,7 +395,7 @@ export function buildBitfield(stack: QueryStack): InstResult {
     dids = isString(dids) ? [dids] : dids;
     let bf = es.resolveComponentDefIds(dids);
 
-    return [SType.Bitfield, bf];
+    return [SType.BitField, bf];
 }
 
 /**
@@ -396,12 +413,13 @@ export async function fetchEntity(stack: ESMemQueryStack, [,op]:StackValue): Asy
     let bf: BitField;
     let eids: number[];
 
-    // Log.debug('[fetchEntity]', 'eh?', data);
+    // Log.debug('[fetchEntity]', 'eh?', type, eid, data);
 
-    if (type === SType.Bitfield) {
+    if (type === SType.BitField) {
         bf = eid as BitField;
         eids = matchEntities(es, undefined, bf);
     } else if (isInteger(eid)) {
+        // Log.debug('[fetchEntity]', 'eid only', eid, isInteger(eid), typeof eid );
         let e = await es.getEntity(eid, false);
         // Log.debug('[fetchEntity]', es.entities);
         if (e === undefined) {
@@ -410,11 +428,13 @@ export async function fetchEntity(stack: ESMemQueryStack, [,op]:StackValue): Asy
         return [SType.Entity, eid];
     }
     else if (Array.isArray(eid)) {
+        // Log.debug('[fetchEntity]', 'eid array');
         eids = eid;
     }
     else if (type === SType.List) {
         let arr = unpackStackValue(data, SType.List, false);
         eids = arr.map(row => entityIdFromValue(row)).filter(Boolean);
+        // Log.debug('[fetchEntity]', 'unpack', eids);
     }
     else if (eid === 'all') {
         let ents = matchEntities(es, undefined, 'all');
@@ -422,6 +442,8 @@ export async function fetchEntity(stack: ESMemQueryStack, [,op]:StackValue): Asy
     } else {
         throw new StackError(`@e unknown type ${type}`)
     }
+
+    // Log.debug('[fetchEntity]', 'ok', eids);
 
     if( op === '@eid' ){
         return [SType.List, eids.map(eid => [SType.Value,eid])];
@@ -443,7 +465,7 @@ export async function fetchEntity(stack: ESMemQueryStack, [,op]:StackValue): Asy
 
 export function matchEntities(es: EntitySetMem, eids: EntityId[], mbf: BitField | 'all'): EntityId[] {
     let matches: number[] = [];
-    const isAll = mbf === 'all' || mbf.isAllSet;// bf.toString() === 'all';
+    const isAll = mbf === 'all' || mbf === undefined || mbf.isAllSet;
     const type = isAll ? TYPE_AND : (mbf as BitField).type;
     let cmpFn = bfAnd;
     if( type === TYPE_OR ){

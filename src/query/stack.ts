@@ -6,13 +6,14 @@ import { stackToString, unpackStackValueR } from "./util";
 import { toInteger } from "../util/to";
 import { EntityId, getEntityId, Entity } from "../entity";
 import { ComponentDefId, ComponentDef, getDefId } from "../component_def";
-import { toValues as bfToValues } from '../util/bitfield';
+import { BitField, create as createBitField, toValues as bfToValues } from '../util/bitfield';
 import {
     StackValue, WordFn, SType,
     StackError, InstResult, AsyncInstResult, WordSpec, WordEntry, Words
 } from "./types";
 import { EntitySet } from "../entity_set";
 import { getComponentEntityId, getComponentDefId } from "../component";
+import { buildBitfield } from "../entity_set/query";
 const Log = createLog('QueryStack');
 
 
@@ -475,6 +476,12 @@ export class QueryStack {
     }
 
 
+    /**
+     * Conditionally pops a bitfield from the stack if it is present.
+     * If it is, then either defs or dids are returned as a result.
+     * 
+     * @param asObj 
+     */
     popBitField<CD extends ComponentDef>(asObj: boolean = true): CD[] | ComponentDefId[] {
         const stack = this; //this.focus();
         const { es } = stack;
@@ -485,7 +492,7 @@ export class QueryStack {
 
         let [type, bf] = val;
         // Log.debug('[popBitField]', 'yes', stack.items);
-        if (type === SType.Bitfield) {
+        if (type === SType.BitField) {
             dids = bfToValues(bf);
             defs = asObj ? dids.map(d => es.getByDefId(d) as CD) : [];
         } else if (type === SType.Value && bf === 'all') {
@@ -500,6 +507,24 @@ export class QueryStack {
             stack.pop();
         }
         return asObj ? defs : dids;
+    }
+
+    popBitFieldOpt(): BitField {
+        const stack = this;
+        let val = stack.peek();
+        if( val === undefined ){
+            return undefined;
+        }
+        let [type, bf] = val;
+        if( type === SType.BitField ){
+            stack.pop();
+            return bf;
+        }
+        else if( type === SType.Value && bf === 'all' ){
+            stack.pop();
+            return createBitField(bf);
+        }
+        return undefined;
     }
 
     toString(): string {
