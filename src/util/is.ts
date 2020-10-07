@@ -33,7 +33,9 @@ export function isRegex(value:any): boolean {
  * @returns {boolean} if the object is a function
  */
 export function isFunction(value:any): boolean {
-    return value && getClass.call(value) === '[object Function]';
+    
+    return value && (getClass.call(value) === '[object Function]' 
+        || getClass.call(value) === '[object AsyncFunction]' );
 }
 
 /**
