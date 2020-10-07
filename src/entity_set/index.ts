@@ -146,11 +146,36 @@ export abstract class EntitySet {
 
     abstract add(item: AddType, options?: AddOptions): Promise<EntitySet>;
 
+    /**
+     * Returns an entity by its id
+     * 
+     * @param eid 
+     * @param populate 
+     */
     abstract getEntity(eid: EntityId, populate?: boolean): Promise<Entity>;
 
+    /**
+     * Returns entities by defId
+     * 
+     * @param dids 
+     * @param populate 
+     */
+    // abstract getEntitiesByDefId( dids:ComponentDefId[], options:MatchOptions ): Promise<Entity[]|EntityId[]>;
+
+
+    /**
+     * Returns a Component by its id [entityId,defId]
+     * 
+     * @param id 
+     */
     abstract getComponent(id: ComponentId | Component): Promise<Component>;
 
-    abstract removeEntity(item: (number | Entity), options?: AddOptions): Promise<EntitySet>;
+    /**
+     * Removes an entity by its id
+     * @param item 
+     * @param options 
+     */
+    abstract removeEntity(item: (EntityId | Entity), options?: AddOptions): Promise<EntitySet>;
 
     abstract removeComponent(item: RemoveType, options?: AddOptions): Promise<EntitySet>;
 
@@ -622,11 +647,21 @@ export class EntitySetMem extends EntitySet {
         return this.applyRemoveChanges();
     }
 
+    /**
+     * 
+     * @param item 
+     * @param options 
+     */
     async removeComponent(item: RemoveType, options: AddOptions = {}): Promise<EntitySet> {
         return this.removeComponents( [item], options );
     }
 
 
+    /**
+     * 
+     * @param item 
+     * @param options 
+     */
     async removeEntity(item: (number | Entity), options: AddOptions = {}): Promise<EntitySet> {
         if (options.retain !== true) {
             this.clearChanges();
@@ -710,6 +745,16 @@ export class EntitySetMem extends EntitySet {
         }
         return result;
     }
+
+    /**
+     * 
+     * @param dids 
+     * @param options 
+     */
+    // getEntitiesByDefId( dids:ComponentDefId[], options:MatchOptions ): Promise<Entity[]|EntityId[]> {
+
+    //     return Promise.resolve([]);
+    // }
 
     /**
      * 

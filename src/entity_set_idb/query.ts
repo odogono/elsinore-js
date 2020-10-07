@@ -77,10 +77,10 @@ export async function select(stack:QueryStack, query: StackValue[], options:Sele
         ['@e', fetchEntity],
         // ['@v', fetchValue],
         ['@c', fetchComponents, SType.Entity, 'all' ],
-        ['@c', fetchComponents, SType.List, SType.Bitfield ],
-        ['@c', fetchComponents, SType.Entity, SType.Bitfield ],
+        ['@c', fetchComponents, SType.List, SType.BitField ],
+        ['@c', fetchComponents, SType.Entity, SType.BitField ],
         ['@c', fetchComponents, 'all' ],
-        ['@c', fetchComponents, SType.Bitfield ],
+        ['@c', fetchComponents, SType.BitField ],
         ['@c', fetchComponents, SType.List ],
         ['@c', fetchComponents, SType.Entity ],
         ['!fil', applyFilter, SType.Filter],
@@ -186,7 +186,7 @@ export async function fetchEntity(stack: IDBQueryStack): AsyncInstResult {
 
     // Log.debug('[fetchEntity]', 'eh?', data);
 
-    if (type === SType.Bitfield) {
+    if (type === SType.BitField) {
         bf = eid as BitField;
         ents = await matchEntities(es, bf);
         

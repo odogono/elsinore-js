@@ -10,12 +10,12 @@ import { EntitySet } from ".";
 
 
 export function parseFilterQuery( es:EntitySet, cmd?, left?, right? ){
-    // Log.debug('[pr]', cmd, left, ',', right);
+    // console.log('[pr]', cmd, left, ',', right);
     switch(cmd){
         case 'and':
         case 'or':
             return prAnd( es, cmd, left, right );
-        case SType.Bitfield:
+        case SType.BitField:
             return [ 'dids', bfToValues(left as BitField) ];
         case '==':
         case '!=':
@@ -67,6 +67,8 @@ function prCompare( es:EntitySet, cmd, left, right ){
             return {eq:[ parseFilterQuery(es,...left), parseFilterQuery(es,...right)]};
         }
     }
+
+    // console.log('[prCompare]', [left,right]);
 
     if( 'key' in key ){
         

@@ -89,7 +89,7 @@ export function unpackStackValue(val: StackValue, assertType: (SType | SType[]) 
         case SType.Any:
         case SType.Entity:
         case SType.EntitySet:
-        case SType.Bitfield:
+        case SType.BitField:
         case SType.Component:
         case SType.Function:
         case SType.Filter:
