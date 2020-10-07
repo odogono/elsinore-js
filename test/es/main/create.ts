@@ -45,7 +45,7 @@ test('passing an id generator', async () => {
     let a = es.createEntityId();
     let b = es.createEntityId();
     
-    Log.debug( es );
+    // Log.debug( es );
 
     assert.equal( a, 1 );
     assert.equal( b, 2 );

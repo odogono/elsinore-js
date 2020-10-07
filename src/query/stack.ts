@@ -31,13 +31,15 @@ interface QueryStackInst {
     id: number;
     items: StackValue[];
     words: Words;
+    udWords: { [key:string]: any };
 }
 
 function createInst():QueryStackInst{
     return {
         id: ++stackId,
         items: [],
-        words: {}
+        words: {},
+        udWords: {}
     };
 }
 
@@ -55,6 +57,9 @@ export class QueryStack {
 
     get words(): Words {
         return this._stacks[ this._idx ].words;
+    }
+    get udWords(): { [key:string]: any } {
+        return this._stacks[ this._idx ].udWords;
     }
     get items(): StackValue[] {
         return this._stacks[ this._idx ].items;
@@ -196,6 +201,7 @@ export class QueryStack {
 
                 else {
                     // Log.debug('[push]', 'word', stack?.id, wordStack?.id );
+                    // Log.debug('[push]', 'word?', value);
                     handler = this.getWord(value);
                     // DLog(stack, '[push]', 'word', stack.id, wordStack.id, value );
                     // Log.debug('[push]', 'word', stack.id, wordStack.id, value, handler );
@@ -362,6 +368,11 @@ export class QueryStack {
         return results;
     }
 
+    addUDWord( word:string, val:any ): QueryStack {
+        // console.log('[addUDWord]', this._idx, word, val );
+        this.udWords[word] = val;
+        return this.addWords([[word,val]], true);
+    }
 
     addWords(words: WordSpec[], replace: boolean = false): QueryStack {
         

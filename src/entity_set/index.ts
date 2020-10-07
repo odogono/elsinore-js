@@ -104,6 +104,7 @@ let workerIdBase = 0;
 export abstract class EntitySet {
     isEntitySet: boolean = true;
     isAsync: boolean = false;
+    type:string = 'es';
 
     uuid: string = createUUID();
 

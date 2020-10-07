@@ -16,13 +16,15 @@ import {
     fetchComponentDef, 
     // onEntitySet, 
     onComponent, onEntity, 
-    onAssertType, 
+    onAssertType,
+    onPrintStack,
     onToString,
     onRegex,
     onDateTime
 } from "./words";
 import { onPluck } from "./words/pluck";
 import { onDefine } from "./words/define";
+import { onLoop } from "./words/loop";
 import {
     QueryStack,
 } from './stack';
@@ -115,6 +117,8 @@ export function createStdLibStack( stack?:QueryStack ){
         ['select', onSelect, SType.EntitySet, SType.List],
         ['spread', onListSpread, SType.List],
         ['cond', onCondition, SType.Any, SType.Any, SType.Any], // cond, if, else
+        ['iif', onCondition, SType.Any, SType.Any, SType.Any], // cond, if, else
+        ['loop', onLoop, SType.List],
         ['!d', onComponentDef, SType.Map],
         ['!d', onComponentDef, SType.List],
         ['!d', onComponentDef, SType.Value],
@@ -127,6 +131,7 @@ export function createStdLibStack( stack?:QueryStack ){
         ['!e', onEntity, SType.List],
         ['!e', onEntity, SType.Value],
         ['assert_type', onAssertType],
+        ['prints', onPrintStack],
     ]);
 
     return stack;

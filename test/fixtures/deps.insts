@@ -1,0 +1,48 @@
+// assert that an entityset exists on the stack
+%es assert_type
+
+
+// Component Defs
+
+[ "/component/dep", [
+    {"name":"src", "type":"entity"},
+    {"name":"dst", "type":"entity"},
+    {"name":"type", "type":"string"}
+] ] !d +
+
+[ "/component/dir", [ {"name":"uri"}] ] !d +
+[ "/component/file", [ {"name":"uri"}] ] !d +
+
+
+// Components
+
+[ "/component/dir", { "@e":1002, "uri": "file:///test/fixtures/rootA" } ] !c
+[ "/component/file", { "@e":1003, "uri":"file:///test/fixtures/rootA/index.mdx" } ] !c
+[ "/component/dir", { "@e":1004, "uri":"file:///test/fixtures/rootA/purgatory" } ] !c
+[ "/component/dir", { "@e":1005, "uri":"file:///test/fixtures/rootA/static" } ] !c
+[ "/component/file", { "@e":1006, "uri":"file:///test/fixtures/rootA/purgatory/meta.yaml" } ] !c
+[ "/component/dir", { "@e":1007, "uri":"file:///test/fixtures/rootA/static/alt" } ] !c
+[ "/component/file", { "@e":1008, "uri":"file:///test/fixtures/rootA/static/meta.yaml" } ] !c
+[ "/component/file", { "@e":1009, "uri":"file:///test/fixtures/rootA/static/style.scss" } ] !c
+[ "/component/file", { "@e":1010, "uri":"file:///test/fixtures/rootA/static/tac.jpg" } ] !c
+[ "/component/file", { "@e":1011, "uri":"file:///test/fixtures/rootA/static/alt/meta.yaml" } ] !c
+[ "/component/dir", { "@e":1012, "uri":"file:///test/fixtures/rootA/static/alt/style" } ] !c
+[ "/component/file", { "@e":1013, "uri":"file:///test/fixtures/rootA/static/alt/style/meta.yaml" } ] !c
+
+
+
+[ "/component/dep", { "@e":1014, "src":1003,"dst":1002,"type":"dir"} ] !c
+[ "/component/dep", { "@e":1015, "src":1004,"dst":1002,"type":"dir"} ] !c
+[ "/component/dep", { "@e":1016, "src":1005,"dst":1002,"type":"dir"} ] !c
+[ "/component/dep", { "@e":1017, "src":1006,"dst":1004,"type":"dir"} ] !c
+[ "/component/dep", { "@e":1018, "src":1007,"dst":1005,"type":"dir"} ] !c
+[ "/component/dep", { "@e":1019, "src":1008,"dst":1005,"type":"dir"} ] !c
+[ "/component/dep", { "@e":1020, "src":1009,"dst":1005,"type":"dir"} ] !c
+[ "/component/dep", { "@e":1021, "src":1010,"dst":1005,"type":"dir"} ] !c
+[ "/component/dep", { "@e":1022, "src":1011,"dst":1007,"type":"dir"} ] !c
+[ "/component/dep", { "@e":1023, "src":1012,"dst":1007,"type":"dir"} ] !c
+[ "/component/dep", { "@e":1024, "src":1013,"dst":1012,"type":"dir"} ] !c
+
+
+// gather components into an array and add to the es
+concat +

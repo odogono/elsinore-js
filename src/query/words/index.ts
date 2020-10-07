@@ -12,7 +12,7 @@ import {
     create as createComponentDef, isComponentDef, toShortObject as defToObject
 } from '../../../src/component_def';
 import {
-    isBoolean, isObject, isInteger, isString
+    isBoolean, isObject, isInteger, isString, isFunction
 } from '../../../src/util/is';
 
 import {
@@ -276,7 +276,7 @@ export async function onPrint<QS extends QueryStack>(stack: QS, val: StackValue)
         //     await stack.pushValues( msg[1] );
         // }
         // console.log( '[onPrint]', msg );
-        console.info('[onPrint]', stack._idx, unpackStackValueR(msg));
+        console.info('[onPrint]', unpackStackValueR(msg));
     }
     return undefined;
 }
@@ -633,6 +633,54 @@ export function onAssertType<QS extends QueryStack>(stack: QS): InstResult {
     }
     return undefined;
 }
+
+export function onPrintStack<QS extends QueryStack>(stack:QS): InstResult {
+    const vals = stack.items;
+    print(0, `> stack ${stack._idx}`);
+
+    const words = stack.udWords;
+    for( const word in words ){
+        print(0, `${word}:`);
+        printType(1, words[word] );
+        // print(1, typeof words[word], {}.toString.call(words[word]), isFunction(words[word]) );
+    }
+    
+    print(0, '---');
+    for( const val of vals.reverse() ){
+        printType( 0, val );
+        // console.log( `${indent} (${type}) ${val}`);
+    }
+
+    return undefined;
+}
+
+function printType( indent:number = 0, val:StackValue ){
+    if( !Array.isArray(val) ){
+        print( indent, isFunction(val) ? 'Fn' : val );
+        return;
+    }
+    switch( val[0] ){
+        case SType.List:
+            printList( indent, val );
+            break;
+        case SType.EntitySet:
+            const es:EntitySet = val[1];
+            print( indent, `(${val[0]}) [${es.type}, ${es.uuid}]`);
+            break;
+        default:
+            print( indent, `(${val[0]}) ${val[1]}`);
+            break;
+    }
+}
+
+function printList( indent:number = 0, list:StackValue ){
+    print( indent, `${list[0]}` );
+    for( const val of list[1] ){
+        printType( indent+1, val );
+    }
+}
+
+function print(indent, ...val){ console.log(`${' '.repeat(indent)}`, ...val); }
 
 // export function onAssert( stack:QueryStack, val:StackValue ):InstResult {
 //     // Log.debug('[assert]', val);

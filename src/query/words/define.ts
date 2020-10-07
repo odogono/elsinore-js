@@ -17,6 +17,7 @@ export function onDefine(stack: QueryStack, [, op]: StackValue): InstResult {
     let wordVal = stack.pop();
     let value = stack.pop();
     let [, word] = wordVal;
+    // let explain = false;
 
     if (value[0] === SType.List && op !== 'let') {
         wordFn = async (stack: QueryStack): AsyncInstResult => {
@@ -24,10 +25,19 @@ export function onDefine(stack: QueryStack, [, op]: StackValue): InstResult {
             return undefined;
         }
     } else {
+        // let existing = stack.getWord([SType.Value,word]);
+        // console.log('[onDefine]', 'existing', existing);
+        // console.log('[onDefine]', op, word, value );
         wordFn = value;
+        // if( existing !== undefined ) explain = true;
     }
 
-    stack.addWords([[word, wordFn]]);
+    // stack.addWords([[word, wordFn]]);
+    stack.addUDWord(word, wordFn);
+
+    // if( explain ){
+    //     console.log('[onDefine]', stack.words);
+    // }
 
     return undefined;
 };
