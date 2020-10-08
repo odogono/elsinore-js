@@ -31,7 +31,7 @@ interface QueryStackInst {
     id: number;
     items: StackValue[];
     words: Words;
-    udWords: { [key:string]: any };
+    // udWords: { [key:string]: any };
 }
 
 function createInst():QueryStackInst{
@@ -39,7 +39,7 @@ function createInst():QueryStackInst{
         id: ++stackId,
         items: [],
         words: {},
-        udWords: {}
+        // udWords: {}
     };
 }
 
@@ -50,6 +50,9 @@ export class QueryStack {
     
     _idx: number = 0;
     _stacks: QueryStackInst[];
+
+    // _udWords = new WeakMap();
+    _udWords: {[key:string]: any} = {};
     
     constructor(stack?: QueryStack) {
         this._stacks = [ createInst() ];
@@ -58,9 +61,9 @@ export class QueryStack {
     get words(): Words {
         return this._stacks[ this._idx ].words;
     }
-    get udWords(): { [key:string]: any } {
-        return this._stacks[ this._idx ].udWords;
-    }
+    // get udWords(): { [key:string]: any } {
+    //     return this._stacks[ this._idx ].udWords;
+    // }
     get items(): StackValue[] {
         return this._stacks[ this._idx ].items;
     }
@@ -175,7 +178,7 @@ export class QueryStack {
                 let stackIndex = this._idx;
 
                 if (len > 1) {
-                    // let up = word.charAt(0) === '^';
+                    // words beginning with ^ cause the stack focus to move up
                     while (word.charAt(0) === '^') {
                         // let st = wordStack.id;
                         this.focusParent();
@@ -189,22 +192,42 @@ export class QueryStack {
                     // handler = getWord(parent, [SType.Value, word.substring(1)]);
                 }
 
-                // words beginning with $ refer to offsets on the root stack
+                // words beginning with $ refer to offsets on the root stack if they are integers,
+                // or user defined words
                 if (len > 1 && word.charAt(0) === '$') {
-                    const idx = toInteger(word.substring(1));
+                    let sub = word.substring(1);
+                    if( isInteger(sub) ){
+                        const idx = toInteger(word.substring(1));
                     // Log.debug('[push]', '$ pr', word, wordStack.items, wordStack.id);
                     // value = wordStack.peek(idx);
-                    value = this.pop(idx);
+                        value = this.pop(idx);
+                    }
+                    else {
+                        handler = this.getUDWord( sub );
+                    }
                     // Log.debug('[push]', '$ po', word, wordStack.items, wordStack.id);
                     // Log.debug('[push]', '$', idx, 'pop', value, stack.id, wordStack.id);
                 }
 
                 else {
+                    // try for a user defined word - these are global
+                    // if( len > 1 && word.charAt(0) === '@' ){
+                    //     handler = this.getUDWord( word.substring(1) );
+                    // }
+
+                    // try for a regular word - these are scoped to the current stack
+                    // if( handler === undefined ){
+                        handler = this.getWord(value);
+                    // }
+
                     // Log.debug('[push]', 'word', stack?.id, wordStack?.id );
-                    // Log.debug('[push]', 'word?', value);
-                    handler = this.getWord(value);
+                    // handler = this.getWord(value);
+                    // if( value[1] === 'dstId' ){
+                    //     let wh = this.getUDWord(value[1]);
+                    //     Log.debug('[push]', 'word?', value);
+                    //     Log.debug('[push]', 'word', stackIndex, handler, wh );
+                    // }
                     // DLog(stack, '[push]', 'word', stack.id, wordStack.id, value );
-                    // Log.debug('[push]', 'word', stack.id, wordStack.id, value, handler );
                 }
 
                 // restore back to original index
@@ -370,8 +393,18 @@ export class QueryStack {
 
     addUDWord( word:string, val:any ): QueryStack {
         // console.log('[addUDWord]', this._idx, word, val );
-        this.udWords[word] = val;
+        // this.udWords[word] = val;
+        this._udWords[word] = val;
+        // this._udWords.set(word, val);
         return this.addWords([[word,val]], true);
+    }
+
+    getUDWord( word:string ){
+        // if (value[0] !== SType.Value || !isString(value[1])) {
+        //     return undefined;
+        // }
+        // const wval = value[1];
+        return this._udWords[word];
     }
 
     addWords(words: WordSpec[], replace: boolean = false): QueryStack {

@@ -39,10 +39,10 @@ test('not evaluated the first time', async () => {
     assert.equal(stack.toString(), '"world" "hello" "planet"');
 });
 
-test('accesses words in parent', async () => {
+test('accesses defined words', async () => {
     let [stack] = await prep(`
             active status let
-            [ status is ^status ]
+            [ status is $status ]
             `);
     assert.equal(stack.toString(), '["status", "is", "active"]');
 });
@@ -50,6 +50,7 @@ test('accesses words in parent', async () => {
 
 test('a defined word evaluates', async () => {
     let [stack] = await prep(`[ 2 3 + ] fn define fn`);
+    // the fn word is evaled as it is pushed onto the stack
     assert.equal(stack.popValue(), 5);
 });
 

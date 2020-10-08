@@ -24,13 +24,13 @@ test('loops until done', async () => {
             // the 'let' word is replacing the existing value
             // note we have to de-reference count to keep it treated
             // as a string
-            count 1 + **count let
+            count 1 + **count !
 
-            // the loop continues while we return false
-            // the condition returns false if count < 10, otherwise
+            // the loop continues while we return true (not just truthy)
+            // the condition returns true if count < 10, otherwise
             // it returns the final count
-            count 
-            false 
+            count
+            true 
             10 count < 
             iif
         ] loop
@@ -49,15 +49,16 @@ test.only('loops until done', async () => {
         // keep swapping things aroung
         es let
         [
-            dsts let
-            ^es [
+            dstId let
+            ^es 
+            [
                 /component/dep !bf
-                /component/dep#dst !ca ^dsts ==
+                /component/dep#dst !ca dstId ==
                 /component/dep#type !ca dir ==
                 and
                 @c
             ] select
-            /src pluck
+            // /src pluck
         ] selectDeps define
 
         1012 selectDeps

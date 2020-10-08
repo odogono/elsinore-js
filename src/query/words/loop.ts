@@ -33,7 +33,7 @@ export async function onLoop(stack: QueryStack, [, op]: StackValue): AsyncInstRe
         if( result === undefined ){
             isLooping = false;
         } else {
-            isLooping = result[1] === false;
+            isLooping = result[1] === true;
         }
         count++;
     }

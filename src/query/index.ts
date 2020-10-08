@@ -89,7 +89,15 @@ export function createStdLibStack( stack?:QueryStack ){
         ['<=', onAdd, SType.Value, SType.Value],
         ['.', onPrint, SType.Any],
         ['..', onPrint],
+
+
         ['@', onFetchArray, SType.List, SType.Value],
+
+        // a defined value is evaled when pushed onto the stack
+        ['define', onDefine, SType.Any, SType.Value],
+        // a let or ! value is just pushed onto the stack
+        ['let', onDefine, SType.Any, SType.Value],
+        ['!', onDefine, SType.Any, SType.Value],
 
         ['[', onListOpen],
         ['{', onMapOpen],
@@ -108,8 +116,7 @@ export function createStdLibStack( stack?:QueryStack ){
         ['unique', onUnique, SType.List],
         ['filter', onFilter, SType.List, SType.List],
         ['reduce', onReduce, SType.List, SType.Value, SType.List],
-        ['define', onDefine, SType.Any, SType.Value],
-        ['let', onDefine, SType.Any, SType.Value],
+        
         ['concat', onConcat],
         ['cls', onClear],
         ['dup', onDup, SType.Any],

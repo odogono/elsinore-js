@@ -38,6 +38,7 @@ import { onLogicalFilter, parseFilterQuery } from './filter';
 import { unpackStackValue, unpackStackValueR, stackToString } from "../query/util";
 import { EntitySetMem } from ".";
 import { compareDates } from '../query/words/util';
+import { onPrintStack } from '../query/words';
 
 const Log = createLog('ESMemQuery');
 
@@ -75,6 +76,7 @@ export async function select(stack:QueryStack, query: StackValue[], options:Sele
         ['>=', onLogicalFilter, SType.Any, SType.Any],
         ['<', onLogicalFilter, SType.Any, SType.Any],
         ['<=', onLogicalFilter, SType.Any, SType.Any],
+        ['prints', onPrintStack],
     ]);
 
 

@@ -17,9 +17,11 @@ export function onDefine(stack: QueryStack, [, op]: StackValue): InstResult {
     let wordVal = stack.pop();
     let value = stack.pop();
     let [, word] = wordVal;
-    // let explain = false;
+    
+    const isUDFunc = op === 'define';
 
-    if (value[0] === SType.List && op !== 'let') {
+    // if (value[0] === SType.List && op !== 'let') {
+    if (value[0] === SType.List && isUDFunc ) {
         wordFn = async (stack: QueryStack): AsyncInstResult => {
             await stack.pushValues(value[1]);
             return undefined;
@@ -32,8 +34,11 @@ export function onDefine(stack: QueryStack, [, op]: StackValue): InstResult {
         // if( existing !== undefined ) explain = true;
     }
 
-    // stack.addWords([[word, wordFn]]);
-    stack.addUDWord(word, wordFn);
+    if( isUDFunc ){
+        stack.addWords([[word, wordFn]]);
+    } else {
+        stack.addUDWord(word, wordFn);
+    }
 
     // if( explain ){
     //     console.log('[onDefine]', stack.words);

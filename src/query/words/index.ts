@@ -638,7 +638,7 @@ export function onPrintStack<QS extends QueryStack>(stack:QS): InstResult {
     const vals = stack.items;
     print(0, `> stack ${stack._idx}`);
 
-    const words = stack.udWords;
+    const words = stack._udWords;
     for( const word in words ){
         print(0, `${word}:`);
         printType(1, words[word] );
@@ -666,6 +666,10 @@ function printType( indent:number = 0, val:StackValue ){
         case SType.EntitySet:
             const es:EntitySet = val[1];
             print( indent, `(${val[0]}) [${es.type}, ${es.uuid}]`);
+            break;
+        case SType.Component:
+            const com:Component = val[1];
+            print( indent, JSON.stringify(com) );
             break;
         default:
             print( indent, `(${val[0]}) ${val[1]}`);

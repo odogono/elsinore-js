@@ -241,25 +241,23 @@ test('super select', async () => {
     let [stack, es] = await prepES(`
             // define a variable holding the es so we don't have to
             // keep swapping things aroung
-            es let
-
+            es !
             [
-                uid let
-                ^es [ /component/username#/username !ca  *^uid == ] select
+                uid !
+                $es [ /component/username#/username !ca  $uid == ] select
                 0 @
             ] selectUserId define
             
             [
-                ch_name let
+                ch_name !
                 // adding * to a ^ stops it from being eval'd the 1st time, but not the 2nd
-                ^es [ /component/channel#/name !ca *^ch_name == ] select
+                $es [ /component/channel#/name !ca $ch_name == ] select
                 0 @
             ] selectChannelId define
             
             ggrice selectUserId 
             
             "mr-rap" selectChannelId
-            
             
             // compose a new component which belongs to the 'mr-rap' channel
             [ "/component/channel_member" { "@e":14, channel: ^^$0, client: ^^$0 } ]
@@ -276,8 +274,8 @@ test('multi fn query', async () => {
             es let
             [
                 client_id let
-                ^es [
-                    /component/channel_member#/client !ca *^client_id ==
+                $es [
+                    /component/channel_member#/client !ca $client_id ==
                     /component/channel_member !bf
                     @c
                 ] select
@@ -288,8 +286,8 @@ test('multi fn query', async () => {
 
             [
                 channel_ids let
-                ^es [
-                    /component/channel_member#/channel !ca *^channel_ids ==
+                $es [
+                    /component/channel_member#/channel !ca $channel_ids ==
                     /component/channel_member !bf
                     @c
                 ] select
@@ -298,13 +296,13 @@ test('multi fn query', async () => {
                 /client pluck unique 
                 
                 // make sure this list of clients doesnt include the client_id
-                [ ^client_id != ] filter
+                [ $client_id != ] filter
 
             ] selectChannelMemberComs define
 
             [
                 eids let
-                ^es [ *^eids [/component/nickname] !bf @c ] select
+                $es [ $eids [/component/nickname] !bf @c ] select
             ] selectNicknames define
 
             [
@@ -322,7 +320,6 @@ test('multi fn query', async () => {
             // selects the nicknames of other entities who share
             // the same channel as 9 (roxanne)
             9 selectChannelMembersByClientId
-
             `, 'irc');
 
     let result = stack.popValue();
