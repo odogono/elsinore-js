@@ -43,7 +43,7 @@ import {
 } from "../entity";
 import { StackValue, SType, InstResult } from "../query/types";
 import { createUUID } from "../util/uuid";
-import { query, QueryOptions, createStdLibStack } from '../query';
+import { query, QueryOptions, createStdLibStack, Statement } from '../query';
 import {
     ChangeSet,
     create as createChangeSet,
@@ -182,6 +182,15 @@ export abstract class EntitySet {
 
     abstract removeComponents( items: RemoveType[], options:AddOptions):Promise<EntitySet>;
 
+    async prepare( q:string, options:QueryOptions = {}) {
+        let stmt = new Statement(q, {values:[[ SType.EntitySet,this]] });
+        stmt.stack.addWords([
+            ['!es', onEntitySet, SType.Map]
+        ]);
+        return stmt;
+    }
+
+
     async query(q: string, options: QueryOptions = {}): Promise<QueryStack> {
         const reset = options.reset ?? false;
         let values: StackValue[] = options.values ?? [];
@@ -246,6 +255,8 @@ export abstract class EntitySet {
 
         return result;
     }
+
+    
 
     async openEntitySet(options: EntitySetOptions = {}): Promise<EntitySet> {
         return this;

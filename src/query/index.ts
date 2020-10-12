@@ -34,6 +34,8 @@ import {
 } from './stack';
 import { tokenizeString } from "./tokenizer";
 import { onCondition } from "./words/cond";
+import { Entity } from "../entity";
+import { getComponentDefId, getComponentEntityId } from "../component";
 export { QueryStack };
 export const parse = (q:string) => tokenizeString(q,{returnValues:true});
 
@@ -43,20 +45,121 @@ export interface QueryOptions {
     reset?:boolean;
 }
 
+export interface StatementArgs {
+    [key:string]: any;
+}
+/**
+ * 
+ */
 export class Statement {
     insts: any[];
     stack:QueryStack;
-    constructor(q:string){
-        this.stack = createStdLibStack();
+    // initial stack values
+    values: StackValue[];
+
+    constructor(q:string, options:QueryOptions = {}){
+        this.stack = options.stack ?? createStdLibStack();
         this.insts = tokenizeString(q, {returnValues:true});
+        this.values = options.values;
     }
 
-    async run(){
+    async clear(){
         await this.stack.clear();
+        if( this.values ){
+            await this.stack.pushValues( this.values );
+        }
+    }
+    
+    async run(args?:StatementArgs){
+        await this.clear();
+        
+        if( args !== undefined ){
+            const defines = Object.keys(args).reduce( (out,key) => {
+                return [...out, 
+                    [SType.Value, args[key] ],
+                    [SType.Value, key],
+                    [SType.Value, 'let']
+                ];
+            }, []);
+            await this.stack.pushValues( defines );
+        }
         await this.stack.pushValues(this.insts);
+
+        return this;
+    }
+
+    /**
+     * Runs the statement and returns the top item
+     * on the result stack
+     * 
+     * @param args 
+     */
+    async pop(args?:StatementArgs){
+        await this.run(args);
+        return this.stack.popValue();
+    }
+
+    /**
+     * Runs the query and returns the result as an array of
+     * entities if appropriate
+     * 
+     * @param args 
+     */
+    async entities(args?:StatementArgs): Promise<Entity[]> {
+        await this.run(args);
+
+        const value = this.stack.pop();
+        let result: Entity[] = [];
+        if (value === undefined) { return result; }
+
+        const es = this.stack.es;
+        const [type, val] = value;
+
+        if (type === SType.List) {
+            let e: Entity;
+            for (const [lt, lv] of val) {
+                if (lt === SType.Entity) {
+                    result.push(lv);
+                }
+                else if (lt === SType.Component) {
+                    
+                    let eid = getComponentEntityId(lv);
+                    let did = getComponentDefId(lv);
+                    // const name = this.getByDefId(did).name;
+                    if (e === undefined || e.id !== eid) {
+                        if (e !== undefined) {
+                            result.push(e);
+                        }
+                        e = es.createEntity(eid);
+                    }
+                    e.addComponentUnsafe(did, lv);
+                }
+            }
+            if (e !== undefined) {
+                result.push(e);
+            }
+        } else if (type === SType.Component) {
+            // result.push( addCom(undefined,val));
+            let eid = getComponentEntityId(val);
+            let did = getComponentDefId(val);
+            // const name = this.getByDefId(did).name;
+            let e = es.createEntity(eid);
+            e.addComponentUnsafe(did, val);
+            result.push(e);
+        } else if (type == SType.Entity) {
+            result.push(val);
+        }
+
+        return result;
     }
 }
 
+
+/**
+ * 
+ * @param q 
+ * @param options 
+ */
 export async function query( q:string, options:QueryOptions = {} ): Promise<QueryStack> {
     let stack = options.stack ?? createStdLibStack();
     const values = options.values;
@@ -73,6 +176,10 @@ export async function query( q:string, options:QueryOptions = {} ): Promise<Quer
     return stack;
 }
 
+/**
+ * 
+ * @param stack 
+ */
 export function createStdLibStack( stack?:QueryStack ){
 
     stack = stack ?? new QueryStack();
