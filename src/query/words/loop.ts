@@ -9,13 +9,7 @@ import { unpackStackValueR } from "../util";
  * @param param1 
  */
 export async function onLoop(stack: QueryStack, [, op]: StackValue): AsyncInstResult {
-    // let wordFn;
-    // let wordVal = stack.pop();
-    // let value = stack.pop();
-    // let [, word] = wordVal;
-
     let val = stack.pop();
-    // let value = unpackStackValueR(val, SType.List).map(v => [SType.Value, v]);
     let value = unpackStackValueR(val, SType.List);
 
     // log( value );
@@ -26,8 +20,13 @@ export async function onLoop(stack: QueryStack, [, op]: StackValue): AsyncInstRe
     let result:StackValue = undefined;
 
     while( count < limit && isLooping ){
+        // log('>--');
+        // stack.debug = true;
         await stack.pushValues(value);
         result = stack.pop();
+
+        // log('result:', result);
+        // log('stack:', stack.toString());
         // if there is nothing on the stack, safest
         // to exit
         if( result === undefined ){

@@ -58,7 +58,7 @@ export async function onPluck(stack: QueryStack): AsyncInstResult {
             out.push( isStackValue(val) ? val : [SType.Value, val] );
         }
 
-        if( out.length === 1 ){
+        if( out.length === 1 && !Array.isArray(key) ){
             return out[0];
         }
     }

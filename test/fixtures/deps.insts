@@ -45,4 +45,4 @@
 
 
 // gather components into an array and add to the es
-concat +
+gather +

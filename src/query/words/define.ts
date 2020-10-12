@@ -20,6 +20,8 @@ export function onDefine(stack: QueryStack, [, op]: StackValue): InstResult {
     
     const isUDFunc = op === 'define';
 
+    
+
     // if (value[0] === SType.List && op !== 'let') {
     if (value[0] === SType.List && isUDFunc ) {
         wordFn = async (stack: QueryStack): AsyncInstResult => {
@@ -29,14 +31,16 @@ export function onDefine(stack: QueryStack, [, op]: StackValue): InstResult {
     } else {
         // let existing = stack.getWord([SType.Value,word]);
         // console.log('[onDefine]', 'existing', existing);
-        // console.log('[onDefine]', op, word, value );
+        
         wordFn = value;
         // if( existing !== undefined ) explain = true;
     }
 
     if( isUDFunc ){
+        // console.log('[onDefine]', op, word, value );
         stack.addWords([[word, wordFn]]);
     } else {
+        // console.log('[onDefine][UDWord]', op, word, value );
         stack.addUDWord(word, wordFn);
     }
 

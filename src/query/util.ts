@@ -16,7 +16,7 @@ export function stackToString(stack: QueryStack): string {
 
 export function valueToString(val: StackValue): string {
     const [type, value] = val;
-    const strCheck = /^[a-z0-9\/_]+$/i;
+    const strCheck = /^[a-z0-9\/_$]+$/i;
 
     // Log.debug('[valueToString]', type, value);
     switch (type) {
@@ -44,6 +44,7 @@ export function valueToString(val: StackValue): string {
             }, []).join(',') + '}';
         case SType.Value:
             return strCheck.test(value) ? JSON.stringify(value) : value;
+            // return JSON.stringify(value);
         case SType.Filter:
             let [op, left, right] = value;
             return `${op} ${valueToString(left)} ${valueToString(right)}`;

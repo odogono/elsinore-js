@@ -21,17 +21,15 @@ test('loops until done', async () => {
         5 count let
         [
             // increment count by one
-            // the 'let' word is replacing the existing value
-            // note we have to de-reference count to keep it treated
-            // as a string
-            count 1 + **count !
-
+            // the '!' word is replacing the existing value
+            $count 1 + count !
+            
             // the loop continues while we return true (not just truthy)
             // the condition returns true if count < 10, otherwise
             // it returns the final count
-            count
+            $count
             true 
-            10 count < 
+            10 $count < 
             iif
         ] loop
     `);
@@ -42,7 +40,11 @@ test('loops until done', async () => {
 
 });
 
-test.only('loops until done', async () => {
+
+
+
+
+test('loops until done', async () => {
 
     let query = `
         // define a variable holding the es so we don't have to
@@ -50,10 +52,10 @@ test.only('loops until done', async () => {
         es let
         [
             dstId let
-            ^es 
+            $es
             [
                 /component/dep !bf
-                /component/dep#dst !ca dstId ==
+                /component/dep#dst !ca $dstId ==
                 /component/dep#type !ca dir ==
                 and
                 @c
@@ -61,8 +63,21 @@ test.only('loops until done', async () => {
             // /src pluck
         ] selectDeps define
 
-        1012 selectDeps
-        prints
+        [
+            [] result let // result array
+            [
+                selectDeps
+                /src pluck
+                dup 
+                $result concat result !
+                dup size
+                true $result rot 0 == iif
+            ] loop
+            // lose the last result
+            swap drop    
+        ] selectDepsRecursive define
+
+        1005 selectDepsRecursive
         `;
 
     console.log('');
@@ -71,8 +86,7 @@ test.only('loops until done', async () => {
     // ilog( stack.words );
 
     let result = stack.popValue();
-    // ilog( result );
-    
+    assert.equal( result, [1007,1008,1009,1010,1011,1012,1013]);
 });
 
 

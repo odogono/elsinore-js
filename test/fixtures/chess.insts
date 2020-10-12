@@ -47,83 +47,83 @@
 [ "/component/piece/rook" ]  !c
 [ "/component/colour", { "colour":"white" } ]  !c
 [ "/component/position", { "file":"a", "rank":1 } ]  !c
-concat 0 !e swap +
+gather 0 !e swap +
 
 [ "/component/piece/knight" ]  !c
 [ "/component/colour", { "colour":"white" } ]  !c
 [ "/component/position", { "file":"b", "rank":1 } ]  !c
-concat 0 !e swap +
+gather 0 !e swap +
 
 [ "/component/piece/bishop" ]  !c
 [ "/component/colour", { "colour":"white" } ]  !c
 [ "/component/position", { "file":"c", "rank":1 } ]  !c
-concat 0 !e swap +
+gather 0 !e swap +
 
 [ "/component/piece/queen" ]  !c
 [ "/component/colour", { "colour":"white" } ]  !c
 [ "/component/position", { "file":"d", "rank":1 } ]  !c
-concat 0 !e swap +
+gather 0 !e swap +
 
 [ "/component/piece/king" ]  !c
 [ "/component/colour", { "colour":"white" } ]  !c
 [ "/component/position", { "file":"e", "rank":1 } ]  !c
-concat 0 !e swap +
+gather 0 !e swap +
 
 [ "/component/piece/bishop" ]  !c
 [ "/component/colour", { "colour":"white" } ]  !c
 [ "/component/position", { "file":"f", "rank":1 } ]  !c
-concat 0 !e swap +
+gather 0 !e swap +
 
 [ "/component/piece/knight" ]  !c
 [ "/component/colour", { "colour":"white" } ]  !c
 [ "/component/position", { "file":"g", "rank":1 } ]  !c
-concat 0 !e swap +
+gather 0 !e swap +
 
 [ "/component/piece/rook" ]  !c
 [ "/component/colour", { "colour":"white" } ]  !c
 [ "/component/position", { "file":"h", "rank":1 } ]  !c
-concat 0 !e swap +
+gather 0 !e swap +
 
 
 [ "/component/piece/pawn" ]  !c
 [ "/component/colour", { "colour":"white" } ]  !c
 [ "/component/position", { "file":"a", "rank":2 } ]  !c
-concat 0 !e swap +
+gather 0 !e swap +
 
 [ "/component/piece/pawn" ]  !c
 [ "/component/colour", { "colour":"white" } ]  !c
 [ "/component/position", { "file":"b", "rank":2 } ]  !c
-concat 0 !e swap +
+gather 0 !e swap +
 
 [ "/component/piece/pawn" ]  !c
 [ "/component/colour", { "colour":"white" } ]  !c
 [ "/component/position", { "file":"c", "rank":2 } ]  !c
-concat 0 !e swap +
+gather 0 !e swap +
 
 [ "/component/piece/pawn" ]  !c
 [ "/component/colour", { "colour":"white" } ]  !c
 [ "/component/position", { "file":"d", "rank":2 } ]  !c
-concat 0 !e swap +
+gather 0 !e swap +
 
 [ "/component/piece/pawn" ]  !c
 [ "/component/colour", { "colour":"white" } ]  !c
 [ "/component/position", { "file":"e", "rank":2 } ]  !c
-concat 0 !e swap +
+gather 0 !e swap +
 
 [ "/component/piece/pawn" ]  !c
 [ "/component/colour", { "colour":"white" } ]  !c
 [ "/component/position", { "file":"f", "rank":2 } ]  !c
-concat 0 !e swap +
+gather 0 !e swap +
 
 [ "/component/piece/pawn" ]  !c
 [ "/component/colour", { "colour":"white" } ]  !c
 [ "/component/position", { "file":"g", "rank":2 } ]  !c
-concat 0 !e swap +
+gather 0 !e swap +
 
 [ "/component/piece/pawn" ]  !c
 [ "/component/colour", { "colour":"white" } ]  !c
 [ "/component/position", { "file":"h", "rank":2 } ]  !c
-concat 0 !e swap +
+gather 0 !e swap +
 
 
 // black 
@@ -131,86 +131,86 @@ concat 0 !e swap +
 [ "/component/piece/rook" ]  !c
 [ "/component/colour", { "colour":"black" } ]  !c
 [ "/component/position", { "file":"a", "rank":8 } ]  !c
-concat 0 !e swap +
+gather 0 !e swap +
 
 [ "/component/piece/knight" ]  !c
 [ "/component/colour", { "colour":"black" } ]  !c
 [ "/component/position", { "file":"b", "rank":8 } ]  !c
-concat 0 !e swap +
+gather 0 !e swap +
 
 [ "/component/piece/bishop" ]  !c
 [ "/component/colour", { "colour":"black" } ]  !c
 [ "/component/position", { "file":"c", "rank":8 } ]  !c
-concat 0 !e swap +
+gather 0 !e swap +
 
 [ "/component/piece/queen" ]  !c
 [ "/component/colour", { "colour":"black" } ]  !c
 [ "/component/position", { "file":"d", "rank":8 } ]  !c
-concat 0 !e swap +
+gather 0 !e swap +
 
 [ "/component/piece/king" ]  !c
 [ "/component/colour", { "colour":"black" } ]  !c
 [ "/component/position", { "file":"e", "rank":8 } ]  !c
-concat 0 !e swap +
+gather 0 !e swap +
 
 [ "/component/piece/bishop" ]  !c
 [ "/component/colour", { "colour":"black" } ]  !c
 [ "/component/position", { "file":"f", "rank":8 } ]  !c
-concat 0 !e swap +
+gather 0 !e swap +
 
 [ "/component/piece/knight" ]  !c
 [ "/component/colour", { "colour":"black" } ]  !c
 [ "/component/position", { "file":"g", "rank":8 } ]  !c
-concat 0 !e swap +
+gather 0 !e swap +
 
 [ "/component/piece/rook" ]  !c
 [ "/component/colour", { "colour":"black" } ]  !c
 [ "/component/position", { "file":"h", "rank":8 } ]  !c
-concat 0 !e swap +
+gather 0 !e swap +
 
 
 [ "/component/piece/pawn" ]  !c
 [ "/component/colour", { "colour":"black" } ]  !c
 [ "/component/position", { "file":"a", "rank":7 } ]  !c
-concat 0 !e swap +
+gather 0 !e swap +
 
 [ "/component/piece/pawn" ]  !c
 [ "/component/colour", { "colour":"black" } ]  !c
 [ "/component/position", { "file":"b", "rank":7 } ]  !c
-concat 0 !e swap +
+gather 0 !e swap +
 
 [ "/component/piece/pawn" ]  !c
 [ "/component/colour", { "colour":"black" } ]  !c
 [ "/component/position", { "file":"c", "rank":7 } ]  !c
-concat 0 !e swap +
+gather 0 !e swap +
 
 [ "/component/piece/pawn" ]  !c
 [ "/component/colour", { "colour":"black" } ]  !c
 [ "/component/position", { "file":"d", "rank":7 } ]  !c
-concat 0 !e swap +
+gather 0 !e swap +
 
 [ "/component/piece/pawn" ]  !c
 [ "/component/colour", { "colour":"black" } ]  !c
 [ "/component/position", { "file":"e", "rank":7 } ]  !c
-concat 0 !e swap +
+gather 0 !e swap +
 
 [ "/component/piece/pawn" ]  !c
 [ "/component/colour", { "colour":"black" } ]  !c
 [ "/component/position", { "file":"f", "rank":7 } ]  !c
-concat 0 !e swap +
+gather 0 !e swap +
 
 [ "/component/piece/pawn" ]  !c
 [ "/component/colour", { "colour":"black" } ]  !c
 [ "/component/position", { "file":"g", "rank":7 } ]  !c
-concat 0 !e swap +
+gather 0 !e swap +
 
 [ "/component/piece/pawn" ]  !c
 [ "/component/colour", { "colour":"black" } ]  !c
 [ "/component/position", { "file":"h", "rank":7 } ]  !c
-concat 0 !e swap +
+gather 0 !e swap +
 
 // add entities to an array
-concat
+gather
 // add to EntitySet
 true trace let
 +

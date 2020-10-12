@@ -23,7 +23,7 @@
     } ] !c
 
 // add components to array
-concat
+gather
 
 // create an entity, add the component array to it, add to entityset
 100 !e swap +
@@ -32,14 +32,14 @@ concat
 [ "/component/title", { "text":"phone up friend"} ] !c
 [ "/component/completed", {"isComplete":true}] !c
 [ "/component/meta", {"createdAt":"2020-05-23T10:15:00.000Z"} ] !c
-concat
+gather
 101 !e swap +
 
 
 [ "/component/title", { "text":"turn on the news"} ] !c
 [ "/component/completed", {"isComplete":false} ] !c
 [ "/component/meta", {"createdAt":"2020-05-23T10:45:00.000Z"} ] !c
-concat
+gather
 102 !e swap +
 
 
@@ -48,17 +48,17 @@ concat
     "author":"jm"
 } },
     "createdAt":"2020-05-23T13:55:00.000Z" ] !c
-concat
+gather
 103 !e swap +
 
 
 [ "/component/title", { "text":"do some shopping"}] !c
 [ "/component/priority", {"priority":-5} ] !c
 [ "/component/meta", {"createdAt":"2020-05-23T15:30:00.000Z"} ] !c
-concat
+gather
 104 !e swap +
 
 // add entities to an array
-concat
+gather
 // add to EntitySet
 +

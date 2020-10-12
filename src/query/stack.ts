@@ -31,6 +31,7 @@ interface QueryStackInst {
     id: number;
     items: StackValue[];
     words: Words;
+    isUDWordsActive: boolean;
     // udWords: { [key:string]: any };
 }
 
@@ -39,6 +40,7 @@ function createInst():QueryStackInst{
         id: ++stackId,
         items: [],
         words: {},
+        isUDWordsActive: true
         // udWords: {}
     };
 }
@@ -53,6 +55,8 @@ export class QueryStack {
 
     // _udWords = new WeakMap();
     _udWords: {[key:string]: any} = {};
+
+    debug: boolean = false;
     
     constructor(stack?: QueryStack) {
         this._stacks = [ createInst() ];
@@ -66,6 +70,13 @@ export class QueryStack {
     // }
     get items(): StackValue[] {
         return this._stacks[ this._idx ].items;
+    }
+
+    set isUDWordsActive(val:boolean){
+        this._stacks[ this._idx ].isUDWordsActive = val;
+    }
+    get isUDWordsActive(){
+        return this._stacks[ this._idx ].isUDWordsActive;
     }
 
     setItems(items:StackValue[]):QueryStack {
@@ -196,14 +207,17 @@ export class QueryStack {
                 // or user defined words
                 if (len > 1 && word.charAt(0) === '$') {
                     let sub = word.substring(1);
+                    // Log.debug('[push]', word, this._idx, isInteger(sub), this.isUDWordsActive );
                     if( isInteger(sub) ){
-                        const idx = toInteger(word.substring(1));
+                        const idx = toInteger(sub);
                     // Log.debug('[push]', '$ pr', word, wordStack.items, wordStack.id);
                     // value = wordStack.peek(idx);
                         value = this.pop(idx);
                     }
-                    else {
+                    else if( this.isUDWordsActive ) {
                         handler = this.getUDWord( sub );
+                        // Log.debug('[push]', 'getUDWord', sub, handler);
+                        
                     }
                     // Log.debug('[push]', '$ po', word, wordStack.items, wordStack.id);
                     // Log.debug('[push]', '$', idx, 'pop', value, stack.id, wordStack.id);
@@ -218,6 +232,9 @@ export class QueryStack {
                     // try for a regular word - these are scoped to the current stack
                     // if( handler === undefined ){
                         handler = this.getWord(value);
+                        // Log.debug('[push][getWord]', value, handler );
+                        // if( this.debug && word === 'count' ) Log.debug( this.words );
+                        // if( this.debug && word === 'count' ) throw new StackError('stop');
                     // }
 
                     // Log.debug('[push]', 'word', stack?.id, wordStack?.id );
@@ -247,7 +264,7 @@ export class QueryStack {
                     // Log.debug('[push]', 'post', this.focus().id, printStackLineage(stack) );//, this.focus().items );
                     this.focus();
                 }
-                // if( value ) Log.debug('[push]', value); 
+                // if( value && this.debug ) Log.debug('[push]', value); 
             } catch (err) {
                 // Log.warn('[push]', err.stack);
                 let e = new StackError(`${err.message}`); // : ${unpackStackValue(value)}
@@ -259,7 +276,7 @@ export class QueryStack {
         }
 
         if (value !== undefined) { // && doPush !== false) {
-            // Log.debug('[push]', stack.id, value);
+            if( this.debug ) Log.debug('[push]', value, word, handler );
             this.items.push( value );
         }
         // Log.debug('[push]', stack.id, `(${this.id})`, stack.items );
@@ -396,7 +413,8 @@ export class QueryStack {
         // this.udWords[word] = val;
         this._udWords[word] = val;
         // this._udWords.set(word, val);
-        return this.addWords([[word,val]], true);
+        // return this.addWords([[word,val]], true);
+        return this;
     }
 
     getUDWord( word:string ){

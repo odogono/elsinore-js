@@ -69,13 +69,13 @@ test('adds components', async () => {
         // setup
         [ "/component/title", ["text"] ] !d
         { "name":"Completed","uri":"/component/completed","properties":[ { "name":"isComplete","type":"boolean" } ] } !d
-        concat
+        gather
         + // add array of defs to es
         
         // query
         [ /component/title {text: "add defs"} ] !c
         [ /component/completed {isComplete: true} ] !c
-        concat
+        gather
         +
         [ /component/title {text: "add components"} ] !c
         +

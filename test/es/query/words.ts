@@ -42,7 +42,7 @@ test('not evaluated the first time', async () => {
 test('accesses defined words', async () => {
     let [stack] = await prep(`
             active status let
-            [ status is $status ]
+            [ status is $status ] eval
             `);
     assert.equal(stack.toString(), '["status", "is", "active"]');
 });
@@ -55,7 +55,7 @@ test('a defined word evaluates', async () => {
 });
 
 test('a let word pushes', async () => {
-    let [stack] = await prep(`[ 2 3 + ] fn let fn`);
+    let [stack] = await prep(`[ 2 3 + ] fn let $fn`);
     assert.equal(stack.popValue(), [2, 3, '+']);
 });
 

@@ -12,6 +12,7 @@ import {
     onClear, 
     onDup, onSelect, 
     onListSpread, 
+    onListEval,
     onComponentDef, 
     fetchComponentDef, 
     // onEntitySet, 
@@ -20,7 +21,10 @@ import {
     onPrintStack,
     onToString,
     onRegex,
-    onDateTime
+    onDateTime,
+    onRot,
+    onSize,
+    onGather
 } from "./words";
 import { onPluck } from "./words/pluck";
 import { onDefine } from "./words/define";
@@ -37,6 +41,20 @@ export interface QueryOptions {
     stack?:QueryStack;
     values?:StackValue[];
     reset?:boolean;
+}
+
+export class Statement {
+    insts: any[];
+    stack:QueryStack;
+    constructor(q:string){
+        this.stack = createStdLibStack();
+        this.insts = tokenizeString(q, {returnValues:true});
+    }
+
+    async run(){
+        await this.stack.clear();
+        await this.stack.pushValues(this.insts);
+    }
 }
 
 export async function query( q:string, options:QueryOptions = {} ): Promise<QueryStack> {
@@ -117,14 +135,19 @@ export function createStdLibStack( stack?:QueryStack ){
         ['filter', onFilter, SType.List, SType.List],
         ['reduce', onReduce, SType.List, SType.Value, SType.List],
         
-        ['concat', onConcat],
+        ['gather', onGather],
+        // ['concat', onConcat],
+        ['concat', onConcat, SType.Any, SType.List],
         ['cls', onClear],
         ['dup', onDup, SType.Any],
         ['over', onDup, SType.Any],
+        ['rot', onRot, SType.Any, SType.Any, SType.Any],
         ['select', onSelect, SType.EntitySet, SType.List],
         ['spread', onListSpread, SType.List],
+        ['eval', onListEval, SType.List],
         ['cond', onCondition, SType.Any, SType.Any, SType.Any], // cond, if, else
         ['iif', onCondition, SType.Any, SType.Any, SType.Any], // cond, if, else
+        ['size', onSize, SType.Any],
         ['loop', onLoop, SType.List],
         ['!d', onComponentDef, SType.Map],
         ['!d', onComponentDef, SType.List],

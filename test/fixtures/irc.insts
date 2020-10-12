@@ -103,7 +103,7 @@
 [ "/component/status", { "@e":13, "status": "active"} ] !c
 
 // gather components into an array and add to the es
-concat +
+gather +
 
 
 
@@ -137,7 +137,7 @@ concat +
 [ "/component/channel_member", { "@e":27, "channel": 2, "client": 13, "username":"gza", "cname":"chat"}] !c
 
 // gather components into an array and add to the es
-concat +
+gather +
 
 // this query selects the other entities which are members of the same channel
 // as entity id 13

@@ -23,7 +23,7 @@ import { isComponent, Component, isComponentList, getComponentDefId } from '../.
 
 import { createLog } from "../../util/log";
 import { stackToString, valueToString, unpackStackValue, unpackStackValueR } from '../util';
-import { EntitySet, EntitySetMem } from '../../entity_set';
+import { EntitySet, EntitySetMem, isEntitySet } from '../../entity_set';
 import { compareDates } from './util';
 
 const Log = createLog('QueryWords');
@@ -54,6 +54,25 @@ export async function onDup<QS extends QueryStack>(stack: QS, op): AsyncInstResu
     }
 
     return out;
+}
+
+/**
+ * Rotates third item to top
+ * 
+ * ( n1 n2 n3 — n2 n3 n1 )
+ */
+export async function onRot<QS extends QueryStack>(stack: QS): AsyncInstResult {
+    let items = stack.items;
+    
+    if( items.length < 3 ){
+        throw new StackError('stack underflow');
+    }
+
+    const rem = items.splice( -3, 1 );
+    items.push(rem[0]);
+    stack.setItems( items );
+
+    return undefined;
 }
 
 
@@ -404,8 +423,10 @@ export function onListOpen(stack: QueryStack): InstResult {
         ['[', onListOpen],
         [']', onListClose],
         ['}', onUnexpectedError],
-        // ['arse', onUnexpectedError],
     ], true);
+    sub.isUDWordsActive = false;
+    // Log.debug('[onListOpen]', 'stack', stack._idx, stack.isUDWordsActive, 'sub', sub._idx, sub.isUDWordsActive );
+
     return undefined;
 }
 
@@ -429,6 +450,35 @@ export async function onListSpread<QS extends QueryStack>(stack: QS): AsyncInstR
     return undefined;
 }
 
+
+/**
+ * By default, values in a list are not evaluated against defined words
+ * this function takes a list and allows each value to be evaluated
+ * 
+ * @param stack 
+ */
+export async function onListEval<QS extends QueryStack>(stack: QS): AsyncInstResult {
+    let val = stack.pop();
+    let list = unpackStackValue(val, SType.List);
+
+    let mapStack = stack.setChild(stack);
+    
+    for( const val of list ){
+        await mapStack.push(val);
+    }
+
+    let result = mapStack.items;
+    stack.restoreParent();
+
+    return [SType.List, result];
+
+    // Log.debug('[onListEval]', val);
+
+    // return undefined;
+}
+
+
+
 export function onValue<QS extends QueryStack>(stack: QS): InstResult {
     let val = stack.pop();
     let value = unpackStackValueR(val);
@@ -449,16 +499,56 @@ export function onValue<QS extends QueryStack>(stack: QS): InstResult {
  * @param stack 
  * @param val 
  */
-export function onConcat<QS extends QueryStack>(stack: QS, val: StackValue): InstResult {
+export function onGather<QS extends QueryStack>(stack: QS, val: StackValue): InstResult {
     let values: StackValue[];
     let first = stack.pop();
     let type: SType = first[0]; //unpackStackValue(first, SType.Value);
 
     values = stack.popOfType(type);
+    // Log.debug('[onConcat]', type, first, values);
 
+    // if( type === SType.List ){
+    //     // concat the array into a single
+    //     values = [].concat( first[1], ...values.map(v => v[1]) );
+    // } else {
     values = [first, ...values];
+    // }
 
     return [SType.List, values];
+}
+
+export function onConcat<QS extends QueryStack>(stack: QS, val: StackValue): InstResult {
+    let a = stack.pop();
+    let b = stack.pop();
+
+    // Log.debug('[onConcat]', 'a:', a[0], 'b:', b );
+    b = b[0] !== SType.List ? [b] : b[1];
+
+    let values = [].concat( a[1], b );
+
+    return [SType.List, values];
+}
+
+export async function onSize<QS extends QueryStack>(stack: QS): AsyncInstResult {
+    let size = 0;
+    let [type,val] = stack.pop();
+    
+    if( type === SType.List ){
+        size = (val as any[]).length;
+    }
+    else if( type === SType.Map ){
+        size = Object.keys( val ).length;
+    } else if( isString(val) ){
+        size = (val as string).length;
+    }
+    else if( isEntitySet(val) ){
+        size = await (val as EntitySet).size();
+    }
+    else if( isEntity(val) ){
+        size = (val as Entity).size;
+    }
+
+    return [SType.Value, size];
 }
 
 export function onBuildMap<QS extends QueryStack>(stack: QS): InstResult {

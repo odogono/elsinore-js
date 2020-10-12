@@ -3,6 +3,7 @@ import assert from 'uvu/assert';
 
 import {
     AsyncInstResult,
+    ilog,
     parse,
     prep,
     QueryStack,
@@ -49,7 +50,47 @@ test('pop empty', async () => {
         assert.instance(err, StackError);
         assert.equal(err.message, 'stack underflow: ()');
     }
-})
+});
+
+test('rot', async () => {
+    let [stack] = await prep(`
+    5 1 2 3 rot
+    `);
+    let result = stack.popValue();
+    assert.equal(result, 1);
+});
+
+
+test('gather builds a list from similar items', async () => {
+    let [stack] = await prep(`
+    [hello] 10 12 14 gather
+    `);
+
+    // hello is not added to the result array
+    assert.equal( stack.toString(), `[14, 12, 10] ["hello"]`);
+});
+
+test('concat joins arrays', async () => {
+    let [stack] = await prep(`
+    [hello] [10 12] [14] concat
+    `);
+
+    // hello is not added to the result array
+    assert.equal( stack.toString(), `[14, 10, 12] ["hello"]`);
+});
+
+test('concat joins arrays and values', async () => {
+    let [stack] = await prep(`
+    hello [14] concat
+    `);
+
+    ilog( stack.items );
+    // hello is not added to the result array
+    assert.equal( stack.toString(), `[14, "hello"]`);
+});
+
+
+
 
 test('builds maps', async () => {
     let [stack] = await prep(`{ name: alex, age: 45, isActive }`);
