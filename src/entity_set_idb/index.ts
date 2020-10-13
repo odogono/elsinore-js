@@ -402,12 +402,15 @@ export class EntitySetIDB extends EntitySetMem {
     }
     
 
-    async markEntityComponentsRemove(eid: number): Promise<EntitySetIDB> {
+    async markEntityComponentsRemove(eids: EntityId[]): Promise<EntitySetIDB> {
 
-        const cids = await idbRetrieveEntityComponentIds(this.db, eid);
-    
-        for( const cid of cids ){
-            this.markComponentRemove(cid);
+        for(let ii=0;ii<eids.length;ii++ ){
+            const eid = eids[ii];
+            const cids = await idbRetrieveEntityComponentIds(this.db, eid);
+        
+            for( const cid of cids ){
+                this.markComponentRemove(cid);
+            }
         }
     
         return this;

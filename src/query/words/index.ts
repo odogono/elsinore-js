@@ -16,7 +16,7 @@ import {
 } from '../../../src/util/is';
 
 import {
-    Entity, isEntity,
+    Entity, EntityId, isEntity,
 } from '../../../src/entity';
 import { isComponent, Component, isComponentList, getComponentDefId } from '../../../src/component';
 
@@ -75,11 +75,17 @@ export async function onRot<QS extends QueryStack>(stack: QS): AsyncInstResult {
     return undefined;
 }
 
-
+/**
+ * Performs a query on an EntitySet
+ * 
+ * ( es args - es result ) 
+ * 
+ * @param stack 
+ */
 export async function onSelect<QS extends QueryStack>(stack: QS): AsyncInstResult {
 
     let right = stack.pop();
-    let left = stack.pop();
+    let left = stack.peek(); // NOTE - we do not consume the ES
     
     let es: EntitySet = unpackStackValue(left, SType.EntitySet);
     let query = unpackStackValue(right, SType.List, false);
@@ -88,8 +94,6 @@ export async function onSelect<QS extends QueryStack>(stack: QS): AsyncInstResul
 
     if (result) {
         // append output stack
-        // stack = { ...stack, items: [...stack.items, ...result] };
-        // stack.items = [...stack.items, ...result];
         stack.setItems( stack.items.concat(result) );
     }
 
@@ -229,6 +233,36 @@ export async function onAddToEntitySet<QS extends QueryStack>(stack: QS): AsyncI
     return [SType.EntitySet, es];
 }
 
+
+/**
+ * 
+ * @param stack 
+ */
+export async function onRemoveFromEntitySet<QS extends QueryStack>(stack: QS): AsyncInstResult {
+    let left = stack.pop();
+    let right = stack.pop();
+
+    let eids:EntityId[];
+    if( left[0] === SType.List ){
+        eids = unpackStackValueR(left);
+    }
+    else if( left[0] === SType.Value ){
+        eids = [ unpackStackValueR(left) ];
+    }
+
+    // DLog(stack, '[onAddToEntitySet]', left );
+    // let value = unpackStackValue(left);
+    // DLog(stack, '[onAddToEntitySet]', isComponentDef(value), value );
+    let es: EntitySet = unpackStackValueR(right, SType.EntitySet);
+
+    // Log.debug('[onRemoveFromEntitySet]', eids);
+    
+    if( eids !== undefined ){
+        es = await es.removeEntity( eids );
+    }
+
+    return [SType.EntitySet, es];
+}
 
 export async function fetchComponentDef<QS extends QueryStack>(stack: QS): AsyncInstResult {
     let val = stack.peek();
@@ -725,7 +759,7 @@ export function onAssertType<QS extends QueryStack>(stack: QS): InstResult {
 }
 
 export function onPrintStack<QS extends QueryStack>(stack:QS): InstResult {
-    const vals = stack.items;
+    const vals = [...stack.items];
     print(0, `> stack ${stack._idx}`);
 
     const words = stack._udWords;
@@ -741,6 +775,7 @@ export function onPrintStack<QS extends QueryStack>(stack:QS): InstResult {
         // console.log( `${indent} (${type}) ${val}`);
     }
 
+    // Log.debug( '??', stack.toString() );
     return undefined;
 }
 

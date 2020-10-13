@@ -149,13 +149,32 @@ export async function prepES(insts?: string, fixture?: string, options: EntitySe
     return [stack,es];
 }
 
+/**
+ * 
+ * @param es 
+ * @param fixture 
+ */
+export async function loadFixtureIntoES( es:EntitySet, fixture:string ){
+    if( es === undefined ){
+        es = createEntitySet();
+    }
+    let data = await loadFixture(fixture, false);
+    let stmt = es.prepare(data);
+    await stmt.run();
 
-export async function loadFixture(name: string) {
+    return es;
+}
+
+
+export async function loadFixture(name: string, doParse:boolean = true) {
     if (process.env.JS_ENV !== 'browser') {
         const Path = require('path');
         const Fs = require('fs-extra');
         const path = Path.resolve(__dirname, `../fixtures/${name}.insts`);
         const data = await Fs.readFile(path, 'utf8');
+        if( !doParse ){
+            return data;
+        }
         const parsed = parse(data);
         // Log.debug(parsed);
         // Log.debug(chessData);

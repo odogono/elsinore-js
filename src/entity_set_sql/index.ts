@@ -163,16 +163,18 @@ export class EntitySetSQL extends EntitySetMem {
         return this;
     }
 
-    async markEntityComponentsRemove(eid: number): Promise<EntitySetSQL> {
-        const e = await this.getEntity(eid, false);
-        if (e === undefined) {
-            return this;
+    async markEntityComponentsRemove(eids: EntityId[]): Promise<EntitySetSQL> {
+        for(let ii=0;ii<eids.length;ii++ ){
+            const eid = eids[ii];
+            const e = await this.getEntity(eid, false);
+            if( e === undefined ){
+                continue;
+            }
+            for (const did of bfToValues(e.bitField)) {
+                this.markComponentRemove(toComponentId(eid, did));
+            }
         }
-
-        for (const did of bfToValues(e.bitField)) {
-            this.markComponentRemove(toComponentId(eid, did));
-        }
-
+        
         return this;
     }
 

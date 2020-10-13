@@ -4,6 +4,7 @@ import assert from 'uvu/assert';
 import {
     AsyncInstResult,
     ilog,
+    loadFixtureIntoES,
     parse,
     prep,
     prepES,
@@ -46,13 +47,9 @@ test('loops until done', async () => {
 
 test('loops until done', async () => {
 
-    let query = `
-        // define a variable holding the es so we don't have to
-        // keep swapping things aroung
-        es let
+    const query = `
         [
             dstId let
-            $es
             [
                 /component/dep !bf
                 /component/dep#dst !ca $dstId ==
@@ -71,8 +68,11 @@ test('loops until done', async () => {
                 dup 
                 $result concat result !
                 dup size
+                // continue if the last results
+                // came back non-empty
                 true $result rot 0 == iif
             ] loop
+
             // lose the last result
             swap drop    
         ] selectDepsRecursive define
@@ -80,12 +80,10 @@ test('loops until done', async () => {
         1005 selectDepsRecursive
         `;
 
-    console.log('');
-    let [stack,es] = await prepES(undefined, 'deps');
-    stack = await es.query(query);
-    // ilog( stack.words );
+    let es = await loadFixtureIntoES(undefined, 'deps');
+    const stmt = es.prepare(query);
 
-    let result = stack.popValue();
+    const result = await stmt.pop();
     assert.equal( result, [1007,1008,1009,1010,1011,1012,1013]);
 });
 

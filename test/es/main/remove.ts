@@ -15,8 +15,11 @@ import {
     isEntity,
     Log,
     OrphanComponent,
+    prepES,
+    ilog,
 } from '../helpers';
 import { assertHasComponents } from '../../helpers/assert';
+import { printAll } from '../../../src/util/print';
 
 let test = suite('es/mem - removing');
 
@@ -63,6 +66,17 @@ test('removes an entity and all its components', async () => {
     await es.removeEntity(eid);
 
     assert.equal(await es.size(), 0, 'no entities should exist');
+});
+
+
+test('removes entities by id', async () => {
+    let [, es] = await prepES(undefined, 'deps');
+    // let es = createEntitySet();
+    const eids = [1004,1006,1015,1017];
+
+    await es.removeEntity( eids );
+
+    assert.equal( getChanges(es.entChanges, ChangeSetOp.Remove), eids );
 });
 
 test.run();

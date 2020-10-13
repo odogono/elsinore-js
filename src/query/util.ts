@@ -9,8 +9,11 @@ export interface ToStringOptions {
     flat?: boolean;
 }
 
-export function stackToString(stack: QueryStack): string {
-    let parts = stack.items.map(val => valueToString(val)).reverse();
+export function stackToString(stack: QueryStack, reverse:boolean = true): string {
+    let parts = stack.items.map(val => valueToString(val));
+    if( reverse ){
+        parts.reverse();
+    }
     return parts.join(' ');
 }
 

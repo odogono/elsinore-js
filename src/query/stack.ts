@@ -210,9 +210,10 @@ export class QueryStack {
                     // Log.debug('[push]', word, this._idx, isInteger(sub), this.isUDWordsActive );
                     if( isInteger(sub) ){
                         const idx = toInteger(sub);
-                    // Log.debug('[push]', '$ pr', word, wordStack.items, wordStack.id);
-                    // value = wordStack.peek(idx);
+                        // Log.debug('[push]', '$ pr', word, this.toString() );
+                        // value = wordStack.peek(idx);
                         value = this.pop(idx);
+                        // Log.debug('[push]', '$ pr', word, this.toString() );
                     }
                     else if( this.isUDWordsActive ) {
                         handler = this.getUDWord( sub );
@@ -589,8 +590,8 @@ export class QueryStack {
         return undefined;
     }
 
-    toString(): string {
-        return stackToString(this);
+    toString(reverse:boolean = true): string {
+        return stackToString(this, reverse);
     }
 }
 

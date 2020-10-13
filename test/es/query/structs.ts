@@ -84,7 +84,7 @@ test('concat joins arrays and values', async () => {
     hello [14] concat
     `);
 
-    ilog( stack.items );
+    // ilog( stack.items );
     // hello is not added to the result array
     assert.equal( stack.toString(), `[14, "hello"]`);
 });

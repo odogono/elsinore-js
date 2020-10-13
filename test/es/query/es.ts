@@ -1,5 +1,6 @@
 import { suite } from 'uvu';
 import assert from 'uvu/assert';
+import { printAll } from '../../../src/util/print';
 
 import {
     AsyncInstResult,
@@ -14,6 +15,8 @@ import {
     QueryStack,
     StackValue,
     sv,
+    loadFixtureIntoES,
+    ilog,
 } from '../helpers';
 
 
@@ -84,6 +87,37 @@ test('adds components', async () => {
     assert.equal(await es.size(), 2);
 });
 
+test('removes entities', async () => {
+    let es = await loadFixtureIntoES(undefined, 'deps');
+
+    const stmtGetEids = await es.prepare(`
+    [
+        /component/dir#uri !ca ~r/purgatory/ == 
+        /component/file#uri !ca ~r/purgatory/ ==
+        or
+        @eid
+    ] select
+    `);
+
+    assert.equal( await stmtGetEids.pop(), [1004,1006] );
+    
+    const stmt = es.prepare(`
+        [
+            /component/dir#uri !ca ~r/purgatory/ == 
+            /component/file#uri !ca ~r/purgatory/ ==
+            or
+            @eid
+        ] select
+        -
+    `);
+
+    await stmt.run();
+
+    assert.equal( await stmtGetEids.pop(), [] );
+
+    // printAll( es );
+});
+
 
 test('duplicates an entityset', async () => {
     let es = createEntitySet();
@@ -119,20 +153,20 @@ test('retrieves component defs', async () => {
     ])
 });
 
-test('retrieves components by did', async () => {
-    let [stack] = await prepES(`
-            [ /component/title !bf @c ] select
-            `, 'todo');
+// test('retrieves components by did', async () => {
+//     let [stack] = await prepES(`
+//             [ /component/title !bf @c ] select
+//             `, 'todo');
 
-    // ilog(stack.items);
-    // let defs = stack.popValue().map( d => d[0] );
-    // assert.equal(defs, [
-    //     '/component/title',
-    //     '/component/completed',
-    //     '/component/priority',
-    //     '/component/meta'
-    // ])
-});
+//     // ilog(stack.items);
+//     // let defs = stack.popValue().map( d => d[0] );
+//     // assert.equal(defs, [
+//     //     '/component/title',
+//     //     '/component/completed',
+//     //     '/component/priority',
+//     //     '/component/meta'
+//     // ])
+// });
 
 // it.only('select performs a subquery', async () => {
 //     const query = `[ 2 2 + ] select`;

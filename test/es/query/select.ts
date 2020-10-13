@@ -12,6 +12,7 @@ import {
     ilog,
     isEntity,
     loadFixture,
+    Log,
     parse,
     prep,
     prepES,
@@ -218,7 +219,11 @@ test('uses multi conditions', async () => {
 test('and/or condition', async () => {
     let query = `
             // create an es with the defs
-            dup @d {} !es swap + swap
+            @d
+            {} !es
+            swap
+            + // add defs to new es
+            swap
             [
                 /component/position#/file !ca a ==
                 /component/position#/file !ca f ==
@@ -227,6 +232,11 @@ test('and/or condition', async () => {
                 and
                 @c
             ] select
+            // exchange the result and the es
+            swap
+            // drop the original es
+            drop 
+            // add the result to the new es
             +
             `;
 
@@ -239,25 +249,28 @@ test('and/or condition', async () => {
 
 test('super select', async () => {
     let [stack, es] = await prepES(`
-            // define a variable holding the es so we don't have to
-            // keep swapping things aroung
-            es !
             [
                 uid !
-                $es [ /component/username#/username !ca  $uid == ] select
+                [ /component/username#/username !ca  $uid == ] select
+                // $es [ /component/username#/username !ca  $uid == ] select
                 0 @
+                
             ] selectUserId define
             
             [
                 ch_name !
                 // adding * to a ^ stops it from being eval'd the 1st time, but not the 2nd
-                $es [ /component/channel#/name !ca $ch_name == ] select
+                [ /component/channel#/name !ca $ch_name == ] select
                 0 @
             ] selectChannelId define
             
             ggrice selectUserId 
+            swap // so the es is now at the top
             
             "mr-rap" selectChannelId
+
+            // get rid of the es
+            swap drop
             
             // compose a new component which belongs to the 'mr-rap' channel
             [ "/component/channel_member" { "@e":14, channel: ^^$0, client: ^^$0 } ]
@@ -265,6 +278,7 @@ test('super select', async () => {
             to_str
             `, 'irc');
 
+    // Log.debug( stack.toString() );
     assert.equal(stack.popValue(),
         '["/component/channel_member", {"@e": 14,"channel": 3,"client": 11}]');
 })

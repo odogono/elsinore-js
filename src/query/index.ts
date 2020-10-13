@@ -24,7 +24,8 @@ import {
     onDateTime,
     onRot,
     onSize,
-    onGather
+    onGather,
+    onRemoveFromEntitySet
 } from "./words";
 import { onPluck } from "./words/pluck";
 import { onDefine } from "./words/define";
@@ -75,8 +76,10 @@ export class Statement {
         
         if( args !== undefined ){
             const defines = Object.keys(args).reduce( (out,key) => {
+                let val = args[key];
+                val = Array.isArray(val) ? [SType.List, val] : [SType.Value, val];
                 return [...out, 
-                    [SType.Value, args[key] ],
+                    val,
                     [SType.Value, key],
                     [SType.Value, 'let']
                 ];
@@ -188,6 +191,7 @@ export function createStdLibStack( stack?:QueryStack ){
         ['+', onAddComponentToEntity, SType.Entity, SType.Component],
         ['+', onAddComponentToEntity, SType.Entity, SType.List],
         ['+', onAddToEntitySet, SType.EntitySet, SType.Any],
+        ['-', onRemoveFromEntitySet, SType.EntitySet, SType.Any],
         // pattern match stack args
         ['+', onAddArray, SType.List, SType.Any],
 
