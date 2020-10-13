@@ -51,7 +51,8 @@
     "better-sqlite3": "^7.1.1",
     "fs-extra": "^9.0.1",
     "jsonpointer": "^4.1.0",
-    "minivents": "^2.2.0"
+    "minivents": "^2.2.0",
+    "vorpal": "^1.12.0"
   },
   "non-dependencies": {},
   "devDependencies": {
@@ -94,6 +95,7 @@
     "web-worker": "^1.0.0"
   },
   "scripts": {
+    "cli": "ts-node bin/cli.ts",
     "build": "node bin/empty_dist && rollup --config rollup.config.js",
     "compile": "tsc",
     "clean": "rm -rf node_modules build dist lib; mkdir build; npm install",
