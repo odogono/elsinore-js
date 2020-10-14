@@ -77,7 +77,9 @@ export class Statement {
         if( args !== undefined ){
             const defines = Object.keys(args).reduce( (out,key) => {
                 let val = args[key];
-                val = Array.isArray(val) ? [SType.List, val] : [SType.Value, val];
+                val = Array.isArray(val) ? 
+                    [SType.List, val.map( v => [SType.Value,v]) ] 
+                    : [SType.Value, val];
                 return [...out, 
                     val,
                     [SType.Value, key],
@@ -102,13 +104,20 @@ export class Statement {
         return this.stack.popValue();
     }
 
+    async getValue(args?:StatementArgs){
+        await this.run(args);
+        return this.stack.popValue();
+    }
+
+    
+
     /**
      * Runs the query and returns the result as an array of
      * entities if appropriate
      * 
      * @param args 
      */
-    async entities(args?:StatementArgs): Promise<Entity[]> {
+    async getEntities(args?:StatementArgs): Promise<Entity[]> {
         await this.run(args);
 
         const value = this.stack.pop();

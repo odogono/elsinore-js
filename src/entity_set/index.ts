@@ -504,6 +504,10 @@ export class EntitySetMem extends EntitySet {
 
         const { debug } = options;
 
+        // if( debug ){
+        //     console.log('[add]', 'entUpdates', this.entUpdates );
+        // }
+
         if (Array.isArray(item)) {
 
             let initial: [Entity[], Component[]] = [[], []];
@@ -588,12 +592,18 @@ export class EntitySetMem extends EntitySet {
             const entities = new Map<number, BitField>(this.entities);
 
             for (const [eid, bf] of this.entUpdates) {
-                entities.set(eid, bf);
+                if( bf === undefined ){
+                    entities.delete(eid)
+                } else {
+                    entities.set(eid, bf);
+                }
             }
 
             this.entities = entities;
             // console.log('[add]', 'applying entity updates', this.entities );
             this.entUpdates.clear();
+
+            // console.log('[add]', 'cleared entity updates', this.entUpdates );
         }
 
         if (this.comUpdates.size > 0) {
@@ -883,6 +893,7 @@ export class EntitySetMem extends EntitySet {
             eid = this.createEntityId();
         }
 
+        // console.log('[setEntity]', eid);
         this.entUpdates.set(eid, bf);
         e.id = eid;
         return e;
@@ -1041,7 +1052,8 @@ export class EntitySetMem extends EntitySet {
      * 
      * @param eid 
      */
-    applyRemoveEntity(eid: number) {
+    applyRemoveEntity(eid: EntityId) {
+        // console.log('[applyRemoveEntity]', eid);
         this.entities.delete(eid);
     }
 
@@ -1133,11 +1145,13 @@ export class EntitySetMem extends EntitySet {
 
         this.components = components;
 
-        // Log.debug('[applyRemoveComponent]', cid, ebf.count() );
+        // console.log('[applyRemoveComponent]', cid, bfCount(ebf) );
 
         if (bfCount(ebf) === 0) {
+            this.entUpdates.set(eid, undefined);
             return this.markEntityRemove(eid);
         } else {
+            // console.log('[applyRemoveComponent]', 'set', eid, bfCount(ebf));
             this.entUpdates.set(eid, ebf);
         }
 

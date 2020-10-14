@@ -62,10 +62,20 @@ test('removes an entity and all its components', async () => {
     // let coms = Array.from( ae.components.values() ).slice(0,2)
     // Log.debug('added e', coms );
 
-    // es = await removeComponents( es, coms );
+    // log('removing >');
     await es.removeEntity(eid);
 
     assert.equal(await es.size(), 0, 'no entities should exist');
+
+    let com = es.createComponent('/component/channel', { '@e':23, name: 'news' });
+
+    // log('adding >');
+
+    await es.add(com);
+
+    assert.equal( await es.size(), 1);
+
+    // ilog( es );
 });
 
 
@@ -80,3 +90,6 @@ test('removes entities by id', async () => {
 });
 
 test.run();
+
+
+const log = (...args) => console.log('[es/mem - removing]', ...args);

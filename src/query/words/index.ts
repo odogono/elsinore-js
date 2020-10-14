@@ -684,6 +684,11 @@ export async function onReduce<QS extends QueryStack>(stack: QS): AsyncInstResul
     return accum;
 }
 
+
+/**
+ * ( %[] -- %[] )
+ * @param stack 
+ */
 export function onUnique<QS extends QueryStack>(stack: QS): InstResult {
     let val = stack.pop();
     let array = unpackStackValueR(val, SType.List);
