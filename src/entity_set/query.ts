@@ -409,6 +409,7 @@ export function buildBitfield(stack: QueryStack): InstResult {
 export async function fetchEntity(stack: ESMemQueryStack, [,op]:StackValue): AsyncInstResult {
     const { es } = stack;
     let data: StackValue = stack.pop();
+    const returnEid = op === '@eid';
 
     const type = data[0];
     let eid = unpackStackValueR(data, SType.Any);
@@ -422,12 +423,13 @@ export async function fetchEntity(stack: ESMemQueryStack, [,op]:StackValue): Asy
         eids = matchEntities(es, undefined, bf);
     } else if (isInteger(eid)) {
         // Log.debug('[fetchEntity]', 'eid only', eid, isInteger(eid), typeof eid );
-        let e = await es.getEntity(eid, false);
-        // Log.debug('[fetchEntity]', es.entities);
+        let e = es.getEntityMem(eid, returnEid ? false : true );
+        
         if (e === undefined) {
             return [SType.Value, false];
         }
-        return [SType.Entity, eid];
+
+        return returnEid ? [SType.Entity, eid] : [SType.Entity, e ];
     }
     else if (Array.isArray(eid)) {
         // Log.debug('[fetchEntity]', 'eid array');
@@ -447,11 +449,11 @@ export async function fetchEntity(stack: ESMemQueryStack, [,op]:StackValue): Asy
 
     // Log.debug('[fetchEntity]', 'ok', eids);
 
-    if( op === '@eid' ){
+    if( returnEid ){
         return [SType.List, eids.map(eid => [SType.Value,eid])];
     }
 
-    let ents = es.getEntitiesByIdMem(eids);
+    let ents = es.getEntitiesByIdMem(eids, {populate:true});
     let result = ents.filter(Boolean).map(e => [SType.Entity, e]);
 
     // let result = [];

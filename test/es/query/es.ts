@@ -68,10 +68,16 @@ test('adds a component', async () => {
 
 test('adds components', async () => {
     let es = createEntitySet();
-    let stack = await es.query(`
-        // setup
+    await es.prepare(`
+        // register defs
+        
         [ "/component/title", ["text"] ] !d
-        { "name":"Completed","uri":"/component/completed","properties":[ { "name":"isComplete","type":"boolean" } ] } !d
+        
+        {   "name":"Completed",
+            "uri":"/component/completed",
+            "properties":[ { "name":"isComplete","type":"boolean" } ] 
+        } !d
+
         gather
         + // add array of defs to es
         
@@ -82,7 +88,7 @@ test('adds components', async () => {
         +
         [ /component/title {text: "add components"} ] !c
         +
-        `)
+        `).run();
 
     assert.equal(await es.size(), 2);
 });
@@ -99,7 +105,7 @@ test('removes entities', async () => {
     ] select
     `);
 
-    assert.equal( await stmtGetEids.pop(), [1004,1006] );
+    assert.equal( await stmtGetEids.getValue(), [1004,1006] );
     
     const stmt = es.prepare(`
         [
@@ -113,7 +119,7 @@ test('removes entities', async () => {
 
     await stmt.run();
 
-    assert.equal( await stmtGetEids.pop(), [] );
+    assert.equal( await stmtGetEids.getValue(), [] );
 
     // printAll( es );
 });
@@ -125,8 +131,6 @@ test('duplicates an entityset', async () => {
             [ "/component/title", ["text"] ] !d +
             [ /component/title {text:first} ] !c +
             dup`);
-
-    // ilog(stack.items);
 
     let es1 = stack.popValue();
     assert.ok(isEntitySet(es1));
@@ -176,16 +180,17 @@ test('retrieves component defs', async () => {
 // });
 
 test('returns query results as components', async () => {
-    const query = `
+    let es = await loadFixtureIntoES(undefined, 'todo');
+
+    const stmt = es.prepare(`
             [
                 /component/completed#/isComplete !ca true ==
                 /component/title !bf
                 @c
             ] select
-            `;
-    let [, es] = await prepES(undefined, 'todo');
+            `);
 
-    const result = await es.queryEntities(query);
+    const result = await stmt.getEntities();
 
     assert.equal(result[0].Title.text, 'get out of bed');
     assert.equal(result[1].id, 101);

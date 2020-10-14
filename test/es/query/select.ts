@@ -33,8 +33,10 @@ test('fetches entities by id', async () => {
     // ilog(stack.items);
     let result = stack.popValue();
 
+    // ilog( result );
+
     // the return value is an entity
-    assert.equal(result, 102);
+    assert.equal(result.id, 102);
 });
 
 test('fetches entities by did', async () => {
@@ -104,7 +106,7 @@ test('fetches component attributes', async () => {
 
 test('fetches entity component attribute', async () => {
     let [stack] = await prepES(`[ 
-                103 @e 
+                103 @eid
                 /component/title !bf
                 @c
                 /text pluck

@@ -20,7 +20,6 @@ test.only('evaluates a boolean condition', async () => {
             [ 2 3 + ] ok define
             wet ok false cond
             // wet hot 2 3 == cond
-            prints
         `);
 
     let result = stack.popValue();
