@@ -14,28 +14,25 @@ import {
 
 let test = suite('es/mem/query - Conditions');
 
-test('evaluates a boolean condition', async () => {
+test('iif evaluates a boolean condition', async () => {
     // WHAT to do - should list conditions be evaled?
     let [stack] = await prep(`
             [ 2 3 + ] ok define
-            wet ok false cond
-            // wet hot 2 3 == cond
+            wet ok false iif
+            // wet hot 2 3 == iif
         `);
 
     let result = stack.popValue();
     assert.equal(result, 'wet');
 })
 
-test('creates a ComponentDef', async () => {
-    let [stack] = await prep(`[ /component/title, [text] ] !d`);
+test('if', async () => {
+    let [stack] = await prep(`
+    "even" 2 1 % 0 == if
+    "odd" 2 1 % 0 != if
+    `);
 
-    // Log.debug( stack );
-
-    let result = stack.popValue();
-
-    // Log.debug( result );
-
-    assert.ok(isComponentDef(result));
+    assert.equal( stack.popValue(), "odd" );
 });
 
 

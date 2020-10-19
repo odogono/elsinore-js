@@ -282,8 +282,9 @@ export function createStdLibStack( stack?:QueryStack ){
         ['select', onSelect, SType.EntitySet, SType.List],
         ['spread', onListSpread, SType.List],
         ['eval', onListEval, SType.List],
-        ['cond', onCondition, SType.Any, SType.Any, SType.Any], // cond, if, else
+        // ['cond', onCondition, SType.Any, SType.Any, SType.Any], // cond, if, else
         ['iif', onCondition, SType.Any, SType.Any, SType.Any], // cond, if, else
+        ['if', onCondition, SType.Any, SType.Any],
         ['size', onSize, SType.Any],
         ['loop', onLoop, SType.List],
         ['leave', onLeave],
