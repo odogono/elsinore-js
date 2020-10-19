@@ -45,4 +45,5 @@ test('plucks multiple values', async () => {
         { '@e': 4, text: 'world', status: 'active' }
     ]);
 });
+
 test.run();

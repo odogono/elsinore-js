@@ -105,7 +105,7 @@ test('removes entities', async () => {
     ] select
     `);
 
-    assert.equal( await stmtGetEids.getValue(), [1004,1006] );
+    assert.equal( await stmtGetEids.getResult(), [1004,1006] );
     
     const stmt = es.prepare(`
         [
@@ -119,7 +119,7 @@ test('removes entities', async () => {
 
     await stmt.run();
 
-    assert.equal( await stmtGetEids.getValue(), [] );
+    assert.equal( await stmtGetEids.getResult(), [] );
 
     // printAll( es );
 });

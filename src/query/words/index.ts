@@ -563,6 +563,10 @@ export function onConcat<QS extends QueryStack>(stack: QS, val: StackValue): Ins
     return [SType.List, values];
 }
 
+/**
+ * ( )
+ * @param stack 
+ */
 export async function onSize<QS extends QueryStack>(stack: QS): AsyncInstResult {
     let size = 0;
     let [type,val] = stack.pop();
@@ -749,6 +753,11 @@ export function onVersion<QS extends QueryStack>(stack: QS): InstResult {
     return [SType.Value, '1.0.0'];
 };
 
+export function onLeave<QS extends QueryStack>(stack: QS): InstResult {
+    // Log.debug('[onLeave]');
+    stack.isActive = false;
+    return undefined;
+}
 
 export function onAssertType<QS extends QueryStack>(stack: QS): InstResult {
     let value: StackValue = stack.pop();

@@ -25,7 +25,8 @@ import {
     onRot,
     onSize,
     onGather,
-    onRemoveFromEntitySet
+    onRemoveFromEntitySet,
+    onLeave
 } from "./words";
 import { onPluck } from "./words/pluck";
 import { onDefine } from "./words/define";
@@ -104,10 +105,26 @@ export class Statement {
         return this.stack.popValue();
     }
 
-    async getValue(args?:StatementArgs){
+    /**
+     * Runs the values on the stack and returns
+     * the top value
+     * 
+     * @param args 
+     */
+    async getResult(args?:StatementArgs){
         await this.run(args);
         return this.stack.popValue();
     }
+
+    /**
+     * Returns the user defined word defined on the stack
+     * 
+     * @param word 
+     */
+    getValue(word:string){
+        return this.stack.getUDValue(word);
+    }
+    
 
     
 
@@ -269,6 +286,7 @@ export function createStdLibStack( stack?:QueryStack ){
         ['iif', onCondition, SType.Any, SType.Any, SType.Any], // cond, if, else
         ['size', onSize, SType.Any],
         ['loop', onLoop, SType.List],
+        ['leave', onLeave],
         ['!d', onComponentDef, SType.Map],
         ['!d', onComponentDef, SType.List],
         ['!d', onComponentDef, SType.Value],

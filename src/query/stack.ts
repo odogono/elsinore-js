@@ -32,6 +32,7 @@ interface QueryStackInst {
     items: StackValue[];
     words: Words;
     isUDWordsActive: boolean;
+    isActive: boolean;
     // udWords: { [key:string]: any };
 }
 
@@ -40,7 +41,8 @@ function createInst():QueryStackInst{
         id: ++stackId,
         items: [],
         words: {},
-        isUDWordsActive: true
+        isUDWordsActive: true,
+        isActive: true,
         // udWords: {}
     };
 }
@@ -79,6 +81,14 @@ export class QueryStack {
         return this._stacks[ this._idx ].isUDWordsActive;
     }
 
+    set isActive(val:boolean){
+        this._stacks[ this._idx ].isActive = val;
+    }
+
+    get isActive(){
+        return this._stacks[this._idx].isActive;
+    }
+
     setItems(items:StackValue[]):QueryStack {
         this._stacks[ this._idx ].items = items;
         return this;
@@ -86,6 +96,11 @@ export class QueryStack {
 
     get size(): number {
         return this._stacks[ this._idx ].items.length;
+    }
+
+    getUDValue(word:string){
+        let value = this.getUDWord(word);
+        return unpackStackValueR(value);
     }
 
     peek(offset: number = 0): StackValue {
@@ -152,13 +167,20 @@ export class QueryStack {
     /**
      * Pushes a stack value onto the stack
      */
-    async push(input: any | StackValue): Promise<StackValue> {
+    async push(input: any | StackValue, options?:PushOptions): Promise<StackValue> {
         let value: StackValue;
         let handler: WordFn;
+
+        if( this.isActive === false ){
+            Log.debug('[push]', 'inactive stack');
+            return undefined;
+        }
+
         value = isStackValue(input) ? input : [SType.Value, input];
 
         // let doPush = true;
         let [type, word] = value;
+        const debug = options?.debug ?? false;
         
         if (type === SType.Value && isString(word)) {
             const len = word.length;
@@ -253,6 +275,10 @@ export class QueryStack {
             }
         }
 
+        // if( word === 'leave' ){
+            // Log.debug('[push]', word, handler );
+        // }
+
         if (handler !== undefined) {
             try {
                 if (isStackValue(handler)) {
@@ -276,11 +302,10 @@ export class QueryStack {
             }
         }
 
-        if (value !== undefined) { // && doPush !== false) {
-            if( this.debug ) Log.debug('[push]', value, word, handler );
+        if (value !== undefined ){
             this.items.push( value );
         }
-        // Log.debug('[push]', stack.id, `(${this.id})`, stack.items );
+        // Log.debug('[push]', this.items );
 
         return value;
     }
@@ -319,7 +344,15 @@ export class QueryStack {
                 // }
                 // let pre = stack;
                 // let st = perf.now();
+                
                 let ovalue = await this.push(value);
+
+                if( this.isActive === false ){
+                    // Log.debug('[pushValues]', 'breaking due to inactive');
+                    break;
+                }
+                // Log.debug('[pushValues]', value, 'ovalue', ovalue);
+                
                 // Log.debug('[pushValues]', 'post', printStackLineage(this), 'focus', printStackLineage(this._focus) );
                 // Log.debug('[pushValues]', 'post', this.id, this._parent?.id, stack.id, stack._parent?.id);
                 // Object.assign(this, stack);

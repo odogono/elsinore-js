@@ -15,7 +15,8 @@ export enum SType {
     Regex = '%r',
     DateTime = '%dt',
     Any = '%*',
-    Filter = '%|'
+    Filter = '%|',
+    // Leave = '%#'
     // Undefined = '%un'
 };
 

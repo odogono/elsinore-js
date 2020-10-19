@@ -14,7 +14,7 @@ import {
 
 let test = suite('es/mem/query - Conditions');
 
-test.only('evaluates a boolean condition', async () => {
+test('evaluates a boolean condition', async () => {
     // WHAT to do - should list conditions be evaled?
     let [stack] = await prep(`
             [ 2 3 + ] ok define

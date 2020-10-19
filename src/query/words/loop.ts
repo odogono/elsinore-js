@@ -11,21 +11,32 @@ import { unpackStackValueR } from "../util";
 export async function onLoop(stack: QueryStack, [, op]: StackValue): AsyncInstResult {
     let val = stack.pop();
     let value = unpackStackValueR(val, SType.List);
+    const wasActive = stack.isActive;
 
     // log( value );
 
     let count = 0;
-    let limit = 10000; // this will definitely cause an issue later
+    let limit = 10000; // yep, this will definitely cause an issue later
     let isLooping = true;
     let result:StackValue = undefined;
 
     while( count < limit && isLooping ){
-        // log('>--');
-        // stack.debug = true;
-        await stack.pushValues(value);
-        result = stack.pop();
+        const out = await stack.pushValues(value, {debug:true});
+        result = stack.size > 0 ? stack.pop() : undefined;
 
-        // log('result:', result);
+        // log('result:', result );//, 'out', out );
+
+        if( stack.isActive === false ){
+            // bit of a hack - mostly because we are
+            // looping on the main stack and not creating a substack
+
+            // log('stack inactive', wasActive);
+            isLooping = false;
+            if( wasActive ){
+                stack.isActive = true;
+            }
+            break;
+        }
         // log('stack:', stack.toString());
         // if there is nothing on the stack, safest
         // to exit

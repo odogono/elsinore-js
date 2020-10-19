@@ -72,21 +72,6 @@ test('fetches all the entities ids', async () => {
 })
 
 
-// test('prepared query', async () => {
-//     let query = `[ 
-//         /component/title !bf
-//         /component/title#text !ca "turn on the news" ==
-//         @e
-//     ] select`;
-//     let [stack,es] = await prepES(undefined, 'todo');
-
-//     stack = await es.query(query);
-//     // ilog( stack );
-//     let result = stack.popValue();
-    
-//     ilog( result );
-// });
-
 test('fetches component attributes', async () => {
     let [stack] = await prepES(`[ 
                 /component/title !bf
@@ -150,6 +135,27 @@ test('fetches entities matching component attribute', async () => {
 
     assert.equal(ents.map(e => getEntityId(e)), [100, 101]);
 });
+
+test('testing whether entity has a component', async () => {
+    const query = `
+    // select a particular entity - result is an array with the eid
+    [ /component/title#/text !ca "turn on the news" == ] select
+    
+    // make sure the es is top of the stack
+    swap
+    
+    // select the component from the entity
+    [ ^$1 /component/priority !bf @c ] select
+
+    // if the result contains the component, return ok, otherwise nok
+    nok ok rot size 0 swap > iif
+    `;
+
+    let [stack] = await prepES(query, 'todo');
+    // ilog( stack.popValue() );
+    assert.equal( stack.popValue(), 'nok' );
+});
+
 
 test('fetches matching attribute with regex', async () => {
     let [stack] = await prepES(`[ 
@@ -359,7 +365,7 @@ test('selects a JSON attribute', async () => {
 
     // console.log( stack.items );
     const result = stack.popValue();
-    ilog( result );
+    // ilog( result );
 
     assert.equal(result, 'action');
 });
