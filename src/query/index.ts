@@ -113,7 +113,10 @@ export class Statement {
      */
     async getResult(args?:StatementArgs){
         await this.run(args);
-        return this.stack.popValue();
+        // console.log('[getResult]', this.stack.toString() );
+        let result = this.stack.popValue();
+        // console.log('[getResult]', 'result', result );
+        return result;
     }
 
     /**
@@ -259,6 +262,7 @@ export function createStdLibStack( stack?:QueryStack ){
         ['}', onUnexpectedError],
         [']', onUnexpectedError],
         ['to_map', onBuildMap],
+        ['to_str!', onToString],
         ['to_str', onToString],
         ['drop', onDrop, SType.Any],
         ['swap', onSwap, SType.Any, SType.Any],

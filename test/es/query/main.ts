@@ -49,6 +49,15 @@ test('swaps the top two elements of the stack', async () => {
 });
 
 
+test('to_str copes with words', async () => {
+    let [stack] = await prep(`
+    13 result let
+    // ["result is " $result] .
+    ["result is " $result] to_str!
+    `);
+    assert.equal( stack.popValue(), "result is 13");
+});
+
 test('creates an entity', async () => {
     let [stack] = await prep(`100 !e`);
     let result = stack.popValue();

@@ -17,7 +17,7 @@ export function stackToString(stack: QueryStack, reverse:boolean = true): string
     return parts.join(' ');
 }
 
-export function valueToString(val: StackValue): string {
+export function valueToString(val: StackValue, listToString:boolean = false): string {
     const [type, value] = val;
     const strCheck = /^[a-z0-9\/_$]+$/i;
 
@@ -40,6 +40,9 @@ export function valueToString(val: StackValue): string {
             }
             return String(getEntityId(value));
         case SType.List:
+            if( listToString ){
+                return value.map(v => valueToString(v,listToString)).join('');
+            }
             return `[` + value.map(v => valueToString(v)).join(', ') + ']';
         case SType.Map:
             return '{' + Object.keys(value).reduce((res, key) => {

@@ -44,6 +44,16 @@ test('stops loop execution', async () => {
 });
 
 
+test('leave with value', async () => {
+    let [stack] = await prep(`
+    red *leave 1 0 < if
+    blue
+    `);
+
+    assert.equal( stack.popValue(), 'red');
+    
+})
+
 
 
 

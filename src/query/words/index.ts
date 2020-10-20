@@ -324,11 +324,8 @@ export async function onPrint<QS extends QueryStack>(stack: QS, val: StackValue)
     if (op === '..') {
         console.info('[onPrint][stack]', '(', stackToString(stack), ')');
     } else {
-        let msg = stack.pop();
-        // if( msg[0] === SType.List ){
-        //     await stack.pushValues( msg[1] );
-        // }
-        // console.log( '[onPrint]', msg );
+        // let msg =  await onToString(stack, [,'to_str!']);
+        // let msg = stack.pop();
         console.info('[onPrint]', unpackStackValueR(msg));
     }
     return undefined;
@@ -495,6 +492,21 @@ export async function onListEval<QS extends QueryStack>(stack: QS): AsyncInstRes
     let val = stack.pop();
     let list = unpackStackValue(val, SType.List);
 
+    return evalList(stack, list);
+
+    // let mapStack = stack.setChild(stack);
+    
+    // for( const val of list ){
+    //     await mapStack.push(val);
+    // }
+
+    // let result = mapStack.items;
+    // stack.restoreParent();
+
+    // return [SType.List, result];
+}
+
+async function evalList<QS extends QueryStack>(stack: QS, list:StackValue[] ): AsyncInstResult {
     let mapStack = stack.setChild(stack);
     
     for( const val of list ){
@@ -505,12 +517,7 @@ export async function onListEval<QS extends QueryStack>(stack: QS): AsyncInstRes
     stack.restoreParent();
 
     return [SType.List, result];
-
-    // Log.debug('[onListEval]', val);
-
-    // return undefined;
 }
-
 
 
 export function onValue<QS extends QueryStack>(stack: QS): InstResult {
@@ -611,9 +618,19 @@ export function onBuildMap<QS extends QueryStack>(stack: QS): InstResult {
     return [SType.Map, map];
 }
 
-export function onToString(stack: QueryStack): InstResult {
+export async function onToString(stack: QueryStack, [,op]:StackValue): AsyncInstResult {
+    const isJoin = op === 'to_str!';
     let val = stack.pop();
-    let str = valueToString(val);
+    let str = '';
+    // with to string
+    if( isJoin && val[0] === SType.List ){
+        let list = unpackStackValue(val, SType.List);
+        val = await evalList(stack, list);
+        str = valueToString(val, true);
+    }
+    else {
+        str = valueToString(val);
+    }
 
     return [SType.Value, str];
 }
