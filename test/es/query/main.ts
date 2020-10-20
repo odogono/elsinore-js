@@ -53,10 +53,23 @@ test('to_str copes with words', async () => {
     let [stack] = await prep(`
     13 result let
     // ["result is " $result] .
-    ["result is " $result] to_str!
+    ["result is" $result] to_str!
     `);
     assert.equal( stack.popValue(), "result is 13");
 });
+
+test('to_str copes with words (loop)', async () => {
+    let [stack] = await prep(`
+    13 result let
+    [
+        ["result is" $result] to_str!
+    ] loop
+    `);
+    assert.equal( stack.popValue(), "result is 13");
+});
+
+
+
 
 test('creates an entity', async () => {
     let [stack] = await prep(`100 !e`);

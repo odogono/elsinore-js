@@ -41,7 +41,7 @@ export function valueToString(val: StackValue, listToString:boolean = false): st
             return String(getEntityId(value));
         case SType.List:
             if( listToString ){
-                return value.map(v => valueToString(v,listToString)).join('');
+                return value.map(v => valueToString(v,listToString)).join(' ');
             }
             return `[` + value.map(v => valueToString(v)).join(', ') + ']';
         case SType.Map:

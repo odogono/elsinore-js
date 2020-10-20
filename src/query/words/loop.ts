@@ -1,6 +1,6 @@
 import { StackValue, InstResult, AsyncInstResult, SType, StackError } from "../types";
 import { QueryStack } from "../stack";
-import { unpackStackValueR } from "../util";
+import { unpackStackValue, unpackStackValueR } from "../util";
 
 
 /**
@@ -10,7 +10,7 @@ import { unpackStackValueR } from "../util";
  */
 export async function onLoop(stack: QueryStack, [, op]: StackValue): AsyncInstResult {
     let val = stack.pop();
-    let value = unpackStackValueR(val, SType.List);
+    let value = unpackStackValue(val, SType.List);
     const wasActive = stack.isActive;
 
     // log( value );

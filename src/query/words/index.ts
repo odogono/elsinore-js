@@ -325,7 +325,7 @@ export async function onPrint<QS extends QueryStack>(stack: QS, val: StackValue)
         console.info('[onPrint][stack]', '(', stackToString(stack), ')');
     } else {
         // let msg =  await onToString(stack, [,'to_str!']);
-        // let msg = stack.pop();
+        let msg = stack.pop();
         console.info('[onPrint]', unpackStackValueR(msg));
     }
     return undefined;
@@ -623,6 +623,7 @@ export async function onToString(stack: QueryStack, [,op]:StackValue): AsyncInst
     let val = stack.pop();
     let str = '';
     // with to string
+    // Log.debug('[onToString]', op, isJoin, val );
     if( isJoin && val[0] === SType.List ){
         let list = unpackStackValue(val, SType.List);
         val = await evalList(stack, list);
