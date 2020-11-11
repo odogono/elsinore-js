@@ -25,7 +25,7 @@ export function onDefine(stack: QueryStack, [, op]: StackValue): InstResult {
     // if (value[0] === SType.List && op !== 'let') {
     if (value[0] === SType.List && isUDFunc ) {
         wordFn = async (stack: QueryStack): AsyncInstResult => {
-            await stack.pushValues(value[1]);
+            await stack.pushValues(value[1], {ignoreActive:false});
             return undefined;
         }
     } else {

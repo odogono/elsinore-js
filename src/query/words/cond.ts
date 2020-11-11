@@ -1,5 +1,5 @@
 import { QueryStack } from "../stack";
-import { StackValue, InstResult, AsyncInstResult } from "../types";
+import { StackValue, InstResult, AsyncInstResult, SType } from "../types";
 
 
 
@@ -25,13 +25,23 @@ export async function onCondition(stack: QueryStack, [, op]: StackValue): AsyncI
     // }
 
     if( isIfElse ){
-        await stack.push( condition ? ifVal : elseVal );
+        // await stack.push( condition ? ifVal : elseVal );
+        await pushValue( stack, condition ? ifVal : elseVal );
     } else if( condition ) {
+        // console.log('[onCondition]', ifVal );
         // console.log('[onCondition]', op, stack.toString() );
-        await stack.push( ifVal );
+        // await stack.push( ifVal );
+        await pushValue( stack, ifVal );
         // console.log('[onCondition]', 'post', op, stack.toString() );
     }
     
-    // return condVal[1] ? ifVal : elseVal;
     return undefined;
+}
+
+async function pushValue( stack:QueryStack, value:StackValue ){
+    if( value[0] === SType.List ){
+        stack.pushValues( value[1], {ignoreActive:true} );
+    } else {
+        return stack.push(value);
+    }
 }

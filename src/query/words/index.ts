@@ -586,12 +586,15 @@ export function onConcat<QS extends QueryStack>(stack: QS, val: StackValue): Ins
 }
 
 /**
- * ( )
+ * ( [] -- vl )
+ * ( %{} -- vl )
  * @param stack 
  */
-export async function onSize<QS extends QueryStack>(stack: QS): AsyncInstResult {
+export async function onSize<QS extends QueryStack>(stack: QS, [,op]:StackValue): AsyncInstResult {
     let size = 0;
-    let [type, val] = stack.pop();
+    // by default, the word consumes what it is measuring
+    const isDes = op === 'size';
+    let [type, val] = isDes ? stack.pop() : stack.peek();
 
     if (type === SType.List) {
         size = (val as any[]).length;

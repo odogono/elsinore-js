@@ -296,9 +296,12 @@ export function createStdLibStack( stack?:QueryStack ){
         // ['cond', onCondition, SType.Any, SType.Any, SType.Any], // cond, if, else
         ['iif', onCondition, SType.Any, SType.Any, SType.Any], // cond, if, else
         ['if', onCondition, SType.Any, SType.Any],
+        ['size!', onSize, SType.Any],
         ['size', onSize, SType.Any],
         ['loop', onLoop, SType.List],
         ['leave', onLeave],
+        ['break', onLeave],
+        ['return', onLeave],
         ['!d', onComponentDef, SType.Map],
         ['!d', onComponentDef, SType.List],
         ['!d', onComponentDef, SType.Value],

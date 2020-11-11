@@ -172,7 +172,7 @@ export class QueryStack {
         let handler: WordFn;
 
         if( this.isActive === false ){
-            Log.debug('[push]', 'inactive stack');
+            // Log.debug('[push]', 'inactive stack');
             return undefined;
         }
 
@@ -303,6 +303,7 @@ export class QueryStack {
         }
 
         if (value !== undefined ){
+            // Log.debug('[push]', word, value, handler, this.isActive );
             this.items.push( value );
         }
         // Log.debug('[push]', this.items );
@@ -324,6 +325,7 @@ export class QueryStack {
 
     async pushValues(values: StackValue[], options: PushOptions = {}): Promise<StackValue[]> {
         let ovalues: StackValue[] = [];
+        const ignoreActive = options.ignoreActive ?? false;
 
         // Log.debug('[pushValues!]', values);
 
@@ -347,8 +349,8 @@ export class QueryStack {
                 
                 let ovalue = await this.push(value);
 
-                if( this.isActive === false ){
-                    // Log.debug('[pushValues]', 'breaking due to inactive', values);
+                if( this.isActive === false && ignoreActive === false ){
+                    // Log.debug('[pushValues]', 'breaking due to inactive', value, values);
                     this.isActive = true;
                     break;
                 }
@@ -658,6 +660,7 @@ export function isStackValue(value: any): boolean {
 
 export interface PushOptions {
     debug?: boolean;
+    ignoreActive?: boolean;
 }
 
 
