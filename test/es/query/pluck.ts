@@ -16,10 +16,14 @@ test('plucks values', async () => {
     let [stack] = await prep(`
             {text: hello} /text pluck
             `);
+    assert.equal(stack.popValue(), 'hello');
+});
 
-    // ilog(stack.items);
-    let result = stack.popValue();
-    assert.equal(result, 'hello');
+test('failed pluck', async () => {
+    let [stack] = await prep(`
+            {text: hello} /msg pluck
+            `);
+    assert.equal(stack.popValue(), undefined);
 });
 
 test('plucks value from multiple maps', async () => {

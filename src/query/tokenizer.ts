@@ -59,7 +59,6 @@ export function tokenizeString(data:string, options:TokenizeOptions = {}) {
     context = tokenize(context, data);
 
     return returnValues ? context.output.map( e => e[0] ) : context.output;
-    // return context;
 }
 
 /**

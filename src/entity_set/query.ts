@@ -223,10 +223,16 @@ function walkFilterQueryCompare(es: EntitySetMem, eids: EntityId[], cmd?, ...arg
         // Log.debug('[walkFQ]','==', key, val, com[key], com);
         // if the value is an array, we look whether it exists
         if (Array.isArray(val)) {
-            out = val.indexOf(ptrVal) !== -1 ? [...out, eid] : out;
+            const r = val.indexOf(ptrVal) !== -1;
+            if( cmd === '==' ){
+                out = r ? [...out,eid] : out;
+            } else if( cmd === '!=' ){
+                out = r ? out : [...out,eid];
+            }
+            // out = val.indexOf(ptrVal) !== -1 ? [...out, eid] : out;
+            // Log.debug('[walkFQ]', cmd, ptrVal, val, val.indexOf(ptrVal) );
         }
         if( ptrVal === undefined ){
-
         }
         else if( isDate(val) ){
             const ptrDte = new Date(ptrVal);

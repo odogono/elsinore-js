@@ -49,7 +49,7 @@ export async function onLoop(stack: QueryStack, [, op]: StackValue): AsyncInstRe
     }
 
     if( count >= limit ){
-        throw new StackError('loop out of control');
+        throw new StackError(`loop out of control ${count} > ${limit}`);
     }
 
     // log('finished at', count, '/', limit )

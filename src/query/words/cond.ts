@@ -27,7 +27,9 @@ export async function onCondition(stack: QueryStack, [, op]: StackValue): AsyncI
     if( isIfElse ){
         await stack.push( condition ? ifVal : elseVal );
     } else if( condition ) {
+        // console.log('[onCondition]', op, stack.toString() );
         await stack.push( ifVal );
+        // console.log('[onCondition]', 'post', op, stack.toString() );
     }
     
     // return condVal[1] ? ifVal : elseVal;

@@ -38,14 +38,20 @@ test('push', async () => {
 });
 
 test('pop', async () => {
-    let [stack] = await prep(`[ hello world ] pop`);
+    let [stack] = await prep(`[ hello world ] pop!`);
     let result = stack.popValue();
     assert.equal(result, 'world');
 });
 
+test('pop return', async () => {
+    let [stack] = await prep(`[ hello world ] pop`);
+    assert.equal( stack.popValue(), 'world');
+    assert.equal( stack.popValue(), [ 'hello' ] );
+});
+
 test('pop empty', async () => {
     try {
-        await prep(`[] pop`);
+        await prep(`[] pop!`);
     } catch (err) {
         assert.instance(err, StackError);
         assert.equal(err.message, 'stack underflow: ()');

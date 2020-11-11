@@ -348,7 +348,8 @@ export class QueryStack {
                 let ovalue = await this.push(value);
 
                 if( this.isActive === false ){
-                    // Log.debug('[pushValues]', 'breaking due to inactive');
+                    // Log.debug('[pushValues]', 'breaking due to inactive', values);
+                    this.isActive = true;
                     break;
                 }
                 // Log.debug('[pushValues]', value, 'ovalue', ovalue);

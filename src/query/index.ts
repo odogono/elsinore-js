@@ -26,7 +26,8 @@ import {
     onSize,
     onGather,
     onRemoveFromEntitySet,
-    onLeave
+    onLeave,
+    onJoin
 } from "./words";
 import { onPluck } from "./words/pluck";
 import { onDefine } from "./words/define";
@@ -224,6 +225,7 @@ export function createStdLibStack( stack?:QueryStack ){
         // pattern match stack args
         ['+', onAddArray, SType.List, SType.Any],
 
+        ['eval', onRegex, SType.Any, SType.Regex],
         ['split', onRegex, SType.Value, SType.Regex],
         ['==', onRegex, SType.Value, SType.Regex],
         ['!=', onRegex, SType.Value, SType.Regex],
@@ -264,12 +266,16 @@ export function createStdLibStack( stack?:QueryStack ){
         ['to_map', onBuildMap],
         ['to_str!', onToString],
         ['to_str', onToString],
+        ['join', onJoin, SType.Value, SType.Value],
+        ['join', onJoin, SType.List, SType.Value],
         ['drop', onDrop, SType.Any],
         ['swap', onSwap, SType.Any, SType.Any],
         ['push', onPush, SType.List, SType.Any],
+        ['pop!', onPop, SType.List],
         ['pop', onPop, SType.List],
         ['map', onMap, SType.List, SType.List],
         ['pluck', onPluck, SType.Map, SType.Value],
+        ['pluck', onPluck, SType.Component, SType.Value],
         ['pluck', onPluck, SType.List, SType.Value],
         ['pluck', onPluck, SType.List, SType.List],
         ['unique', onUnique, SType.List],
@@ -285,6 +291,7 @@ export function createStdLibStack( stack?:QueryStack ){
         ['rot', onRot, SType.Any, SType.Any, SType.Any],
         ['select', onSelect, SType.EntitySet, SType.List],
         ['spread', onListSpread, SType.List],
+        
         ['eval', onListEval, SType.List],
         // ['cond', onCondition, SType.Any, SType.Any, SType.Any], // cond, if, else
         ['iif', onCondition, SType.Any, SType.Any, SType.Any], // cond, if, else

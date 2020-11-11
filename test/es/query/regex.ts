@@ -30,4 +30,28 @@ test('matches length >', async () => {
     assert.equal(result, true);
 });
 
+
+
+test('executes a regex', async () => {
+    let [stack] = await prep(`
+        "file:///test/fixtures/rootA/static"
+        ~r/(?!.*/).+/
+        eval
+    `);
+    assert.equal( stack.popValue(), "static" );
+});
+
+
+test('split with regex', async () => {
+    let [stack] = await prep(`
+        "file:///test/fixtures/rootA/static/"
+        ~r/(?!\/\/)\/(?=.*\/)/
+        split
+        pop
+        drop
+        / join / join
+    `);
+    assert.equal( stack.popValue(), "file:///test/fixtures/rootA/" );
+});
+
 test.run();

@@ -13,7 +13,7 @@ export async function onPluck(stack: QueryStack): AsyncInstResult {
     let left = stack.pop();
 
     let key = unpackStackValueR(right, SType.Any);
-    let list = unpackStackValue(left, [SType.List, SType.Map]);
+    let list = unpackStackValue(left, [SType.List, SType.Map, SType.Component]);
 
     if (isObject(list)) {
         list = [[SType.Map, list]];
@@ -31,7 +31,7 @@ export async function onPluck(stack: QueryStack): AsyncInstResult {
                 throw new StackError(`expected map, got ${it[0]}`);
             }
 
-            // console.log('well', key, Object.keys(obj) );
+            // console.log( '[onPluck]', 'well', key, Object.keys(obj) );
 
             let result = {};
             for( const ptr of key ){

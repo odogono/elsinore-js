@@ -50,8 +50,25 @@ test('leave with value', async () => {
     blue
     `);
 
-    assert.equal( stack.popValue(), 'red');
-    
+    assert.equal( stack.popValue(), 'red'); 
+});
+
+
+test('leave function', async () => {
+    let [stack] = await prep(`
+    // only returns false if the value is not even
+    [
+        **leave swap 2 swap % 0 == if
+        false
+    ] isNotEven define
+
+    6 isNotEven
+    5 isNotEven
+    3 isNotEven
+    2 isNotEven
+    `);
+
+    assert.equal( stack.toString(), 'false false' );
 })
 
 

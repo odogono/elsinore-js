@@ -63,14 +63,14 @@ export async function onDup<QS extends QueryStack>(stack: QS, op): AsyncInstResu
  */
 export async function onRot<QS extends QueryStack>(stack: QS): AsyncInstResult {
     let items = stack.items;
-    
-    if( items.length < 3 ){
+
+    if (items.length < 3) {
         throw new StackError('stack underflow');
     }
 
-    const rem = items.splice( -3, 1 );
+    const rem = items.splice(-3, 1);
     items.push(rem[0]);
-    stack.setItems( items );
+    stack.setItems(items);
 
     return undefined;
 }
@@ -86,15 +86,15 @@ export async function onSelect<QS extends QueryStack>(stack: QS): AsyncInstResul
 
     let right = stack.pop();
     let left = stack.peek(); // NOTE - we do not consume the ES
-    
+
     let es: EntitySet = unpackStackValue(left, SType.EntitySet);
     let query = unpackStackValue(right, SType.List, false);
-    
+
     let result = await es.select(stack, query);
 
     if (result) {
         // append output stack
-        stack.setItems( stack.items.concat(result) );
+        stack.setItems(stack.items.concat(result));
     }
 
     return undefined;
@@ -109,7 +109,7 @@ export function onArgError(stack: QueryStack, val: StackValue): InstResult {
 export function onEntity(stack: QueryStack): InstResult {
     let data: StackValue = stack.pop();
     let [type, val] = data;
-    const {es} = stack;
+    const { es } = stack;
 
     if (type === SType.List) {
         let e = val.reduce((acc, val) => {
@@ -242,12 +242,12 @@ export async function onRemoveFromEntitySet<QS extends QueryStack>(stack: QS): A
     let left = stack.pop();
     let right = stack.pop();
 
-    let eids:EntityId[];
-    if( left[0] === SType.List ){
+    let eids: EntityId[];
+    if (left[0] === SType.List) {
         eids = unpackStackValueR(left);
     }
-    else if( left[0] === SType.Value ){
-        eids = [ unpackStackValueR(left) ];
+    else if (left[0] === SType.Value) {
+        eids = [unpackStackValueR(left)];
     }
 
     // DLog(stack, '[onAddToEntitySet]', left );
@@ -256,9 +256,9 @@ export async function onRemoveFromEntitySet<QS extends QueryStack>(stack: QS): A
     let es: EntitySet = unpackStackValueR(right, SType.EntitySet);
 
     // Log.debug('[onRemoveFromEntitySet]', eids);
-    
-    if( eids !== undefined ){
-        es = await es.removeEntity( eids );
+
+    if (eids !== undefined) {
+        es = await es.removeEntity(eids);
     }
 
     return [SType.EntitySet, es];
@@ -349,38 +349,50 @@ export function onFetchArray<QS extends QueryStack>(stack: QS, val: StackValue):
 }
 
 
-export function onRegex(stack:QueryStack, [,op]:StackValue): InstResult {
-    let regex:RegExp = stack.popValue();
+export function onRegex(stack: QueryStack, [, op]: StackValue): InstResult {
+    let regex: RegExp = stack.popValue();
     let val = stack.popValue();
 
     // console.log('[onRegex]', regex, val );
 
-    let value = false;
-    if( op === 'split' ){
-        value = isString(val) ? val.split(regex) : val;
+    if (!isString(val)) {
+        return [SType.Value, false];
     }
-    else if( op === '==' ){
+
+    let value: any = false;
+
+    if (op === 'split') {
+        value = val.split(regex);
+        return [SType.List, value.map( v => [SType.Value,v])];
+    }
+    else if (op === 'eval') {
+        let result = regex.exec(val);
+        if (result) {
+            value = result[0];
+        }
+    }
+    else if (op === '==') {
         value = regex.test(val);
-    } else if( op === '!=' ){
+    } else if (op === '!=') {
         value = !regex.test(val);
     }
 
     return [SType.Value, value];
 }
 
-export function onDateTime(stack:QueryStack, [,op]:StackValue): InstResult {
+export function onDateTime(stack: QueryStack, [, op]: StackValue): InstResult {
     let dateA = stack.popValue();
     let dateB = stack.popValue();
-    
+
     let value = compareDates(op, dateA, dateB);
-    
+
     return [SType.Value, value];
 }
 
 
 
-export function onAdd(stack: QueryStack, [,op]: StackValue): InstResult {
-    
+export function onAdd(stack: QueryStack, [, op]: StackValue): InstResult {
+
     let left = stack.popValue();
     let right = stack.popValue();
 
@@ -389,7 +401,10 @@ export function onAdd(stack: QueryStack, [,op]: StackValue): InstResult {
         case '+': value = left + right; break;
         case '*': value = left * right; break;
         case '-': value = left - right; break;
-        case '%': value = left % right; break;
+        case '%':
+            // Log.debug('[%]', left, right, left % right );
+            value = left % right; 
+            break;
         case '==': value = left === right; break;
         case '!=': value = left !== right; break;
         case '>': value = left > right; break;
@@ -402,7 +417,7 @@ export function onAdd(stack: QueryStack, [,op]: StackValue): InstResult {
 }
 
 export function onMapOpen(stack: QueryStack): InstResult {
-    
+
     // Log.debug('[onMapOpen]', stack.items);//Object.keys(stack.words));
 
     let sub = stack.setChild();
@@ -448,7 +463,7 @@ export function onMapClose<QS extends QueryStack>(stack: QS, val: StackValue): I
 
 export function onListOpen(stack: QueryStack): InstResult {
     let sub = stack.setChild();
-    
+
     sub.addWords([
         ['{', onMapOpen],
         ['[', onListOpen],
@@ -495,7 +510,7 @@ export async function onListEval<QS extends QueryStack>(stack: QS): AsyncInstRes
     return evalList(stack, list);
 
     // let mapStack = stack.setChild(stack);
-    
+
     // for( const val of list ){
     //     await mapStack.push(val);
     // }
@@ -506,10 +521,10 @@ export async function onListEval<QS extends QueryStack>(stack: QS): AsyncInstRes
     // return [SType.List, result];
 }
 
-async function evalList<QS extends QueryStack>(stack: QS, list:StackValue[] ): AsyncInstResult {
+async function evalList<QS extends QueryStack>(stack: QS, list: StackValue[]): AsyncInstResult {
     let mapStack = stack.setChild(stack);
-    
-    for( const val of list ){
+
+    for (const val of list) {
         await mapStack.push(val);
     }
 
@@ -527,7 +542,7 @@ export function onValue<QS extends QueryStack>(stack: QS): InstResult {
         value = value.map(v => [Array.isArray(v) ? SType.List : SType.Value, v]);
         // stack = { ...stack, items: [...stack.items, ...value] };
         // stack.items = [...stack.items, ...value];
-        stack.items.push( value );
+        stack.items.push(value);
     }
     return undefined;
 }
@@ -565,7 +580,7 @@ export function onConcat<QS extends QueryStack>(stack: QS, val: StackValue): Ins
     // Log.debug('[onConcat]', 'a:', a[0], 'b:', b );
     b = b[0] !== SType.List ? [b] : b[1];
 
-    let values = [].concat( a[1], b );
+    let values = [].concat(a[1], b);
 
     return [SType.List, values];
 }
@@ -576,20 +591,20 @@ export function onConcat<QS extends QueryStack>(stack: QS, val: StackValue): Ins
  */
 export async function onSize<QS extends QueryStack>(stack: QS): AsyncInstResult {
     let size = 0;
-    let [type,val] = stack.pop();
-    
-    if( type === SType.List ){
+    let [type, val] = stack.pop();
+
+    if (type === SType.List) {
         size = (val as any[]).length;
     }
-    else if( type === SType.Map ){
-        size = Object.keys( val ).length;
-    } else if( isString(val) ){
+    else if (type === SType.Map) {
+        size = Object.keys(val).length;
+    } else if (isString(val)) {
         size = (val as string).length;
     }
-    else if( isEntitySet(val) ){
+    else if (isEntitySet(val)) {
         size = await (val as EntitySet).size();
     }
-    else if( isEntity(val) ){
+    else if (isEntity(val)) {
         size = (val as Entity).size;
     }
 
@@ -618,13 +633,13 @@ export function onBuildMap<QS extends QueryStack>(stack: QS): InstResult {
     return [SType.Map, map];
 }
 
-export async function onToString(stack: QueryStack, [,op]:StackValue): AsyncInstResult {
+export async function onToString(stack: QueryStack, [, op]: StackValue): AsyncInstResult {
     const isJoin = op === 'to_str!';
     let val = stack.pop();
     let str = '';
     // with to string
     // Log.debug('[onToString]', op, isJoin, val );
-    if( isJoin && val[0] === SType.List ){
+    if (isJoin && val[0] === SType.List) {
         let list = unpackStackValue(val, SType.List);
         val = await evalList(stack, list);
         str = valueToString(val, true);
@@ -634,6 +649,28 @@ export async function onToString(stack: QueryStack, [,op]:StackValue): AsyncInst
     }
 
     return [SType.Value, str];
+}
+
+
+/**
+ * 
+ * ( [] vl -- vl )
+ * ( vl vl -- vl )
+ */
+export function onJoin(stack: QueryStack): InstResult {
+    let joinStr = stack.pop();
+    let list = stack.pop();
+    let result;
+
+    if( list[0] === SType.List ){
+        list = unpackStackValueR(list, SType.List);
+        result = list.join( joinStr[1] ).trim();
+    } else {
+        result = list[1] + joinStr[1];
+    }
+
+    // Log.debug('[onJoin]', joinStr[1], list, `"${result}"` );
+    return [SType.Value, result];
 }
 
 export async function onFilter<QS extends QueryStack>(stack: QS): AsyncInstResult {
@@ -670,8 +707,8 @@ export async function onMap<QS extends QueryStack>(stack: QS): AsyncInstResult {
     let fn = unpackStackValue(right, SType.List);
 
     let mapStack = stack.setChild(stack);
-    
-    for( const val of list ){
+
+    for (const val of list) {
         await mapStack.push(val);
         await mapStack.pushValues(fn);
     }
@@ -694,7 +731,7 @@ export async function onReduce<QS extends QueryStack>(stack: QS): AsyncInstResul
 
     let mapStack = stack.setChild(stack);
 
-    for( const val of list ){
+    for (const val of list) {
         await mapStack.push(val);
         await mapStack.push(accum);
         await mapStack.pushValues(fn);
@@ -717,6 +754,11 @@ export function onUnique<QS extends QueryStack>(stack: QS): InstResult {
     return [SType.List, [...new Set([...array].sort())].map(v => [SType.Value, v])];
 }
 
+
+/**
+ * 
+ * ( [] vl -- [] )
+ */
 export function onPush<QS extends QueryStack>(stack: QS, val: StackValue): InstResult {
     let rv = stack.pop();
     let lv = stack.pop();
@@ -730,7 +772,17 @@ export function onPush<QS extends QueryStack>(stack: QS, val: StackValue): InstR
     return [SType.List, list];
 }
 
-export function onPop<QS extends QueryStack>(stack: QS, val: StackValue): InstResult {
+
+/**
+ * 
+ * pop! ( [] -- vl )
+ * pop ( [] -- [] vl )
+ * 
+ * @param stack 
+ */
+export function onPop<QS extends QueryStack>(stack: QS, [,op]:StackValue): InstResult {
+    const isPopRet = op == 'pop';
+
     let lv = stack.pop();
 
     let list = unpackStackValue(lv, SType.List);
@@ -738,8 +790,16 @@ export function onPop<QS extends QueryStack>(stack: QS, val: StackValue): InstRe
     if (len === 0) {
         throw new StackError('stack underflow');
     }
-    let value = list[len - 1];
-    return value;
+
+    let value = list.pop();
+
+    if( isPopRet ){
+        stack.pushRaw( [SType.List, list] );
+    }
+
+    stack.pushRaw( value );
+
+    return undefined;
 }
 
 
@@ -790,20 +850,20 @@ export function onAssertType<QS extends QueryStack>(stack: QS): InstResult {
     return undefined;
 }
 
-export function onPrintStack<QS extends QueryStack>(stack:QS): InstResult {
+export function onPrintStack<QS extends QueryStack>(stack: QS): InstResult {
     const vals = [...stack.items];
     print(0, `> stack ${stack._idx}`);
 
     const words = stack._udWords;
-    for( const word in words ){
+    for (const word in words) {
         print(0, `${word}:`);
-        printType(1, words[word] );
+        printType(1, words[word]);
         // print(1, typeof words[word], {}.toString.call(words[word]), isFunction(words[word]) );
     }
-    
+
     print(0, '---');
-    for( const val of vals.reverse() ){
-        printType( 0, val );
+    for (const val of vals.reverse()) {
+        printType(0, val);
         // console.log( `${indent} (${type}) ${val}`);
     }
 
@@ -811,37 +871,37 @@ export function onPrintStack<QS extends QueryStack>(stack:QS): InstResult {
     return undefined;
 }
 
-function printType( indent:number = 0, val:StackValue ){
-    if( !Array.isArray(val) ){
-        print( indent, isFunction(val) ? 'Fn' : val );
+function printType(indent: number = 0, val: StackValue) {
+    if (!Array.isArray(val)) {
+        print(indent, isFunction(val) ? 'Fn' : val);
         return;
     }
-    switch( val[0] ){
+    switch (val[0]) {
         case SType.List:
-            printList( indent, val );
+            printList(indent, val);
             break;
         case SType.EntitySet:
-            const es:EntitySet = val[1];
-            print( indent, `(${val[0]}) [${es.type}, ${es.uuid}]`);
+            const es: EntitySet = val[1];
+            print(indent, `(${val[0]}) [${es.type}, ${es.uuid}]`);
             break;
         case SType.Component:
-            const com:Component = val[1];
-            print( indent, JSON.stringify(com) );
+            const com: Component = val[1];
+            print(indent, JSON.stringify(com));
             break;
         default:
-            print( indent, `(${val[0]}) ${val[1]}`);
+            print(indent, `(${val[0]}) ${val[1]}`);
             break;
     }
 }
 
-function printList( indent:number = 0, list:StackValue ){
-    print( indent, `${list[0]}` );
-    for( const val of list[1] ){
-        printType( indent+1, val );
+function printList(indent: number = 0, list: StackValue) {
+    print(indent, `${list[0]}`);
+    for (const val of list[1]) {
+        printType(indent + 1, val);
     }
 }
 
-function print(indent, ...val){ console.log(`${' '.repeat(indent)}`, ...val); }
+function print(indent, ...val) { console.log(`${' '.repeat(indent)}`, ...val); }
 
 // export function onAssert( stack:QueryStack, val:StackValue ):InstResult {
 //     // Log.debug('[assert]', val);
