@@ -27,7 +27,8 @@ import {
     onGather,
     onRemoveFromEntitySet,
     onLeave,
-    onJoin
+    onJoin,
+    onUndefined
 } from "./words";
 import { onPluck } from "./words/pluck";
 import { onDefine } from "./words/define";
@@ -278,6 +279,7 @@ export function createStdLibStack( stack?:QueryStack ){
         ['pluck', onPluck, SType.Component, SType.Value],
         ['pluck', onPluck, SType.List, SType.Value],
         ['pluck', onPluck, SType.List, SType.List],
+        ['pluck', onPluck, SType.Any, SType.Value],
         ['unique', onUnique, SType.List],
         ['filter', onFilter, SType.List, SType.List],
         ['reduce', onReduce, SType.List, SType.Value, SType.List],
@@ -289,7 +291,7 @@ export function createStdLibStack( stack?:QueryStack ){
         ['dup', onDup, SType.Any],
         ['over', onDup, SType.Any],
         ['rot', onRot, SType.Any, SType.Any, SType.Any],
-        ['select', onSelect, SType.EntitySet, SType.List],
+        ['select', onSelect, SType.Any, SType.List],
         ['spread', onListSpread, SType.List],
         
         ['eval', onListEval, SType.List],
@@ -302,6 +304,7 @@ export function createStdLibStack( stack?:QueryStack ){
         ['leave', onLeave],
         ['break', onLeave],
         ['return', onLeave],
+        ['undefined', onUndefined],
         ['!d', onComponentDef, SType.Map],
         ['!d', onComponentDef, SType.List],
         ['!d', onComponentDef, SType.Value],

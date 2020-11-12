@@ -39,6 +39,14 @@ test('fetches entities by id', async () => {
     assert.equal(result.id, 102);
 });
 
+// test.only('something', async () => {
+//     let query = `102 [ ^$0 @e ] select`;
+//     let [stack] = await prepES(query, 'todo');
+
+//     ilog( stack.items );
+//     // console.log( stack.toString() );
+// })
+
 test('fetches entities by did', async () => {
     let query = `[ "/component/completed" !bf @e] select`;
     let [stack] = await prepES(query, 'todo');

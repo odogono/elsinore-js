@@ -87,8 +87,8 @@ export async function onSelect<QS extends QueryStack>(stack: QS): AsyncInstResul
     let right = stack.pop();
     let left = stack.peek(); // NOTE - we do not consume the ES
 
-    let es: EntitySet = unpackStackValue(left, SType.EntitySet);
     let query = unpackStackValue(right, SType.List, false);
+    let es: EntitySet = unpackStackValue(left, SType.EntitySet);
 
     let result = await es.select(stack, query);
 
@@ -389,6 +389,12 @@ export function onDateTime(stack: QueryStack, [, op]: StackValue): InstResult {
     return [SType.Value, value];
 }
 
+/**
+ * Places an undefined value on the stack
+ */
+export function onUndefined(stack: QueryStack): InstResult {
+    return [SType.Value, undefined];
+}
 
 
 export function onAdd(stack: QueryStack, [, op]: StackValue): InstResult {
@@ -405,8 +411,15 @@ export function onAdd(stack: QueryStack, [, op]: StackValue): InstResult {
             // Log.debug('[%]', left, right, left % right );
             value = left % right; 
             break;
-        case '==': value = left === right; break;
-        case '!=': value = left !== right; break;
+        case '==': 
+            // Log.debug(`[==]`, left, right, compare(left, right) );
+            // value = compare(left,right);
+            value = left === right; 
+            break;
+        case '!=': 
+            // value = !compare(left,right);// left !== right; 
+            value = left !== right;
+            break;
         case '>': value = left > right; break;
         case '>=': value = left >= right; break;
         case '<': value = left < right; break;
@@ -415,6 +428,16 @@ export function onAdd(stack: QueryStack, [, op]: StackValue): InstResult {
 
     return [SType.Value, value];
 }
+
+// function compare( left:any, right:any ){
+//     if( left === 'undefined' ){
+//         left = undefined;
+//     }
+//     if( right === 'undefined' ){
+//         right = undefined;
+//     }
+//     return left === right;
+// }
 
 export function onMapOpen(stack: QueryStack): InstResult {
 
@@ -659,6 +682,8 @@ export async function onToString(stack: QueryStack, [, op]: StackValue): AsyncIn
  * 
  * ( [] vl -- vl )
  * ( vl vl -- vl )
+ * 
+ * [ hello world ] ' ' join -- 'hello world'
  */
 export function onJoin(stack: QueryStack): InstResult {
     let joinStr = stack.pop();
@@ -889,10 +914,15 @@ function printType(indent: number = 0, val: StackValue) {
             break;
         case SType.Component:
             const com: Component = val[1];
-            print(indent, JSON.stringify(com));
+            print(indent, `(${val[0]})`, JSON.stringify(com));
+            break;
+        case SType.Entity:
+            const e:Entity = val[1];
+            print(indent, `(${val[0]}) ${e.id}`);
             break;
         default:
             print(indent, `(${val[0]}) ${val[1]}`);
+            // print(indent, val[1]);
             break;
     }
 }

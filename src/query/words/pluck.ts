@@ -3,6 +3,8 @@ import { unpackStackValue, unpackStackValueR, stackToString } from "../util";
 import { isObject } from "../../util/is";
 import { isStackValue, QueryStack } from "../stack";
 import Jsonpointer from 'jsonpointer';
+import { isComponent } from "../../component";
+import { isEntity } from "../../entity";
 
 
 export async function onPluck(stack: QueryStack): AsyncInstResult {
@@ -13,7 +15,7 @@ export async function onPluck(stack: QueryStack): AsyncInstResult {
     let left = stack.pop();
 
     let key = unpackStackValueR(right, SType.Any);
-    let list = unpackStackValue(left, [SType.List, SType.Map, SType.Component]);
+    let list = unpackStackValue(left, [SType.List, SType.Map, SType.Component, SType.Entity]);
 
     if (isObject(list)) {
         list = [[SType.Map, list]];
@@ -55,7 +57,17 @@ export async function onPluck(stack: QueryStack): AsyncInstResult {
             }
             let val = Jsonpointer.get(obj,key);
             // console.log('[onPluck]', 'get', key, obj, val );
-            out.push( isStackValue(val) ? val : [SType.Value, val] );
+            if( isStackValue(val) === false ){
+                if( isComponent(val) ){
+                    val = [SType.Component,val];
+                } else if( isEntity(val) ){
+                    val = [SType.Entity,val];
+                } else {
+                    val = [SType.Value,val];
+                }
+            }
+            out.push(val);
+            // out.push( isStackValue(val) ? val : [SType.Value, val] );
         }
 
         if( out.length === 1 && !Array.isArray(key) ){
