@@ -1,4 +1,5 @@
 import {
+    ActiveMode,
     isDLogEnabled,
     QueryStack
 } from '../stack';
@@ -494,6 +495,7 @@ export function onListOpen(stack: QueryStack): InstResult {
         ['}', onUnexpectedError],
     ], true);
     sub.isUDWordsActive = false;
+    sub.isEscapeActive = false;
     // Log.debug('[onListOpen]', 'stack', stack._idx, stack.isUDWordsActive, 'sub', sub._idx, sub.isUDWordsActive );
 
     return undefined;
@@ -859,11 +861,11 @@ export function onVersion<QS extends QueryStack>(stack: QS): InstResult {
     return [SType.Value, '1.0.0'];
 };
 
-export function onLeave<QS extends QueryStack>(stack: QS): InstResult {
-    // Log.debug('[onLeave]');
-    stack.isActive = false;
-    return undefined;
-}
+// export function onLeave<QS extends QueryStack>(stack: QS, [,op]:StackValue): InstResult {
+//     const mode = op === 'leave' ? ActiveMode.Leave : ActiveMode.Break;
+//     stack.setActive( false, mode, 'onLeave' );
+//     return undefined;
+// }
 
 export function onAssertType<QS extends QueryStack>(stack: QS): InstResult {
     let value: StackValue = stack.pop();

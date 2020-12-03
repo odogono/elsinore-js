@@ -17,13 +17,27 @@ import { buildBitfield } from "../entity_set/query";
 const Log = createLog('QueryStack');
 
 
+// let wordStack = [];
 
+let pushValuesRun = 0;
 
 export interface CloneOptions {
     items?: boolean;
     words?: boolean;
 }
 
+export const ActiveMode = {
+    Active: 0,
+    Leave: 1,
+    Break: 2,
+    Return: 3,
+} as const;
+type ActiveMode = typeof ActiveMode[keyof typeof ActiveMode]
+
+// export const MODE_LEAVE = 0;
+// export const MODE_BREAK = 1;
+
+// type ActiveMode = 0 | 1;
 
 let stackId = 0;
 
@@ -32,73 +46,123 @@ interface QueryStackInst {
     items: StackValue[];
     words: Words;
     isUDWordsActive: boolean;
+    isEscapeActive: boolean;
     isActive: boolean;
+    // pendingActive?: boolean;
+    // leaveSet?: boolean;
+    // wordStack: any[];
     // udWords: { [key:string]: any };
 }
 
-function createInst():QueryStackInst{
+function createInst(): QueryStackInst {
     return {
         id: ++stackId,
         items: [],
         words: {},
         isUDWordsActive: true,
+        isEscapeActive: true,
         isActive: true,
+        // pendingActive: undefined,
+        // leaveSet: undefined,
+        // wordStack: []
         // udWords: {}
     };
 }
 
 
 export class QueryStack {
-    
+
     es?: EntitySet;
-    
+
     _idx: number = 0;
     _stacks: QueryStackInst[];
 
     // _udWords = new WeakMap();
-    _udWords: {[key:string]: any} = {};
+    _udWords: { [key: string]: any } = {};
 
     debug: boolean = false;
-    
+
     constructor(stack?: QueryStack) {
-        this._stacks = [ createInst() ];
+        this._stacks = [createInst()];
+    }
+
+    get inst(): QueryStackInst {
+        return this._stacks[this._idx];
     }
 
     get words(): Words {
-        return this._stacks[ this._idx ].words;
+        return this._stacks[this._idx].words;
     }
     // get udWords(): { [key:string]: any } {
     //     return this._stacks[ this._idx ].udWords;
     // }
     get items(): StackValue[] {
-        return this._stacks[ this._idx ].items;
+        return this._stacks[this._idx].items;
     }
 
-    set isUDWordsActive(val:boolean){
-        this._stacks[ this._idx ].isUDWordsActive = val;
+    set isUDWordsActive(val: boolean) {
+        this._stacks[this._idx].isUDWordsActive = val;
     }
-    get isUDWordsActive(){
-        return this._stacks[ this._idx ].isUDWordsActive;
-    }
-
-    set isActive(val:boolean){
-        this._stacks[ this._idx ].isActive = val;
+    get isUDWordsActive() {
+        return this._stacks[this._idx].isUDWordsActive;
     }
 
-    get isActive(){
+    set isEscapeActive(val: boolean) {
+        this._stacks[this._idx].isEscapeActive = val;
+    }
+    get isEscapeActive() {
+        return this._stacks[this._idx].isEscapeActive;
+    }
+
+    set isActive(val: boolean) {
+        this._stacks[this._idx].isActive = val;
+    }
+
+    get isActive() {
         return this._stacks[this._idx].isActive;
     }
 
-    setItems(items:StackValue[]):QueryStack {
-        this._stacks[ this._idx ].items = items;
+    // get wordStack() {
+    //     return this._stacks[this._idx].wordStack;
+    // }
+
+    // setActive(isit: boolean, mode: ActiveMode, reason: string) {
+    //     this._stacks[this._idx].isActive = isit;
+    //     // let entry = this.wordStack.pop();
+    //     // if (entry !== undefined) {
+    //     //     entry = { ...entry, active: isit, mode };
+    //     //     this.wordStack.push(entry);
+    //     //     // Log.debug('[setActive]', reason, entry, mode === ActiveMode.Leave ? 'leave' : 'break');
+    //     // }
+    // }
+
+    // set pendingActive(val: boolean) {
+    //     this._stacks[this._idx].pendingActive = val;
+    // }
+
+    // get pendingActive() {
+    //     return this._stacks[this._idx].pendingActive;
+    // }
+
+    // set leaveSet(val:boolean){
+    //     this._stacks[ this._idx ].leaveSet = val;
+    // }
+    // get leaveSet(){
+    //     return this._stacks[this._idx].leaveSet;
+    // }
+
+
+
+    setItems(items: StackValue[]): QueryStack {
+        this._stacks[this._idx].items = items;
         return this;
     }
 
     get size(): number {
-        return this._stacks[ this._idx ].items.length;
+        return this._stacks[this._idx].items.length;
     }
 
-    getUDValue(word:string){
+    getUDValue(word: string) {
         let value = this.getUDWord(word);
         return unpackStackValueR(value);
     }
@@ -109,23 +173,23 @@ export class QueryStack {
         return items[items.length - 1 - offset];
     }
 
-    clear(clearItems:boolean = true, clearWords:boolean = false):QueryStack {
-        if( clearItems ){
+    clear(clearItems: boolean = true, clearWords: boolean = false): QueryStack {
+        if (clearItems) {
             this._stacks[this._idx].items = [];
         }
-        if( clearWords ){
+        if (clearWords) {
             this._stacks[this._idx].words = {};
         }
         return this;
     }
-    
-    focus():QueryStack {
-        this._idx = this._stacks.length-1;
+
+    focus(): QueryStack {
+        this._idx = this._stacks.length - 1;
         return this;
     }
 
-    focusParent():QueryStack {
-        this._idx = this._idx > 1 ? this._idx -1 : 0;
+    focusParent(): QueryStack {
+        this._idx = this._idx > 1 ? this._idx - 1 : 0;
         return this;
     }
 
@@ -135,24 +199,24 @@ export class QueryStack {
     //     return this;
     // }
 
-    setChild(stack?:QueryStack): QueryStack {
+    setChild(stack?: QueryStack): QueryStack {
         let sub = createInst();
-        if( stack !== undefined ){
+        if (stack !== undefined) {
             sub.words = deepExtend(stack.words);
         }
-        this._stacks.push( sub );
-        this._idx = this._stacks.length-1;
+        this._stacks.push(sub);
+        this._idx = this._stacks.length - 1;
 
         return this;
     }
 
     restoreParent(): QueryStack {
-        if( this._stacks.length <= 1 ){
+        if (this._stacks.length <= 1) {
             return this;
         }
 
         this._stacks.pop();
-        this._idx = this._stacks.length-1;
+        this._idx = this._stacks.length - 1;
 
         return this;
     }
@@ -167,21 +231,36 @@ export class QueryStack {
     /**
      * Pushes a stack value onto the stack
      */
-    async push(input: any | StackValue, options?:PushOptions): Promise<StackValue> {
+    async push(input: any | StackValue, options?: PushOptions): Promise<StackValue> {
         let value: StackValue;
         let handler: WordFn;
+        // const ticket = options.ticket;
 
-        if( this.isActive === false ){
+        value = isStackValue(input) ? input : [SType.Value, input];
+        let [type, word] = value;
+
+        // Log.debug('[push]', 'pre', this.isActive, value);
+
+        if (this.isEscapeActive) {
+            if (word == '@!') {
+                this.isActive = false;
+                // this.setActive(false, ActiveMode.Return, word);
+            } else if (word == '@>') {
+                this.isActive = true;
+                // this.setActive(true, ActiveMode.Active, word);
+                return value;
+            }
+        }
+
+        if (this.isActive === false) {
             // Log.debug('[push]', 'inactive stack');
             return undefined;
         }
 
-        value = isStackValue(input) ? input : [SType.Value, input];
 
         // let doPush = true;
-        let [type, word] = value;
         const debug = options?.debug ?? false;
-        
+
         if (type === SType.Value && isString(word)) {
             const len = word.length;
 
@@ -196,15 +275,16 @@ export class QueryStack {
                     const regex = new RegExp(sigilV, flags);
                     value = [SType.Regex, regex];
                 }
-                else if( sigil === 'd' ){
+                else if (sigil === 'd') {
                     // console.log('new date yo', sigilV, new Date(sigilV) );
-                    value = [SType.DateTime, sigilV == '' ? new Date() : new Date(sigilV) ];
+                    value = [SType.DateTime, sigilV == '' ? new Date() : new Date(sigilV)];
                 }
             }
 
             // escape char for values which might otherwise get processed as words
-            if (len > 1 && word.charAt(0) === '*') {
+            if (this.isEscapeActive && len > 1 && word.charAt(0) === '*') {
                 value = [SType.Value, word.substring(1)] as any;
+                // Log.debug('[push]', value, 'escaped');
             }
             else {
                 // save the current stack
@@ -215,7 +295,7 @@ export class QueryStack {
                     while (word.charAt(0) === '^') {
                         // let st = wordStack.id;
                         this.focusParent();
-                        // Log.debug('[push]', '^', 'start at', stack._idx );
+                        // Log.debug('[push]', '^', word, 'start at', this._idx, this.wordStack);
                         word = word.substring(1);
                         value = [type, word];
                     }
@@ -230,17 +310,17 @@ export class QueryStack {
                 if (len > 1 && word.charAt(0) === '$') {
                     let sub = word.substring(1);
                     // Log.debug('[push]', word, this._idx, isInteger(sub), this.isUDWordsActive );
-                    if( isInteger(sub) ){
+                    if (isInteger(sub)) {
                         const idx = toInteger(sub);
                         // Log.debug('[push]', '$ pr', word, this.toString() );
                         // value = wordStack.peek(idx);
                         value = this.pop(idx);
                         // Log.debug('[push]', '$ pr', word, this.toString() );
                     }
-                    else if( this.isUDWordsActive ) {
-                        handler = this.getUDWord( sub );
+                    else if (this.isUDWordsActive) {
+                        handler = this.getUDWord(sub);
                         // Log.debug('[push]', 'getUDWord', sub, handler);
-                        
+
                     }
                     // Log.debug('[push]', '$ po', word, wordStack.items, wordStack.id);
                     // Log.debug('[push]', '$', idx, 'pop', value, stack.id, wordStack.id);
@@ -254,10 +334,10 @@ export class QueryStack {
 
                     // try for a regular word - these are scoped to the current stack
                     // if( handler === undefined ){
-                        handler = this.getWord(value);
-                        // Log.debug('[push][getWord]', value, handler );
-                        // if( this.debug && word === 'count' ) Log.debug( this.words );
-                        // if( this.debug && word === 'count' ) throw new StackError('stop');
+                    handler = this.getWord(value);
+                    // Log.debug('[push][getWord]', value, handler );
+                    // if( this.debug && word === 'count' ) Log.debug( this.words );
+                    // if( this.debug && word === 'count' ) throw new StackError('stop');
                     // }
 
                     // Log.debug('[push]', 'word', stack?.id, wordStack?.id );
@@ -276,8 +356,10 @@ export class QueryStack {
         }
 
         // if( word === 'leave' ){
-            // Log.debug('[push]', word, handler );
+        // Log.debug('[push]', word, handler );
         // }
+
+        // Log.debug('[push]', 'pre', { isActive: this.isActive, isEscapeActive: this.isEscapeActive }, value, handler);
 
         if (handler !== undefined) {
             try {
@@ -285,11 +367,15 @@ export class QueryStack {
                     value = (handler as any);
                 }
                 else {
-                    // Log.debug('[push]', 'pre', this.focus().id, printStackLineage(stack) );//, this.focus().items );
+
+                    let handlerVal = value;
+                    // Log.debug('[push]', 'pre', this.isActive, value);
                     let result = handler(this, value);
                     value = isPromise(result) ? await result : result as InstResult;
-                    // Log.debug('[push]', 'post', this.focus().id, printStackLineage(stack) );//, this.focus().items );
                     this.focus();
+                    if (value === undefined) {
+                        // Log.debug('[push]', 'post', this.isActive, this.items );
+                    }
                 }
                 // if( value && this.debug ) Log.debug('[push]', value); 
             } catch (err) {
@@ -302,10 +388,10 @@ export class QueryStack {
             }
         }
 
-        if (value !== undefined ){
-            // Log.debug('[push]', word, value, handler, this.isActive );
-            this.items.push( value );
+        if (value !== undefined) {
+            this.items.push(value);
         }
+        // Log.debug('[push]', word, value, handler, this.isActive );
         // Log.debug('[push]', this.items );
 
         return value;
@@ -323,13 +409,133 @@ export class QueryStack {
         return stack;
     }
 
-    async pushValues(values: StackValue[], options: PushOptions = {}): Promise<StackValue[]> {
-        let ovalues: StackValue[] = [];
+    // async pushWordValues(stack: QueryStack, word: string, values: StackValue[], options: PushOptions = {}) {
+    //     const ticket = Math.random().toString(36).substring(7);
+    //     const ignoreActive = options.ignoreActive ?? false;
+    //     const isWord = options.isWord ?? false;
+    //     const wasActive = stack.isActive;
+    //     let activeMode: ActiveMode = ActiveMode.Active;
+    //     // stack.leaveSet = undefined;
+
+    //     let wordActive: boolean = undefined;
+
+    //     // let opts = { isActive: stack.isActive, wasActive, ignoreActive, pendingActive: stack.pendingActive };
+
+    //     // if( isWord ){
+    //     // this.wordStack.push({ word, isWord });
+    //     // }
+
+    //     // console.log('[pushWordValues]', 'start', ticket, word, this.wordStack, values);
+
+    //     // if( stack.pendingActive ){
+    //     //     stack.isActive = true;
+    //     //     stack.pendingActive = undefined;
+    //     // }
+    //     // else if( wasActive && !stack.isActive ){
+    //     //     stack.pendingActive = true;
+    //     // }
+
+    //     const result = await this.pushValues(values, { ticket });
+
+    //     // if( isWord ){
+    //     // let entry = this.wordStack.pop();
+    //     // // console.log('[pushWordValues]', 'end', word, 'entry', entry);
+    //     // wordActive = entry.active;
+    //     // activeMode = entry.mode ?? ActiveMode.Active;
+    //     // if (isWord) {
+    //     //     if (entry.subActive === false) {
+    //     //         wordActive = true;
+    //     //     }
+    //     // }
+    //     // else if (wordActive === false) {
+    //     //     let above = this.wordStack.pop();
+    //     //     if (above !== undefined) {
+    //     //         this.wordStack.push({ ...above, mode: activeMode, subActive: false });
+    //     //     }
+    //     // }
+
+    //     // console.log('[pushWordValues]', 'staaack!',activeMode, this.wordStack);
+    //     // console.log('[pushWordValues]', 'woorrdd!', entry); 
+    //     // }
+
+    //     // if( entry !== undefined ){
+    //     //     let {active} = entry;
+    //     // }
+
+    //     // opts = { isActive: stack.isActive, wasActive, ignoreActive, pendingActive: stack.pendingActive };
+    //     // if( stack.pendingActive ){
+    //     //     stack.isActive = true;
+    //     //     stack.pendingActive = undefined;
+    //     //     console.log('[pushWordValues]', 'end', ticket, word, 'reactive after pending', {...opts,pendingActive:stack.pendingActive});
+    //     // }
+    //     // // else if( ignoreActive === false && wasActive && !stack.isActive ){
+    //     // // }
+    //     // else if( ignoreActive === false && wasActive && !stack.isActive ){
+    //     //     // if( wordStack.length === 0 ){
+    //     //     //     stack.isActive = true;
+    //     //     //     console.log('[pushWordValues]', 'end', ticket, word, 'wordstack empty', {...opts,pendingActive:stack.pendingActive} );
+    //     //     // } else 
+    //     //     {
+    //     //     stack.pendingActive = true;
+    //     //     console.log('[pushWordValues]', 'end', ticket, word, 'set pending', {...opts,pendingActive:stack.pendingActive} );
+    //     //     }
+    //     // }
+    //     // else {
+    //     //     console.log('[pushWordValues]', 'end', ticket, word, opts );
+    //     // }
+
+    //     // console.log('[pushWordValues]', 'end', word, { wordActive, isWord, isActive: stack.isActive, activeMode });
+
+    //     // if (isWord) {
+    //     //     if (activeMode === ActiveMode.Leave) {
+    //     //         stack.isActive = true;
+    //     //     } else if (activeMode === ActiveMode.Break) {
+
+    //     //     }
+    //     // }
+
+    //     // if( isWord ){
+    //     // if( isWord && stack.isActive === false && wordActive === false ){
+    //     //     stack.isActive = true;
+    //     //     console.log('[pushWordValues]', 'end', word, 'reset active');
+    //     // }else {
+    //     //     // console.log('[pushWordValues]', 'fuck', isWord, stack.isActive, wordActive );
+    //     // }
+
+    //     // if( wordStack.length === 0 && !stack.isActive ){
+    //     // console.log('[pushWordValues]', 'end', 'clearing active');
+    //     // stack.isActive = true;
+    //     // }
+
+    //     // stack.leaveSet = undefined;
+
+    //     return result;
+    // }
+
+    async pushValues(values: StackValue[], options: PushOptions = {}): Promise<number> {
+        // let ovalues: StackValue[] = [];
         const ignoreActive = options.ignoreActive ?? false;
+        const ticket = options.ticket;
 
-        // Log.debug('[pushValues!]', values);
+        // if( ignoreActive === false ) pushValuesRun++;
 
-        // const stack = this.focus();
+
+        // if( !ignoreActive ){
+        //     Log.debug('[pushValues$]', 'inc run from', pushValuesRun, 'to', pushValuesRun+1);    
+        // }
+
+        // let run = !ignoreActive ? pushValuesRun++ : pushValuesRun;
+        let run = pushValuesRun++;
+        // let run = pushValuesRun; // !ignoreActive ? pushValuesRun++ : pushValuesRun;
+        // if( ignoreActive !== true ){
+        //     pushValuesRun++;
+        //     run = pushValuesRun;
+        // }
+        let count = 0;
+        // let revertActive = false;
+        // Log.debug('[pushValues$]', this.isActive, {run,ticket}, values);
+        // let startActive = this.isActive;
+
         try {
             for (const value of values) {
 
@@ -342,32 +548,43 @@ export class QueryStack {
                 // }
                 // DLog(stack, '[pushValues]', value);
                 // if( options.debug ){
-                // Log.debug('[pushValues!]', value);
+                // Log.debug('[pushValues!]', run, count, value);
                 // }
                 // let pre = stack;
                 // let st = perf.now();
-                
-                let ovalue = await this.push(value);
+                // let isActive = this.isActive;
+                let ovalue = await this.push(value, options);
+                // if( isActive && !this.isActive ){
+                //     Log.debug('[pushValues!]', run, count, 'inactive'); 
+                // }
+                // revertActive = isActive !== this.isActive;
+                // Log.debug('[pushValues!]', run, `${count}/${values.length}`, this.isActive, value);
 
-                if( this.isActive === false && ignoreActive === false ){
-                    // Log.debug('[pushValues]', 'breaking due to inactive', value, values);
-                    this.isActive = true;
-                    break;
-                }
-                // Log.debug('[pushValues]', value, 'ovalue', ovalue);
-                
-                // Log.debug('[pushValues]', 'post', printStackLineage(this), 'focus', printStackLineage(this._focus) );
-                // Log.debug('[pushValues]', 'post', this.id, this._parent?.id, stack.id, stack._parent?.id);
-                // Object.assign(this, stack);
+                // if( this.isActive === false && ignoreActive === false ){
+                // if (this.isActive === false) {
+                //     //     // Log.debug('[pushValues]', run, count, 'breaking due to inactive', value, values);
+                //     //     this.isActive = true;
+                //     break;
+                // }
+
                 // let end = perf.now() - st;
                 // if( end > 10 ){
                 //     Log.debug('[pushValues]', value, stackToString(pre), end );
                 // }
-                ovalues.push(ovalue);
+                // ovalues.push(ovalue);
+                count++;
             }
 
+            // if( revertActive ){
+            //     this.isActive = true;
+            // }
             // Object.assign(this, stack);
-            // Log.debug('[pushValues]', 'still?', this.pop);
+            // let changed = startActive && !this.isActive;
+            // Log.debug('[pushValues]', 'finished', this.isActive, {run,ticket, count} );
+
+            if (ignoreActive) {
+                // this.isActive = true;
+            }
 
         } catch (err) {
             // Log.debug('st un?', (stack as any)._parent.items );
@@ -378,7 +595,8 @@ export class QueryStack {
             throw e;
         }
 
-        return ovalues;
+        return count;
+        // return ovalues;
     }
 
     popValue(offset: number = 0, recursive: boolean = true): any {
@@ -440,12 +658,12 @@ export class QueryStack {
         }
 
         // cut the stack down to size
-        this.setItems( this.items.slice(0, ii + 1) );
+        this.setItems(this.items.slice(0, ii + 1));
 
         return results;
     }
 
-    addUDWord( word:string, val:any ): QueryStack {
+    addUDWord(word: string, val: any): QueryStack {
         // console.log('[addUDWord]', this._idx, word, val );
         // this.udWords[word] = val;
         this._udWords[word] = val;
@@ -454,7 +672,7 @@ export class QueryStack {
         return this;
     }
 
-    getUDWord( word:string ){
+    getUDWord(word: string) {
         // if (value[0] !== SType.Value || !isString(value[1])) {
         //     return undefined;
         // }
@@ -463,15 +681,15 @@ export class QueryStack {
     }
 
     addWords(words: WordSpec[], replace: boolean = false): QueryStack {
-        
+
         for (const spec of words) {
             const [word, fn, ...args] = spec;
-            
-            let patterns = replace ? 
-                [] 
+
+            let patterns = replace ?
+                []
                 : (this.words[word] || []);
-                // : Array.isArray(word) ? this.words[word[0]] : (this.words[word] || []);
-                // : Array.isArray(word) ? word.reduce( (o,w) => [...o,this.words[w]], [] ) : (this.words[word] || []);
+            // : Array.isArray(word) ? this.words[word[0]] : (this.words[word] || []);
+            // : Array.isArray(word) ? word.reduce( (o,w) => [...o,this.words[w]], [] ) : (this.words[word] || []);
             patterns = [...patterns, [fn, (args as (SType[]))]] as WordEntry[];
 
             // if( Array.isArray(word) ){
@@ -479,8 +697,8 @@ export class QueryStack {
             //     // console.log('[getWord]', this.words);
             //     // throw 'stop';
             // } else {
-                this.words[word] = patterns;
-                // this.words = { ...this.words, [word]: patterns };
+            this.words[word] = patterns;
+            // this.words = { ...this.words, [word]: patterns };
             // }
         }
 
@@ -501,7 +719,7 @@ export class QueryStack {
         }
         let pattern = patterns.find(pat => {
             const [, args] = pat;
-            
+
             return matchStack(this.items, args) ? pat : undefined;
 
             // Log.debug('[getWord]', 'match', `'${wval}'`, args, stack.items );
@@ -611,22 +829,22 @@ export class QueryStack {
     popBitFieldOpt(): BitField {
         const stack = this;
         let val = stack.peek();
-        if( val === undefined ){
+        if (val === undefined) {
             return undefined;
         }
         let [type, bf] = val;
-        if( type === SType.BitField ){
+        if (type === SType.BitField) {
             stack.pop();
             return bf;
         }
-        else if( type === SType.Value && bf === 'all' ){
+        else if (type === SType.Value && bf === 'all') {
             stack.pop();
             return createBitField(bf);
         }
         return undefined;
     }
 
-    toString(reverse:boolean = true): string {
+    toString(reverse: boolean = true): string {
         return stackToString(this, reverse);
     }
 }
@@ -661,6 +879,8 @@ export function isStackValue(value: any): boolean {
 export interface PushOptions {
     debug?: boolean;
     ignoreActive?: boolean;
+    ticket?: string;
+    isWord?: boolean;
 }
 
 

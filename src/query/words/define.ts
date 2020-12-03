@@ -1,5 +1,6 @@
 import { StackValue, InstResult, AsyncInstResult, SType } from "../types";
 import { QueryStack } from "../stack";
+import { hash } from "../../util/hash";
 
 
 /**
@@ -25,7 +26,32 @@ export function onDefine(stack: QueryStack, [, op]: StackValue): InstResult {
     // if (value[0] === SType.List && op !== 'let') {
     if (value[0] === SType.List && isUDFunc ) {
         wordFn = async (stack: QueryStack): AsyncInstResult => {
-            await stack.pushValues(value[1], {ignoreActive:false});
+            
+            // console.log('[onDefine]', 'wordFn', word, value[1] );
+            // let wasActive = stack.isActive;
+            // const ticket = Math.random().toString(36).substring(7);
+            // let count = await stack.pushValues(value[1], {ticket,ignoreActive:true});
+            
+            
+            await stack.pushValues(value[1]);
+            // const count = await stack.pushWordValues(stack,word,value[1],{ticket, isWord:true});
+            
+            // console.log('[onDefine]', 'end wordFn', word, {count, ticket, wasActive,isActive:stack.isActive}, stack.items );
+            // if the stack is inActive coming out of a word, set a flag
+            // so that the active state is restored after leaving containing word
+            
+            // if( stack.pendingActive ){
+            //     console.log('[onDefine]', 'end wordFn', word, 'reactive after pending');
+            //     stack.isActive = true;
+            //     stack.pendingActive = undefined;
+            // }
+            // else if( wasActive && !stack.isActive ){
+            //     console.log('[onDefine]', 'end wordFn', word, 'set pending');
+            //     stack.pendingActive = true;
+            // }
+
+            
+
             return undefined;
         }
     } else {

@@ -1,7 +1,7 @@
 import './cond';
 import './date';
 import './es';
-import './leave';
+import './control';
 import './loop';
 import './main';
 import './mapreduce';

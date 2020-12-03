@@ -21,7 +21,9 @@ export async function onLoop(stack: QueryStack, [, op]: StackValue): AsyncInstRe
     let result:StackValue = undefined;
 
     while( count < limit && isLooping ){
-        const out = await stack.pushValues(value, {debug:true});
+        
+        await stack.pushValues(value);
+        
         result = stack.size > 0 ? stack.pop() : undefined;
 
         // log('result:', result );//, 'out', out );
@@ -45,6 +47,9 @@ export async function onLoop(stack: QueryStack, [, op]: StackValue): AsyncInstRe
         } else {
             isLooping = result[1] === true;
         }
+        // if( isLooping === false ){
+            // log('stack', stack.items);
+        // }
         count++;
     }
 

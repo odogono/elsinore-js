@@ -26,7 +26,7 @@ import {
     onSize,
     onGather,
     onRemoveFromEntitySet,
-    onLeave,
+    // onLeave,
     onJoin,
     onUndefined
 } from "./words";
@@ -301,9 +301,9 @@ export function createStdLibStack( stack?:QueryStack ){
         ['size!', onSize, SType.Any],
         ['size', onSize, SType.Any],
         ['loop', onLoop, SType.List],
-        ['leave', onLeave],
-        ['break', onLeave],
-        ['return', onLeave],
+        // ['leave', onLeave],
+        // ['break', onLeave],
+        // ['return', onLeave],
         ['undefined', onUndefined],
         ['!d', onComponentDef, SType.Map],
         ['!d', onComponentDef, SType.List],

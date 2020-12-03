@@ -44,6 +44,18 @@ test('loops until done', async () => {
 
 
 
+// test.only('var', async () => {
+//     let [stack] = await prep(`
+//     [] result let
+//     [ 1001 1002 1003 ] $result concat result !
+
+//     [ $result ] true if
+//     prints
+
+//     `);
+
+// })
+
 
 test('loops until done 2', async () => {
 
@@ -70,11 +82,11 @@ test('loops until done 2', async () => {
                 dup size
                 // continue if the last results
                 // came back non-empty
-                true $result rot 0 == iif
+                true [$result] rot 0 == iif
+                
             ] loop
-
             // lose the last result
-            swap drop    
+            swap drop
         ] selectDepsRecursive define
 
         1005 selectDepsRecursive
@@ -82,7 +94,7 @@ test('loops until done 2', async () => {
 
     let es = await loadFixtureIntoES(undefined, 'deps');
     const stmt = es.prepare(query);
-
+    
     const result = await stmt.pop();
     assert.equal( result, [1007,1008,1009,1010,1011,1012,1013]);
 });
