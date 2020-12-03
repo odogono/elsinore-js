@@ -186,7 +186,6 @@ test('inner function break', async () => {
     // TODO - continue?
     [
         size! 0 == [ drop nothing @! ] swap if
-        // break has been set
     ] returnUndefinedIfEmpty define
 
     [

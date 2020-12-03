@@ -21,14 +21,19 @@ let test = suite('es/mem/query - Maps and Lists');
 
 test('builds lists', async () => {
     let [stack] = await prep(`[ hello, world ]`);
-    let result = stack.popValue();
-    assert.equal(result, ['hello', 'world']);
+    assert.equal(stack.popValue(), ['hello', 'world']);
 });
 
 test('adds to an list', async () => {
-    let [stack] = await prep(`[] hello +`);
-    let result = stack.popValue();
-    assert.equal(result, ['hello']);
+    let [stack] = await prep(`[ world ] hello +`);
+    assert.equal(stack.popValue(), ['world', 'hello']);
+})
+
+test('prepends to a list', async () => {
+    let [stack] = await prep(`
+    hello [ world ] +
+    `);
+    assert.equal( stack.popValue(), ['hello', 'world'] );
 })
 
 test('push', async () => {

@@ -336,9 +336,27 @@ export function onAddArray<QS extends QueryStack>(stack: QS, val: StackValue): I
 
     let left = stack.pop();
     let right = stack.pop();
-    let [type, arr] = right;
-    arr = [...arr, left];
-    return [type, arr];
+    
+    // let arr = right[0] === SType.List
+    let [ltype, lval] = left;
+    let [rtype, rval] = right;
+    let result = rval;
+    // let resultType = rtype;
+
+    if( rtype === SType.List ){
+        if( ltype === SType.List ){
+            result = [...result, ...lval];
+        } else {
+            result = [...result, left];
+        }
+    }
+    // left value being a list is a prepend
+    else if( ltype === SType.List ){
+        result = lval;
+        result = [ right, ...result ];
+    }
+    // console.log('[onAddArray]', result);
+    return [SType.List, result];
 }
 
 export function onFetchArray<QS extends QueryStack>(stack: QS, val: StackValue): InstResult {
@@ -756,7 +774,7 @@ export async function onReduce<QS extends QueryStack>(stack: QS): AsyncInstResul
     let left = stack.pop();
 
     let list = unpackStackValue(left, SType.List);
-    accum = unpackStackValue(accum, SType.Any);
+    // accum = unpackStackValue(accum, SType.Any);
     let fn = unpackStackValue(right, SType.List);
 
     let mapStack = stack.setChild(stack);

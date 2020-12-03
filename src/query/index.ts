@@ -225,6 +225,7 @@ export function createStdLibStack( stack?:QueryStack ){
         ['-', onRemoveFromEntitySet, SType.EntitySet, SType.Any],
         // pattern match stack args
         ['+', onAddArray, SType.List, SType.Any],
+        ['+', onAddArray, SType.Any, SType.List],
 
         ['eval', onRegex, SType.Any, SType.Regex],
         ['split', onRegex, SType.Value, SType.Regex],
@@ -280,9 +281,10 @@ export function createStdLibStack( stack?:QueryStack ){
         ['pluck', onPluck, SType.List, SType.Value],
         ['pluck', onPluck, SType.List, SType.List],
         ['pluck', onPluck, SType.Any, SType.Value],
+        
         ['unique', onUnique, SType.List],
         ['filter', onFilter, SType.List, SType.List],
-        ['reduce', onReduce, SType.List, SType.Value, SType.List],
+        ['reduce', onReduce, SType.List, SType.Any, SType.List],
         
         ['gather', onGather],
         // ['concat', onConcat],
