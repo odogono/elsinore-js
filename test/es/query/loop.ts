@@ -43,20 +43,6 @@ test('loops until done', async () => {
 
 
 
-
-// test.only('var', async () => {
-//     let [stack] = await prep(`
-//     [] result let
-//     [ 1001 1002 1003 ] $result concat result !
-
-//     [ $result ] true if
-//     prints
-
-//     `);
-
-// })
-
-
 test('loops until done 2', async () => {
 
     const query = `

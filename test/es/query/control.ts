@@ -69,17 +69,19 @@ test('stops defined list execution', async () => {
 
 test('stops loop execution', async () => {
     let [stack] = await prep(`
-    0 count let
-    [
-        $count 1 + count !
 
-        // the stop word @! stops the loop from continuing
-        true [ @! ] $count 2 == iif
-        
-        // note
+    // increment up to 15
+    10
+    [
+        1 +
+        dup [ @! ] swap 15 <= if
+        true
     ] loop
+    // the loop will automatically continue after any break
+
+    100 +
     `);
-    assert.equal( stack.getUDValue('count'), 2 );
+    assert.equal( stack.popValue(), 115 );
 });
 
 
