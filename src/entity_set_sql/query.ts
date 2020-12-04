@@ -213,6 +213,9 @@ export function fetchComponents(stack: SQLQueryStack): InstResult {
                     : isEntity(it) ? getEntityId(it) : undefined;
             }).filter(Boolean);
         }
+        else {
+            return [SType.List, []];
+        }
     }
 
     let coms = [];

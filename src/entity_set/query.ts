@@ -313,7 +313,8 @@ export function fetchComponents(stack: ESMemQueryStack): InstResult {
             }).
                 filter(Boolean);
         } else {
-            Log.debug('[fetchComponent]', 'unhandled', from);
+            // Log.debug('[fetchComponent]', 'unhandled', from);
+            return [SType.List, []];
         }
     }
 

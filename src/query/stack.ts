@@ -242,10 +242,10 @@ export class QueryStack {
         // Log.debug('[push]', 'pre', this.isActive, value);
 
         if (this.isEscapeActive) {
-            if (word == '@!') {
+            if (word == '@!' || word === '🔴') {
                 this.isActive = false;
                 // this.setActive(false, ActiveMode.Return, word);
-            } else if (word == '@>') {
+            } else if (word == '@>' || word === '🟢') {
                 this.isActive = true;
                 // this.setActive(true, ActiveMode.Active, word);
                 return value;
@@ -673,10 +673,6 @@ export class QueryStack {
     }
 
     getUDWord(word: string) {
-        // if (value[0] !== SType.Value || !isString(value[1])) {
-        //     return undefined;
-        // }
-        // const wval = value[1];
         return this._udWords[word];
     }
 

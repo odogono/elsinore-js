@@ -77,8 +77,8 @@ test('stops loop execution', async () => {
         dup [ @! ] swap 15 <= if
         true
     ] loop
+    
     // the loop will automatically continue after any break
-
     100 +
     `);
     assert.equal( stack.popValue(), 115 );
