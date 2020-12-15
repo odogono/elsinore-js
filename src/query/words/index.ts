@@ -35,6 +35,8 @@ const Log = createLog('QueryWords');
 /**
  * Duplicates the top stack value, or if the op is 'over', duplicates the previous
  * 
+ * ( n1 n2 — n1 n2 n1 )
+ * 
  * @param stack 
  * @param op 
  */
@@ -90,7 +92,8 @@ export async function onSelect<QS extends QueryStack>(stack: QS): AsyncInstResul
 
     let query = unpackStackValue(right, SType.List, false);
     let es: EntitySet = unpackStackValue(left, SType.EntitySet);
-
+    
+    // Log.debug('[onSelect]', query );
     let result = await es.select(stack, query);
 
     if (result) {

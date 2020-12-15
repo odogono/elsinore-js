@@ -169,8 +169,15 @@ export class QueryStack {
 
     peek(offset: number = 0): StackValue {
         let items = this.items;
+        const length = items.length;
+        const idx = length - 1 - offset;
+        // if (idx < 0 || length === 0) {
+        //     // console.log('[pop]', this);
+        //     throw new StackError(`stack underflow ${offset} / ${length}`);
+        // }
+
         // const stack = this.focus();
-        return items[items.length - 1 - offset];
+        return items[idx];
     }
 
     clear(clearItems: boolean = true, clearWords: boolean = false): QueryStack {
@@ -242,10 +249,10 @@ export class QueryStack {
         // Log.debug('[push]', 'pre', this.isActive, value);
 
         if (this.isEscapeActive) {
-            if (word == '@!' || word === '🔴') {
+            if (word == '@!' ) {
                 this.isActive = false;
                 // this.setActive(false, ActiveMode.Return, word);
-            } else if (word == '@>' || word === '🟢') {
+            } else if (word == '@>' ) {
                 this.isActive = true;
                 // this.setActive(true, ActiveMode.Active, word);
                 return value;
@@ -260,9 +267,11 @@ export class QueryStack {
 
         // let doPush = true;
         const debug = options?.debug ?? false;
+        const evalEscape = options?.evalEscape ?? false;
 
         if (type === SType.Value && isString(word)) {
             const len = word.length;
+            let evalWord = true;
 
             if (len > 1 && word.charAt(0) === '~') {
                 const sigil = word.charAt(1);
@@ -283,10 +292,14 @@ export class QueryStack {
 
             // escape char for values which might otherwise get processed as words
             if (this.isEscapeActive && len > 1 && word.charAt(0) === '*') {
-                value = [SType.Value, word.substring(1)] as any;
-                // Log.debug('[push]', value, 'escaped');
+                word = word.substring(1);
+                value = [SType.Value, word] as any;
+                evalWord = evalEscape;// false;
+                
+                if( debug ) Log.debug('[push]', value, 'escaped');
             }
-            else {
+
+            if( evalWord ) {
                 // save the current stack
                 let stackIndex = this._idx;
 
@@ -300,6 +313,8 @@ export class QueryStack {
                         value = [type, word];
                     }
 
+                    // if( debug ) Log.debug('[push]', 'post up', word, value );
+
                     // if( up ) Log.debug('[push]', '^', word, wordStack.id, printStackLineage(wordStack) );
                     // Log.debug('[getWord]', 'from parent', word, parent.words );
                     // handler = getWord(parent, [SType.Value, word.substring(1)]);
@@ -307,14 +322,15 @@ export class QueryStack {
 
                 // words beginning with $ refer to offsets on the root stack if they are integers,
                 // or user defined words
-                if (len > 1 && word.charAt(0) === '$') {
+                const pr = word.charAt(0);
+                if (len > 1 && pr === '$' || pr === '%') {
                     let sub = word.substring(1);
                     // Log.debug('[push]', word, this._idx, isInteger(sub), this.isUDWordsActive );
                     if (isInteger(sub)) {
                         const idx = toInteger(sub);
                         // Log.debug('[push]', '$ pr', word, this.toString() );
-                        // value = wordStack.peek(idx);
-                        value = this.pop(idx);
+                        
+                        value = pr === '$' ? this.pop(idx) : this.peek(idx);
                         // Log.debug('[push]', '$ pr', word, this.toString() );
                     }
                     else if (this.isUDWordsActive) {
@@ -515,7 +531,8 @@ export class QueryStack {
     async pushValues(values: StackValue[], options: PushOptions = {}): Promise<number> {
         // let ovalues: StackValue[] = [];
         const ignoreActive = options.ignoreActive ?? false;
-        const ticket = options.ticket;
+        // const ticket = options.ticket;
+        const debug = options.debug;
 
         // if( ignoreActive === false ) pushValuesRun++;
 
@@ -525,7 +542,7 @@ export class QueryStack {
         // }
 
         // let run = !ignoreActive ? pushValuesRun++ : pushValuesRun;
-        let run = pushValuesRun++;
+        // let run = pushValuesRun++;
         // let run = pushValuesRun; // !ignoreActive ? pushValuesRun++ : pushValuesRun;
         // if( ignoreActive !== true ){
         //     pushValuesRun++;
@@ -877,6 +894,7 @@ export interface PushOptions {
     ignoreActive?: boolean;
     ticket?: string;
     isWord?: boolean;
+    evalEscape?: boolean;
 }
 
 

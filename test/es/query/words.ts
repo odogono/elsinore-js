@@ -15,7 +15,7 @@ let test = suite('es/mem/query - Reference Words');
 
 
 
-test('references an earlier word', async () => {
+test('pops an earlier word', async () => {
     let [stack] = await prep(`planet world hello $1`);
     assert.equal(stack.toString(), '"world" "hello" "planet"');
 });
@@ -25,12 +25,9 @@ test('works within a list', async () => {
     assert.equal(stack.toString(), '["hello"] "world" "planet"');
 });
 
-test('references above a list', async () => {
+test('pops above a list', async () => {
     let [stack] = await prep(`planet [ world [ hello ^^$0 ]]`);
     assert.equal(stack.toString(), '["world", ["hello", "planet"]]');
-
-    // [stack] = await prep(`planet world [ hello ^$1 ]`);
-    // assert.equal(stack.toString(), 'world [hello, planet]');
 });
 
 
@@ -60,5 +57,20 @@ test('a let word pushes', async () => {
     let [stack] = await prep(`[ 2 3 + ] fn let $fn`);
     assert.equal(stack.popValue(), [2, 3, '+']);
 });
+
+
+test('peeks an earlier word', async () => {
+    let [stack] = await prep(`planet world hello %1`);
+    assert.equal(stack.toString(), '"world" "hello" "world" "planet"');
+})
+
+test('out of range on peeking an earlier word', async () => {
+    try {
+        await prep(`planet world hello %5`);
+    } catch( err ){
+        assert.equal( err.message, 'stack underflow: ("hello" "world" "planet")');
+    }
+    // assert.equal(stack.toString(), '"hello" "world" "planet"');
+})
 
 test.run();

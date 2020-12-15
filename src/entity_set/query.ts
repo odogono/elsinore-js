@@ -81,8 +81,11 @@ export async function select(stack:QueryStack, query: StackValue[], options:Sele
 
 
     // Log.debug('[select]', query );
+    // Log.debug('[select]');
+    // ilog(query);
 
-    await stack.pushValues(query);
+
+    await stack.pushValues(query, {evalEscape:true});
 
     // reset stack items and words
     let items = stack.items;
@@ -90,8 +93,10 @@ export async function select(stack:QueryStack, query: StackValue[], options:Sele
     // stack.items = [];
     // stack.words = {};
 
+    // Log.debug('[select] post');
+    // ilog(items);
 
-    // Log.debug('[select]', items );
+    
 
     stack.addWords([
         ['@e', fetchEntity],
@@ -112,10 +117,14 @@ export async function select(stack:QueryStack, query: StackValue[], options:Sele
         return result;
     }, []);
 
+    // Log.debug('[select]');
+    // ilog(items);
+
     await stack.pushValues(items);
     
     let result = stack.items;
-    // Log.debug('pushing ', result);
+    // Log.debug('[select] pushing');
+    // ilog(result);
 
     stack.restoreParent();
     
@@ -208,7 +217,7 @@ function walkFilterQueryCompare(es: EntitySetMem, eids: EntityId[], cmd?, ...arg
         const cid = toComponentId(eid, did);
         const com = es.components.get(cid);
 
-        // console.log('[walk]', cmd, ptr, {}.toString.call(val) );
+        // console.log('[walk]', cmd, ptr, val);// {}.toString.call(val) );
 
         let ptrVal;
         if (ptr.startsWith('/')) {
