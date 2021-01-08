@@ -36,7 +36,7 @@ import { onDefine } from "../query/words/define";
 import { ComponentDefId, getDefId, ComponentDef } from "../component_def";
 import { onLogicalFilter, parseFilterQuery } from './filter';
 import { unpackStackValue, unpackStackValueR, stackToString } from "../query/util";
-import { EntitySetMem } from ".";
+import { EntitySet, EntitySetMem } from ".";
 import { compareDates } from '../query/words/util';
 import { onPrintStack } from '../query/words';
 
@@ -102,6 +102,7 @@ export async function select(stack:QueryStack, query: StackValue[], options:Sele
         ['@e', fetchEntity],
         ['@eid', fetchEntity],
         ['@c', fetchComponents],
+        ['@ca', fetchComponentAttributes],
         ['!fil', applyFilter, SType.Filter],
 
         ['limit', applyLimit],
@@ -210,6 +211,7 @@ function walkFilterQueryCompare(es: EntitySetMem, eids: EntityId[], cmd?, ...arg
     let { def } = args[0];
     const did = getDefId(def);
     let [ptr, val] = args[1];
+    const isJptr = ptr.startsWith('/');
 
     eids = matchEntities(es, eids, createBitField([did]));
     let out = [];
@@ -219,13 +221,8 @@ function walkFilterQueryCompare(es: EntitySetMem, eids: EntityId[], cmd?, ...arg
 
         // console.log('[walk]', cmd, ptr, val);// {}.toString.call(val) );
 
-        let ptrVal;
-        if (ptr.startsWith('/')) {
-            ptrVal = Jsonpointer.get(com, ptr);
-            // console.log('[walk]', ptr, com );
-        } else {
-            ptrVal = com[ptr];
-        }
+        let ptrVal = isJptr ? Jsonpointer.get(com,ptr) : com[ptr];
+        
 
         // if( com[key] === val )
         // Log.debug('[walkFQ]','==', ptr, ptrVal, val );
@@ -359,6 +356,46 @@ export function fetchComponents(stack: ESMemQueryStack): InstResult {
     return [SType.List, coms];
 }
 
+export function fetchComponentAttributes(stack:ESMemQueryStack): InstResult {
+    const { es } = stack;
+    let result = [];
+
+    // get the attribute
+    let attr = stack.pop();
+
+    // determine whether the previous stack argument can give us
+    // a set of eids. if not, then the filter is applied to all the entities
+    // in the es
+    let eids = readEntityIds(stack);
+
+    // console.log('[fetchComponentAttributes]', attr );
+
+    if( attr[0] === SType.Value ){
+        attr = stringToComponentAttr( es, attr[1] );
+    }
+    else if( attr[0] !== SType.ComponentAttr ){
+        throw new Error(`invalid component attr arg: ${attr[0]}`);
+    }
+
+    const [bf,ptr] = attr[1];
+
+    const did = bfToValues(bf)[0];
+    const def = es.getByDefId( did );
+    const isJptr = ptr.startsWith('/');
+
+
+    for( const eid of eids ){
+        const cid = toComponentId(eid, did);
+        const com = es.components.get(cid);
+
+        let val = isJptr ? Jsonpointer.get(com,ptr) : com[ptr];
+
+        result.push( [SType.Value, val] );
+    }
+    
+    return [SType.List, result];
+}
+
 
 /**
  * Builds a ComponentAttr value - [Bitfield,string]
@@ -371,39 +408,32 @@ export function onComponentAttr(stack: QueryStack): InstResult {
 
     let right: string = stack.popValue(0, false);
 
+    let result = stringToComponentAttr(es, right);
 
-    const parts: RegExpExecArray = /^(\/.*)#(.*)/.exec(right);
-
-    if (parts !== null) {
-        let [, did, pointer] = parts;
-        // console.log('wat', right, did,pointer );
-
-        const bf = es.resolveComponentDefIds([did]);
-        if (bfCount(bf) === 0) {
-            throw new StackError(`def not found: ${did}`);
-        }
-
-        return [SType.ComponentAttr, [bf, pointer]];
+    if( result === undefined ){
+        throw new Error(`invalid component attr: ${right}`);
     }
 
-    throw new Error(`invalid component attr: #{right}`);
-
-    // let left:StackValue = stack.pop();
-
-    // let attr = unpackStackValue(right, SType.Value);
-    // let dids = unpackStackValue(left, SType.Any);
-    // dids = isString(dids) ? [dids] : dids;
-
-    // let bf = es.resolveComponentDefIds(dids );
-
-    // if( bfCount(bf) === 0 ){
-    //     throw new StackError(`def not found: ${left}`);
-    // }
-
-
-    // return [SType.ComponentAttr, [bf, attr]];
-    // return undefined;
+    return result;
 }
+
+
+export function stringToComponentAttr( es:EntitySet, val:string ):StackValue {
+    const parts: RegExpExecArray = /^(\/.*)#(.*)/.exec(val);
+
+    if( parts === null ){
+        return undefined;
+    }
+
+    let [,did,pointer] = parts;
+    const bf = es.resolveComponentDefIds([did]);
+    if( bfCount(bf) === 0){
+        throw new StackError(`def not found: ${did}`);
+    }
+
+    return [SType.ComponentAttr, [bf,pointer]];
+}
+
 
 export function buildBitfield(stack: QueryStack): InstResult {
     const { es } = stack;

@@ -123,6 +123,16 @@ test('fetching components from unknown entity', async () => {
     assert.equal( stack.popValue(), [] );
 });
 
+test('fetches component attributes', async () => {
+    let [stack] = await prepES(`
+
+        [ /component/title#/text @ca ] select
+
+    `, 'todo');
+    let titles = stack.popValue();
+    assert.equal( titles[2], 'turn on the news' );
+});
+
 test('fetches matching component attribute', async () => {
     let [stack] = await prepES(`[ 
                 // fetches values for text from all the entities in the es
