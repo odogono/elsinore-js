@@ -136,8 +136,33 @@ export async function select(stack:QueryStack, query: StackValue[], options:Sele
 function readEntityIds( stack:ESMemQueryStack ): EntityId[] {
     const { es } = stack;
 
+    let eids:EntityId[];
+
     let bf = stack.popBitFieldOpt();
-    let eids = matchEntities(es, undefined, bf);
+
+    if( bf === undefined ){
+        let from = stack.peek();
+
+        if( from === undefined ){
+            // return matchEntities(es, undefined, undefined);
+        }
+        else {
+            stack.pop();
+            if (from[0] === SType.Entity) {
+                return [unpackStackValueR(from)];
+                // Log.debug('[fetchComponent]', 'fetching from entity', eids);
+    
+            } else if (from[0] === SType.List) {
+                return from[1].map(it => {
+                    return isStackValue(it) ? getEntityId(it[1])
+                        : isEntity(it) ? getEntityId(it) : undefined;
+                }).
+                    filter(Boolean);
+            }
+        }
+    }
+
+    eids = matchEntities(es, undefined, bf);
 
     // Log.debug('[readEntityIds]', eids);
 
@@ -388,6 +413,10 @@ export function fetchComponentAttributes(stack:ESMemQueryStack): InstResult {
         const cid = toComponentId(eid, did);
         const com = es.components.get(cid);
 
+        if( com === undefined ){
+            continue;
+        }
+        // console.log('[fetchComponentAttributes]', 'reading', cid, ptr );
         let val = isJptr ? Jsonpointer.get(com,ptr) : com[ptr];
 
         result.push( [SType.Value, val] );
@@ -489,6 +518,8 @@ export async function fetchEntity(stack: ESMemQueryStack, [,op]:StackValue): Asy
     else if (eid === 'all') {
         let ents = matchEntities(es, undefined, 'all');
         return [SType.List, ents];
+    } else if(eid === undefined){
+        return [SType.Value, false];
     } else {
         throw new StackError(`@e unknown type ${type}`)
     }

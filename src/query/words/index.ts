@@ -833,12 +833,16 @@ export function onPush<QS extends QueryStack>(stack: QS, val: StackValue): InstR
  */
 export function onPop<QS extends QueryStack>(stack: QS, [,op]:StackValue): InstResult {
     const isPopRet = op == 'pop';
+    const isPopSafe = op == 'pop?';
 
     let lv = stack.pop();
 
     let list = unpackStackValue(lv, SType.List);
     const len = list.length;
     if (len === 0) {
+        if( isPopSafe ) {
+            return [SType.Value, undefined];
+        }
         throw new StackError('stack underflow');
     }
 

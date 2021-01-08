@@ -126,11 +126,20 @@ test('fetching components from unknown entity', async () => {
 test('fetches component attributes', async () => {
     let [stack] = await prepES(`
 
-        [ /component/title#/text @ca ] select
+        [ /component/title#text @ca ] select
 
     `, 'todo');
     let titles = stack.popValue();
     assert.equal( titles[2], 'turn on the news' );
+});
+
+test('fetches component attribute from entitiy', async () => {
+    let [stack] = await prepES(`
+
+        [ 102 @eid /component/title#text @ca ] select pop!
+    `, 'todo');
+    let title = stack.popValue();
+    assert.equal( title, 'turn on the news' );
 });
 
 test('fetches matching component attribute', async () => {

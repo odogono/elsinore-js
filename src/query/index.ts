@@ -273,6 +273,7 @@ export function createStdLibStack( stack?:QueryStack ){
         ['drop', onDrop, SType.Any],
         ['swap', onSwap, SType.Any, SType.Any],
         ['push', onPush, SType.List, SType.Any],
+        ['pop?', onPop, SType.List],
         ['pop!', onPop, SType.List],
         ['pop', onPop, SType.List],
         ['map', onMap, SType.List, SType.List],
