@@ -584,6 +584,14 @@ export class EntitySetMem extends EntitySet {
         return this as unknown as ES;
     }
 
+
+    /**
+     * Returns an array of entity ids that were added or updated last op
+     */
+    getUpdatedEntities(): EntityId[] {
+        return getChanges(this.entChanges, ChangeSetOp.Add | ChangeSetOp.Update);
+    }
+
     async applyUpdates() {
 
         if (this.entUpdates.size > 0) {
