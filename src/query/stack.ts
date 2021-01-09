@@ -281,11 +281,11 @@ export class QueryStack {
                 const sigilV = word.substring(3, end);
 
                 if (sigil === 'r') {
+                    // Log.debug('[push]', 'regex', sigilV);
                     const regex = new RegExp(sigilV, flags);
                     value = [SType.Regex, regex];
                 }
                 else if (sigil === 'd') {
-                    // console.log('new date yo', sigilV, new Date(sigilV) );
                     value = [SType.DateTime, sigilV == '' ? new Date() : new Date(sigilV)];
                 }
             }
@@ -306,18 +306,10 @@ export class QueryStack {
                 if (len > 1) {
                     // words beginning with ^ cause the stack focus to move up
                     while (word.charAt(0) === '^') {
-                        // let st = wordStack.id;
                         this.focusParent();
-                        // Log.debug('[push]', '^', word, 'start at', this._idx, this.wordStack);
                         word = word.substring(1);
                         value = [type, word];
                     }
-
-                    // if( debug ) Log.debug('[push]', 'post up', word, value );
-
-                    // if( up ) Log.debug('[push]', '^', word, wordStack.id, printStackLineage(wordStack) );
-                    // Log.debug('[getWord]', 'from parent', word, parent.words );
-                    // handler = getWord(parent, [SType.Value, word.substring(1)]);
                 }
 
                 // words beginning with $ refer to offsets on the root stack if they are integers,

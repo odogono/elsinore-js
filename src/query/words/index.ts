@@ -385,18 +385,27 @@ export function onRegex(stack: QueryStack, [, op]: StackValue): InstResult {
 
     if (op === 'split') {
         value = val.split(regex);
-        return [SType.List, value.map( v => [SType.Value,v])];
+    }
+    else if( op === 'replace' ){
+        let repl = stack.popValue();
+        // console.log('[onRegex]', 'replace', regex, val, repl );
+        value = val.replace( regex, repl );
     }
     else if (op === 'eval') {
         let result = regex.exec(val);
+        // console.log('[onRegex]', 'result', Array.from(result) );
         if (result) {
-            value = result[0];
+            value = Array.from(result);
         }
     }
     else if (op === '==') {
         value = regex.test(val);
     } else if (op === '!=') {
         value = !regex.test(val);
+    }
+
+    if( Array.isArray(value) ){
+        return [SType.List, value.map( v => [SType.Value,v])];
     }
 
     return [SType.Value, value];

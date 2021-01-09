@@ -36,10 +36,38 @@ test('executes a regex', async () => {
     let [stack] = await prep(`
         "file:///test/fixtures/rootA/static"
         ~r/(?!.*/).+/
-        eval
+        eval pop!
     `);
     assert.equal( stack.popValue(), "static" );
 });
+
+test('executes a regex', async () => {
+    let [stack] = await prep(`
+        "file:///test/fixtures/rootA/static/index.html"
+        ~r/^.*:\\/\\/([\\/\\w]+\\/)/
+        eval pop!
+    `);
+    assert.equal( stack.popValue(), "/test/fixtures/rootA/static/" );
+});
+
+test('executes a file selection regex', async () => {
+    let [stack] = await prep(`
+        "file:///content/style.scss"
+        ~r/[^/\\\\&\\?#]+\\.\\w{3,4}(?=([\\?&#].*$|$))/
+        eval "" join
+    `);
+    assert.equal( stack.popValue(), "style.scss" );
+});
+
+test('trim leading char', async () => {
+    let [stack] = await prep(`
+        "" "/content/style.scss"
+        ~r/^\\/+/
+        replace
+    `);
+    assert.equal( stack.popValue(), "content/style.scss" );
+
+})
 
 
 test('split with regex', async () => {
@@ -55,3 +83,7 @@ test('split with regex', async () => {
 });
 
 test.run();
+
+
+// /[^/\\&\?#]+\.\w{3,4}(?=([\?&#].*$|$))/
+// /[^/\\&\?#]+\.\w{3,4}(?=([\?&#].*$|$))/

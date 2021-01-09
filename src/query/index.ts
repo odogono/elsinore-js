@@ -229,6 +229,7 @@ export function createStdLibStack( stack?:QueryStack ){
 
         ['eval', onRegex, SType.Any, SType.Regex],
         ['split', onRegex, SType.Value, SType.Regex],
+        ['replace', onRegex, SType.Value, SType.Value, SType.Regex],
         ['==', onRegex, SType.Value, SType.Regex],
         ['!=', onRegex, SType.Value, SType.Regex],
         
