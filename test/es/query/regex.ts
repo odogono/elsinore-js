@@ -82,6 +82,18 @@ test('split with regex', async () => {
     assert.equal( stack.popValue(), "file:///test/fixtures/rootA/" );
 });
 
+test('create a regex', async () => {
+    let [stack] = await prep(`
+        "file:///layout/main.mdx"
+        ["^.*://" "/layout/main" ".*"] "" join !r
+        eval
+        pop?
+    `);
+
+    assert.equal( stack.popValue(), "file:///layout/main.mdx" );
+
+});
+
 test.run();
 
 

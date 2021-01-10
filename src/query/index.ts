@@ -28,7 +28,8 @@ import {
     onRemoveFromEntitySet,
     // onLeave,
     onJoin,
-    onUndefined
+    onUndefined,
+    onRegexBuild
 } from "./words";
 import { onPluck } from "./words/pluck";
 import { onDefine } from "./words/define";
@@ -232,6 +233,8 @@ export function createStdLibStack( stack?:QueryStack ){
         ['replace', onRegex, SType.Value, SType.Value, SType.Regex],
         ['==', onRegex, SType.Value, SType.Regex],
         ['!=', onRegex, SType.Value, SType.Regex],
+        ['!r', onRegexBuild, SType.Value],
+
         
         ['==', onDateTime, SType.DateTime, SType.DateTime],
         ['!=', onDateTime, SType.DateTime, SType.DateTime],

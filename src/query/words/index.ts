@@ -371,6 +371,12 @@ export function onFetchArray<QS extends QueryStack>(stack: QS, val: StackValue):
 }
 
 
+export function onRegexBuild(stack:QueryStack): InstResult {
+    let val = stack.popValue();
+    // console.log('[onRegexBuild]', new RegExp(val) );
+    return [SType.Regex, new RegExp(val) ];
+}
+
 export function onRegex(stack: QueryStack, [, op]: StackValue): InstResult {
     let regex: RegExp = stack.popValue();
     let val = stack.popValue();
@@ -393,7 +399,7 @@ export function onRegex(stack: QueryStack, [, op]: StackValue): InstResult {
     }
     else if (op === 'eval') {
         let result = regex.exec(val);
-        // console.log('[onRegex]', 'result', Array.from(result) );
+        // console.log('[onRegex]', 'result', regex, val, result );
         if (result) {
             value = Array.from(result);
         }
