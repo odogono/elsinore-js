@@ -29,7 +29,8 @@ import {
     // onLeave,
     onJoin,
     onUndefined,
-    onRegexBuild
+    onRegexBuild,
+    onCompare
 } from "./words";
 import { onPluck } from "./words/pluck";
 import { onDefine } from "./words/define";
@@ -256,6 +257,8 @@ export function createStdLibStack( stack?:QueryStack ){
         ['.', onPrint, SType.Any],
         ['..', onPrint],
 
+        ['==', onCompare, SType.Any, SType.Any],
+        ['!=', onCompare, SType.Any, SType.Any],
 
         ['@', onFetchArray, SType.List, SType.Value],
 

@@ -182,6 +182,19 @@ export abstract class EntitySet {
 
     abstract removeComponents(items: RemoveType[], options: AddOptions): Promise<EntitySet>;
 
+
+    /**
+     * Returns an array of entity ids that were added or updated last op
+     */
+    getUpdatedEntities(): EntityId[] {
+        return getChanges(this.entChanges, ChangeSetOp.Add | ChangeSetOp.Update);
+    }
+
+    /**
+     * 
+     * @param q 
+     * @param options 
+     */
     prepare(q: string, options: QueryOptions = {}) {
         let stmt = new Statement(q, { values: [[SType.EntitySet, this]] });
         stmt.stack.addWords([
@@ -191,6 +204,11 @@ export abstract class EntitySet {
     }
 
 
+    /**
+     * 
+     * @param q 
+     * @param options 
+     */
     async query(q: string, options: QueryOptions = {}): Promise<QueryStack> {
         const reset = options.reset ?? false;
         let values: StackValue[] = options.values ?? [];
@@ -585,12 +603,7 @@ export class EntitySetMem extends EntitySet {
     }
 
 
-    /**
-     * Returns an array of entity ids that were added or updated last op
-     */
-    getUpdatedEntities(): EntityId[] {
-        return getChanges(this.entChanges, ChangeSetOp.Add | ChangeSetOp.Update);
-    }
+    
 
     async applyUpdates() {
 

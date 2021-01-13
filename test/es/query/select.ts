@@ -39,13 +39,21 @@ test('fetches entities by id', async () => {
     assert.equal(result.id, 102);
 });
 
-// test.only('something', async () => {
-//     let query = `102 [ ^$0 @e ] select`;
-//     let [stack] = await prepES(query, 'todo');
+test('select no entities', async () => {
+    let query = `
+    [ 0 @eid /component/title#text @ca ] select
+    `;
+    let [stack] = await prepES(query, 'todo');
 
-//     ilog( stack.items );
-//     // console.log( stack.toString() );
-// })
+    // ilog(stack.items);
+    let result = stack.popValue();
+
+    // ilog( result );
+
+    // the return value is an entity
+    assert.equal(result, [] );
+});
+
 
 test('fetches entities by did', async () => {
     let query = `[ "/component/completed" !bf @e] select`;
@@ -262,6 +270,27 @@ test('uses multi conditions', async () => {
     assert.equal(e.size, 3);
     assert.equal(e.Colour.colour, 'white');
 });
+
+
+// test.only('and condition with failing', async () => {
+//     let query = `
+//     [
+//         /component/position#/file !ca a ==
+//         /component/position#/rank !ca 2 ==
+//         and
+//         all
+//         @c
+//     ] select
+//     prints
+//     `;
+
+//     let [stack] = await prepES(query, 'chess');
+
+//     let e: Entity = stack.popValue();
+
+//     assert.equal(e.size, 3);
+//     assert.equal(e.Colour.colour, 'white');
+// });
 
 test('and/or condition', async () => {
     let query = `

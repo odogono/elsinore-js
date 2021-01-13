@@ -159,6 +159,10 @@ function readEntityIds( stack:ESMemQueryStack ): EntityId[] {
                 }).
                     filter(Boolean);
             }
+            else if( from[0] === SType.Value && from[1] === false ){
+                return [];
+            }
+            // Log.debug('[readEntityIds]', from);
         }
     }
 
@@ -501,6 +505,7 @@ export async function fetchEntity(stack: ESMemQueryStack, [,op]:StackValue): Asy
         let e = es.getEntityMem(eid, returnEid ? false : true );
         
         if (e === undefined) {
+            // Log.debug('[fetchEntity]', 'empty');
             return [SType.Value, false];
         }
 

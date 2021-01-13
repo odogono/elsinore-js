@@ -417,6 +417,15 @@ export function onRegex(stack: QueryStack, [, op]: StackValue): InstResult {
     return [SType.Value, value];
 }
 
+export function onCompare(stack: QueryStack, [, op]:StackValue): InstResult {
+    let left = JSON.stringify( stack.pop() );
+    let right = JSON.stringify( stack.pop() );
+
+    let value = op == '!=' ? left != right : left == right;
+
+    return [SType.Value, value];
+}
+
 export function onDateTime(stack: QueryStack, [, op]: StackValue): InstResult {
     let dateA = stack.popValue();
     let dateB = stack.popValue();
