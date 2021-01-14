@@ -40,13 +40,7 @@ export async function onCondition(stack: QueryStack, [, op]: StackValue): AsyncI
 
 async function pushValue( stack:QueryStack, value:StackValue ){
     if( value[0] === SType.List ){
-        // console.log('[onCondition]', op, value[1]);
-        
         await stack.pushValues(value[1]);
-        // await stack.pushWordValues(stack,op,value[1], {ignoreActive:true});
-
-        // await stack.pushValues( value[1], {ticket,ignoreActive:true} );
-        // console.log('[onCondition]', op, 'end', {isActive:stack.isActive} );
     } else {
         return stack.push(value);
     }

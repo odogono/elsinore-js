@@ -594,9 +594,11 @@ export async function onListEval<QS extends QueryStack>(stack: QS): AsyncInstRes
 async function evalList<QS extends QueryStack>(stack: QS, list: StackValue[]): AsyncInstResult {
     let mapStack = stack.setChild(stack);
 
-    for (const val of list) {
-        await mapStack.push(val);
-    }
+    await mapStack.pushValues( list );
+    // for (const val of list) {
+    //     // console.log('[evalList]', val, mapStack.isEscapeActive);
+    //     await mapStack.push(val);
+    // }
 
     let result = mapStack.items;
     stack.restoreParent();
@@ -732,12 +734,13 @@ export async function onToString(stack: QueryStack, [, op]: StackValue): AsyncIn
  * 
  * [ hello world ] ' ' join -- 'hello world'
  */
-export function onJoin(stack: QueryStack): InstResult {
+export async function onJoin(stack: QueryStack): AsyncInstResult {
     let joinStr = stack.pop();
     let list = stack.pop();
     let result;
 
     if( list[0] === SType.List ){
+        list = await evalList(stack, list[1]);
         list = unpackStackValueR(list, SType.List);
         result = list.join( joinStr[1] ).trim();
     } else {

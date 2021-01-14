@@ -291,7 +291,7 @@ export class QueryStack {
             }
 
             // escape char for values which might otherwise get processed as words
-            if (this.isEscapeActive && len > 1 && word.charAt(0) === '*') {
+            if ( len > 1 && word.charAt(0) === '*') {
                 word = word.substring(1);
                 value = [SType.Value, word] as any;
                 evalWord = evalEscape;// false;

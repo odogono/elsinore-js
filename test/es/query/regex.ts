@@ -30,7 +30,23 @@ test('matches length >', async () => {
     assert.equal(result, true);
 });
 
+test('ensure leading slash', async () => {
+    let [stack] = await prep(`    
+        [
+            dup ~r/^\\// eval
+            
+            [["/" *^^$0] "" join ] swap false == if
 
+        ] ensureLeadingSlash define
+        
+        "hello" ensureLeadingSlash
+        "/hello" ensureLeadingSlash
+    `);
+
+    assert.equal( stack.popValue(), "/hello" );
+    assert.equal( stack.popValue(), "/hello" );
+    
+});
 
 test('executes a regex', async () => {
     let [stack] = await prep(`

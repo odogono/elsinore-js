@@ -28,7 +28,7 @@ test('stops and restarts stack execution', async () => {
     assert.equal( stack.toString(), '7 6 3 2 1');
 });
 
-test('stops and restarts stack execution', async () => {
+test('stops and restarts stack execution 2', async () => {
     let [stack] = await prep(`
         1 2 3 
         [ @! ] 1 1 == if
