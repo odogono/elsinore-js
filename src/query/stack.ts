@@ -315,7 +315,7 @@ export class QueryStack {
                 // words beginning with $ refer to offsets on the root stack if they are integers,
                 // or user defined words
                 const pr = word.charAt(0);
-                if (len > 1 && pr === '$' || pr === '%') {
+                if (len > 1 && pr === '$' || (len > 1 && pr === '%') ) {
                     let sub = word.substring(1);
                     // Log.debug('[push]', word, this._idx, isInteger(sub), this.isUDWordsActive );
                     if (isInteger(sub)) {
