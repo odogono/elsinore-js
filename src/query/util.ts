@@ -2,7 +2,7 @@ import { StackValue, SType } from "./types";
 import { getComponentId } from "../component";
 import { getEntityId } from "../entity";
 import { stringify } from "../util/json";
-import { QueryStack } from "./stack";
+import { isStackValue, QueryStack } from "./stack";
 
 
 export interface ToStringOptions {
@@ -86,11 +86,11 @@ export function unpackStackValue(val: StackValue, assertType: (SType | SType[]) 
     switch (type) {
         case SType.List:
             // console.log('[unpackStackValue]', type, value);
-            // console.log('[unpackStackValue]', type, value);
             return recursive ? value.map(av => unpackStackValue(av, SType.Any, true)) : value;
         case SType.Map:
             return recursive ? Object.keys(value).reduce((res, key) => {
-                return { ...res, [key]: unpackStackValue(value[key], SType.Any, true) }
+                let val = value[key];
+                return { ...res, [key]: isStackValue(val) ? unpackStackValue(val, SType.Any, true) : val }
             }, {}) : value;
         case SType.Value:
         case SType.Any:

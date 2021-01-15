@@ -2,9 +2,8 @@ import { suite } from 'uvu';
 import assert from 'uvu/assert';
 
 import {
-    AsyncInstResult,
-    parse,
     prep,
+    prepES,
     QueryStack,
     StackValue,
     sv,
@@ -45,9 +44,30 @@ test('plucks multiple values', async () => {
     // ilog(stack.items);
     let result = stack.popValue();
     assert.equal(result, [
-        { '@e': 3, text: 'hello' },
-        { '@e': 4, text: 'world', status: 'active' }
+        [ 3, 'hello', undefined ],
+        [ 4, 'world', 'active' ]
     ]);
+});
+
+
+test('plucks from an entity', async () => {
+
+    let [stack] = await prepES(`[ 
+            /component/priority#priority !ca 10 == 
+            @e
+        ] select
+        [/component/title#text /id /component/meta#/meta/tags] pluck
+        // prints
+    `, 
+    'todo');
+
+    // console.log( stack.items[1] );
+    // console.log( stack.popValue() );
+
+    assert.equal( stack.popValue(), [
+        'get out of bed', 100, [ 'first', 'action']
+    ]);
+
 });
 
 test.run();
