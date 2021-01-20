@@ -58,6 +58,14 @@ gather
 gather
 104 !e swap +
 
+
+[ "/component/priority", {"priority":-25} ] !c
+[ "/component/meta", { "meta": {
+    "notes":"empty entity"
+} } ] !c
+gather 105 !e swap +
+
+
 // add entities to an array
 gather
 // add to EntitySet

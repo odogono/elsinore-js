@@ -342,10 +342,25 @@ export abstract class EntitySet {
         return did === undefined ? undefined : this.componentDefs[did - 1];
     }
 
+    // getComponentDefs( bf?:BitField|'all' ): Promise<ComponentDef[]> {
     getComponentDefs(): Promise<ComponentDef[]> {
+        // if( bf !== undefined ){
+
+        // }
         return Promise.resolve(this.componentDefs);
     }
 
+
+    getComponentDefsFromBitField( bf?:BitField|'all', asDefIds = false): ComponentDef[]|ComponentDefId[] {
+        if( bf === undefined || bf === 'all' ){
+            let defs = this.componentDefs;
+            return asDefIds ? defs.map(d => getDefId(d)) : defs;
+        }
+        
+        let dids = bfToValues(bf);
+        return asDefIds ? dids : dids.map(d => this.getByDefId(d));
+    }
+    
 
 
     addComponentToEntity(e: Entity, com: Component, did?: ComponentDefId): Entity {

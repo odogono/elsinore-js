@@ -289,6 +289,7 @@ export function createStdLibStack( stack?:QueryStack ){
         ['pluck', onPluck, SType.List, SType.Value],
         ['pluck', onPluck, SType.List, SType.List],
         ['pluck', onPluck, SType.Any, SType.Value],
+        ['pluck!', onPluck, SType.Any, SType.Any],
         
         ['unique', onUnique, SType.List],
         ['filter', onFilter, SType.List, SType.List],
@@ -311,18 +312,14 @@ export function createStdLibStack( stack?:QueryStack ){
         ['size!', onSize, SType.Any],
         ['size', onSize, SType.Any],
         ['loop', onLoop, SType.List],
-        // ['leave', onLeave],
-        // ['break', onLeave],
-        // ['return', onLeave],
+        
         ['undefined', onUndefined],
         ['!d', onComponentDef, SType.Map],
         ['!d', onComponentDef, SType.List],
         ['!d', onComponentDef, SType.Value],
         ['@d', fetchComponentDef, SType.EntitySet],
         ['@d', fetchComponentDef, SType.EntitySet, SType.Value],
-        // ['!bf', buildBitfield, SType.List],
-        // ['!bf', buildBitfield, SType.Value],
-        // ['!es', onEntitySet, SType.Map],
+        
         ['!c', onComponent, SType.List],
         ['!e', onEntity, SType.List],
         ['!e', onEntity, SType.Value],

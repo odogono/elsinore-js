@@ -813,22 +813,31 @@ export class QueryStack {
         val = stack.peek();
 
         let [type, bf] = val;
-        // Log.debug('[popBitField]', 'yes', stack.items);
-        if (type === SType.BitField) {
-            dids = bfToValues(bf);
-            defs = asObj ? dids.map(d => es.getByDefId(d) as CD) : [];
-        } else if (type === SType.Value && bf === 'all') {
-            // get all def ids
-            if (asObj) {
-                defs = es.componentDefs as CD[];
-            } else {
-                dids = es.componentDefs.map(d => getDefId(d));
-            }
-        }
-        if (dids !== undefined || defs !== undefined) {
+
+        if( type === SType.BitField || (type === SType.Value && bf === 'all') ){
             stack.pop();
+            const result = es.getComponentDefsFromBitField( bf, asObj === false );
+            return asObj ? result as CD[] : result as ComponentDefId[];
         }
-        return asObj ? defs : dids;
+
+        return undefined;
+
+        // // Log.debug('[popBitField]', 'yes', stack.items);
+        // if (type === SType.BitField) {
+        //     dids = bfToValues(bf);
+        //     defs = asObj ? dids.map(d => es.getByDefId(d) as CD) : [];
+        // } else if (type === SType.Value && bf === 'all') {
+        //     // get all def ids
+        //     if (asObj) {
+        //         defs = es.componentDefs as CD[];
+        //     } else {
+        //         dids = es.componentDefs.map(d => getDefId(d));
+        //     }
+        // }
+        // if (dids !== undefined || defs !== undefined) {
+        //     stack.pop();
+        // }
+        // return asObj ? defs : dids;
     }
 
     popBitFieldOpt(): BitField {

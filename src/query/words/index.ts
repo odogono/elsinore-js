@@ -26,6 +26,7 @@ import { createLog } from "../../util/log";
 import { stackToString, valueToString, unpackStackValue, unpackStackValueR } from '../util';
 import { EntitySet, EntitySetMem, isEntitySet } from '../../entity_set';
 import { compareDates } from './util';
+import { TYPE_OR } from '../../util/bitfield';
 
 const Log = createLog('QueryWords');
 
@@ -442,6 +443,12 @@ export function onUndefined(stack: QueryStack): InstResult {
     return [SType.Value, undefined];
 }
 
+
+export function onBitFieldOr(stack:QueryStack):InstResult {
+    let bf = stack.popValue();
+    bf.type = TYPE_OR;
+    return [SType.BitField, bf];
+}
 
 export function onAdd(stack: QueryStack, [, op]: StackValue): InstResult {
 

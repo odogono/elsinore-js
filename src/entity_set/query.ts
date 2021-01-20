@@ -15,6 +15,7 @@ import {
     count as bfCount,
     and as bfAnd,
     or as bfOr,
+    typeFn as bfTypeFn,
     toValues as bfToValues,
     TYPE_AND,
     TYPE_OR,
@@ -38,7 +39,7 @@ import { onLogicalFilter, parseFilterQuery } from './filter';
 import { unpackStackValue, unpackStackValueR, stackToString } from "../query/util";
 import { EntitySet, EntitySetMem } from ".";
 import { compareDates } from '../query/words/util';
-import { onPrintStack } from '../query/words';
+import { onBitFieldOr, onPrintStack } from '../query/words';
 
 const Log = createLog('ESMemQuery');
 
@@ -66,6 +67,9 @@ export async function select(stack:QueryStack, query: StackValue[], options:Sele
         ['!bf', buildBitfield, SType.Value],
         ['!ca', onComponentAttr],
         ['define', onDefine],
+
+        // converts a BitField to OR mode
+        ['!or', onBitFieldOr, SType.BitField],
 
         ['and', onLogicalFilter, SType.Any, SType.Any],
         ['or', onLogicalFilter, SType.Any, SType.Any],
@@ -202,6 +206,7 @@ export function applyFilter(stack: ESMemQueryStack): InstResult {
 }
 
 function walkFilterQuery(es: EntitySetMem, eids: EntityId[], cmd?, ...args) {
+    // console.log('[walkFQ]', cmd, args);
     if (cmd === 'and') {
         let left = walkFilterQuery(es, eids, ...args[0]);
         if (left === undefined || left.length === 0) {
@@ -216,6 +221,8 @@ function walkFilterQuery(es: EntitySetMem, eids: EntityId[], cmd?, ...args) {
         let left = walkFilterQuery(es, eids, ...args[0]);
         let right = walkFilterQuery(es, eids, ...args[1]);
 
+        // Log.debug('[applyFilter]', 'or', left, right );
+
         // merge the results and return
         return [...new Set([...left, ...right])];
     }
@@ -228,13 +235,23 @@ function walkFilterQuery(es: EntitySetMem, eids: EntityId[], cmd?, ...args) {
         case '<':
         case '<=':
             return walkFilterQueryCompare(es, eids, cmd, ...args);
+        case 'dids':
+            return applyFilterDefIds( es, eids, args[0], args[1] );
         default:
-            console.log('[walkFQ]', `unhandled ${cmd}`);
+            console.log('[walkFQ]', `unhandled cmd '${cmd}'`);
             return eids;
 
     }
 }
 
+function applyFilterDefIds( es:EntitySetMem, eids: EntityId[], dids, bf ){
+    // console.log('[applyFilterDefIds]', eids, dids, bf );
+    
+    let feids = matchEntities(es, eids, bf );
+    // console.log('[applyFilterDefIds]', feids );
+
+    return feids;
+}
 
 function walkFilterQueryCompare(es: EntitySetMem, eids: EntityId[], cmd?, ...args) {
     let { def } = args[0];
@@ -323,11 +340,16 @@ export function fetchComponents(stack: ESMemQueryStack): InstResult {
     const { es } = stack;
     let left: StackValue;
     let eids: EntityId[];
-    let dids: ComponentDefId[];
+    // let dids: ComponentDefId[];
     let coms = [];
 
+    // let val = stack.peek();
+    // Log.debug('[fetchComponent]', 'peek', val);
+
     // get the bitfield
-    dids = stack.popBitField<ComponentDef>(false) as ComponentDefId[];
+    // dids = stack.popBitField<ComponentDef>(false) as ComponentDefId[];
+    // let bf:BitField = stack.popValue();
+    let bf = stack.popBitFieldOpt();
     
     // ilog(dids);
 
@@ -341,12 +363,12 @@ export function fetchComponents(stack: ESMemQueryStack): InstResult {
             // Log.debug('[fetchComponent]', 'fetching from entity', eids);
 
         } else if (from[0] === SType.List) {
-            // Log.debug('[fetchComponent]', from[1]);          
             eids = from[1].map(it => {
                 return isStackValue(it) ? getEntityId(it[1])
-                    : isEntity(it) ? getEntityId(it) : undefined;
+                : isEntity(it) ? getEntityId(it) : undefined;
             }).
-                filter(Boolean);
+            filter(Boolean);
+            // Log.debug('[fetchComponent]', eids);
         } else {
             // Log.debug('[fetchComponent]', 'unhandled', from);
             return [SType.List, []];
@@ -354,28 +376,61 @@ export function fetchComponents(stack: ESMemQueryStack): InstResult {
     }
 
     // Log.debug('[fetchComponent]', eids, dids );
+    // Log.debug('[fetchComponent]', eids, bfToValues(bf), bf?.type );
 
     // if an empty eid array has been passed, then no coms can be selected
     if (eids !== undefined && eids.length === 0) {
         return [SType.List, coms];
     }
 
-    // Log.debug('[fetchComponent]', eids, dids );
 
 
-    if (dids !== undefined && dids.length > 0) {
+    // eids = matchEntities(es, undefined, bf);
+
+    // if( bf === undefined || bf.isAllSet ){
+    //     coms = Array.from(es.components.values());
+    // }
+    // else {
         for (const [, com] of es.components) {
-            if (dids.indexOf(getComponentDefId(com)) !== -1) {
-                coms.push(com);
+            if( eids !== undefined && eids.length > 0 ){
+                if( eids.indexOf( getComponentEntityId(com) ) === -1 ){
+                    continue;
+                }
             }
-        }
-    } else {
-        coms = Array.from(es.components.values());
-    }
+            
+            if( bf !== undefined && bf.isAllSet === false  ){
+                let cmpFn = bfTypeFn( bf );
+                const ebf = es.entities.get( getComponentEntityId(com) );
+                if( cmpFn( bf, ebf ) === false ){
+                    continue;
+                }
+                if( bfGet(bf, getComponentDefId(com)) === false ){
+                    continue;
+                }
+            }
+            // if( bf !== undefined && bf.isAllSet === false && cmpFn( bf, ebf ) === false ){
+            // // if( bf !== undefined && bf.isAllSet === false && bfGet(bf, getComponentDefId(com)) === false ){
+            //     continue;
+            // }
+            // Log.debug('[fetchComponent]', 'ok', getComponentEntityId(com) );
 
-    if (eids !== undefined && eids.length > 0) {
-        coms = coms.filter(com => eids.indexOf(getComponentEntityId(com)) !== -1);
-    }
+            coms.push(com);
+        }
+    // }
+
+    // if (dids !== undefined && dids.length > 0) {
+    //     for (const [, com] of es.components) {
+    //         if (dids.indexOf(getComponentDefId(com)) !== -1) {
+    //             coms.push(com);
+    //         }
+    //     }
+    // } else {
+    //     coms = Array.from(es.components.values());
+    // }
+
+    // if (eids !== undefined && eids.length > 0) {
+    //     coms = coms.filter(com => eids.indexOf(getComponentEntityId(com)) !== -1);
+    // }
 
     // sort by entityId
     coms.sort((a, b) => a['@e'] - b['@e']);
@@ -474,7 +529,7 @@ export function buildBitfield(stack: QueryStack): InstResult {
 
     let dids = unpackStackValueR(arg, SType.Any);
     dids = isString(dids) ? [dids] : dids;
-    let bf = es.resolveComponentDefIds(dids);
+    let bf:BitField = es.resolveComponentDefIds(dids);
 
     return [SType.BitField, bf];
 }
@@ -529,11 +584,13 @@ export async function fetchEntity(stack: ESMemQueryStack, [,op]:StackValue): Asy
         throw new StackError(`@e unknown type ${type}`)
     }
 
-    // Log.debug('[fetchEntity]', 'ok', eids);
+    
 
     if( returnEid ){
         return [SType.List, eids.map(eid => [SType.Value,eid])];
     }
+
+    // Log.debug('[fetchEntity]', 'ok', eids);
 
     let ents = es.getEntitiesByIdMem(eids, {populate:true});
     let result = ents.filter(Boolean).map(e => [SType.Entity, e]);
@@ -544,6 +601,8 @@ export async function fetchEntity(stack: ESMemQueryStack, [,op]:StackValue): Asy
     //     result.push( e === undefined ? [SType.Value,false] : [SType.Entity,e] );
     // }
 
+    // Log.debug('[fetchEntity]', 'ok', result);
+
     return [SType.List, result];
 }
 
@@ -553,12 +612,12 @@ export function matchEntities(es: EntitySetMem, eids: EntityId[], mbf: BitField 
     let matches: number[] = [];
     const isAll = mbf === 'all' || mbf === undefined || mbf.isAllSet;
     const type = isAll ? TYPE_AND : (mbf as BitField).type;
-    let cmpFn = bfAnd;
-    if( type === TYPE_OR ){
-        cmpFn = bfOr;
-    } else if( type === TYPE_NOT ){
-        // cmpFn = bfNot;
-    }
+    let cmpFn = bfTypeFn( type ); // bfAnd;
+    // if( type === TYPE_OR ){
+    //     cmpFn = bfOr;
+    // } else if( type === TYPE_NOT ){
+    //     // cmpFn = bfNot;
+    // }
     if (isAll) {
         return eids !== undefined ? eids : Array.from(es.entities.keys());
     }

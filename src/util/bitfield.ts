@@ -104,6 +104,12 @@ export function count(bf:BitField): number {
     return count;
 }
 
+export function typeFn( a:BitField|number ){
+    // todo - TYPE_NOT
+    const type = isBitField(a) ? (a as BitField).type : a as number;
+    return type === TYPE_AND ? and : or;
+}
+
 /**
  * Bitwise AND - returns false if one bit is true when the other is false
  */

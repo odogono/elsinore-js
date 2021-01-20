@@ -5,6 +5,7 @@ import {
     bfToValues,
     Entity,
     getEntityId,
+    ilog,
     prepES,
 } from '../helpers';
 
@@ -62,7 +63,7 @@ test('fetches all the entities', async () => {
     let [stack] = await prepES(query, 'todo');
     let result = stack.popValue();
 
-    assert.equal(result.map(e => e.id), [100, 101, 102, 103, 104]);
+    assert.equal(result.map(e => e.id), [100, 101, 102, 103, 104, 105]);
 })
 
 test('fetches all the entities ids', async () => {
@@ -70,7 +71,7 @@ test('fetches all the entities ids', async () => {
     let [stack] = await prepES(query, 'todo');
     let result = stack.popValue();
 
-    assert.equal( result, [100, 101, 102, 103, 104] );
+    assert.equal( result, [100, 101, 102, 103, 104, 105] );
 })
 
 
@@ -115,6 +116,22 @@ test('fetching components from unknown entity', async () => {
     `, 'todo');
 
     assert.equal( stack.popValue(), [] );
+});
+
+
+test('fetching components with optional', async () => {
+    let [stack] = await prepES(`
+    [
+        [/component/title /component/completed] !bf
+        @c
+    ] select
+    /@e pluck!
+    // prints
+    rot [ *^$1 /component/priority !bf @c ] select rot +
+    // prints
+    `, 'todo');
+
+    assert.equal( stack.popValue().length, 7 );
 });
 
 test('fetches component attributes', async () => {

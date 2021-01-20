@@ -16,7 +16,7 @@ export function parseFilterQuery( es:EntitySet, cmd?, left?, right? ){
         case 'or':
             return prAnd( es, cmd, left, right );
         case SType.BitField:
-            return [ 'dids', bfToValues(left as BitField) ];
+            return [ 'dids', bfToValues(left as BitField), left ];
         case '==':
         case '!=':
         case '>':
