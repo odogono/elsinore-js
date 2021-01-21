@@ -54,6 +54,7 @@ export class Entity {
             this.components.delete(did);
             this.bitField = bfSet(this.bitField,did, false);
         } else {
+            
             com = setComponentEntityId(com, eid);
             this.components.set(did, com);
             this.bitField = bfSet(this.bitField,did);
@@ -106,6 +107,7 @@ export class Entity {
             const did = getDefId(def);
             return {...props, [ def.name ]:{
                 set: (com) => {
+                    
                     if( com === undefined ){
                         // remove the component
                         this.components.delete(did);
@@ -116,7 +118,7 @@ export class Entity {
                     if( cdid !== undefined && cdid !== did ){
                         throw new Error(`invalid set component on ${def.name}`);
                     }
-                    com = { '@e':eid, '@d':did, ...com };
+                    com = { ...com, '@e':eid, '@d':did };
                     this.components.set(did,com);
                 },
                 get: () => this.components.get(did),
@@ -148,4 +150,5 @@ export function getEntityId(entity: Entity): EntityId {
 export function isEntity(item: any): boolean {
     return isObject(item) && item['isEntity'] === true;
 }
+
 

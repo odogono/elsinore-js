@@ -20,9 +20,9 @@ export interface OrphanComponent {
 }
 
 export interface Component {
-    [key: string]: any;
-    [DefT]: number;
-    [EntityT]: number;
+    [key: string]: any; // attributes
+    [DefT]: number; // def id
+    [EntityT]: number; // entity id
     // props: Map<string, any>;
 }
 

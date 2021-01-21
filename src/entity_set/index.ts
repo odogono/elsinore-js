@@ -283,9 +283,7 @@ export abstract class EntitySet {
 
     createEntity(eid: EntityId = 0, bf?: BitField): Entity {
         let e = new Entity(eid, bf);
-
         e = e.defineComponentProperties(this.componentDefs);
-
         return e;
     }
 
