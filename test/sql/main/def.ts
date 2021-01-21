@@ -21,7 +21,7 @@ import {
 } from '../helpers';
 import { assertHasComponents } from '../../helpers/assert';
 
-let test = suite('es/mem - component def');
+let test = suite('es/sqlite - component def');
 
 test.before.each( beforeEach );
 

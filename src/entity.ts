@@ -120,6 +120,10 @@ export class Entity {
                     this.components.set(did,com);
                 },
                 get: () => this.components.get(did),
+                // get: () => {
+                //     console.log('[get]', def.name, did );
+                //     return this.components.get(did)
+                // }
                 // writable: true
             }};
         }, {});

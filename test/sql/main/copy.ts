@@ -23,9 +23,14 @@ import {
 } from '../helpers';
 import { assertHasComponents } from '../../helpers/assert';
 
-let test = suite('es/mem - copying');
+let test = suite('es/sqlite - copying');
+
+
+
 
 test.before.each( beforeEach );
+
+
 
 test('transfers components to a foreign es', async () => {
     // create es1 with defs and components
@@ -50,6 +55,8 @@ test('transfers components to a foreign es', async () => {
 
     await defsA.reduce( (p,def) => p.then( () => es1.register(def)), Promise.resolve() );
     await defsB.reduce( (p,def) => p.then( () => es2.register(def)), Promise.resolve() );
+
+    
 
     let data:any = [ 
         {uri:'/component/status', status:'active'},

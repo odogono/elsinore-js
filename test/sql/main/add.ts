@@ -8,7 +8,6 @@ import {
     createEntitySet,
     Component,
     Entity,
-    EntitySet,
     EntitySetInst,
     getChanges,
     getComponentDefId,
@@ -18,12 +17,11 @@ import {
     beforeEach,
 } from '../helpers';
 import { assertHasComponents } from '../../helpers/assert';
-import { printEntity } from '../../sql/helpers';
 
 
 
 
-let test = suite('es/mem - adding');
+let test = suite('es/sqlite - adding');
 
 test.before.each( beforeEach );
 
@@ -244,35 +242,6 @@ test('overwrites an entity', async () => {
 
     assert.equal(com.channel, 3);
 });
-
-
-// test.only('overwrites an entity 2', async () => {
-//     let e: Entity;
-//     let [es, buildEntity] = await buildEntitySet();
-
-//     e = buildEntity(es, ({ component }) => {
-//         component('/component/channel', { name: 'chat' });
-//         component('/component/status', { status: 'inactive' });
-//         component('/component/topic', { topic: 'data-structures' });
-//     }, 15);
-
-
-//     await es.add(e);
-
-
-//     e = buildEntity(es, ({ component }) => {
-//         component('/component/username', { name: 'alex' });
-//     }, 15);
-
-//     await es.add(e);
-
-//     e = await es.getEntity(15);
-
-//     assertHasComponents(es, e,
-//         ['/component/username']);
-
-//     // printEntity( es, e );
-// });
 
 test('updates an entity', async () => {
     let [es] = await buildEntitySet();

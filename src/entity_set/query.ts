@@ -198,15 +198,18 @@ export function applyFilter(stack: ESMemQueryStack): InstResult {
     let result = parseFilterQuery(es, filter[0], filter[1], filter[2]);
     // Log.debug('[applyFilter]', result);
     // Log.debug('[applyFilter]', Array.from(es.entities.keys()) );
+    // Log.debug('[applyFilter]', 'query', result );
 
     eids = walkFilterQuery(es, eids, ...result).sort();
     // Log.debug('[applyFilter]', 'result eids', eids );
+    // Log.debug('[applyFilter]', 'result' );
+    // ilog( eids );
 
     return [SType.List, eids.map(eid => [SType.Entity, eid])];
 }
 
 function walkFilterQuery(es: EntitySetMem, eids: EntityId[], cmd?, ...args) {
-    // console.log('[walkFQ]', cmd, args);
+    // console.log('[walkFQ]', eids, cmd, args);
     if (cmd === 'and') {
         let left = walkFilterQuery(es, eids, ...args[0]);
         if (left === undefined || left.length === 0) {
@@ -260,6 +263,7 @@ function walkFilterQueryCompare(es: EntitySetMem, eids: EntityId[], cmd?, ...arg
     const isJptr = ptr.startsWith('/');
 
     eids = matchEntities(es, eids, createBitField([did]));
+    // console.log('[walkFilterQueryCompare]', 'eids', eids, did);
     let out = [];
     for( const eid of eids ){
         const cid = toComponentId(eid, did);
@@ -351,12 +355,15 @@ export function fetchComponents(stack: ESMemQueryStack): InstResult {
     // let bf:BitField = stack.popValue();
     let bf = stack.popBitFieldOpt();
     
+    // Log.debug('[fetchComponent]', 'bf', bf );
+
     // ilog(dids);
 
     left = stack.peek();
 
     if (left !== undefined) {
         let from = stack.pop();
+        // Log.debug('[fetchComponent]', 'arg', from);
 
         if (from[0] === SType.Entity) {
             eids = [unpackStackValueR(from)];
@@ -375,7 +382,7 @@ export function fetchComponents(stack: ESMemQueryStack): InstResult {
         }
     }
 
-    // Log.debug('[fetchComponent]', eids, dids );
+    // Log.debug('[fetchComponent]', eids, bfToValues(bf) );
     // Log.debug('[fetchComponent]', eids, bfToValues(bf), bf?.type );
 
     // if an empty eid array has been passed, then no coms can be selected
@@ -528,9 +535,13 @@ export function buildBitfield(stack: QueryStack): InstResult {
     let arg: StackValue = stack.pop();
 
     let dids = unpackStackValueR(arg, SType.Any);
+    if( dids === 'all' ){
+        return [SType.BitField, createBitField('all')];
+    }
     dids = isString(dids) ? [dids] : dids;
     let bf:BitField = es.resolveComponentDefIds(dids);
 
+    // Log.debug('[buildBitfield]', arg, bf );
     return [SType.BitField, bf];
 }
 
@@ -555,6 +566,7 @@ export async function fetchEntity(stack: ESMemQueryStack, [,op]:StackValue): Asy
     if (type === SType.BitField) {
         bf = eid as BitField;
         eids = matchEntities(es, undefined, bf);
+        
     } else if (isInteger(eid)) {
         // Log.debug('[fetchEntity]', 'eid only', eid, isInteger(eid), typeof eid );
         let e = es.getEntityMem(eid, returnEid ? false : true );
@@ -587,6 +599,7 @@ export async function fetchEntity(stack: ESMemQueryStack, [,op]:StackValue): Asy
     
 
     if( returnEid ){
+        
         return [SType.List, eids.map(eid => [SType.Value,eid])];
     }
 
@@ -613,18 +626,24 @@ export function matchEntities(es: EntitySetMem, eids: EntityId[], mbf: BitField 
     const isAll = mbf === 'all' || mbf === undefined || mbf.isAllSet;
     const type = isAll ? TYPE_AND : (mbf as BitField).type;
     let cmpFn = bfTypeFn( type ); // bfAnd;
-    // if( type === TYPE_OR ){
-    //     cmpFn = bfOr;
-    // } else if( type === TYPE_NOT ){
-    //     // cmpFn = bfNot;
-    // }
+    
+    
+
     if (isAll) {
-        return eids !== undefined ? eids : Array.from(es.entities.keys());
+        eids = eids !== undefined ? eids : Array.from(es.entities.keys());
+        eids.sort();
+        return eids;
     }
+
+    if( bfCount(mbf as BitField) === 0 ){
+        return [];
+    }
+
     if (eids === undefined) {
         // let es = from as EntitySetMem;
         for (let [eid, ebf] of es.entities) {
             if (cmpFn(mbf as BitField, ebf)) {
+                // Log.debug('[matchEntities]', 'match', type, mbf, ebf);
                 matches.push(eid);
             }
         }
@@ -633,6 +652,7 @@ export function matchEntities(es: EntitySetMem, eids: EntityId[], mbf: BitField 
             let eid = eids[ii];
             let ebf = es.entities.get(eid);
             if (cmpFn(mbf as BitField, ebf)) {
+                
                 matches.push(eid);
             }
         }

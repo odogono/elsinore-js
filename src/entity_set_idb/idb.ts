@@ -75,7 +75,7 @@ async function walkFilterQuery(db: IDBDatabase, eids: EntityId[], cmd?, ...args)
         case '<=':
             return walkFilterQueryCompare(db, eids, cmd, ...args);
         default:
-            console.log('[walkFQ]', `unhandled ${cmd}`);
+            console.log('[walkFQ]', `unhandled '${cmd}'` );
             return eids;
     }
 

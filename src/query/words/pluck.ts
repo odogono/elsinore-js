@@ -74,8 +74,8 @@ function getStackValue(obj: any, key: string) {
     let val:any;
 
     if( isEntity(obj) ){
-        // console.log('[onPluck]', 'get entity', key, obj, val );
         val = getEntityComponent( obj, key );
+        // console.log('[onPluck]', 'get entity', key, val );
     } else {
         val = Jsonpointer.get(obj, key);
     }
@@ -114,6 +114,7 @@ function getEntityComponent( e:Entity, ptr:string ){
     const com = e[ toCapitalized(comPtr) ];
 
     if( com === undefined ){
+        // console.log('[getEntityComponent]', com, toCapitalized(comPtr), e );
         return undefined;
     }
 

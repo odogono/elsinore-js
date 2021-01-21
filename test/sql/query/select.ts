@@ -2,16 +2,17 @@ import { suite } from 'uvu';
 import assert from 'uvu/assert';
 
 import {
+    beforeEach,
     bfToValues,
     Entity,
     getEntityId,
-    ilog,
     prepES,
 } from '../helpers';
 
 
 let test = suite('es/mem/query - Select');
 
+test.before.each( beforeEach );
 
 test('fetches entities by id', async () => {
     let query = `[ 102 @e ] select`;
@@ -125,7 +126,8 @@ test('fetching components with optional', async () => {
         [/component/title /component/completed] !bf
         @c
     ] select
-    /@e pluck! unique
+    // prints
+    /@e pluck!  unique
     // prints
     rot [ *^$1 /component/priority !bf @c ] select rot +
     // prints
@@ -311,6 +313,7 @@ test('and/or condition', async () => {
                 and
                 @c
             ] select
+            // prints
             // exchange the result and the es
             swap
             // drop the original es
@@ -325,7 +328,6 @@ test('and/or condition', async () => {
 
     assert.equal(await es.size(), 4);
 });
-
 
 test('super select', async () => {
     let [stack, es] = await prepES(`

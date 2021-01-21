@@ -2,6 +2,7 @@ import { suite } from 'uvu';
 import assert from 'uvu/assert';
 
 import {
+    beforeEach,
     prep,
     prepES,
     QueryStack,
@@ -10,6 +11,8 @@ import {
 } from '../helpers';
 
 let test = suite('es/mem/query - Pluck');
+
+test.before.each( beforeEach );
 
 test('plucks values', async () => {
     let [stack] = await prep(`

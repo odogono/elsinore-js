@@ -132,6 +132,7 @@ export function and(a : BitField, b : BitField ) : boolean {
             return false;
         }
     }
+    
     return true;
 };
 

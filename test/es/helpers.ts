@@ -44,6 +44,7 @@ export { isComponentDef, hash as hashDef, getDefId, Type } from '../../src/compo
 
 export { printAll, printEntity } from '../../src/util/print';
 
+export function beforeEach(){}
 
 export function buildComponents( es:EntitySet, data:any[] ):Component[] {
     return data.map( props => {

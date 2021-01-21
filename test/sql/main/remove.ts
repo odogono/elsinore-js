@@ -16,13 +16,12 @@ import {
     Log,
     OrphanComponent,
     prepES,
-    ilog,
     beforeEach,
 } from '../helpers';
 import { assertHasComponents } from '../../helpers/assert';
 import { printAll } from '../../../src/util/print';
 
-let test = suite('es/mem - removing');
+let test = suite('es/sqlite - removing');
 
 test.before.each( beforeEach );
 

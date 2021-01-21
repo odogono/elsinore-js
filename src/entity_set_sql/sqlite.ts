@@ -11,7 +11,8 @@ import {
     getDefId,
     getProperty as getDefProperty,
     ComponentDefProperty,
-    getProperty
+    getProperty,
+    ComponentDefId
 } from '../component_def';
 import {
     Entity,
@@ -182,12 +183,14 @@ export function sqlInsertDef(ref: SqlRef, def: ComponentDef): ComponentDef {
     const { db } = ref;
     const hash = def.hash;// defHash(def);
     const schema = defToObject(def, false);
-    let stmt = db.prepare('INSERT INTO tbl_component_def (uri,hash,schema) VALUES (?,?,?)');
+    let [tblName, sql] = defToStmt(def);
 
-    stmt.run(def.uri, hash, JSON.stringify(schema));
+    let stmt = db.prepare('INSERT INTO tbl_component_def (uri,hash,tbl,schema) VALUES (?,?,?,?)');
+
+    stmt.run(def.uri, hash, tblName, JSON.stringify(schema));
     let did = sqlLastId(ref);
 
-    let [tblName, sql] = defToStmt(def);
+    
     // Log.debug('[sqlInsertDef]', sql);
     db.exec(sql);
     // let out = stmt.all(sql);
@@ -195,8 +198,7 @@ export function sqlInsertDef(ref: SqlRef, def: ComponentDef): ComponentDef {
 
     let sdef = createComponentDef(did, schema) as ComponentDefSQL;
     sdef.tblName = tblName;
-    // sdef.hash = hash;
-
+    
     return sdef as ComponentDef;
 }
 
@@ -383,7 +385,7 @@ export function sqlComponentExists(ref: SqlRef, eid: number, did: number): boole
 export function sqlRetrieveComponent(ref: SqlRef, eid: number, def: ComponentDefSQL): Component {
     const { db } = ref;
     const { tblName } = def;
-    const did = def[ComponentDefT];
+    // const did = def[ComponentDefT];
 
     let stmt = db.prepare(`SELECT * FROM ${tblName} WHERE eid = ? LIMIT 1`);
     let row = stmt.get(eid);
@@ -392,26 +394,130 @@ export function sqlRetrieveComponent(ref: SqlRef, eid: number, def: ComponentDef
         return undefined;
     }
 
-    let { created_at: ca, updated_at: ua, id: id, eid: ee, ...rest } = row;
+    // Log.debug('[sqlRetrieveComponent]', row );
 
-    let com = { '@e': eid, '@d': did, ...rest };
+    let com = rowToComponent(def, row);
+    // let { created_at: ca, updated_at: ua, id: id, eid: ee } = row;
+
+    // let com = { '@e': eid, '@d': did };
+
+    // for( const prop of def.properties ){
+    //     let val = row[ prop.name ];
+    //     switch( prop.type ){
+    //         case 'json':
+    //         case 'boolean':
+    //             val = JSON.parse(val);
+    //             break;
+    //     }
+        
+    //     com[prop.name] = val;
+    // }
 
     return com;
 }
 
-export function sqlRetrieveComponents(ref: SqlRef, eids: EntityId[], defs: ComponentDefSQL[]): Component[] {
+
+function rowToComponent(def:ComponentDefSQL, row:any ): Component {
+    const did = def[ComponentDefT];
+    let com: any = { '@e': row.eid, '@d': did };
+
+    for( const prop of def.properties ){
+        let val = row[ prop.name ];
+        switch( prop.type ){
+            case 'json':
+            case 'boolean':
+                val = JSON.parse(val);
+                break;
+        }
+        
+        com[prop.name] = val;
+    }
+
+    return com;
+}
+
+// export function sqlRetrieveComponents(ref: SqlRef, eids: EntityId[], dids: ComponentDefId[]): Component[] {
+//     const { db } = ref;
+//     let result = [];
+
+//     if (eids !== undefined && eids.length === 0) {
+//         return result;
+//     }
+
+//     if( dids === undefined ){
+//         let stmt = db.prepare(`
+//     SELECT 
+//         eid,did 
+//     FROM 
+//         tbl_entity_component 
+//     WHERE 
+//         eid IN (
+//             SELECT 
+//                 eid 
+//             FROM 
+//                 tbl_entity_component 
+//             WHERE 
+//                 did IN (?)
+//         ) 
+//     ORDER BY 
+//         eid;
+//     `);
+//     let rows = stmt.all(did);
+//     }
+// }
+
+/**
+ * Retrieves components of entities which have the specified defs
+ * 
+ * @param ref 
+ * @param eids 
+ * @param defs 
+ */
+export function sqlRetrieveComponents(ref: SqlRef, eids: EntityId[], defs: ComponentDefSQL[], allDefs = false): Component[] {
     const { db } = ref;
-    // let tblName, did;
     let result = [];
 
     if (eids !== undefined && eids.length === 0) {
         return result;
     }
 
+    // eids = eids ?? [];
+
+    
+    const dids = defs.map( d => getDefId(d) );
+    // Log.debug('[sqlRetrieveComponents]', {allDefs}, dids, eids);
+
+    const eidCondition = eids === undefined ? '' : `AND eid IN (${eids})`;
+
+    // NOTE - this is horrible
+    const havingCondition = allDefs ? '' : `HAVING COUNT(eid) = ${dids.length}`
+
+    const sql = `
+    SELECT DISTINCT eid FROM tbl_entity_component
+    WHERE eid IN (
+        SELECT eid FROM tbl_entity_component
+        WHERE did IN (${dids}) ${eidCondition}
+        GROUP BY eid ${havingCondition}
+    )
+    AND did IN (${dids})
+    `;
+
+    // Log.debug('[sqlRetrieveComponents]', sql);
+
+    let stmt = db.prepare(sql);
+
+    eids = stmt.all().map( r => r.eid );
+
+    // Log.debug('[sqlRetrieveComponents]', 'result', eids );
+
+
+    // build a list of entity ids which have all the defs
+
+    
     for (let ii = 0; ii < defs.length; ii++) {
         let def = defs[ii];
-        const did = def[ComponentDefT];
-
+        
+        
         let rows;
         if (eids === undefined) {
             let stmt = db.prepare(`SELECT * FROM ${def.tblName} ORDER BY eid`);
@@ -422,23 +528,10 @@ export function sqlRetrieveComponents(ref: SqlRef, eids: EntityId[], defs: Compo
             // Log.debug('[sqlRetrieveComponents]', eids, params);
             rows = stmt.all(...eids);
         }
-        // let rows = stmt.all(eids);
-
-
+        
         for (let rr = 0; rr < rows.length; rr++) {
             const row = rows[rr];
-            let com: any = { '@e': row.eid, '@d': did };
-
-            for (const prop of def.properties) {
-                let val = row[prop.name];
-                if (prop.type === 'json') {
-                    val = JSON.parse(val);
-                }
-                com[prop.name] = val;
-            }
-            // Log.debug('[sqlRetrieveComponents]',com, row );
-            // let { created_at: ca, updated_at: ua, id: id, eid: ee, ...rest } = rows[rr];
-            // result.push( { '@e': ee, '@d': did, ...rest } );
+            let com = rowToComponent(def, row);
             result.push(com);
         }
     }
@@ -516,6 +609,10 @@ export function sqlRetrieveDefByHash(ref: SqlRef, id: number): ComponentDef {
     return createComponentDef(did, JSON.parse(schema));;
 }
 
+
+/**
+ * Retrieves entities with the given entityIds 
+ */
 export function sqlRetrieveEntities(ref: SqlRef, eids?: EntityId[]): Entity[] {
     const { db } = ref;
     let rows, stmt;
@@ -528,6 +625,8 @@ export function sqlRetrieveEntities(ref: SqlRef, eids?: EntityId[]): Entity[] {
         stmt = db.prepare(`SELECT eid,did FROM tbl_entity_component ORDER BY eid;`);
         rows = stmt.all();
     }
+
+    // Log.debug('[sqlRetrieveEntities]', rows);
 
     let result = rows.reduce((result, { eid, did }) => {
         let e = result[eid];
@@ -542,6 +641,12 @@ export function sqlRetrieveEntities(ref: SqlRef, eids?: EntityId[]): Entity[] {
 
 export function sqlRetrieveEntityByDefId(ref: SqlRef, did: number[]): Entity[] {
     const { db } = ref;
+
+    // Log.debug('[sqlRetrieveEntityByDefId]', did);
+    if( did === undefined || did.length === 0 ){
+        return [];
+    }
+
     let stmt = db.prepare(`
     SELECT 
         eid,did 
@@ -622,14 +727,14 @@ export function sqlRetrieveEntityByDefId(ref: SqlRef, did: number[]): Entity[] {
 // }
 
 
-export function sqlRetrieveByQuery(ref: SqlRef, query: any[]) {
+export function sqlRetrieveByQuery(ref: SqlRef, eids: EntityId[], query: any[]) {
     const { db } = ref;
 
     let comp;
     let sql = [];
     let params = [];
-    // Log.debug('[sqlRetrieveByQuery]', query);
-    walkFilterQuery(sql, params, ...query);
+    // Log.debug('[sqlRetrieveByQuery]', eids, query);
+    walkFilterQuery(eids, sql, params, ...query);
 
     // sql.push('ORDER BY eid')
     // Log.debug('[sqlRetrieveByQuery]', sql, params);
@@ -643,20 +748,20 @@ export function sqlRetrieveByQuery(ref: SqlRef, query: any[]) {
 
 }
 
-function walkFilterQuery(out: string[], params: any[], cmd?, ...args) {
+function walkFilterQuery(eids: EntityId[], out: string[], params: any[], cmd?, ...args) {
     if (cmd === 'dids') {
         let dids = args[0];
         out.push(`SELECT eid from tbl_entity_component WHERE did IN ( ? )`);
         params.push(dids);
     }
     else if (cmd === 'and') {
-        walkFilterQuery(out, params, ...args[1]);
+        walkFilterQuery(eids, out, params, ...args[1]);
         out.push('INTERSECT');
-        walkFilterQuery(out, params, ...args[0]);
+        walkFilterQuery(eids, out, params, ...args[0]);
     } else if (cmd === 'or') {
-        walkFilterQuery(out, params, ...args[0]);
+        walkFilterQuery(eids, out, params, ...args[0]);
         out.push('UNION');
-        walkFilterQuery(out, params, ...args[1]);
+        walkFilterQuery(eids, out, params, ...args[1]);
     } else {
         switch (cmd) {
             case '==':
@@ -665,7 +770,7 @@ function walkFilterQuery(out: string[], params: any[], cmd?, ...args) {
             case '>=':
             case '<':
             case '<=':
-                return walkFilterQueryCompare(out, params, cmd, ...args);
+                return walkFilterQueryCompare(eids, out, params, cmd, ...args);
             default:
                 console.log('[walkFQ]', `unhandled ${cmd}`);
                 // return eids;
@@ -674,7 +779,7 @@ function walkFilterQuery(out: string[], params: any[], cmd?, ...args) {
     }
 }
 
-function walkFilterQueryCompare(out: string[], params: any[], cmd?, ...args) {
+function walkFilterQueryCompare(eids:EntityId[], out: string[], params: any[], cmd?, ...args) {
     let { def } = args[0];
     let tbl = defToTbl(def);
     let [ptr, val] = args[1];
@@ -696,8 +801,14 @@ function walkFilterQueryCompare(out: string[], params: any[], cmd?, ...args) {
     if (isRegex(val)) {
         // console.log(`SELECT eid from ${tbl} WHERE ${key} REGEXP '${val.toString()}'`);
         out.push(`SELECT eid from ${tbl} WHERE ${key} REGEXP '${val.toString()}'`);
+    } else if( Array.isArray(val) ){
+        let arrOp = cmd === '!=' ? 'NOT IN' : 'IN';
+        // console.log(`SELECT eid from ${tbl} WHERE ${key} ${arrOp} (${val})`, op);
+        out.push(`SELECT eid from ${tbl} WHERE ${key} ${arrOp} (${val})`);
+        // params.push(valueToSQL(val,prop));
     } else {
-        // console.log(`SELECT eid from ${tbl} WHERE ${key} ${op} ?`, valueToSQL(val,prop), isDate(val) );
+        // console.log(`SELECT eid from ${tbl} WHERE ${key} ${op} ?`, valueToSQL(val,prop), val );
+        // out.push(`SELECT eid from ${tbl} WHERE eid IN (${eids}) AND ${key} ${op} ?`);
         out.push(`SELECT eid from ${tbl} WHERE ${key} ${op} ?`);
         params.push(valueToSQL(val,prop));
     }
@@ -757,7 +868,7 @@ function defToStmt(def: ComponentDef) {
     }
 
     const sql = `
-    CREATE TABLE ${tblName} (
+    CREATE TABLE IF NOT EXISTS ${tblName} (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         eid INTEGER,
         ${props}
@@ -765,7 +876,7 @@ function defToStmt(def: ComponentDef) {
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
     UPDATE SQLITE_SEQUENCE SET seq = 1 WHERE name = '${tblName}';
-    CREATE INDEX idx_${hash}_eid ON ${tblName} (eid);
+    CREATE INDEX IF NOT EXISTS idx_${hash}_eid ON ${tblName} (eid);
     `
 
     return [tblName, sql];
@@ -774,6 +885,7 @@ function defToStmt(def: ComponentDef) {
 function propTypeToSQL(type: string): string {
     switch (type) {
         case 'integer':
+        case 'entity':
             return 'INTEGER';
         case 'number':
             return 'REAL';
@@ -807,7 +919,7 @@ function initialiseSchema(ref: SqlRef, options: OpenOptions = {}) {
         // );
         db.exec(tblEntitySet);
     } else {
-        Log.debug('[initialseSchema]', 'existing db version', existingVersion);
+        // Log.debug('[initialseSchema]', 'existing db version', existingVersion);
     }
 }
 
@@ -854,6 +966,7 @@ const tblEntitySet = `
         eid INTEGER,
         uri STRING,
         hash INTEGER,
+        tbl STRING,
         schema STRING,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP

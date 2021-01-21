@@ -3,7 +3,7 @@ import assert from 'uvu/assert';
 
 import {
     AsyncInstResult,
-    ilog,
+    beforeEach,
     loadFixtureIntoES,
     parse,
     prep,
@@ -13,7 +13,9 @@ import {
     SType,
 } from '../helpers';
 
-let test = suite('es/mem/query - Loops');
+let test = suite('es/sqlite/query - Loops');
+
+test.before.each( beforeEach );
 
 
 test('loops until done', async () => {

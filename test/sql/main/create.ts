@@ -2,17 +2,28 @@ import { suite } from 'uvu';
 import assert from 'uvu/assert';
 
 import {
+    bfToValues,
+    buildEntitySet,
+    ChangeSetOp,
     createEntitySet,
+    Component,
+    Entity,
+    EntitySet,
+    EntitySetInst,
+    getChanges,
+    getComponentDefId,
+    isEntity,
+    Log,
+    OrphanComponent,
     beforeEach,
 } from '../helpers';
 import { assertHasComponents } from '../../helpers/assert';
 import { printAll } from '../../../src/util/print';
 
 
-let test = suite('es/mem - create');
+let test = suite('es/sqlite - create');
 
 test.before.each( beforeEach );
-
 
 test('should create an entity (id)', async () => {
     let es = createEntitySet();

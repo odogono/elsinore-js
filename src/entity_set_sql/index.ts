@@ -70,6 +70,7 @@ import { select } from "./query";
 import { EntitySetMem, AddType, AddOptions, RemoveType, ESOptions, EntitySet, EntitySetOptions } from "../entity_set";
 import { StackValue } from "../query/types";
 import { QueryStack } from "../query";
+import { hashToString } from "../util/hash";
 
 const Log = createLog('EntitySetSQL');
 
@@ -324,18 +325,37 @@ export class EntitySetSQL extends EntitySetMem {
             return e;
         }
 
+        e = this.retrieveEntityComponents(e);
+
+        // let dids = bfToValues(e.bitField);
+        // let defs = dids.map(did => this.getByDefId(did));
+
+        // let coms = sqlRetrieveEntityComponents(this.db, eid, defs);
+
+        // // Log.debug('[getEntity]', coms );
+        // for (const com of coms) {
+        //     const did = getComponentDefId(com);
+        //     // const def = this.getByDefId(did);
+        //     e = e.addComponentUnsafe(did, com);
+        // }
+
+        return e;
+    }
+
+    retrieveEntityComponents(e:Entity){
         let dids = bfToValues(e.bitField);
         let defs = dids.map(did => this.getByDefId(did));
-
-        let coms = sqlRetrieveEntityComponents(this.db, eid, defs);
-
+    
+        let coms = sqlRetrieveEntityComponents(this.db, e.id, defs);
+    
         // Log.debug('[getEntity]', coms );
         for (const com of coms) {
             const did = getComponentDefId(com);
             // const def = this.getByDefId(did);
-            e = e.addComponentUnsafe(did, com);
-        }
 
+            e = this.addComponentToEntity(e, com, did);
+            // e = e.addComponentUnsafe(did, com);
+        }
         return e;
     }
 
@@ -358,17 +378,17 @@ export class EntitySetSQL extends EntitySetMem {
         let def:ComponentDef = createComponentDef(0, value);
 
         // Hash the def, and check whether we already have this
-        // let hash = hashComponentDef(def);
         const existing = this.getByHash(def.hash);
+
         if (existing !== undefined) {
-            console.log(`component definition already exists (${existing['@d']}/${existing.uri})`);
+            // console.log(`component definition already exists (${existing['@d']}/${existing.uri})`);
             return existing;
         }
+        // Log.debug('[register]', def.uri, def.hash, hashToString(def.hash), this.byHash );
 
         // insert the def into the def tbl
         def = sqlInsertDef(this.db, def);
 
-        // Log.debug('[register]', def);
 
         const did = def[ComponentDefT];
         // const { hash, tblName } = (def as ComponentDefSQL);

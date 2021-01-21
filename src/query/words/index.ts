@@ -26,7 +26,7 @@ import { createLog } from "../../util/log";
 import { stackToString, valueToString, unpackStackValue, unpackStackValueR } from '../util';
 import { EntitySet, EntitySetMem, isEntitySet } from '../../entity_set';
 import { compareDates } from './util';
-import { TYPE_OR } from '../../util/bitfield';
+import { BitField, TYPE_OR, toValues as bfToValues } from '../../util/bitfield';
 
 const Log = createLog('QueryWords');
 
@@ -141,7 +141,7 @@ export function onEntity(stack: QueryStack): InstResult {
 
     // let eid = unpackStackValue(data, SType.Value);
 
-    return undefined;
+    return [SType.Entity, es.createEntity()];
 }
 
 
@@ -965,25 +965,30 @@ function printType(indent: number = 0, val: StackValue) {
         print(indent, isFunction(val) ? 'Fn' : val);
         return;
     }
-    switch (val[0]) {
+    const type = val[0];
+    switch (type) {
         case SType.List:
             printList(indent, val);
             break;
         case SType.EntitySet:
             const es: EntitySet = val[1];
-            print(indent, `(${val[0]}) [${es.type}, ${es.uuid}]`);
+            print(indent, `(${type}) [${es.type}, ${es.uuid}]`);
             break;
         case SType.Component:
             const com: Component = val[1];
-            print(indent, `(${val[0]})`, JSON.stringify(com));
+            print(indent, `(${type})`, JSON.stringify(com));
             break;
         case SType.Entity:
             const e:Entity = val[1];
-            print(indent, `(${val[0]}) ${e.id}`);
+            const dids = bfToValues(e.bitField)
+            print(indent, `(${type}) ${e.id} [${dids}]`);
+            break;
+        case SType.BitField:
+            const bf:BitField = val[1];
+            print(indent, `(${type}) [${bfToValues(bf)}]`)
             break;
         default:
-            print(indent, `(${val[0]}) ${val[1]}`);
-            // print(indent, val[1]);
+            print(indent, `(${type}) ${val[1]}`);
             break;
     }
 }

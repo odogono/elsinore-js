@@ -21,7 +21,8 @@ import {
     set as bfSet,
     count as bfCount,
     or as bfOr,
-    toValues as bfToValues
+    toValues as bfToValues,
+    isBitField
 } from "../util/bitfield";
 import {
     Type as DefT,
@@ -352,7 +353,7 @@ export abstract class EntitySet {
 
 
     getComponentDefsFromBitField( bf?:BitField|'all', asDefIds = false): ComponentDef[]|ComponentDefId[] {
-        if( bf === undefined || bf === 'all' ){
+        if( bf === undefined || bf === 'all' || (isBitField(bf) && bf.isAllSet) ){
             let defs = this.componentDefs;
             return asDefIds ? defs.map(d => getDefId(d)) : defs;
         }
