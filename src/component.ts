@@ -83,18 +83,30 @@ export function fromComponentId( id:ComponentId ): [EntityId,ComponentDefId] {
     return JSON.parse(id);
 }
 
-export function getComponentDefId( component:Component ): ComponentDefId {
-    return component[DefT];
+export function getComponentDefId( com:Component ): ComponentDefId {
+    if( com === undefined ){
+        return 0;
+    }
+    return com[DefT];
 }
 
-export function getComponentEntityId( component:Component ): number {
-    let eid = component[EntityT];
+/**
+ * Returns the EntityId of a Component
+ */
+export function getComponentEntityId( com:Component ): EntityId {
+    if( com === undefined ){
+        return 0;
+    }
+    let eid = com[EntityT];
     return !isInteger(eid) ? 0 : eid;
 }
 
-export function setEntityId( component:Component, entityId:number ): Component {
+export function setEntityId( com:Component, entityId:EntityId ): Component {
+    if( com === undefined ){
+        return undefined;
+    }
     return {
-        ...component,
+        ...com,
         [EntityT]: entityId
     };
 }
