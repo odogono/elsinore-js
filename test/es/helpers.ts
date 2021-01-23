@@ -25,7 +25,7 @@ export const Log = createLog('TestEntitySet');
 export { isComponent } from '../../src/component';
 export const parse = (data) => tokenizeString(data, { returnValues: true });
 export const sv = (v): StackValue => [SType.Value, v];
-export const createEntitySet = (options?) => new EntitySetMem(undefined, options);
+
 
 export { EntitySet, EntitySetMem as EntitySetInst, isEntitySet } from '../../src/entity_set';
 export { getChanges, ChangeSetOp } from '../../src/entity_set/change_set';
@@ -45,6 +45,11 @@ export { isComponentDef, hash as hashDef, getDefId, Type } from '../../src/compo
 export { printAll, printEntity } from '../../src/util/print';
 
 export function beforeEach(){}
+
+
+export const createEntitySet = (options?) => new EntitySetMem(undefined, options);
+
+
 
 export function buildComponents( es:EntitySet, data:any[] ):Component[] {
     return data.map( props => {
@@ -68,7 +73,7 @@ export function buildComponents( es:EntitySet, data:any[] ):Component[] {
 }
 
 export async function buildEntitySet(options?): Promise<[EntitySetMem, Function]> {
-    let es = new EntitySetMem(options);
+    let es = createEntitySet(options);
 
     const defs = [
         { uri: '/component/channel', properties: ['name'] },

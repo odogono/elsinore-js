@@ -269,6 +269,7 @@ function walkFilterQueryCompare(es: EntitySetMem, eids: EntityId[], cmd?, ...arg
         const cid = toComponentId(eid, did);
         const com = es.components.get(cid);
 
+        // console.log('[walk]', cmd, cid);
         // console.log('[walk]', cmd, ptr, val);// {}.toString.call(val) );
 
         let ptrVal = isJptr ? Jsonpointer.get(com,ptr) : com[ptr];
@@ -348,7 +349,7 @@ export function fetchComponents(stack: ESMemQueryStack): InstResult {
     let coms = [];
 
     // let val = stack.peek();
-    // Log.debug('[fetchComponent]', 'peek', val);
+    
 
     // get the bitfield
     // dids = stack.popBitField<ComponentDef>(false) as ComponentDefId[];
@@ -360,6 +361,8 @@ export function fetchComponents(stack: ESMemQueryStack): InstResult {
     // ilog(dids);
 
     left = stack.peek();
+
+    // Log.debug('[fetchComponent]', 'peek', left);
 
     if (left !== undefined) {
         let from = stack.pop();
@@ -509,6 +512,8 @@ export function onComponentAttr(stack: QueryStack): InstResult {
         throw new Error(`invalid component attr: ${right}`);
     }
 
+    // console.log('[onComponentAttr]', result );
+
     return result;
 }
 
@@ -525,6 +530,8 @@ export function stringToComponentAttr( es:EntitySet, val:string ):StackValue {
     if( bfCount(bf) === 0){
         throw new StackError(`def not found: ${did}`);
     }
+
+    // console.log('[stringToComponentAttr]', bfToValues(bf) );
 
     return [SType.ComponentAttr, [bf,pointer]];
 }

@@ -1,9 +1,11 @@
 import { suite } from 'uvu';
 import assert from 'uvu/assert';
+import { printAll } from '../../es/helpers';
 
 import {
     beforeEach,
     bfToValues,
+    createEntitySet,
     Entity,
     getEntityId,
     prepES,
@@ -442,6 +444,37 @@ test('selects a JSON attribute', async () => {
     // ilog( result );
 
     assert.equal(result, 'action');
+});
+
+test('selecting component by attribute', async () => {
+    let id = 1000;
+    let idgen = () => ++id;
+    const es = createEntitySet({idgen});
+
+    const stmt = es.prepare(`
+        [ "/component/src", ["url"] ] !d
+        [ "/component/dst", ["url"] ] !d
+        gather // wraps previous into a list
+        + // add list to es
+
+        [ /component/src {url: "file:///readme.txt"} ] !c
+        [ /component/dst {url: "file:///about.txt"} ] !c
+        gather
+        +
+
+        [ 
+            /component/src#url !ca ~r/^file\:\/\// == 
+            // note - without this bitfield, both components will be selected
+            /component/src !bf
+            @c 
+        ] select
+    `);
+
+    const res = await stmt.getResult();
+
+    assert.equal( res.length, 1 );
+    assert.equal( res[0].url, 'file:///readme.txt' );
+
 });
 
 test.run();
