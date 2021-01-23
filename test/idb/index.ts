@@ -1,7 +1,5 @@
 if (process.env.JS_ENV !== 'browser') {
     require('fake-indexeddb/auto');
-} else {
-    
 }
 
 import { suite } from 'uvu';
