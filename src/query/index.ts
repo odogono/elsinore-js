@@ -188,6 +188,11 @@ export class Statement {
 
         return result;
     }
+
+    async getEntity(args?:StatementArgs): Promise<Entity> {
+        const res = await this.getEntities(args);
+        return res.length > 0 ? res[0] : undefined;
+    }
 }
 
 

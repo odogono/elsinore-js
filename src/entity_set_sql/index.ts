@@ -67,7 +67,7 @@ import {
 import { createLog } from "../util/log";
 import { isString, isInteger } from "../util/is";
 import { select } from "./query";
-import { EntitySetMem, AddType, AddOptions, RemoveType, ESOptions, EntitySet, EntitySetOptions } from "../entity_set";
+import { EntitySetMem, AddType, AddOptions, RemoveType, ESOptions, EntitySet, EntitySetOptions, CloneOptions } from "../entity_set";
 import { StackValue } from "../query/types";
 import { QueryStack } from "../query";
 import { hashToString } from "../util/hash";
@@ -115,7 +115,7 @@ export class EntitySetSQL extends EntitySetMem {
         this.path = options.path ?? 'ecs.sqlite';
     }
 
-    clone(){
+    clone(options:CloneOptions = {}){
         const {byUri,byHash,entChanges,comChanges} = this;
         let componentDefs = this.componentDefs.map(d => ({...d}) );
         

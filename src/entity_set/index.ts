@@ -91,6 +91,11 @@ export interface EntitySetOptions {
     idgen?: EntityIdGen;
 }
 
+export interface CloneOptions {
+    cloneDefs?: boolean;
+    cloneEntities?: boolean;
+}
+
 export type ResolveComponentDefIdResult = [Component, string][] | [BitField, string][];
 
 export type ResolveDefIds = string | string[] | number | number[];
@@ -140,7 +145,7 @@ export abstract class EntitySet {
         this.eidEpoch = options.eidEpoch ?? 1577836800000; // 2020-01-01T00:00:00.000Z
     }
 
-    abstract clone();
+    abstract clone(options?:CloneOptions);
 
     abstract select(stack: QueryStack, query: StackValue[]): Promise<StackValue[]>;
 
@@ -185,10 +190,17 @@ export abstract class EntitySet {
 
 
     /**
-     * Returns an array of entity ids that were added or updated last op
+     * Returns an array of EntityId that were added or updated last op
      */
     getUpdatedEntities(): EntityId[] {
         return getChanges(this.entChanges, ChangeSetOp.Add | ChangeSetOp.Update);
+    }
+
+    /**
+     * Returns an array of EntityId that were removed in the last operation
+     */
+    getRemovedEntities():EntityId[] {
+        return getChanges(this.entChanges, ChangeSetOp.Remove);
     }
 
     /**
@@ -287,7 +299,7 @@ export abstract class EntitySet {
         return e;
     }
 
-    createEntityId() {
+    createEntityId():EntityId {
         if (this.idgen !== undefined) {
             return this.idgen();
         }
@@ -493,13 +505,28 @@ export class EntitySetMem extends EntitySet {
         }
     }
 
-    clone() {
-        const { components, entities, byUri, byHash, entChanges, comChanges } = this;
+    clone(options:CloneOptions = {}){
+        let includeDefs = options.cloneDefs ?? true;
+        let includeEnts = includeDefs ? options.cloneEntities ?? true : false;
+
+        let { componentDefs, components, entities, byUri, byHash, entChanges, comChanges } = this;
+        if( !includeEnts ){
+            components = undefined;
+            entities = undefined;
+            entChanges = undefined;
+            comChanges = undefined;
+        }
+        if( !includeDefs ){
+            componentDefs = undefined;
+            byHash = undefined;
+            byUri = undefined;
+        }
         let props = {
             ...this,
             uuid: createUUID(),
             components: new Map<ComponentId, Component>(components),
             entities: new Map<EntityId, BitField>(entities),
+            componentDefs: componentDefs ? [...componentDefs] : [],
             byUri: new Map<string, number>(byUri),
             byHash: new Map<number, number>(byHash),
             entChanges: createChangeSet(entChanges),

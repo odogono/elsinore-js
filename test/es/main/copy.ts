@@ -1,5 +1,6 @@
 import { suite } from 'uvu';
 import assert from 'uvu/assert';
+import { printAll } from '../../sql/helpers';
 
 import {
     bfToValues,
@@ -7,25 +8,24 @@ import {
     buildEntitySet,
     ChangeSetOp,
     createEntitySet,
-    Component,
-    Entity,
-    EntitySet,
-    EntitySetInst,
-    getChanges,
-    getComponentDefId,
-    hashDef,
-    isComponentDef,
-    isEntity,
-    Log,
-    OrphanComponent,
-    printAll,
     beforeEach,
+    prepES,
 } from '../helpers';
-import { assertHasComponents } from '../../helpers/assert';
+
 
 let test = suite('es/mem - copying');
 
 test.before.each( beforeEach );
+
+
+test('cloning without defs', async () => {
+    let [,es] = await prepES(undefined, 'todo');
+
+    let es2 = es.clone({cloneDefs:false});
+
+    assert.equal( (await es2.getComponentDefs()).length, 0 );
+    assert.equal( (await es2.size() ), 0 );
+})
 
 test('transfers components to a foreign es', async () => {
     // create es1 with defs and components
