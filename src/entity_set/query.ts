@@ -3,7 +3,8 @@ import { EntityId, getEntityId, isEntity } from "../entity";
 import {
     toComponentId,
     getComponentDefId,
-    getComponentEntityId
+    getComponentEntityId,
+    getComponentId
 } from "../component";
 import { createLog } from "../util/log";
 import { isRegex, isInteger, isString, isBoolean, isDate, isValidDate } from "../util/is";
@@ -57,10 +58,10 @@ export interface SelectOptions {
  * @param es 
  * @param query 
  */
-export async function select(stack:QueryStack, query: StackValue[], options:SelectOptions = {}): Promise<StackValue[]> {
-    
+export async function select(stack: QueryStack, query: StackValue[], options: SelectOptions = {}): Promise<StackValue[]> {
+
     stack.setChild();
-    
+
     // add first pass words
     stack.addWords([
         ['!bf', buildBitfield, SType.List],
@@ -89,7 +90,7 @@ export async function select(stack:QueryStack, query: StackValue[], options:Sele
     // ilog(query);
 
 
-    await stack.pushValues(query, {evalEscape:true});
+    await stack.pushValues(query, { evalEscape: true });
 
     // reset stack items and words
     let items = stack.items;
@@ -100,12 +101,13 @@ export async function select(stack:QueryStack, query: StackValue[], options:Sele
     // Log.debug('[select] post');
     // ilog(items);
 
-    
+
 
     stack.addWords([
         ['@e', fetchEntity],
         ['@eid', fetchEntity],
         ['@c', fetchComponents],
+        ['@cid', fetchComponents],
         ['@ca', fetchComponentAttributes],
         ['!fil', applyFilter, SType.Filter],
 
@@ -126,28 +128,28 @@ export async function select(stack:QueryStack, query: StackValue[], options:Sele
     // ilog(items);
 
     await stack.pushValues(items);
-    
+
     let result = stack.items;
     // Log.debug('[select] pushing');
     // ilog(result);
 
     stack.restoreParent();
-    
+
     return result;
 }
 
 
-function readEntityIds( stack:ESMemQueryStack ): EntityId[] {
+function readEntityIds(stack: ESMemQueryStack): EntityId[] {
     const { es } = stack;
 
-    let eids:EntityId[];
+    let eids: EntityId[];
 
     let bf = stack.popBitFieldOpt();
 
-    if( bf === undefined ){
+    if (bf === undefined) {
         let from = stack.peek();
 
-        if( from === undefined ){
+        if (from === undefined) {
             // return matchEntities(es, undefined, undefined);
         }
         else {
@@ -155,7 +157,7 @@ function readEntityIds( stack:ESMemQueryStack ): EntityId[] {
             if (from[0] === SType.Entity) {
                 return [unpackStackValueR(from)];
                 // Log.debug('[fetchComponent]', 'fetching from entity', eids);
-    
+
             } else if (from[0] === SType.List) {
                 return from[1].map(it => {
                     return isStackValue(it) ? getEntityId(it[1])
@@ -163,7 +165,7 @@ function readEntityIds( stack:ESMemQueryStack ): EntityId[] {
                 }).
                     filter(Boolean);
             }
-            else if( from[0] === SType.Value && from[1] === false ){
+            else if (from[0] === SType.Value && from[1] === false) {
                 return [];
             }
             // Log.debug('[readEntityIds]', from);
@@ -212,12 +214,14 @@ function walkFilterQuery(es: EntitySetMem, eids: EntityId[], cmd?, ...args) {
     // console.log('[walkFQ]', eids, cmd, args);
     if (cmd === 'and') {
         let left = walkFilterQuery(es, eids, ...args[0]);
+        // console.log('[walkFQ]', 'left', cmd, args[0], '->', left);
         if (left === undefined || left.length === 0) {
             return left;
         }
 
         // if there are no results, then return
         let right = walkFilterQuery(es, left, ...args[1]);
+        // console.log('[walkFQ]', 'right', cmd, args[1], '->', right);
         return right;
     }
     else if (cmd === 'or') {
@@ -239,7 +243,7 @@ function walkFilterQuery(es: EntitySetMem, eids: EntityId[], cmd?, ...args) {
         case '<=':
             return walkFilterQueryCompare(es, eids, cmd, ...args);
         case 'dids':
-            return applyFilterDefIds( es, eids, args[0], args[1] );
+            return applyFilterDefIds(es, eids, args[0], args[1]);
         default:
             console.log('[walkFQ]', `unhandled cmd '${cmd}'`);
             return eids;
@@ -247,10 +251,10 @@ function walkFilterQuery(es: EntitySetMem, eids: EntityId[], cmd?, ...args) {
     }
 }
 
-function applyFilterDefIds( es:EntitySetMem, eids: EntityId[], dids, bf ){
+function applyFilterDefIds(es: EntitySetMem, eids: EntityId[], dids, bf) {
     // console.log('[applyFilterDefIds]', eids, dids, bf );
-    
-    let feids = matchEntities(es, eids, bf );
+
+    let feids = matchEntities(es, eids, bf);
     // console.log('[applyFilterDefIds]', feids );
 
     return feids;
@@ -265,15 +269,15 @@ function walkFilterQueryCompare(es: EntitySetMem, eids: EntityId[], cmd?, ...arg
     eids = matchEntities(es, eids, createBitField([did]));
     // console.log('[walkFilterQueryCompare]', 'eids', eids, did);
     let out = [];
-    for( const eid of eids ){
+    for (const eid of eids) {
         const cid = toComponentId(eid, did);
         const com = es.components.get(cid);
 
         // console.log('[walk]', cmd, cid);
         // console.log('[walk]', cmd, ptr, val);// {}.toString.call(val) );
 
-        let ptrVal = isJptr ? Jsonpointer.get(com,ptr) : com[ptr];
-        
+        let ptrVal = isJptr ? Jsonpointer.get(com, ptr) : com[ptr];
+
 
         // if( com[key] === val )
         // Log.debug('[walkFQ]','==', ptr, ptrVal, val );
@@ -281,20 +285,20 @@ function walkFilterQueryCompare(es: EntitySetMem, eids: EntityId[], cmd?, ...arg
         // if the value is an array, we look whether it exists
         if (Array.isArray(val)) {
             const r = val.indexOf(ptrVal) !== -1;
-            if( cmd === '==' ){
-                out = r ? [...out,eid] : out;
-            } else if( cmd === '!=' ){
-                out = r ? out : [...out,eid];
+            if (cmd === '==') {
+                out = r ? [...out, eid] : out;
+            } else if (cmd === '!=') {
+                out = r ? out : [...out, eid];
             }
             // out = val.indexOf(ptrVal) !== -1 ? [...out, eid] : out;
             // Log.debug('[walkFQ]', cmd, ptrVal, val, val.indexOf(ptrVal) );
         }
-        if( ptrVal === undefined ){
+        if (ptrVal === undefined) {
         }
-        else if( isDate(val) ){
+        else if (isDate(val)) {
             const ptrDte = new Date(ptrVal);
-            if( isValidDate(ptrDte) ){
-                if( compareDates(cmd, ptrDte, val ) ){
+            if (isValidDate(ptrDte)) {
+                if (compareDates(cmd, ptrDte, val)) {
                     // console.log('[walk]', cmd, ptrVal, val );
                     out = [...out, eid];
                 }
@@ -341,24 +345,18 @@ export function fetchValue(stack: ESMemQueryStack): InstResult {
  * 2nd argument is a list of entity ids
  * @param stack 
  */
-export function fetchComponents(stack: ESMemQueryStack): InstResult {
+export function fetchComponents(stack: ESMemQueryStack, [, op]: StackValue): InstResult {
     const { es } = stack;
     let left: StackValue;
     let eids: EntityId[];
-    // let dids: ComponentDefId[];
+    const returnCid = op === '@cid';
+    
     let coms = [];
 
-    // let val = stack.peek();
-    
-
     // get the bitfield
-    // dids = stack.popBitField<ComponentDef>(false) as ComponentDefId[];
-    // let bf:BitField = stack.popValue();
     let bf = stack.popBitFieldOpt();
-    
-    // Log.debug('[fetchComponent]', 'bf', bf );
 
-    // ilog(dids);
+    // Log.debug('[fetchComponent]', 'bf', bf );
 
     left = stack.peek();
 
@@ -375,9 +373,9 @@ export function fetchComponents(stack: ESMemQueryStack): InstResult {
         } else if (from[0] === SType.List) {
             eids = from[1].map(it => {
                 return isStackValue(it) ? getEntityId(it[1])
-                : isEntity(it) ? getEntityId(it) : undefined;
+                    : isEntity(it) ? getEntityId(it) : undefined;
             }).
-            filter(Boolean);
+                filter(Boolean);
             // Log.debug('[fetchComponent]', eids);
         } else {
             // Log.debug('[fetchComponent]', 'unhandled', from);
@@ -393,64 +391,38 @@ export function fetchComponents(stack: ESMemQueryStack): InstResult {
         return [SType.List, coms];
     }
 
-
-
-    // eids = matchEntities(es, undefined, bf);
-
-    // if( bf === undefined || bf.isAllSet ){
-    //     coms = Array.from(es.components.values());
-    // }
-    // else {
-        for (const [, com] of es.components) {
-            if( eids !== undefined && eids.length > 0 ){
-                if( eids.indexOf( getComponentEntityId(com) ) === -1 ){
-                    continue;
-                }
+    for (const [, com] of es.components) {
+        if (eids !== undefined && eids.length > 0) {
+            if (eids.indexOf(getComponentEntityId(com)) === -1) {
+                continue;
             }
-            
-            if( bf !== undefined && bf.isAllSet === false  ){
-                let cmpFn = bfTypeFn( bf );
-                const ebf = es.entities.get( getComponentEntityId(com) );
-                if( cmpFn( bf, ebf ) === false ){
-                    continue;
-                }
-                if( bfGet(bf, getComponentDefId(com)) === false ){
-                    continue;
-                }
-            }
-            // if( bf !== undefined && bf.isAllSet === false && cmpFn( bf, ebf ) === false ){
-            // // if( bf !== undefined && bf.isAllSet === false && bfGet(bf, getComponentDefId(com)) === false ){
-            //     continue;
-            // }
-            // Log.debug('[fetchComponent]', 'ok', getComponentEntityId(com) );
-
-            coms.push(com);
         }
-    // }
 
-    // if (dids !== undefined && dids.length > 0) {
-    //     for (const [, com] of es.components) {
-    //         if (dids.indexOf(getComponentDefId(com)) !== -1) {
-    //             coms.push(com);
-    //         }
-    //     }
-    // } else {
-    //     coms = Array.from(es.components.values());
-    // }
+        if (bf !== undefined && bf.isAllSet === false) {
+            let cmpFn = bfTypeFn(bf);
+            const ebf = es.entities.get(getComponentEntityId(com));
+            if (cmpFn(bf, ebf) === false) {
+                continue;
+            }
+            if (bfGet(bf, getComponentDefId(com)) === false) {
+                continue;
+            }
+        }
 
-    // if (eids !== undefined && eids.length > 0) {
-    //     coms = coms.filter(com => eids.indexOf(getComponentEntityId(com)) !== -1);
-    // }
+        coms.push(com);
+    }
 
     // sort by entityId
     coms.sort((a, b) => a['@e'] - b['@e']);
 
-    coms = coms.map(c => [SType.Component, c]);
+    if( returnCid ){
+        return [SType.List, coms.map(c => [SType.Value, getComponentId(c) ])];
+    }
 
-    return [SType.List, coms];
+    return [SType.List, coms.map(c => [SType.Component, c])];
 }
 
-export function fetchComponentAttributes(stack:ESMemQueryStack): InstResult {
+export function fetchComponentAttributes(stack: ESMemQueryStack): InstResult {
     const { es } = stack;
     let result = [];
 
@@ -464,33 +436,33 @@ export function fetchComponentAttributes(stack:ESMemQueryStack): InstResult {
 
     // console.log('[fetchComponentAttributes]', attr );
 
-    if( attr[0] === SType.Value ){
-        attr = stringToComponentAttr( es, attr[1] );
+    if (attr[0] === SType.Value) {
+        attr = stringToComponentAttr(es, attr[1]);
     }
-    else if( attr[0] !== SType.ComponentAttr ){
+    else if (attr[0] !== SType.ComponentAttr) {
         throw new Error(`invalid component attr arg: ${attr[0]}`);
     }
 
-    const [bf,ptr] = attr[1];
+    const [bf, ptr] = attr[1];
 
     const did = bfToValues(bf)[0];
-    const def = es.getByDefId( did );
+    const def = es.getByDefId(did);
     const isJptr = ptr.startsWith('/');
 
 
-    for( const eid of eids ){
+    for (const eid of eids) {
         const cid = toComponentId(eid, did);
         const com = es.components.get(cid);
 
-        if( com === undefined ){
+        if (com === undefined) {
             continue;
         }
         // console.log('[fetchComponentAttributes]', 'reading', cid, ptr );
-        let val = isJptr ? Jsonpointer.get(com,ptr) : com[ptr];
+        let val = isJptr ? Jsonpointer.get(com, ptr) : com[ptr];
 
-        result.push( [SType.Value, val] );
+        result.push([SType.Value, val]);
     }
-    
+
     return [SType.List, result];
 }
 
@@ -508,7 +480,7 @@ export function onComponentAttr(stack: QueryStack): InstResult {
 
     let result = stringToComponentAttr(es, right);
 
-    if( result === undefined ){
+    if (result === undefined) {
         throw new Error(`invalid component attr: ${right}`);
     }
 
@@ -518,22 +490,22 @@ export function onComponentAttr(stack: QueryStack): InstResult {
 }
 
 
-export function stringToComponentAttr( es:EntitySet, val:string ):StackValue {
+export function stringToComponentAttr(es: EntitySet, val: string): StackValue {
     const parts: RegExpExecArray = /^(\/.*)#(.*)/.exec(val);
 
-    if( parts === null ){
+    if (parts === null) {
         return undefined;
     }
 
-    let [,did,pointer] = parts;
+    let [, did, pointer] = parts;
     const bf = es.resolveComponentDefIds([did]);
-    if( bfCount(bf) === 0){
+    if (bfCount(bf) === 0) {
         throw new StackError(`def not found: ${did}`);
     }
 
     // console.log('[stringToComponentAttr]', bfToValues(bf) );
 
-    return [SType.ComponentAttr, [bf,pointer]];
+    return [SType.ComponentAttr, [bf, pointer]];
 }
 
 
@@ -542,11 +514,11 @@ export function buildBitfield(stack: QueryStack): InstResult {
     let arg: StackValue = stack.pop();
 
     let dids = unpackStackValueR(arg, SType.Any);
-    if( dids === 'all' ){
+    if (dids === 'all') {
         return [SType.BitField, createBitField('all')];
     }
     dids = isString(dids) ? [dids] : dids;
-    let bf:BitField = es.resolveComponentDefIds(dids);
+    let bf: BitField = es.resolveComponentDefIds(dids);
 
     // Log.debug('[buildBitfield]', arg, bf );
     return [SType.BitField, bf];
@@ -558,7 +530,7 @@ export function buildBitfield(stack: QueryStack): InstResult {
  * @param es 
  * @param stack 
  */
-export async function fetchEntity(stack: ESMemQueryStack, [,op]:StackValue): AsyncInstResult {
+export async function fetchEntity(stack: ESMemQueryStack, [, op]: StackValue): AsyncInstResult {
     const { es } = stack;
     let data: StackValue = stack.pop();
     const returnEid = op === '@eid';
@@ -573,17 +545,17 @@ export async function fetchEntity(stack: ESMemQueryStack, [,op]:StackValue): Asy
     if (type === SType.BitField) {
         bf = eid as BitField;
         eids = matchEntities(es, undefined, bf);
-        
+
     } else if (isInteger(eid)) {
         // Log.debug('[fetchEntity]', 'eid only', eid, isInteger(eid), typeof eid );
-        let e = es.getEntityMem(eid, returnEid ? false : true );
-        
+        let e = es.getEntityMem(eid, returnEid ? false : true);
+
         if (e === undefined) {
             // Log.debug('[fetchEntity]', 'empty');
             return [SType.Value, false];
         }
 
-        return returnEid ? [SType.Entity, eid] : [SType.Entity, e ];
+        return returnEid ? [SType.Entity, eid] : [SType.Entity, e];
     }
     else if (Array.isArray(eid)) {
         // Log.debug('[fetchEntity]', 'eid array');
@@ -597,22 +569,22 @@ export async function fetchEntity(stack: ESMemQueryStack, [,op]:StackValue): Asy
     else if (eid === 'all') {
         let ents = matchEntities(es, undefined, 'all');
         return [SType.List, ents];
-    } else if(eid === undefined){
+    } else if (eid === undefined) {
         return [SType.Value, false];
     } else {
         throw new StackError(`@e unknown type ${type}`)
     }
 
-    
 
-    if( returnEid ){
-        
-        return [SType.List, eids.map(eid => [SType.Value,eid])];
+
+    if (returnEid) {
+
+        return [SType.List, eids.map(eid => [SType.Value, eid])];
     }
 
     // Log.debug('[fetchEntity]', 'ok', eids);
 
-    let ents = es.getEntitiesByIdMem(eids, {populate:true});
+    let ents = es.getEntitiesByIdMem(eids, { populate: true });
     let result = ents.filter(Boolean).map(e => [SType.Entity, e]);
 
     // let result = [];
@@ -632,9 +604,9 @@ export function matchEntities(es: EntitySetMem, eids: EntityId[], mbf: BitField 
     let matches: number[] = [];
     const isAll = mbf === 'all' || mbf === undefined || mbf.isAllSet;
     const type = isAll ? TYPE_AND : (mbf as BitField).type;
-    let cmpFn = bfTypeFn( type ); // bfAnd;
-    
-    
+    let cmpFn = bfTypeFn(type); // bfAnd;
+
+
 
     if (isAll) {
         eids = eids !== undefined ? eids : Array.from(es.entities.keys());
@@ -642,7 +614,7 @@ export function matchEntities(es: EntitySetMem, eids: EntityId[], mbf: BitField 
         return eids;
     }
 
-    if( bfCount(mbf as BitField) === 0 ){
+    if (bfCount(mbf as BitField) === 0) {
         return [];
     }
 
@@ -659,7 +631,7 @@ export function matchEntities(es: EntitySetMem, eids: EntityId[], mbf: BitField 
             let eid = eids[ii];
             let ebf = es.entities.get(eid);
             if (cmpFn(mbf as BitField, ebf)) {
-                
+
                 matches.push(eid);
             }
         }

@@ -374,11 +374,18 @@ export abstract class EntitySet {
     
 
 
+    /**
+     * 
+     */
     addComponentToEntity(e: Entity, com: Component, did?: ComponentDefId): Entity {
         did = did === undefined ? getComponentDefId(com) : did;
         return e.addComponentUnsafe(did, com);
     }
 
+
+    /**
+     * Register a ComponentDef with this EntitySet
+     */
     async register(value: ComponentDef | ComponentDefObj | any): Promise<ComponentDef> {
 
         let did = this.componentDefs.length + 1;

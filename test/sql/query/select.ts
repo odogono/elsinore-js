@@ -77,6 +77,14 @@ test('fetches all the entities ids', async () => {
     assert.equal( result, [100, 101, 102, 103, 104, 105] );
 })
 
+test('fetches component ids', async () => {
+    let query = `[ /component/title !bf @cid ] select`;
+    let [stack] = await prepES(query, 'todo');
+    let result = stack.popValue();
+
+    assert.equal( result, ["[100,1]","[101,1]","[102,1]","[103,1]","[104,1]"] );
+});
+
 
 test('fetches component attributes', async () => {
     let [stack] = await prepES(`[ 

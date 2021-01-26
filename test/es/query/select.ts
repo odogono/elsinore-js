@@ -73,7 +73,15 @@ test('fetches all the entities ids', async () => {
     let result = stack.popValue();
 
     assert.equal( result, [100, 101, 102, 103, 104, 105] );
-})
+});
+
+test('fetches component ids', async () => {
+    let query = `[ /component/title !bf @cid ] select`;
+    let [stack] = await prepES(query, 'todo');
+    let result = stack.popValue();
+
+    assert.equal( result, ["[100,1]","[101,1]","[102,1]","[103,1]","[104,1]"] );
+});
 
 
 test('fetches component attributes', async () => {
@@ -472,6 +480,45 @@ test('selecting component by attribute', async () => {
 
     assert.equal( res.length, 1 );
     assert.equal( res[0].url, 'file:///readme.txt' );
+
+});
+
+
+test('selecting component against bf', async () => {
+    let id = 1000;
+    let idgen = () => ++id;
+    const es = createEntitySet({idgen});
+
+    const stmt = es.prepare(`
+        [ "/component/src", ["url"] ] !d
+        [ "/component/diff", [{name:op, type:integer}] ] !d
+        gather // wraps previous into a list
+        + // add list to es
+
+        [ /component/src {url: "file:///about.txt"} ] !c
+        gather
+        +
+        [ /component/src {url: "file:///readme.txt"} ] !c
+        [ /component/diff {op: 1} ] !c
+        gather
+        +
+
+        [ 
+            /component/src#url !ca ~r/^file\:\/\// == 
+            [/component/diff /component/src] !bf
+            and
+            @c 
+        ] select
+
+        // prints
+    `);
+
+    const res = await stmt.getResult();
+
+    
+
+    assert.equal( res.length, 2 );
+    assert.equal( res[1].url, 'file:///readme.txt' );
 
 });
 

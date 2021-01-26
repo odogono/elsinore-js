@@ -34,7 +34,8 @@ import {
     sqlRetrieveEntityComponents,
     sqlRetrieveComponents,
     sqlRetrieveEntities,
-    sqlRetrieveComponent
+    sqlRetrieveComponent,
+    sqlRetrieveComponentIds
 } from "./sqlite";
 import { Type, ComponentDefId, ComponentDef } from "../component_def";
 import { onLogicalFilter, parseFilterQuery } from "../entity_set/filter";
@@ -96,6 +97,7 @@ export async function select(stack:QueryStack, query: StackValue[], options:Sele
         ['@e', fetchEntity],
         ['@eid', fetchEntity],
         ['@c', fetchComponents],
+        ['@cid', fetchComponents],
         ['@ca', fetchComponentAttributes],
 
         // ['@e', fetchEntity],
@@ -251,10 +253,11 @@ export function fetchValue(stack: SQLQueryStack): InstResult {
 
 
 
-export function fetchComponents(stack: SQLQueryStack): InstResult {
+export function fetchComponents(stack: SQLQueryStack, [,op]:StackValue): InstResult {
     const { es } = stack;
     let left, right: StackValue;
     let eids: EntityId[];
+    const returnCid = op === '@cid';
     // let defs: ComponentDefSQL[];
 
 
@@ -295,8 +298,12 @@ export function fetchComponents(stack: SQLQueryStack): InstResult {
     const allDefs = bf === undefined || (isBitField(bf) && bf.isAllSet) || defs === undefined;
     // Log.debug('[fetchComponent]', {allDefs, isAllSet:(isBitField(bf) && bf.isAllSet), undefined:(defs===undefined)}, bf);
 
-    coms = sqlRetrieveComponents(es.db, eids, defs || es.componentDefs, allDefs);
+    if( returnCid ){
+        coms = sqlRetrieveComponentIds(es.db, eids, defs || es.componentDefs, allDefs);
+        return [SType.List, coms.map(cid => [SType.Value, cid]) ];
+    }
 
+    coms = sqlRetrieveComponents(es.db, eids, defs || es.componentDefs, allDefs);
     return [SType.List, coms.map(c => [SType.Component, c])];
 }
 
@@ -380,20 +387,6 @@ export async function fetchEntity(stack: SQLQueryStack, [,op]:StackValue): Async
         returnSingle = true;
         eids = [eid];
 
-        // let e = es.getEntity(eid, returnEid ? false : true );
-        
-        // if (e === undefined) {
-        //     // Log.debug('[fetchEntity]', 'empty');
-        //     return [SType.Value, false];
-        // }
-
-        // return returnEid ? [SType.Entity, eid] : [SType.Entity, e ];
-
-        // let e = await es.getEntity(eid, false);
-        // if (e === undefined) {
-        //     return [[SType.Value, false]];
-        // }
-        // return [[SType.Entity, eid]];
     }
     else if (Array.isArray(eid)) {
         eids = eid;

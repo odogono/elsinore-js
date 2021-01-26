@@ -29,7 +29,7 @@ import {
     or as bfOr,
     toValues as bfToValues
 } from "../util/bitfield";
-import { Component, toComponentId } from '../component';
+import { Component, ComponentId, toComponentId } from '../component';
 import { SType } from '../query/types';
 import { isBoolean, isRegex, isDate, isValidDate } from '../util/is';
 import { compareDates } from '../query/words/util';
@@ -480,9 +480,6 @@ export function sqlRetrieveComponents(ref: SqlRef, eids: EntityId[], defs: Compo
     if (eids !== undefined && eids.length === 0) {
         return result;
     }
-
-    // eids = eids ?? [];
-
     
     const dids = defs.map( d => getDefId(d) );
     // Log.debug('[sqlRetrieveComponents]', {allDefs}, dids, eids);
@@ -538,6 +535,41 @@ export function sqlRetrieveComponents(ref: SqlRef, eids: EntityId[], defs: Compo
 
 
     return result;
+}
+
+export function sqlRetrieveComponentIds(ref: SqlRef, eids: EntityId[], defs: ComponentDefSQL[], allDefs = false): ComponentId[] {
+    const { db } = ref;
+    let result = [];
+
+    if (eids !== undefined && eids.length === 0) {
+        return result;
+    }
+
+    const dids = defs.map( d => getDefId(d) );
+    // Log.debug('[sqlRetrieveComponents]', {allDefs}, dids, eids);
+
+    const eidCondition = eids === undefined ? '' : `AND eid IN (${eids})`;
+
+    // NOTE - this is horrible
+    const havingCondition = allDefs ? '' : `HAVING COUNT(eid) = ${dids.length}`
+
+    const sql = `
+    SELECT DISTINCT eid,did FROM tbl_entity_component
+    WHERE eid IN (
+        SELECT eid FROM tbl_entity_component
+        WHERE did IN (${dids}) ${eidCondition}
+        GROUP BY eid ${havingCondition}
+    )
+    AND did IN (${dids})
+    `;
+
+    // Log.debug('[sqlRetrieveComponents]', sql);
+
+    let stmt = db.prepare(sql);
+
+    return stmt.all().map( r => toComponentId(r.eid,r.did) );
+
+
 }
 
 function buildInParamString(params: any[]): string {
