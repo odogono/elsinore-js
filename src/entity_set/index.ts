@@ -145,7 +145,7 @@ export abstract class EntitySet {
         this.eidEpoch = options.eidEpoch ?? 1577836800000; // 2020-01-01T00:00:00.000Z
     }
 
-    abstract clone(options?:CloneOptions);
+    abstract clone(options?: CloneOptions);
 
     abstract select(stack: QueryStack, query: StackValue[]): Promise<StackValue[]>;
 
@@ -186,7 +186,7 @@ export abstract class EntitySet {
 
     abstract removeComponent(item: RemoveType, options?: AddOptions): Promise<EntitySet>;
 
-    abstract removeComponents(items: RemoveType[], options: AddOptions): Promise<EntitySet>;
+    abstract removeComponents(items: RemoveType[], options?: AddOptions): Promise<EntitySet>;
 
 
     /**
@@ -199,7 +199,7 @@ export abstract class EntitySet {
     /**
      * Returns an array of EntityId that were removed in the last operation
      */
-    getRemovedEntities():EntityId[] {
+    getRemovedEntities(): EntityId[] {
         return getChanges(this.entChanges, ChangeSetOp.Remove);
     }
 
@@ -299,7 +299,7 @@ export abstract class EntitySet {
         return e;
     }
 
-    createEntityId():EntityId {
+    createEntityId(): EntityId {
         if (this.idgen !== undefined) {
             return this.idgen();
         }
@@ -362,16 +362,16 @@ export abstract class EntitySet {
     }
 
 
-    getComponentDefsFromBitField( bf?:BitField|'all', asDefIds = false): ComponentDef[]|ComponentDefId[] {
-        if( bf === undefined || bf === 'all' || (isBitField(bf) && bf.isAllSet) ){
+    getComponentDefsFromBitField(bf?: BitField | 'all', asDefIds = false): ComponentDef[] | ComponentDefId[] {
+        if (bf === undefined || bf === 'all' || (isBitField(bf) && bf.isAllSet)) {
             let defs = this.componentDefs;
             return asDefIds ? defs.map(d => getDefId(d)) : defs;
         }
-        
+
         let dids = bfToValues(bf);
         return asDefIds ? dids : dids.map(d => this.getByDefId(d));
     }
-    
+
 
 
     /**
@@ -512,18 +512,18 @@ export class EntitySetMem extends EntitySet {
         }
     }
 
-    clone(options:CloneOptions = {}){
+    clone(options: CloneOptions = {}) {
         let includeDefs = options.cloneDefs ?? true;
         let includeEnts = includeDefs ? options.cloneEntities ?? true : false;
 
         let { componentDefs, components, entities, byUri, byHash, entChanges, comChanges } = this;
-        if( !includeEnts ){
+        if (!includeEnts) {
             components = undefined;
             entities = undefined;
             entChanges = undefined;
             comChanges = undefined;
         }
-        if( !includeDefs ){
+        if (!includeDefs) {
             componentDefs = undefined;
             byHash = undefined;
             byUri = undefined;
@@ -602,7 +602,7 @@ export class EntitySetMem extends EntitySet {
         else if (isEntity(item)) {
             let e = item as Entity
             // if( debug ){ console.log('add', e)}
-            this.markEntityComponentsRemove( [e.id] );
+            this.markEntityComponentsRemove([e.id]);
             await this.addComponents(e.getComponents());
         }
         else if (isEntitySetMem(item)) {
@@ -651,7 +651,7 @@ export class EntitySetMem extends EntitySet {
     }
 
 
-    
+
 
     async applyUpdates() {
 
@@ -661,7 +661,7 @@ export class EntitySetMem extends EntitySet {
             const entities = new Map<number, BitField>(this.entities);
 
             for (const [eid, bf] of this.entUpdates) {
-                if( bf === undefined ){
+                if (bf === undefined) {
                     entities.delete(eid)
                 } else {
                     entities.set(eid, bf);
@@ -724,7 +724,7 @@ export class EntitySetMem extends EntitySet {
      * @param components 
      * @param options 
      */
-    removeComponents(items: RemoveType[], options: AddOptions = {}): Promise<EntitySet> {
+    async removeComponents(items: RemoveType[], options: AddOptions = {}): Promise<EntitySet> {
         if (options.retain !== true) {
             this.clearChanges();
         }
@@ -1074,48 +1074,19 @@ export class EntitySetMem extends EntitySet {
      */
     async markEntityComponentsRemove(eids: EntityId[]): Promise<EntitySet> {
 
-        for(let ii=0;ii<eids.length;ii++ ){
+        for (let ii = 0; ii < eids.length; ii++) {
             const eid = eids[ii];
             let ebf = this.entities.get(eid);
-            if( ebf === undefined ){ continue; }
+            if (ebf === undefined) { continue; }
             const dids = bfToValues(ebf);
-            for( let dd=0;dd<dids.length;dd++ ){
-                this.markComponentRemove( toComponentId(eid,dids[dd]));
+            for (let dd = 0; dd < dids.length; dd++) {
+                this.markComponentRemove(toComponentId(eid, dids[dd]));
             }
         }
-        
-        return this;
-        // const e = await this.getEntity(eid, false);
-        // if (e === undefined) {
-        //     return this;
-        // }
 
-        // for (const did of bfToValues(e.bitField)) {
-        //     this.markComponentRemove(toComponentId(eid, did));
-        // }
-        // return this;
+        return this;
     }
 
-    // /**
-    //  * 
-    //  * @param eid 
-    //  */
-    // async markRemoveComponents(eid: EntityId): Promise<EntitySet> {
-    //     if (eid === 0) {
-    //         return this;
-    //     }
-
-    //     const ebf = this.entities.get(eid);
-    //     if (ebf === undefined) {
-    //         return this;
-    //     }
-
-    //     for (const did of bfToValues(ebf)) {
-    //         this.markComponentRemove(toComponentId(eid, did));
-    //     }
-
-    //     return this;
-    // }
 
     /**
      * 
@@ -1139,7 +1110,6 @@ export class EntitySetMem extends EntitySet {
         for (const cid of removedComs) {
             this.applyRemoveComponent(cid);
         }
-        // es = removedComs.reduce((es, cid) => applyRemoveComponent(es, cid), es);
 
         // Log.debug('[applyRemoveChanges]', removedComs );
 
@@ -1199,16 +1169,12 @@ export class EntitySetMem extends EntitySet {
         if (ebf === undefined) {
             ebf = createBitField(this.entities.get(eid));
         }
-        // if( ebf !== undefined ){
+
+        // remove from the entity
         ebf = bfSet(ebf, did, false);
-        // }
 
-        // let entities = new Map<number, BitField>(es.entities);
-        // let ebf = createBitfield(entities.get(eid));
-        // ebf.set(did, false);
-        // entities.set(eid, ebf);
 
-        // remove component
+        // remove component from the internal component map
         let components = new Map<ComponentId, Component>(this.components);
         components.delete(cid);
 
@@ -1219,12 +1185,11 @@ export class EntitySetMem extends EntitySet {
         if (bfCount(ebf) === 0) {
             this.entUpdates.set(eid, undefined);
             return this.markEntityRemove(eid);
-        } else {
-            // console.log('[applyRemoveComponent]', 'set', eid, bfCount(ebf));
-            this.entUpdates.set(eid, ebf);
         }
+        // console.log('[applyRemoveComponent]', 'set', eid, bfCount(ebf));
+        this.entUpdates.set(eid, ebf);
+        return this.markEntityUpdate(eid);
 
-        return this;
     }
 
     clearChanges() {

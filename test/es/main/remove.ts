@@ -21,6 +21,7 @@ import {
 } from '../helpers';
 import { assertHasComponents } from '../../helpers/assert';
 import { printAll } from '../../../src/util/print';
+import { toComponentId } from '../../../src/component';
 
 let test = suite('es/mem - removing');
 
@@ -91,6 +92,21 @@ test('removes entities by id', async () => {
 
     assert.equal( getChanges(es.entChanges, ChangeSetOp.Remove), eids );
 });
+
+test('removes components by id', async () => {
+    let [, es] = await prepES(undefined, 'todo');
+
+    const cids = [ toComponentId(100,1), toComponentId(104,3) ];
+
+    await es.removeComponents( cids );
+    
+    // log( es );
+    assert.equal( getChanges( es.comChanges, ChangeSetOp.Remove), cids);
+    assert.equal( getChanges( es.entChanges, ChangeSetOp.Update), [100,104] );
+
+});
+
+
 
 test.run();
 

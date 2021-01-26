@@ -233,9 +233,10 @@ export class EntitySetSQL extends EntitySetMem {
 
         if (bfCount(e.bitField) === 0) {
             return this.markEntityRemove(eid);
-        } else {
-            // e = setEntity(es, e);
         }
+
+        this.markEntityUpdate(eid);
+            
 
         return this;
     }
