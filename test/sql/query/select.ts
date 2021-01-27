@@ -109,7 +109,7 @@ test('fetches entity component attribute', async () => {
                 /component/title !bf
                 @c
                 /text pluck
-            ] select`, 'todo');
+            ] select pop`, 'todo');
 
     // ilog(stack.items);
     let result = stack.popValue();
@@ -444,7 +444,7 @@ test('selects a JSON attribute', async () => {
             /component/meta !bf
             @c
             /meta/tags/1 pluck
-        ] select
+        ] select pop
         `, 'todo');
 
     // console.log( stack.items );

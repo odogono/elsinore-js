@@ -20,6 +20,7 @@ export async function onPluck(stack: QueryStack, [,op]:StackValue): AsyncInstRes
     let key = unpackStackValueR(right, SType.Any);
     let list = unpackStackValue(left, [SType.List, SType.Map, SType.Component, SType.Entity]);
 
+    let isInputArray = !isObject(list);
     if (isObject(list)) {
         list = [[SType.Map, list]];
     }
@@ -62,7 +63,7 @@ export async function onPluck(stack: QueryStack, [,op]:StackValue): AsyncInstRes
         }
 
     }
-    if (out.length === 1 ){//&& !Array.isArray(key)) {
+    if (out.length === 1 && !isInputArray){// !Array.isArray(key)) {
         return out[0];
     }
 
