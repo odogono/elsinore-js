@@ -19,6 +19,16 @@ test('maps values', async () => {
     assert.equal(result, [10, 20, 30, 40]);
 })
 
+test('maps values with a word', async () => {
+    let [stack] = await prep(`
+        [ 10 * ] mulByTen define
+        [1 2 3 4] *mulByTen map
+    `);
+
+    let result = stack.popValue();
+    assert.equal(result, [10, 20, 30, 40]);
+})
+
 test('reduces values', async () => {
     let [stack] = await prep(`[1 2 3 4] 0 [+] reduce`);
     let result = stack.popValue();

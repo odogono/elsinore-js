@@ -73,4 +73,14 @@ test('out of range on peeking an earlier word', async () => {
     // assert.equal(stack.toString(), '"hello" "world" "planet"');
 })
 
+
+test('evals map', async () => {
+    let [stack] = await prep(`
+            active status let
+            { status: $status }
+            `);
+    assert.equal(stack.toString(), '{"status": "active"}');
+});
+
+
 test.run();

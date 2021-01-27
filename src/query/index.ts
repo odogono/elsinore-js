@@ -30,7 +30,8 @@ import {
     onJoin,
     onUndefined,
     onRegexBuild,
-    onCompare
+    onCompare,
+    onMapEval
 } from "./words";
 import { onPluck } from "./words/pluck";
 import { onDefine } from "./words/define";
@@ -288,6 +289,7 @@ export function createStdLibStack( stack?:QueryStack ){
         ['pop?', onPop, SType.List],
         ['pop!', onPop, SType.List],
         ['pop', onPop, SType.List],
+        ['map', onMap, SType.List, SType.Value],
         ['map', onMap, SType.List, SType.List],
         ['pluck', onPluck, SType.Map, SType.Value],
         ['pluck', onPluck, SType.Component, SType.Value],
@@ -297,7 +299,9 @@ export function createStdLibStack( stack?:QueryStack ){
         ['pluck!', onPluck, SType.Any, SType.Any],
         
         ['unique', onUnique, SType.List],
+        ['filter', onFilter, SType.List, SType.Value],
         ['filter', onFilter, SType.List, SType.List],
+        ['reduce', onReduce, SType.List, SType.Any, SType.Value],
         ['reduce', onReduce, SType.List, SType.Any, SType.List],
         
         ['gather', onGather],

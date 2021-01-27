@@ -27,6 +27,7 @@ import { stackToString, valueToString, unpackStackValue, unpackStackValueR } fro
 import { EntitySet, EntitySetMem, isEntitySet } from '../../entity_set';
 import { compareDates } from './util';
 import { BitField, TYPE_OR, toValues as bfToValues } from '../../util/bitfield';
+import { stringify } from '../../util/json';
 
 const Log = createLog('QueryWords');
 
@@ -564,12 +565,8 @@ export async function onListSpread<QS extends QueryStack>(stack: QS): AsyncInstR
     let val = stack.pop();
     let value = unpackStackValueR(val, SType.List).map(v => [SType.Value, v]);
 
-    // if( val[0] === SType.List ){
-    //     value = value.map( v => [Array.isArray(v) ? SType.List : SType.Value, v] );
-    // stack = { ...stack, items: [...stack.items, ...value] };
     // Log.debug('[onArraySpread]', value);
     await stack.pushValues(value);
-    // }
     return undefined;
 }
 
@@ -585,17 +582,6 @@ export async function onListEval<QS extends QueryStack>(stack: QS): AsyncInstRes
     let list = unpackStackValue(val, SType.List);
 
     return evalList(stack, list);
-
-    // let mapStack = stack.setChild(stack);
-
-    // for( const val of list ){
-    //     await mapStack.push(val);
-    // }
-
-    // let result = mapStack.items;
-    // stack.restoreParent();
-
-    // return [SType.List, result];
 }
 
 async function evalList<QS extends QueryStack>(stack: QS, list: StackValue[]): AsyncInstResult {
@@ -763,14 +749,19 @@ export async function onFilter<QS extends QueryStack>(stack: QS): AsyncInstResul
     let list = stack.pop();
 
     list = unpackStackValue(list, SType.List);
-    fn = unpackStackValue(fn, SType.List);
+    const isListFn = fn[0] === SType.List;
+    fn = unpackStackValue(fn);
 
     let mapStack = stack.setChild(stack);
     let accum = [];
 
     for (const val of list) {
         await mapStack.push(val);
-        await mapStack.pushValues(fn as any);
+        if( isListFn ){
+            await mapStack.pushValues(fn as any);
+        } else {
+            await mapStack.push(fn);
+        }
 
         // Log.debug('[onFilter]', 'end', mapStack.items );
         let out = mapStack.pop();
@@ -789,13 +780,18 @@ export async function onMap<QS extends QueryStack>(stack: QS): AsyncInstResult {
     let left = stack.pop();
 
     let list = unpackStackValue(left, SType.List);
-    let fn = unpackStackValue(right, SType.List);
+    const isListFn = right[0] === SType.List;
+    let fn = unpackStackValue(right);
 
     let mapStack = stack.setChild(stack);
 
     for (const val of list) {
         await mapStack.push(val);
-        await mapStack.pushValues(fn);
+        if( isListFn ){
+            await mapStack.pushValues(fn);
+        } else {
+            await mapStack.push(fn);
+        }
     }
 
     let result = mapStack.items;
@@ -811,15 +807,19 @@ export async function onReduce<QS extends QueryStack>(stack: QS): AsyncInstResul
     let left = stack.pop();
 
     let list = unpackStackValue(left, SType.List);
-    // accum = unpackStackValue(accum, SType.Any);
-    let fn = unpackStackValue(right, SType.List);
+    const isListFn = right[0] === SType.List;
+    let fn = unpackStackValue(right);
 
     let mapStack = stack.setChild(stack);
 
     for (const val of list) {
         await mapStack.push(val);
         await mapStack.push(accum);
+        if( isListFn ){
         await mapStack.pushValues(fn);
+        } else {
+            await mapStack.push(fn);
+        }
 
         accum = mapStack.pop();
     }
@@ -980,15 +980,21 @@ function printType(indent: number = 0, val: StackValue) {
             break;
         case SType.Entity:
             const e:Entity = val[1];
-            const dids = bfToValues(e.bitField)
-            print(indent, `(${type}) ${e.id} [${dids}]`);
+            if( isInteger(e) ){
+                print(indent, `(@eid) ${e}`);    
+            }
+            else {
+                const dids = bfToValues(e.bitField);
+                print(indent, `(${type}) ${e.id} [${dids}]`);
+            }
             break;
         case SType.BitField:
             const bf:BitField = val[1];
             print(indent, `(${type}) [${bfToValues(bf)}]`)
             break;
+        
         default:
-            print(indent, `(${type}) ${val[1]}`);
+            print(indent, `(${type}) ${stringify(val[1])}`);
             break;
     }
 }
