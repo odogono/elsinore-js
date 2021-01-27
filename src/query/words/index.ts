@@ -51,8 +51,8 @@ export async function onDup<QS extends QueryStack>(stack: QS, op): AsyncInstResu
     let out;
     if (val[0] === SType.EntitySet) {
         let es: EntitySet = unpackStackValue(val, SType.EntitySet);
-        let dup = await es.clone();
-        out = [SType.EntitySet, dup];
+        // let dup = await es.clone();
+        out = [SType.EntitySet, es];
     } else {
         // let o = unpackStackValue(val);
         out = [...val];
@@ -783,9 +783,13 @@ export async function onMap<QS extends QueryStack>(stack: QS): AsyncInstResult {
     const isListFn = right[0] === SType.List;
     let fn = unpackStackValue(right);
 
+    // console.log('[onMap]', 'list', list);
+    // console.log('[onMap]', 'fn', fn);
+
     let mapStack = stack.setChild(stack);
 
     for (const val of list) {
+        // console.log('[onMap]', 'li', val);
         await mapStack.push(val);
         if( isListFn ){
             await mapStack.pushValues(fn);

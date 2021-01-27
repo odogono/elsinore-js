@@ -31,7 +31,6 @@ import {
     onUndefined,
     onRegexBuild,
     onCompare,
-    onMapEval
 } from "./words";
 import { onPluck } from "./words/pluck";
 import { onDefine } from "./words/define";
