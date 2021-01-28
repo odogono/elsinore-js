@@ -161,6 +161,12 @@ export abstract class EntitySet {
      */
     abstract getEntity(eid: EntityId, populate?: boolean): Promise<Entity>;
 
+
+    /**
+     * Returns an array of all entity ids in the set
+     */
+    abstract getEntities(): Promise<EntityId[]>;
+
     /**
      * Returns entities by defId
      * 
@@ -854,6 +860,10 @@ export class EntitySetMem extends EntitySet {
 
     //     return Promise.resolve([]);
     // }
+
+    getEntities(): Promise<EntityId[]> {
+        return Promise.resolve( Array.from(this.entities.keys()) );
+    }
 
     /**
      * 
