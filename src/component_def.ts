@@ -34,6 +34,7 @@ export interface ComponentDefProperty {
     name: string;
     type: string;
     default: any;
+    isDefault?: boolean;
     optional: boolean;
     // whether this property should be persisted in storage
     persist: boolean;
@@ -55,7 +56,7 @@ const typeDefaults = {
     'boolean': false,
     'list': [],
     'map': {},
-    'datetime': () => new Date()
+    'datetime': undefined,// () => new Date()
 }
 
 /**
@@ -126,6 +127,7 @@ export function createFromObj({ id, name, uri, properties, ...extra }): Componen
     if (isString(properties) || isObject(properties)) {
         properties = [createProperty(properties)];
     } else if (Array.isArray(properties)) {
+        // console.log('[createFromObj]', 'creating from obj', uri );
         properties = properties.map(prop => createProperty(prop));
     } else {
         // console.log('but what', properties );
@@ -218,6 +220,7 @@ export function createProperty(params: any): ComponentDefProperty {
     let defaultValue = propertyDefaults.default;
     let optional = propertyDefaults.optional;
     let persist = true;
+    let isDefault = true;
 
     if (isString(params)) {
         name = params;
@@ -225,10 +228,11 @@ export function createProperty(params: any): ComponentDefProperty {
         name = params.name || name;
         type = params.type || type;
         persist = params.persist ?? persist;
-        const tdef = type === 'datetime' ? new Date() : typeDefaults[type] ?? undefined;
+        const tdef = type === 'datetime' ? undefined : typeDefaults[type] ?? undefined;
         defaultValue = params.default ?? tdef;
+        isDefault = params.default === undefined;
 
-        // console.log('but', name, 'type', type, defaultValue);
+        // console.log('but', name, 'type', type, defaultValue, params);
 
         for (let key of Object.keys(params)) {
             if (key === 'additional') {
@@ -241,7 +245,7 @@ export function createProperty(params: any): ComponentDefProperty {
     }
 
     return {
-        name, type, 'default': defaultValue, optional, persist, additional
+        name, type, 'default': defaultValue, optional, persist, additional, isDefault
     };
 }
 
@@ -251,6 +255,12 @@ export function propertyToObject(prop: ComponentDefProperty, includeAdditional: 
     for (let key of Object.keys(propertyDefaults)) {
         if (propertyDefaults[key] == prop[key] || prop[key] === undefined) {
             continue;
+        }
+        if( key === 'default' ){
+            if( prop.isDefault || typeDefaults[ prop.type ] == prop[key] ){
+                continue;
+            }
+            // console.log('[pTo]', key, prop.type, prop[key]);
         }
         result[key] = prop[key];
     }

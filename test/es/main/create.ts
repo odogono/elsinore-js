@@ -5,8 +5,6 @@ import {
     createEntitySet,
     beforeEach,
 } from '../helpers';
-import { assertHasComponents } from '../../helpers/assert';
-import { printAll } from '../../../src/util/print';
 
 
 let test = suite('es/mem - create');
