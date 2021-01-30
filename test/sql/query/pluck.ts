@@ -67,7 +67,7 @@ test('plucks from an entity', async () => {
     // console.log( stack.popValue() );
 
     assert.equal( stack.popValue(), [
-        'get out of bed', 100, [ 'first', 'action']
+        ['get out of bed', 100, [ 'first', 'action']]
     ]);
 
 });

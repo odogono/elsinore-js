@@ -195,7 +195,7 @@ export async function onAddToEntitySet<QS extends QueryStack>(stack: QS): AsyncI
     let left = stack.pop();
     let right = stack.pop();
 
-    // DLog(stack, '[onAddToEntitySet]', left );
+    // console.log('[onAddToEntitySet]', left );
     let value = unpackStackValue(left);
     // DLog(stack, '[onAddToEntitySet]', isComponentDef(value), value );
     let es: EntitySet = unpackStackValueR(right, SType.EntitySet);
@@ -658,7 +658,7 @@ export function onConcat<QS extends QueryStack>(stack: QS, val: StackValue): Ins
 export async function onSize<QS extends QueryStack>(stack: QS, [,op]:StackValue): AsyncInstResult {
     let size = 0;
     // by default, the word consumes what it is measuring
-    const isDes = op === 'size';
+    const isDes = op === 'size!';
     let [type, val] = isDes ? stack.pop() : stack.peek();
 
     if (type === SType.List) {

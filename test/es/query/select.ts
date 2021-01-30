@@ -207,7 +207,7 @@ test('testing whether entity has a component', async () => {
     [ ^$1 /component/priority !bf @c ] select
 
     // if the result contains the component, return ok, otherwise nok
-    nok ok rot size 0 swap > iif
+    nok ok rot size! 0 swap > iif
     `;
 
     let [stack] = await prepES(query, 'todo');

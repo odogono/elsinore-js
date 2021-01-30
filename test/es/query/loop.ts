@@ -64,7 +64,7 @@ test('loops until done 2', async () => {
                 /src pluck
                 dup 
                 $result concat result !
-                dup size
+                dup size!
                 // continue if the last results
                 // came back non-empty
                 true [$result] rot 0 == iif
