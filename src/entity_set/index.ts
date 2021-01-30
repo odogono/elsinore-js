@@ -98,7 +98,7 @@ export interface CloneOptions {
 
 export type ResolveComponentDefIdResult = [Component, string][] | [BitField, string][];
 
-export type ResolveDefIds = string | string[] | number | number[];
+export type ResolveDefIds = string | string[] | ComponentDefId | ComponentDefId[];
 
 export type AddArrayType = (Entity | Component)[];// Entity[] | Component[];
 export type AddType = Entity | Component | OrphanComponent | AddArrayType | EntitySetMem;
@@ -485,7 +485,11 @@ export abstract class EntitySet {
             return undefined;
         });
 
-        return defs.reduce((bf, def) => def === undefined ? bf : bfSet(bf, getDefId(def)), bf);
+        return defs.reduce((bf, def) => 
+            def === undefined ? 
+                bf : 
+                bfSet(bf, getDefId(def)), 
+        bf);
     }
 
     /**

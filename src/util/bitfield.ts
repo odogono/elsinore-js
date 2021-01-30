@@ -12,6 +12,10 @@ export interface BitField {
     isAllSet: boolean;
     type: number;
     values: number[];
+
+    // and: number[];
+    // or: number[];
+    // not: number[];
 }
 
 
