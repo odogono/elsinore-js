@@ -59,7 +59,7 @@ export async function exportEntitySet(es: EntitySet, options: ExportOptions) {
         }
         buffer.push('gather'); // wrap in list
         if (retainEid) {
-            buffer.push(`${e.id} !e swap +`);
+            buffer.push(`${e.id} !e swap + +`);
         } else {
             buffer.push('+'); // add to es
         }
