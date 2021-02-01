@@ -886,7 +886,7 @@ export function onPop<QS extends QueryStack>(stack: QS, [, op]: StackValue): Ins
 
     let value = list.pop();
 
-    if (isPopRet) {
+    if (isPopRet || isPopSafe) {
         stack.pushRaw([SType.List, list]);
     }
 
