@@ -94,7 +94,7 @@ export async function onSelect<QS extends QueryStack>(stack: QS): AsyncInstResul
 
     let query = unpackStackValue(right, SType.List, false);
     let es: EntitySet = unpackStackValue(left, SType.EntitySet);
-    
+
     // Log.debug('[onSelect]', query );
     let result = await es.select(stack, query);
 
@@ -341,24 +341,24 @@ export function onAddArray<QS extends QueryStack>(stack: QS, val: StackValue): I
 
     let left = stack.pop();
     let right = stack.pop();
-    
+
     // let arr = right[0] === SType.List
     let [ltype, lval] = left;
     let [rtype, rval] = right;
     let result = rval;
     // let resultType = rtype;
 
-    if( rtype === SType.List ){
-        if( ltype === SType.List ){
+    if (rtype === SType.List) {
+        if (ltype === SType.List) {
             result = [...result, ...lval];
         } else {
             result = [...result, left];
         }
     }
     // left value being a list is a prepend
-    else if( ltype === SType.List ){
+    else if (ltype === SType.List) {
         result = lval;
-        result = [ right, ...result ];
+        result = [right, ...result];
     }
     // console.log('[onAddArray]', result);
     return [SType.List, result];
@@ -373,10 +373,10 @@ export function onFetchArray<QS extends QueryStack>(stack: QS, val: StackValue):
 }
 
 
-export function onRegexBuild(stack:QueryStack): InstResult {
+export function onRegexBuild(stack: QueryStack): InstResult {
     let val = stack.popValue();
     // console.log('[onRegexBuild]', new RegExp(val) );
-    return [SType.Regex, new RegExp(val) ];
+    return [SType.Regex, new RegExp(val)];
 }
 
 export function onRegex(stack: QueryStack, [, op]: StackValue): InstResult {
@@ -394,10 +394,10 @@ export function onRegex(stack: QueryStack, [, op]: StackValue): InstResult {
     if (op === 'split') {
         value = val.split(regex);
     }
-    else if( op === 'replace' ){
+    else if (op === 'replace') {
         let repl = stack.popValue();
         // console.log('[onRegex]', 'replace', regex, val, repl );
-        value = val.replace( regex, repl );
+        value = val.replace(regex, repl);
     }
     else if (op === 'eval') {
         let result = regex.exec(val);
@@ -412,16 +412,16 @@ export function onRegex(stack: QueryStack, [, op]: StackValue): InstResult {
         value = !regex.test(val);
     }
 
-    if( Array.isArray(value) ){
-        return [SType.List, value.map( v => [SType.Value,v])];
+    if (Array.isArray(value)) {
+        return [SType.List, value.map(v => [SType.Value, v])];
     }
 
     return [SType.Value, value];
 }
 
-export function onCompare(stack: QueryStack, [, op]:StackValue): InstResult {
-    let left = JSON.stringify( stack.pop() );
-    let right = JSON.stringify( stack.pop() );
+export function onCompare(stack: QueryStack, [, op]: StackValue): InstResult {
+    let left = JSON.stringify(stack.pop());
+    let right = JSON.stringify(stack.pop());
 
     let value = op == '!=' ? left != right : left == right;
 
@@ -445,7 +445,7 @@ export function onUndefined(stack: QueryStack): InstResult {
 }
 
 
-export function onBitFieldOr(stack:QueryStack):InstResult {
+export function onBitFieldOr(stack: QueryStack): InstResult {
     let bf = stack.popValue();
     bf.type = TYPE_OR;
     return [SType.BitField, bf];
@@ -463,14 +463,14 @@ export function onAdd(stack: QueryStack, [, op]: StackValue): InstResult {
         case '-': value = left - right; break;
         case '%':
             // Log.debug('[%]', left, right, left % right );
-            value = left % right; 
+            value = left % right;
             break;
-        case '==': 
+        case '==':
             // Log.debug(`[==]`, left, right, compare(left, right) );
             // value = compare(left,right);
-            value = left === right; 
+            value = left === right;
             break;
-        case '!=': 
+        case '!=':
             // value = !compare(left,right);// left !== right; 
             value = left !== right;
             break;
@@ -587,7 +587,7 @@ export async function onListEval<QS extends QueryStack>(stack: QS): AsyncInstRes
 async function evalList<QS extends QueryStack>(stack: QS, list: StackValue[]): AsyncInstResult {
     let mapStack = stack.setChild(stack);
 
-    await mapStack.pushValues( list );
+    await mapStack.pushValues(list);
     // for (const val of list) {
     //     // console.log('[evalList]', val, mapStack.isEscapeActive);
     //     await mapStack.push(val);
@@ -655,7 +655,7 @@ export function onConcat<QS extends QueryStack>(stack: QS, val: StackValue): Ins
  * ( %{} -- vl )
  * @param stack 
  */
-export async function onSize<QS extends QueryStack>(stack: QS, [,op]:StackValue): AsyncInstResult {
+export async function onSize<QS extends QueryStack>(stack: QS, [, op]: StackValue): AsyncInstResult {
     let size = 0;
     // by default, the word consumes what it is measuring
     const isDes = op === 'size!';
@@ -732,10 +732,10 @@ export async function onJoin(stack: QueryStack): AsyncInstResult {
     let list = stack.pop();
     let result;
 
-    if( list[0] === SType.List ){
+    if (list[0] === SType.List) {
         list = await evalList(stack, list[1]);
         list = unpackStackValueR(list, SType.List);
-        result = list.join( joinStr[1] ).trim();
+        result = list.join(joinStr[1]).trim();
     } else {
         result = list[1] + joinStr[1];
     }
@@ -757,7 +757,7 @@ export async function onFilter<QS extends QueryStack>(stack: QS): AsyncInstResul
 
     for (const val of list) {
         await mapStack.push(val);
-        if( isListFn ){
+        if (isListFn) {
             await mapStack.pushValues(fn as any);
         } else {
             await mapStack.push(fn);
@@ -791,7 +791,7 @@ export async function onMap<QS extends QueryStack>(stack: QS): AsyncInstResult {
     for (const val of list) {
         // console.log('[onMap]', 'li', val);
         await mapStack.push(val);
-        if( isListFn ){
+        if (isListFn) {
             await mapStack.pushValues(fn);
         } else {
             await mapStack.push(fn);
@@ -819,8 +819,8 @@ export async function onReduce<QS extends QueryStack>(stack: QS): AsyncInstResul
     for (const val of list) {
         await mapStack.push(val);
         await mapStack.push(accum);
-        if( isListFn ){
-        await mapStack.pushValues(fn);
+        if (isListFn) {
+            await mapStack.pushValues(fn);
         } else {
             await mapStack.push(fn);
         }
@@ -864,12 +864,12 @@ export function onPush<QS extends QueryStack>(stack: QS, val: StackValue): InstR
 
 /**
  * 
- * pop! ( [] -- vl )
- * pop ( [] -- [] vl )
+ * pop! ( [] -- vl ) - destructive
+ * pop ( [] -- [] vl ) - retains list
  * 
  * @param stack 
  */
-export function onPop<QS extends QueryStack>(stack: QS, [,op]:StackValue): InstResult {
+export function onPop<QS extends QueryStack>(stack: QS, [, op]: StackValue): InstResult {
     const isPopRet = op == 'pop';
     const isPopSafe = op == 'pop?';
 
@@ -878,7 +878,7 @@ export function onPop<QS extends QueryStack>(stack: QS, [,op]:StackValue): InstR
     let list = unpackStackValue(lv, SType.List);
     const len = list.length;
     if (len === 0) {
-        if( isPopSafe ) {
+        if (isPopSafe) {
             return [SType.Value, undefined];
         }
         throw new StackError('stack underflow');
@@ -886,11 +886,11 @@ export function onPop<QS extends QueryStack>(stack: QS, [,op]:StackValue): InstR
 
     let value = list.pop();
 
-    if( isPopRet ){
-        stack.pushRaw( [SType.List, list] );
+    if (isPopRet) {
+        stack.pushRaw([SType.List, list]);
     }
 
-    stack.pushRaw( value );
+    stack.pushRaw(value);
 
     return undefined;
 }
@@ -983,9 +983,9 @@ function printType(indent: number = 0, val: StackValue) {
             print(indent, `(${type})`, JSON.stringify(com));
             break;
         case SType.Entity:
-            const e:Entity = val[1];
-            if( isInteger(e) ){
-                print(indent, `(@eid) ${e}`);    
+            const e: Entity = val[1];
+            if (isInteger(e)) {
+                print(indent, `(@eid) ${e}`);
             }
             else {
                 const dids = bfToValues(e.bitField);
@@ -993,10 +993,10 @@ function printType(indent: number = 0, val: StackValue) {
             }
             break;
         case SType.BitField:
-            const bf:BitField = val[1];
+            const bf: BitField = val[1];
             print(indent, `(${type}) [${bfToValues(bf)}]`)
             break;
-        
+
         default:
             print(indent, `(${type}) ${stringify(val[1])}`);
             break;

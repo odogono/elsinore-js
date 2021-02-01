@@ -251,6 +251,7 @@ export function createStdLibStack( stack?:QueryStack ){
 
         // important that this is after more specific case
         ['+', onAdd, SType.Value, SType.Value],
+        ['-', onAdd, SType.Value, SType.Value],
         ['*', onAdd, SType.Value, SType.Value],
         ['%', onAdd, SType.Value, SType.Value],
         ['==', onAdd, SType.Value, SType.Value],
