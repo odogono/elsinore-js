@@ -3,21 +3,26 @@ import { getComponentId } from "../component";
 import { getEntityId } from "../entity";
 import { stringify } from "../util/json";
 import { isStackValue, QueryStack } from "./stack";
+import { isString } from "../util/is";
 
 
 export interface ToStringOptions {
     flat?: boolean;
 }
 
-export function stackToString(stack: QueryStack, reverse:boolean = true): string {
-    let parts = stack.items.map(val => valueToString(val));
+export function stackToString(stack: QueryStack, reverse:boolean = true, items:StackValue[] = undefined): string {
+    items = items ?? stack.items;
+    let strs = items.map(val => valueToString(val));
     if( reverse ){
-        parts.reverse();
+        strs.reverse();
     }
-    return parts.join(' ');
+    return strs.join(' ');
 }
 
 export function valueToString(val: StackValue, listToString:boolean = false): string {
+    if( !Array.isArray(val) ){
+        return val as any;
+    }
     const [type, value] = val;
     const strCheck = /^[a-z0-9\/_$]+$/i;
 

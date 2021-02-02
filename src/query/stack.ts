@@ -545,6 +545,9 @@ export class QueryStack {
         // Log.debug('[pushValues$]', this.isActive, {run,ticket}, values);
         // let startActive = this.isActive;
 
+        // record pushed values so we can report errors better
+        let pushed = [];
+
         try {
             for (const value of values) {
 
@@ -582,6 +585,7 @@ export class QueryStack {
                 // }
                 // ovalues.push(ovalue);
                 count++;
+                pushed.push(value);
             }
 
             // if( revertActive ){
@@ -596,11 +600,18 @@ export class QueryStack {
             }
 
         } catch (err) {
-            // Log.debug('st un?', (stack as any)._parent.items );
-            let e = new StackError(`${err.message}: (${stackToString(this)})`);
+            let dump = stackToString(this, true, pushed.slice(1).slice(-5));
+            let msg = err.message;
+            if( msg.indexOf(': (') == -1 ){
+                msg = `${err.message}: (${dump})`;
+            } else {
+                throw err;
+            }
+            let e = new StackError(msg);
+            // let e = new StackError(`${err.message}: (${pushed.slice(1).slice(-5).join(' ')})`);
             e.original = err
             e.stack = e.stack.split('\n').slice(0, 2).join('\n') + '\n'
-                + err.stack;// [...new Set(err.stack.split('\n'))].join('\n');
+                + err.stack;
             throw e;
         }
 

@@ -879,6 +879,7 @@ export function onPop<QS extends QueryStack>(stack: QS, [, op]: StackValue): Ins
     const len = list.length;
     if (len === 0) {
         if (isPopSafe) {
+            stack.pushRaw([SType.List, list]);
             return [SType.Value, undefined];
         }
         throw new StackError('stack underflow');
