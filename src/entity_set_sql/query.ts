@@ -113,6 +113,7 @@ export async function select(stack:QueryStack, query: StackValue[], options:Sele
 
         ['limit', applyLimit],
         ['pluck', onPluck],
+        ['pluck!', onPluck],
     ]);
 
     // make sure any filter values have a following cmd

@@ -134,10 +134,8 @@ test('fetching components with optional', async () => {
         [/component/title /component/completed] !bf
         @c
     ] select
-    /@e pluck! unique
-    // prints
+    /@e pluck unique
     rot [ *^$1 /component/priority !bf @c ] select rot +
-    // prints
     `, 'todo');
 
     assert.equal( stack.popValue().length, 7 );

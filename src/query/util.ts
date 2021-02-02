@@ -1,4 +1,4 @@
-import { StackValue, SType } from "./types";
+import { StackError, StackValue, SType } from "./types";
 import { getComponentId } from "../component";
 import { getEntityId } from "../entity";
 import { stringify } from "../util/json";
@@ -85,7 +85,7 @@ export function unpackStackValue(val: StackValue, assertType: (SType | SType[]) 
     }
 
     if (assertType.indexOf(SType.Any) === -1 && assertType.indexOf(type) === -1) {
-        throw new Error(`expected type ${assertType}, got ${type}`);
+        throw new StackError(`expected type ${assertType}, got ${type}`);
     }
 
     switch (type) {

@@ -387,8 +387,10 @@ export class QueryStack {
                 }
                 // if( value && this.debug ) Log.debug('[push]', value); 
             } catch (err) {
-                // Log.warn('[push]', err.stack);
-                let e = new StackError(`${err.message}`); // : ${unpackStackValue(value)}
+                if( err instanceof StackError ){
+                    throw err;
+                }
+                let e = new StackError(`${err.message}`);
                 e.original = err
                 e.stack = e.stack.split('\n').slice(0, 2).join('\n') + '\n'
                     + [...new Set(err.stack?.split('\n'))].join('\n');
@@ -600,6 +602,9 @@ export class QueryStack {
             }
 
         } catch (err) {
+            // if( err instanceof StackError ){
+            //     throw err;
+            // }
             let dump = stackToString(this, true, pushed.slice(1).slice(-5));
             let msg = err.message;
             if( msg.indexOf(': (') == -1 ){
@@ -611,7 +616,8 @@ export class QueryStack {
             // let e = new StackError(`${err.message}: (${pushed.slice(1).slice(-5).join(' ')})`);
             e.original = err
             e.stack = e.stack.split('\n').slice(0, 2).join('\n') + '\n'
-                + err.stack;
+                // + err.stack;
+                + [...new Set(err.stack?.split('\n'))].join('\n');
             throw e;
         }
 

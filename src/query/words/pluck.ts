@@ -11,7 +11,7 @@ import { Entity, isEntity } from "../../entity";
 export async function onPluck(stack: QueryStack, [,op]:StackValue): AsyncInstResult {
 
     // console.log('[onPluck]', stackToString(stack) );
-    const isDes = op === 'pluck';
+    const isDes = op === 'pluck!';
 
     let right = stack.pop();
     // let left = stack.pop();

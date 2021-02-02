@@ -295,7 +295,7 @@ export function createStdLibStack( stack?:QueryStack ){
         ['pluck', onPluck, SType.Component, SType.Value],
         ['pluck', onPluck, SType.List, SType.Value],
         ['pluck', onPluck, SType.List, SType.List],
-        ['pluck', onPluck, SType.Any, SType.Value],
+        ['pluck', onPluck, SType.Any, SType.Any],
         ['pluck!', onPluck, SType.Any, SType.Any],
         
         ['unique', onUnique, SType.List],

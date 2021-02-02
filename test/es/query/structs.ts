@@ -59,7 +59,7 @@ test('pop empty', async () => {
         await prep(`[] pop!`);
     } catch (err) {
         assert.instance(err, StackError);
-        assert.equal(err.message, 'stack underflow: ()');
+        assert.equal(err.message, 'stack underflow: (])');
     }
 });
 

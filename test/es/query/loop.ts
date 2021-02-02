@@ -61,7 +61,7 @@ test('loops until done 2', async () => {
             [] result let // result array
             [
                 selectDeps
-                /src pluck
+                /src pluck!
                 dup 
                 $result concat result !
                 dup size!

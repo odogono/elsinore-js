@@ -66,4 +66,25 @@ test('plucks from an entity', async () => {
 
 });
 
+
+test('non-destructive', async () => {
+    let [stack] = await prep(`
+    {text: hello} /text pluck
+    `);
+
+    assert.equal( stack.size, 2 );
+    // console.log( stack.popValue() );
+    // console.log( stack.popValue() );
+});
+
+test('destructive', async () => {
+    let [stack] = await prep(`
+    {text: hello} /text pluck!
+    `);
+
+    assert.equal( stack.size, 1 );
+    // console.log( stack.popValue() );
+    // console.log( stack.popValue() );
+});
+
 test.run();
