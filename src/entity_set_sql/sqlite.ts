@@ -34,6 +34,7 @@ import { SType } from '../query/types';
 import { isBoolean, isRegex, isDate, isValidDate } from '../util/is';
 import { compareDates } from '../query/words/util';
 import { hashToString } from '../util/hash';
+import { stringify } from '../util/json';
 
 const Log = createLog('Sqlite');
 
@@ -279,10 +280,11 @@ export function sqlUpdateComponent(ref: SqlRef, com: Component, def: ComponentDe
     if (exists) {
         const { id } = row;
         const set = defToSetStmt(def);
-        let vals = names.map(name => com[name]);
+        // let vals = names.map(name => com[name]);
+        let vals = names.map(name => valueToSQL(com[name], getDefProperty(def, name)));
         const sql = `UPDATE ${tblName} ${set} WHERE id = ?`;
         stmt = db.prepare(sql);
-        // Log.debug('[sqlUpdateComponent]', eid, did, sql );
+        // Log.debug('[sqlUpdateComponent]', eid, did, sql, names, 'vals', vals );
         stmt.run([...vals, id]);
     }
     else {
@@ -691,12 +693,13 @@ export function sqlRetrieveEntityByDefId(ref: SqlRef, did: number[]): Entity[] {
             FROM 
                 tbl_entity_component 
             WHERE 
-                did IN (?)
+                did IN (${did})
         ) 
     ORDER BY 
         eid;
     `);
-    let rows = stmt.all(did);
+    // Log.debug('[sqlRetrieveEntityByDefId]', did);
+    let rows = stmt.all();
 
     let result = rows.reduce((result, { eid, did }) => {
         let e = result[eid];
@@ -769,10 +772,26 @@ export function sqlRetrieveByQuery(ref: SqlRef, eids: EntityId[], query: any[]) 
     walkFilterQuery(eids, sql, params, ...query);
 
     // sql.push('ORDER BY eid')
-    // Log.debug('[sqlRetrieveByQuery]', sql, params);
+    // Log.debug('[sqlRetrieveByQuery]', sql, params );
+    // Log.debug('[sqlRetrieveByQuery]', sql, params.map(p => Array.isArray(p) ? stringify(p) : p) );
 
     let stmt = db.prepare(sql.join(' '));
-    let rows = stmt.all(...params);
+    
+    params = params.map( p => {
+        if( Array.isArray(p) ){
+            if( p.length === 1 ){
+                return p[0];
+            }
+            return stringify(p);
+        }
+        return p;
+    })
+    params = params.map(p => Array.isArray(p) ? stringify(p) : p);
+
+    let rows = stmt.all(...params );
+
+    // Log.debug('[sqlRetrieveByQuery]', sql, params );
+
 
     // Log.debug('[sqlRetrieveByQuery]', sql, params, rows);
 

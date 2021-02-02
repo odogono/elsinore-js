@@ -228,10 +228,12 @@ export class EntitySetSQL extends EntitySetMem {
 
         const def = this.getByDefId(did);
         // remove component
-        // Log.debug('[applyRemoveComponent]', eid, did );
+        // let ee = sqlRetrieveEntity(this.db, eid);
+        // Log.debug('[applyRemoveComponent]', eid, did, ee );
+
         let e = sqlDeleteComponent(this.db, eid, def);
 
-        if (bfCount(e.bitField) === 0) {
+        if (e === undefined || bfCount(e.bitField) === 0) {
             return this.markEntityRemove(eid);
         }
 
