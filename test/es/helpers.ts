@@ -83,8 +83,11 @@ export async function buildEntitySet(options?): Promise<[EntitySetMem, Function]
         { uri: '/component/channel_member', properties: ['channel_member'] },
     ]
 
-    await defs.reduce( (p,def) => p.then( () => es.register(def)), Promise.resolve() );
+    for( const def of defs ){
+        await es.register(def);
+    }
 
+    
 
     const buildEntity = (es: EntitySet, buildFn: BuildQueryFn, eid: number = 0) => {
         let e = new Entity(eid);
@@ -110,8 +113,10 @@ export async function buildStackEntitySet(stack: QueryStack, options?): Promise<
         { uri: "/component/priority", properties: [{ "name": "priority", "type": "integer", "default": 0 }] },
     ];
 
-    await defs.reduce((p, def) => p.then(() => es.register(def)), Promise.resolve());
-
+    for( const def of defs ){
+        await es.register(def);
+    }
+    
     await stack.push([SType.EntitySet, es]);
 
     return [stack, es];

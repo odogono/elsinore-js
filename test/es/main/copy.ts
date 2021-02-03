@@ -48,8 +48,12 @@ test('transfers components to a foreign es', async () => {
     let es1 = createEntitySet();
     let es2 = createEntitySet();
 
-    await defsA.reduce( (p,def) => p.then( () => es1.register(def)), Promise.resolve() );
-    await defsB.reduce( (p,def) => p.then( () => es2.register(def)), Promise.resolve() );
+    for( const def of defsA ){
+        await es1.register(def);
+    }
+    for( const def of defsB ){
+        await es2.register(def);
+    }
 
     let data:any = [ 
         {uri:'/component/status', status:'active'},

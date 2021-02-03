@@ -1,5 +1,5 @@
 import { Entity } from "../entity";
-import { EntitySet, EntitySetMem } from "../entity_set";
+import { EntitySet } from "../entity_set";
 import { BitField, get as bfGet } from "./bitfield";
 
 
@@ -7,10 +7,17 @@ import { BitField, get as bfGet } from "./bitfield";
 
 
 
-export function printAll(es: EntitySet, ents?: Entity[], dids?:string[]) {
-    let result = ents || selectAll(es);
-    for (const e of result) {
-        printEntity(es, e, dids);
+/**
+ * Prints all entities to console.log
+ * 
+ * @param es 
+ * @param ents 
+ * @param dids 
+ */
+export async function printAll(es: EntitySet, ents?: Entity[], dids?:string[]) {
+
+    for await ( const e of es.getEntities() ){
+        printEntity( es, e, dids );
     }
 }
 
@@ -41,9 +48,9 @@ export function printEntity(es: EntitySet, e: Entity, dids?:string[]) {
     }
 }
 
-function selectAll(es: EntitySet): Entity[] {
-    if( es instanceof EntitySetMem ){
-        return es.getEntitiesByIdMem(true, { populate: true });
-    }
-    return [];
-}
+// function selectAll(es: EntitySet): Entity[] {
+//     if( es instanceof EntitySetMem ){
+//         return es.getEntitiesByIdMem(true, { populate: true });
+//     }
+//     return [];
+// }

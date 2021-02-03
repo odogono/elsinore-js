@@ -62,7 +62,8 @@ import {
     sqlDeleteComponent, sqlDeleteEntity,
     sqlRetrieveEntityComponents,
     sqlComponentExists,
-    sqlGetEntities
+    sqlGetEntities,
+    sqlRetrieveComponentsByDef
 } from "./sqlite";
 import { createLog } from "../util/log";
 import { isString, isInteger } from "../util/is";
@@ -115,16 +116,16 @@ export class EntitySetSQL extends EntitySetMem {
         this.path = options.path ?? 'ecs.sqlite';
     }
 
-    clone(options:CloneOptions = {}){
-        const {byUri,byHash,entChanges,comChanges} = this;
-        let componentDefs = this.componentDefs.map(d => ({...d}) );
-        
+    clone(options: CloneOptions = {}) {
+        const { byUri, byHash, entChanges, comChanges } = this;
+        let componentDefs = this.componentDefs.map(d => ({ ...d }));
+
         let props = {
             ...this,
             componentDefs,
             uuid: createUUID(),
-            byUri: new Map<string,number>(byUri),
-            byHash: new Map<number,number>(byHash),
+            byUri: new Map<string, number>(byUri),
+            byHash: new Map<number, number>(byHash),
             entChanges: createChangeSet(entChanges),
             comChanges: createChangeSet(comChanges),
         }
@@ -132,12 +133,71 @@ export class EntitySetSQL extends EntitySetMem {
         return new EntitySetSQL(props as any);
     }
 
-    select(stack:QueryStack, query: StackValue[]): Promise<StackValue[]> {
+    select(stack: QueryStack, query: StackValue[]): Promise<StackValue[]> {
         stack.es = this as unknown as EntitySet;
         return select(stack, query);
     }
 
-    async applyUpdates(){
+    // /**
+    //  * 
+    //  */
+    // *entityIds() {
+    //     this.openEntitySet();
+    //     let eids = sqlGetEntities(this.db);
+
+    //     for (const eid of eids) {
+    //         yield eid;
+    //     }
+    // }
+
+    /**
+     * Returns an iterate over all of the Entitys in the es
+     * @param populate 
+     */
+    async *getEntities( populate:boolean = true): AsyncGenerator<Entity, void, void> {
+        this.openEntitySet();
+        let eids = sqlGetEntities(this.db);
+
+        for (const eid of eids) {
+            yield await this.getEntity(eid, populate);
+        }
+    }
+
+    async *getComponents(){
+        this.openEntitySet();
+
+        for ( const def of this.componentDefs ){
+            // console.log('getC', def.uri);
+            for( const com of sqlRetrieveComponentsByDef(this.db, def) ){
+                yield com;
+            }
+        }
+    }
+
+    /**
+     * Returns an AsyncIterator for all of the entity ids
+     * in the es
+     * 
+     */
+    async * [Symbol.asyncIterator]() {
+        this.openEntitySet();
+        let eids = sqlGetEntities(this.db);
+
+        for (const eid of eids) {
+            yield eid;
+        }
+    }
+
+    // getEntities(): Promise<EntityId[]> {
+    //     this.openEntitySet();
+
+    //     let eids = sqlGetEntities(this.db);
+
+    //     return Promise.resolve(eids);
+    // }
+
+
+    async applyUpdates() {
     }
 
     async markComponentAdd(com: Component): Promise<EntitySetSQL> {
@@ -152,30 +212,30 @@ export class EntitySetSQL extends EntitySetMem {
         const def = this.getByDefId(did) as ComponentDefSQL;
 
         // Log.debug('[markComponentAdd]', existing, com );
-        
+
         sqlUpdateComponent(this.db, com, def);
-        
-        if (existing === true ) {
+
+        if (existing === true) {
             return this.markComponentUpdate(cid);
         }
-        
+
         this.comChanges = addCS(this.comChanges, cid);
 
         return this;
     }
 
     async markEntityComponentsRemove(eids: EntityId[]): Promise<EntitySetSQL> {
-        for(let ii=0;ii<eids.length;ii++ ){
+        for (let ii = 0; ii < eids.length; ii++) {
             const eid = eids[ii];
             const e = await this.getEntity(eid, false);
-            if( e === undefined ){
+            if (e === undefined) {
                 continue;
             }
             for (const did of bfToValues(e.bitField)) {
                 this.markComponentRemove(toComponentId(eid, did));
             }
         }
-        
+
         return this;
     }
 
@@ -238,7 +298,7 @@ export class EntitySetSQL extends EntitySetMem {
         }
 
         this.markEntityUpdate(eid);
-            
+
 
         return this;
     }
@@ -284,8 +344,8 @@ export class EntitySetSQL extends EntitySetMem {
      * @param id 
      */
     async getComponent(id: ComponentId | Component): Promise<Component> {
-        let cid: ComponentId = isComponentId(id) ? 
-            id as ComponentId 
+        let cid: ComponentId = isComponentId(id) ?
+            id as ComponentId
             : getComponentId(id as Component);
 
         this.openEntitySet();
@@ -310,7 +370,7 @@ export class EntitySetSQL extends EntitySetMem {
         return e !== undefined ? this.createEntity(e.id, e.bitField) : undefined;
     }
 
-    
+
     /**
      * Returns an entity instance with components
      * 
@@ -345,12 +405,12 @@ export class EntitySetSQL extends EntitySetMem {
         return e;
     }
 
-    retrieveEntityComponents(e:Entity){
+    retrieveEntityComponents(e: Entity) {
         let dids = bfToValues(e.bitField);
         let defs = dids.map(did => this.getByDefId(did));
-    
+
         let coms = sqlRetrieveEntityComponents(this.db, e.id, defs);
-    
+
         // Log.debug('[getEntity]', coms );
         for (const com of coms) {
             const did = getComponentDefId(com);
@@ -362,14 +422,6 @@ export class EntitySetSQL extends EntitySetMem {
         return e;
     }
 
-    getEntities(): Promise<EntityId[]> {
-        this.openEntitySet();
-
-        let eids = sqlGetEntities(this.db);
-
-        return Promise.resolve(eids);
-    }
-
 
     /**
      * Registers a new ComponentDef in the entityset
@@ -378,7 +430,7 @@ export class EntitySetSQL extends EntitySetMem {
      */
     async register(value: ComponentDef | ComponentDefObj | any): Promise<ComponentDef> {
         this.openEntitySet();
-        let def:ComponentDef = createComponentDef(0, value);
+        let def: ComponentDef = createComponentDef(0, value);
 
         // Hash the def, and check whether we already have this
         const existing = this.getByHash(def.hash);

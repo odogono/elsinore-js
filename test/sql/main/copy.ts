@@ -53,8 +53,15 @@ test('transfers components to a foreign es', async () => {
     let es1 = createEntitySet();
     let es2 = createEntitySet();
 
-    await defsA.reduce( (p,def) => p.then( () => es1.register(def)), Promise.resolve() );
-    await defsB.reduce( (p,def) => p.then( () => es2.register(def)), Promise.resolve() );
+    for( const def of defsA ){
+        await es1.register(def);
+    }
+    for( const def of defsB ){
+        await es2.register(def);
+    }
+
+    // await defsA.reduce( (p,def) => p.then( () => es1.register(def)), Promise.resolve() );
+    // await defsB.reduce( (p,def) => p.then( () => es2.register(def)), Promise.resolve() );
 
     
 
@@ -67,6 +74,9 @@ test('transfers components to a foreign es', async () => {
     let coms = buildComponents(es1, data);
     await es1.add(coms);
 
+    // console.log('\nes1');
+    // await printAll( es1 );
+
     data = [
         {uri:'/component/status', status:'inactive', isActive:false },
         {uri:'/component/topic', topic:'Off Topic'},
@@ -76,16 +86,16 @@ test('transfers components to a foreign es', async () => {
     
     await es2.add(coms);
     // console.log('\nes2');
-    // printAll( es2 );
+    // await printAll( es2 );
 
     
     // console.log('\n>---');
     await es2.add(es1, {debug:true});
     
     // console.log('\nes1');
-    // printAll( es1 );
+    // await printAll( es1 );
     // console.log('\nes2');
-    // printAll( es2 );
+    // await printAll( es2 );
     // Log.debug(es2);
 
     // Log.debug('[TF]', 'es1 size', await es1.size() );

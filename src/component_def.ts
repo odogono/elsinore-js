@@ -30,6 +30,11 @@ export interface ComponentDef {
     additional: Map<string, any>;
 }
 
+export interface ComponentDefRaw {
+    uri: string;
+    properties: [];
+}
+
 export interface ComponentDefProperty {
     name: string;
     type: string;

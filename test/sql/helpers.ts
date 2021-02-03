@@ -1,7 +1,7 @@
 import {
     Entity, isEntity,
 } from '../../src/entity';
-import { EntitySetSQL } from '../../src/entity_set_sql';
+import { EntitySetSQL, SQLEntitySetOptions } from '../../src/entity_set_sql';
 
 import { EntitySet, EntitySetOptions, isEntitySet } from '../../src/entity_set';
 export { EntitySet, isEntitySet } from '../../src/entity_set';
@@ -23,8 +23,8 @@ import {
 import { createLog } from '../../src/util/log';
 
 export { isComponent } from '../../src/component';
-export const parse = (data) => tokenizeString(data, { returnValues: true });
-export const sv = (v): StackValue => [SType.Value, v];
+export const parse = (data:string) => tokenizeString(data, { returnValues: true });
+export const sv = (v:unknown): StackValue => [SType.Value, v];
 
 export { getChanges, ChangeSetOp } from '../../src/entity_set/change_set';
 export { fromComponentId, getComponentDefId, Component, OrphanComponent } from '../../src/component';
@@ -51,7 +51,7 @@ export { buildComponents, loadFixture } from '../es/helpers';
 const liveDB = { path: 'test.sqlite', isMemory: false };
 const testDB = { uuid: 'TEST-1', isMemory: true };
 
-export const createEntitySet = (options?) => new EntitySetSQL({...options,...liveDB});
+export const createEntitySet = (options?:SQLEntitySetOptions) => new EntitySetSQL({...options,...testDB});
 
 
 export async function beforeEach(){
@@ -69,7 +69,10 @@ export async function buildEntitySet(): Promise<[EntitySet, Function]> {
         { uri: '/component/channel_member', properties: [ {name:'channel', type:'integer'} ] },
     ]
 
-    await defs.reduce( (p,def) => p.then( () => es.register(def)), Promise.resolve() );
+    for( const def of defs ){
+        await es.register(def);
+    }
+    // await defs.reduce( (p,def) => p.then( () => es.register(def)), Promise.resolve() );
 
     const buildEntity = (es: EntitySet, buildFn: BuildQueryFn, eid: number = 0) => {
         let e = new Entity(eid);
@@ -95,7 +98,9 @@ export async function buildStackEntitySet(stack: QueryStack, options?): Promise<
         { uri: "/component/priority", properties: [{ "name": "priority", "type": "integer", "default": 0 }] },
     ];
 
-    await defs.reduce((p, def) => p.then(() => es.register(def)), Promise.resolve());
+    for( const def of defs ){
+        await es.register(def);
+    }
 
     await stack.push([SType.EntitySet, es]);
 
@@ -103,7 +108,7 @@ export async function buildStackEntitySet(stack: QueryStack, options?): Promise<
 }
 
 
-export async function prepES(insts?: string, fixture?: string, options: EntitySetOptions = {}): Promise<[QueryStack, EntitySet]> {
+export async function prepES(insts?: string, fixture?: string, options: EntitySetOptions = {}): Promise<[QueryStack, EntitySetSQL]> {
     let es = createEntitySet();
     let values: StackValue[];
 

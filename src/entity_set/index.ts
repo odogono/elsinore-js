@@ -163,9 +163,15 @@ export abstract class EntitySet {
 
 
     /**
-     * Returns an array of all entity ids in the set
+     * Returns a generator of all entities in the set
      */
-    abstract getEntities(): Promise<EntityId[]>;
+    // abstract getEntities(): Promise<EntityId[]>;
+    abstract getEntities(populate?: boolean): AsyncGenerator<Entity, void, void>;
+
+    /**
+     * Returns a generator of all components in the set
+     */
+    abstract getComponents(): AsyncGenerator<Component, void, void>;
 
     /**
      * Returns entities by defId
@@ -615,8 +621,8 @@ export class EntitySetMem extends EntitySet {
             this.markEntityComponentsRemove([e.id]);
             await this.addComponents(e.getComponents());
         }
-        else if (isEntitySetMem(item)) {
-            let es = item as EntitySetMem;
+        else if (isEntitySet(item)) {
+            let es = item as EntitySet;
             // apply defs
             let defs = await es.getComponentDefs();
             let didTable = new Map<ComponentDefId, ComponentDefId>();
@@ -627,11 +633,6 @@ export class EntitySetMem extends EntitySet {
                 let def = defs[ii];
                 await this.register(def);
                 let rdef = this.getByHash(def.hash);
-                // let rr = this.getByUri(def.uri);
-                // if( rdef === undefined ){
-                // console.log('[add][es]', 'convert', def.uri, def.hash, defToObject(rr) );
-                // console.log( defToObject(def) );
-                // }
                 didTable.set(getDefId(def), getDefId(rdef));
             }
 
@@ -641,7 +642,8 @@ export class EntitySetMem extends EntitySet {
             // rebuild each of the sender components altering their
             // def id
             let coms: Component[] = [];
-            for (const [cid, com] of es.components) {
+
+            for await( const com of es.getComponents() ){
                 let { '@d': did, ...rest } = com;
                 did = didTable.get(did);
                 coms.push({ '@d': did, ...rest });
@@ -649,8 +651,8 @@ export class EntitySetMem extends EntitySet {
 
             // console.log('[add][es]', 'convert', coms);
             await this.addComponents(coms);
-            // build a lookup of src dids to target dids
-            // await this.addComponents( Array.from(es.components.values()) );
+        } else {
+            // console.log('[add]', 'no matching type');
         }
 
         this.applyRemoveChanges();
@@ -865,8 +867,29 @@ export class EntitySetMem extends EntitySet {
     //     return Promise.resolve([]);
     // }
 
-    getEntities(): Promise<EntityId[]> {
-        return Promise.resolve( Array.from(this.entities.keys()) );
+    // getEntities(): Promise<EntityId[]> {
+    //     return Promise.resolve( Array.from(this.entities.keys()) );
+    // }
+
+    async * [Symbol.asyncIterator]() {
+        for( const eid of this.entities.keys() ){
+            yield eid;
+        }
+    }
+
+    async *getEntities( populate:boolean = true): AsyncGenerator<Entity, void, void> {
+        for( const eid of this.entities.keys() ){
+            yield await this.getEntity(eid, populate);
+        }
+    }
+    // getEntities(): Promise<EntityId[]> {
+    //     return Promise.resolve( Array.from(this.entities.keys()) );
+    // }
+
+    async *getComponents(): AsyncGenerator<Component, void, void> {
+        for( const [cid, com] of this.components ){
+            yield com;
+        }
     }
 
     /**

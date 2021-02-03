@@ -485,4 +485,23 @@ test('selecting component by attribute', async () => {
 
 });
 
+
+// test.only('select with bf', async () => {
+//     let [,es] = await prepES(``, 'todo');
+//     const stmt = es.prepare(`
+//         [
+//             /component/meta#/meta/author !ca $author ==
+//             /component/meta !bf
+//             @c
+//         ] select
+//         prints
+//         `);
+
+//     // console.log( stack.items );
+//     const result = await stmt.getResult({author:'av'});
+//     console.log( result );
+
+//     // assert.equal(result, 'action');
+// });
+
 test.run();

@@ -468,6 +468,25 @@ function rowToComponent(def:ComponentDefSQL, row:any ): Component {
 //     }
 // }
 
+
+
+/**
+ * Returns a generator which yields each component of a given def type
+ * 
+ * @param ref 
+ * @param def 
+ */
+export function *sqlRetrieveComponentsByDef(ref: SqlRef, def:ComponentDefSQL ){
+    const {db} = ref;
+
+    let stmt = db.prepare(`SELECT * FROM ${def.tblName} ORDER BY eid`);
+    
+    for( const row of stmt.iterate() ){
+        yield rowToComponent(def, row);
+    }
+}
+
+
 /**
  * Retrieves components of entities which have the specified defs
  * 
@@ -581,6 +600,8 @@ export function sqlRetrieveEntityComponents(ref: SqlRef, eid: number, defs: Comp
     return defs.map(def => sqlRetrieveComponent(ref, eid, def));
 }
 
+
+
 export function sqlLastId(ref: SqlRef): number {
     let stmt = ref.db.prepare('SELECT last_insert_rowid() AS id');
     let { id } = stmt.get();
@@ -594,7 +615,7 @@ export function sqlGetEntities(ref: SqlRef): number[] {
         return [];
     }
 
-    return rows.map(r => r.did);
+    return rows.map(r => r.id);
 }
 
 export function getLastEntityId(ref: SqlRef): number {
@@ -645,7 +666,10 @@ export function sqlRetrieveDefByHash(ref: SqlRef, id: number): ComponentDef {
 
 
 /**
- * Retrieves entities with the given entityIds 
+ * Retrieves entities with the given entityIds
+ * 
+ * @param ref 
+ * @param eids 
  */
 export function sqlRetrieveEntities(ref: SqlRef, eids?: EntityId[]): Entity[] {
     const { db } = ref;
@@ -672,6 +696,8 @@ export function sqlRetrieveEntities(ref: SqlRef, eids?: EntityId[]): Entity[] {
     }, {});
     return Object.values(result);
 }
+
+
 
 export function sqlRetrieveEntityByDefId(ref: SqlRef, did: number[]): Entity[] {
     const { db } = ref;

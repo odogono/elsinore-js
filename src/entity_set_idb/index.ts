@@ -187,14 +187,30 @@ export class EntitySetIDB extends EntitySetMem {
         return e;
     }
 
-    async getEntities(): Promise<EntityId[]> {
+    /**
+     * Returns an AsyncIterator for all of the entity ids
+     * in the es
+     * 
+     */
+    async * [Symbol.asyncIterator]() {
         await this.openEntitySet();
         const store = this.db.transaction(STORE_ENTITIES, 'readonly').objectStore(STORE_ENTITIES);
 
-        let result = await idbGetAllKeys(store);
+        
 
-        return result;
+        // for (const eid of eids) {
+        //     yield eid;
+        // }
     }
+
+    // async getEntities(): Promise<EntityId[]> {
+    //     await this.openEntitySet();
+    //     const store = this.db.transaction(STORE_ENTITIES, 'readonly').objectStore(STORE_ENTITIES);
+
+    //     let result = await idbGetAllKeys(store);
+
+    //     return result;
+    // }
 
 
 
