@@ -1,4 +1,4 @@
-const getClass:Function = {}.toString;
+const getClass: Function = {}.toString;
 
 /**
  * Checks if the value is an object
@@ -8,7 +8,7 @@ const getClass:Function = {}.toString;
  * @param {*} value The value to check.
  * @returns {boolean} Returns `true` if `value` is an object, else `false`.
  */
-export function isObject(value:any): boolean {
+export function isObject(value: any): boolean {
     // taken from https://github.com/lodash/lodash/blob/master/isObject.js
     // const type = typeof value;
     // return value != null && (type === 'object' || type === 'function')
@@ -19,11 +19,11 @@ export function isObject(value:any): boolean {
  *
  * @param {*} object
  */
-export function isString(value:any): boolean {
+export function isString(value: any): boolean {
     return getClass.call(value) === '[object String]';
 }
 
-export function isRegex(value:any): boolean {
+export function isRegex(value: any): boolean {
     return getClass.call(value) === '[object RegExp]';
 }
 
@@ -32,21 +32,21 @@ export function isRegex(value:any): boolean {
  * @param {*} object
  * @returns {boolean} if the object is a function
  */
-export function isFunction(value:any): boolean {
-    
-    return value && (getClass.call(value) === '[object Function]' 
-        || getClass.call(value) === '[object AsyncFunction]' );
+export function isFunction(value: any): boolean {
+
+    return value && (getClass.call(value) === '[object Function]'
+        || getClass.call(value) === '[object AsyncFunction]');
 }
 
 /**
  *
  * @param {*} object
  */
-export function isDate(value:any): boolean {
+export function isDate(value: any): boolean {
     return value && getClass.call(value) === '[object Date]';
 }
 
-export function isValidDate(value:any):boolean {
+export function isValidDate(value: any): boolean {
     return isDate(value) && !isNaN(value.getTime());
 }
 
@@ -57,7 +57,7 @@ export function isValidDate(value:any):boolean {
 // A numeric is a letiable that contains a numeric value, regardless its type
 // It can be a String containing a numeric value, exponential notation, or a Number object
 // See here for more discussion: http://stackoverflow.com/questions/18082/validate-numbers-in-javascript-isnumeric/1830844#1830844
-export function isNumeric(n:any): boolean {
+export function isNumeric(n: any): boolean {
     return !Number.isNaN(parseFloat(n)) && isFinite(n);
 }
 
@@ -65,7 +65,7 @@ export function isNumeric(n:any): boolean {
 // Objects that can be parsed that way are also considered ints, e.g. "123"
 // Floats that are mathematically equal to integers are considered integers, e.g. 1.0
 // See here for more discussion: http://stackoverflow.com/questions/1019515/javascript-test-for-an-integer
-export function isInteger(val:any): boolean {
+export function isInteger(val: any): boolean {
     // return Number.isInteger(val);
     return !Array.isArray(val) && !Number.isNaN(parseFloat(val)) && isFinite(val) && val % 1 === 0;
 }
@@ -74,14 +74,14 @@ export function isInteger(val:any): boolean {
 /**
  * Returns true if the passed value is a boolean
  */
-export function isBoolean(value:any):boolean {
+export function isBoolean(value: any): boolean {
     return value !== undefined && getClass.call(value) === '[object Boolean]';
 }
 
 /**
  * 
  */
-export function isUUID(value:any):boolean {
+export function isUUID(value: any): boolean {
     // 4AC18B41-2372-D0FD-9336-E678D0EAE236
     return isString(value) && (value as string).length === 36;
 }
@@ -89,22 +89,55 @@ export function isUUID(value:any):boolean {
 /**
  * 
  */
-export function isBrowser():boolean {
+export function isBrowser(): boolean {
     return typeof window !== "undefined" && typeof window.document !== "undefined";
 }
 
 
-export function isPromise(value:any): boolean {
+export function isPromise(value: any): boolean {
     return value && typeof value.then === 'function';
 }
 
-export function isEmpty(value:any): boolean {
-    if( value == null ){
+export function isEmpty(value: any): boolean {
+    if (value == null) {
         return true;
     }
-    if( Array.isArray(value) || isString(value) ){
+    if (Array.isArray(value) || isString(value)) {
         return value.length === 0;
     }
 
     return Object.keys(value).length === 0;
+}
+
+
+/**
+ * Compares two values for equality
+ * 
+ * https://github.com/epoberezkin/fast-deep-equal/blob/master/src/index.jst
+ * 
+ * @param a 
+ * @param b 
+ */
+export function isEqual(a: any, b: any): boolean {
+    if (a === b) { return true; }
+    if (a && b && typeof a == 'object' && typeof b == 'object') {
+        if (a.constructor !== b.constructor) return false;
+
+        let length, ii, keys;
+        if (Array.isArray(a)) {
+            length = a.length;
+            if (length != b.length) {
+                return false;
+            }
+            for (ii = length; ii-- !== 0;) {
+                if (!isEqual(a[ii], b[ii])) {
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+
+    // true if both NaN, false otherwise
+    return a !== a && b !== b;
 }

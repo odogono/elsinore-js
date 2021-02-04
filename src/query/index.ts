@@ -42,6 +42,7 @@ import { tokenizeString } from "./tokenizer";
 import { onCondition } from "./words/cond";
 import { Entity } from "../entity";
 import { getComponentDefId, getComponentEntityId } from "../component";
+import { onDiff } from "./words/set";
 export { QueryStack };
 export const parse = (q:string) => tokenizeString(q,{returnValues:true});
 
@@ -297,6 +298,10 @@ export function createStdLibStack( stack?:QueryStack ){
         ['pluck', onPluck, SType.List, SType.List],
         ['pluck', onPluck, SType.Any, SType.Any],
         ['pluck!', onPluck, SType.Any, SType.Any],
+        ['diff', onDiff, SType.Any, SType.Any],
+        ['diff!', onDiff, SType.Any, SType.Any],
+        ['intersect', onDiff, SType.Any, SType.Any],
+        ['intersect!', onDiff, SType.Any, SType.Any],
         
         ['unique', onUnique, SType.List],
         ['filter', onFilter, SType.List, SType.Value],

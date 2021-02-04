@@ -1,4 +1,4 @@
-import { SType, StackError, AsyncInstResult, StackValue } from "../types";
+import { SType, StackError, AsyncInstResult, StackValue, InstResult } from "../types";
 import { unpackStackValue, unpackStackValueR, stackToString } from "../util";
 import { toCapitalized } from '../../util/to';
 import { isObject } from "../../util/is";
@@ -8,7 +8,7 @@ import { isComponent } from "../../component";
 import { Entity, isEntity } from "../../entity";
 
 
-export async function onPluck(stack: QueryStack, [,op]:StackValue): AsyncInstResult {
+export function onPluck(stack: QueryStack, [,op]:StackValue): InstResult {
 
     // console.log('[onPluck]', stackToString(stack) );
     const isDes = op === 'pluck!';

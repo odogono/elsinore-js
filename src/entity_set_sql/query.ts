@@ -44,6 +44,7 @@ import { onDefine } from "../query/words/define";
 import { onPluck } from "../query/words/pluck";
 import { onBitFieldOr } from "../query/words";
 import { printEntity } from '../util/print';
+import { onDiff } from '../query/words/set';
 
 const Log = createLog('SQLQuery');
 
@@ -114,6 +115,10 @@ export async function select(stack:QueryStack, query: StackValue[], options:Sele
         ['limit', applyLimit],
         ['pluck', onPluck],
         ['pluck!', onPluck],
+        ['diff', onDiff],
+        ['diff!', onDiff],
+        ['intersect', onDiff],
+        ['intersect!', onDiff],
     ]);
 
     // make sure any filter values have a following cmd

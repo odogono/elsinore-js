@@ -41,6 +41,7 @@ import { unpackStackValue, unpackStackValueR, stackToString } from "../query/uti
 import { EntitySet, EntitySetMem } from ".";
 import { compareDates } from '../query/words/util';
 import { onBitFieldOr, onPrintStack } from '../query/words';
+import { onDiff } from '../query/words/set';
 
 const Log = createLog('ESMemQuery');
 
@@ -114,6 +115,10 @@ export async function select(stack: QueryStack, query: StackValue[], options: Se
         ['limit', applyLimit],
         ['pluck', onPluck],
         ['pluck!', onPluck],
+        ['diff', onDiff],
+        ['diff!', onDiff],
+        ['intersect', onDiff],
+        ['intersect!', onDiff],
     ]);
 
     // make sure any filter values have a following cmd
