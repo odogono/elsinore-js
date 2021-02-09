@@ -52,6 +52,7 @@ const liveDB = { path: 'test.sqlite', isMemory: false };
 const testDB = { uuid: 'TEST-1', isMemory: true };
 
 export const createEntitySet = (options?:SQLEntitySetOptions) => new EntitySetSQL({...options,...testDB});
+// export const createEntitySet = (options?:SQLEntitySetOptions) => new EntitySetSQL({...options,...liveDB});
 
 
 export async function beforeEach(){

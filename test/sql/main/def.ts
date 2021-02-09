@@ -47,6 +47,23 @@ test('registers', async () => {
     assert.equal(def.uri, '/component/position');
 });
 
+test('registering again wont add', async () => {
+    let es = createEntitySet();
+    const data = { uri: '/component/position', properties: [{ name: 'rank', type: 'integer' }, 'file'] };
+    
+    await es.register(data);
+
+    // retain the db reference
+    let db = es.db;
+    es = createEntitySet({db});
+
+    await es.register(data);
+
+    const defs = await es.getComponentDefs();
+
+    assert.is( defs.length, 1 );
+})
+
 test('registers same uri, but different properties', async () => {
     // in effect, the def is overwritten, but existing components are retained
 
