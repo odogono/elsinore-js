@@ -1,12 +1,11 @@
-
-import { isObject, isString, isPromise, isFunction, isInteger } from "../util/is";
+import { deepExtend } from '@odgn/utils';
+import { isInteger, isPromise, isString } from '@odgn/utils';
+import { toInteger } from '@odgn/utils';
 import { createLog } from "../util/log";
-import { deepExtend } from "../util/deep_extend";
 import { stackToString, unpackStackValueR } from "./util";
-import { toInteger } from "../util/to";
 import { EntityId, getEntityId, Entity } from "../entity";
 import { ComponentDefId, ComponentDef, getDefId } from "../component_def";
-import { BitField, create as createBitField, toValues as bfToValues } from '../util/bitfield';
+import { BitField, create as createBitField, toValues as bfToValues } from '@odgn/utils/lib/cjs/bitfield';
 import {
     StackValue, WordFn, SType,
     StackError, InstResult, AsyncInstResult, WordSpec, WordEntry, Words

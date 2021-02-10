@@ -1,6 +1,6 @@
-import { hash as hashValue } from './util/hash';
-import { isObject, isString, isFunction, isInteger } from './util/is';
-import { toCamelCase, toCapitalized } from './util/to';
+import { hash as hashValue } from '@odgn/utils';
+import { isObject, isString, isFunction, isInteger } from '@odgn/utils';
+import { toCamelCase, toCapitalized } from '@odgn/utils';
 
 
 

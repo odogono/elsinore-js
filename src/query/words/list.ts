@@ -1,6 +1,6 @@
 import { onUnexpectedError } from ".";
 import { QueryStack } from "..";
-import { isEqual } from "../../util/is";
+import { isEqual } from "@odgn/utils";
 import { AsyncInstResult, InstResult, StackError, StackValue, SType } from "../types";
 import { unpackStackValue, unpackStackValueR } from "../util";
 import { onMapOpen } from "./map";

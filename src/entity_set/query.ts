@@ -7,7 +7,7 @@ import {
     getComponentId
 } from "../component";
 import { createLog } from "../util/log";
-import { isRegex, isInteger, isString, isBoolean, isDate, isValidDate } from "../util/is";
+import { isRegex, isInteger, isString, isBoolean, isDate, isValidDate } from '@odgn/utils';
 import {
     BitField,
     create as createBitField,
@@ -21,7 +21,7 @@ import {
     TYPE_AND,
     TYPE_OR,
     TYPE_NOT
-} from "../util/bitfield";
+} from '@odgn/utils/lib/cjs/bitfield';
 import {
     isStackValue,
     entityIdFromValue,

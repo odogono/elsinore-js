@@ -46,8 +46,8 @@ import {
     and as bfAnd,
     or as bfOr,
     toValues as bfToValues
-} from "../util/bitfield";
-import { createUUID } from "../util/uuid";
+} from '@odgn/utils/lib/cjs/bitfield';
+import { createUUID } from '@odgn/utils';
 import {
     SqlRef,
     sqlOpen, sqlIsOpen,
@@ -66,12 +66,10 @@ import {
     sqlRetrieveComponentsByDef
 } from "./sqlite";
 import { createLog } from "../util/log";
-import { isString, isInteger } from "../util/is";
 import { select } from "./query";
 import { EntitySetMem, AddType, AddOptions, RemoveType, ESOptions, EntitySet, EntitySetOptions, CloneOptions } from "../entity_set";
 import { StackValue } from "../query/types";
 import { QueryStack } from "../query";
-import { hashToString } from "../util/hash";
 
 const Log = createLog('EntitySetSQL');
 

@@ -3,14 +3,14 @@ import {
     getComponentDefId,
     setEntityId as setComponentEntityId
 } from "./component";
-import { isObject, isInteger } from './util/is';
+import { isObject, isInteger } from '@odgn/utils';
 import { 
     BitField,
     create as createBitField,
     set as bfSet,
     and as bfAnd,
     toValues as bfToValues
-} from "./util/bitfield";
+} from "@odgn/utils/lib/cjs/bitfield";
 import { ComponentDefId, ComponentDef, getDefId } from "./component_def";
 
 export const Type = '@e';

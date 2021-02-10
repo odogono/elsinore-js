@@ -1,5 +1,5 @@
 import { QueryStack } from "..";
-import { isBoolean } from "../../util/is";
+import { isBoolean } from '@odgn/utils';
 import { AsyncInstResult, InstResult, StackError, StackValue, SType } from "../types";
 
 

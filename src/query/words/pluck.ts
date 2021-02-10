@@ -1,7 +1,7 @@
 import { SType, StackError, AsyncInstResult, StackValue, InstResult } from "../types";
 import { unpackStackValue, unpackStackValueR, stackToString } from "../util";
-import { toCapitalized } from '../../util/to';
-import { isObject } from "../../util/is";
+import { toCapitalized } from '@odgn/utils';
+import { isObject } from '@odgn/utils';
 import { isStackValue, QueryStack } from "../stack";
 import Jsonpointer from 'jsonpointer';
 import { isComponent } from "../../component";

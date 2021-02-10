@@ -3,7 +3,7 @@ import { InstResult, SType, StackValue } from "../query/types";
 import { 
     BitField,
     toValues as bfToValues
-} from "../util/bitfield";
+} from '@odgn/utils/lib/cjs/bitfield';
 import { unpackStackValueR } from "../query/util";
 import { EntitySet } from ".";
 

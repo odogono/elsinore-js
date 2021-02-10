@@ -23,7 +23,7 @@ import {
     or as bfOr,
     toValues as bfToValues,
     isBitField
-} from "../util/bitfield";
+} from "@odgn/utils/lib/cjs/bitfield";
 import {
     Type as DefT,
     ComponentDef,
@@ -43,7 +43,7 @@ import {
     EntityId
 } from "../entity";
 import { StackValue, SType, InstResult } from "../query/types";
-import { createUUID } from "../util/uuid";
+import { createUUID } from '@odgn/utils';
 import { query, QueryOptions, createStdLibStack, Statement } from '../query';
 import {
     ChangeSet,
@@ -55,10 +55,10 @@ import {
     merge as mergeCS,
     ChangeSetOp, getChanges
 } from "./change_set";
-import { isInteger, isObject, isString } from "../util/is";
+import { isInteger, isObject, isString } from '@odgn/utils';
 import { MatchOptions } from '../constants';
 import { select, matchEntities } from "./query";
-import { buildFlake53 } from "../util/id";
+import { buildFlake53 } from '@odgn/utils';
 import { QueryStack } from "../query/stack";
 import { unpackStackValueR } from "../query/util";
 

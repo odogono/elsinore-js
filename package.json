@@ -48,6 +48,7 @@
     "dist/esm/*"
   ],
   "dependencies": {
+    "@odgn/utils": "^0.1.0",
     "better-sqlite3": "^7.1.2",
     "fs-extra": "^9.0.1",
     "jsonpointer": "^4.1.0",

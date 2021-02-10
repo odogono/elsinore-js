@@ -1,5 +1,5 @@
 import { Type as DefT, ComponentDefId } from './component_def';
-import { isObject, isString, isInteger } from './util/is';
+import { isObject, isString, isInteger } from '@odgn/utils';
 import { EntityId } from './entity';
 
 export type ComponentProperties = Map<string, any>;

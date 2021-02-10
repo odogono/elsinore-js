@@ -1,6 +1,6 @@
 import { StackValue, InstResult, AsyncInstResult, SType } from "../types";
 import { QueryStack } from "../stack";
-import { hash } from "../../util/hash";
+
 
 
 /**

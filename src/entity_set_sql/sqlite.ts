@@ -28,13 +28,13 @@ import {
     and as bfAnd,
     or as bfOr,
     toValues as bfToValues
-} from "../util/bitfield";
+} from '@odgn/utils/lib/cjs/bitfield';
 import { Component, ComponentId, toComponentId } from '../component';
 import { SType } from '../query/types';
-import { isBoolean, isRegex, isDate, isValidDate } from '../util/is';
+import { isBoolean, isRegex, isDate, isValidDate } from '@odgn/utils';
 import { compareDates } from '../query/words/util';
-import { hashToString } from '../util/hash';
-import { stringify } from '../util/json';
+import { hashToString } from '@odgn/utils';
+import { stringify } from '@odgn/utils';
 
 const Log = createLog('Sqlite');
 

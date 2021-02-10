@@ -11,10 +11,10 @@ import {
     or as bfOr,
     toValues as bfToValues,
     isBitField
-} from "../util/bitfield";
+} from '@odgn/utils/lib/cjs/bitfield';
 import { EntitySetSQL, ComponentDefSQL } from ".";
 import { createLog } from "../util/log";
-import { isInteger, isString, isBoolean } from "../util/is";
+import { isInteger, isString, isBoolean } from '@odgn/utils';
 
 import {
     isStackValue,
@@ -37,13 +37,11 @@ import {
     sqlRetrieveComponent,
     sqlRetrieveComponentIds
 } from "./sqlite";
-import { Type, ComponentDefId, ComponentDef } from "../component_def";
 import { onLogicalFilter, parseFilterQuery } from "../entity_set/filter";
 import { onComponentAttr, buildBitfield, SelectOptions, stringToComponentAttr } from "../entity_set/query";
 import { onDefine } from "../query/words/define";
 import { onPluck } from "../query/words/pluck";
 import { onBitFieldOr } from "../query/words";
-import { printEntity } from '../util/print';
 import { onDiff } from '../query/words/list';
 
 const Log = createLog('SQLQuery');

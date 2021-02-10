@@ -1,9 +1,8 @@
 import { StackError, StackValue, SType } from "./types";
 import { getComponentId } from "../component";
 import { getEntityId } from "../entity";
-import { stringify } from "../util/json";
+import { stringify } from '@odgn/utils';
 import { isStackValue, QueryStack } from "./stack";
-import { isString } from "../util/is";
 
 
 export interface ToStringOptions {
