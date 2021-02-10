@@ -14,7 +14,7 @@ import {
 
 let test = suite('es/mem/query - Conditions');
 
-test('iif evaluates a boolean condition', async () => {
+test('iif evaluates a boolean condition with a word result', async () => {
     // WHAT to do - should list conditions be evaled?
     let [stack] = await prep(`
             [ 2 3 + ] ok define
@@ -23,6 +23,18 @@ test('iif evaluates a boolean condition', async () => {
 
     let result = stack.popValue();
     assert.equal(result, 5);
+})
+
+test('iif evaluates a boolean condition', async () => {
+    // WHAT to do - should list conditions be evaled?
+    let [stack] = await prep(`
+            [ 2 3 ] 
+            [ 10 2 ]
+            [ intersect! pop! ] [ diff! pop! ] true iif
+        `);
+
+    let result = stack.popValue();
+    assert.equal(result, 10);
 })
 
 test('if', async () => {

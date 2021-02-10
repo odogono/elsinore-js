@@ -180,7 +180,7 @@ export function registerEntitySet(ref: SqlRef, es: EntitySetSQL, options = {}) {
 }
 
 
-export function sqlInsertDef(ref: SqlRef, def: ComponentDef): ComponentDef {
+export function sqlInsertDef(ref: SqlRef, def: ComponentDef): ComponentDefSQL {
     const { db } = ref;
     const hash = def.hash;// defHash(def);
     const schema = defToObject(def, false);
@@ -624,14 +624,15 @@ export function getLastEntityId(ref: SqlRef): number {
     return row !== undefined ? row.id : 0;
 }
 
-export function sqlRetrieveDefs(ref: SqlRef): ComponentDef[] {
+export function sqlRetrieveDefs(ref: SqlRef): ComponentDefSQL[] {
     const { db } = ref;
     let stmt = db.prepare('SELECT * FROM tbl_component_def');
     let rows = stmt.all();
 
     return rows.map(row => {
         let { id, schema } = row;
-        return createComponentDef(id, JSON.parse(schema));
+        // return createComponentDef(id, JSON.parse(schema));
+        return sqlCreateComponentDef( id, schema );
     })
 }
 
@@ -646,10 +647,10 @@ export function sqlRetrieveDefByUri(ref: SqlRef, uri: string): ComponentDef {
     }
 
     let { id, schema } = row;
-    return createComponentDef(id, JSON.parse(schema));
+    return sqlCreateComponentDef( id, schema );
 }
 
-export function sqlRetrieveDefByHash(ref: SqlRef, id: number): ComponentDef {
+export function sqlRetrieveDefByHash(ref: SqlRef, id: number): ComponentDefSQL {
     const { db } = ref;
 
     let stmt = db.prepare('SELECT * FROM tbl_component_def WHERE hash = ? LIMIT 1');
@@ -660,10 +661,14 @@ export function sqlRetrieveDefByHash(ref: SqlRef, id: number): ComponentDef {
     }
 
     let { id: did, schema } = row;
-
-    return createComponentDef(did, JSON.parse(schema));;
+    return sqlCreateComponentDef( did, schema );
 }
 
+function sqlCreateComponentDef( did: ComponentDefId, schema:string ): ComponentDefSQL {
+    const def = createComponentDef(did, JSON.parse(schema)) as ComponentDefSQL;
+    def.tblName = defToTbl(def);
+    return def;
+}
 
 /**
  * Retrieves entities with the given entityIds

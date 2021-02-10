@@ -232,7 +232,9 @@ function walkFilterQuery(es: EntitySetMem, eids: EntityId[], cmd?, ...args) {
     }
     else if (cmd === 'or') {
         let left = walkFilterQuery(es, eids, ...args[0]);
+        // console.log('[walkFQ]', 'left', cmd, args[0], '->', left);
         let right = walkFilterQuery(es, eids, ...args[1]);
+        // console.log('[walkFQ]', 'right', cmd, eids, args[0], '->', right);
 
         // Log.debug('[applyFilter]', 'or', left, right );
 
@@ -279,14 +281,21 @@ function walkFilterQueryCompare(es: EntitySetMem, eids: EntityId[], cmd?, ...arg
         const cid = toComponentId(eid, did);
         const com = es.components.get(cid);
 
+        if( com === undefined ){
+            continue;
+        }
+
         // console.log('[walk]', cmd, cid);
-        // console.log('[walk]', cmd, ptr, val);// {}.toString.call(val) );
+        // console.log('[walk]', cmd, ptr, val, cid);// {}.toString.call(val) );
+        // if( com === undefined ){
+        //     console.log('[walkFilterQueryCompare]', eid, def);
+        // }
 
         let ptrVal = isJptr ? Jsonpointer.get(com, ptr) : com[ptr];
 
 
         // if( com[key] === val )
-        // Log.debug('[walkFQ]','==', ptr, ptrVal, val );
+        // Log.debug('[walkFQ]','==', eid, ptr, ptrVal, val );
         // Log.debug('[walkFQ]','==', key, val, com[key], com);
         // if the value is an array, we look whether it exists
         if (Array.isArray(val)) {

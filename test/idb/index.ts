@@ -19,7 +19,6 @@ import {
     Entity,
     isEntity,
 } from '../../src/entity';
-import { BuildQueryFn } from '../../src/query/build';
 import { isComponentDef, hash as hashDef, ComponentDef, getDefId } from '../../src/component_def';
 import { getChanges, ChangeSetOp } from '../../src/entity_set/change_set';
 import { assertHasComponents } from '../helpers/assert';

@@ -517,7 +517,22 @@ test('selecting component against bf', async () => {
 
     assert.equal( res.length, 2 );
     assert.equal( res[1].url, 'file:///readme.txt' );
-
 });
+
+
+// test('condition against missing com', async () => {
+//     let query = `[
+//             /component/completed#/isComplete !ca true ==
+//             /component/completed#/isComplete !ca false ==
+//             or
+//             /component/priority#priority !ca -5 ==
+//             and
+//             @e
+//             ] select
+//             prints
+//             `
+
+//     let [stack] = await prepES(query, 'todo');
+// });
 
 test.run();

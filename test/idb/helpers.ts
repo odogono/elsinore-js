@@ -16,7 +16,6 @@ import { tokenizeString } from '../../src/query/tokenizer';
 import { StackValue, SType } from '../../src/query/types';
 import { createStdLibStack } from '../../src/query';
 
-import { BuildQueryFn } from '../../src/query/build';
 import {
     toObject as defToObject,
     hash as hashDef,
@@ -47,7 +46,7 @@ export { isComponentDef, hash as hashDef, getDefId, Type } from '../../src/compo
 
 export { printAll, printEntity } from '../../src/util/print';
 
-import { loadFixture } from '../es/helpers';
+import { BuildQueryFn, loadFixture } from '../es/helpers';
 import { EntitySetIDB, clearIDB } from '../../src/entity_set_idb';
 export { buildComponents, loadFixture } from '../es/helpers';
 
@@ -72,7 +71,9 @@ export async function buildEntitySet(): Promise<[EntitySet, Function]> {
         { uri: '/component/channel_member', properties: [ {name:'channel', type:'integer'} ] },
     ]
 
-    await defs.reduce( (p,def) => p.then( () => es.register(def)), Promise.resolve() );
+    for( const def of defs ){
+        await es.register(def);
+    }
 
     const buildEntity = (es: EntitySet, buildFn: BuildQueryFn, eid: number = 0) => {
         let e = new Entity(eid);
@@ -98,8 +99,10 @@ export async function buildStackEntitySet(stack: QueryStack, options?): Promise<
         { uri: "/component/priority", properties: [{ "name": "priority", "type": "integer", "default": 0 }] },
     ];
 
-    await defs.reduce((p, def) => p.then(() => es.register(def)), Promise.resolve());
-
+    for( const def of defs ){
+        await es.register(def);
+    }
+    
     await stack.push([SType.EntitySet, es]);
 
     return [stack, es];

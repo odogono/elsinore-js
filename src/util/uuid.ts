@@ -11,7 +11,10 @@ const getRandomValues = crypto ?
     : () => require('crypto').randomBytes(16);
 
 
-export const createUUID = () => {
+/**
+ * Creates a new UUIDv4
+ */
+export function createUUID() {
     const hex = [...Array(256).keys()]
         .map(index => (index).toString(16).padStart(2, '0'));
 
@@ -24,7 +27,7 @@ export const createUUID = () => {
     return [...r.entries()]
         .map(([index, int]) => [4, 6, 8, 10].includes(index) ? `-${hex[int]}` : hex[int])
         .join('');
-};
+}
 
 // export const createUUID = () => b();
 // function b(a){

@@ -87,6 +87,7 @@ export interface SQLEntitySetOptions extends EntitySetOptions {
     readDefs?: boolean;
     isMemory?: boolean;
     clearDb?: boolean;
+    db?: SqlRef;
 }
 
 
@@ -114,6 +115,11 @@ export class EntitySetSQL extends EntitySetMem {
         this.isMemory = options.isMemory ?? false;
         this.debug = options.debug ?? false;
         this.path = options.path ?? 'ecs.sqlite';
+        this.db = options.db ?? undefined;
+    }
+
+    getUrl(){
+        return `es://sqlite${this.path}?uuid=${this.uuid}`;
     }
 
     clone(options: CloneOptions = {}) {
@@ -433,17 +439,10 @@ export class EntitySetSQL extends EntitySetMem {
         let def: ComponentDef = createComponentDef(0, value);
 
         // Hash the def, and check whether we already have this
-        const existing = this.getByHash(def.hash);
+        // const existing = this.getByHash(def.hash);
+        let existing = sqlRetrieveDefByHash(this.db, def.hash);
 
-        if (existing !== undefined) {
-            // console.log(`component definition already exists (${existing['@d']}/${existing.uri})`);
-            return existing;
-        }
-        // Log.debug('[register]', def.uri, def.hash, hashToString(def.hash), this.byHash );
-
-        // insert the def into the def tbl
-        def = sqlInsertDef(this.db, def);
-
+        def = existing === undefined ? sqlInsertDef(this.db, def) : existing;
 
         const did = def[ComponentDefT];
         // const { hash, tblName } = (def as ComponentDefSQL);

@@ -12,7 +12,6 @@ import { tokenizeString } from '../../src/query/tokenizer';
 import { StackValue, SType } from '../../src/query/types';
 import { createStdLibStack } from '../../src/query';
 
-import { BuildQueryFn } from '../../src/query/build';
 import {
     toObject as defToObject,
     hash as hashDef,
@@ -44,7 +43,7 @@ export { isComponentDef, hash as hashDef, getDefId, Type } from '../../src/compo
 export { printAll, printEntity } from '../../src/util/print';
 
 import { sqlClear } from '../../src/entity_set_sql/sqlite';
-import { loadFixture } from '../es/helpers';
+import { BuildQueryFn, loadFixture } from '../es/helpers';
 export { buildComponents, loadFixture } from '../es/helpers';
 
 
@@ -73,8 +72,6 @@ export async function buildEntitySet(): Promise<[EntitySet, Function]> {
     for( const def of defs ){
         await es.register(def);
     }
-    // await defs.reduce( (p,def) => p.then( () => es.register(def)), Promise.resolve() );
-
     const buildEntity = (es: EntitySet, buildFn: BuildQueryFn, eid: number = 0) => {
         let e = new Entity(eid);
         const component = (uri: string, props: object) => {

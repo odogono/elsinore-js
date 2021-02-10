@@ -74,7 +74,7 @@ export function tokenize(context:TokenizerContext, input:string):TokenizerContex
     // let it = 0;
     while (context.pos < context.length ) {
         // it++;
-        context = processAlt(context, input);
+        context = process(context, input);
         // console.log('proc', context.pos, len );
         // if( it > 100 ){ throw new Error('over')}
     }
@@ -83,7 +83,7 @@ export function tokenize(context:TokenizerContext, input:string):TokenizerContex
     return context;
 }
 
-function processAlt(context:TokenizerContext, input:string):TokenizerContext {
+function process(context:TokenizerContext, input:string):TokenizerContext {
     let { pos, length, offset, mode,
         markPosition,
         output, 
@@ -119,7 +119,7 @@ function processAlt(context:TokenizerContext, input:string):TokenizerContext {
                 else if (char === "'" && charBuffer[1] === "'" && charBuffer[2] === "'") {
                     mode = set(mode,MODE_MULTI_QUOTE);
                     offset = linePosition;
-                    // Log('processAlt', 'multiquote offset', offset);
+                    // Log('process', 'multiquote offset', offset);
                     clear = true;
                 }
             }

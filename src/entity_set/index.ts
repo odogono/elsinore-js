@@ -133,7 +133,7 @@ export abstract class EntitySet {
     idgen: EntityIdGen;
 
     // for generation of entityids
-    readonly eidEpoch: number = 1577836800000; // 2020-01-01T00:00:00.000Z
+    readonly eidEpoch: number = 1609459200000; // 2021-01-01T00:00:00.000Z
 
     stack: QueryStack;
 
@@ -142,8 +142,13 @@ export abstract class EntitySet {
             Object.assign(this, data);
         }
         this.idgen = options.idgen;
-        this.eidEpoch = options.eidEpoch ?? 1577836800000; // 2020-01-01T00:00:00.000Z
+        this.eidEpoch = options.eidEpoch ?? 1609459200000; // 2021-01-01T00:00:00.000Z
     }
+
+    /**
+     * Returns a url indicating the type/config of this EntitySet
+     */
+    abstract getUrl();
 
     abstract clone(options?: CloneOptions);
 
@@ -526,6 +531,10 @@ export class EntitySetMem extends EntitySet {
         if (data !== undefined) {
             Object.assign(this, data);
         }
+    }
+
+    getUrl(){
+        return `es://${this.type}/?uuid=${this.uuid}`;
     }
 
     clone(options: CloneOptions = {}) {

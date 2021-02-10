@@ -7,9 +7,22 @@ import {
     Entity, isEntity
 } from '../../src/entity';
 
+export type buildDefFn = (uri: string, ...args: any[]) => void;
+export type buildComponentFn = (uri: string, props:object) => void;
+export type buildInstFn = (...args: any[]) => void;
+export type buildEntityFn = () => void;
+export type buildValueFn = (registry: EntitySet) => void;
+export interface BuildQueryParams {
+    def:buildDefFn, 
+    component: buildComponentFn,
+    entity:buildEntityFn,
+    inst:buildInstFn,
+    value:buildValueFn
+}
+export type BuildQueryFn = (BuildQueryParams) => void;
+
 import { fromComponentId, getComponentDefId, Component, OrphanComponent } from '../../src/component';
 import { isComponentDef, hash as hashDef, getDefId, Type } from '../../src/component_def';
-import { BuildQueryFn } from '../../src/query/build';
 // import { EntitySetMem, EntitySet } from '../../src/entity_set/types';
 import { EntitySet, EntitySetMem, EntitySetOptions } from '../../src/entity_set';
 
