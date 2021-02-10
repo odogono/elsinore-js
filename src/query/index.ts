@@ -1,21 +1,15 @@
 import { SType, StackValue } from "./types";
 
 import { 
-    onAddComponentToEntity, onAddToEntitySet, onAddArray, onAdd, 
+    onAddComponentToEntity, onAddToEntitySet, onAdd, 
     onPrint, 
-    onFetchArray, 
-    onListOpen, onMapOpen, 
     onUnexpectedError, 
     onBuildMap, 
-    onDrop, onSwap, onPush, onPop, onMap, 
-    onUnique, onFilter, onReduce, onConcat, 
+    onDrop, onSwap, onPush, onPop, 
     onClear, 
     onDup, onSelect, 
-    onListSpread, 
-    onListEval,
     onComponentDef, 
     fetchComponentDef, 
-    // onEntitySet, 
     onComponent, onEntity, 
     onAssertType,
     onPrintStack,
@@ -24,13 +18,12 @@ import {
     onDateTime,
     onRot,
     onSize,
-    onGather,
     onRemoveFromEntitySet,
-    // onLeave,
     onJoin,
     onUndefined,
     onRegexBuild,
     onCompare,
+    onFetchList,
 } from "./words";
 import { onPluck } from "./words/pluck";
 import { onDefine } from "./words/define";
@@ -42,7 +35,8 @@ import { tokenizeString } from "./tokenizer";
 import { onCondition } from "./words/cond";
 import { Entity } from "../entity";
 import { getComponentDefId, getComponentEntityId } from "../component";
-import { onDiff } from "./words/set";
+import { onAddList, onConcat, onDiff, onFilter, onGather, onListEval, onListOpen, onListSpread, onMap, onReduce, onUnique } from "./words/list";
+import { onMapOpen } from "./words/map";
 export { QueryStack };
 export const parse = (q:string) => tokenizeString(q,{returnValues:true});
 
@@ -232,8 +226,8 @@ export function createStdLibStack( stack?:QueryStack ){
         ['+', onAddToEntitySet, SType.EntitySet, SType.Any],
         ['-', onRemoveFromEntitySet, SType.EntitySet, SType.Any],
         // pattern match stack args
-        ['+', onAddArray, SType.List, SType.Any],
-        ['+', onAddArray, SType.Any, SType.List],
+        ['+', onAddList, SType.List, SType.Any],
+        ['+', onAddList, SType.Any, SType.List],
 
         ['eval', onRegex, SType.Any, SType.Regex],
         ['split', onRegex, SType.Value, SType.Regex],
@@ -267,7 +261,7 @@ export function createStdLibStack( stack?:QueryStack ){
         ['==', onCompare, SType.Any, SType.Any],
         ['!=', onCompare, SType.Any, SType.Any],
 
-        ['@', onFetchArray, SType.List, SType.Value],
+        ['@', onFetchList, SType.List, SType.Value],
 
         // a defined value is evaled when pushed onto the stack
         ['define', onDefine, SType.Any, SType.Value],
@@ -306,8 +300,7 @@ export function createStdLibStack( stack?:QueryStack ){
         ['unique', onUnique, SType.List],
         ['filter', onFilter, SType.List, SType.Value],
         ['filter', onFilter, SType.List, SType.List],
-        ['reduce', onReduce, SType.List, SType.Any, SType.Value],
-        ['reduce', onReduce, SType.List, SType.Any, SType.List],
+        ['reduce', onReduce, SType.List, SType.Any, SType.Any],
         
         ['gather', onGather],
         // ['concat', onConcat],

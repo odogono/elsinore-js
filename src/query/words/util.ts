@@ -1,3 +1,10 @@
+import { QueryStack } from "..";
+import { isBoolean } from "../../util/is";
+import { AsyncInstResult, InstResult, StackError, StackValue, SType } from "../types";
+
+
+
+
 
 
 export function compareDates( op:string, dateA:Date, dateB:Date ){
@@ -13,4 +20,32 @@ export function compareDates( op:string, dateA:Date, dateB:Date ){
         default:
             return false;
     }
+}
+
+
+export function isTruthy(value: StackValue): boolean {
+    const [type, val] = value;
+    if (isBoolean(val)) {
+        return val;
+    }
+    return false;
+}
+
+export function compareValues(left: StackValue, right: StackValue): boolean {
+    if (!Array.isArray(left) || !Array.isArray(right)) {
+        return false;
+    }
+    if (left[0] !== right[0]) {
+        return false;
+    }
+    if (left[1] !== right[1]) {
+        return false;
+    }
+    return true;
+}
+
+
+
+export function onArgError(stack: QueryStack, val: StackValue): InstResult {
+    throw new StackError('invalid argument');
 }

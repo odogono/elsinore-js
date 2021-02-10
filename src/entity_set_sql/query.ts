@@ -44,7 +44,7 @@ import { onDefine } from "../query/words/define";
 import { onPluck } from "../query/words/pluck";
 import { onBitFieldOr } from "../query/words";
 import { printEntity } from '../util/print';
-import { onDiff } from '../query/words/set';
+import { onDiff } from '../query/words/list';
 
 const Log = createLog('SQLQuery');
 

@@ -41,7 +41,7 @@ import { unpackStackValue, unpackStackValueR, stackToString } from "../query/uti
 import { EntitySet, EntitySetMem } from ".";
 import { compareDates } from '../query/words/util';
 import { onBitFieldOr, onPrintStack } from '../query/words';
-import { onDiff } from '../query/words/set';
+import { onDiff } from '../query/words/list';
 
 const Log = createLog('ESMemQuery');
 
