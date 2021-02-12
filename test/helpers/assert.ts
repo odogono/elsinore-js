@@ -2,7 +2,7 @@ import assert from 'uvu/assert';
 
 import { Entity } from '../../src/entity';
 import{ getComponentDefId } from '../../src/component';
-import{ get as bfGet, toValues as bfToValues } from '@odgn/utils/lib/cjs/bitfield';
+import{ get as bfGet, toValues as bfToValues } from '@odgn/utils/bitfield';
 import { EntitySet } from '../../src/entity_set';
 
 

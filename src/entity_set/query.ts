@@ -21,7 +21,7 @@ import {
     TYPE_AND,
     TYPE_OR,
     TYPE_NOT
-} from '@odgn/utils/lib/cjs/bitfield';
+} from '@odgn/utils/bitfield';
 import {
     isStackValue,
     entityIdFromValue,

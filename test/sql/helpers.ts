@@ -29,7 +29,7 @@ export { getChanges, ChangeSetOp } from '../../src/entity_set/change_set';
 export { fromComponentId, getComponentDefId, Component, OrphanComponent } from '../../src/component';
 export const Log = createLog('TestEntitySetSQL');
 
-export { toValues as bfToValues } from '@odgn/utils/lib/cjs/bitfield';
+export { toValues as bfToValues } from '@odgn/utils/bitfield';
 export { Entity, isEntity, getEntityId } from '../../src/entity';
 export { QueryStack } from '../../src/query/stack';
 export {

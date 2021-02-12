@@ -10,7 +10,7 @@ import {
     set as bfSet,
     and as bfAnd,
     toValues as bfToValues
-} from "@odgn/utils/lib/cjs/bitfield";
+} from "@odgn/utils/bitfield";
 import { ComponentDefId, ComponentDef, getDefId } from "./component_def";
 
 export const Type = '@e';

@@ -28,7 +28,7 @@ import {
     and as bfAnd,
     or as bfOr,
     toValues as bfToValues
-} from '@odgn/utils/lib/cjs/bitfield';
+} from '@odgn/utils/bitfield';
 import { Component, ComponentId, toComponentId } from '../component';
 import { SType } from '../query/types';
 import { isBoolean, isRegex, isDate, isValidDate } from '@odgn/utils';

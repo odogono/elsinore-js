@@ -23,7 +23,7 @@ import {
     or as bfOr,
     toValues as bfToValues,
     isBitField
-} from "@odgn/utils/lib/cjs/bitfield";
+} from "@odgn/utils/bitfield";
 import {
     Type as DefT,
     ComponentDef,

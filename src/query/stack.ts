@@ -5,7 +5,7 @@ import { createLog } from "../util/log";
 import { stackToString, unpackStackValueR } from "./util";
 import { EntityId, getEntityId, Entity } from "../entity";
 import { ComponentDefId, ComponentDef, getDefId } from "../component_def";
-import { BitField, create as createBitField, toValues as bfToValues } from '@odgn/utils/lib/cjs/bitfield';
+import { BitField, create as createBitField, toValues as bfToValues } from '@odgn/utils/bitfield';
 import {
     StackValue, WordFn, SType,
     StackError, InstResult, AsyncInstResult, WordSpec, WordEntry, Words

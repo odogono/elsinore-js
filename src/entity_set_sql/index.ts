@@ -46,7 +46,7 @@ import {
     and as bfAnd,
     or as bfOr,
     toValues as bfToValues
-} from '@odgn/utils/lib/cjs/bitfield';
+} from '@odgn/utils/bitfield';
 import { createUUID } from '@odgn/utils';
 import {
     SqlRef,

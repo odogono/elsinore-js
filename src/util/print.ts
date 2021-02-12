@@ -1,6 +1,6 @@
 import { Entity } from "../entity";
 import { EntitySet } from "../entity_set";
-import { BitField, get as bfGet } from '@odgn/utils/lib/cjs/bitfield';
+import { BitField, get as bfGet } from '@odgn/utils/bitfield';
 
 
 

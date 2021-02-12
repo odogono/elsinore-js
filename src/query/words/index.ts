@@ -26,7 +26,7 @@ import { createLog } from "../../util/log";
 import { stackToString, valueToString, unpackStackValue, unpackStackValueR } from '../util';
 import { EntitySet, isEntitySet } from '../../entity_set';
 import { compareDates } from './util';
-import { BitField, TYPE_OR, toValues as bfToValues } from '@odgn/utils/lib/cjs/bitfield';
+import { BitField, TYPE_OR, toValues as bfToValues } from '@odgn/utils/bitfield';
 import { stringify } from '@odgn/utils';
 import { evalList } from './list';
 
