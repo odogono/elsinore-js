@@ -5,7 +5,7 @@ export enum SType {
     Value = '%v',
     List = '%[]',
     Map = '%{}',
-    Function = '%()',
+    Word = '%w',
     BitField = '%bf',
     Entity = '%e',
     EntitySet = '%es',

@@ -295,7 +295,7 @@ export class QueryStack {
                 value = [SType.Value, word] as any;
                 evalWord = evalEscape;// false;
                 
-                if( debug ) Log.debug('[push]', value, 'escaped');
+                // if( debug ) Log.debug('[push]', value, 'escaped');
             }
 
             if( evalWord ) {
@@ -316,45 +316,18 @@ export class QueryStack {
                 const pr = word.charAt(0);
                 if (len > 1 && pr === '$' || (len > 1 && pr === '%') ) {
                     let sub = word.substring(1);
-                    // Log.debug('[push]', word, this._idx, isInteger(sub), this.isUDWordsActive );
                     if (isInteger(sub)) {
                         const idx = toInteger(sub);
-                        // Log.debug('[push]', '$ pr', word, this.toString() );
                         
                         value = pr === '$' ? this.pop(idx) : this.peek(idx);
-                        // Log.debug('[push]', '$ pr', word, this.toString() );
                     }
                     else if (this.isUDWordsActive) {
                         handler = this.getUDWord(sub);
-                        // Log.debug('[push]', 'getUDWord', sub, handler);
-
                     }
-                    // Log.debug('[push]', '$ po', word, wordStack.items, wordStack.id);
-                    // Log.debug('[push]', '$', idx, 'pop', value, stack.id, wordStack.id);
                 }
 
                 else {
-                    // try for a user defined word - these are global
-                    // if( len > 1 && word.charAt(0) === '@' ){
-                    //     handler = this.getUDWord( word.substring(1) );
-                    // }
-
-                    // try for a regular word - these are scoped to the current stack
-                    // if( handler === undefined ){
                     handler = this.getWord(value);
-                    // Log.debug('[push][getWord]', value, handler );
-                    // if( this.debug && word === 'count' ) Log.debug( this.words );
-                    // if( this.debug && word === 'count' ) throw new StackError('stop');
-                    // }
-
-                    // Log.debug('[push]', 'word', stack?.id, wordStack?.id );
-                    // handler = this.getWord(value);
-                    // if( value[1] === 'dstId' ){
-                    //     let wh = this.getUDWord(value[1]);
-                    //     Log.debug('[push]', 'word?', value);
-                    //     Log.debug('[push]', 'word', stackIndex, handler, wh );
-                    // }
-                    // DLog(stack, '[push]', 'word', stack.id, wordStack.id, value );
                 }
 
                 // restore back to original index
@@ -362,29 +335,19 @@ export class QueryStack {
             }
         }
 
-        // if( word === 'leave' ){
-        // Log.debug('[push]', word, handler );
-        // }
-
-        // Log.debug('[push]', 'pre', { isActive: this.isActive, isEscapeActive: this.isEscapeActive }, value, handler);
-
         if (handler !== undefined) {
             try {
                 if (isStackValue(handler)) {
                     value = (handler as any);
-                }
-                else {
-
-                    let handlerVal = value;
-                    // Log.debug('[push]', 'pre', this.isActive, value);
-                    let result = handler(this, value);
-                    value = isPromise(result) ? await result : result as InstResult;
-                    this.focus();
-                    if (value === undefined) {
-                        // Log.debug('[push]', 'post', this.isActive, this.items );
+                    if( value[0] === SType.Word ){
+                        await this.pushValues(value[1]);
+                        value = undefined;
                     }
                 }
-                // if( value && this.debug ) Log.debug('[push]', value); 
+                else {
+                    let result = handler(this, value);
+                    value = isPromise(result) ? await result : result as InstResult;
+                }
             } catch (err) {
                 if( err instanceof StackError ){
                     throw err;
@@ -418,186 +381,23 @@ export class QueryStack {
         return stack;
     }
 
-    // async pushWordValues(stack: QueryStack, word: string, values: StackValue[], options: PushOptions = {}) {
-    //     const ticket = Math.random().toString(36).substring(7);
-    //     const ignoreActive = options.ignoreActive ?? false;
-    //     const isWord = options.isWord ?? false;
-    //     const wasActive = stack.isActive;
-    //     let activeMode: ActiveMode = ActiveMode.Active;
-    //     // stack.leaveSet = undefined;
 
-    //     let wordActive: boolean = undefined;
-
-    //     // let opts = { isActive: stack.isActive, wasActive, ignoreActive, pendingActive: stack.pendingActive };
-
-    //     // if( isWord ){
-    //     // this.wordStack.push({ word, isWord });
-    //     // }
-
-    //     // console.log('[pushWordValues]', 'start', ticket, word, this.wordStack, values);
-
-    //     // if( stack.pendingActive ){
-    //     //     stack.isActive = true;
-    //     //     stack.pendingActive = undefined;
-    //     // }
-    //     // else if( wasActive && !stack.isActive ){
-    //     //     stack.pendingActive = true;
-    //     // }
-
-    //     const result = await this.pushValues(values, { ticket });
-
-    //     // if( isWord ){
-    //     // let entry = this.wordStack.pop();
-    //     // // console.log('[pushWordValues]', 'end', word, 'entry', entry);
-    //     // wordActive = entry.active;
-    //     // activeMode = entry.mode ?? ActiveMode.Active;
-    //     // if (isWord) {
-    //     //     if (entry.subActive === false) {
-    //     //         wordActive = true;
-    //     //     }
-    //     // }
-    //     // else if (wordActive === false) {
-    //     //     let above = this.wordStack.pop();
-    //     //     if (above !== undefined) {
-    //     //         this.wordStack.push({ ...above, mode: activeMode, subActive: false });
-    //     //     }
-    //     // }
-
-    //     // console.log('[pushWordValues]', 'staaack!',activeMode, this.wordStack);
-    //     // console.log('[pushWordValues]', 'woorrdd!', entry); 
-    //     // }
-
-    //     // if( entry !== undefined ){
-    //     //     let {active} = entry;
-    //     // }
-
-    //     // opts = { isActive: stack.isActive, wasActive, ignoreActive, pendingActive: stack.pendingActive };
-    //     // if( stack.pendingActive ){
-    //     //     stack.isActive = true;
-    //     //     stack.pendingActive = undefined;
-    //     //     console.log('[pushWordValues]', 'end', ticket, word, 'reactive after pending', {...opts,pendingActive:stack.pendingActive});
-    //     // }
-    //     // // else if( ignoreActive === false && wasActive && !stack.isActive ){
-    //     // // }
-    //     // else if( ignoreActive === false && wasActive && !stack.isActive ){
-    //     //     // if( wordStack.length === 0 ){
-    //     //     //     stack.isActive = true;
-    //     //     //     console.log('[pushWordValues]', 'end', ticket, word, 'wordstack empty', {...opts,pendingActive:stack.pendingActive} );
-    //     //     // } else 
-    //     //     {
-    //     //     stack.pendingActive = true;
-    //     //     console.log('[pushWordValues]', 'end', ticket, word, 'set pending', {...opts,pendingActive:stack.pendingActive} );
-    //     //     }
-    //     // }
-    //     // else {
-    //     //     console.log('[pushWordValues]', 'end', ticket, word, opts );
-    //     // }
-
-    //     // console.log('[pushWordValues]', 'end', word, { wordActive, isWord, isActive: stack.isActive, activeMode });
-
-    //     // if (isWord) {
-    //     //     if (activeMode === ActiveMode.Leave) {
-    //     //         stack.isActive = true;
-    //     //     } else if (activeMode === ActiveMode.Break) {
-
-    //     //     }
-    //     // }
-
-    //     // if( isWord ){
-    //     // if( isWord && stack.isActive === false && wordActive === false ){
-    //     //     stack.isActive = true;
-    //     //     console.log('[pushWordValues]', 'end', word, 'reset active');
-    //     // }else {
-    //     //     // console.log('[pushWordValues]', 'fuck', isWord, stack.isActive, wordActive );
-    //     // }
-
-    //     // if( wordStack.length === 0 && !stack.isActive ){
-    //     // console.log('[pushWordValues]', 'end', 'clearing active');
-    //     // stack.isActive = true;
-    //     // }
-
-    //     // stack.leaveSet = undefined;
-
-    //     return result;
-    // }
-
+    /**
+     * Push multiple values onto the stack
+     * 
+     * @param values 
+     * @param options 
+     */
     async pushValues(values: StackValue[], options: PushOptions = {}): Promise<number> {
-        // let ovalues: StackValue[] = [];
-        const ignoreActive = options.ignoreActive ?? false;
-        // const ticket = options.ticket;
-        const debug = options.debug;
-
-        // if( ignoreActive === false ) pushValuesRun++;
-
-
-        // if( !ignoreActive ){
-        //     Log.debug('[pushValues$]', 'inc run from', pushValuesRun, 'to', pushValuesRun+1);    
-        // }
-
-        // let run = !ignoreActive ? pushValuesRun++ : pushValuesRun;
-        // let run = pushValuesRun++;
-        // let run = pushValuesRun; // !ignoreActive ? pushValuesRun++ : pushValuesRun;
-        // if( ignoreActive !== true ){
-        //     pushValuesRun++;
-        //     run = pushValuesRun;
-        // }
         let count = 0;
-        // let revertActive = false;
-        // Log.debug('[pushValues$]', this.isActive, {run,ticket}, values);
-        // let startActive = this.isActive;
-
         // record pushed values so we can report errors better
         let pushed = [];
 
         try {
             for (const value of values) {
-
-                // let perf;
-                // if( process.env.JS_ENV !== 'browser' ){
-                //     const pf = require('perf_hooks');
-                //     perf = pf.performance;
-                // } else {
-                //     perf = performance;
-                // }
-                // DLog(stack, '[pushValues]', value);
-                // if( options.debug ){
-                // Log.debug('[pushValues!]', run, count, value);
-                // }
-                // let pre = stack;
-                // let st = perf.now();
-                // let isActive = this.isActive;
-                let ovalue = await this.push(value, options);
-                // if( isActive && !this.isActive ){
-                //     Log.debug('[pushValues!]', run, count, 'inactive'); 
-                // }
-                // revertActive = isActive !== this.isActive;
-                // Log.debug('[pushValues!]', run, `${count}/${values.length}`, this.isActive, value);
-
-                // if( this.isActive === false && ignoreActive === false ){
-                // if (this.isActive === false) {
-                //     //     // Log.debug('[pushValues]', run, count, 'breaking due to inactive', value, values);
-                //     //     this.isActive = true;
-                //     break;
-                // }
-
-                // let end = perf.now() - st;
-                // if( end > 10 ){
-                //     Log.debug('[pushValues]', value, stackToString(pre), end );
-                // }
-                // ovalues.push(ovalue);
+                await this.push(value, options);
                 count++;
                 pushed.push(value);
-            }
-
-            // if( revertActive ){
-            //     this.isActive = true;
-            // }
-            // Object.assign(this, stack);
-            // let changed = startActive && !this.isActive;
-            // Log.debug('[pushValues]', 'finished', this.isActive, {run,ticket, count} );
-
-            if (ignoreActive) {
-                // this.isActive = true;
             }
 
         } catch (err) {
