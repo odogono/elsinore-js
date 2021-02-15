@@ -431,6 +431,10 @@ function rowToComponent(def:ComponentDefSQL, row:any ): Component {
                 val = JSON.parse(val);
                 break;
         }
+
+        if( val === null ){
+            continue;
+        }
         
         com[prop.name] = val;
     }
