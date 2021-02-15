@@ -33,7 +33,7 @@ import {
 } from './stack';
 import { tokenizeString } from "./tokenizer";
 import { onCondition } from "./words/cond";
-import { Entity } from "../entity";
+import { Entity, EntityId } from "../entity";
 import { getComponentDefId, getComponentEntityId } from "../component";
 import { onAddList, onConcat, onDiff, onFilter, onGather, onListEval, onListOpen, onListSpread, onMap, onReduce, onUnique } from "./words/list";
 import { onMapOpen } from "./words/map";
@@ -148,26 +148,30 @@ export class Statement {
 
         if (type === SType.List) {
             let e: Entity;
+            let em: Map<EntityId,Entity>;
             for (const [lt, lv] of val) {
                 if (lt === SType.Entity) {
                     result.push(lv);
                 }
                 else if (lt === SType.Component) {
-                    
                     let eid = getComponentEntityId(lv);
                     let did = getComponentDefId(lv);
-                    // const name = this.getByDefId(did).name;
-                    if (e === undefined || e.id !== eid) {
-                        if (e !== undefined) {
-                            result.push(e);
-                        }
-                        e = es.createEntity(eid);
+
+                    if( em === undefined ){
+                        em = new Map<EntityId,Entity>();
                     }
+                    e = em.get(eid) ?? es.createEntity(eid);
                     e.addComponentUnsafe(did, lv);
+                    em.set(eid, e);
                 }
             }
             if (e !== undefined) {
                 result.push(e);
+            }
+            if( em !== undefined ){
+                for( const e of em.values() ){
+                    result.push(e);
+                }
             }
         } else if (type === SType.Component) {
             // result.push( addCom(undefined,val));

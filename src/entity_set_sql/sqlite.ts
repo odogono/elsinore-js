@@ -820,7 +820,8 @@ export function sqlRetrieveByQuery(ref: SqlRef, eids: EntityId[], query: any[]) 
             return stringify(p);
         }
         return p;
-    })
+    });
+
     params = params.map(p => Array.isArray(p) ? stringify(p) : p);
 
     let rows = stmt.all(...params );
@@ -845,9 +846,11 @@ function walkFilterQuery(eids: EntityId[], out: string[], params: any[], cmd?, .
         out.push('INTERSECT');
         walkFilterQuery(eids, out, params, ...args[0]);
     } else if (cmd === 'or') {
+        out.push('SELECT eid FROM (');
         walkFilterQuery(eids, out, params, ...args[0]);
         out.push('UNION');
         walkFilterQuery(eids, out, params, ...args[1]);
+        out.push(')');
     } else {
         switch (cmd) {
             case '==':

@@ -47,7 +47,7 @@ import {
     or as bfOr,
     toValues as bfToValues
 } from '@odgn/utils/bitfield';
-import { createUUID } from '@odgn/utils';
+import { createUUID, toBoolean } from '@odgn/utils';
 import {
     SqlRef,
     sqlOpen, sqlIsOpen,
@@ -110,14 +110,16 @@ export class EntitySetSQL extends EntitySetMem {
 
     constructor(options: SQLEntitySetOptions = {}) {
         super(options as any);
-        this.isMemory = options.isMemory ?? false;
+        this.isMemory = toBoolean(options.isMemory ?? false);
         this.debug = options.debug ?? false;
         this.path = options.path ?? 'ecs.sqlite';
         this.db = options.db ?? undefined;
     }
 
     getUrl(){
-        return `es://sqlite${this.path}?uuid=${this.uuid}`;
+        return this.isMemory ? 
+            `es://sqlite?uuid=${this.uuid}&isMemory=${this.isMemory}`
+            : `es://sqlite${this.path}?uuid=${this.uuid}`;
     }
 
     clone(options: CloneOptions = {}) {
