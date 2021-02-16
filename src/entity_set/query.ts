@@ -16,11 +16,14 @@ import {
     count as bfCount,
     and as bfAnd,
     or as bfOr,
+    not as bfNot,
     typeFn as bfTypeFn,
     toValues as bfToValues,
+    toString as bfToString,
     TYPE_AND,
     TYPE_OR,
-    TYPE_NOT
+    TYPE_NOT,
+    isBitField
 } from '@odgn/utils/bitfield';
 import {
     isStackValue,
@@ -40,7 +43,7 @@ import { onLogicalFilter, parseFilterQuery } from './filter';
 import { unpackStackValue, unpackStackValueR, stackToString } from "../query/util";
 import { EntitySet, EntitySetMem } from ".";
 import { compareDates } from '../query/words/util';
-import { onBitFieldOr, onPrintStack } from '../query/words';
+import { onBitFieldNot, onBitFieldOr, onPrintStack } from '../query/words';
 import { onDiff } from '../query/words/list';
 
 const Log = createLog('ESMemQuery');
@@ -72,6 +75,7 @@ export async function select(stack: QueryStack, query: StackValue[], options: Se
 
         // converts a BitField to OR mode
         ['!or', onBitFieldOr, SType.BitField],
+        ['not', onBitFieldNot, SType.BitField],
 
         ['and', onLogicalFilter, SType.Any, SType.Any],
         ['or', onLogicalFilter, SType.Any, SType.Any],
@@ -535,7 +539,7 @@ export function buildBitfield(stack: QueryStack): InstResult {
     dids = isString(dids) ? [dids] : dids;
     let bf: BitField = es.resolveComponentDefIds(dids);
 
-    // Log.debug('[buildBitfield]', arg, bf );
+    // Log.debug('[buildBitfield]', arg, bfToValues(bf) );
     return [SType.BitField, bf];
 }
 
@@ -614,15 +618,20 @@ export async function fetchEntity(stack: ESMemQueryStack, [, op]: StackValue): A
 }
 
 
-
+/**
+ * 
+ * @param es 
+ * @param eids 
+ * @param mbf 
+ */
 export function matchEntities(es: EntitySetMem, eids: EntityId[], mbf: BitField | 'all'): EntityId[] {
     let matches: number[] = [];
     const isAll = mbf === 'all' || mbf === undefined || mbf.isAllSet;
     const type = isAll ? TYPE_AND : (mbf as BitField).type;
     let cmpFn = bfTypeFn(type); // bfAnd;
-
-
-
+    if( type === TYPE_NOT ){
+        cmpFn = bfNot;
+    }
     if (isAll) {
         eids = eids !== undefined ? eids : Array.from(es.entities.keys());
         eids.sort();
@@ -637,7 +646,8 @@ export function matchEntities(es: EntitySetMem, eids: EntityId[], mbf: BitField 
         // let es = from as EntitySetMem;
         for (let [eid, ebf] of es.entities) {
             if (cmpFn(mbf as BitField, ebf)) {
-                // Log.debug('[matchEntities]', 'match', type, mbf, ebf);
+                // Log.debug('[matchEntities]', 'match', type, bfToValues(mbf as BitField), bfToValues(ebf) );
+                // Log.debug('[matchEntities]', cmpFn);
                 matches.push(eid);
             }
         }
@@ -646,7 +656,6 @@ export function matchEntities(es: EntitySetMem, eids: EntityId[], mbf: BitField 
             let eid = eids[ii];
             let ebf = es.entities.get(eid);
             if (cmpFn(mbf as BitField, ebf)) {
-
                 matches.push(eid);
             }
         }
@@ -657,6 +666,7 @@ export function matchEntities(es: EntitySetMem, eids: EntityId[], mbf: BitField 
 
     return matches;
 }
+
 
 function ilog(...args) {
     if (process.env.JS_ENV === 'browser') { return; }

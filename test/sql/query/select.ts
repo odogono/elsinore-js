@@ -12,7 +12,7 @@ import {
 } from '../helpers';
 
 
-let test = suite('es/mem/query - Select');
+let test = suite('es/sql/query - Select');
 
 test.before.each( beforeEach );
 
@@ -127,6 +127,33 @@ test('fetching components from unknown entity', async () => {
     `, 'todo');
 
     assert.equal( stack.popValue(), [] );
+});
+
+test('entity with all the components', async () => {
+    let [stack,es] = await prepES(`
+    [
+        [ /component/title /component/priority ] !bf
+        @eid
+    ] select
+    `, 'todo');
+
+    // console.log(es.getUrl());
+    // await printAll(es);
+    assert.equal( stack.popValue(), [100,104] );
+});
+
+test('entity without components', async () => {
+    let [stack,es] = await prepES(`
+    [
+        /component/completed !bf not
+        @eid
+    ] select
+    `, 'todo');
+
+    // console.log(es.getUrl());
+    // await printAll(es);
+    // console.log( es.componentDefs.map( d => `${d['@d']} ${d.uri}`).join('\n') );
+    assert.equal( stack.popValue(), [103,104,105] );
 });
 
 
@@ -485,6 +512,60 @@ test('selecting component by attribute', async () => {
 
 });
 
+
+test('and/or component', async () => {
+    let id = 1000;
+    let idgen = () => ++id;
+    const es = createEntitySet({ idgen });
+
+    const stmt = es.prepare(`
+        [ "/component/src", ["url"] ] !d
+        [ "/component/upd", [{name:op, type:integer}] ] !d
+        [ "/component/site_ref", [{name:ref, type:integer}] ] !d
+        gather // wraps previous into a list
+        + // add list to es
+
+        [ /component/src {url: "file:///about.txt"} ] !c
+        [ /component/upd {op: 2} ] !c
+        [ /component/site_ref {ref: 200} ] !c
+        gather
+        +
+        [ /component/src {url: "file:///misc/style.scss"} ] !c
+        [ /component/upd {op: 1} ] !c
+        [ /component/site_ref {ref: 200} ] !c
+        gather
+        +
+        [ /component/src {url: "file:///readme.txt"} ] !c
+        [ /component/upd {op: 1} ] !c
+        [ /component/site_ref {ref: 300} ] !c
+        gather
+        +
+        [ /component/src {url: "file:///style.scss"} ] !c
+        [ /component/upd {op: 2} ] !c
+        [ /component/site_ref {ref: 300} ] !c
+        gather
+        +
+
+        [
+            /component/src#url !ca ~r/.scss$/ ==
+                    /component/upd#op !ca 1 ==
+                    /component/upd#op !ca 2 ==
+                or
+                /component/site_ref#ref !ca $ref ==
+            and
+        and
+        /component/src !bf
+        @c ] 
+        select
+
+        // prints
+    `);
+
+    const res = await stmt.getResult({ref:200});
+
+    assert.equal(res.length, 1);
+    assert.equal(res[0].url, 'file:///misc/style.scss');
+});
 
 // test.only('select with bf', async () => {
 //     let [,es] = await prepES(``, 'todo');

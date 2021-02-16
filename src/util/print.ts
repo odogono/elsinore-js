@@ -37,7 +37,7 @@ export function printEntity(es: EntitySet, e: Entity, dids?:string[]) {
     if( dids !== undefined ){
         bf = es.resolveComponentDefIds(dids);
     }
-    console.log(`- e(${e.id})`);
+    console.log(`- e(${yellow(e.id)})`);
     for (const [did, com] of e.components) {
         if( bf && bfGet(bf,did) === false ){
             continue;
@@ -46,6 +46,12 @@ export function printEntity(es: EntitySet, e: Entity, dids?:string[]) {
         const def = es.getByDefId(did);
         console.log(`   ${def.name}`, JSON.stringify(rest));
     }
+}
+
+const Reset = "\x1b[0m";
+const FgYellow = "\x1b[33m";
+function yellow(str:any){
+    return `${FgYellow}${str}${Reset}`;
 }
 
 // function selectAll(es: EntitySet): Entity[] {

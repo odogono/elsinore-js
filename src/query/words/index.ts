@@ -26,7 +26,7 @@ import { createLog } from "../../util/log";
 import { stackToString, valueToString, unpackStackValue, unpackStackValueR } from '../util';
 import { EntitySet, isEntitySet } from '../../entity_set';
 import { compareDates } from './util';
-import { BitField, TYPE_OR, toValues as bfToValues } from '@odgn/utils/bitfield';
+import { BitField, TYPE_OR, toValues as bfToValues, TYPE_NOT } from '@odgn/utils/bitfield';
 import { stringify } from '@odgn/utils';
 import { evalList } from './list';
 
@@ -418,6 +418,12 @@ export function onUndefined(stack: QueryStack): InstResult {
 export function onBitFieldOr(stack: QueryStack): InstResult {
     let bf = stack.popValue();
     bf.type = TYPE_OR;
+    return [SType.BitField, bf];
+}
+
+export function onBitFieldNot(stack: QueryStack): InstResult {
+    let bf = stack.popValue();
+    bf.type = TYPE_NOT;
     return [SType.BitField, bf];
 }
 

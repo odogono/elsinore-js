@@ -39,7 +39,7 @@ test('select no entities', async () => {
     // ilog( result );
 
     // the return value is an entity
-    assert.equal(result, [] );
+    assert.equal(result, []);
 });
 
 
@@ -72,7 +72,7 @@ test('fetches all the entities ids', async () => {
     let [stack] = await prepES(query, 'todo');
     let result = stack.popValue();
 
-    assert.equal( result, [100, 101, 102, 103, 104, 105] );
+    assert.equal(result, [100, 101, 102, 103, 104, 105]);
 });
 
 test('fetches component ids', async () => {
@@ -80,7 +80,7 @@ test('fetches component ids', async () => {
     let [stack] = await prepES(query, 'todo');
     let result = stack.popValue();
 
-    assert.equal( result, ["[100,1]","[101,1]","[102,1]","[103,1]","[104,1]"] );
+    assert.equal(result, ["[100,1]", "[101,1]", "[102,1]", "[103,1]", "[104,1]"]);
 });
 
 
@@ -124,9 +124,34 @@ test('fetching components from unknown entity', async () => {
     ] select
     `, 'todo');
 
-    assert.equal( stack.popValue(), [] );
+    assert.equal(stack.popValue(), []);
 });
 
+
+test('entity with all the components', async () => {
+    let [stack,es] = await prepES(`
+    [
+        [ /component/title /component/priority ] !bf
+        @eid
+    ] select
+    `, 'todo');
+
+    assert.equal( stack.popValue(), [100,104] );
+});
+
+test('entity without components', async () => {
+    let [stack,es] = await prepES(`
+    [
+        /component/completed !bf not
+        @eid
+    ] select
+    `, 'todo');
+
+    // console.log(es.getUrl());
+    // await printAll(es);
+    // console.log( es.componentDefs.map( d => `${d['@d']} ${d.uri}`).join('\n') );
+    assert.equal( stack.popValue(), [103,104,105] );
+});
 
 test('fetching components with optional', async () => {
     let [stack] = await prepES(`
@@ -138,8 +163,9 @@ test('fetching components with optional', async () => {
     rot [ *^$1 /component/priority !bf @c ] select rot +
     `, 'todo');
 
-    assert.equal( stack.popValue().length, 7 );
+    assert.equal(stack.popValue().length, 7);
 });
+
 
 test('fetches component attributes', async () => {
     let [stack] = await prepES(`
@@ -148,7 +174,7 @@ test('fetches component attributes', async () => {
 
     `, 'todo');
     let titles = stack.popValue();
-    assert.equal( titles[2], 'turn on the news' );
+    assert.equal(titles[2], 'turn on the news');
 });
 
 test('fetches component attribute from entitiy', async () => {
@@ -157,7 +183,7 @@ test('fetches component attribute from entitiy', async () => {
         [ 102 @eid /component/title#text @ca ] select pop!
     `, 'todo');
     let title = stack.popValue();
-    assert.equal( title, 'turn on the news' );
+    assert.equal(title, 'turn on the news');
 });
 
 test('fetches matching component attribute', async () => {
@@ -210,7 +236,7 @@ test('testing whether entity has a component', async () => {
 
     let [stack] = await prepES(query, 'todo');
     // ilog( stack.popValue() );
-    assert.equal( stack.popValue(), 'nok' );
+    assert.equal(stack.popValue(), 'nok');
 });
 
 
@@ -453,7 +479,7 @@ test('selects a JSON attribute', async () => {
 test('selecting component by attribute', async () => {
     let id = 1000;
     let idgen = () => ++id;
-    const es = createEntitySet({idgen});
+    const es = createEntitySet({ idgen });
 
     const stmt = es.prepare(`
         [ "/component/src", ["url"] ] !d
@@ -476,8 +502,8 @@ test('selecting component by attribute', async () => {
 
     const res = await stmt.getResult();
 
-    assert.equal( res.length, 1 );
-    assert.equal( res[0].url, 'file:///readme.txt' );
+    assert.equal(res.length, 1);
+    assert.equal(res[0].url, 'file:///readme.txt');
 
 });
 
@@ -485,11 +511,11 @@ test('selecting component by attribute', async () => {
 test('selecting component against bf', async () => {
     let id = 1000;
     let idgen = () => ++id;
-    const es = createEntitySet({idgen});
+    const es = createEntitySet({ idgen });
 
     const stmt = es.prepare(`
         [ "/component/src", ["url"] ] !d
-        [ "/component/diff", [{name:op, type:integer}] ] !d
+        [ "/component/upd", [{name:op, type:integer}] ] !d
         gather // wraps previous into a list
         + // add list to es
 
@@ -497,13 +523,13 @@ test('selecting component against bf', async () => {
         gather
         +
         [ /component/src {url: "file:///readme.txt"} ] !c
-        [ /component/diff {op: 1} ] !c
+        [ /component/upd {op: 1} ] !c
         gather
         +
 
         [ 
             /component/src#url !ca ~r/^file\:\/\// == 
-            [/component/diff /component/src] !bf
+            [/component/upd /component/src] !bf
             and
             @c 
         ] select
@@ -513,12 +539,65 @@ test('selecting component against bf', async () => {
 
     const res = await stmt.getResult();
 
-    
 
-    assert.equal( res.length, 2 );
-    assert.equal( res[1].url, 'file:///readme.txt' );
+
+    assert.equal(res.length, 2);
+    assert.equal(res[1].url, 'file:///readme.txt');
 });
 
+
+
+test('and/or component', async () => {
+    let id = 1000;
+    let idgen = () => ++id;
+    const es = createEntitySet({ idgen });
+
+    const stmt = es.prepare(`
+        [ "/component/src", ["url"] ] !d
+        [ "/component/upd", [{name:op, type:integer}] ] !d
+        [ "/component/site_ref", [{name:ref, type:integer}] ] !d
+        gather // wraps previous into a list
+        + // add list to es
+
+        [ /component/src {url: "file:///about.txt"} ] !c
+        [ /component/upd {op: 2} ] !c
+        [ /component/site_ref {ref: 200} ] !c
+        [ /component/src {url: "file:///misc/style.scss"} ] !c
+        [ /component/upd {op: 1} ] !c
+        [ /component/site_ref {ref: 200} ] !c
+        gather
+        +
+        [ /component/src {url: "file:///readme.txt"} ] !c
+        [ /component/upd {op: 1} ] !c
+        [ /component/site_ref {ref: 300} ] !c
+        gather
+        +
+        [ /component/src {url: "file:///style.scss"} ] !c
+        [ /component/upd {op: 2} ] !c
+        [ /component/site_ref {ref: 300} ] !c
+        gather
+        +
+
+        [
+            /component/src#url !ca ~r/.scss$/ ==
+                    /component/upd#op !ca 1 ==
+                    /component/upd#op !ca 2 ==
+                or
+                /component/site_ref#ref !ca $ref ==
+            and
+        and
+        /component/src !bf
+        @c ] 
+        select
+
+        // prints
+    `);
+
+    const res = await stmt.getResult({ref:200});
+
+    assert.equal(res.length, 1);
+    assert.equal(res[0].url, 'file:///misc/style.scss');
+});
 
 // test('condition against missing com', async () => {
 //     let query = `[

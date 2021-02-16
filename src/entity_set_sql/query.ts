@@ -10,7 +10,8 @@ import {
     and as bfAnd,
     or as bfOr,
     toValues as bfToValues,
-    isBitField
+    isBitField,
+    TYPE_NOT
 } from '@odgn/utils/bitfield';
 import { EntitySetSQL, ComponentDefSQL } from ".";
 import { createLog } from "../util/log";
@@ -41,7 +42,7 @@ import { onLogicalFilter, parseFilterQuery } from "../entity_set/filter";
 import { onComponentAttr, buildBitfield, SelectOptions, stringToComponentAttr } from "../entity_set/query";
 import { onDefine } from "../query/words/define";
 import { onPluck } from "../query/words/pluck";
-import { onBitFieldOr } from "../query/words";
+import { onBitFieldNot, onBitFieldOr } from "../query/words";
 import { onDiff } from '../query/words/list';
 
 const Log = createLog('SQLQuery');
@@ -68,7 +69,8 @@ export async function select(stack:QueryStack, query: StackValue[], options:Sele
         ['define', onDefine],
 
         // converts a BitField to OR mode
-        ['!or', onBitFieldOr, SType.BitField],
+        ['or', onBitFieldOr, SType.BitField],
+        ['not', onBitFieldNot, SType.BitField],
 
         ['and', onLogicalFilter, SType.Any, SType.Any],
         ['or', onLogicalFilter, SType.Any, SType.Any],
@@ -211,7 +213,7 @@ export function applyFilter(stack: SQLQueryStack): InstResult {
     const { es } = stack;
     [, filter] = stack.pop();
 
-    // Log.debug('[applyFilter]', filter[2] );
+    // Log.debug('[applyFilter]', filter );
     // determine whether the previous stack argument can give us
     // a set of eids. if not, then the filter is applied to all the entities
     // in the es
@@ -298,7 +300,7 @@ export function fetchComponents(stack: SQLQueryStack, [,op]:StackValue): InstRes
 
     // let dids = bf !== undefined || bf.isAllSet ? undefined : bfToValues(bf);
 
-    // coms = sqlRetrieveComponents(es.db, eids, dids );
+    
     const allDefs = bf === undefined || (isBitField(bf) && bf.isAllSet) || defs === undefined;
     // Log.debug('[fetchComponent]', {allDefs, isAllSet:(isBitField(bf) && bf.isAllSet), undefined:(defs===undefined)}, bf);
 
@@ -384,6 +386,7 @@ export async function fetchEntity(stack: SQLQueryStack, [,op]:StackValue): Async
         
         bf = eid as BitField;
         ents = matchEntities(es, bf);
+        
 
         // Log.debug('[fetchEntity]', ents);
 
@@ -465,7 +468,8 @@ function matchEntities(es: EntitySetSQL, mbf?: BitField): Entity[] {
     if (mbf === undefined || mbf.isAllSet) {
         return sqlRetrieveEntities(es.db);
     }
-    return sqlRetrieveEntityByDefId(es.db, bfToValues(mbf));
+    
+    return sqlRetrieveEntityByDefId(es.db, bfToValues(mbf), {type:mbf.type} );
 }
 
 function ilog(...args) {

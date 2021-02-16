@@ -27,7 +27,10 @@ import {
     count as bfCount,
     and as bfAnd,
     or as bfOr,
-    toValues as bfToValues
+    toValues as bfToValues,
+    TYPE_AND,
+    TYPE_OR,
+    TYPE_NOT
 } from '@odgn/utils/bitfield';
 import { Component, ComponentId, toComponentId } from '../component';
 import { SType } from '../query/types';
@@ -706,96 +709,54 @@ export function sqlRetrieveEntities(ref: SqlRef, eids?: EntityId[]): Entity[] {
     return Object.values(result);
 }
 
+export interface RetrieveOptions {
+    type?: number;
+}
 
-
-export function sqlRetrieveEntityByDefId(ref: SqlRef, did: number[]): Entity[] {
+/**
+ * Retrieves entities which have ALL of the specified Def Ids
+ * 
+ * @param ref 
+ * @param did 
+ */
+export function sqlRetrieveEntityByDefId(ref: SqlRef, did: ComponentDefId[], options:RetrieveOptions = {}): Entity[] {
     const { db } = ref;
+    const type = options.type ?? TYPE_AND;
 
-    // Log.debug('[sqlRetrieveEntityByDefId]', did);
     if( did === undefined || did.length === 0 ){
-        return [];
+        return type === TYPE_AND || type === TYPE_OR ? [] : sqlRetrieveEntities(ref);
     }
 
-    let stmt = db.prepare(`
-    SELECT 
-        eid,did 
-    FROM 
-        tbl_entity_component 
-    WHERE 
-        eid IN (
-            SELECT 
-                eid 
-            FROM 
-                tbl_entity_component 
-            WHERE 
-                did IN (${did})
-        ) 
-    ORDER BY 
-        eid;
-    `);
-    // Log.debug('[sqlRetrieveEntityByDefId]', did);
-    let rows = stmt.all();
+    let qualifier = type === TYPE_NOT ? 'NOT' : '';
+
+    const sql = `
+    SELECT eid,did FROM tbl_entity_component
+    WHERE eid ${qualifier} IN (
+
+    SELECT a.eid FROM tbl_entity_component AS a 
+    INNER JOIN(
+    SELECT eid, COUNT(DISTINCT did) AS cnt
+    FROM tbl_entity_component
+    WHERE did IN (${did})
+    GROUP BY eid
+    HAVING COUNT(DISTINCT did) = ${did.length}
+    ORDER BY eid
+    ) AS b ON a.eid = b.eid WHERE a.did IN (${did})
+
+    )
+    `;
+    
+    let rows = db.prepare(sql).all();
+    // Log.debug('[sqlRetrieveEntityByDefId]', did, rows);
 
     let result = rows.reduce((result, { eid, did }) => {
-        let e = result[eid];
-        if (e === undefined) {
-            e = new Entity(eid);
-        }
+        let e = result[eid] ?? new Entity(eid);
         e.bitField = bfSet(e.bitField, did);
         return { ...result, [eid]: e };
     }, {});
 
     return Object.values(result);
 }
-
-// export function sqlRetrieveComponentValue(ref: SqlRef, def: ComponentDef, attr: string, value:any, eids: EntityId[] = [], returnComs:boolean = false) {
-//     const { db } = ref;
-//     const tblName = defToTbl(def);
-//     const did = getDefId(def);
-
-//     let whereClauses = [];
-//     let params = [];
-
-//     if( value !== undefined ){
-//         whereClauses.push(`${attr} = (?)`)
-//         params.push( valueToSQL(value) );
-//     }
-
-//     if( eids.length > 0 ){
-//         const paramStr = buildInParamString(eids);
-//         whereClauses.push( `eid IN (${paramStr})`); 
-//         params.push(...eids);
-//     };
-
-//     let additional = '';
-//     if( whereClauses.length > 0 ){
-//         additional = 'WHERE ' + whereClauses.join('AND');
-//     }
-
-//     let columns = ['eid', ...getDefColumns(def)];
-
-//     let query = `
-//         SELECT
-//         ${columns}
-//         FROM
-//         ${tblName}
-//         ${additional}
-//         ORDER BY
-//         eid
-//         ;`;
-
-//     // Log.debug('[sqlRetrieveComponentValue]', query, params);
-//     let stmt = db.prepare(query);
-
-//     let rows = stmt.all(...params);
-
-//     return rows.map(row => {
-//         return returnComs ?
-//             [SType.Component, componentRowToComponent(did,row) ]
-//             : [SType.ComponentValue, [toComponentId(row.eid, did), attr, row[attr]]];
-//     })
-// }
-
 
 export function sqlRetrieveByQuery(ref: SqlRef, eids: EntityId[], query: any[]) {
     const { db } = ref;
