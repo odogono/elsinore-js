@@ -59,6 +59,10 @@ export interface OpenOptions {
     verbose?: any;
 }
 
+export interface OpOptions {
+    debug?: boolean;
+}
+
 export function sqlClear(name: string): Promise<boolean> {
     const db = new BetterSqlite3(name, { verbose: undefined });
 
@@ -191,8 +195,8 @@ export function sqlInsertDef(ref: SqlRef, def: ComponentDef): ComponentDefSQL {
 
     let stmt = db.prepare('INSERT INTO tbl_component_def (uri,hash,tbl,schema) VALUES (?,?,?,?)');
 
-    stmt.run(def.uri, hash, tblName, JSON.stringify(schema));
-    let did = sqlLastId(ref);
+    const {lastInsertRowid:did} = stmt.run(def.uri, hash, tblName, JSON.stringify(schema));
+    // let did = sqlLastId(ref);
 
     
     // Log.debug('[sqlInsertDef]', sql);
@@ -224,8 +228,8 @@ export function sqlUpdateEntity(ref: SqlRef, e: Entity): Entity {
     // asTransaction( ref, () => {
     if (!update) {
         let stmt = db.prepare('INSERT INTO tbl_entity DEFAULT VALUES;');
-        stmt.run();
-        eid = sqlLastId(ref);
+        const {lastInsertRowid} = stmt.run();
+        eid = lastInsertRowid as EntityId; //sqlLastId(ref);
         // Log.debug('[sqlUpdateEntity]', 'err?', eid );
     } else {
         let stmt = db.prepare('INSERT INTO tbl_entity(id) VALUES (?)');
@@ -268,8 +272,9 @@ export function sqlRetrieveEntity(ref: SqlRef, eid: number): Entity {
     return new Entity(eid, bf);
 }
 
-export function sqlUpdateComponent(ref: SqlRef, com: Component, def: ComponentDefSQL): Component {
+export function sqlUpdateComponent(ref: SqlRef, com: Component, def: ComponentDefSQL, options:OpOptions = {}): Component {
     const { db } = ref;
+    // const debug = options.debug ?? false;
     let { '@e': eid, '@d': did } = com;
     const { tblName } = def;
 
@@ -287,8 +292,8 @@ export function sqlUpdateComponent(ref: SqlRef, com: Component, def: ComponentDe
         let vals = names.map(name => valueToSQL(com[name], getDefProperty(def, name)));
         const sql = `UPDATE ${tblName} ${set} WHERE id = ?`;
         stmt = db.prepare(sql);
-        // Log.debug('[sqlUpdateComponent]', eid, did, sql, names, 'vals', vals );
         stmt.run([...vals, id]);
+        // if( debug ) Log.debug('[sqlUpdateComponent][update]', eid, did, sql, names, 'vals', vals );
     }
     else {
 
@@ -300,16 +305,38 @@ export function sqlUpdateComponent(ref: SqlRef, com: Component, def: ComponentDe
         let valString = vals.map(v => '?').join(',');
         // Log.debug('[sqlUpdateComponent]',`INSERT INTO ${tblName} (${colString}) VALUES (${valString});`, vals, com);
         // Log.debug('[sqlUpdateComponent]', 'def', def);
-        stmt = db.prepare(`INSERT INTO ${tblName} (${colString}) VALUES (${valString});`)
-        stmt.run(vals);
-        const cid = sqlLastId(ref);
+        const sql = `INSERT INTO ${tblName} (${colString}) VALUES (${valString});`
+        stmt = db.prepare(sql);
+        let {lastInsertRowid:cid} = stmt.run(vals);
+        // const cid = sqlLastId(ref);
 
+        // if( lastInsertRowid !== cid ){
+        //     throw new Error('oh no!');
+        // }
+        // Log.debug('[sqlUpdateComponent][insert]', eid, changes);
+
+        // if( debug ) Log.debug('[sqlUpdateComponent][insert]', eid, did, sql, names, 'vals', vals );
+        // if( debug ) Log.debug('[sqlUpdateComponent][insert]', 'result cid', {cid} );
+        
         // Log.debug('[sqlUpdateComponent]',`inserting into tbl_entity_component ${eid} ${did} ${cid}`);
         stmt = db.prepare('INSERT INTO tbl_entity_component (eid,did,cid,created_at,updated_at) VALUES (?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)');
-        stmt.run(eid, did, cid);
+        let r = stmt.run(eid, did, cid);
+
+        // if( debug ) Log.debug('[sqlUpdateComponent][insert]', 'tbl_e_c result cid', r );
     }
 
     return com;
+}
+
+export function sqlBegin(ref:SqlRef ){
+    const {db} = ref;
+    db.exec('BEGIN TRANSACTION;');
+    // Log.debug('[sqlBegin]');
+}
+export function sqlCommit(ref:SqlRef ){
+    const {db} = ref;
+    db.exec('COMMIT;');
+    // Log.debug('[sqlCommit]');
 }
 
 function valueToSQL(value: any, property?: ComponentDefProperty) {
