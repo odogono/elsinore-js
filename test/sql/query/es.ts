@@ -1,6 +1,6 @@
 import { suite } from 'uvu';
 import assert from 'uvu/assert';
-import { printAll } from '../../../src/util/print';
+import { printAll, printEntity } from '../../../src/util/print';
 
 import {
     AsyncInstResult,
@@ -192,6 +192,7 @@ test('returns query results as components', async () => {
             `);
 
     const result = await stmt.getEntities();
+
 
     assert.equal(result[0].Title.text, 'get out of bed');
     assert.equal(result[1].id, 101);

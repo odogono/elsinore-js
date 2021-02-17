@@ -160,24 +160,19 @@ export class Statement {
                     if( em === undefined ){
                         em = new Map<EntityId,Entity>();
                     }
+                    
                     e = em.get(eid) ?? es.createEntity(eid);
                     e.addComponentUnsafe(did, lv);
                     em.set(eid, e);
                 }
             }
-            if (e !== undefined) {
-                result.push(e);
-            }
             if( em !== undefined ){
-                for( const e of em.values() ){
-                    result.push(e);
-                }
+                result = Array.from(em.values());
             }
         } else if (type === SType.Component) {
-            // result.push( addCom(undefined,val));
             let eid = getComponentEntityId(val);
             let did = getComponentDefId(val);
-            // const name = this.getByDefId(did).name;
+            
             let e = es.createEntity(eid);
             e.addComponentUnsafe(did, val);
             result.push(e);

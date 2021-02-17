@@ -54,14 +54,23 @@ export function find<T>( set:ChangeSet<T>, val:T ):ChangeSetOp {
 export function merge<T>( a:ChangeSet<T>, b:ChangeSet<T> ): ChangeSet<T> {
     const added = new Set([...a.added, ...b.added]);
     const removed = new Set([...a.removed, ...b.removed]);
-    const updates = [...a.updated, ...b.updated];
-    for(let ii=0;ii<updates.length;ii++) {
-        let val = updates[ii];
+    const updated = new Set([...a.updated, ...b.updated]);
+    for (let val of updated ){
         if( removed.has( val ) ){
             removed.delete( val );
         }
     }
-    const updated = new Set(updates);
+    
+    // if a value is in added and also in removed, changed to updated
+    for( let val of added ){
+        if( removed.has(val) ){
+            removed.delete(val);
+            added.delete(val);
+            updated.add(val);
+        }
+    }
+    
+    
     return {added,updated,removed};
 }
 

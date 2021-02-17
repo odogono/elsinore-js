@@ -63,7 +63,9 @@ import {
     sqlRetrieveEntityComponents,
     sqlComponentExists,
     sqlGetEntities,
-    sqlRetrieveComponentsByDef
+    sqlRetrieveComponentsByDef,
+    sqlBegin, 
+    sqlCommit
 } from "./sqlite";
 import { createLog } from "../util/log";
 import { select } from "./query";
@@ -116,8 +118,8 @@ export class EntitySetSQL extends EntitySetMem {
         this.db = options.db ?? undefined;
     }
 
-    getUrl(){
-        return this.isMemory ? 
+    getUrl() {
+        return this.isMemory ?
             `es://sqlite?uuid=${this.uuid}&isMemory=${this.isMemory}`
             : `es://sqlite${this.path}?uuid=${this.uuid}`;
     }
@@ -160,7 +162,7 @@ export class EntitySetSQL extends EntitySetMem {
      * Returns an iterate over all of the Entitys in the es
      * @param populate 
      */
-    async *getEntities( populate:boolean = true): AsyncGenerator<Entity, void, void> {
+    async *getEntities(populate: boolean = true): AsyncGenerator<Entity, void, void> {
         this.openEntitySet();
         let eids = sqlGetEntities(this.db);
 
@@ -169,12 +171,12 @@ export class EntitySetSQL extends EntitySetMem {
         }
     }
 
-    async *getComponents(){
+    async *getComponents() {
         this.openEntitySet();
 
-        for ( const def of this.componentDefs ){
+        for (const def of this.componentDefs) {
             // console.log('getC', def.uri);
-            for( const com of sqlRetrieveComponentsByDef(this.db, def) ){
+            for (const com of sqlRetrieveComponentsByDef(this.db, def)) {
                 yield com;
             }
         }
@@ -185,7 +187,7 @@ export class EntitySetSQL extends EntitySetMem {
      * in the es
      * 
      */
-    async * [Symbol.asyncIterator]() {
+    async *[Symbol.asyncIterator]() {
         this.openEntitySet();
         let eids = sqlGetEntities(this.db);
 
@@ -203,10 +205,18 @@ export class EntitySetSQL extends EntitySetMem {
     // }
 
 
-    async applyUpdates() {
+    async beginUpdates() {
+        sqlBegin(this.db);
     }
 
-    async markComponentAdd(com: Component): Promise<EntitySetSQL> {
+    async applyUpdates() {
+        // if (this.entUpdates.size > 0 || this.comUpdates.size > 0) {
+            sqlCommit(this.db);
+        // }
+    }
+
+    async markComponentAdd(com: Component, options: ESOptions = {}): Promise<EntitySetSQL> {
+        const debug = options.debug ?? false;
         // adds the component to the entityset if it is unknown,
         // otherwise marks as an update
         const cid = getComponentId(com);

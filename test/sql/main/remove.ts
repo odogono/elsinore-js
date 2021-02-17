@@ -20,7 +20,7 @@ import {
 } from '../helpers';
 import { assertHasComponents } from '../../helpers/assert';
 import { printAll } from '../../../src/util/print';
-import { toComponentId } from '../../../src/component';
+import { setEntityId, toComponentId } from '../../../src/component';
 
 let test = suite('es/sqlite - removing');
 
@@ -106,6 +106,23 @@ test('removes components by id', async () => {
     assert.equal( getChanges( es.entChanges, ChangeSetOp.Update), [100,104] );
 
 });
+
+test('remove with retain', async () => {
+    let [, es] = await prepES(undefined, 'todo');
+
+    await es.removeComponents( [ toComponentId(100,1) ] );
+
+    let com = es.createComponent( '/component/title', {text:'start the day'} );
+    com = setEntityId(com, 100);
+
+    // we are adding a component that was previously removed,
+    // so it becomes an update
+    await es.add( com, {retain:true} );
+
+    assert.equal( getChanges( es.comChanges, ChangeSetOp.Update), [toComponentId(100,1)] );
+    assert.equal( getChanges( es.entChanges, ChangeSetOp.Update), [100] );
+});
+
 
 test.run();
 

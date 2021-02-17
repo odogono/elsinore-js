@@ -589,6 +589,8 @@ export class EntitySetMem extends EntitySet {
     async add<ES extends EntitySet>(item: AddType, options: AddOptions = {}): Promise<ES> {
         await this.openEntitySet();
 
+        await this.beginUpdates();
+
         if (options.retain !== true) {
             this.clearChanges();
         }
@@ -600,7 +602,6 @@ export class EntitySetMem extends EntitySet {
         // }
 
         if (Array.isArray(item)) {
-
             let initial: [Entity[], Component[]] = [[], []];
             // sort the incoming items into entities and components
             let [ents, coms] = (item as any[]).reduce(([ents, coms], item) => {
@@ -615,20 +616,20 @@ export class EntitySetMem extends EntitySet {
             // console.log('[add]', ents);
             // add components on entities
             if (ents.length > 0) {
-                await ents.reduce((p, e) => p.then(() => this.addComponents(e.getComponents())), Promise.resolve());
+                await ents.reduce((p, e) => p.then(() => this.addComponents(e.getComponents(), options)), Promise.resolve());
             }
 
             // add components
-            await this.addComponents(coms);
+            await this.addComponents(coms, options);
         }
         else if (isComponentLike(item)) {
-            await this.addComponents([item as Component]);
+            await this.addComponents([item as Component], options);
         }
         else if (isEntity(item)) {
             let e = item as Entity
             // if( debug ){ console.log('add', e)}
             this.markEntityComponentsRemove([e.id]);
-            await this.addComponents(e.getComponents());
+            await this.addComponents(e.getComponents(), options);
         }
         else if (isEntitySet(item)) {
             let es = item as EntitySet;
@@ -672,7 +673,8 @@ export class EntitySetMem extends EntitySet {
     }
 
 
-
+    async beginUpdates() {
+    }
 
     async applyUpdates() {
 
@@ -712,6 +714,7 @@ export class EntitySetMem extends EntitySet {
     }
 
     async addComponents(components: Component[], options: ESOptions = {}): Promise<EntitySet> {
+        const debug = options.debug ?? false;
         // set a new (same) entity id on all orphaned components
         components = this.assignEntityIds(components)
 
@@ -723,14 +726,14 @@ export class EntitySetMem extends EntitySet {
         // clearChanges()
 
         // mark incoming components as either additions or updates
-        await components.reduce((p, com) => p.then(() => this.markComponentAdd(com)), Promise.resolve());
+        await components.reduce((p, com) => p.then(() => this.markComponentAdd(com, options)), Promise.resolve());
 
         // gather the components that have been added or updated and apply
         let changedCids = getChanges(this.comChanges, ChangeSetOp.Add | ChangeSetOp.Update)
-        // console.log('[addComponents]', 'pre', changedCids);
+        // if( debug ) console.log('[addComponents]', 'pre', changedCids);
 
         this.comChanges = mergeCS(changes, this.comChanges);
-        // console.log('[addComponents]', 'changes', this.comChanges);
+        // if( debug ) console.log('[addComponents]', 'changes', this.comChanges);
 
         // sequentially apply
         await changedCids.reduce((p, cid) => p.then(() => this.applyUpdatedComponents(cid)), Promise.resolve());
@@ -1062,7 +1065,8 @@ export class EntitySetMem extends EntitySet {
     }
 
 
-    async markComponentAdd(com: Component): Promise<EntitySet> {
+    async markComponentAdd(com: Component, options:ESOptions={}): Promise<EntitySet> {
+        const debug = options.debug ?? false;
         // adds the component to the entityset if it is unknown,
         // otherwise marks as an update
         const cid = getComponentId(com);
@@ -1076,25 +1080,26 @@ export class EntitySetMem extends EntitySet {
             existing = await this.getComponent(cid);
         }
 
-        // Log.debug('[markComponentAdd]', cid, existing );
+        // console.log('[markComponentAdd]', cid, existing );
         this.comUpdates.set(cid, com);
 
         if (existing !== undefined) {
             return this.markComponentUpdate(cid);
         }
         this.comChanges = addCS(this.comChanges, cid);
+        // console.log('[markComponentAdd]', cid, this.comChanges );
         return this;
     }
 
     markComponentUpdate(cid: ComponentId) {
         this.comChanges = updateCS(this.comChanges, cid)
-        // Log.debug('[markComponentUpdate]', cid, comChanges);
+        // console.log('[markComponentUpdate]', cid);
         return this;
     }
 
     markComponentRemove(cid: ComponentId) {
         this.comChanges = removeCS(this.comChanges, cid);
-        // Log.debug('[markComponentRemove]', cid);
+        // console.log('[markComponentRemove]', cid);
         return this;
     }
 
