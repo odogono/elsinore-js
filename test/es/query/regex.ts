@@ -110,6 +110,16 @@ test('create a regex', async () => {
 
 });
 
+
+test('case insensitive regex', async () => {
+    let [stack] = await prep(`
+            "FOO is bar" ~r/foo/i ==
+            `);
+
+    let result = stack.popValue();
+    assert.equal(result, true);
+});
+
 test.run();
 
 
