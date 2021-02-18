@@ -272,7 +272,6 @@ test('uses regex for minimum length', async () => {
 
 test('fetches by comparing a date', async () => {
     let [stack] = await prepES(`[ 
-                // /component/meta#/createdAt !ca ~d/2020-05-23T10:00:00.000Z/ >=
                 /component/meta#/createdAt !ca ~d/2020-05-23T12:00:00.000Z/ <=
                 // and
                 /component/title !bf
@@ -283,8 +282,7 @@ test('fetches by comparing a date', async () => {
     let result = stack.popValue();
     assert.equal(result, [
         'get out of bed',
-        'phone up friend',
-        'turn on the news',
+        'turn on the news'
     ])
 });
 

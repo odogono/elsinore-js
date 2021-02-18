@@ -16,11 +16,14 @@
 [ "/component/title", { "text":"get out of bed"} ] !c
 [ "/component/completed", {"isComplete":true}]  !c
 [ "/component/priority", {"priority":10} ] !c
-[ "/component/meta", { "meta":{ 
-    "author":"av",
-    "tags": [ "first", "action" ] },
-    "createdAt":"2020-05-23T09:00:00.000Z",
-    } ] !c
+[ "/component/meta", { 
+    "meta":{ 
+        "author":"av",
+        "tags": [ "first", "action" ] 
+        },
+        "createdAt":"2020-05-23T09:00:00.000Z"
+    } 
+    ] !c
 
 // add components to array
 gather
@@ -31,7 +34,7 @@ gather
 
 [ "/component/title", { "text":"phone up friend"} ] !c
 [ "/component/completed", {"isComplete":true}] !c
-[ "/component/meta", {"createdAt":"2020-05-23T10:15:00.000Z"} ] !c
+[ "/component/meta", {"createdAt":"2020-05-24T10:15:00.000Z"} ] !c
 gather
 101 !e swap +
 
@@ -44,10 +47,12 @@ gather
 
 
 [ "/component/title", { "text":"drink some tea"} ] !c
-[ "/component/meta", { "meta": {
-    "author":"jm"
-} },
-    "createdAt":"2020-05-23T13:55:00.000Z" ] !c
+[ "/component/meta", { 
+    "meta": { "author":"jm" } 
+    "createdAt":"2020-05-23T19:10:00.000Z" 
+},
+] !c
+
 gather
 103 !e swap +
 

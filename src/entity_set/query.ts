@@ -38,7 +38,7 @@ import {
 } from "../query/types";
 import { onPluck } from "../query/words/pluck";
 import { onDefine } from "../query/words/define";
-import { ComponentDefId, getDefId, ComponentDef } from "../component_def";
+import { ComponentDefId, getDefId, ComponentDef, getProperty, PropertyType } from "../component_def";
 import { onLogicalFilter, parseFilterQuery } from './filter';
 import { unpackStackValue, unpackStackValueR, stackToString } from "../query/util";
 import { EntitySet, EntitySetMem } from ".";
@@ -76,6 +76,9 @@ export async function select(stack: QueryStack, query: StackValue[], options: Se
         // converts a BitField to OR mode
         ['!or', onBitFieldOr, SType.BitField],
         ['not', onBitFieldNot, SType.BitField],
+
+        ['order', onOrder, SType.ComponentAttr, SType.Value],
+        ['limit', applyLimit],
 
         ['and', onLogicalFilter, SType.Any, SType.Any],
         ['or', onLogicalFilter, SType.Any, SType.Any],
@@ -116,7 +119,7 @@ export async function select(stack: QueryStack, query: StackValue[], options: Se
         ['@ca', fetchComponentAttributes],
         ['!fil', applyFilter, SType.Filter],
 
-        ['limit', applyLimit],
+        
         ['pluck', onPluck],
         ['pluck!', onPluck],
         ['diff', onDiff],
@@ -285,7 +288,7 @@ function walkFilterQueryCompare(es: EntitySetMem, eids: EntityId[], cmd?, ...arg
         const cid = toComponentId(eid, did);
         const com = es.components.get(cid);
 
-        if( com === undefined ){
+        if (com === undefined) {
             continue;
         }
 
@@ -335,9 +338,24 @@ function walkFilterQueryCompare(es: EntitySetMem, eids: EntityId[], cmd?, ...arg
     return out;
 }
 
+
+export function onOrder(stack: ESMemQueryStack): InstResult {
+    let order = stack.popValue();
+    let [bf, attrPtr] = stack.popValue();
+
+    // Log.debug('[onOrder]', order, attrPtr);
+    let did = bfToValues(bf)[0];
+
+    stack.scratch.orderBy = [order.toLowerCase(), did, attrPtr];
+
+    return undefined;
+}
+
 export function applyLimit(stack: ESMemQueryStack): InstResult {
-    let limit = stack.pop();
-    let offset = stack.pop();
+    let offset = stack.popValue();
+    let limit = stack.popValue();
+
+    stack.scratch.limit = [ offset, limit ];
 
     return undefined;
 }
@@ -369,7 +387,7 @@ export function fetchComponents(stack: ESMemQueryStack, [, op]: StackValue): Ins
     let left: StackValue;
     let eids: EntityId[];
     const returnCid = op === '@cid';
-    
+
     let coms = [];
 
     // get the bitfield
@@ -402,7 +420,7 @@ export function fetchComponents(stack: ESMemQueryStack, [, op]: StackValue): Ins
         }
     }
 
-    // Log.debug('[fetchComponent]', eids, bfToValues(bf) );
+    // Log.debug('[fetchComponent]', eids, bfToValues(bf));
     // Log.debug('[fetchComponent]', eids, bfToValues(bf), bf?.type );
 
     // if an empty eid array has been passed, then no coms can be selected
@@ -410,16 +428,37 @@ export function fetchComponents(stack: ESMemQueryStack, [, op]: StackValue): Ins
         return [SType.List, coms];
     }
 
+    let [orderDir, orderDid, orderAttr, orderType] = stack.scratch.orderBy ?? ['desc'];
+    let [offset, limit] = stack.scratch.limit ?? [0, Number.MAX_SAFE_INTEGER];
+    if( orderType === undefined ){
+        orderType = 'integer';
+    }
+    let isPtr = false;
+
+    if (orderDid !== undefined ) {
+        const def = es.getByDefId( orderDid );
+        isPtr = orderAttr.startsWith('/');
+        const prop = getProperty(def, isPtr ? orderAttr.substring(1) : orderAttr );
+        if( prop === undefined ){
+            console.log('[fetchComponent][orderBy]', 'could not find prop', orderAttr );
+            orderDid = undefined;
+        } else {
+            orderType = prop.type;
+        }
+        // Log.debug('[fetchComponent]', 'orderBy', orderDid, orderAttr);
+    }
+
     for (const [, com] of es.components) {
+        const eid = getComponentEntityId(com);
         if (eids !== undefined && eids.length > 0) {
-            if (eids.indexOf(getComponentEntityId(com)) === -1) {
+            if (eids.indexOf(eid) === -1) {
                 continue;
             }
         }
 
         if (bf !== undefined && bf.isAllSet === false) {
             let cmpFn = bfTypeFn(bf);
-            const ebf = es.entities.get(getComponentEntityId(com));
+            const ebf = es.entities.get(eid);
             if (cmpFn(bf, ebf) === false) {
                 continue;
             }
@@ -428,17 +467,56 @@ export function fetchComponents(stack: ESMemQueryStack, [, op]: StackValue): Ins
             }
         }
 
-        coms.push(com);
+        if (orderDid !== undefined) {
+            let orderCom = es.components.get(toComponentId(eid, orderDid));
+            if (orderCom !== undefined) {
+                let val = isPtr ? Jsonpointer.get(orderCom, orderAttr) : orderCom[orderAttr];
+                if (val !== undefined) {
+                    val = isString(val) ? val.toLowerCase() : val;
+                    if( orderType === 'datetime' ){
+                        val = new Date(val).getTime();
+                    }
+                    coms.push([com, val, orderType]);
+                    continue;
+                }
+            }
+        }
+        // Log.debug('[fetchComponent]', eid, com);
+
+        coms.push([com, eid, 'entity']);
     }
 
-    // sort by entityId
-    coms.sort((a, b) => a['@e'] - b['@e']);
 
-    if( returnCid ){
-        return [SType.List, coms.map(c => [SType.Value, getComponentId(c) ])];
+    // sort
+    coms.sort(([a, ac, at], [b, bc, bt]) => attrCompare(ac, bc, at, bt, orderDir));
+
+    coms = coms.map( ([com]) => {
+        return returnCid ? [SType.Value, getComponentId(com)]
+            : [SType.Component,com];
+    });
+
+    coms = coms.slice(offset, limit);
+    
+
+    return [SType.List, coms]; //coms.map(c => [SType.Component, c])];
+}
+
+function attrCompare(a: any, b: any, aType:PropertyType, bType:PropertyType, orderDir:'asc'|'desc' = 'desc') {
+    // console.log('[attrCompare]', a, b, aType, bType);
+    let isDesc = orderDir === 'desc';
+    if( aType === 'datetime' ){
+        isDesc = !isDesc;
     }
-
-    return [SType.List, coms.map(c => [SType.Component, c])];
+    if( aType !== bType ){
+        return 0;
+    }
+    if (a < b) {
+        return isDesc ? -1 : 1;
+    }
+    if (a > b) {
+        return isDesc ? 1 : -1;
+    }
+    return 0;
 }
 
 export function fetchComponentAttributes(stack: ESMemQueryStack): InstResult {
@@ -629,7 +707,7 @@ export function matchEntities(es: EntitySetMem, eids: EntityId[], mbf: BitField 
     const isAll = mbf === 'all' || mbf === undefined || mbf.isAllSet;
     const type = isAll ? TYPE_AND : (mbf as BitField).type;
     let cmpFn = bfTypeFn(type); // bfAnd;
-    if( type === TYPE_NOT ){
+    if (type === TYPE_NOT) {
         cmpFn = bfNot;
     }
     if (isAll) {

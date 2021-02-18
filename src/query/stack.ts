@@ -79,6 +79,9 @@ export class QueryStack {
     // _udWords = new WeakMap();
     _udWords: { [key: string]: any } = {};
 
+    // used by words for temporary storage
+    scratch: { [key:string]: any } = {};
+
     debug: boolean = false;
 
     constructor(stack?: QueryStack) {

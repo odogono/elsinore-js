@@ -7,18 +7,18 @@ import { toCamelCase, toCapitalized } from '@odgn/utils';
 export const Type = '@d';
 export type ComponentDefId = number;
 
-export enum PropertyType {
-    String,
-    Integer,
-    Number,
-    Boolean,
-    Array,
-    Binary,
-    JSON, // also an object
-    Entity,
-    BitField,
-    DateTime,
-};
+// export enum PropertyType {
+//     String,
+//     Integer,
+//     Number,
+//     Boolean,
+//     Array,
+//     Binary,
+//     JSON, // also an object
+//     Entity,
+//     BitField,
+//     DateTime,
+// };
 
 
 export interface ComponentDef {
@@ -63,6 +63,9 @@ const typeDefaults = {
     'map': {},
     'datetime': undefined,// () => new Date()
 }
+
+export type PropertyType = 'string' | 'integer' | 'boolean' | 'entity' | 'list' | 'map' | 'datetime' | 'json';
+
 
 /**
  * 
