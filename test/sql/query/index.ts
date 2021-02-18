@@ -5,6 +5,7 @@ import './control';
 import './loop';
 import './main';
 import './mapreduce';
+import './paging';
 import './pluck';
 import './regex';
 import './select';

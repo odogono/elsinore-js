@@ -32,7 +32,7 @@ import {
     TYPE_OR,
     TYPE_NOT
 } from '@odgn/utils/bitfield';
-import { Component, ComponentId, toComponentId } from '../component';
+import { Component, ComponentId, getComponentEntityId, toComponentId } from '../component';
 import { SType } from '../query/types';
 import { isBoolean, isRegex, isDate, isValidDate } from '@odgn/utils';
 import { compareDates } from '../query/words/util';
@@ -63,6 +63,25 @@ export interface OpOptions {
     debug?: boolean;
 }
 
+
+export interface RetrieveOptions {
+    offset?: number;
+    limit?: number;
+    type?: number;
+    orderDir?: 'asc' | 'desc';
+    orderAttr?: string;
+    orderDef?: ComponentDefSQL;
+}
+
+
+export interface RetrieveComponentOptions extends RetrieveOptions {
+    allDefs?: boolean;
+    returnCid?: boolean;
+}
+
+
+
+
 export function sqlClear(name: string): Promise<boolean> {
     const db = new BetterSqlite3(name, { verbose: undefined });
 
@@ -88,7 +107,7 @@ export function sqlOpen(path: string, options: OpenOptions): SqlRef {
 
     // define our regexp function - so nice!
     db.function('regexp', { deterministic: true }, (regex, val) => {
-        if( val == null ){
+        if (val == null) {
             return 0;
         }
         let end = regex.lastIndexOf('/');
@@ -195,10 +214,10 @@ export function sqlInsertDef(ref: SqlRef, def: ComponentDef): ComponentDefSQL {
 
     let stmt = db.prepare('INSERT INTO tbl_component_def (uri,hash,tbl,schema) VALUES (?,?,?,?)');
 
-    const {lastInsertRowid:did} = stmt.run(def.uri, hash, tblName, JSON.stringify(schema));
+    const { lastInsertRowid: did } = stmt.run(def.uri, hash, tblName, JSON.stringify(schema));
     // let did = sqlLastId(ref);
 
-    
+
     // Log.debug('[sqlInsertDef]', sql);
     db.exec(sql);
     // let out = stmt.all(sql);
@@ -206,7 +225,7 @@ export function sqlInsertDef(ref: SqlRef, def: ComponentDef): ComponentDefSQL {
 
     let sdef = createComponentDef(did, schema) as ComponentDefSQL;
     sdef.tblName = tblName;
-    
+
     return sdef as ComponentDef;
 }
 
@@ -228,7 +247,7 @@ export function sqlUpdateEntity(ref: SqlRef, e: Entity): Entity {
     // asTransaction( ref, () => {
     if (!update) {
         let stmt = db.prepare('INSERT INTO tbl_entity DEFAULT VALUES;');
-        const {lastInsertRowid} = stmt.run();
+        const { lastInsertRowid } = stmt.run();
         eid = lastInsertRowid as EntityId; //sqlLastId(ref);
         // Log.debug('[sqlUpdateEntity]', 'err?', eid );
     } else {
@@ -272,7 +291,7 @@ export function sqlRetrieveEntity(ref: SqlRef, eid: number): Entity {
     return new Entity(eid, bf);
 }
 
-export function sqlUpdateComponent(ref: SqlRef, com: Component, def: ComponentDefSQL, options:OpOptions = {}): Component {
+export function sqlUpdateComponent(ref: SqlRef, com: Component, def: ComponentDefSQL, options: OpOptions = {}): Component {
     const { db } = ref;
     // const debug = options.debug ?? false;
     let { '@e': eid, '@d': did } = com;
@@ -307,7 +326,7 @@ export function sqlUpdateComponent(ref: SqlRef, com: Component, def: ComponentDe
         // Log.debug('[sqlUpdateComponent]', 'def', def);
         const sql = `INSERT INTO ${tblName} (${colString}) VALUES (${valString});`
         stmt = db.prepare(sql);
-        let {lastInsertRowid:cid} = stmt.run(vals);
+        let { lastInsertRowid: cid } = stmt.run(vals);
         // const cid = sqlLastId(ref);
 
         // if( lastInsertRowid !== cid ){
@@ -317,7 +336,7 @@ export function sqlUpdateComponent(ref: SqlRef, com: Component, def: ComponentDe
 
         // if( debug ) Log.debug('[sqlUpdateComponent][insert]', eid, did, sql, names, 'vals', vals );
         // if( debug ) Log.debug('[sqlUpdateComponent][insert]', 'result cid', {cid} );
-        
+
         // Log.debug('[sqlUpdateComponent]',`inserting into tbl_entity_component ${eid} ${did} ${cid}`);
         stmt = db.prepare('INSERT INTO tbl_entity_component (eid,did,cid,created_at,updated_at) VALUES (?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)');
         let r = stmt.run(eid, did, cid);
@@ -328,13 +347,13 @@ export function sqlUpdateComponent(ref: SqlRef, com: Component, def: ComponentDe
     return com;
 }
 
-export function sqlBegin(ref:SqlRef ){
-    const {db} = ref;
+export function sqlBegin(ref: SqlRef) {
+    const { db } = ref;
     db.exec('BEGIN TRANSACTION;');
     // Log.debug('[sqlBegin]');
 }
-export function sqlCommit(ref:SqlRef ){
-    const {db} = ref;
+export function sqlCommit(ref: SqlRef) {
+    const { db } = ref;
     db.exec('COMMIT;');
     // Log.debug('[sqlCommit]');
 }
@@ -441,7 +460,7 @@ export function sqlRetrieveComponent(ref: SqlRef, eid: number, def: ComponentDef
     //             val = JSON.parse(val);
     //             break;
     //     }
-        
+
     //     com[prop.name] = val;
     // }
 
@@ -449,23 +468,23 @@ export function sqlRetrieveComponent(ref: SqlRef, eid: number, def: ComponentDef
 }
 
 
-function rowToComponent(def:ComponentDefSQL, row:any ): Component {
+function rowToComponent(def: ComponentDefSQL, row: any): Component {
     const did = def[ComponentDefT];
     let com: any = { '@e': row.eid, '@d': did };
 
-    for( const prop of def.properties ){
-        let val = row[ prop.name ];
-        switch( prop.type ){
+    for (const prop of def.properties) {
+        let val = row[prop.name];
+        switch (prop.type) {
             case 'json':
             case 'boolean':
                 val = JSON.parse(val);
                 break;
         }
 
-        if( val === null ){
+        if (val === null) {
             continue;
         }
-        
+
         com[prop.name] = val;
     }
 
@@ -510,12 +529,12 @@ function rowToComponent(def:ComponentDefSQL, row:any ): Component {
  * @param ref 
  * @param def 
  */
-export function *sqlRetrieveComponentsByDef(ref: SqlRef, def:ComponentDefSQL ){
-    const {db} = ref;
+export function* sqlRetrieveComponentsByDef(ref: SqlRef, def: ComponentDefSQL) {
+    const { db } = ref;
 
     let stmt = db.prepare(`SELECT * FROM ${def.tblName} ORDER BY eid`);
-    
-    for( const row of stmt.iterate() ){
+
+    for (const row of stmt.iterate()) {
         yield rowToComponent(def, row);
     }
 }
@@ -528,79 +547,18 @@ export function *sqlRetrieveComponentsByDef(ref: SqlRef, def:ComponentDefSQL ){
  * @param eids 
  * @param defs 
  */
-export function sqlRetrieveComponents(ref: SqlRef, eids: EntityId[], defs: ComponentDefSQL[], allDefs = false): Component[] {
+export function sqlRetrieveComponents(ref: SqlRef, eids: EntityId[], defs: ComponentDefSQL[], options: RetrieveComponentOptions = {}): Component[] | ComponentId[] {
     const { db } = ref;
     let result = [];
-
-    if (eids !== undefined && eids.length === 0) {
-        return result;
-    }
-    
-    const dids = defs.map( d => getDefId(d) );
-    // Log.debug('[sqlRetrieveComponents]', {allDefs}, dids, eids);
-
-    const eidCondition = eids === undefined ? '' : `AND eid IN (${eids})`;
-
-    // NOTE - this is horrible
-    const havingCondition = allDefs ? '' : `HAVING COUNT(eid) = ${dids.length}`
-
-    const sql = `
-    SELECT DISTINCT eid FROM tbl_entity_component
-    WHERE eid IN (
-        SELECT eid FROM tbl_entity_component
-        WHERE did IN (${dids}) ${eidCondition}
-        GROUP BY eid ${havingCondition}
-    )
-    AND did IN (${dids})
-    `;
-
-    // Log.debug('[sqlRetrieveComponents]', sql);
-
-    let stmt = db.prepare(sql);
-
-    eids = stmt.all().map( r => r.eid );
-
-    // Log.debug('[sqlRetrieveComponents]', 'result', eids );
-
-
-    // build a list of entity ids which have all the defs
-
-    
-    for (let ii = 0; ii < defs.length; ii++) {
-        let def = defs[ii];
-        
-        
-        let rows;
-        if (eids === undefined) {
-            let stmt = db.prepare(`SELECT * FROM ${def.tblName} ORDER BY eid`);
-            rows = stmt.all();
-        } else {
-            const params = buildInParamString(eids);
-            let stmt = db.prepare(`SELECT * FROM ${def.tblName} WHERE eid IN (${params}) ORDER BY eid`);
-            // Log.debug('[sqlRetrieveComponents]', eids, params);
-            rows = stmt.all(...eids);
-        }
-        
-        for (let rr = 0; rr < rows.length; rr++) {
-            const row = rows[rr];
-            let com = rowToComponent(def, row);
-            result.push(com);
-        }
-    }
-
-
-    return result;
-}
-
-export function sqlRetrieveComponentIds(ref: SqlRef, eids: EntityId[], defs: ComponentDefSQL[], allDefs = false): ComponentId[] {
-    const { db } = ref;
-    let result = [];
+    const allDefs = options.allDefs ?? false;
+    const returnCid = options.returnCid ?? false;
+    let { offset, limit, orderDir, orderAttr, orderDef } = options;
 
     if (eids !== undefined && eids.length === 0) {
         return result;
     }
 
-    const dids = defs.map( d => getDefId(d) );
+    const dids = defs.map(d => getDefId(d));
     // Log.debug('[sqlRetrieveComponents]', {allDefs}, dids, eids);
 
     const eidCondition = eids === undefined ? '' : `AND eid IN (${eids})`;
@@ -617,15 +575,104 @@ export function sqlRetrieveComponentIds(ref: SqlRef, eids: EntityId[], defs: Com
     )
     AND did IN (${dids})
     `;
+    // LIMIT ${offset},${limit}
 
     // Log.debug('[sqlRetrieveComponents]', sql);
 
     let stmt = db.prepare(sql);
 
-    return stmt.all().map( r => toComponentId(r.eid,r.did) );
+    eids = stmt.all().map(r => r.eid);
+
+    // Log.debug('[sqlRetrieveComponents]', 'result', eids );
+    // Log.debug('[sqlRetrieveComponents]', 'defs', defs );
+    // Log.debug('[sqlRetrieveComponents]', 'orderDef', orderDef );
 
 
+
+
+    // build a list of entity ids which have all the defs
+
+
+    for (let ii = 0; ii < defs.length; ii++) {
+        let def = defs[ii];
+        const did = getDefId(def);
+
+        let rows;
+        if (eids === undefined) {
+            let sql = orderDef === undefined ?
+                `SELECT * FROM ${def.tblName} ORDER BY eid`
+                : `SELECT a.*,b.${orderAttr} FROM ${def.tblName} AS a
+                LEFT JOIN ${orderDef.tblName} AS b ON b.eid = a.eid
+                ORDER BY b.${orderAttr} ${orderDir} LIMIT ${offset},${limit}
+                `;
+            rows = db.prepare(sql).all();
+        } else {
+            const params = buildInParamString(eids);
+            let sql = orderDef === undefined ?
+                `SELECT * FROM ${def.tblName} WHERE eid IN (${params}) ORDER BY eid`
+                : `SELECT a.*,b.${orderAttr} FROM ${def.tblName} AS a
+                LEFT JOIN ${orderDef.tblName} AS b ON b.eid = a.eid
+                WHERE a.eid IN (${params})
+                ORDER BY b.${orderAttr} ${orderDir} LIMIT ${offset},${limit}
+                `;
+            // Log.debug('[sqlRetrieveComponents]', sql, eids );
+            rows = db.prepare(sql).all(...eids);
+        }
+
+        for (let rr = 0; rr < rows.length; rr++) {
+            const row = rows[rr];
+            let com = rowToComponent(def, row);
+            // result.push(com);
+            // Log.debug('[sqlRetrieveComponents]', 'push', toComponentId(getComponentEntityId(com), did));
+            result.push(returnCid ? toComponentId(getComponentEntityId(com), did) : com)
+        }
+    }
+
+
+    return result;
 }
+
+
+// SELECT a.*,b.createdAt FROM tbl_component_title_cc2c57e6 AS a
+// LEFT JOIN tbl_component_meta_90f607b9 AS b ON b.eid = a.eid
+// WHERE a.eid IN (100, 101, 102, 103, 104)
+// ORDER BY b.createdAt DESC
+
+// export function sqlRetrieveComponentIds(ref: SqlRef, eids: EntityId[], defs: ComponentDefSQL[], options:RetrieveComponentOptions = {}): ComponentId[] {
+//     const { db } = ref;
+//     let result = [];
+//     const allDefs = options.allDefs ?? false;
+
+//     if (eids !== undefined && eids.length === 0) {
+//         return result;
+//     }
+
+//     const dids = defs.map( d => getDefId(d) );
+//     // Log.debug('[sqlRetrieveComponents]', {allDefs}, dids, eids);
+
+//     const eidCondition = eids === undefined ? '' : `AND eid IN (${eids})`;
+
+//     // NOTE - this is horrible
+//     const havingCondition = allDefs ? '' : `HAVING COUNT(eid) = ${dids.length}`
+
+//     const sql = `
+//     SELECT DISTINCT eid,did FROM tbl_entity_component
+//     WHERE eid IN (
+//         SELECT eid FROM tbl_entity_component
+//         WHERE did IN (${dids}) ${eidCondition}
+//         GROUP BY eid ${havingCondition}
+//     )
+//     AND did IN (${dids})
+//     `;
+
+//     // Log.debug('[sqlRetrieveComponents]', sql);
+
+//     let stmt = db.prepare(sql);
+
+//     return stmt.all().map( r => toComponentId(r.eid,r.did) );
+
+
+// }
 
 function buildInParamString(params: any[]): string {
     return '?,'.repeat(params.length).slice(0, -1);;
@@ -666,7 +713,7 @@ export function sqlRetrieveDefs(ref: SqlRef): ComponentDefSQL[] {
     return rows.map(row => {
         let { id, schema } = row;
         // return createComponentDef(id, JSON.parse(schema));
-        return sqlCreateComponentDef( id, schema );
+        return sqlCreateComponentDef(id, schema);
     })
 }
 
@@ -681,7 +728,7 @@ export function sqlRetrieveDefByUri(ref: SqlRef, uri: string): ComponentDef {
     }
 
     let { id, schema } = row;
-    return sqlCreateComponentDef( id, schema );
+    return sqlCreateComponentDef(id, schema);
 }
 
 export function sqlRetrieveDefByHash(ref: SqlRef, id: number): ComponentDefSQL {
@@ -695,10 +742,10 @@ export function sqlRetrieveDefByHash(ref: SqlRef, id: number): ComponentDefSQL {
     }
 
     let { id: did, schema } = row;
-    return sqlCreateComponentDef( did, schema );
+    return sqlCreateComponentDef(did, schema);
 }
 
-function sqlCreateComponentDef( did: ComponentDefId, schema:string ): ComponentDefSQL {
+function sqlCreateComponentDef(did: ComponentDefId, schema: string): ComponentDefSQL {
     const def = createComponentDef(did, JSON.parse(schema)) as ComponentDefSQL;
     def.tblName = defToTbl(def);
     return def;
@@ -710,17 +757,19 @@ function sqlCreateComponentDef( did: ComponentDefId, schema:string ): ComponentD
  * @param ref 
  * @param eids 
  */
-export function sqlRetrieveEntities(ref: SqlRef, eids?: EntityId[]): Entity[] {
+export function sqlRetrieveEntities(ref: SqlRef, eids?: EntityId[], options: RetrieveOptions = {}): Entity[] {
     const { db } = ref;
+    const { offset, limit } = options;
     let rows, stmt;
     if (eids !== undefined) {
         const params = buildInParamString(eids);
-        stmt = db.prepare(`SELECT eid,did FROM tbl_entity_component WHERE eid IN (${params}) ORDER BY eid`);
+        stmt = db.prepare(`SELECT eid,did FROM tbl_entity_component WHERE eid IN (${params}) ORDER BY eid LIMIT ${offset}, ${limit}`);
         rows = stmt.all(...eids);
         // rows = stmt.all( ...eids );
     } else {
-        stmt = db.prepare(`SELECT eid,did FROM tbl_entity_component ORDER BY eid;`);
-        rows = stmt.all();
+        let sql = `SELECT eid,did FROM tbl_entity_component ORDER BY eid LIMIT ${offset}, ${limit};`;
+        // Log.debug('[sqlRetrieveEntities]', sql);
+        rows = db.prepare(sql).all();
     }
 
     // Log.debug('[sqlRetrieveEntities]', rows);
@@ -736,53 +785,90 @@ export function sqlRetrieveEntities(ref: SqlRef, eids?: EntityId[]): Entity[] {
     return Object.values(result);
 }
 
-export interface RetrieveOptions {
-    type?: number;
-}
-
 /**
  * Retrieves entities which have ALL of the specified Def Ids
  * 
  * @param ref 
  * @param did 
  */
-export function sqlRetrieveEntityByDefId(ref: SqlRef, did: ComponentDefId[], options:RetrieveOptions = {}): Entity[] {
+export function sqlRetrieveEntitiesByDefId(ref: SqlRef, did: ComponentDefId[], options: RetrieveOptions = {}): Entity[] {
     const { db } = ref;
     const type = options.type ?? TYPE_AND;
+    const { limit, offset, orderDef, orderAttr, orderDir } = options;
 
-    if( did === undefined || did.length === 0 ){
+    if (did === undefined || did.length === 0) {
         return type === TYPE_AND || type === TYPE_OR ? [] : sqlRetrieveEntities(ref);
     }
 
     let qualifier = type === TYPE_NOT ? 'NOT' : '';
+    let sql: string;
 
-    const sql = `
+    if (orderDef !== undefined) {
+        // Log.debug('[sqlRetrieveEntityByDefId]', orderDef);
+        sql = `
+        SELECT s.eid, s.did FROM tbl_entity_component AS s INNER JOIN(
+            SELECT a.eid FROM tbl_entity_component AS a 
+                    INNER JOIN(
+            
+                        SELECT s.eid, t.${orderAttr}, COUNT(DISTINCT s.did) AS cnt FROM tbl_entity_component AS s
+                        LEFT JOIN ${orderDef.tblName} AS t ON t.eid = s.eid
+                        WHERE s.did IN (${did})
+                        GROUP BY s.eid
+                        HAVING COUNT(DISTINCT s.did) = ${did.length}
+                        ORDER BY t.${orderAttr} ${orderDir}
+                        LIMIT ${offset}, ${limit}
+            
+            ) AS b ON a.eid = b.eid WHERE a.did IN (${did})
+            ) AS t ON s.eid = t.eid
+        `;
+    }
+    else {
+        sql = `
     SELECT eid,did FROM tbl_entity_component
     WHERE eid ${qualifier} IN (
 
-    SELECT a.eid FROM tbl_entity_component AS a 
-    INNER JOIN(
-    SELECT eid, COUNT(DISTINCT did) AS cnt
-    FROM tbl_entity_component
-    WHERE did IN (${did})
-    GROUP BY eid
-    HAVING COUNT(DISTINCT did) = ${did.length}
-    ORDER BY eid
-    ) AS b ON a.eid = b.eid WHERE a.did IN (${did})
-
+        SELECT a.eid FROM tbl_entity_component AS a 
+        INNER JOIN(
+            SELECT eid, COUNT(DISTINCT did) AS cnt
+            FROM tbl_entity_component
+            WHERE did IN (${did})
+            GROUP BY eid
+            HAVING COUNT(DISTINCT did) = ${did.length}
+            ORDER BY eid ${orderDir}
+            LIMIT ${offset},${limit}
+        ) AS b ON a.eid = b.eid WHERE a.did IN (${did})
     )
     `;
-    
+    }
+
+    // Log.debug('[sqlRetrieveEntityByDefId]', sql);
     let rows = db.prepare(sql).all();
-    // Log.debug('[sqlRetrieveEntityByDefId]', did, rows);
+    // Log.debug('[sqlRetrieveEntityByDefId]', rows);
 
-    let result = rows.reduce((result, { eid, did }) => {
-        let e = result[eid] ?? new Entity(eid);
+    // `SELECT a.*,b.${orderAttr} FROM ${def.tblName} AS a
+    //             LEFT JOIN ${orderDef.tblName} AS b ON b.eid = a.eid
+    //             ORDER BY b.${orderAttr} ${orderDir} LIMIT ${offset},${limit}
+    // SELECT a.*,b.createdAt FROM tbl_component_title_cc2c57e6 AS a
+    // LEFT JOIN tbl_component_meta_90f607b9 AS b ON b.eid = a.eid
+    // WHERE a.eid IN (100, 101, 102, 103, 104)
+    // ORDER BY b.createdAt DESC
+    // Log.debug('[sqlRetrieveEntityByDefId]', rows);
+    
+    let result = rows.reduce( ([result,e], {eid,did}) => {
+        if( e === undefined || e.id !== eid ){
+            e = new Entity(eid);
+            result.push(e);
+        }
         e.bitField = bfSet(e.bitField, did);
-        return { ...result, [eid]: e };
-    }, {});
+        return [result, e];
+    }, [[],undefined] );
 
-    return Object.values(result);
+    // let result = rows.reduce((result, { eid, did }) => {
+    //     let e = result[eid] ?? new Entity(eid);
+    //     e.bitField = bfSet(e.bitField, did);
+    //     return { ...result, [eid]: e };
+    // }, {});
+    return result[0]; //Object.values(result);
 }
 
 export function sqlRetrieveByQuery(ref: SqlRef, eids: EntityId[], query: any[]) {
@@ -799,10 +885,10 @@ export function sqlRetrieveByQuery(ref: SqlRef, eids: EntityId[], query: any[]) 
     // Log.debug('[sqlRetrieveByQuery]', sql, params.map(p => Array.isArray(p) ? stringify(p) : p) );
 
     let stmt = db.prepare(sql.join(' '));
-    
-    params = params.map( p => {
-        if( Array.isArray(p) ){
-            if( p.length === 1 ){
+
+    params = params.map(p => {
+        if (Array.isArray(p)) {
+            if (p.length === 1) {
                 return p[0];
             }
             return stringify(p);
@@ -812,7 +898,7 @@ export function sqlRetrieveByQuery(ref: SqlRef, eids: EntityId[], query: any[]) 
 
     params = params.map(p => Array.isArray(p) ? stringify(p) : p);
 
-    let rows = stmt.all(...params );
+    let rows = stmt.all(...params);
 
     // Log.debug('[sqlRetrieveByQuery]', sql, params );
 
@@ -856,7 +942,7 @@ function walkFilterQuery(eids: EntityId[], out: string[], params: any[], cmd?, .
     }
 }
 
-function walkFilterQueryCompare(eids:EntityId[], out: string[], params: any[], cmd?, ...args) {
+function walkFilterQueryCompare(eids: EntityId[], out: string[], params: any[], cmd?, ...args) {
     let { def } = args[0];
     let tbl = defToTbl(def);
     let [ptr, val] = args[1];
@@ -878,7 +964,7 @@ function walkFilterQueryCompare(eids:EntityId[], out: string[], params: any[], c
     if (isRegex(val)) {
         // console.log(`SELECT eid from ${tbl} WHERE ${key} REGEXP '${val.toString()}'`);
         out.push(`SELECT eid from ${tbl} WHERE ${key} REGEXP '${val.toString()}'`);
-    } else if( Array.isArray(val) ){
+    } else if (Array.isArray(val)) {
         let arrOp = cmd === '!=' ? 'NOT IN' : 'IN';
         // console.log(`SELECT eid from ${tbl} WHERE ${key} ${arrOp} (${val})`, op);
         out.push(`SELECT eid from ${tbl} WHERE ${key} ${arrOp} (${val})`);
@@ -887,11 +973,11 @@ function walkFilterQueryCompare(eids:EntityId[], out: string[], params: any[], c
         // console.log(`SELECT eid from ${tbl} WHERE ${key} ${op} ?`, valueToSQL(val,prop), val );
         // out.push(`SELECT eid from ${tbl} WHERE eid IN (${eids}) AND ${key} ${op} ?`);
         out.push(`SELECT eid from ${tbl} WHERE ${key} ${op} ?`);
-        params.push(valueToSQL(val,prop));
+        params.push(valueToSQL(val, prop));
     }
 }
 
-function compareOpToSQL(op:string){
+function compareOpToSQL(op: string) {
     switch (op) {
         case '==':
             return '=';
@@ -935,7 +1021,7 @@ function defToStmt(def: ComponentDef) {
     let properties = def.properties || [];
 
     let props = properties.map(prop => {
-        if( prop.persist === false ){
+        if (prop.persist === false) {
             return undefined;
         }
         return `'${prop.name}' ${propTypeToSQL(prop.type)}`;

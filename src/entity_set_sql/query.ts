@@ -30,26 +30,28 @@ import {
 } from '../query/types';
 import { stackToString, unpackStackValue, unpackStackValueR } from "../query/util";
 import {
-    sqlRetrieveEntityByDefId,
+    sqlRetrieveEntitiesByDefId,
     sqlRetrieveByQuery,
     sqlRetrieveEntityComponents,
     sqlRetrieveComponents,
     sqlRetrieveEntities,
     sqlRetrieveComponent,
-    sqlRetrieveComponentIds
+    RetrieveOptions
 } from "./sqlite";
 import { onLogicalFilter, parseFilterQuery } from "../entity_set/filter";
-import { onComponentAttr, buildBitfield, SelectOptions, stringToComponentAttr } from "../entity_set/query";
+import { onComponentAttr, buildBitfield, SelectOptions, stringToComponentAttr, onOrder, applyLimit } from "../entity_set/query";
 import { onDefine } from "../query/words/define";
 import { onPluck } from "../query/words/pluck";
 import { onBitFieldNot, onBitFieldOr } from "../query/words";
 import { onDiff } from '../query/words/list';
+import { getProperty } from '../component_def';
 
 const Log = createLog('SQLQuery');
 
 
 class SQLQueryStack extends QueryStack {
-    es: EntitySetSQL
+    es: EntitySetSQL;
+
 }
 
 /**
@@ -57,10 +59,10 @@ class SQLQueryStack extends QueryStack {
  * @param es 
  * @param query 
  */
-export async function select(stack:QueryStack, query: StackValue[], options:SelectOptions = {}): Promise<StackValue[]> {
-    
+export async function select(stack: QueryStack, query: StackValue[], options: SelectOptions = {}): Promise<StackValue[]> {
+
     stack.setChild();
-    
+
     // add first pass words
     stack.addWords([
         ['!bf', buildBitfield, SType.List],
@@ -71,6 +73,9 @@ export async function select(stack:QueryStack, query: StackValue[], options:Sele
         // converts a BitField to OR mode
         ['or', onBitFieldOr, SType.BitField],
         ['not', onBitFieldNot, SType.BitField],
+
+        ['order', onOrder, SType.ComponentAttr, SType.Value],
+        ['limit', applyLimit],
 
         ['and', onLogicalFilter, SType.Any, SType.Any],
         ['or', onLogicalFilter, SType.Any, SType.Any],
@@ -83,7 +88,10 @@ export async function select(stack:QueryStack, query: StackValue[], options:Sele
         ['<=', onLogicalFilter, SType.Any, SType.Any],
     ]);
 
-    
+    // reset ordering and limits
+    stack.scratch.orderBy = undefined;
+    stack.scratch.limit = [0, Number.MAX_SAFE_INTEGER];
+
     await stack.pushValues(query);
 
     // reset stack items and words
@@ -101,18 +109,10 @@ export async function select(stack:QueryStack, query: StackValue[], options:Sele
         ['@cid', fetchComponents],
         ['@ca', fetchComponentAttributes],
 
-        // ['@e', fetchEntity],
-        // ['@c', fetchComponents, SType.Entity, 'all'],
-        // ['@c', fetchComponents, SType.List, SType.BitField],
-        // ['@c', fetchComponents, SType.Entity, SType.BitField],
-        // ['@c', fetchComponents, 'all'],
-        // ['@c', fetchComponents, SType.BitField],
-        // ['@c', fetchComponents, SType.List],
-        // ['@c', fetchComponents, SType.Entity],
         ['@v', fetchValue],
         ['!fil', applyFilter, SType.Filter],
 
-        ['limit', applyLimit],
+
         ['pluck', onPluck],
         ['pluck!', onPluck],
         ['diff', onDiff],
@@ -137,7 +137,7 @@ export async function select(stack:QueryStack, query: StackValue[], options:Sele
     let result = stack.items;
 
     stack.restoreParent();
-    
+
     return result;
 }
 /*
@@ -166,17 +166,17 @@ export async function select(stack:QueryStack, query: StackValue[], options:Sele
 */
 
 
-function readEntityIds( stack:SQLQueryStack ): EntityId[] {
+function readEntityIds(stack: SQLQueryStack): EntityId[] {
     const { es } = stack;
 
-    let eids:EntityId[];
+    let eids: EntityId[];
 
     let bf = stack.popBitFieldOpt();
 
-    if( bf === undefined ){
+    if (bf === undefined) {
         let from = stack.peek();
 
-        if( from === undefined ){
+        if (from === undefined) {
             // return matchEntities(es, undefined, undefined);
         }
         else {
@@ -184,7 +184,7 @@ function readEntityIds( stack:SQLQueryStack ): EntityId[] {
             if (from[0] === SType.Entity) {
                 return [unpackStackValueR(from)];
                 // Log.debug('[fetchComponent]', 'fetching from entity', eids);
-    
+
             } else if (from[0] === SType.List) {
                 return from[1].map(it => {
                     return isStackValue(it) ? getEntityId(it[1])
@@ -192,15 +192,18 @@ function readEntityIds( stack:SQLQueryStack ): EntityId[] {
                 }).
                     filter(Boolean);
             }
-            else if( from[0] === SType.Value && from[1] === false ){
+            else if (from[0] === SType.Value && from[1] === false) {
                 return [];
             }
             // Log.debug('[readEntityIds]', from);
         }
     }
 
+    // let [orderDir, orderDid, orderAttr, orderType] = stack.scratch.orderBy ?? ['desc'];
+    // let [offset, limit] = stack.scratch.limit ?? [0, Number.MAX_SAFE_INTEGER];
+
     let ents = matchEntities(es, bf);
-    eids = ents.map( e => e.id );
+    eids = ents.map(e => e.id);
 
     // Log.debug('[readEntityIds]', eids);
 
@@ -222,25 +225,16 @@ export function applyFilter(stack: SQLQueryStack): InstResult {
 
     let result = parseFilterQuery(es, filter[0], filter[1], filter[2]);
 
-    
     // Log.debug('[applyFilter]', 'query', result );
 
     result = sqlRetrieveByQuery(es.db, eids, result);
-    
+
     // Log.debug('[applyFilter]', 'result' );
     // ilog( result );
 
     return result;
 }
 
-
-
-export function applyLimit(stack: SQLQueryStack): InstResult {
-    let limit = stack.pop();
-    let offset = stack.pop();
-
-    return undefined;
-}
 
 export function fetchValue(stack: SQLQueryStack): InstResult {
     let arg: StackValue = stack.pop();
@@ -259,7 +253,7 @@ export function fetchValue(stack: SQLQueryStack): InstResult {
 
 
 
-export function fetchComponents(stack: SQLQueryStack, [,op]:StackValue): InstResult {
+export function fetchComponents(stack: SQLQueryStack, [, op]: StackValue): InstResult {
     const { es } = stack;
     let left, right: StackValue;
     let eids: EntityId[];
@@ -270,7 +264,7 @@ export function fetchComponents(stack: SQLQueryStack, [,op]:StackValue): InstRes
     // get the bitfield
     // defs = stack.popBitField(true) as ComponentDefSQL[];
     let bf = stack.popBitFieldOpt();
-    const defs = es.getComponentDefsFromBitField( bf ) as ComponentDefSQL[];
+    const defs = es.getComponentDefsFromBitField(bf) as ComponentDefSQL[];
 
     // Log.debug('[fetchComponent]', 'bf', bf );
 
@@ -300,22 +294,48 @@ export function fetchComponents(stack: SQLQueryStack, [,op]:StackValue): InstRes
 
     // let dids = bf !== undefined || bf.isAllSet ? undefined : bfToValues(bf);
 
-    
-    const allDefs = bf === undefined || (isBitField(bf) && bf.isAllSet) || defs === undefined;
-    // Log.debug('[fetchComponent]', {allDefs, isAllSet:(isBitField(bf) && bf.isAllSet), undefined:(defs===undefined)}, bf);
+    let [orderDir, orderDid, orderAttr, orderType] = stack.scratch.orderBy ?? ['desc'];
+    let [offset, limit] = stack.scratch.limit ?? [0, Number.MAX_SAFE_INTEGER];
+    if( orderType === undefined ){
+        orderType = 'integer';
+    }
+    let isPtr = false;
+    let orderDef:ComponentDefSQL;
 
-    if( returnCid ){
-        coms = sqlRetrieveComponentIds(es.db, eids, defs || es.componentDefs, allDefs);
-        return [SType.List, coms.map(cid => [SType.Value, cid]) ];
+    if (orderDid !== undefined ) {
+        orderDef = es.getByDefId( orderDid );
+        orderAttr = orderAttr.startsWith('/') ? orderAttr.substring(1) : orderAttr;
+        const prop = getProperty(orderDef, orderAttr );
+        if( prop === undefined ){
+            console.log('[fetchComponent][orderBy]', 'could not find prop', orderAttr );
+            orderDef = undefined;
+        } else {
+            orderType = prop.type;
+        }
+        // Log.debug('[fetchComponent]', 'orderBy', orderDid, orderAttr);
     }
 
-    coms = sqlRetrieveComponents(es.db, eids, defs || es.componentDefs, allDefs);
-    return [SType.List, coms.map(c => [SType.Component, c])];
+
+    const allDefs = bf === undefined || (isBitField(bf) && bf.isAllSet) || defs === undefined;
+    // Log.debug('[fetchComponent]', {allDefs, isAllSet:(isBitField(bf) && bf.isAllSet), undefined:(defs===undefined)}, bf);
+    const options = {allDefs, offset, limit, orderDef, orderDir, orderAttr, returnCid};
+
+    // if (returnCid) {
+        // coms = sqlRetrieveComponentIds(es.db, eids, defs || es.componentDefs, options);
+    //     return [SType.List, coms.map(cid => [SType.Value, cid])];
+    // }
+
+    // Log.debug('[fetchComponent]', 'options', options);
+    coms = sqlRetrieveComponents(es.db, eids, defs || es.componentDefs, options);
+
+    return [SType.List, returnCid ?
+        coms.map(cid => [SType.Value, cid])
+        : coms.map(c => [SType.Component, c])];
 }
 
 
 
-export function fetchComponentAttributes(stack:SQLQueryStack): InstResult {
+export function fetchComponentAttributes(stack: SQLQueryStack): InstResult {
     const { es } = stack;
     let result = [];
 
@@ -329,34 +349,34 @@ export function fetchComponentAttributes(stack:SQLQueryStack): InstResult {
 
     // console.log('[fetchComponentAttributes]', attr );
 
-    if( attr[0] === SType.Value ){
-        attr = stringToComponentAttr( es, attr[1] );
+    if (attr[0] === SType.Value) {
+        attr = stringToComponentAttr(es, attr[1]);
     }
-    else if( attr[0] !== SType.ComponentAttr ){
+    else if (attr[0] !== SType.ComponentAttr) {
         throw new Error(`invalid component attr arg: ${attr[0]}`);
     }
 
-    const [bf,ptr] = attr[1];
+    const [bf, ptr] = attr[1];
 
     const did = bfToValues(bf)[0];
-    const def = es.getByDefId( did );
+    const def = es.getByDefId(did);
     const isJptr = ptr.startsWith('/');
 
 
-    for( const eid of eids ){
+    for (const eid of eids) {
         const def = es.getByDefId(did);
-        const com = sqlRetrieveComponent( es.db, eid, def);
+        const com = sqlRetrieveComponent(es.db, eid, def);
 
         // Log.debug('[fetchComponentAttributes]', 'reading', eid, cid, com );
-        if( com === undefined ){
+        if (com === undefined) {
             continue;
         }
         // console.log('[fetchComponentAttributes]', 'reading', cid, ptr );
-        let val = isJptr ? Jsonpointer.get(com,ptr) : com[ptr];
+        let val = isJptr ? Jsonpointer.get(com, ptr) : com[ptr];
 
-        result.push( [SType.Value, val] );
+        result.push([SType.Value, val]);
     }
-    
+
     return [SType.List, result];
 }
 
@@ -367,7 +387,7 @@ export function fetchComponentAttributes(stack:SQLQueryStack): InstResult {
  * @param es 
  * @param stack 
  */
-export async function fetchEntity(stack: SQLQueryStack, [,op]:StackValue): AsyncInstResult {
+export async function fetchEntity(stack: SQLQueryStack, [, op]: StackValue): AsyncInstResult {
     const { es } = stack;
     let data: StackValue = stack.pop();
     const returnEid = op === '@eid';
@@ -375,25 +395,44 @@ export async function fetchEntity(stack: SQLQueryStack, [,op]:StackValue): Async
     const type = data[0];
     let eid = unpackStackValueR(data, SType.Any);
     let bf: BitField;
-    
+
     let eids: EntityId[];
     let ents: Entity[];
     let returnSingle = false;
 
     // Log.debug('[fetchEntity]', data, eid);
 
-    if (type === SType.BitField) {
-        
-        bf = eid as BitField;
-        ents = matchEntities(es, bf);
-        
+    let [orderDir, orderDid, orderAttr, orderType] = stack.scratch.orderBy ?? ['desc'];
+    let [offset, limit] = stack.scratch.limit ?? [0, Number.MAX_SAFE_INTEGER];
+    if( orderType === undefined ){
+        orderType = 'integer';
+    }
+    let isPtr = false;
+    let orderDef:ComponentDefSQL;
 
-        // Log.debug('[fetchEntity]', ents);
+    if (orderDid !== undefined ) {
+        orderDef = es.getByDefId( orderDid );
+        orderAttr = orderAttr.startsWith('/') ? orderAttr.substring(1) : orderAttr;
+        const prop = getProperty(orderDef, orderAttr );
+        if( prop === undefined ){
+            console.log('[fetchEntity][orderBy]', 'could not find prop', orderAttr );
+            orderDef = undefined;
+        } else {
+            orderType = prop.type;
+        }
+        // Log.debug('[fetchComponent]', 'orderBy', orderDid, orderAttr);
+    }
+
+    let matchOptions = { offset, limit, orderDef, orderAttr, orderDir };
+
+    if (type === SType.BitField) {
+        // Log.debug('[fetchEntity]', 'byBF');
+        bf = eid as BitField;
+        ents = matchEntities(es, bf, matchOptions);
 
     } else if (isInteger(eid)) {
         returnSingle = true;
         eids = [eid];
-
     }
     else if (Array.isArray(eid)) {
         eids = eid;
@@ -403,40 +442,40 @@ export async function fetchEntity(stack: SQLQueryStack, [,op]:StackValue): Async
         eids = arr.map(row => entityIdFromValue(row)).filter(Boolean);
     }
     else if (eid === 'all') {
-        ents = matchEntities(es);
+        ents = matchEntities(es, undefined, matchOptions);
         // return [[SType.List, ents]];
-    } else if(eid === undefined){
+    } else if (eid === undefined) {
         return [SType.Value, false];
     } else {
         throw new StackError(`@e unknown type ${type}`)
     }
 
-    if( ents === undefined ){
-        ents = await sqlRetrieveEntities(es.db, eids);
+    if (ents === undefined) {
+        ents = await sqlRetrieveEntities(es.db, eids, matchOptions);
     }
 
-    if( returnSingle ){
-        let e:Entity = ents.length > 0 ? ents[0] : undefined;
+    if (returnSingle) {
+        let e: Entity = ents.length > 0 ? ents[0] : undefined;
         if (e === undefined) {
             return [SType.Value, false];
         }
 
-        if( returnEid ){
+        if (returnEid) {
             return [SType.Entity, eid];
         }
 
         e = es.createEntity(e.id, e.bitField);
         e = es.retrieveEntityComponents(e);
 
-        return [SType.Entity, e ];
+        return [SType.Entity, e];
         // return [SType.Entity, eid];
     }
 
-    if( returnEid ){
-        return [SType.List, ents.map(e => [SType.Value,e.id])];
+    if (returnEid) {
+        return [SType.List, ents.map(e => [SType.Value, e.id])];
     }
 
-    let result = ents.map( e => {
+    let result = ents.map(e => {
         e = es.createEntity(e.id, e.bitField);
         e = es.retrieveEntityComponents(e);
         return [SType.Entity, e];
@@ -444,7 +483,7 @@ export async function fetchEntity(stack: SQLQueryStack, [,op]:StackValue): Async
 
     // let result = ents.map( e => [SType.Entity, e] );
     // Log.debug('[fetchEntity]', 'by bf', ents);
-    
+
     return [SType.List, result];
 }
 
@@ -464,12 +503,12 @@ export async function fetchEntity(stack: SQLQueryStack, [,op]:StackValue): Async
 //     return e;
 // }
 
-function matchEntities(es: EntitySetSQL, mbf?: BitField): Entity[] {
+function matchEntities(es: EntitySetSQL, mbf?: BitField, options:RetrieveOptions = {offset:0, limit:Number.MAX_SAFE_INTEGER, orderDir: 'desc'}): Entity[] {
     if (mbf === undefined || mbf.isAllSet) {
-        return sqlRetrieveEntities(es.db);
+        return sqlRetrieveEntities(es.db, undefined, options);
     }
-    
-    return sqlRetrieveEntityByDefId(es.db, bfToValues(mbf), {type:mbf.type} );
+
+    return sqlRetrieveEntitiesByDefId(es.db, bfToValues(mbf), { ...options, type: mbf.type });
 }
 
 function ilog(...args) {

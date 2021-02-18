@@ -97,6 +97,8 @@ export async function select(stack: QueryStack, query: StackValue[], options: Se
     // Log.debug('[select]');
     // ilog(query);
 
+    stack.scratch.orderBy = undefined;
+    stack.scratch.limit = [0, Number.MAX_SAFE_INTEGER];
 
     await stack.pushValues(query, { evalEscape: true });
 
