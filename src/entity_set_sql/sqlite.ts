@@ -1,4 +1,4 @@
-import BetterSqlite3 from 'better-sqlite3';
+import BetterSqlite3, { SqliteError } from 'better-sqlite3';
 import { createLog } from '../util/log';
 import { EntitySetSQL, ComponentDefSQL } from '.';
 import {
@@ -71,6 +71,7 @@ export interface RetrieveOptions {
     orderDir?: 'asc' | 'desc';
     orderAttr?: string;
     orderDef?: ComponentDefSQL;
+    returnSQL?: boolean;
 }
 
 
@@ -757,17 +758,24 @@ function sqlCreateComponentDef(did: ComponentDefId, schema: string): ComponentDe
  * @param ref 
  * @param eids 
  */
-export function sqlRetrieveEntities(ref: SqlRef, eids?: EntityId[], options: RetrieveOptions = {}): Entity[] {
+export function sqlRetrieveEntities(ref: SqlRef, eids?: EntityId[], options: RetrieveOptions = {}): Entity[]|string {
     const { db } = ref;
     const { offset, limit } = options;
+    const returnSQL = options.returnSQL ?? false;
     let rows, stmt;
     if (eids !== undefined) {
         const params = buildInParamString(eids);
-        stmt = db.prepare(`SELECT eid,did FROM tbl_entity_component WHERE eid IN (${params}) ORDER BY eid LIMIT ${offset}, ${limit}`);
-        rows = stmt.all(...eids);
-        // rows = stmt.all( ...eids );
+        let sql = `SELECT eid,did FROM tbl_entity_component WHERE eid IN (${eids}) ORDER BY eid LIMIT ${offset}, ${limit}`;
+        if( returnSQL ){
+            return `SELECT DISTINCT eid FROM tbl_entity_component WHERE eid IN (${eids}) ORDER BY eid LIMIT ${offset}, ${limit}`;
+        }
+        // Log.debug('[sqlRetrieveEntities]', sql);
+        rows = db.prepare(sql).all();
     } else {
-        let sql = `SELECT eid,did FROM tbl_entity_component ORDER BY eid LIMIT ${offset}, ${limit};`;
+        let sql = `SELECT eid,did FROM tbl_entity_component ORDER BY eid LIMIT ${offset}, ${limit}`;
+        if( returnSQL ){
+            return `SELECT DISTINCT eid FROM tbl_entity_component ORDER BY eid LIMIT ${offset}, ${limit}`;
+        }
         // Log.debug('[sqlRetrieveEntities]', sql);
         rows = db.prepare(sql).all();
     }
@@ -791,7 +799,7 @@ export function sqlRetrieveEntities(ref: SqlRef, eids?: EntityId[], options: Ret
  * @param ref 
  * @param did 
  */
-export function sqlRetrieveEntitiesByDefId(ref: SqlRef, did: ComponentDefId[], options: RetrieveOptions = {}): Entity[] {
+export function sqlRetrieveEntitiesByDefId(ref: SqlRef, did: ComponentDefId[], options: RetrieveOptions = {}): Entity[]|string {
     const { db } = ref;
     const type = options.type ?? TYPE_AND;
     const { limit, offset, orderDef, orderAttr, orderDir } = options;
@@ -802,45 +810,56 @@ export function sqlRetrieveEntitiesByDefId(ref: SqlRef, did: ComponentDefId[], o
 
     let qualifier = type === TYPE_NOT ? 'NOT' : '';
     let sql: string;
+    let innerSql: string;
 
     if (orderDef !== undefined) {
         // Log.debug('[sqlRetrieveEntityByDefId]', orderDef);
+
+        // SELECT s.eid, t.${orderAttr}, COUNT(DISTINCT s.did) AS cnt FROM tbl_entity_component AS s
+        innerSql = `
+        SELECT s.eid, t.${orderAttr} FROM tbl_entity_component AS s
+        LEFT JOIN ${orderDef.tblName} AS t ON t.eid = s.eid
+        WHERE s.did IN (${did})
+        GROUP BY s.eid
+        HAVING COUNT(DISTINCT s.did) = ${did.length}
+        ORDER BY t.${orderAttr} ${orderDir}
+        LIMIT ${offset}, ${limit}
+        `;
+
         sql = `
         SELECT s.eid, s.did FROM tbl_entity_component AS s INNER JOIN(
             SELECT a.eid FROM tbl_entity_component AS a 
                     INNER JOIN(
-            
-                        SELECT s.eid, t.${orderAttr}, COUNT(DISTINCT s.did) AS cnt FROM tbl_entity_component AS s
-                        LEFT JOIN ${orderDef.tblName} AS t ON t.eid = s.eid
-                        WHERE s.did IN (${did})
-                        GROUP BY s.eid
-                        HAVING COUNT(DISTINCT s.did) = ${did.length}
-                        ORDER BY t.${orderAttr} ${orderDir}
-                        LIMIT ${offset}, ${limit}
-            
+                        ${innerSql}
             ) AS b ON a.eid = b.eid WHERE a.did IN (${did})
             ) AS t ON s.eid = t.eid
         `;
     }
     else {
-        sql = `
-    SELECT eid,did FROM tbl_entity_component
-    WHERE eid ${qualifier} IN (
-
-        SELECT a.eid FROM tbl_entity_component AS a 
-        INNER JOIN(
-            SELECT eid, COUNT(DISTINCT did) AS cnt
+        // SELECT eid, COUNT(DISTINCT did) AS cnt
+        innerSql = `
+            SELECT eid
             FROM tbl_entity_component
             WHERE did IN (${did})
             GROUP BY eid
             HAVING COUNT(DISTINCT did) = ${did.length}
             ORDER BY eid ${orderDir}
             LIMIT ${offset},${limit}
+        `
+        sql = `
+    SELECT eid,did FROM tbl_entity_component
+    WHERE eid ${qualifier} IN (
+
+        SELECT a.eid FROM tbl_entity_component AS a 
+        INNER JOIN(
+            ${innerSql}
         ) AS b ON a.eid = b.eid WHERE a.did IN (${did})
-    )
-    `;
+    )`;
     }
 
+    if( options.returnSQL ){
+        return innerSql;
+    }
     // Log.debug('[sqlRetrieveEntityByDefId]', sql);
     let rows = db.prepare(sql).all();
     // Log.debug('[sqlRetrieveEntityByDefId]', rows);
@@ -853,15 +872,15 @@ export function sqlRetrieveEntitiesByDefId(ref: SqlRef, did: ComponentDefId[], o
     // WHERE a.eid IN (100, 101, 102, 103, 104)
     // ORDER BY b.createdAt DESC
     // Log.debug('[sqlRetrieveEntityByDefId]', rows);
-    
-    let result = rows.reduce( ([result,e], {eid,did}) => {
-        if( e === undefined || e.id !== eid ){
+
+    let result = rows.reduce(([result, e], { eid, did }) => {
+        if (e === undefined || e.id !== eid) {
             e = new Entity(eid);
             result.push(e);
         }
         e.bitField = bfSet(e.bitField, did);
         return [result, e];
-    }, [[],undefined] );
+    }, [[], undefined]);
 
     // let result = rows.reduce((result, { eid, did }) => {
     //     let e = result[eid] ?? new Entity(eid);
@@ -871,20 +890,44 @@ export function sqlRetrieveEntitiesByDefId(ref: SqlRef, did: ComponentDefId[], o
     return result[0]; //Object.values(result);
 }
 
-export function sqlRetrieveByQuery(ref: SqlRef, eids: EntityId[], query: any[]) {
+export interface RetrieveByFilterOptions extends RetrieveOptions {
+    selectEidSql?: string;
+}
+
+/**
+ * 
+ * @param ref 
+ * @param eids 
+ * @param query 
+ */
+export function sqlRetrieveByFilterQuery(ref: SqlRef, eids: EntityId[], query: any[], options:RetrieveByFilterOptions = {}) {
     const { db } = ref;
 
-    let comp;
-    let sql = [];
+    // let comp;
+    let sqlParts = [];
     let params = [];
     // Log.debug('[sqlRetrieveByQuery]', eids, query);
-    walkFilterQuery(eids, sql, params, ...query);
+    walkFilterQuery(eids, sqlParts, params, ...query);
 
     // sql.push('ORDER BY eid')
-    // Log.debug('[sqlRetrieveByQuery]', sql, params );
+    // Log.debug('[sqlRetrieveByQuery]', sqlParts, params);
     // Log.debug('[sqlRetrieveByQuery]', sql, params.map(p => Array.isArray(p) ? stringify(p) : p) );
 
-    let stmt = db.prepare(sql.join(' '));
+    let sql:string;
+    if( options.selectEidSql ){
+        sql = `
+        SELECT s.id AS eid FROM tbl_entity AS s INNER JOIN ( 
+            ${options.selectEidSql}
+        ) AS t ON s.id = t.eid WHERE t.eid IN ( 
+            ${sqlParts.join('\n')}
+        );`
+        // sqlParts.join('\n')
+    } else {
+        sql = sqlParts.join('\n');
+    }
+    // Log.debug('[sqlRetrieveByFilterQuery]', sql);
+    let stmt = db.prepare(sql);
+
 
     params = params.map(p => {
         if (Array.isArray(p)) {

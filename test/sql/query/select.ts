@@ -564,6 +564,63 @@ test('and/or component', async () => {
     assert.equal(res[0].url, 'file:///misc/style.scss');
 });
 
+
+test('filter with bf', async () => {
+    let id = 1000;
+    let idgen = () => ++id;
+    const es = createEntitySet({ idgen });
+
+    const stmt = es.prepare(`
+        [ "/component/src", ["url"] ] !d
+        [ "/component/static" ] !d
+        [ "/component/upd", [{name:op, type:integer}] ] !d
+        [ "/component/site_ref", [{name:ref, type:integer}] ] !d
+        gather // wraps previous into a list
+        + // add list to es
+
+        [ /component/src {url: "file:///about.txt"} ] !c
+        [ /component/static ] !c
+        [ /component/upd {op: 2} ] !c
+        [ /component/site_ref {ref: 200} ] !c
+        gather
+        +
+        [ /component/src {url: "file:///misc/style.scss"} ] !c
+        [ /component/upd {op: 1} ] !c
+        [ /component/site_ref {ref: 200} ] !c
+        gather
+        +
+        [ /component/src {url: "file:///readme.txt"} ] !c
+        [ /component/static ] !c
+        [ /component/upd {op: 1} ] !c
+        [ /component/site_ref {ref: 300} ] !c
+        gather
+        +
+        [ /component/src {url: "file:///style.scss"} ] !c
+        [ /component/upd {op: 2} ] !c
+        [ /component/site_ref {ref: 300} ] !c
+        gather
+        +
+
+        [
+            [ /component/src /component/static ] !bf
+            /component/site_ref#ref !ca $ref ==
+        
+            /component/src !bf
+            @c 
+        ]  select
+
+        // prints
+    `);
+
+    const res = await stmt.getResult({ref:200});
+
+    // console.log( res );
+
+    assert.equal(res.length, 1);
+    assert.equal(res[0].url, 'file:///about.txt');
+});
+
+
 // test.only('select with bf', async () => {
 //     let [,es] = await prepES(``, 'todo');
 //     const stmt = es.prepare(`
