@@ -1,12 +1,12 @@
 import { suite } from 'uvu';
 import assert from 'uvu/assert';
-import { printEntity } from '../../es/helpers';
 
 import {
     bfToValues,
     Entity,
     getEntityId,
     createEntitySet,
+    printEntity,
     prepES,
 } from '../helpers';
 

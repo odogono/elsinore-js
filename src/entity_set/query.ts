@@ -121,7 +121,7 @@ export async function select(stack: QueryStack, query: StackValue[], options: Se
         ['@ca', fetchComponentAttributes],
         ['!fil', applyFilter, SType.Filter],
 
-        
+
         ['pluck', onPluck],
         ['pluck!', onPluck],
         ['diff', onDiff],
@@ -357,7 +357,7 @@ export function applyLimit(stack: ESMemQueryStack): InstResult {
     let offset = stack.popValue();
     let limit = stack.popValue();
 
-    stack.scratch.limit = [ offset, limit ];
+    stack.scratch.limit = [offset, limit];
 
     return undefined;
 }
@@ -432,17 +432,17 @@ export function fetchComponents(stack: ESMemQueryStack, [, op]: StackValue): Ins
 
     let [orderDir, orderDid, orderAttr, orderType] = stack.scratch.orderBy ?? ['desc'];
     let [offset, limit] = stack.scratch.limit ?? [0, Number.MAX_SAFE_INTEGER];
-    if( orderType === undefined ){
+    if (orderType === undefined) {
         orderType = 'integer';
     }
     let isPtr = false;
 
-    if (orderDid !== undefined ) {
-        const def = es.getByDefId( orderDid );
+    if (orderDid !== undefined) {
+        const def = es.getByDefId(orderDid);
         isPtr = orderAttr.startsWith('/');
-        const prop = getProperty(def, isPtr ? orderAttr.substring(1) : orderAttr );
-        if( prop === undefined ){
-            console.log('[fetchComponent][orderBy]', 'could not find prop', orderAttr );
+        const prop = getProperty(def, isPtr ? orderAttr.substring(1) : orderAttr);
+        if (prop === undefined) {
+            console.log('[fetchComponent][orderBy]', 'could not find prop', orderAttr);
             orderDid = undefined;
         } else {
             orderType = prop.type;
@@ -475,7 +475,7 @@ export function fetchComponents(stack: ESMemQueryStack, [, op]: StackValue): Ins
                 let val = isPtr ? Jsonpointer.get(orderCom, orderAttr) : orderCom[orderAttr];
                 if (val !== undefined) {
                     val = isString(val) ? val.toLowerCase() : val;
-                    if( orderType === 'datetime' ){
+                    if (orderType === 'datetime') {
                         val = new Date(val).getTime();
                     }
                     coms.push([com, val, orderType]);
@@ -492,24 +492,24 @@ export function fetchComponents(stack: ESMemQueryStack, [, op]: StackValue): Ins
     // sort
     coms.sort(([a, ac, at], [b, bc, bt]) => attrCompare(ac, bc, at, bt, orderDir));
 
-    coms = coms.map( ([com]) => {
+    coms = coms.map(([com]) => {
         return returnCid ? [SType.Value, getComponentId(com)]
-            : [SType.Component,com];
+            : [SType.Component, com];
     });
 
-    coms = coms.slice(offset, limit);
-    
+    coms = coms.slice(offset, offset + limit);
+
 
     return [SType.List, coms]; //coms.map(c => [SType.Component, c])];
 }
 
-function attrCompare(a: any, b: any, aType:PropertyType, bType:PropertyType, orderDir:'asc'|'desc' = 'desc') {
+function attrCompare(a: any, b: any, aType: PropertyType, bType: PropertyType, orderDir: 'asc' | 'desc' = 'desc') {
     // console.log('[attrCompare]', a, b, aType, bType);
     let isDesc = orderDir === 'desc';
-    if( aType === 'datetime' ){
+    if (aType === 'datetime') {
         isDesc = !isDesc;
     }
-    if( aType !== bType ){
+    if (aType !== bType) {
         return 0;
     }
     if (a < b) {
@@ -640,10 +640,32 @@ export async function fetchEntity(stack: ESMemQueryStack, [, op]: StackValue): A
     let eids: number[];
 
     // Log.debug('[fetchEntity]', 'eh?', type, eid, data);
+    let [orderDir, orderDid, orderAttr, orderType] = stack.scratch.orderBy ?? ['desc'];
+    let [offset, limit] = stack.scratch.limit ?? [0, Number.MAX_SAFE_INTEGER];
+    if (orderType === undefined) {
+        orderType = 'integer';
+    }
+    let isPtr = false;
+    let orderDef: ComponentDef;
+
+    if (orderDid !== undefined) {
+        orderDef = es.getByDefId(orderDid);
+        orderAttr = orderAttr.startsWith('/') ? orderAttr.substring(1) : orderAttr;
+        const prop = getProperty(orderDef, orderAttr);
+        if (prop === undefined) {
+            console.log('[fetchEntity][orderBy]', 'could not find prop', orderAttr);
+            orderDef = undefined;
+        } else {
+            orderType = prop.type;
+        }
+    }
+
+    let matchOptions = { offset, limit, orderDef, orderAttr, orderDir };
+
 
     if (type === SType.BitField) {
         bf = eid as BitField;
-        eids = matchEntities(es, undefined, bf);
+        eids = matchEntities(es, undefined, bf, matchOptions);
 
     } else if (isInteger(eid)) {
         // Log.debug('[fetchEntity]', 'eid only', eid, isInteger(eid), typeof eid );
@@ -666,7 +688,7 @@ export async function fetchEntity(stack: ESMemQueryStack, [, op]: StackValue): A
         // Log.debug('[fetchEntity]', 'unpack', eids);
     }
     else if (eid === 'all') {
-        let ents = matchEntities(es, undefined, 'all');
+        let ents = matchEntities(es, undefined, 'all', matchOptions);
         return [SType.List, ents];
     } else if (eid === undefined) {
         return [SType.Value, false];
@@ -674,29 +696,25 @@ export async function fetchEntity(stack: ESMemQueryStack, [, op]: StackValue): A
         throw new StackError(`@e unknown type ${type}`)
     }
 
-
-
     if (returnEid) {
-
         return [SType.List, eids.map(eid => [SType.Value, eid])];
     }
-
-    // Log.debug('[fetchEntity]', 'ok', eids);
 
     let ents = es.getEntitiesByIdMem(eids, { populate: true });
     let result = ents.filter(Boolean).map(e => [SType.Entity, e]);
 
-    // let result = [];
-    // for( const eid of eids ){
-    //     const e = await es.getEntity(eid, false);
-    //     result.push( e === undefined ? [SType.Value,false] : [SType.Entity,e] );
-    // }
-
-    // Log.debug('[fetchEntity]', 'ok', result);
-
     return [SType.List, result];
 }
 
+
+export interface MatchOptions {
+    offset?: number;
+    limit?: number;
+    type?: number;
+    orderDir?: 'asc' | 'desc';
+    orderAttr?: string;
+    orderDef?: ComponentDef;
+}
 
 /**
  * 
@@ -704,17 +722,40 @@ export async function fetchEntity(stack: ESMemQueryStack, [, op]: StackValue): A
  * @param eids 
  * @param mbf 
  */
-export function matchEntities(es: EntitySetMem, eids: EntityId[], mbf: BitField | 'all'): EntityId[] {
-    let matches: number[] = [];
+export function matchEntities(es: EntitySetMem, eids: EntityId[], mbf: BitField | 'all', options: MatchOptions = { offset: 0, limit: Number.MAX_SAFE_INTEGER, orderDir: 'desc' }): EntityId[] {
+    let matches = [];
+    let { offset, limit, orderDef, orderDir, orderAttr } = options;
     const isAll = mbf === 'all' || mbf === undefined || mbf.isAllSet;
     const type = isAll ? TYPE_AND : (mbf as BitField).type;
     let cmpFn = bfTypeFn(type); // bfAnd;
     if (type === TYPE_NOT) {
         cmpFn = bfNot;
     }
+
+    let isPtr = false;
+    let orderDid = undefined;
+    let orderType = 'integer';
+
+    if (orderDef !== undefined) {
+        isPtr = orderAttr.startsWith('/');
+        const prop = getProperty(orderDef, isPtr ? orderAttr.substring(1) : orderAttr);
+        if (prop === undefined) {
+            console.log('[fetchComponent][orderBy]', 'could not find prop', orderAttr);
+            // orderDid = undefined;
+        } else {
+            orderType = prop.type;
+            orderDid = getDefId(orderDef);
+        }
+    }
+
     if (isAll) {
         eids = eids !== undefined ? eids : Array.from(es.entities.keys());
         eids.sort();
+
+        if (limit < Number.MAX_SAFE_INTEGER) {
+            eids = eids.slice(offset, offset + limit);
+        }
+
         return eids;
     }
 
@@ -722,34 +763,56 @@ export function matchEntities(es: EntitySetMem, eids: EntityId[], mbf: BitField 
         return [];
     }
 
-    if (eids === undefined) {
-        // let es = from as EntitySetMem;
-        for (let [eid, ebf] of es.entities) {
-            if (cmpFn(mbf as BitField, ebf)) {
-                // Log.debug('[matchEntities]', 'match', type, bfToValues(mbf as BitField), bfToValues(ebf) );
-                // Log.debug('[matchEntities]', cmpFn);
-                matches.push(eid);
-            }
-        }
-    } else {
+    let coll;
+
+    if (eids !== undefined) {
+        coll = [];
         for (let ii = 0; ii < eids.length; ii++) {
             let eid = eids[ii];
             let ebf = es.entities.get(eid);
-            if (cmpFn(mbf as BitField, ebf)) {
-                matches.push(eid);
-            }
+            coll.push([eid, ebf]);
         }
+    } else {
+        coll = es.entities;
     }
 
+    for (let [eid, ebf] of coll) {
+
+        if (cmpFn(mbf as BitField, ebf) === false) {
+            continue;
+        }
+
+        if (orderDid !== undefined) {
+
+            let orderCom = es.components.get(toComponentId(eid, orderDid));
+            if (orderCom !== undefined) {
+                let val = isPtr ? Jsonpointer.get(orderCom, orderAttr) : orderCom[orderAttr];
+                if (val !== undefined) {
+                    val = isString(val) ? val.toLowerCase() : val;
+                    if (orderType === 'datetime') {
+                        val = new Date(val).getTime();
+                    }
+                    matches.push([eid, val, orderType]);
+
+                    continue;
+                }
+            }
+        }
+
+        // matches.push(eid);
+        matches.push([eid, eid, orderType]);
+
+    }
+    // }
+
+
+
     // sort ascending
-    matches.sort();
+    matches.sort(([a, ac, at], [b, bc, bt]) => attrCompare(ac, bc, at, bt, orderDir));
+
+    matches = matches.map(([e]) => e);
+    // matches.sort(attrCompare);
+    matches = matches.slice(offset, offset + limit);
 
     return matches;
-}
-
-
-function ilog(...args) {
-    if (process.env.JS_ENV === 'browser') { return; }
-    const util = require('util');
-    console.log(util.inspect(...args, { depth: null }));
 }
