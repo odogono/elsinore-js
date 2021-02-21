@@ -201,10 +201,10 @@ function readEntityIds(stack: SQLQueryStack, options = {}): EntityId[] {
 
     let [orderDir, orderDid, orderAttr, orderType] = stack.scratch.orderBy ?? ['desc'];
     let [offset, limit] = stack.scratch.limit ?? [0, Number.MAX_SAFE_INTEGER];
-    let pageOptions = {offset,limit,orderDir};
-    
+    let pageOptions = { offset, limit, orderDir };
 
-    let ents = matchEntities(es, bf, {...pageOptions,...options}) as Entity[];
+
+    let ents = matchEntities(es, bf, { ...pageOptions, ...options }) as Entity[];
     // Log.debug('[readEntityIds]', ents);
     eids = ents.map(e => e.id);
 
@@ -213,7 +213,7 @@ function readEntityIds(stack: SQLQueryStack, options = {}): EntityId[] {
     return eids;
 }
 
-function buildEntitySelect(stack:SQLQueryStack):string{
+function buildEntitySelect(stack: SQLQueryStack): string {
     const { es } = stack;
 
     let eids: EntityId[];
@@ -229,21 +229,21 @@ function buildEntitySelect(stack:SQLQueryStack):string{
         else {
             stack.pop();
             if (from[0] === SType.Entity) {
-                throw 'not implemented bES1';
-                // return [unpackStackValueR(from)];
+                // throw new StackError('not implemented bES1');
+                eids = [unpackStackValueR(from)];
                 // Log.debug('[fetchComponent]', 'fetching from entity', eids);
 
             } else if (from[0] === SType.List) {
-                throw 'not implemented bES2';
-                // return from[1].map(it => {
-                //     return isStackValue(it) ? getEntityId(it[1])
-                //         : isEntity(it) ? getEntityId(it) : undefined;
-                // }).
-                //     filter(Boolean);
+                // throw new StackError('not implemented bES2');
+                eids = from[1].map(it => {
+                    return isStackValue(it) ? getEntityId(it[1])
+                        : isEntity(it) ? getEntityId(it) : undefined;
+                }).
+                    filter(Boolean);
             }
             else if (from[0] === SType.Value && from[1] === false) {
                 // return [];
-                throw 'not implemented bES3';
+                // throw new StackError('not implemented bES3');
             }
             // Log.debug('[readEntityIds]', from);
         }
@@ -251,7 +251,7 @@ function buildEntitySelect(stack:SQLQueryStack):string{
 
     let [orderDir, orderDid, orderAttr, orderType] = stack.scratch.orderBy ?? ['desc'];
     let [offset, limit] = stack.scratch.limit ?? [0, Number.MAX_SAFE_INTEGER];
-    let options = {offset,limit,orderDir,returnSQL:true};
+    let options = { offset, limit, orderDir, returnSQL: true, eids };
 
     return matchEntities(es, bf, options) as string;
 }
@@ -267,14 +267,14 @@ export function applyFilter(stack: SQLQueryStack): InstResult {
     // in the es
     // let eids = readEntityIds(stack);
     let eidSql = buildEntitySelect(stack);
-    
+
     // Log.debug('[applyFilter]', 'eidSql', eidSql );
 
     let result = parseFilterQuery(es, filter[0], filter[1], filter[2]);
 
     // Log.debug('[applyFilter]', 'query', result );
 
-    result = sqlRetrieveByFilterQuery(es.db, undefined, result, {selectEidSql:eidSql});
+    result = sqlRetrieveByFilterQuery(es.db, undefined, result, { selectEidSql: eidSql });
 
     // Log.debug('[applyFilter]', 'result', result );
 
@@ -344,18 +344,18 @@ export function fetchComponents(stack: SQLQueryStack, [, op]: StackValue): InstR
 
     let [orderDir, orderDid, orderAttr, orderType] = stack.scratch.orderBy ?? ['desc'];
     let [offset, limit] = stack.scratch.limit ?? [0, Number.MAX_SAFE_INTEGER];
-    if( orderType === undefined ){
+    if (orderType === undefined) {
         orderType = 'integer';
     }
     let isPtr = false;
-    let orderDef:ComponentDefSQL;
+    let orderDef: ComponentDefSQL;
 
-    if (orderDid !== undefined ) {
-        orderDef = es.getByDefId( orderDid );
+    if (orderDid !== undefined) {
+        orderDef = es.getByDefId(orderDid);
         orderAttr = orderAttr.startsWith('/') ? orderAttr.substring(1) : orderAttr;
-        const prop = getProperty(orderDef, orderAttr );
-        if( prop === undefined ){
-            console.log('[fetchComponent][orderBy]', 'could not find prop', orderAttr );
+        const prop = getProperty(orderDef, orderAttr);
+        if (prop === undefined) {
+            console.log('[fetchComponent][orderBy]', 'could not find prop', orderAttr);
             orderDef = undefined;
         } else {
             orderType = prop.type;
@@ -366,10 +366,10 @@ export function fetchComponents(stack: SQLQueryStack, [, op]: StackValue): InstR
 
     const allDefs = bf === undefined || (isBitField(bf) && bf.isAllSet) || defs === undefined;
     // Log.debug('[fetchComponent]', {allDefs, isAllSet:(isBitField(bf) && bf.isAllSet), undefined:(defs===undefined)}, bf);
-    const options = {allDefs, offset, limit, orderDef, orderDir, orderAttr, returnCid};
+    const options = { allDefs, offset, limit, orderDef, orderDir, orderAttr, returnCid };
 
     // if (returnCid) {
-        // coms = sqlRetrieveComponentIds(es.db, eids, defs || es.componentDefs, options);
+    // coms = sqlRetrieveComponentIds(es.db, eids, defs || es.componentDefs, options);
     //     return [SType.List, coms.map(cid => [SType.Value, cid])];
     // }
 
@@ -452,18 +452,18 @@ export async function fetchEntity(stack: SQLQueryStack, [, op]: StackValue): Asy
 
     let [orderDir, orderDid, orderAttr, orderType] = stack.scratch.orderBy ?? ['desc'];
     let [offset, limit] = stack.scratch.limit ?? [0, Number.MAX_SAFE_INTEGER];
-    if( orderType === undefined ){
+    if (orderType === undefined) {
         orderType = 'integer';
     }
     let isPtr = false;
-    let orderDef:ComponentDefSQL;
+    let orderDef: ComponentDefSQL;
 
-    if (orderDid !== undefined ) {
-        orderDef = es.getByDefId( orderDid );
+    if (orderDid !== undefined) {
+        orderDef = es.getByDefId(orderDid);
         orderAttr = orderAttr.startsWith('/') ? orderAttr.substring(1) : orderAttr;
-        const prop = getProperty(orderDef, orderAttr );
-        if( prop === undefined ){
-            console.log('[fetchEntity][orderBy]', 'could not find prop', orderAttr );
+        const prop = getProperty(orderDef, orderAttr);
+        if (prop === undefined) {
+            console.log('[fetchEntity][orderBy]', 'could not find prop', orderAttr);
             orderDef = undefined;
         } else {
             orderType = prop.type;
@@ -551,9 +551,9 @@ export async function fetchEntity(stack: SQLQueryStack, [, op]: StackValue): Asy
 //     return e;
 // }
 
-function matchEntities(es: EntitySetSQL, mbf?: BitField, options:RetrieveOptions = {offset:0, limit:Number.MAX_SAFE_INTEGER, orderDir: 'desc'}): Entity[]|string {
+function matchEntities(es: EntitySetSQL, mbf?: BitField, options: RetrieveOptions = { offset: 0, limit: Number.MAX_SAFE_INTEGER, orderDir: 'desc' }): Entity[] | string {
     if (mbf === undefined || mbf.isAllSet) {
-        return sqlRetrieveEntities(es.db, undefined, options);
+        return sqlRetrieveEntities(es.db, options.eids, options);
     }
 
     return sqlRetrieveEntitiesByDefId(es.db, bfToValues(mbf), { ...options, type: mbf.type });

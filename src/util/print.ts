@@ -15,7 +15,7 @@ import { BitField, get as bfGet } from '@odgn/utils/bitfield';
  * @param dids 
  */
 export async function printAll(es: EntitySet, ents?: Entity[], dids?:string[]) {
-
+    console.log(`[${es.getUrl()}]:`);
     for await ( const e of es.getEntities() ){
         printEntity( es, e, dids );
     }

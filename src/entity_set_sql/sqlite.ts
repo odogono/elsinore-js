@@ -72,6 +72,7 @@ export interface RetrieveOptions {
     orderAttr?: string;
     orderDef?: ComponentDefSQL;
     returnSQL?: boolean;
+    eids?: EntityId[];
 }
 
 
@@ -105,7 +106,7 @@ export function sqlOpen(path: string, options: OpenOptions): SqlRef {
     const isMemory = options.isMemory ?? true;
     const { verbose } = options;
     const db = new BetterSqlite3(isMemory ? ":memory:" : path, { verbose });
-
+    
     // define our regexp function - so nice!
     db.function('regexp', { deterministic: true }, (regex, val) => {
         if (val == null) {
@@ -349,13 +350,15 @@ export function sqlUpdateComponent(ref: SqlRef, com: Component, def: ComponentDe
 }
 
 export function sqlBegin(ref: SqlRef) {
-    const { db } = ref;
-    db.exec('BEGIN TRANSACTION;');
+    const { db, begin } = ref;
+    begin.run();
+    // db.exec('BEGIN TRANSACTION;');
     // Log.debug('[sqlBegin]');
 }
 export function sqlCommit(ref: SqlRef) {
-    const { db } = ref;
-    db.exec('COMMIT;');
+    const { db, commit } = ref;
+    commit.run();
+    // db.exec('COMMIT;');
     // Log.debug('[sqlCommit]');
 }
 
@@ -582,7 +585,8 @@ export function sqlRetrieveComponents(ref: SqlRef, eids: EntityId[], defs: Compo
 
     let stmt = db.prepare(sql);
 
-    eids = stmt.all().map(r => r.eid);
+    // get rid of duplicates - although shouldnt the sql do this?
+    eids = Array.from( new Set( stmt.all().map(r => r.eid) ) );
 
     // Log.debug('[sqlRetrieveComponents]', 'result', eids );
     // Log.debug('[sqlRetrieveComponents]', 'defs', defs );
@@ -802,7 +806,7 @@ export function sqlRetrieveEntities(ref: SqlRef, eids?: EntityId[], options: Ret
 export function sqlRetrieveEntitiesByDefId(ref: SqlRef, did: ComponentDefId[], options: RetrieveOptions = {}): Entity[]|string {
     const { db } = ref;
     const type = options.type ?? TYPE_AND;
-    const { limit, offset, orderDef, orderAttr, orderDir } = options;
+    const { limit, offset, orderDef, orderAttr, orderDir, eids } = options;
 
     if (did === undefined || did.length === 0) {
         return type === TYPE_AND || type === TYPE_OR ? [] : sqlRetrieveEntities(ref);
@@ -858,6 +862,7 @@ export function sqlRetrieveEntitiesByDefId(ref: SqlRef, did: ComponentDefId[], o
     }
 
     if( options.returnSQL ){
+        // Log.debug('[sqlRetrieveEntityByDefId]', 'inner', innerSql);
         return innerSql;
     }
     // Log.debug('[sqlRetrieveEntityByDefId]', sql);

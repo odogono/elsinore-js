@@ -106,7 +106,7 @@ export async function buildStackEntitySet(stack: QueryStack, options?): Promise<
 }
 
 
-export async function prepES(insts?: string, fixture?: string, options: EntitySetOptions = {}): Promise<[QueryStack, EntitySetSQL]> {
+export async function prepES(insts?: string, fixture?: string, options: SQLEntitySetOptions = {}): Promise<[QueryStack, EntitySetSQL]> {
     let es = createEntitySet();
     let values: StackValue[];
 

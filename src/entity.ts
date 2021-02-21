@@ -43,6 +43,9 @@ export class Entity {
 
     /**
      * A direct means of adding an already owned component to the entity
+     * 
+     * its unsafe because the component won't necesarily be able to accessed via
+     * property
      * @param entity 
      * @param component 
      */

@@ -100,7 +100,7 @@ export type ResolveComponentDefIdResult = [Component, string][] | [BitField, str
 
 export type ResolveDefIds = string | string[] | ComponentDefId | ComponentDefId[];
 
-export type AddArrayType = (Entity | Component)[];// Entity[] | Component[];
+export type AddArrayType = (Entity | Component)[];
 export type AddType = Entity | Component | OrphanComponent | AddArrayType | EntitySetMem;
 export type RemoveType = ComponentId | Entity | Component | EntitySetMem;
 
@@ -474,8 +474,9 @@ export abstract class EntitySet {
 
     /**
      * Resolves an array of Def identifiers (uri,hash, or did) to ComponentDefs  
-     * @param registry ComponentRegistry
-     * @param dids array of def ids as strings or numbers 
+     * 
+     * @param value defId or url
+     * @returns a bitfield with the resolved def ids
      */
     resolveComponentDefIds(value: ResolveDefIds): BitField {
         const bf = createBitField();

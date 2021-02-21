@@ -42,6 +42,45 @@ test('select no entities', async () => {
     assert.equal(result, []);
 });
 
+test('select using eids', async () => {
+    let [stack,es] = await prepES(`
+    [
+        [ 100 102 ]
+        @c
+    ] select
+    `, 'todo');
+
+    let eids = new Set( stack.popValue().map( c => c['@e'] ) );
+    assert.equal( Array.from(eids), [100,102] );
+});
+
+test('select condition using eids', async () => {
+    let [stack,es] = await prepES(`
+    [
+        [ 100 102 ]
+        /component/completed#/isComplete !ca true ==
+        @c
+    ] select
+    `, 'todo');
+
+    let eids = new Set( stack.popValue().map( c => c['@e'] ) );
+    assert.equal( Array.from(eids), [100] );
+});
+
+test('multi select condition using eids', async () => {
+    let [stack,es] = await prepES(`
+    [
+        [ 100 102 ]
+            /component/completed#/isComplete !ca true ==
+            /component/priority#/priority !ca 10 ==
+        and
+        @c
+    ] select
+    `, 'todo');
+
+    let eids = new Set( stack.popValue().map( c => c['@e'] ) );
+    assert.equal( Array.from(eids), [100] );
+});
 
 test('fetches entities by did', async () => {
     let query = `[ "/component/completed" !bf @e] select`;
