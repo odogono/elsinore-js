@@ -17,7 +17,8 @@ import {
 import {
     Entity,
     getEntityId,
-    EntityId
+    EntityId,
+    isEntity
 } from '../entity';
 import {
     BitField,
@@ -33,7 +34,7 @@ import {
     TYPE_NOT
 } from '@odgn/utils/bitfield';
 import { Component, ComponentId, getComponentEntityId, toComponentId } from '../component';
-import { SType } from '../query/types';
+import { StackError, SType } from '../query/types';
 import { isBoolean, isRegex, isDate, isValidDate } from '@odgn/utils';
 import { compareDates } from '../query/words/util';
 import { hashToString } from '@odgn/utils';
@@ -72,7 +73,7 @@ export interface RetrieveOptions {
     orderAttr?: string;
     orderDef?: ComponentDefSQL;
     returnSQL?: boolean;
-    eids?: EntityId[];
+    returnEid?: boolean;
 }
 
 
@@ -437,13 +438,18 @@ export function sqlComponentExists(ref: SqlRef, eid: number, did: number): boole
     return row !== undefined;
 }
 
-export function sqlRetrieveComponent(ref: SqlRef, eid: number, def: ComponentDefSQL): Component {
+export function sqlRetrieveComponent(ref: SqlRef, eid: EntityId, def: ComponentDefSQL): Component {
     const { db } = ref;
     const { tblName } = def;
     // const did = def[ComponentDefT];
-
-    let stmt = db.prepare(`SELECT * FROM ${tblName} WHERE eid = ? LIMIT 1`);
-    let row = stmt.get(eid);
+    if( isEntity(eid) ){
+        throw new StackError('e not allowed');
+    }
+    
+    const sql = `SELECT * FROM ${tblName} WHERE eid = ? LIMIT 1`;
+    
+    // Log.debug('[sqlRetrieveComponent]', sql, eid );
+    let row = db.prepare(sql).get(eid);
 
     if (row === undefined) {
         return undefined;
@@ -756,17 +762,31 @@ function sqlCreateComponentDef(did: ComponentDefId, schema: string): ComponentDe
     return def;
 }
 
+
+/**
+ * 
+ * @param ref 
+ * @param eids 
+ * @param options 
+ */
+export function sqlRetrieveEntityIds(ref:SqlRef, eids?: EntityId[], options:RetrieveOptions = {}): EntityId[] {
+    return [];
+}
+
 /**
  * Retrieves entities with the given entityIds
  * 
  * @param ref 
  * @param eids 
  */
-export function sqlRetrieveEntities(ref: SqlRef, eids?: EntityId[], options: RetrieveOptions = {}): Entity[]|string {
+export function sqlRetrieveEntities(ref: SqlRef, eids?: EntityId[], options: RetrieveOptions = {}): Entity[]|EntityId[]|string {
     const { db } = ref;
     const { offset, limit } = options;
     const returnSQL = options.returnSQL ?? false;
+    const returnEid = options.returnEid ?? false;
     let rows, stmt;
+
+    // console.log( {returnSQL, returnEid});
     if (eids !== undefined) {
         const params = buildInParamString(eids);
         let sql = `SELECT eid,did FROM tbl_entity_component WHERE eid IN (${eids}) ORDER BY eid LIMIT ${offset}, ${limit}`;
@@ -784,7 +804,13 @@ export function sqlRetrieveEntities(ref: SqlRef, eids?: EntityId[], options: Ret
         rows = db.prepare(sql).all();
     }
 
-    // Log.debug('[sqlRetrieveEntities]', rows);
+    // Log.debug('[sqlRetrieveEntities]', returnEid, rows);
+    if( returnEid ){
+        // todo - sql should be altered to return eids, rather than entities
+        let result = Array.from( new Set( rows.map( r => r.eid ) ) );
+        // Log.debug('[sqlRetrieveEntities]', returnEid, result);
+        return result as EntityId[];
+    }
 
     let result = rows.reduce((result, { eid, did }) => {
         let e = result[eid];
@@ -794,7 +820,7 @@ export function sqlRetrieveEntities(ref: SqlRef, eids?: EntityId[], options: Ret
         e.bitField = bfSet(e.bitField, did);
         return { ...result, [eid]: e };
     }, {});
-    return Object.values(result);
+    return Object.values(result) as Entity[];
 }
 
 /**
@@ -803,13 +829,13 @@ export function sqlRetrieveEntities(ref: SqlRef, eids?: EntityId[], options: Ret
  * @param ref 
  * @param did 
  */
-export function sqlRetrieveEntitiesByDefId(ref: SqlRef, did: ComponentDefId[], options: RetrieveOptions = {}): Entity[]|string {
+export function sqlRetrieveEntitiesByDefId(ref: SqlRef, did: ComponentDefId[], eids?:EntityId[], options: RetrieveOptions = {}): Entity[]|string {
     const { db } = ref;
     const type = options.type ?? TYPE_AND;
-    const { limit, offset, orderDef, orderAttr, orderDir, eids } = options;
+    const { limit, offset, orderDef, orderAttr, orderDir } = options;
 
     if (did === undefined || did.length === 0) {
-        return type === TYPE_AND || type === TYPE_OR ? [] : sqlRetrieveEntities(ref);
+        return type === TYPE_AND || type === TYPE_OR ? [] : sqlRetrieveEntities(ref) as Entity[];
     }
 
     let qualifier = type === TYPE_NOT ? 'NOT' : '';
@@ -850,9 +876,11 @@ export function sqlRetrieveEntitiesByDefId(ref: SqlRef, did: ComponentDefId[], o
             ORDER BY eid ${orderDir}
             LIMIT ${offset},${limit}
         `
+        let eidSql = eids !== undefined ? `eid in (${eids}) AND` : '';
         sql = `
     SELECT eid,did FROM tbl_entity_component
-    WHERE eid ${qualifier} IN (
+    WHERE ${eidSql}
+    eid ${qualifier} IN (
 
         SELECT a.eid FROM tbl_entity_component AS a 
         INNER JOIN(
@@ -869,14 +897,6 @@ export function sqlRetrieveEntitiesByDefId(ref: SqlRef, did: ComponentDefId[], o
     let rows = db.prepare(sql).all();
     // Log.debug('[sqlRetrieveEntityByDefId]', rows);
 
-    // `SELECT a.*,b.${orderAttr} FROM ${def.tblName} AS a
-    //             LEFT JOIN ${orderDef.tblName} AS b ON b.eid = a.eid
-    //             ORDER BY b.${orderAttr} ${orderDir} LIMIT ${offset},${limit}
-    // SELECT a.*,b.createdAt FROM tbl_component_title_cc2c57e6 AS a
-    // LEFT JOIN tbl_component_meta_90f607b9 AS b ON b.eid = a.eid
-    // WHERE a.eid IN (100, 101, 102, 103, 104)
-    // ORDER BY b.createdAt DESC
-    // Log.debug('[sqlRetrieveEntityByDefId]', rows);
 
     let result = rows.reduce(([result, e], { eid, did }) => {
         if (e === undefined || e.id !== eid) {

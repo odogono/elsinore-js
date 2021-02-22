@@ -163,30 +163,32 @@ function readEntityIds(stack: ESMemQueryStack): EntityId[] {
 
     if (bf === undefined) {
         let from = stack.peek();
-
+        
         if (from === undefined) {
             // return matchEntities(es, undefined, undefined);
         }
         else {
             stack.pop();
-            if (from[0] === SType.Entity) {
+            const [type,val] = from;
+            if (type === SType.Entity) {
                 return [unpackStackValueR(from)];
                 // Log.debug('[fetchComponent]', 'fetching from entity', eids);
 
-            } else if (from[0] === SType.List) {
-                return from[1].map(it => {
+            } else if (type === SType.List) {
+                return val.map(it => {
                     return isStackValue(it) ? getEntityId(it[1])
                         : isEntity(it) ? getEntityId(it) : undefined;
                 }).
                     filter(Boolean);
             }
-            else if (from[0] === SType.Value && from[1] === false) {
+            else if (type === SType.Value && (val === false || val === 0) ) {
                 return [];
             }
             // Log.debug('[readEntityIds]', from);
         }
     }
 
+    // console.log('[readEntityIds]', from);
     eids = matchEntities(es, undefined, bf);
 
     // Log.debug('[readEntityIds]', eids);
@@ -533,7 +535,7 @@ export function fetchComponentAttributes(stack: ESMemQueryStack): InstResult {
     // in the es
     let eids = readEntityIds(stack);
 
-    // console.log('[fetchComponentAttributes]', attr );
+    // console.log('[fetchComponentAttributes]', eids );
 
     if (attr[0] === SType.Value) {
         attr = stringToComponentAttr(es, attr[1]);
@@ -623,21 +625,109 @@ export function buildBitfield(stack: QueryStack): InstResult {
     return [SType.BitField, bf];
 }
 
+
+// export async function fetchEntity(stack: ESMemQueryStack, [, op]: StackValue): AsyncInstResult {
+//     const { es } = stack;
+//     let arg: StackValue;
+//     let eids: EntityId[];
+//     const returnEid = op === '@eid';
+
+//     // Log.debug('[fetchEntity]', 'eh?', type, eid, data);
+//     let [orderDir, orderDid, orderAttr, orderType] = stack.scratch.orderBy ?? ['desc'];
+//     let [offset, limit] = stack.scratch.limit ?? [0, Number.MAX_SAFE_INTEGER];
+//     if (orderType === undefined) {
+//         orderType = 'integer';
+//     }
+//     let isPtr = false;
+//     let orderDef: ComponentDef;
+
+//     if (orderDid !== undefined) {
+//         orderDef = es.getByDefId(orderDid);
+//         orderAttr = orderAttr.startsWith('/') ? orderAttr.substring(1) : orderAttr;
+//         const prop = getProperty(orderDef, orderAttr);
+//         if (prop === undefined) {
+//             console.log('[fetchEntity][orderBy]', 'could not find prop', orderAttr);
+//             orderDef = undefined;
+//         } else {
+//             orderType = prop.type;
+//         }
+//     }
+
+//     let matchOptions = { offset, limit, orderDef, orderAttr, orderDir };
+
+
+
+//     // get the bitfield
+//     let bf = stack.popBitFieldOpt();
+
+//     // Log.debug('[fetchComponent]', 'bf', bf );
+
+//     // take the 2nd arg
+//     arg = stack.peek();
+
+
+
+//     if (type === SType.BitField) {
+//         bf = eid as BitField;
+//         eids = matchEntities(es, undefined, bf, matchOptions);
+
+//     } else if (isInteger(eid)) {
+//         // Log.debug('[fetchEntity]', 'eid only', eid, isInteger(eid), typeof eid );
+//         let e = es.getEntityMem(eid, returnEid ? false : true);
+
+//         if (e === undefined) {
+//             // Log.debug('[fetchEntity]', 'empty');
+//             return [SType.Value, false];
+//         }
+
+//         return returnEid ? [SType.Entity, eid] : [SType.Entity, e];
+//     }
+//     else if (Array.isArray(eid)) {
+//         // Log.debug('[fetchEntity]', 'eid array');
+//         eids = eid;
+//     }
+//     else if (type === SType.List) {
+//         let arr = unpackStackValue(data, SType.List, false);
+//         eids = arr.map(row => entityIdFromValue(row)).filter(Boolean);
+//         // Log.debug('[fetchEntity]', 'unpack', eids);
+//     }
+//     else if (eid === 'all') {
+//         let ents = matchEntities(es, undefined, 'all', matchOptions);
+//         return [SType.List, ents];
+//     } else if (eid === undefined) {
+//         return [SType.Value, false];
+//     } else {
+//         throw new StackError(`@e unknown type ${type}`)
+//     }
+
+//     if (returnEid) {
+//         return [SType.List, eids.map(eid => [SType.Value, eid])];
+//     }
+
+//     let ents = es.getEntitiesByIdMem(eids, { populate: true });
+//     let result = ents.filter(Boolean).map(e => [SType.Entity, e]);
+
+//     return [SType.List, result];
+// }
+
 /**
  * Fetches an entity instance
+ * @e
  * 
  * @param es 
  * @param stack 
  */
 export async function fetchEntity(stack: ESMemQueryStack, [, op]: StackValue): AsyncInstResult {
     const { es } = stack;
-    let data: StackValue = stack.pop();
+    // let data: StackValue = stack.pop();
     const returnEid = op === '@eid';
 
-    const type = data[0];
-    let eid = unpackStackValueR(data, SType.Any);
+    // const type = data[0];
+    // let eid = unpackStackValueR(data, SType.Any);
     let bf: BitField;
-    let eids: number[];
+    let eids: EntityId[];
+    let returnList = true;
+
 
     // Log.debug('[fetchEntity]', 'eh?', type, eid, data);
     let [orderDir, orderDid, orderAttr, orderType] = stack.scratch.orderBy ?? ['desc'];
@@ -662,7 +752,54 @@ export async function fetchEntity(stack: ESMemQueryStack, [, op]: StackValue): A
 
     let matchOptions = { offset, limit, orderDef, orderAttr, orderDir };
 
+    // !bf || 'all
+    bf = stack.popBitFieldOpt();
 
+    let arg = stack.peek();
+
+    // console.log('ok', arg, bf);
+
+    if( arg !== undefined ){
+        let [type,val] = arg;
+        if( type === SType.Value ){
+            if( isInteger(val) ){
+                stack.pop();
+                eids = [val];
+                returnList = false;
+            }
+        }
+        else if( type === SType.List ){
+            // console.log('[fetchEntity]', val);
+            let arr = unpackStackValue(arg, SType.List, false);
+            eids = arr.map(row => entityIdFromValue(row)).filter(Boolean);
+            stack.pop();
+        }
+    }
+
+    // if( bf !== undefined ){
+        eids = matchEntities(es, eids, bf, matchOptions );
+    // }
+
+    // console.log('ok', eids);
+
+    let result:any;
+
+    if( returnEid ){
+        result = returnList ? eids.map(eid => [SType.Entity, eid]) : [SType.Entity, eids[0]];
+    } else {
+        let ents = es.getEntitiesByIdMem(eids, { populate: true });
+        result = returnList ? ents.filter(Boolean).map(e => [SType.Entity, e]) : [SType.Entity, ents[0]];
+    }
+
+    // console.log('ok', returnList, result);
+
+    return returnList ? [SType.List, result] : result;
+
+    // bf
+    // eid
+    // [ eid ]
+    // [ eid ]
+/*
     if (type === SType.BitField) {
         bf = eid as BitField;
         eids = matchEntities(es, undefined, bf, matchOptions);
@@ -703,7 +840,7 @@ export async function fetchEntity(stack: ESMemQueryStack, [, op]: StackValue): A
     let ents = es.getEntitiesByIdMem(eids, { populate: true });
     let result = ents.filter(Boolean).map(e => [SType.Entity, e]);
 
-    return [SType.List, result];
+    return [SType.List, result];//*/
 }
 
 
@@ -722,11 +859,12 @@ export interface MatchOptions {
  * @param eids 
  * @param mbf 
  */
-export function matchEntities(es: EntitySetMem, eids: EntityId[], mbf: BitField | 'all', options: MatchOptions = { offset: 0, limit: Number.MAX_SAFE_INTEGER, orderDir: 'desc' }): EntityId[] {
+export function matchEntities(es: EntitySetMem, eids: EntityId[], dids: BitField | 'all', options: MatchOptions = { offset: 0, limit: Number.MAX_SAFE_INTEGER, orderDir: 'desc' }): EntityId[] {
     let matches = [];
     let { offset, limit, orderDef, orderDir, orderAttr } = options;
-    const isAll = mbf === 'all' || mbf === undefined || mbf.isAllSet;
-    const type = isAll ? TYPE_AND : (mbf as BitField).type;
+    const isAll = dids === 'all' || dids === undefined || dids.isAllSet;
+    const mbf = isBitField(dids) ? dids as BitField : undefined;
+    const type = isAll ? TYPE_AND : mbf.type;
     let cmpFn = bfTypeFn(type); // bfAnd;
     if (type === TYPE_NOT) {
         cmpFn = bfNot;
@@ -770,17 +908,23 @@ export function matchEntities(es: EntitySetMem, eids: EntityId[], mbf: BitField 
         for (let ii = 0; ii < eids.length; ii++) {
             let eid = eids[ii];
             let ebf = es.entities.get(eid);
-            coll.push([eid, ebf]);
+            // console.log('[matchEntities]', eid, ebf);
+            if( ebf !== undefined ){
+                coll.push([eid, ebf]);
+            }
         }
     } else {
         coll = es.entities;
     }
+
+    // console.log('[matchEntities]', coll);
 
     for (let [eid, ebf] of coll) {
 
         if (cmpFn(mbf as BitField, ebf) === false) {
             continue;
         }
+        // console.log('[matchEntities]', bfToValues(mbf), bfToValues(ebf) );
 
         if (orderDid !== undefined) {
 

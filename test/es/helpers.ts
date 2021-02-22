@@ -153,7 +153,7 @@ export async function prep(insts?: string): Promise<[QueryStack, EntitySet]> {
 
 
 export async function prepES(insts?: string, fixture?: string, options: EntitySetOptions = {}): Promise<[QueryStack, EntitySet]> {
-    let es = createEntitySet();
+    let es = createEntitySet(options);
     let values: StackValue[];
 
     if (fixture) {

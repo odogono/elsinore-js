@@ -42,7 +42,7 @@ import { onLogicalFilter, parseFilterQuery } from "../entity_set/filter";
 import { onComponentAttr, buildBitfield, SelectOptions, stringToComponentAttr, onOrder, applyLimit } from "../entity_set/query";
 import { onDefine } from "../query/words/define";
 import { onPluck } from "../query/words/pluck";
-import { onBitFieldNot, onBitFieldOr } from "../query/words";
+import { onBitFieldNot, onBitFieldOr, onPrintStack } from "../query/words";
 import { onDiff } from '../query/words/list';
 import { getProperty } from '../component_def';
 
@@ -119,6 +119,7 @@ export async function select(stack: QueryStack, query: StackValue[], options: Se
         ['diff!', onDiff],
         ['intersect', onDiff],
         ['intersect!', onDiff],
+        ['prints', onPrintStack],
     ]);
 
     // make sure any filter values have a following cmd
@@ -174,40 +175,38 @@ function readEntityIds(stack: SQLQueryStack, options = {}): EntityId[] {
     let bf = stack.popBitFieldOpt();
 
     if (bf === undefined) {
-        let from = stack.peek();
 
-        if (from === undefined) {
-            // return matchEntities(es, undefined, undefined);
-        }
-        else {
-            stack.pop();
-            if (from[0] === SType.Entity) {
-                return [unpackStackValueR(from)];
-                // Log.debug('[fetchComponent]', 'fetching from entity', eids);
+        // Log.debug('[readEntityIds]', stack.peek() );
+        if (stack.peek() !== undefined) {
+            const [type, val] = stack.pop();
+            if (type === SType.Entity) {
+                return [unpackStackValueR([type, val])];
 
-            } else if (from[0] === SType.List) {
-                return from[1].map(it => {
+            } else if (type === SType.List) {
+                return val.map(it => {
                     return isStackValue(it) ? getEntityId(it[1])
                         : isEntity(it) ? getEntityId(it) : undefined;
                 }).
                     filter(Boolean);
             }
-            else if (from[0] === SType.Value && from[1] === false) {
+            else if (type === SType.Value && val === false) {
                 return [];
             }
             // Log.debug('[readEntityIds]', from);
         }
     }
 
+
+
     let [orderDir, orderDid, orderAttr, orderType] = stack.scratch.orderBy ?? ['desc'];
     let [offset, limit] = stack.scratch.limit ?? [0, Number.MAX_SAFE_INTEGER];
     let pageOptions = { offset, limit, orderDir };
 
 
-    let ents = matchEntities(es, bf, { ...pageOptions, ...options }) as Entity[];
-    // Log.debug('[readEntityIds]', ents);
-    eids = ents.map(e => e.id);
 
+    eids = matchEntities(es, bf, undefined, { ...pageOptions, ...options, returnEid: true }) as EntityId[];
+    // Log.debug('[readEntityIds]', ents);
+    // eids = ents.map(e => e.id);
 
     // default to all of the entity ids
     return eids;
@@ -251,9 +250,9 @@ function buildEntitySelect(stack: SQLQueryStack): string {
 
     let [orderDir, orderDid, orderAttr, orderType] = stack.scratch.orderBy ?? ['desc'];
     let [offset, limit] = stack.scratch.limit ?? [0, Number.MAX_SAFE_INTEGER];
-    let options = { offset, limit, orderDir, returnSQL: true, eids };
+    let options = { offset, limit, orderDir, returnSQL: true };
 
-    return matchEntities(es, bf, options) as string;
+    return matchEntities(es, bf, eids, options) as string;
 }
 
 export function applyFilter(stack: SQLQueryStack): InstResult {
@@ -395,7 +394,7 @@ export function fetchComponentAttributes(stack: SQLQueryStack): InstResult {
     // in the es
     let eids = readEntityIds(stack);
 
-    // console.log('[fetchComponentAttributes]', attr );
+    // console.log('[fetchComponentAttributes]', eids, attr );
 
     if (attr[0] === SType.Value) {
         attr = stringToComponentAttr(es, attr[1]);
@@ -410,6 +409,7 @@ export function fetchComponentAttributes(stack: SQLQueryStack): InstResult {
     const def = es.getByDefId(did);
     const isJptr = ptr.startsWith('/');
 
+    // Log.debug('[fetchComponentAttributes]', eids );
 
     for (const eid of eids) {
         const def = es.getByDefId(did);
@@ -437,16 +437,15 @@ export function fetchComponentAttributes(stack: SQLQueryStack): InstResult {
  */
 export async function fetchEntity(stack: SQLQueryStack, [, op]: StackValue): AsyncInstResult {
     const { es } = stack;
-    let data: StackValue = stack.pop();
+    // let data: StackValue = stack.pop();
     const returnEid = op === '@eid';
 
-    const type = data[0];
-    let eid = unpackStackValueR(data, SType.Any);
+    // const type = data[0];
+    // let eid = unpackStackValueR(data, SType.Any);
     let bf: BitField;
-
     let eids: EntityId[];
     let ents: Entity[];
-    let returnSingle = false;
+    let returnList = true;
 
     // Log.debug('[fetchEntity]', data, eid);
 
@@ -471,68 +470,131 @@ export async function fetchEntity(stack: SQLQueryStack, [, op]: StackValue): Asy
         // Log.debug('[fetchComponent]', 'orderBy', orderDid, orderAttr);
     }
 
-    let matchOptions = { offset, limit, orderDef, orderAttr, orderDir };
+    let matchOptions = { offset, limit, orderDef, orderAttr, orderDir, returnEid };
 
-    if (type === SType.BitField) {
-        // Log.debug('[fetchEntity]', 'byBF');
-        bf = eid as BitField;
-        ents = matchEntities(es, bf, matchOptions) as Entity[];
+    // !bf || 'all
+    bf = stack.popBitFieldOpt();
 
-    } else if (isInteger(eid)) {
-        returnSingle = true;
-        eids = [eid];
-    }
-    else if (Array.isArray(eid)) {
-        eids = eid;
-    }
-    else if (type === SType.List) {
-        let arr = unpackStackValue(data, SType.List, false);
-        eids = arr.map(row => entityIdFromValue(row)).filter(Boolean);
-    }
-    else if (eid === 'all') {
-        ents = matchEntities(es, undefined, matchOptions) as Entity[];
-        // return [[SType.List, ents]];
-    } else if (eid === undefined) {
-        return [SType.Value, false];
-    } else {
-        throw new StackError(`@e unknown type ${type}`)
-    }
+    let arg = stack.peek();
 
-    if (ents === undefined) {
-        ents = await sqlRetrieveEntities(es.db, eids, matchOptions) as Entity[];
-    }
+    // console.log('ok', arg, bf);
 
-    if (returnSingle) {
-        let e: Entity = ents.length > 0 ? ents[0] : undefined;
-        if (e === undefined) {
-            return [SType.Value, false];
+    if (arg !== undefined) {
+        let [type, val] = arg;
+        if (type === SType.Value) {
+            if (isInteger(val)) {
+                stack.pop();
+                eids = [val];
+                returnList = false;
+            }
         }
-
-        if (returnEid) {
-            return [SType.Entity, eid];
+        else if (type === SType.List) {
+            // console.log('[fetchEntity]', val);
+            let arr = unpackStackValue(arg, SType.List, false);
+            eids = arr.map(row => entityIdFromValue(row)).filter(Boolean);
+            stack.pop();
         }
-
-        e = es.createEntity(e.id, e.bitField);
-        e = es.retrieveEntityComponents(e);
-
-        return [SType.Entity, e];
-        // return [SType.Entity, eid];
     }
+
+
+
+    // todo - an optimisation here might be to return only eids rather than full entities
+    ents = matchEntities(es, bf, eids, matchOptions) as Entity[];
+
+    // console.log('[fetchComponent]', 'yo', {returnList, returnEid}, ents, bfToValues(bf));
+
+    let result: any;
 
     if (returnEid) {
-        return [SType.List, ents.map(e => [SType.Value, e.id])];
+        result = ents.map(e => [SType.Entity, isEntity(e) ? e.id : e]);
+        return returnList ? [SType.List, result] : [SType.Entity, ents.length > 0 ? ents[0] : 0];
     }
 
-    let result = ents.map(e => {
+    result = ents.map(e => {
         e = es.createEntity(e.id, e.bitField);
         e = es.retrieveEntityComponents(e);
         return [SType.Entity, e];
     })
 
-    // let result = ents.map( e => [SType.Entity, e] );
-    // Log.debug('[fetchEntity]', 'by bf', ents);
+    // result = ents.map(e => [SType.Entity, e]);
 
-    return [SType.List, result];
+
+    // if (!returnList) {
+    //     result = [SType.Entity, ents.length > 0 ? ents[0] : 0];
+    // }
+
+
+    // if (returnEid) {
+    //     result = returnList ? ents.map(e => [SType.Entity, e.id]) : [SType.Entity, ents.length > 0 ? ents[0].id : 0];
+    // } else {
+    //     // let ents = es.getEntitiesByIdMem(eids, { populate: true });
+    //     result = returnList ? ents.map(e => [SType.Entity, e]) : [SType.Entity, ents.length > 0 ? ents[0] : 0];
+    // }
+
+    // console.log('ok', returnList, result);
+
+    return returnList ? [SType.List, result] : [SType.Entity, ents.length > 0 ? ents[0] : 0];;
+    /*
+        if (type === SType.BitField) {
+            // Log.debug('[fetchEntity]', 'byBF');
+            bf = eid as BitField;
+            ents = matchEntities(es, bf, matchOptions) as Entity[];
+    
+        } else if (isInteger(eid)) {
+            returnSingle = true;
+            eids = [eid];
+        }
+        else if (Array.isArray(eid)) {
+            eids = eid;
+        }
+        else if (type === SType.List) {
+            let arr = unpackStackValue(data, SType.List, false);
+            eids = arr.map(row => entityIdFromValue(row)).filter(Boolean);
+        }
+        else if (eid === 'all') {
+            ents = matchEntities(es, undefined, matchOptions) as Entity[];
+            // return [[SType.List, ents]];
+        } else if (eid === undefined) {
+            return [SType.Value, false];
+        } else {
+            throw new StackError(`@e unknown type ${type}`)
+        }
+    
+        if (ents === undefined) {
+            ents = await sqlRetrieveEntities(es.db, eids, matchOptions) as Entity[];
+        }
+    
+        if (returnSingle) {
+            let e: Entity = ents.length > 0 ? ents[0] : undefined;
+            if (e === undefined) {
+                return [SType.Value, false];
+            }
+    
+            if (returnEid) {
+                return [SType.Entity, eid];
+            }
+    
+            e = es.createEntity(e.id, e.bitField);
+            e = es.retrieveEntityComponents(e);
+    
+            return [SType.Entity, e];
+            // return [SType.Entity, eid];
+        }
+    
+        if (returnEid) {
+            return [SType.List, ents.map(e => [SType.Value, e.id])];
+        }
+    
+        let result = ents.map(e => {
+            e = es.createEntity(e.id, e.bitField);
+            e = es.retrieveEntityComponents(e);
+            return [SType.Entity, e];
+        })
+    
+        // let result = ents.map( e => [SType.Entity, e] );
+        // Log.debug('[fetchEntity]', 'by bf', ents);
+    
+        return [SType.List, result];//*/
 }
 
 
@@ -551,12 +613,19 @@ export async function fetchEntity(stack: SQLQueryStack, [, op]: StackValue): Asy
 //     return e;
 // }
 
-function matchEntities(es: EntitySetSQL, mbf?: BitField, options: RetrieveOptions = { offset: 0, limit: Number.MAX_SAFE_INTEGER, orderDir: 'desc' }): Entity[] | string {
+/**
+ * 
+ * @param es 
+ * @param mbf 
+ * @param eids 
+ * @param options 
+ */
+function matchEntities(es: EntitySetSQL, mbf?: BitField, eids?: EntityId[], options: RetrieveOptions = { offset: 0, limit: Number.MAX_SAFE_INTEGER, orderDir: 'desc' }): Entity[] | EntityId[] | string {
     if (mbf === undefined || mbf.isAllSet) {
-        return sqlRetrieveEntities(es.db, options.eids, options);
+        return sqlRetrieveEntities(es.db, eids, options);
     }
 
-    return sqlRetrieveEntitiesByDefId(es.db, bfToValues(mbf), { ...options, type: mbf.type });
+    return sqlRetrieveEntitiesByDefId(es.db, bfToValues(mbf), eids, { ...options, type: mbf.type });
 }
 
 function ilog(...args) {

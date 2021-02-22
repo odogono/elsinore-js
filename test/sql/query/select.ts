@@ -1,6 +1,6 @@
 import { suite } from 'uvu';
 import assert from 'uvu/assert';
-import { printAll } from '../../es/helpers';
+import { printAll, printEntity } from '../../es/helpers';
 
 import {
     beforeEach,
@@ -67,6 +67,24 @@ test('select condition using eids', async () => {
 
     let eids = new Set( stack.popValue().map( c => c['@e'] ) );
     assert.equal( Array.from(eids), [100] );
+});
+
+
+test('select bf using eids', async () => {
+    let id = 100; const idgen = () => ++id;
+    let [stack,es] = await prepES(`
+    [
+        [ 100 103 ]
+        /component/piece/pawn !bf
+        @eid
+    ] select
+    `, 'chess', {idgen});
+
+    // console.log( stack.popValue() );
+
+    // await printAll(es, undefined, ['/component/piece/pawn']);
+    // let eids = new Set( stack.popValue().map( c => c['@e'] ) );
+    assert.equal( stack.popValue(), [103] );
 });
 
 test('multi select condition using eids', async () => {
@@ -194,6 +212,23 @@ test('entity without components', async () => {
     // console.log( es.componentDefs.map( d => `${d['@d']} ${d.uri}`).join('\n') );
     assert.equal( stack.popValue(), [103,104,105] );
 });
+
+// test.only('match against both defs', async () => {
+//     let id = 1000;
+//     let idgen = () => ++id;
+//     let q = `[
+//             [ /component/title /component/priority ] !bf
+//             @e
+//             ] select`
+
+//     let [stack,es] = await prepES(q, 'todo', {idgen});
+
+//     console.log( stack.popValue().map( e => printEntity(es,e)) );
+//     // let e: Entity = stack.popValue();
+
+//     // assert.equal(e.size, 3);
+//     // assert.equal(e.Colour.colour, 'white');
+// });
 
 
 test('fetching components with optional', async () => {

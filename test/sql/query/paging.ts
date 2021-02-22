@@ -46,7 +46,6 @@ test('limit/orderby on entities', async () => {
             3 0 limit
             /component/title !bf
             @e
-            
         ] select
         `, 'todo');
 

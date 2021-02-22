@@ -1,6 +1,7 @@
-import { Entity } from "../entity";
+import { Entity, isEntity } from "../entity";
 import { EntitySet } from "../entity_set";
 import { BitField, get as bfGet } from '@odgn/utils/bitfield';
+import { linkSync } from "fs-extra";
 
 
 
@@ -30,21 +31,34 @@ export async function printQuery(es: EntitySet, q: string) {
 
 export function printEntity(es: EntitySet, e: Entity, dids?:string[]) {
     let bf:BitField;
+    if( !isEntity(e) ){
+        throw new Error('non entity');
+    }
     if( es === undefined || e === undefined ){
         console.log('(undefined e)');
+        return;
+    }
+    
+    let lines = [`- e(${yellow(e.id)})`];
+    if( e.components === undefined ){
+        console.log(lines[0]);
         return;
     }
     if( dids !== undefined ){
         bf = es.resolveComponentDefIds(dids);
     }
-    console.log(`- e(${yellow(e.id)})`);
+    // console.log(`- e(${yellow(e.id)})`);
     for (const [did, com] of e.components) {
         if( bf && bfGet(bf,did) === false ){
             continue;
         }
         const { '@e': eid, '@d': _did, ...rest } = com;
         const def = es.getByDefId(did);
-        console.log(`   ${def.name}`, JSON.stringify(rest));
+        // console.log(`   ${def.name}`, JSON.stringify(rest));
+        lines.push(`   ${def.name} ${JSON.stringify(rest)}`);
+    }
+    if( lines.length > 1 ){
+        console.log(lines.join('\n'));
     }
 }
 
