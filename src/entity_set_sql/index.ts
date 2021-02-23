@@ -121,7 +121,7 @@ export class EntitySetSQL extends EntitySetMem {
     getUrl() {
         return this.isMemory ?
             `es://sqlite?uuid=${this.uuid}&isMemory=${this.isMemory}`
-            : `es://sqlite${this.path}?uuid=${this.uuid}`;
+            : `es://sqlite/${this.path}?uuid=${this.uuid}`;
     }
 
     clone(options: CloneOptions = {}) {

@@ -127,10 +127,4 @@ test('parses various', () => {
 });
 
 
-test.only('wtf', () => {
-    let str = `"file:///test/fixtures/rootA/static/"`;
-    let tokens = tokenizeString(str, {returnValues:true});
-    console.log( tokens );
-})
-
 test.run();

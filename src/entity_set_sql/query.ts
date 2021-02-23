@@ -86,12 +86,15 @@ export async function select(stack: QueryStack, query: StackValue[], options: Se
         ['>=', onLogicalFilter, SType.Any, SType.Any],
         ['<', onLogicalFilter, SType.Any, SType.Any],
         ['<=', onLogicalFilter, SType.Any, SType.Any],
+
+        // ['debug', () => {stack.scratch.debug = true;return undefined} ],
     ]);
 
     // reset ordering and limits
     stack.scratch.orderBy = undefined;
     stack.scratch.limit = [0, Number.MAX_SAFE_INTEGER];
 
+    // Log.debug('[select] query', query);
     await stack.pushValues(query);
 
     // reset stack items and words
@@ -271,6 +274,7 @@ export function applyFilter(stack: SQLQueryStack): InstResult {
 
     let result = parseFilterQuery(es, filter[0], filter[1], filter[2]);
 
+    // Log.debug('[applyFilter]', 'filter', filter );
     // Log.debug('[applyFilter]', 'query', result );
 
     result = sqlRetrieveByFilterQuery(es.db, undefined, result, { selectEidSql: eidSql });
@@ -437,6 +441,7 @@ export function fetchComponentAttributes(stack: SQLQueryStack): InstResult {
  */
 export async function fetchEntity(stack: SQLQueryStack, [, op]: StackValue): AsyncInstResult {
     const { es } = stack;
+    // const debug = stack.scratch.debug ?? false;
     // let data: StackValue = stack.pop();
     const returnEid = op === '@eid';
 
@@ -497,6 +502,7 @@ export async function fetchEntity(stack: SQLQueryStack, [, op]: StackValue): Asy
     }
 
 
+    // console.log('[fetchComponent]', 'yo', {returnList, returnEid}, eids, bfToValues(bf));
 
     // todo - an optimisation here might be to return only eids rather than full entities
     ents = matchEntities(es, bf, eids, matchOptions) as Entity[];

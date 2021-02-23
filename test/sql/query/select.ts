@@ -695,21 +695,17 @@ test('filter with bf', async () => {
 });
 
 
-
-
-// test.only('select with bf', async () => {
-//     let [,es] = await prepES(``, 'todo');
-//     const stmt = es.prepare(`
+// test.only('com attr case', async () => {
+//     let [stack] = await prepES(`
+        
 //         [
-//             /component/meta#/meta/author !ca $author ==
-//             /component/meta !bf
-//             @c
+//             /component/position#rank !ca *^$1 ==
+//             @eid /component/position#file @ca
 //         ] select
-//         prints
-//         `);
+//         `, 'chess');
 
 //     // console.log( stack.items );
-//     const result = await stmt.getResult({author:'av'});
+//     const result = stack.popValue();
 //     console.log( result );
 
 //     // assert.equal(result, 'action');

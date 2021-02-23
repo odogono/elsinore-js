@@ -50,12 +50,16 @@ function prCompare( es:EntitySet, cmd, left, right ){
         case SType.Value:
         case SType.Regex:
         case SType.DateTime:
+        case SType.Entity:
             val = left[1];
             key = parseFilterQuery(es,...right);
             break;
         case SType.List:
             val = unpackStackValueR(left);
             key = parseFilterQuery(es,...right);
+            break;
+        default:
+            console.warn('[prCompare]', 'unknown left type', left[0] );
             break;
     }
     if( key === undefined ){

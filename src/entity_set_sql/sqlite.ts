@@ -845,11 +845,13 @@ export function sqlRetrieveEntitiesByDefId(ref: SqlRef, did: ComponentDefId[], e
     if (orderDef !== undefined) {
         // Log.debug('[sqlRetrieveEntityByDefId]', orderDef);
 
+        let eidSql = eids !== undefined ? `AND s.eid in (${eids}) ` : '';
+
         // SELECT s.eid, t.${orderAttr}, COUNT(DISTINCT s.did) AS cnt FROM tbl_entity_component AS s
         innerSql = `
         SELECT s.eid, t.${orderAttr} FROM tbl_entity_component AS s
         LEFT JOIN ${orderDef.tblName} AS t ON t.eid = s.eid
-        WHERE s.did IN (${did})
+        WHERE s.did IN (${did}) ${eidSql}
         GROUP BY s.eid
         HAVING COUNT(DISTINCT s.did) = ${did.length}
         ORDER BY t.${orderAttr} ${orderDir}
@@ -931,7 +933,7 @@ export function sqlRetrieveByFilterQuery(ref: SqlRef, eids: EntityId[], query: a
     // let comp;
     let sqlParts = [];
     let params = [];
-    // Log.debug('[sqlRetrieveByQuery]', eids, query);
+    // Log.debug('[sqlRetrieveByQuery]', query);
     walkFilterQuery(eids, sqlParts, params, ...query);
 
     // sql.push('ORDER BY eid')
