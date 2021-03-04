@@ -179,6 +179,9 @@ export class Statement {
         } else if (type == SType.Entity) {
             result.push(val);
         }
+        else if( type === SType.Value ) {
+            result.push( await es.getEntity( val, true ) );
+        }
 
         return result;
     }

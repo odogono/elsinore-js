@@ -283,8 +283,8 @@ export class QueryStack {
                 const sigilV = word.substring(3, end);
 
                 if (sigil === 'r') {
-                    // Log.debug('[push]', 'regex', sigilV);
                     const regex = new RegExp(sigilV, flags);
+                    // Log.debug('[push]', 'regex', sigilV, regex);
                     value = [SType.Regex, regex];
                 }
                 else if (sigil === 'd') {

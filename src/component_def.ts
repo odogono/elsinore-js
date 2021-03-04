@@ -6,6 +6,7 @@ import { toCamelCase, toCapitalized } from '@odgn/utils';
 
 export const Type = '@d';
 export type ComponentDefId = number;
+export type ComponentDefUrl = string;
 
 // export enum PropertyType {
 //     String,

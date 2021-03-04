@@ -17,7 +17,12 @@ import { linkSync } from "fs-extra";
  */
 export async function printAll(es: EntitySet, ents?: Entity[], dids?:string[]) {
     console.log(`[${es.getUrl()}]:`);
-    for await ( const e of es.getEntities() ){
+    if( ents ){
+        for( const e of ents ){
+            printEntity( es, e, dids );
+        }
+    }
+    else for await ( const e of es.getEntities() ){
         printEntity( es, e, dids );
     }
 }

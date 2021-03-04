@@ -1,5 +1,5 @@
 // import FlakeId63 from 'flake-idgen-63';
-import intformat from 'biguint-format';
+// import intformat from 'biguint-format';
 
 import { suite } from 'uvu';
 import assert from 'uvu/assert';
