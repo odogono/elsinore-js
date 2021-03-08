@@ -37,7 +37,9 @@ export async function printQuery(es: EntitySet, q: string) {
 export function printEntity(es: EntitySet, e: Entity, dids?:string[]) {
     let bf:BitField;
     if( !isEntity(e) ){
-        throw new Error('non entity');
+        // throw new Error('non entity');
+        console.warn('non entity');
+        return;
     }
     if( es === undefined || e === undefined ){
         console.log('(undefined e)');

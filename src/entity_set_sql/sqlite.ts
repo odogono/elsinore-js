@@ -33,7 +33,7 @@ import {
     TYPE_OR,
     TYPE_NOT
 } from '@odgn/utils/bitfield';
-import { Component, ComponentId, getComponentEntityId, toComponentId } from '../component';
+import { Component, ComponentId, getComponentDefId, getComponentEntityId, toComponentId } from '../component';
 import { StackError, SType } from '../query/types';
 import { isBoolean, isRegex, isDate, isValidDate } from '@odgn/utils';
 import { compareDates } from '../query/words/util';
@@ -66,6 +66,7 @@ export interface OpOptions {
 
 
 export interface RetrieveOptions {
+    debug?: boolean;
     offset?: number;
     limit?: number;
     type?: number;
@@ -307,6 +308,7 @@ export function sqlUpdateComponent(ref: SqlRef, com: Component, def: ComponentDe
 
     let names = def.properties.map(p => p.persist === true ? `${p.name}` : undefined).filter(Boolean);
 
+    // if( getComponentDefId(com) === 14 ) Log.debug('[sqlUpdateComponent]', com);
     if (exists) {
         const { id } = row;
         const set = defToSetStmt(def);
@@ -325,8 +327,8 @@ export function sqlUpdateComponent(ref: SqlRef, com: Component, def: ComponentDe
         let vals: any[] = [eid];
         vals = [...vals, ...names.map(name => valueToSQL(com[name], getDefProperty(def, name)))];
         let valString = vals.map(v => '?').join(',');
-        // Log.debug('[sqlUpdateComponent]',`INSERT INTO ${tblName} (${colString}) VALUES (${valString});`, vals, com);
-        // Log.debug('[sqlUpdateComponent]', 'def', def);
+        // if( getComponentDefId(com) === 14 )  Log.debug('[sqlUpdateComponent]',`INSERT INTO ${tblName} (${colString}) VALUES (${valString});`, vals, com);
+        // if( getComponentDefId(com) === 14 )  Log.debug('[sqlUpdateComponent]', 'def', def);
         const sql = `INSERT INTO ${tblName} (${colString}) VALUES (${valString});`
         stmt = db.prepare(sql);
         let { lastInsertRowid: cid } = stmt.run(vals);
@@ -929,6 +931,7 @@ export interface RetrieveByFilterOptions extends RetrieveOptions {
  */
 export function sqlRetrieveByFilterQuery(ref: SqlRef, eids: EntityId[], query: any[], options:RetrieveByFilterOptions = {}) {
     const { db } = ref;
+    const {debug} = options;
 
     // let comp;
     let sqlParts = [];
@@ -952,7 +955,7 @@ export function sqlRetrieveByFilterQuery(ref: SqlRef, eids: EntityId[], query: a
     } else {
         sql = sqlParts.join('\n');
     }
-    // Log.debug('[sqlRetrieveByFilterQuery]', sql);
+    if( debug ) Log.debug('[sqlRetrieveByFilterQuery]', sql);
     let stmt = db.prepare(sql);
 
 

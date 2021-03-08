@@ -90,6 +90,7 @@ export async function select(stack: QueryStack, query: StackValue[], options: Se
         ['<', onLogicalFilter, SType.Any, SType.Any],
         ['<=', onLogicalFilter, SType.Any, SType.Any],
         ['prints', onPrintStack],
+        ['debug', () => {stack.scratch.debug = true;return undefined} ],
     ]);
 
 
@@ -203,9 +204,9 @@ function readEntityIds(stack: ESMemQueryStack): EntityId[] {
  * @param stack 
  */
 export function applyFilter(stack: ESMemQueryStack): InstResult {
-    let filter;
+    const debug = stack.scratch.debug ?? false;
     const { es } = stack;
-    [, filter] = stack.pop();
+    let [, filter] = stack.pop();
 
     // determine whether the previous stack argument can give us
     // a set of eids. if not, then the filter is applied to all the entities
@@ -215,36 +216,40 @@ export function applyFilter(stack: ESMemQueryStack): InstResult {
     // DLog(stack._root, 'bugger', filter);
     // ilog(stack.peek());
     let result = parseFilterQuery(es, filter[0], filter[1], filter[2]);
-    // Log.debug('[applyFilter]', result);
+    // if( debug ) Log.debug('[applyFilter]', result);
     // Log.debug('[applyFilter]', Array.from(es.entities.keys()) );
-    // Log.debug('[applyFilter]', 'query', result );
+    if( debug ) Log.debug('[applyFilter]', 'query', result );
 
-    eids = walkFilterQuery(es, eids, ...result).sort();
-    // Log.debug('[applyFilter]', 'result eids', eids );
+    eids = walkFilterQuery(es, {debug}, eids, ...result).sort();
+    // if( debug ) Log.debug('[applyFilter]', 'result eids', eids );
     // Log.debug('[applyFilter]', 'result' );
     // ilog( eids );
 
     return [SType.List, eids.map(eid => [SType.Entity, eid])];
 }
 
-function walkFilterQuery(es: EntitySetMem, eids: EntityId[], cmd?, ...args) {
+interface FilterOptions {
+    debug?: boolean;
+}
+
+function walkFilterQuery(es: EntitySetMem, options:FilterOptions = {}, eids: EntityId[], cmd?:string, ...args) {
     // console.log('[walkFQ]', eids, cmd, args);
     if (cmd === 'and') {
-        let left = walkFilterQuery(es, eids, ...args[0]);
-        // console.log('[walkFQ]', 'left', cmd, args[0], '->', left);
+        let left = walkFilterQuery(es, options, eids, ...args[0]);
+        if(options.debug) console.log('[walkFQ]', 'left', cmd, args[0], '->', left);
         if (left === undefined || left.length === 0) {
             return left;
         }
 
         // if there are no results, then return
-        let right = walkFilterQuery(es, left, ...args[1]);
-        // console.log('[walkFQ]', 'right', cmd, args[1], '->', right);
+        let right = walkFilterQuery(es, options, left, ...args[1]);
+        if(options.debug) console.log('[walkFQ]', 'right', cmd, args[1], '->', right);
         return right;
     }
     else if (cmd === 'or') {
-        let left = walkFilterQuery(es, eids, ...args[0]);
+        let left = walkFilterQuery(es, options, eids, ...args[0]);
         // console.log('[walkFQ]', 'left', cmd, args[0], '->', left);
-        let right = walkFilterQuery(es, eids, ...args[1]);
+        let right = walkFilterQuery(es, options, eids, ...args[1]);
         // console.log('[walkFQ]', 'right', cmd, eids, args[0], '->', right);
 
         // Log.debug('[applyFilter]', 'or', left, right );
@@ -260,9 +265,9 @@ function walkFilterQuery(es: EntitySetMem, eids: EntityId[], cmd?, ...args) {
         case '>=':
         case '<':
         case '<=':
-            return walkFilterQueryCompare(es, eids, cmd, ...args);
+            return walkFilterQueryCompare(es, options, eids, cmd, ...args);
         case 'dids':
-            return applyFilterDefIds(es, eids, args[0], args[1]);
+            return applyFilterDefIds(es, options, eids, args[1]);
         default:
             console.log('[walkFQ]', `unhandled cmd '${cmd}'`);
             return eids;
@@ -270,7 +275,7 @@ function walkFilterQuery(es: EntitySetMem, eids: EntityId[], cmd?, ...args) {
     }
 }
 
-function applyFilterDefIds(es: EntitySetMem, eids: EntityId[], dids, bf) {
+function applyFilterDefIds(es: EntitySetMem, options:FilterOptions = {}, eids: EntityId[], bf:BitField) {
     // console.log('[applyFilterDefIds]', eids, dids, bf );
 
     let feids = matchEntities(es, eids, bf);
@@ -279,7 +284,7 @@ function applyFilterDefIds(es: EntitySetMem, eids: EntityId[], dids, bf) {
     return feids;
 }
 
-function walkFilterQueryCompare(es: EntitySetMem, eids: EntityId[], cmd?, ...args) {
+function walkFilterQueryCompare(es: EntitySetMem, options:FilterOptions = {}, eids: EntityId[], cmd?:string, ...args) {
     let { def } = args[0];
     const did = getDefId(def);
     let [ptr, val] = args[1];
@@ -719,11 +724,9 @@ export function buildBitfield(stack: QueryStack): InstResult {
  */
 export async function fetchEntity(stack: ESMemQueryStack, [, op]: StackValue): AsyncInstResult {
     const { es } = stack;
-    // let data: StackValue = stack.pop();
+    const debug = stack.scratch.debug ?? false;
     const returnEid = op === '@eid';
 
-    // const type = data[0];
-    // let eid = unpackStackValueR(data, SType.Any);
     let bf: BitField;
     let eids: EntityId[];
     let returnList = true;
@@ -757,7 +760,7 @@ export async function fetchEntity(stack: ESMemQueryStack, [, op]: StackValue): A
 
     let arg = stack.peek();
 
-    // console.log('ok', arg, bf);
+    
 
     if( arg !== undefined ){
         let [type,val] = arg;
@@ -780,6 +783,7 @@ export async function fetchEntity(stack: ESMemQueryStack, [, op]: StackValue): A
         eids = matchEntities(es, eids, bf, matchOptions );
     // }
 
+    if( debug ) console.log('ok', arg, bf, eids);
     // console.log('ok', eids);
 
     let result:any;

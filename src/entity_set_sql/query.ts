@@ -87,7 +87,7 @@ export async function select(stack: QueryStack, query: StackValue[], options: Se
         ['<', onLogicalFilter, SType.Any, SType.Any],
         ['<=', onLogicalFilter, SType.Any, SType.Any],
 
-        // ['debug', () => {stack.scratch.debug = true;return undefined} ],
+        ['debug', () => {stack.scratch.debug = true;return undefined} ],
     ]);
 
     // reset ordering and limits
@@ -261,9 +261,10 @@ function buildEntitySelect(stack: SQLQueryStack): string {
 export function applyFilter(stack: SQLQueryStack): InstResult {
     let filter;
     const { es } = stack;
+    const debug = stack.scratch.debug ?? false;
     [, filter] = stack.pop();
 
-    // Log.debug('[applyFilter]', filter );
+    // if( debug ) Log.debug('[applyFilter]', filter );
     // determine whether the previous stack argument can give us
     // a set of eids. if not, then the filter is applied to all the entities
     // in the es
@@ -274,10 +275,10 @@ export function applyFilter(stack: SQLQueryStack): InstResult {
 
     let result = parseFilterQuery(es, filter[0], filter[1], filter[2]);
 
-    // Log.debug('[applyFilter]', 'filter', filter );
-    // Log.debug('[applyFilter]', 'query', result );
+    // if( debug ) Log.debug('[applyFilter]', 'filter', filter );
+    if( debug ) Log.debug('[applyFilter]', 'query', result );
 
-    result = sqlRetrieveByFilterQuery(es.db, undefined, result, { selectEidSql: eidSql });
+    result = sqlRetrieveByFilterQuery(es.db, undefined, result, { selectEidSql: eidSql, debug });
 
     // Log.debug('[applyFilter]', 'result', result );
 
