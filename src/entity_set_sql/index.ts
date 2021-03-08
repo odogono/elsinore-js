@@ -69,7 +69,7 @@ import {
 } from "./sqlite";
 import { createLog } from "../util/log";
 import { select } from "./query";
-import { EntitySetMem, AddType, AddOptions, RemoveType, ESOptions, EntitySet, EntitySetOptions, CloneOptions } from "../entity_set";
+import { EntitySetMem, AddType, AddOptions, RemoveType, EntitySet, EntitySetOptions, CloneOptions } from "../entity_set";
 import { StackValue } from "../query/types";
 import { QueryStack } from "../query";
 
@@ -215,7 +215,7 @@ export class EntitySetSQL extends EntitySetMem {
         // }
     }
 
-    async markComponentAdd(com: Component, options: ESOptions = {}): Promise<EntitySetSQL> {
+    async markComponentAdd(com: Component, options: AddOptions = {}): Promise<EntitySetSQL> {
         const debug = options.debug ?? false;
         // adds the component to the entityset if it is unknown,
         // otherwise marks as an update

@@ -60,10 +60,6 @@ test('transfers components to a foreign es', async () => {
         await es2.register(def);
     }
 
-    // await defsA.reduce( (p,def) => p.then( () => es1.register(def)), Promise.resolve() );
-    // await defsB.reduce( (p,def) => p.then( () => es2.register(def)), Promise.resolve() );
-
-    
 
     let data:any = [ 
         {uri:'/component/status', status:'active'},

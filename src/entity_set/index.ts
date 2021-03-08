@@ -62,10 +62,6 @@ import { buildFlake53 } from '@odgn/utils';
 import { QueryStack } from "../query/stack";
 import { unpackStackValueR } from "../query/util";
 
-export interface ESOptions {
-    debug?: boolean;
-}
-
 export interface AddOptions {
     debug?: boolean;
     retain?: boolean;
@@ -103,7 +99,7 @@ export type ResolveDefIds = string | string[] | ComponentDefId | ComponentDefId[
 export type AddArrayType = (Entity | Component)[];
 export type AddType = Entity | Component | OrphanComponent | AddArrayType | EntitySetMem;
 export type RemoveType = ComponentId | Entity | Component | EntitySetMem;
-
+export type RemoveEntityType = EntityId | EntityId[] | Entity | Entity[];
 
 let workerIdBase = 0;
 
@@ -156,7 +152,7 @@ export abstract class EntitySet {
 
     abstract size(): Promise<number>;
 
-    abstract add(item: AddType, options?: AddOptions): Promise<EntitySet>;
+    // abstract add(item: AddType, options?: AddOptions): Promise<EntitySet>;
 
     /**
      * Returns an entity by its id
@@ -199,11 +195,120 @@ export abstract class EntitySet {
      * @param item 
      * @param options 
      */
-    abstract removeEntity(item: (EntityId | EntityId[] | Entity), options?: AddOptions): Promise<EntitySet>;
+    abstract removeEntity(item: RemoveEntityType, options?: AddOptions): Promise<EntitySet>;
 
     abstract removeComponent(item: RemoveType, options?: AddOptions): Promise<EntitySet>;
 
     abstract removeComponents(items: RemoveType[], options?: AddOptions): Promise<EntitySet>;
+
+
+    /**
+     * 
+     * @param item 
+     * @param options 
+     */
+     async add<ES extends EntitySet>(item: AddType, options: AddOptions = {}): Promise<ES> {
+        await this.openEntitySet();
+
+        await this.beginUpdates();
+
+        if (options.retain !== true) {
+            this.clearChanges();
+        }
+
+        const { debug } = options;
+
+        // if( debug ){
+        //     console.log('[add]', 'entUpdates', this.entUpdates );
+        // }
+
+        if (Array.isArray(item)) {
+            let initial: [Entity[], Component[]] = [[], []];
+            // sort the incoming items into entities and components
+            let [ents, coms] = (item as any[]).reduce(([ents, coms], item) => {
+                if (isComponentLike(item)) {
+                    coms.push(item);
+                } else if (isEntity(item)) {
+                    ents.push(item);
+                }
+                return [ents, coms];
+            }, initial);
+
+            // console.log('[add]', ents);
+            // add components on entities
+            if (ents.length > 0) {
+                await ents.reduce((p, e) => p.then(() => this.addComponents(e.getComponents(), options)), Promise.resolve());
+            }
+
+            // add components
+            await this.addComponents(coms, options);
+        }
+        else if (isComponentLike(item)) {
+            await this.addComponents([item as Component], options);
+        }
+        else if (isEntity(item)) {
+            let e = item as Entity
+            // if( debug ){ console.log('add', e)}
+            this.markEntityComponentsRemove([e.id]);
+            await this.addComponents(e.getComponents(), options);
+        }
+        else if (isEntitySet(item)) {
+            let es = item as EntitySet;
+            // apply defs
+            let defs = await es.getComponentDefs();
+            let didTable = new Map<ComponentDefId, ComponentDefId>();
+
+
+            // register sender defs and record their ids
+            for (let ii = 0, len = defs.length; ii < len; ii++) {
+                let def = defs[ii];
+                await this.register(def);
+                let rdef = this.getByHash(def.hash);
+                didTable.set(getDefId(def), getDefId(rdef));
+            }
+
+            // console.log('[add][es]', 'convert', didTable);
+            // console.log('[add][es]', 'convert', es.components);
+
+            // rebuild each of the sender components altering their
+            // def id
+            let coms: Component[] = [];
+
+            for await( const com of es.getComponents() ){
+                let { '@d': did, ...rest } = com;
+                did = didTable.get(did);
+                coms.push({ '@d': did, ...rest });
+            }
+
+            // console.log('[add][es]', 'convert', coms);
+            await this.addComponents(coms);
+        } else {
+            // console.log('[add]', 'no matching type');
+        }
+
+        this.applyRemoveChanges();
+
+        await this.applyUpdates();
+
+        return this as unknown as ES;
+    }
+
+    async beginUpdates() {
+    }
+    async applyUpdates() {
+    }
+
+
+    clearChanges() {
+        this.comChanges = createChangeSet();
+        this.entChanges = createChangeSet();
+    }
+
+    abstract addComponents(components: Component[], options?: AddOptions): Promise<EntitySet>;
+
+    abstract markEntityComponentsRemove(eids: EntityId[]): Promise<EntitySet>;
+
+    abstract applyRemoveChanges(): Promise<EntitySet>;
 
 
     /**
@@ -582,101 +687,11 @@ export class EntitySetMem extends EntitySet {
         return select(stack, query);
     }
 
+    
+
     /**
      * 
-     * @param item 
-     * @param options 
      */
-    async add<ES extends EntitySet>(item: AddType, options: AddOptions = {}): Promise<ES> {
-        await this.openEntitySet();
-
-        await this.beginUpdates();
-
-        if (options.retain !== true) {
-            this.clearChanges();
-        }
-
-        const { debug } = options;
-
-        // if( debug ){
-        //     console.log('[add]', 'entUpdates', this.entUpdates );
-        // }
-
-        if (Array.isArray(item)) {
-            let initial: [Entity[], Component[]] = [[], []];
-            // sort the incoming items into entities and components
-            let [ents, coms] = (item as any[]).reduce(([ents, coms], item) => {
-                if (isComponentLike(item)) {
-                    coms.push(item);
-                } else if (isEntity(item)) {
-                    ents.push(item);
-                }
-                return [ents, coms];
-            }, initial);
-
-            // console.log('[add]', ents);
-            // add components on entities
-            if (ents.length > 0) {
-                await ents.reduce((p, e) => p.then(() => this.addComponents(e.getComponents(), options)), Promise.resolve());
-            }
-
-            // add components
-            await this.addComponents(coms, options);
-        }
-        else if (isComponentLike(item)) {
-            await this.addComponents([item as Component], options);
-        }
-        else if (isEntity(item)) {
-            let e = item as Entity
-            // if( debug ){ console.log('add', e)}
-            this.markEntityComponentsRemove([e.id]);
-            await this.addComponents(e.getComponents(), options);
-        }
-        else if (isEntitySet(item)) {
-            let es = item as EntitySet;
-            // apply defs
-            let defs = await es.getComponentDefs();
-            let didTable = new Map<ComponentDefId, ComponentDefId>();
-
-
-            // register sender defs and record their ids
-            for (let ii = 0, len = defs.length; ii < len; ii++) {
-                let def = defs[ii];
-                await this.register(def);
-                let rdef = this.getByHash(def.hash);
-                didTable.set(getDefId(def), getDefId(rdef));
-            }
-
-            // console.log('[add][es]', 'convert', didTable);
-            // console.log('[add][es]', 'convert', es.components);
-
-            // rebuild each of the sender components altering their
-            // def id
-            let coms: Component[] = [];
-
-            for await( const com of es.getComponents() ){
-                let { '@d': did, ...rest } = com;
-                did = didTable.get(did);
-                coms.push({ '@d': did, ...rest });
-            }
-
-            // console.log('[add][es]', 'convert', coms);
-            await this.addComponents(coms);
-        } else {
-            // console.log('[add]', 'no matching type');
-        }
-
-        this.applyRemoveChanges();
-
-        await this.applyUpdates();
-
-        return this as unknown as ES;
-    }
-
-
-    async beginUpdates() {
-    }
-
     async applyUpdates() {
 
         if (this.entUpdates.size > 0) {
@@ -714,7 +729,13 @@ export class EntitySetMem extends EntitySet {
         }
     }
 
-    async addComponents(components: Component[], options: ESOptions = {}): Promise<EntitySet> {
+    /**
+     * 
+     * @param components 
+     * @param options 
+     * @returns 
+     */
+    async addComponents(components: Component[], options: AddOptions = {}): Promise<EntitySet> {
         const debug = options.debug ?? false;
         // set a new (same) entity id on all orphaned components
         components = this.assignEntityIds(components)
@@ -773,12 +794,14 @@ export class EntitySetMem extends EntitySet {
     }
 
 
+    
+
     /**
      * 
      * @param item 
      * @param options 
      */
-    async removeEntity(item: (EntityId | EntityId[] | Entity | Entity[]), options: AddOptions = {}): Promise<EntitySet> {
+    async removeEntity(item: (RemoveEntityType), options: AddOptions = {}): Promise<EntitySet> {
         if (options.retain !== true) {
             this.clearChanges();
         }
@@ -1066,7 +1089,7 @@ export class EntitySetMem extends EntitySet {
     }
 
 
-    async markComponentAdd(com: Component, options:ESOptions={}): Promise<EntitySet> {
+    async markComponentAdd(com: Component, options:AddOptions={}): Promise<EntitySet> {
         const debug = options.debug ?? false;
         // adds the component to the entityset if it is unknown,
         // otherwise marks as an update
@@ -1150,10 +1173,9 @@ export class EntitySetMem extends EntitySet {
     }
 
     /**
-     * 
+     * Applies any removal operations that have previously been marked
      */
     async applyRemoveChanges(): Promise<EntitySet> {
-        // applies any removal changes that have previously been marked
         const removedComs = getChanges(this.comChanges, ChangeSetOp.Remove);
         if (removedComs.length === 0) {
             return this;
@@ -1244,10 +1266,7 @@ export class EntitySetMem extends EntitySet {
 
     }
 
-    clearChanges() {
-        this.comChanges = createChangeSet();
-        this.entChanges = createChangeSet();
-    }
+    
 
 
     createEntityAlt(): EntityId {
