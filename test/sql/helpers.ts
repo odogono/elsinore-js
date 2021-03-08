@@ -77,7 +77,7 @@ export async function buildEntitySet(): Promise<[EntitySet, Function]> {
         const component = (uri: string, props: object) => {
             let def = es.getByUri(uri);
             let com = es.createComponent(def, props);
-            es.addComponentToEntity(e, com, getDefId(def));
+            es.addComponentToEntity(e, com);
         };
 
         buildFn({ component });

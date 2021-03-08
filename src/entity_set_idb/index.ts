@@ -181,7 +181,7 @@ export class EntitySetIDB extends EntitySetMem {
             let { '_e': ceid, '_d': cdid, ...rest } = row.value;
             let com = { '@e': ceid, '@d': cdid, ...rest };
 
-            e.addComponentUnsafe(cdid, com);
+            e.addComponentUnsafe(com);
         }
 
         return e;

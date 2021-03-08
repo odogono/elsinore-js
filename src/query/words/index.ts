@@ -121,9 +121,7 @@ export function onEntity(stack: QueryStack): InstResult {
                 if (!acc) {
                     acc = es !== undefined ? es.createEntity() : new Entity();
                 }
-                const did = getComponentDefId(val[1]);
-                // const def = stack.es.getByDefId(did);
-                return acc.addComponentUnsafe(did, val[1]);
+                return acc.addComponentUnsafe(val[1]);
             } else if (isInteger(val[1])) {
                 return es !== undefined ? es.createEntity(val[1]) : new Entity(val[1]);
             }

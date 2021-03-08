@@ -604,22 +604,6 @@ export async function fetchEntity(stack: SQLQueryStack, [, op]: StackValue): Asy
         return [SType.List, result];//*/
 }
 
-
-// export function retrieveEntityComponents(es:EntitySetSQL, e:Entity){
-//     let dids = bfToValues(e.bitField);
-//     let defs = dids.map(did => es.getByDefId(did));
-
-//     let coms = sqlRetrieveEntityComponents(es.db, e.id, defs);
-
-//     // Log.debug('[getEntity]', coms );
-//     for (const com of coms) {
-//         const did = getComponentDefId(com);
-//         // const def = this.getByDefId(did);
-//         e = e.addComponentUnsafe(did, com);
-//     }
-//     return e;
-// }
-
 /**
  * 
  * @param es 

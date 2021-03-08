@@ -23,6 +23,7 @@ import { isComponentDef, hash as hashDef, ComponentDef, getDefId } from '../../s
 import { getChanges, ChangeSetOp } from '../../src/entity_set/change_set';
 import { assertHasComponents } from '../helpers/assert';
 import { getComponentDefId, Component, OrphanComponent } from '../../src/component';
+import { BuildQueryFn } from '../es/helpers';
 
 
 const Log = createLog('TestEntitySetIDB');
@@ -446,7 +447,7 @@ async function buildEntitySet(): Promise<[EntitySetIDB, Function]> {
         const component = (uri: string, props: object) => {
             let def = es.getByUri(uri);
             let com = es.createComponent(def, props);
-            es.addComponentToEntity(e, com, getDefId(def));
+            es.addComponentToEntity(e, com);
         };
 
         buildFn({ component });

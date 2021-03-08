@@ -49,7 +49,8 @@ export class Entity {
      * @param entity 
      * @param component 
      */
-    addComponentUnsafe( did: number, com: Component): Entity {
+    addComponentUnsafe( com: Component): Entity {
+        const did = getComponentDefId(com);
         const eid = getEntityId(this);
         this.components = this.components ?? new Map<ComponentDefId,Component>();
     

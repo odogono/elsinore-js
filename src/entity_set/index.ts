@@ -380,27 +380,23 @@ export abstract class EntitySet {
                 }
                 else if (lt === SType.Component) {
                     let eid = getComponentEntityId(lv);
-                    let did = getComponentDefId(lv);
-                    // const name = this.getByDefId(did).name;
+                    
                     if (e === undefined || e.id !== eid) {
                         if (e !== undefined) {
                             result.push(e);
                         }
                         e = this.createEntity(eid);
                     }
-                    e.addComponentUnsafe(did, lv);
+                    e.addComponentUnsafe(lv);
                 }
             }
             if (e !== undefined) {
                 result.push(e);
             }
         } else if (type === SType.Component) {
-            // result.push( addCom(undefined,val));
             let eid = getComponentEntityId(val);
-            let did = getComponentDefId(val);
-            // const name = this.getByDefId(did).name;
             let e = this.createEntity(eid);
-            e.addComponentUnsafe(did, val);
+            e.addComponentUnsafe(val);
             result.push(e);
         } else if (type == SType.Entity) {
             result.push(val);
@@ -499,9 +495,8 @@ export abstract class EntitySet {
     /**
      * 
      */
-    addComponentToEntity(e: Entity, com: Component, did?: ComponentDefId): Entity {
-        did = did === undefined ? getComponentDefId(com) : did;
-        return e.addComponentUnsafe(did, com);
+    addComponentToEntity(e: Entity, com: Component): Entity {
+        return e.addComponentUnsafe(com);
     }
 
 
@@ -862,7 +857,7 @@ export class EntitySetMem extends EntitySet {
         for (const did of bfToValues(ebf)) {
             const com = this.components.get(toComponentId(eid, did));
 
-            e = this.addComponentToEntity(e, com, did);
+            e = this.addComponentToEntity(e, com);
         }
 
         return e;

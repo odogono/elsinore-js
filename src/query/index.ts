@@ -155,14 +155,13 @@ export class Statement {
                 }
                 else if (lt === SType.Component) {
                     let eid = getComponentEntityId(lv);
-                    let did = getComponentDefId(lv);
-
+                    
                     if( em === undefined ){
                         em = new Map<EntityId,Entity>();
                     }
                     
                     e = em.get(eid) ?? es.createEntity(eid);
-                    e.addComponentUnsafe(did, lv);
+                    e.addComponentUnsafe(lv);
                     em.set(eid, e);
                 }
             }
@@ -171,10 +170,8 @@ export class Statement {
             }
         } else if (type === SType.Component) {
             let eid = getComponentEntityId(val);
-            let did = getComponentDefId(val);
-            
             let e = es.createEntity(eid);
-            e.addComponentUnsafe(did, val);
+            e.addComponentUnsafe(val);
             result.push(e);
         } else if (type == SType.Entity) {
             result.push(val);

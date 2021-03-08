@@ -406,18 +406,6 @@ export class EntitySetSQL extends EntitySetMem {
 
         e = this.retrieveEntityComponents(e);
 
-        // let dids = bfToValues(e.bitField);
-        // let defs = dids.map(did => this.getByDefId(did));
-
-        // let coms = sqlRetrieveEntityComponents(this.db, eid, defs);
-
-        // // Log.debug('[getEntity]', coms );
-        // for (const com of coms) {
-        //     const did = getComponentDefId(com);
-        //     // const def = this.getByDefId(did);
-        //     e = e.addComponentUnsafe(did, com);
-        // }
-
         return e;
     }
 
@@ -427,13 +415,8 @@ export class EntitySetSQL extends EntitySetMem {
 
         let coms = sqlRetrieveEntityComponents(this.db, e.id, defs);
 
-        // Log.debug('[getEntity]', coms );
         for (const com of coms) {
-            const did = getComponentDefId(com);
-            // const def = this.getByDefId(did);
-
-            e = this.addComponentToEntity(e, com, did);
-            // e = e.addComponentUnsafe(did, com);
+            e = this.addComponentToEntity(e, com);
         }
         return e;
     }
