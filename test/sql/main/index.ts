@@ -1,5 +1,6 @@
-import './create';
 import './add';
-import './remove';
 import './copy';
+import './create';
 import './def';
+import './get';
+import './remove';

@@ -45,7 +45,8 @@ import {
     count as bfCount,
     and as bfAnd,
     or as bfOr,
-    toValues as bfToValues
+    toValues as bfToValues,
+    isBitField
 } from '@odgn/utils/bitfield';
 import { createUUID, toBoolean } from '@odgn/utils';
 import {
@@ -162,7 +163,7 @@ export class EntitySetSQL extends EntitySetMem {
      * Returns an iterate over all of the Entitys in the es
      * @param populate 
      */
-    async *getEntities(populate: boolean = true): AsyncGenerator<Entity, void, void> {
+    async *getEntities(populate: BitField|boolean = true): AsyncGenerator<Entity, void, void> {
         this.openEntitySet();
         let eids = sqlGetEntities(this.db);
 
@@ -393,24 +394,23 @@ export class EntitySetSQL extends EntitySetMem {
      * @param es 
      * @param eid 
      */
-    async getEntity(eid: EntityId, populate: boolean = true): Promise<Entity> {
+    async getEntity(eid: EntityId, populate: BitField|boolean = true): Promise<Entity> {
         this.openEntitySet();
         let e = this._getEntity(eid);
         if (e === undefined) {
             return undefined;
         }
 
+        return this.retrieveEntityComponents(e, populate);
+    }
+
+
+    retrieveEntityComponents( e:Entity, populate: BitField|boolean = true ){
         if (!populate) {
             return e;
         }
 
-        e = this.retrieveEntityComponents(e);
-
-        return e;
-    }
-
-    retrieveEntityComponents(e: Entity) {
-        let dids = bfToValues(e.bitField);
+        const dids = bfToValues( isBitField(populate) ? (populate as BitField) : e.bitField );
         let defs = dids.map(did => this.getByDefId(did));
 
         let coms = sqlRetrieveEntityComponents(this.db, e.id, defs);
@@ -420,7 +420,6 @@ export class EntitySetSQL extends EntitySetMem {
         }
         return e;
     }
-
 
     /**
      * Registers a new ComponentDef in the entityset

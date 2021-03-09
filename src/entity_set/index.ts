@@ -160,14 +160,14 @@ export abstract class EntitySet {
      * @param eid 
      * @param populate 
      */
-    abstract getEntity(eid: EntityId, populate?: boolean): Promise<Entity>;
+    abstract getEntity(eid: EntityId, populate?: BitField|boolean): Promise<Entity>;
 
 
     /**
      * Returns a generator of all entities in the set
      */
     // abstract getEntities(): Promise<EntityId[]>;
-    abstract getEntities(populate?: boolean): AsyncGenerator<Entity, void, void>;
+    abstract getEntities(populate?: BitField|boolean): AsyncGenerator<Entity, void, void>;
 
     /**
      * Returns a generator of all components in the set
@@ -834,7 +834,13 @@ export class EntitySetMem extends EntitySet {
         return this.components.get(cid);
     }
 
-    async getEntity(eid: number, populate: boolean = true): Promise<Entity> {
+    /**
+     * Return an Entity by its id
+     * @param eid 
+     * @param populate 
+     * @returns 
+     */
+    async getEntity(eid: EntityId, populate: BitField|boolean = true): Promise<Entity> {
         return this.getEntityMem(eid, populate);
     }
 
@@ -843,18 +849,20 @@ export class EntitySetMem extends EntitySet {
      * @param eid 
      * @param populate 
      */
-    getEntityMem(eid: number, populate: boolean = true): Entity {
+    getEntityMem(eid: EntityId, populate: BitField|boolean = true): Entity {
         let ebf = this.entities.get(eid);
         if (ebf === undefined) {
             return undefined;
         }
-        let e = this.createEntity(eid, ebf);// new Entity(eid, ebf);
+        let e = this.createEntity(eid, ebf);
 
         if (!populate) {
             return e;
         }
 
-        for (const did of bfToValues(ebf)) {
+        const dids = bfToValues( isBitField(populate) ? (populate as BitField) : ebf );
+        
+        for (const did of dids) {
             const com = this.components.get(toComponentId(eid, did));
 
             e = this.addComponentToEntity(e, com);
