@@ -1,4 +1,5 @@
 import { Component, ComponentId } from "./component";
+import { ComponentDef, ComponentDefObj } from "./component_def";
 import { Entity, EntityId } from "./entity";
 import { AddOptions, AddType, CloneOptions, EntitySet, EntitySetOptions, RemoveEntityType, RemoveType } from "./entity_set";
 import { QueryStack } from "./query";
@@ -31,6 +32,14 @@ export class ProxyEntitySet extends EntitySet {
 
     select(stack: QueryStack, query: StackValue[]): Promise<StackValue[]> {
         return this.es.select(stack, query);
+    }
+
+    async register(value: ComponentDef | ComponentDefObj | any): Promise<ComponentDef> {
+        return this.es.register(value);
+    }
+
+    async getComponentDefs(): Promise<ComponentDef[]> {
+        return this.es.getComponentDefs();
     }
 
     async getComponent(id: ComponentId | Component): Promise<Component> {
@@ -72,5 +81,9 @@ export class ProxyEntitySet extends EntitySet {
 
     async markEntityComponentsRemove(eids: EntityId[]): Promise<EntitySet> {
         return this.es.markEntityComponentsRemove(eids);
+    }
+
+    createComponent(defId: (string | number | ComponentDef), attributes = {}): Component {
+        return this.es.createComponent(defId, attributes);
     }
 }

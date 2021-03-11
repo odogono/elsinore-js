@@ -28,7 +28,7 @@ import {
     InstResult, AsyncInstResult,
     StackError,
 } from '../query/types';
-import { stackToString, unpackStackValue, unpackStackValueR } from "../query/util";
+import { getComponentDefsFromBitField, stackToString, unpackStackValue, unpackStackValueR } from "../query/util";
 import {
     sqlRetrieveEntitiesByDefId,
     sqlRetrieveByFilterQuery,
@@ -316,7 +316,7 @@ export function fetchComponents(stack: SQLQueryStack, [, op]: StackValue): InstR
     // get the bitfield
     // defs = stack.popBitField(true) as ComponentDefSQL[];
     let bf = stack.popBitFieldOpt();
-    const defs = es.getComponentDefsFromBitField(bf) as ComponentDefSQL[];
+    const defs = getComponentDefsFromBitField(es, bf) as ComponentDefSQL[];
 
     // Log.debug('[fetchComponent]', 'bf', bf );
 

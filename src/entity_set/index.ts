@@ -121,7 +121,7 @@ export abstract class EntitySet {
 
     // to slightly reduce the chance of eid collision, we randomise
     // the sequence
-    eidSeq: EntityId = Math.random() * 255;
+    eidSeq: EntityId = Math.floor(Math.random() * 255);
 
     // by default, make sure the workerId is incremented
     workerId: number = workerIdBase++;
@@ -173,6 +173,12 @@ export abstract class EntitySet {
      * Returns a generator of all components in the set
      */
     abstract getComponents(): AsyncGenerator<Component, void, void>;
+
+    abstract register(value: ComponentDef | ComponentDefObj | any): Promise<ComponentDef>;
+
+    abstract getComponentDefs(): Promise<ComponentDef[]>;
+
+    
 
     /**
      * Returns entities by defId
@@ -471,27 +477,6 @@ export abstract class EntitySet {
         return did === undefined ? undefined : this.componentDefs[did - 1];
     }
 
-    // getComponentDefs( bf?:BitField|'all' ): Promise<ComponentDef[]> {
-    getComponentDefs(): Promise<ComponentDef[]> {
-        // if( bf !== undefined ){
-
-        // }
-        return Promise.resolve(this.componentDefs);
-    }
-
-
-    getComponentDefsFromBitField(bf?: BitField | 'all', asDefIds = false): ComponentDef[] | ComponentDefId[] {
-        if (bf === undefined || bf === 'all' || (isBitField(bf) && bf.isAllSet)) {
-            let defs = this.componentDefs;
-            return asDefIds ? defs.map(d => getDefId(d)) : defs;
-        }
-
-        let dids = bfToValues(bf);
-        return asDefIds ? dids : dids.map(d => this.getByDefId(d));
-    }
-
-
-
     /**
      * 
      */
@@ -500,34 +485,7 @@ export abstract class EntitySet {
     }
 
 
-    /**
-     * Register a ComponentDef with this EntitySet
-     */
-    async register(value: ComponentDef | ComponentDefObj | any): Promise<ComponentDef> {
-
-        let did = this.componentDefs.length + 1;
-
-        let def = createComponentDef(did, value);
-
-        // Hash the def, and check whether we already have this
-        let hash = hashComponentDef(def);
-
-        const existing = this.getByHash(hash);
-        if (existing !== undefined) {
-            // throw new Error(`component definition already exists (${existing[DefT]}/${existing.uri})`);
-            return existing;
-        }
-
-        // seems legit, add it
-        def = { ...def, [DefT]: did };
-
-        this.byHash.set(hash, did);
-        this.byUri.set(def.uri, did);
-
-        this.componentDefs = [...this.componentDefs, def];
-
-        return def;
-    }
+    
 
     resolveComponent(com: (OrphanComponent | Component)): Component {
         if (!isExternalComponent(com)) {
@@ -680,6 +638,41 @@ export class EntitySetMem extends EntitySet {
     select(stack: QueryStack, query: StackValue[]): Promise<StackValue[]> {
         stack.es = this as unknown as EntitySet;
         return select(stack, query);
+    }
+
+
+    /**
+     * Register a ComponentDef with this EntitySet
+     */
+     async register(value: ComponentDef | ComponentDefObj | any): Promise<ComponentDef> {
+
+        let did = this.componentDefs.length + 1;
+
+        let def = createComponentDef(did, value);
+
+        // Hash the def, and check whether we already have this
+        let hash = hashComponentDef(def);
+
+        const existing = this.getByHash(hash);
+        if (existing !== undefined) {
+            // throw new Error(`component definition already exists (${existing[DefT]}/${existing.uri})`);
+            return existing;
+        }
+
+        // seems legit, add it
+        def = { ...def, [DefT]: did };
+
+        this.byHash.set(hash, did);
+        this.byUri.set(def.uri, did);
+
+        this.componentDefs = [...this.componentDefs, def];
+
+        return def;
+    }
+
+
+    async getComponentDefs(): Promise<ComponentDef[]> {
+        return Promise.resolve(this.componentDefs);
     }
 
     

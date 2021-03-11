@@ -109,11 +109,11 @@ export class EntitySetSQL extends EntitySetMem {
 
     type: string = 'sql';
     isAsync: boolean = true;
-
-
+    
     constructor(options: SQLEntitySetOptions = {}) {
-        super(options as any);
+        super(undefined, options);
         this.isMemory = toBoolean(options.isMemory ?? false);
+        this.isEntitySetMem = false;
         this.debug = options.debug ?? false;
         this.path = options.path ?? 'ecs.sqlite';
         this.db = options.db ?? undefined;

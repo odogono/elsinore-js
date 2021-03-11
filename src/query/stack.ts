@@ -2,7 +2,7 @@ import { deepExtend } from '@odgn/utils';
 import { isInteger, isPromise, isString } from '@odgn/utils';
 import { toInteger } from '@odgn/utils';
 import { createLog } from "../util/log";
-import { stackToString, unpackStackValueR } from "./util";
+import { getComponentDefsFromBitField, stackToString, unpackStackValueR } from "./util";
 import { EntityId, getEntityId, Entity } from "../entity";
 import { ComponentDefId, ComponentDef, getDefId } from "../component_def";
 import { BitField, create as createBitField, toValues as bfToValues } from '@odgn/utils/bitfield';
@@ -635,7 +635,7 @@ export class QueryStack {
 
         if( type === SType.BitField || (type === SType.Value && bf === 'all') ){
             stack.pop();
-            const result = es.getComponentDefsFromBitField( bf, asObj === false );
+            const result = getComponentDefsFromBitField( es, bf, asObj === false );
             return asObj ? result as CD[] : result as ComponentDefId[];
         }
 

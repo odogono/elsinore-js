@@ -3,6 +3,9 @@ import { getComponentId } from "../component";
 import { getEntityId } from "../entity";
 import { stringify } from '@odgn/utils';
 import { isStackValue, QueryStack } from "./stack";
+import { BitField, isBitField, toValues as bfToValues } from "@odgn/utils/bitfield";
+import { EntitySet } from "../entity_set";
+import { ComponentDef, ComponentDefId, getDefId } from "../component_def";
 
 
 export interface ToStringOptions {
@@ -121,4 +124,22 @@ export function unpackStackValue(val: StackValue, assertType: (SType | SType[]) 
  */
 export function unpackStackValueR(val: StackValue, assertType: SType = SType.Any) {
     return unpackStackValue(val, assertType, true);
+}
+
+
+/**
+     * Takes a bitfield and returns an array of defs corresponding
+     * 
+     * @param bf 
+     * @param asDefIds 
+     * @returns 
+     */
+ export function getComponentDefsFromBitField(es:EntitySet, bf?: BitField | 'all', asDefIds = false): ComponentDef[] | ComponentDefId[] {
+    if (bf === undefined || bf === 'all' || (isBitField(bf) && bf.isAllSet)) {
+        let defs = es.componentDefs;
+        return asDefIds ? defs.map(d => getDefId(d)) : defs;
+    }
+
+    let dids = bfToValues(bf);
+    return asDefIds ? dids : dids.map(d => es.getByDefId(d));
 }

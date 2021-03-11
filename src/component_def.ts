@@ -174,7 +174,7 @@ export function hashStr(def: ComponentDef): string {
 }
 
 export function getDefId(def: ComponentDef): number {
-    return def[Type];
+    return def !== undefined ? def[Type] : undefined;
 }
 
 export function getProperty(def: ComponentDef, name: string): ComponentDefProperty {
