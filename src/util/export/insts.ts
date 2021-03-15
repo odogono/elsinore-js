@@ -1,9 +1,9 @@
-import Fs from 'fs-extra';
 import { Component, getComponentDefId, toObject } from '../../component';
 import { ComponentDef, toShortObject } from '../../component_def';
 import { EntitySet } from "../../entity_set";
-import { BitField, get as bfGet } from '../bitfield';
-import { stringify } from '../json';
+import { BitField, get as bfGet } from "@odgn/utils/bitfield";
+import { stringify } from '@odgn/utils';
+
 
 
 const log = (...args) => console.log('[ExportInsts]', ...args);
