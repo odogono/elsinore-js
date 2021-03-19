@@ -58,8 +58,8 @@ export async function beforeEach(){
     await sqlClear('test.sqlite');
 }
 
-export async function buildEntitySet(): Promise<[EntitySet, Function]> {
-    let es = createEntitySet();
+export async function buildEntitySet(options?:SQLEntitySetOptions): Promise<[EntitySet, Function]> {
+    let es = createEntitySet(options);
 
     const defs = [
         { uri: '/component/channel', properties: ['name'] },

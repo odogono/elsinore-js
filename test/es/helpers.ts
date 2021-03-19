@@ -85,7 +85,7 @@ export function buildComponents( es:EntitySet, data:any[] ):Component[] {
     })
 }
 
-export async function buildEntitySet(options?): Promise<[EntitySetMem, Function]> {
+export async function buildEntitySet(options?:EntitySetOptions): Promise<[EntitySetMem, Function]> {
     let es = createEntitySet(options);
 
     const defs = [

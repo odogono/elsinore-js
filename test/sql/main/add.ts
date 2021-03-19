@@ -17,6 +17,7 @@ import {
     beforeEach,
 } from '../helpers';
 import { assertHasComponents } from '../../helpers/assert';
+import { printAll } from '../../es/helpers';
 
 
 
@@ -266,5 +267,21 @@ test('updates an entity', async () => {
 
     assert.equal(com.topic, 'discussion');
 });
+
+
+test('passing an idgen', async () => {
+    let id = 1234;
+    const idgen = () => id++;
+
+    let [es] = await buildEntitySet({idgen});
+
+    let com: OrphanComponent = { "@d": "/component/topic", topic: 'chat' };
+
+    await es.add(com);
+
+    const e = await es.getEntity(1234);
+
+    assert.ok( e !== undefined );
+})
 
 test.run();
