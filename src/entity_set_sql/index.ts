@@ -121,6 +121,8 @@ export class EntitySetSQL extends EntitySetMem {
 
         if( options.path === undefined ){
             this.isMemory = true;
+        } else {
+            this.path = options.path;
         }
         this.db = options.db ?? undefined;
     }
@@ -129,7 +131,6 @@ export class EntitySetSQL extends EntitySetMem {
         if( this.isMemory ){
             return `es://sqlite/memory?uuid=${this.uuid}`;
         }
-
         const path = this.path.startsWith('/') ? this.path : '/' + this.path;
         return `es://sqlite${path}?uuid=${this.uuid}`;
     }
