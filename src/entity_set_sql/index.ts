@@ -144,6 +144,7 @@ export class EntitySetSQL extends EntitySetMem {
         let isMemory = options.isMemory ?? this.isMemory;
 
         let props = {
+            idgen,
             isMemory,
             path,
             uuid: createUUID(),
