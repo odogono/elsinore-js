@@ -2,26 +2,11 @@ import { suite } from 'uvu';
 import assert from 'uvu/assert';
 
 import {
-    bfToValues,
     buildComponents,
-    buildEntitySet,
-    ChangeSetOp,
     createEntitySet,
-    Component,
-    Entity,
-    EntitySet,
-    EntitySetInst,
-    getChanges,
-    getComponentDefId,
-    hashDef,
-    isComponentDef,
-    isEntity,
-    Log,
-    OrphanComponent,
-    printAll,
     beforeEach,
+    prepES,
 } from '../helpers';
-import { assertHasComponents } from '../../helpers/assert';
 
 let test = suite('es/sqlite - copying');
 
@@ -30,6 +15,18 @@ let test = suite('es/sqlite - copying');
 
 test.before.each( beforeEach );
 
+
+test('cloning without entities', async () => {
+    let [,es] = await prepES(undefined, 'todo');
+
+    let es2 = await es.clone({cloneEntities:false});
+
+    // console.log('es1', es.getUrl());
+    // console.log('es2', es2);
+
+    assert.equal( (await es2.getComponentDefs()).length, 4 );
+    assert.equal( (await es2.size() ), 0 );
+});
 
 
 test('transfers components to a foreign es', async () => {

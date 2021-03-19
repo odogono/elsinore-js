@@ -596,7 +596,7 @@ export class EntitySetMem extends EntitySet {
         return `es://${this.type}/?uuid=${this.uuid}`;
     }
 
-    clone(options: CloneOptions = {}) {
+    async clone(options: CloneOptions = {}) {
         let includeDefs = options.cloneDefs ?? true;
         let includeEnts = includeDefs ? options.cloneEntities ?? true : false;
 

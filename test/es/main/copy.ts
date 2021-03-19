@@ -18,6 +18,18 @@ let test = suite('es/mem - copying');
 test.before.each( beforeEach );
 
 
+test('cloning without entities', async () => {
+    let [,es] = await prepES(undefined, 'todo');
+
+    let es2 = es.clone({cloneEntities:false});
+
+    // console.log('es1', es.getUrl());
+    // console.log('es2', es2);
+
+    assert.equal( (await es2.getComponentDefs()).length, 4 );
+    assert.equal( (await es2.size() ), 0 );
+});
+
 test('cloning without defs', async () => {
     let [,es] = await prepES(undefined, 'todo');
 
@@ -25,7 +37,8 @@ test('cloning without defs', async () => {
 
     assert.equal( (await es2.getComponentDefs()).length, 0 );
     assert.equal( (await es2.size() ), 0 );
-})
+});
+
 
 test('transfers components to a foreign es', async () => {
     // create es1 with defs and components

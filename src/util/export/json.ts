@@ -85,6 +85,9 @@ export async function exportEntitySet(es: EntitySet, options: ExportOptions = {}
  */
 export function exportEntity(es: EntitySet, e: Entity, options: ExportOptions = {}) {
     const { exclude } = options;
+    if( e === undefined ){
+        return {};
+    }
     let result: any = { id: e.id };
 
     const coms = e.components.values();

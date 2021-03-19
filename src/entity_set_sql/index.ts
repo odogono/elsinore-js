@@ -121,17 +121,17 @@ export class EntitySetSQL extends EntitySetMem {
 
     getUrl() {
         return this.isMemory ?
-            `es://sqlite?uuid=${this.uuid}&isMemory=${this.isMemory}`
-            : `es://sqlite/${this.path}?uuid=${this.uuid}`;
+            `es://sqlite/memory?uuid=${this.uuid}`
+            : `es://sqlite${this.path}?uuid=${this.uuid}`;
     }
 
-    clone(options: CloneOptions = {}) {
-        const { byUri, byHash, entChanges, comChanges } = this;
-        let componentDefs = this.componentDefs.map(d => ({ ...d }));
+    async clone(options: CloneOptions = {}) {
+        let includeDefs = options.cloneDefs ?? true;
+        let includeEnts = includeDefs ? options.cloneEntities ?? true : false;
+
+        let { byUri, byHash, entChanges, comChanges, idgen } = this;
 
         let props = {
-            ...this,
-            componentDefs,
             uuid: createUUID(),
             byUri: new Map<string, number>(byUri),
             byHash: new Map<number, number>(byHash),
@@ -139,7 +139,15 @@ export class EntitySetSQL extends EntitySetMem {
             comChanges: createChangeSet(comChanges),
         }
 
-        return new EntitySetSQL(props as any);
+        const clone = new EntitySetSQL(props as any);
+
+        const defs = await this.getComponentDefs();
+
+        for( const def of defs ){
+            await clone.register( def );
+        }
+
+        return clone;
     }
 
     select(stack: QueryStack, query: StackValue[]): Promise<StackValue[]> {
