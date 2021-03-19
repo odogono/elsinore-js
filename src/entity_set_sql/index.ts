@@ -91,7 +91,10 @@ export interface SQLEntitySetOptions extends EntitySetOptions {
     db?: SqlRef;
 }
 
-
+export interface SQLCloneOptions extends CloneOptions {
+    isMemory?: boolean;
+    path?: string;
+}
 
 
 /**
@@ -115,23 +118,34 @@ export class EntitySetSQL extends EntitySetMem {
         this.isMemory = toBoolean(options.isMemory ?? false);
         this.isEntitySetMem = false;
         this.debug = options.debug ?? false;
-        this.path = options.path ?? 'ecs.sqlite';
+
+        if( options.path === undefined ){
+            this.isMemory = true;
+        }
         this.db = options.db ?? undefined;
     }
 
     getUrl() {
-        return this.isMemory ?
-            `es://sqlite/memory?uuid=${this.uuid}`
-            : `es://sqlite${this.path}?uuid=${this.uuid}`;
+        if( this.isMemory ){
+            return `es://sqlite/memory?uuid=${this.uuid}`;
+        }
+
+        const path = this.path.startsWith('/') ? this.path : '/' + this.path;
+        return `es://sqlite${path}?uuid=${this.uuid}`;
     }
 
-    async clone(options: CloneOptions = {}) {
+    async clone(options: SQLCloneOptions = {}) {
         let includeDefs = options.cloneDefs ?? true;
         let includeEnts = includeDefs ? options.cloneEntities ?? true : false;
 
         let { byUri, byHash, entChanges, comChanges, idgen } = this;
 
+        let path = options.path ?? this.path;
+        let isMemory = options.isMemory ?? this.isMemory;
+
         let props = {
+            isMemory,
+            path,
             uuid: createUUID(),
             byUri: new Map<string, number>(byUri),
             byHash: new Map<number, number>(byHash),
