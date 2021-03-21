@@ -1,4 +1,3 @@
-import { createUUID } from "../util/uuid";
 import {
     ChangeSet,
     create as createChangeSet,
@@ -7,7 +6,7 @@ import {
     find as findCS,
     merge as mergeCS,
     remove as removeCS, ChangeSetOp, getChanges
-} from "../entity_set/change_set";
+} from "../change_set";
 import {
     ComponentId,
     isComponent,
@@ -44,7 +43,7 @@ import {
     and as bfAnd,
     or as bfOr,
     toValues as bfToValues
-} from "../util/bitfield";
+} from "@odgn/utils/bitfield";
 import {
     idbOpen, idbDeleteDB,
     idbDelete, idbGet,
@@ -65,11 +64,12 @@ import {
     idbDeleteComponents,
     idbRetrieveEntityBitField
 } from "./idb";
-import { isString, isInteger } from "../util/is";
 import { select } from "./query";
-import { EntitySet, EntitySetMem, ESOptions, AddType, AddOptions, RemoveType, EntitySetOptions } from "../entity_set";
+import { EntitySet, AddType, AddOptions, RemoveType, EntitySetOptions, CloneOptions } from "../entity_set";
 import { StackValue } from "../query/types";
 import { QueryStack } from "../query";
+import { EntitySetMem } from "../entity_set_mem";
+import { createUUID } from "@odgn/utils";
 
 const Log = createLog('EntitySetIDB');
 
@@ -102,7 +102,7 @@ export class EntitySetIDB extends EntitySetMem {
         }
     }
 
-    clone() {
+    async clone(options: CloneOptions = {}) {
         const { byUri, byHash, entChanges, comChanges } = this;
         let componentDefs = this.componentDefs.map(d => ({ ...d }));
 

@@ -13,26 +13,31 @@ import {
     StackError,
 } from '../query/types';
 
-import { onComponentAttr, buildBitfield, SelectOptions } from "../entity_set/query";
-import { onLogicalFilter, parseFilterQuery } from "../entity_set/filter";
+import { onComponentAttr, buildBitfield, SelectOptions } from "../entity_set_mem/query";
+import { onLogicalFilter, parseFilterQuery } from "../entity_set_mem/query/filter";
 import { 
     BitField,
     toValues as bfToValues
-} from "../util/bitfield";
-import { isInteger } from "../util/is";
+} from "@odgn/utils/bitfield";
+import { isInteger } from '@odgn/utils';
 import { Entity, EntityId, getEntityId, isEntity } from "../entity";
 import { idbRetrieveEntityByDefId, idbRetrieveComponents, idbRetrieveByQuery, idbRetrieveEntities } from "./idb";
 import { ComponentDefId } from "../component_def";
 import { unpackStackValueR, unpackStackValue } from "../query/util";
 import { onPluck } from "../query/words/pluck";
 import { onDefine } from "../query/words/define";
-import { createStdLibStack } from '../../src/query';
 
 const Log = createLog('IDBQuery');
 
 
 class IDBQueryStack extends QueryStack {
-    es: EntitySetIDB
+    es: QueryableEntitySetIDB
+}
+
+
+
+export class QueryableEntitySetIDB extends EntitySetIDB {
+
 }
 
 /**

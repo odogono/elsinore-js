@@ -38,8 +38,8 @@ import {
     sqlRetrieveComponent,
     RetrieveOptions
 } from "./sqlite";
-import { onLogicalFilter, parseFilterQuery } from "../entity_set/filter";
-import { onComponentAttr, buildBitfield, SelectOptions, stringToComponentAttr, onOrder, applyLimit } from "../entity_set/query";
+import { onLogicalFilter, parseFilterQuery } from "../entity_set_mem/query/filter";
+import { onComponentAttr, buildBitfield, SelectOptions, stringToComponentAttr, onOrder, applyLimit } from "../entity_set_mem/query";
 import { onDefine } from "../query/words/define";
 import { onPluck } from "../query/words/pluck";
 import { onBitFieldNot, onBitFieldOr, onPrintStack } from "../query/words";

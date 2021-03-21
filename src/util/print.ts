@@ -2,6 +2,7 @@ import { Entity, isEntity } from "../entity";
 import { EntitySet } from "../entity_set";
 import { BitField, get as bfGet } from '@odgn/utils/bitfield';
 import { linkSync } from "fs-extra";
+import { QueryableEntitySet } from "../entity_set/queryable";
 
 
 
@@ -27,7 +28,7 @@ export async function printAll(es: EntitySet, ents?: Entity[], dids?:string[]) {
     }
 }
 
-export async function printQuery(es: EntitySet, q: string) {
+export async function printQuery(es: QueryableEntitySet, q: string) {
     let result = await es.queryEntities(q);
     for (const e of result) {
         printEntity(es, e);

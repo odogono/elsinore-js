@@ -8,17 +8,13 @@ import {
     createEntitySet,
     Component,
     Entity,
-    EntitySet,
-    EntitySetInst,
     getChanges,
     getComponentDefId,
     isEntity,
-    Log,
     OrphanComponent,
     beforeEach,
 } from '../helpers';
 import { assertHasComponents } from '../../helpers/assert';
-import { printEntity } from '../../sql/helpers';
 
 
 

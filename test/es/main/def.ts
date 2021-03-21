@@ -2,24 +2,11 @@ import { suite } from 'uvu';
 import assert from 'uvu/assert';
 
 import {
-    bfToValues,
-    buildEntitySet,
-    ChangeSetOp,
     createEntitySet,
-    Component,
-    Entity,
-    EntitySet,
-    EntitySetInst,
-    getChanges,
-    getComponentDefId,
     hashDef,
     isComponentDef,
-    isEntity,
-    Log,
-    OrphanComponent,
     beforeEach,
 } from '../helpers';
-import { assertHasComponents } from '../../helpers/assert';
 
 let test = suite('es/mem - component def');
 

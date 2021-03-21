@@ -2,25 +2,13 @@ import { suite } from 'uvu';
 import assert from 'uvu/assert';
 
 import {
-    bfToValues,
     buildEntitySet,
     ChangeSetOp,
-    createEntitySet,
-    Component,
     Entity,
-    EntitySet,
-    EntitySetInst,
     getChanges,
-    getComponentDefId,
-    isEntity,
-    Log,
-    OrphanComponent,
     prepES,
-    ilog,
     beforeEach,
 } from '../helpers';
-import { assertHasComponents } from '../../helpers/assert';
-import { printAll } from '../../../src/util/print';
 import { setEntityId, toComponentId } from '../../../src/component';
 
 let test = suite('es/mem - removing');

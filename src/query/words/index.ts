@@ -29,6 +29,7 @@ import { compareDates } from './util';
 import { BitField, TYPE_OR, toValues as bfToValues, TYPE_NOT } from '@odgn/utils/bitfield';
 import { stringify } from '@odgn/utils';
 import { evalList } from './list';
+import { QueryableEntitySet } from '../../entity_set/queryable';
 
 const Log = createLog('QueryWords');
 
@@ -94,7 +95,7 @@ export async function onSelect<QS extends QueryStack>(stack: QS): AsyncInstResul
     let left = stack.peek(); // NOTE - we do not consume the ES
 
     let query = unpackStackValue(right, SType.List, false);
-    let es: EntitySet = unpackStackValue(left, SType.EntitySet);
+    let es: QueryableEntitySet = unpackStackValue(left, SType.EntitySet);
 
     // Log.debug('[onSelect]', query );
     let result = await es.select(stack, query);

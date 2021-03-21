@@ -1,11 +1,12 @@
-import { QueryStack } from "../query/stack";
-import { InstResult, SType, StackValue } from "../query/types";
+import { QueryStack } from "../../query/stack";
+import { InstResult, SType, StackValue } from "../../query/types";
 import { 
     BitField,
     toValues as bfToValues
 } from '@odgn/utils/bitfield';
-import { unpackStackValueR } from "../query/util";
-import { EntitySet } from ".";
+import { unpackStackValueR } from "../../query/util";
+import { EntitySet } from "../../entity_set";
+
 
 
 

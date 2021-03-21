@@ -25,7 +25,7 @@ export { isComponent } from '../../src/component';
 export const parse = (data:string) => tokenizeString(data, { returnValues: true });
 export const sv = (v:unknown): StackValue => [SType.Value, v];
 
-export { getChanges, ChangeSetOp } from '../../src/entity_set/change_set';
+export { getChanges, ChangeSetOp } from '../../src/change_set';
 export { fromComponentId, getComponentDefId, Component, OrphanComponent } from '../../src/component';
 export const Log = createLog('TestEntitySetSQL');
 
@@ -148,7 +148,7 @@ export async function prep(insts?: string): Promise<[QueryStack, EntitySet]> {
  * @param es 
  * @param fixture 
  */
-export async function loadFixtureIntoES( es:EntitySet, fixture:string ){
+export async function loadFixtureIntoES( es:EntitySetSQL, fixture:string ){
     if( es === undefined ){
         es = createEntitySet();
     }

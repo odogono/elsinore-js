@@ -1,12 +1,12 @@
 import Jsonpointer from 'jsonpointer';
-import { EntityId, getEntityId, isEntity } from "../entity";
+import { Entity, EntityId, getEntityId, isEntity } from "../../entity";
 import {
     toComponentId,
     getComponentDefId,
     getComponentEntityId,
     getComponentId
-} from "../component";
-import { createLog } from "../util/log";
+} from "../../component";
+import { createLog } from "../../util/log";
 import { isRegex, isInteger, isString, isBoolean, isDate, isValidDate } from '@odgn/utils';
 import {
     BitField,
@@ -29,22 +29,25 @@ import {
     isStackValue,
     entityIdFromValue,
     QueryStack,
-} from "../query/stack";
+} from "../../query/stack";
 import {
     SType,
     StackValue,
     InstResult, AsyncInstResult,
     StackError,
-} from "../query/types";
-import { onPluck } from "../query/words/pluck";
-import { onDefine } from "../query/words/define";
-import { ComponentDefId, getDefId, ComponentDef, getProperty, PropertyType } from "../component_def";
+} from "../../query/types";
+import { onPluck } from "../../query/words/pluck";
+import { onDefine } from "../../query/words/define";
+import { ComponentDefId, getDefId, ComponentDef, getProperty, PropertyType } from "../../component_def";
 import { onLogicalFilter, parseFilterQuery } from './filter';
-import { unpackStackValue, unpackStackValueR, stackToString } from "../query/util";
-import { EntitySet, EntitySetMem } from ".";
-import { compareDates } from '../query/words/util';
-import { onBitFieldNot, onBitFieldOr, onPrintStack } from '../query/words';
-import { onDiff } from '../query/words/list';
+import { unpackStackValue, unpackStackValueR, stackToString } from "../../query/util";
+import { EntitySetMem } from "../";
+import { compareDates } from '../../query/words/util';
+import { onBitFieldNot, onBitFieldOr, onPrintStack } from '../../query/words';
+import { onDiff } from '../../query/words/list';
+import { EntitySet, EntitySetOptions } from '../../entity_set';
+import { QueryableEntitySet } from '../../entity_set/queryable';
+import { query, createStdLibStack, QueryOptions, Statement } from '../../query';
 
 const Log = createLog('ESMemQuery');
 
@@ -57,6 +60,126 @@ class ESMemQueryStack extends QueryStack {
 export interface SelectOptions {
     stack?: QueryStack;
 }
+
+
+
+export interface QueryableEntitySetMem extends QueryableEntitySet, EntitySetMem {};
+
+export class QueryableEntitySetMem extends EntitySetMem {
+
+    // constructor(data?: EntitySet, options: EntitySetOptions = {}) {
+    //     super(undefined, options);
+    // }
+
+    /**
+     * 
+     * @param stack 
+     * @param query 
+     * @returns 
+     */
+     select(stack: QueryStack, query: StackValue[]): Promise<StackValue[]> {
+        stack.es = this as unknown as EntitySet;
+        return select(stack, query);
+    }
+
+
+    /**
+     * 
+     * @param q 
+     * @param options 
+     */
+     prepare(q: string, options: QueryOptions = {}) {
+        let stmt = new Statement(q, { values: [[SType.EntitySet, this]] });
+        stmt.stack.addWords([
+            ['!es', onEntitySet, SType.Map]
+        ]);
+        return stmt;
+    }
+
+
+    /**
+     * 
+     * @param q 
+     * @param options 
+     */
+    async query(q: string, options: QueryOptions = {}): Promise<QueryStack> {
+        const reset = options.reset ?? false;
+        let values: StackValue[] = options.values ?? [];
+        if (this.stack === undefined || reset) {
+            this.stack = createStdLibStack();
+            this.stack.addWords([
+                ['!es', onEntitySet, SType.Map]
+            ]);
+        }
+
+        values = [[SType.Value, 'cls'], [SType.EntitySet, this], ...values];
+
+        return await query(q, { stack: this.stack, values });
+    }
+
+    /**
+     * Returns the results of a query as an array of entities
+     * 
+     * @param q 
+     * @param options 
+     */
+    async queryEntities(q: string, options: QueryOptions = {}): Promise<Entity[]> {
+        const stack = await this.query(q, options);
+        const value = stack.pop();
+        let result: Entity[] = [];
+        if (value === undefined) { return result; }
+
+        const [type, val] = value;
+        if (type === SType.List) {
+            let e: Entity;
+            for (const [lt, lv] of val) {
+                if (lt === SType.Entity) {
+                    result.push(lv);
+                }
+                else if (lt === SType.Component) {
+                    let eid = getComponentEntityId(lv);
+
+                    if (e === undefined || e.id !== eid) {
+                        if (e !== undefined) {
+                            result.push(e);
+                        }
+                        e = this.createEntity(eid);
+                    }
+                    e.addComponentUnsafe(lv);
+                }
+            }
+            if (e !== undefined) {
+                result.push(e);
+            }
+        } else if (type === SType.Component) {
+            let eid = getComponentEntityId(val);
+            let e = this.createEntity(eid);
+            e.addComponentUnsafe(val);
+            result.push(e);
+        } else if (type == SType.Entity) {
+            result.push(val);
+        }
+
+        return result;
+    }
+}
+
+
+
+
+
+
+function onEntitySet<QS extends QueryStack>(stack: QS): InstResult {
+    let data = stack.pop();
+
+    let options = unpackStackValueR(data, SType.Map);
+    let es = new EntitySetMem(options);
+
+    return [SType.EntitySet, es];
+}
+
+
+
 /**
  * 
  * @param es 

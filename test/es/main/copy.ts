@@ -1,5 +1,6 @@
 import { suite } from 'uvu';
 import assert from 'uvu/assert';
+import { QueryableEntitySet } from '../../../src/entity_set/queryable';
 import { printAll } from '../../sql/helpers';
 
 import {
@@ -21,7 +22,7 @@ test.before.each( beforeEach );
 test('cloning without entities', async () => {
     let [,es] = await prepES(undefined, 'todo');
 
-    let es2 = es.clone({cloneEntities:false});
+    let es2 = await es.clone({cloneEntities:false});
 
     // console.log('es1', es.getUrl());
     // console.log('es2', es2);
@@ -33,7 +34,7 @@ test('cloning without entities', async () => {
 test('cloning without defs', async () => {
     let [,es] = await prepES(undefined, 'todo');
 
-    let es2 = es.clone({cloneDefs:false});
+    let es2 = await es.clone({cloneDefs:false});
 
     assert.equal( (await es2.getComponentDefs()).length, 0 );
     assert.equal( (await es2.size() ), 0 );

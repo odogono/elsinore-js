@@ -36,7 +36,7 @@ import {
     find as findCS,
     merge as mergeCS,
     remove as removeCS, ChangeSetOp, getChanges
-} from "../entity_set/change_set";
+} from "../change_set";
 import {
     BitField,
     create as createBitField,
@@ -70,9 +70,13 @@ import {
 } from "./sqlite";
 import { createLog } from "../util/log";
 import { select } from "./query";
-import { EntitySetMem, AddType, AddOptions, RemoveType, EntitySet, EntitySetOptions, CloneOptions } from "../entity_set";
+import { AddType, AddOptions, RemoveType, EntitySet, EntitySetOptions, CloneOptions } from "../entity_set";
 import { StackValue } from "../query/types";
 import { QueryStack } from "../query";
+import { EntitySetMem } from '../entity_set_mem';
+import { QueryableEntitySetMem } from "../entity_set_mem/query";
+import { QueryableEntitySet } from '../entity_set/queryable';
+
 
 const Log = createLog('EntitySetSQL');
 
@@ -97,11 +101,14 @@ export interface SQLCloneOptions extends CloneOptions {
 }
 
 
+export interface EntitySetSQL extends EntitySetMem, QueryableEntitySet {};
+
+
 /**
  * As a storage backed ES, this entityset has functions
  * as a ComponentRegistry
  */
-export class EntitySetSQL extends EntitySetMem {
+export class EntitySetSQL extends QueryableEntitySetMem {
 
     // keep a reference to the open es db
     db?: SqlRef;
