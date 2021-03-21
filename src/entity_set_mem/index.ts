@@ -26,7 +26,6 @@ import {
     ComponentDefObj,
     create as createComponentDef,
     hash as hashComponentDef,
-    toObject as defToObject,
     Type as DefT
 } from "../component_def";
 import { MatchOptions } from "../constants";
@@ -39,7 +38,6 @@ import {
 } from "../entity";
 import { AddOptions, CloneOptions, EntitySet, EntitySetOptions, RemoveEntityType, RemoveType } from "../entity_set";
 import {
-    ChangeSet,
     create as createChangeSet,
     add as addCS,
     update as updateCS,
@@ -48,7 +46,6 @@ import {
     merge as mergeCS,
     ChangeSetOp, getChanges
 } from "../change_set";
-import { matchEntities } from "./query";
 
 /**
  * 
@@ -153,6 +150,10 @@ import { matchEntities } from "./query";
     }
 
 
+    /**
+     * 
+     * @returns 
+     */
     async getComponentDefs(): Promise<ComponentDef[]> {
         return Promise.resolve(this.componentDefs);
     }

@@ -1,6 +1,5 @@
 import {
     Component,
-
     isComponentLike,
     ComponentId,
     create as createComponentInstance,
@@ -29,21 +28,15 @@ import {
 } from "../entity";
 import { createUUID } from '@odgn/utils';
 import {
-    ChangeSet,
     create as createChangeSet,
-    add as addCS,
-    update as updateCS,
-    remove as removeCS,
-    find as findCS,
-    merge as mergeCS,
     ChangeSetOp, getChanges
 } from "../change_set";
 import { isInteger, isObject, isString } from '@odgn/utils';
-import { MatchOptions } from '../constants';
 
 import { buildFlake53 } from '@odgn/utils';
 import { QueryStack } from "../query/stack";
-import { unpackStackValueR } from "../query/util";
+
+
 
 export interface AddOptions {
     debug?: boolean;
@@ -313,88 +306,12 @@ export abstract class EntitySet {
         return getChanges(this.entChanges, ChangeSetOp.Remove);
     }
 
-    /**
-     * 
-     * @param q 
-     * @param options 
-     */
-    // prepare(q: string, options: QueryOptions = {}) {
-    //     let stmt = new Statement(q, { values: [[SType.EntitySet, this]] });
-    //     stmt.stack.addWords([
-    //         ['!es', onEntitySet, SType.Map]
-    //     ]);
-    //     return stmt;
-    // }
-
 
     /**
      * 
-     * @param q 
      * @param options 
+     * @returns 
      */
-    // async query(q: string, options: QueryOptions = {}): Promise<QueryStack> {
-    //     const reset = options.reset ?? false;
-    //     let values: StackValue[] = options.values ?? [];
-    //     if (this.stack === undefined || reset) {
-    //         this.stack = createStdLibStack();
-    //         this.stack.addWords([
-    //             ['!es', onEntitySet, SType.Map]
-    //         ]);
-    //     }
-
-    //     values = [[SType.Value, 'cls'], [SType.EntitySet, this], ...values];
-
-    //     return await query(q, { stack: this.stack, values });
-    // }
-
-    /**
-     * Returns the results of a query as an array of entities
-     * 
-     * @param q 
-     * @param options 
-     */
-    // async queryEntities(q: string, options: QueryOptions = {}): Promise<Entity[]> {
-    //     const stack = await this.query(q, options);
-    //     const value = stack.pop();
-    //     let result: Entity[] = [];
-    //     if (value === undefined) { return result; }
-
-    //     const [type, val] = value;
-    //     if (type === SType.List) {
-    //         let e: Entity;
-    //         for (const [lt, lv] of val) {
-    //             if (lt === SType.Entity) {
-    //                 result.push(lv);
-    //             }
-    //             else if (lt === SType.Component) {
-    //                 let eid = getComponentEntityId(lv);
-                    
-    //                 if (e === undefined || e.id !== eid) {
-    //                     if (e !== undefined) {
-    //                         result.push(e);
-    //                     }
-    //                     e = this.createEntity(eid);
-    //                 }
-    //                 e.addComponentUnsafe(lv);
-    //             }
-    //         }
-    //         if (e !== undefined) {
-    //             result.push(e);
-    //         }
-    //     } else if (type === SType.Component) {
-    //         let eid = getComponentEntityId(val);
-    //         let e = this.createEntity(eid);
-    //         e.addComponentUnsafe(val);
-    //         result.push(e);
-    //     } else if (type == SType.Entity) {
-    //         result.push(val);
-    //     }
-
-    //     return result;
-    // }
-
-
-
     async openEntitySet(options: EntitySetOptions = {}): Promise<EntitySet> {
         return this;
     }
