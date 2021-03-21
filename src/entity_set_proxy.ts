@@ -1,23 +1,31 @@
 import { Component, ComponentId } from "./component";
 import { ComponentDef, ComponentDefObj } from "./component_def";
 import { Entity, EntityId } from "./entity";
-import { AddOptions, AddType, CloneOptions, EntitySet, EntitySetOptions, RemoveEntityType, RemoveType } from "./entity_set";
-import { QueryStack } from "./query";
+import {
+    AddOptions,
+    CloneOptions,
+    EntitySet,
+    EntitySetOptions,
+    RemoveEntityType,
+    RemoveType
+} from "./entity_set";
+import { QueryableEntitySet } from "./entity_set/queryable";
+import { QueryOptions, QueryStack, Statement } from "./query";
 import { StackValue } from "./query/types";
 
 
 /**
  * Proxies calls to another EntitySet. Useful for overriding and intercepting certain calls
  */
-export class ProxyEntitySet extends EntitySet {
-    es: EntitySet;
+export class ProxyEntitySet extends QueryableEntitySet {
+    es: QueryableEntitySet;
     type: string = 'proxy';
 
-    constructor(es:EntitySet, options: EntitySetOptions = {}) {
-        super( undefined, options );
+    constructor(es: QueryableEntitySet, options: EntitySetOptions = {}) {
+        super(undefined, options);
         this.es = es;
     }
-    getUrl(){
+    getUrl() {
         return `es://${this.type}/?uuid=${this.uuid}`;
     }
 
@@ -25,13 +33,25 @@ export class ProxyEntitySet extends EntitySet {
         return this.es.size();
     }
 
-    clone(options: CloneOptions = {}) {
-        let result = new ProxyEntitySet(this.es.clone());
+    async clone(options: CloneOptions = {}): Promise<EntitySet> {
+        let result = new ProxyEntitySet(await this.es.clone() as QueryableEntitySet);
         return result;
     }
 
     select(stack: QueryStack, query: StackValue[]): Promise<StackValue[]> {
         return this.es.select(stack, query);
+    }
+
+    prepare(q: string, options?: QueryOptions): Statement {
+        return this.es.prepare(q, options);
+    }
+
+    query(q: string, options?: QueryOptions): Promise<QueryStack> {
+        return this.es.query(q, options);
+    }
+
+    queryEntities(q: string, options?: QueryOptions): Promise<Entity[]> {
+        return this.es.queryEntities(q, options);
     }
 
     async register(value: ComponentDef | ComponentDefObj | any): Promise<ComponentDef> {
@@ -51,7 +71,7 @@ export class ProxyEntitySet extends EntitySet {
     }
 
     async removeComponents(items: RemoveType[], options: AddOptions = {}): Promise<EntitySet> {
-        return this.es.removeComponents(items,options);
+        return this.es.removeComponents(items, options);
     }
 
     async removeEntity(item: RemoveEntityType, options: AddOptions = {}): Promise<EntitySet> {
@@ -62,17 +82,17 @@ export class ProxyEntitySet extends EntitySet {
         return this.es.getComponents();
     }
 
-    getEntities(){
+    getEntities() {
         return this.es.getEntities();
     }
-    
+
     async getEntity(eid: EntityId, populate: boolean = true): Promise<Entity> {
-        return this.es.getEntity(eid,populate);
+        return this.es.getEntity(eid, populate);
     }
-    
+
 
     addComponents(components: Component[], options?: AddOptions): Promise<EntitySet> {
-        return this.es.addComponents( components, options );
+        return this.es.addComponents(components, options);
     }
 
     applyRemoveChanges(): Promise<EntitySet> {
