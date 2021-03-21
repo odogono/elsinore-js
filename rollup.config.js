@@ -96,7 +96,6 @@ function build({ external, format, minify, input, output:outputFile, ext = "js",
         NodePolyfills(),
         NodeResolve({ browser: true, preferBuiltins: false }),
         Typescript(),
-        // typescriptPlugin,
         CommonJS({
             exclude: ['node_modules/type-detect/*.js'],
         }), // so Rollup can convert `ms` to an ES module

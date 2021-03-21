@@ -2,7 +2,7 @@ import CommonJS from '@rollup/plugin-commonjs';
 import { terser } from 'rollup-plugin-terser';
 import NodeResolve from '@rollup/plugin-node-resolve';
 import Replace from '@rollup/plugin-replace';
-import Typescript from "rollup-plugin-typescript2";
+import Typescript from "@wessberg/rollup-plugin-ts";
 import MultiEntry from '@rollup/plugin-multi-entry';
 import NodePolyfills from 'rollup-plugin-node-polyfills';
 import Json from '@rollup/plugin-json';
@@ -14,18 +14,6 @@ import OMT from "@surma/rollup-plugin-off-main-thread";
 const environment = process.env.NODE_ENV || 'development';
 const jsEnv = process.env.JS_ENV || 'browser';
 const isProduction = false //environment === 'production';
-
-const tsconfigOverride = { compilerOptions: { declaration: false, sourceMap: true, module: "es2015" } };
-
-const typescriptPlugin = Typescript({
-    // Disable type checking during the build
-    // to increase the build speed.
-    check: false,
-    tsconfig: './tsconfig.json',
-    tsconfigOverride,
-    typescript: require('typescript'),
-    useTsconfigDeclarationDir: true
-});
 
 
 function build({ format, minify, input, ext = "js", globals }) {
@@ -48,7 +36,7 @@ function build({ format, minify, input, ext = "js", globals }) {
         Replace({ 'process.env.JS_ENV': JSON.stringify(jsEnv) }),
         NodePolyfills(),
         NodeResolve({ browser: true, preferBuiltins: false }),
-        typescriptPlugin,
+        Typescript(),
         CommonJS({
             exclude: ['node_modules/type-detect/*.js'],
         }), // so Rollup can convert `ms` to an ES module
