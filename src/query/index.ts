@@ -23,7 +23,6 @@ import {
     onUndefined,
     onRegexBuild,
     onCompare,
-    onFetchList,
 } from "./words";
 import { onPluck } from "./words/pluck";
 import { onDefine } from "./words/define";
@@ -35,7 +34,14 @@ import { tokenizeString } from "./tokenizer";
 import { onCondition } from "./words/cond";
 import { Entity, EntityId } from "../entity";
 import { getComponentDefId, getComponentEntityId } from "../component";
-import { onAddList, onConcat, onDiff, onFilter, onGather, onListEval, onListOpen, onListSpread, onMap, onReduce, onUnique } from "./words/list";
+import { onAddList, onListFetch, 
+    onConcat, onDiff, 
+    onFilter, onGather, 
+    onListEval, onListOpen, 
+    onListSpread, 
+    onMap, onReduce, onUnique,
+    onListIndexOf 
+} from "./words/list";
 import { onMapOpen } from "./words/map";
 export { QueryStack };
 export const parse = (q: string) => tokenizeString(q, { returnValues: true });
@@ -268,7 +274,7 @@ export function createStdLibStack(stack?: QueryStack) {
         ['==', onCompare, SType.Any, SType.Any],
         ['!=', onCompare, SType.Any, SType.Any],
 
-        ['@', onFetchList, SType.List, SType.Value],
+        ['@', onListFetch, SType.List, SType.Value],
 
         // a defined value is evaled when pushed onto the stack
         ['define', onDefine, SType.Any, SType.Value],
@@ -308,6 +314,8 @@ export function createStdLibStack(stack?: QueryStack) {
         ['filter', onFilter, SType.List, SType.Value],
         ['filter', onFilter, SType.List, SType.List],
         ['reduce', onReduce, SType.List, SType.Any, SType.Any],
+        ['index_of', onListIndexOf, SType.List, SType.Value],
+        ['index_of!', onListIndexOf, SType.List, SType.Value],
 
         ['gather', onGather],
         // ['concat', onConcat],

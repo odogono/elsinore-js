@@ -333,13 +333,7 @@ export async function onPrint<QS extends QueryStack>(stack: QS, val: StackValue)
 }
 
 
-export function onFetchList<QS extends QueryStack>(stack: QS, val: StackValue): InstResult {
-    let left = stack.pop();
-    let right = stack.pop();
-    let arr = unpackStackValue(right, SType.List);
-    let idx = unpackStackValue(left, SType.Value);
-    return arr[idx];
-}
+
 
 
 export function onRegexBuild(stack: QueryStack): InstResult {

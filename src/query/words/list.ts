@@ -1,6 +1,6 @@
 import { onUnexpectedError } from ".";
 import { QueryStack } from "..";
-import { isEqual } from "@odgn/utils";
+import { isEqual, isInteger } from "@odgn/utils";
 import { AsyncInstResult, InstResult, StackError, StackValue, SType } from "../types";
 import { unpackStackValue, unpackStackValueR } from "../util";
 import { onMapOpen } from "./map";
@@ -30,6 +30,14 @@ export function onListClose<QS extends QueryStack>(stack: QS): InstResult {
     let val: StackValue = [SType.List, stack.items];
     stack.restoreParent();
     return val;
+}
+
+export function onListFetch<QS extends QueryStack>(stack: QS, val: StackValue): InstResult {
+    let left = stack.pop();
+    let right = stack.pop();
+    let arr = unpackStackValue(right, SType.List);
+    let idx = unpackStackValue(left, SType.Value);
+    return isInteger(idx) ? arr[idx] : [SType.Value, false];
 }
 
 
@@ -297,4 +305,20 @@ export function onDiff(stack: QueryStack, [,op]:StackValue): InstResult {
 
 
     return [SType.List, out];
+}
+
+
+export function onListIndexOf( stack:QueryStack, [,op]:StackValue): InstResult {
+    const isDes = op.endsWith('!');
+    let left = stack.pop();
+    let right = isDes ? stack.pop() : stack.peek();
+    let arr = unpackStackValue(right, SType.List);
+    let idx = left;
+
+    let result = arr.findIndex( ([at,av]) => {
+        return at === idx[0] && av === idx[1];
+    })
+
+    // console.log('[onListIndexOf]', arr, idx, result );
+    return [SType.Value, result];
 }

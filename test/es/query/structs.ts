@@ -101,6 +101,22 @@ test('concat joins arrays and values', async () => {
 });
 
 
+test('indexOf', async () => {
+    let [stack] = await prep(`
+    [ hello world today ]
+    world index_of
+    `);
+
+    assert.equal( stack.popValue(), 1 );
+
+    [stack] = await prep(`
+    [ hello world today ]
+    goodbye index_of
+    `);
+
+    assert.equal( stack.popValue(), -1 );
+});
+
 
 
 test('builds maps', async () => {

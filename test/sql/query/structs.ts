@@ -12,7 +12,7 @@ import {
 
 let test = suite('es/mem/query - Maps and Lists');
 
-test.before.each( beforeEach );
+test.before.each(beforeEach);
 
 test('builds lists', async () => {
     let [stack] = await prep(`[ hello, world ]`);
@@ -28,7 +28,7 @@ test('prepends to a list', async () => {
     let [stack] = await prep(`
     hello [ world ] +
     `);
-    assert.equal( stack.popValue(), ['hello', 'world'] );
+    assert.equal(stack.popValue(), ['hello', 'world']);
 })
 
 test('push', async () => {
@@ -45,8 +45,8 @@ test('pop', async () => {
 
 test('pop return', async () => {
     let [stack] = await prep(`[ hello world ] pop`);
-    assert.equal( stack.popValue(), 'world');
-    assert.equal( stack.popValue(), [ 'hello' ] );
+    assert.equal(stack.popValue(), 'world');
+    assert.equal(stack.popValue(), ['hello']);
 });
 
 test('pop empty', async () => {
@@ -73,7 +73,7 @@ test('gather builds a list from similar items', async () => {
     `);
 
     // hello is not added to the result array
-    assert.equal( stack.toString(), `[14, 12, 10] ["hello"]`);
+    assert.equal(stack.toString(), `[14, 12, 10] ["hello"]`);
 });
 
 test('concat joins arrays', async () => {
@@ -82,7 +82,7 @@ test('concat joins arrays', async () => {
     `);
 
     // hello is not added to the result array
-    assert.equal( stack.toString(), `[14, 10, 12] ["hello"]`);
+    assert.equal(stack.toString(), `[14, 10, 12] ["hello"]`);
 });
 
 test('concat joins arrays and values', async () => {
@@ -92,10 +92,24 @@ test('concat joins arrays and values', async () => {
 
     // ilog( stack.items );
     // hello is not added to the result array
-    assert.equal( stack.toString(), `[14, "hello"]`);
+    assert.equal(stack.toString(), `[14, "hello"]`);
 });
 
+test('indexOf', async () => {
+    let [stack] = await prep(`
+    [ hello world today ]
+    world index_of
+    `);
 
+    assert.equal(stack.popValue(), 1);
+
+    [stack] = await prep(`
+    [ hello world today ]
+    goodbye index_of
+    `);
+
+    assert.equal(stack.popValue(), -1);
+});
 
 
 test('builds maps', async () => {
