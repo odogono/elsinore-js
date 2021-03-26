@@ -48,7 +48,7 @@ export function valueToString(val: StackValue, listToString:boolean = false): st
             return String(getEntityId(value));
         case SType.List:
             if( listToString ){
-                return value.map(v => valueToString(v,listToString)).join(' ');
+                return value.map(v => valueToString(v)).join(' ');
             }
             return `[` + value.map(v => valueToString(v)).join(', ') + ']';
         case SType.Map:
@@ -56,7 +56,7 @@ export function valueToString(val: StackValue, listToString:boolean = false): st
                 return [...res, `"${key}": ${valueToString(value[key])}`];
             }, []).join(',') + '}';
         case SType.Value:
-            return strCheck.test(value) ? JSON.stringify(value) : value;
+            return strCheck.test(value) ? stringify(value) : value;
             // return JSON.stringify(value);
         case SType.Filter:
             let [op, left, right] = value;
