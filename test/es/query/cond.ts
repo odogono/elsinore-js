@@ -43,7 +43,7 @@ test('if', async () => {
     "odd" 2 1 % 0 != if
     `);
 
-    assert.equal( stack.popValue(), "odd" );
+    assert.equal(stack.popValue(), "odd");
 });
 
 
@@ -52,8 +52,8 @@ test('list values are pushed', async () => {
         [ 19, 9 ] true if
     `);
 
-    assert.equal( stack.popValue(), 9 );
-    assert.equal( stack.popValue(), 19 );
+    assert.equal(stack.popValue(), 9);
+    assert.equal(stack.popValue(), 19);
 });
 
 test('can still produce a list', async () => {
@@ -61,8 +61,19 @@ test('can still produce a list', async () => {
         [ [19, 9] ] true if
     `);
 
-    assert.equal( stack.popValue(), [19,9] );
+    assert.equal(stack.popValue(), [19, 9]);
 });
 
+test('and', async () => {
+    let [stack] = await prep(`
+         ok  true true and if
+         ok 4 6 > 10 5 < and if
+         nok  ok  true false or iif
+    `);
+    assert.equal( stack.popValue(), 'ok' );
+    assert.equal( stack.popValue(), 'ok' );
+    assert.equal( stack.popValue(), 'ok' );
+
+});
 
 test.run();

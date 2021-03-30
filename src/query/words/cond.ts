@@ -45,3 +45,21 @@ async function pushValue( stack:QueryStack, value:StackValue ){
         return stack.push(value);
     }
 }
+
+
+export async function onLogicalOp(stack:QueryStack, [,op]:StackValue ): AsyncInstResult {
+    const left = stack.popValue();
+    const right = stack.popValue();
+
+    if( op === 'and' ){
+        return [SType.Value, left && right];
+    }
+    if( op === 'or' ){
+        return [SType.Value, left || right];
+    }
+    if( op === '??' ){
+        return [SType.Value, left ?? right];
+    }
+    
+    return undefined;
+}

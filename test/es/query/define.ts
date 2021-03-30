@@ -32,7 +32,8 @@ test('define nodejs', async () => {
 
     let result = stack.popValue();
     assert.equal(result, '/foo/bar/baz/asdf');
-    
 });
+
+
 
 test.run();

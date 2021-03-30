@@ -1,6 +1,6 @@
 import { StackValue, InstResult, AsyncInstResult, SType } from "../types";
 import { QueryStack } from "../stack";
-import { isString, parseUri } from "@odgn/utils";
+import { isNumeric, isString, parseUri } from "@odgn/utils";
 import { unpackStackValueR } from "../util";
 
 
@@ -26,7 +26,8 @@ export function onDefine(stack: QueryStack, [, op]: StackValue): InstResult {
     
     if (valType === SType.List && isDefine ) {
         wordFn = [SType.Word,value];
-    } else if( isString(value) ){
+    } 
+    else if( isString(value) && isDefine  ){
         const {protocol, host, path} = parseUri(value);
         // console.log('ok', {protocol,host,path});
 
@@ -45,6 +46,7 @@ export function onDefine(stack: QueryStack, [, op]: StackValue): InstResult {
             }
         }
         else if( protocol === 'nodejs' ){
+            // console.log('nodejs', 'require', `"${host}"` );
             const module = require(host);
             let fn = module[path.substring(1)];
             let arity = fn.length;
@@ -60,7 +62,8 @@ export function onDefine(stack: QueryStack, [, op]: StackValue): InstResult {
                 return [SType.Value, result];
             }
         }
-    } else {
+    } 
+    else {
         wordFn = [valType,value];
     }
 

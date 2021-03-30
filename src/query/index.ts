@@ -31,7 +31,7 @@ import {
     QueryStack,
 } from './stack';
 import { tokenizeString } from "./tokenizer";
-import { onCondition } from "./words/cond";
+import { onCondition, onLogicalOp } from "./words/cond";
 import { Entity, EntityId } from "../entity";
 import { getComponentDefId, getComponentEntityId } from "../component";
 import { onAddList, onListFetch, 
@@ -289,8 +289,9 @@ export function createStdLibStack(stack?: QueryStack) {
         ['to_map', onBuildMap],
         ['to_str!', onToString],
         ['to_str', onToString],
-        ['join', onJoin, SType.Value, SType.Value],
-        ['join', onJoin, SType.List, SType.Value],
+        ['join', onJoin],
+        // ['join', onJoin, SType.Value, SType.Value],
+        // ['join', onJoin, SType.List, SType.Value],
         ['drop', onDrop, SType.Any],
         ['swap', onSwap, SType.Any, SType.Any],
         ['push', onPush, SType.List, SType.Any],
@@ -331,6 +332,11 @@ export function createStdLibStack(stack?: QueryStack) {
         // ['cond', onCondition, SType.Any, SType.Any, SType.Any], // cond, if, else
         ['iif', onCondition, SType.Any, SType.Any, SType.Any], // cond, if, else
         ['if', onCondition, SType.Any, SType.Any],
+        
+        ['and', onLogicalOp, SType.Any, SType.Any],
+        ['or', onLogicalOp, SType.Any, SType.Any],
+        ['??', onLogicalOp, SType.Any, SType.Any],
+
         ['size!', onSize, SType.Any], // destructive (any -- int)
         ['size', onSize, SType.Any], // non destructive (any -- any int)
         ['loop', onLoop, SType.List],

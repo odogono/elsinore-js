@@ -527,6 +527,22 @@ export class QueryStack {
         return this;
     }
 
+    /**
+     * 
+     * @param word 
+     * @param val 
+     * @param replace 
+     * @returns 
+     */
+    addWord(word:string, val:WordFn, replace:boolean = false): QueryStack {
+        return this.addWords([ [word, val] ]);
+
+        // let patterns = replace ? [] : this.words[word] || [];
+        // patterns = [...patterns, [val] ] as WordEntry[];
+        // this.words[word] = patterns;
+        // return this;
+    }
+
 
     getWord(value: StackValue): WordFn | undefined {
         // const [type,word] = value;
@@ -744,6 +760,9 @@ export function entityIdFromValue(value: StackValue): EntityId {
 }
 
 function matchStack(stackItems: StackValue[], pattern: SType[]) {
+    if( pattern === undefined ){
+        return true;
+    }
     const pLength = pattern.length;
     if (pLength === 0) {
         return true;
