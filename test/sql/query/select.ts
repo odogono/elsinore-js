@@ -202,7 +202,7 @@ test('entity with all the components', async () => {
 test('entity without components', async () => {
     let [stack,es] = await prepES(`
     [
-        /component/completed !bf not
+        /component/completed !bf !not
         @eid
     ] select
     `, 'todo');
@@ -695,20 +695,34 @@ test('filter with bf', async () => {
 });
 
 
-// test.only('com attr case', async () => {
-//     let [stack] = await prepES(`
-        
-//         [
-//             /component/position#rank !ca *^$1 ==
-//             @eid /component/position#file @ca
-//         ] select
-//         `, 'chess');
+test('bf or', async () => {
+    let id = 1000;
+    let idgen = () => ++id;
+    const es = createEntitySet({ idgen });
 
-//     // console.log( stack.items );
-//     const result = stack.popValue();
-//     console.log( result );
+    const stmt = es.prepare(`
+    [ "/component/src", ["url"] ] !d
+    [ "/component/dst", ["url"] ] !d
+    gather +
 
-//     // assert.equal(result, 'action');
-// });
+    [ /component/src {url: "file:///about.txt"} ] !c
+    gather +
+    
+    [ /component/dst {url: "file:///projects.txt"} ] !c
+    gather +
+
+
+    [
+        [ /component/src /component/dst ] !bf !or
+        @c
+    ] select
+    `);
+
+    // await printAll( es );
+
+    const res = await stmt.getResult();
+    assert.equal(res.length, 2);
+
+});
 
 test.run();

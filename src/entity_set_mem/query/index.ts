@@ -198,7 +198,7 @@ export async function select(stack: QueryStack, query: StackValue[], options: Se
 
         // converts a BitField to OR mode
         ['!or', onBitFieldOr, SType.BitField],
-        ['not', onBitFieldNot, SType.BitField],
+        ['!not', onBitFieldNot, SType.BitField],
 
         ['order', onOrder, SType.ComponentAttr, SType.Value],
         ['limit', applyLimit],
@@ -233,7 +233,7 @@ export async function select(stack: QueryStack, query: StackValue[], options: Se
     // stack.words = {};
 
     // Log.debug('[select] post');
-    // ilog(items);
+    // console.log(items);
 
 
 

@@ -80,6 +80,7 @@ export interface RetrieveOptions {
 
 export interface RetrieveComponentOptions extends RetrieveOptions {
     allDefs?: boolean;
+    optDefs?: boolean;
     returnCid?: boolean;
 }
 
@@ -563,6 +564,7 @@ export function sqlRetrieveComponents(ref: SqlRef, eids: EntityId[], defs: Compo
     const { db } = ref;
     let result = [];
     const allDefs = options.allDefs ?? false;
+    const optDefs = options.optDefs ?? false;
     const returnCid = options.returnCid ?? false;
     let { offset, limit, orderDir, orderAttr, orderDef } = options;
 
@@ -576,7 +578,7 @@ export function sqlRetrieveComponents(ref: SqlRef, eids: EntityId[], defs: Compo
     const eidCondition = eids === undefined ? '' : `AND eid IN (${eids})`;
 
     // NOTE - this is horrible
-    const havingCondition = allDefs ? '' : `HAVING COUNT(eid) = ${dids.length}`
+    const havingCondition = (allDefs || optDefs) ? '' : `HAVING COUNT(eid) = ${dids.length}`
 
     const sql = `
     SELECT DISTINCT eid,did FROM tbl_entity_component

@@ -198,7 +198,7 @@ test('entity with all the components', async () => {
 test('entity without components', async () => {
     let [stack,es] = await prepES(`
     [
-        /component/completed !bf not
+        /component/completed !bf !not
         @eid
     ] select
     `, 'todo');
@@ -670,19 +670,33 @@ test('and/or component', async () => {
     assert.equal(res[0].url, 'file:///misc/style.scss');
 });
 
-// test('condition against missing com', async () => {
-//     let query = `[
-//             /component/completed#/isComplete !ca true ==
-//             /component/completed#/isComplete !ca false ==
-//             or
-//             /component/priority#priority !ca -5 ==
-//             and
-//             @e
-//             ] select
-//             prints
-//             `
+test.only('bf or', async () => {
+    let id = 1000;
+    let idgen = () => ++id;
+    const es = createEntitySet({ idgen });
 
-//     let [stack] = await prepES(query, 'todo');
-// });
+    const stmt = es.prepare(`
+    [ "/component/src", ["url"] ] !d
+    [ "/component/dst", ["url"] ] !d
+    gather +
+
+    [ /component/src {url: "file:///about.txt"} ] !c
+    gather +
+    
+    [ /component/dst {url: "file:///projects.txt"} ] !c
+    gather +
+
+
+    [
+        [ /component/src /component/dst ] !bf !or
+        @c
+    ] select
+    `);
+
+    const res = await stmt.getResult();
+    assert.equal(res.length, 2);
+
+});
+
 
 test.run();

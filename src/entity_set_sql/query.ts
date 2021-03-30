@@ -11,7 +11,8 @@ import {
     or as bfOr,
     toValues as bfToValues,
     isBitField,
-    TYPE_NOT
+    TYPE_NOT,
+    TYPE_OR
 } from '@odgn/utils/bitfield';
 import { EntitySetSQL, ComponentDefSQL } from ".";
 import { createLog } from "../util/log";
@@ -71,8 +72,8 @@ export async function select(stack: QueryStack, query: StackValue[], options: Se
         ['define', onDefine],
 
         // converts a BitField to OR mode
-        ['or', onBitFieldOr, SType.BitField],
-        ['not', onBitFieldNot, SType.BitField],
+        ['!or', onBitFieldOr, SType.BitField],
+        ['!not', onBitFieldNot, SType.BitField],
 
         ['order', onOrder, SType.ComponentAttr, SType.Value],
         ['limit', applyLimit],
@@ -342,9 +343,6 @@ export function fetchComponents(stack: SQLQueryStack, [, op]: StackValue): InstR
     let coms = [];
     // Log.debug('[fetchComponent]', 'good', eids, defs );
 
-    // let dids =  bf === undefined || bf.isAllSet ? undefined : bfToValues(bf);
-
-    // let dids = bf !== undefined || bf.isAllSet ? undefined : bfToValues(bf);
 
     let [orderDir, orderDid, orderAttr, orderType] = stack.scratch.orderBy ?? ['desc'];
     let [offset, limit] = stack.scratch.limit ?? [0, Number.MAX_SAFE_INTEGER];
@@ -369,8 +367,9 @@ export function fetchComponents(stack: SQLQueryStack, [, op]: StackValue): InstR
 
 
     const allDefs = bf === undefined || (isBitField(bf) && bf.isAllSet) || defs === undefined;
+    const optDefs = bf !== undefined && bf.type === TYPE_OR;
     // Log.debug('[fetchComponent]', {allDefs, isAllSet:(isBitField(bf) && bf.isAllSet), undefined:(defs===undefined)}, bf);
-    const options = { allDefs, offset, limit, orderDef, orderDir, orderAttr, returnCid };
+    const options = { allDefs, optDefs, offset, limit, orderDef, orderDir, orderAttr, returnCid };
 
     // if (returnCid) {
     // coms = sqlRetrieveComponentIds(es.db, eids, defs || es.componentDefs, options);

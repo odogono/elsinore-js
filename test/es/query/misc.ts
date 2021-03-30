@@ -32,7 +32,9 @@ test('selects using string compare', async () => {
         { uri: '/component/file', properties: ['uri', 'path', 'ext'] },
     ];
 
-    await defs.reduce( (p,def) => p.then( () => es.register(def)), Promise.resolve() );
+    for( const def of defs ){
+        await es.register(def);
+    }
 
     const data = [
         { '@d': '/component/file', uri: 'file:///temp/welcome.txt' },
