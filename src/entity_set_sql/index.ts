@@ -400,6 +400,11 @@ export class EntitySetSQL extends QueryableEntitySetMem {
 
         let [eid, did] = fromComponentId(cid);
         const def = this.getByDefId(did);
+
+        if( def === undefined ){
+            return undefined;
+        }
+
         let com = sqlRetrieveComponent(this.db, eid, def);
 
         return com;
