@@ -43,7 +43,7 @@ test('if', async () => {
     "odd" 2 1 % 0 != if
     `);
 
-    assert.equal(stack.popValue(), "odd");
+    assert.equal(stack.popValue(), "even");
 });
 
 
@@ -66,8 +66,8 @@ test('can still produce a list', async () => {
 
 test('and', async () => {
     let [stack] = await prep(`
-         ok  true true and if
-         ok 4 6 > 10 5 < and if
+         ok true true and if
+         ok 6 4 > 5 10 < and if
          nok  ok  true false or iif
     `);
     assert.equal( stack.popValue(), 'ok' );

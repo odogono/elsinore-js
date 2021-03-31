@@ -422,8 +422,8 @@ export function onBitFieldNot(stack: QueryStack): InstResult {
 
 export function onAdd(stack: QueryStack, [, op]: StackValue): InstResult {
 
-    let left = stack.popValue();
     let right = stack.popValue();
+    let left = stack.popValue();
 
     let value = left;
     switch (op) {

@@ -32,7 +32,7 @@ test('loops until done', async () => {
             // it returns the final count
             $count
             true 
-            10 $count < 
+            10 $count > 
             iif
         ] loop
     `);

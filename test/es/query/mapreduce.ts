@@ -37,7 +37,7 @@ test('reduces values', async () => {
 
 test('filters values', async () => {
     // applies an is-even filter
-    let [stack] = await prep(`[1 2 3 4] [ 2 swap % 0 == ] filter`);
+    let [stack] = await prep(`[1 2 3 4] [ 2 % 0 == ] filter`);
     // Log.debug('stack:', stackToString(stack) );
     let result = stack.popValue();
     assert.equal(result, [2, 4]);

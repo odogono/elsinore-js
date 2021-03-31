@@ -84,7 +84,7 @@ test('stops loop execution', async () => {
     10
     [
         1 +
-        dup [ @! ] swap 15 <= if
+        dup [ @! ] swap 15 >= if
         true
     ] loop
     
@@ -100,7 +100,7 @@ test('break function', async () => {
     let [stack] = await prep(`
     // only returns false if the value is not even
     [
-        [ true @! ] swap 2 swap % 0 == if
+        [ true @! ] swap 2 % 0 == if
         false
         @>
     ] isNotEven define
@@ -118,7 +118,7 @@ test('break function', async () => {
 test('defined break', async () => {
     let [stack] = await prep(`
     [
-        [ true @! ] swap 2 swap % 0 == if
+        [ true @! ] swap 2 % 0 == if
         false
         @>
     ] isEven define
