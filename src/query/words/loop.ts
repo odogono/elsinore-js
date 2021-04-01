@@ -3,68 +3,70 @@ import { QueryStack } from "../stack";
 import { unpackStackValue, unpackStackValueR } from "../util";
 
 
+export async function onDo(stack: QueryStack, [,op]: StackValue): AsyncInstResult {
+    const isSame = op === '?do';
+    let start = stack.popValue();
+    let end = stack.popValue();
+    let expr = unpackStackValue(stack.pop(), SType.List);
+    return evalLoop(stack, expr, false, start, end + (isSame ? 0 : 1) );
+}
+
 /**
  * 
  * @param stack 
  * @param param1 
  */
 export async function onLoop(stack: QueryStack, [, op]: StackValue): AsyncInstResult {
-    let val = stack.pop();
-    let value = unpackStackValue(val, SType.List);
+    let expr = unpackStackValue(stack.pop(), SType.List);
+    return evalLoop(stack, expr);
+};
+
+async function evalLoop(stack: QueryStack, expr: StackValue[], exitOnNonTrue: boolean = true, start: number = 0, end: number = 10000) {
+    let count = start;
+    let isLooping = true;
+    let result: StackValue = undefined;
     const wasActive = stack.isActive;
 
-    // log( value );
 
-    let count = 0;
-    let limit = 10000; // yep, this will definitely cause an issue later
-    let isLooping = true;
-    let result:StackValue = undefined;
+    while (count < end && isLooping) {
+        stack.addUDWord('i', [SType.Value, count]);
 
-    while( count < limit && isLooping ){
-        
-        await stack.pushValues(value);
-        
-        result = stack.size > 0 ? stack.pop() : undefined;
+        await stack.pushValues(expr);
 
+        if (exitOnNonTrue) {
+            result = stack.size > 0 ? stack.pop() : undefined;
+        }
+
+        // log( 'count', count, result );
         // log('result:', result );//, 'out', out );
 
-        if( stack.isActive === false ){
+        if (stack.isActive === false) {
             // bit of a hack - mostly because we are
             // looping on the main stack and not creating a substack
 
-            // log('stack inactive', wasActive);
             isLooping = false;
-            if( wasActive ){
+            if (wasActive) {
                 stack.isActive = true;
             }
             break;
         }
-        // log('stack:', stack.toString());
         // if there is nothing on the stack, safest
         // to exit
-        if( result === undefined ){
+        if (exitOnNonTrue && result === undefined) {
             isLooping = false;
         } else {
-            isLooping = result[1] === true;
+            isLooping = exitOnNonTrue ? result[1] === true : true;
         }
-        // if( isLooping === false ){
-            // log('stack', stack.items);
-        // }
+        
         count++;
     }
 
-    if( count >= limit ){
-        throw new StackError(`loop out of control ${count} > ${limit}`);
+    if (count > end) {
+        throw new StackError(`loop out of control ${count} > ${end}`);
     }
 
-    // log('finished at', count, '/', limit )
-
-    // await stack.pushValues(value);
-    
-    // log('finished with', result);
-
     return result;
-};
+}
 
 
 const log = (...args) => console.log('[onLoop]', ...args);

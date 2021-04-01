@@ -127,21 +127,15 @@ export async function evalList<QS extends QueryStack>(stack: QS, list: StackValu
  * @param stack 
  * @param val 
  */
-export function onGather<QS extends QueryStack>(stack: QS, val: StackValue): InstResult {
+ export function onGather<QS extends QueryStack>(stack: QS, val: StackValue): InstResult {
     let values: StackValue[];
     let first = stack.pop();
-    let type: SType = first[0]; //unpackStackValue(first, SType.Value);
+    let type: SType = first[0];
 
     values = stack.popOfType(type);
-    // Log.debug('[onConcat]', type, first, values);
-
-    // if( type === SType.List ){
-    //     // concat the array into a single
-    //     values = [].concat( first[1], ...values.map(v => v[1]) );
-    // } else {
-    values = [first, ...values];
-    // }
-
+    
+    values = [...values.reverse(), first];
+    
     return [SType.List, values];
 }
 
@@ -157,7 +151,7 @@ export function onConcat<QS extends QueryStack>(stack: QS, val: StackValue): Ins
     // Log.debug('[onConcat]', 'a:', a[0], 'b:', b );
     b = b[0] !== SType.List ? [b] : b[1];
 
-    let values = [].concat(a[1], b);
+    let values = [].concat(b, a[1]);
 
     return [SType.List, values];
 }

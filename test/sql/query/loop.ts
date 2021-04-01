@@ -65,7 +65,7 @@ test('loops until done 2', async () => {
                 selectDeps
                 /src pluck!
                 dup 
-                $result concat result !
+                $result swap concat result !
                 dup size!
                 // continue if the last results
                 // came back non-empty

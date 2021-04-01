@@ -25,8 +25,8 @@ import {
     onCompare,
 } from "./words";
 import { onPluck } from "./words/pluck";
-import { onDefine } from "./words/define";
-import { onLoop } from "./words/loop";
+import { onDefine, onFetchWord } from "./words/define";
+import { onDo, onLoop } from "./words/loop";
 import {
     QueryStack,
 } from './stack';
@@ -275,6 +275,7 @@ export function createStdLibStack(stack?: QueryStack) {
         ['!=', onCompare, SType.Any, SType.Any],
 
         ['@', onListFetch, SType.List, SType.Value],
+        ['@', onFetchWord, SType.Value],
 
         // a defined value is evaled when pushed onto the stack
         ['define', onDefine, SType.Any, SType.Value],
@@ -340,6 +341,8 @@ export function createStdLibStack(stack?: QueryStack) {
         ['size!', onSize, SType.Any], // destructive (any -- int)
         ['size', onSize, SType.Any], // non destructive (any -- any int)
         ['loop', onLoop, SType.List],
+        ['do', onDo, SType.List, SType.Value, SType.Value],
+        ['?do', onDo, SType.List, SType.Value, SType.Value],
 
         ['undefined', onUndefined],
         ['!d', onComponentDef, SType.Map],

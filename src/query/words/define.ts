@@ -75,3 +75,10 @@ export function onDefine(stack: QueryStack, [, op]: StackValue): InstResult {
 
     return undefined;
 };
+
+
+export function onFetchWord(stack:QueryStack): InstResult {
+    let word = stack.popValue();
+    const val = stack.getUDWord(word);
+    return val;
+}

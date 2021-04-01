@@ -73,7 +73,7 @@ test('gather builds a list from similar items', async () => {
     `);
 
     // hello is not added to the result array
-    assert.equal(stack.toString(), `[14, 12, 10] ["hello"]`);
+    assert.equal( stack.toString(), `[10, 12, 14] ["hello"]`);
 });
 
 test('concat joins arrays', async () => {
@@ -82,7 +82,7 @@ test('concat joins arrays', async () => {
     `);
 
     // hello is not added to the result array
-    assert.equal(stack.toString(), `[14, 10, 12] ["hello"]`);
+    assert.equal( stack.toString(), `[10, 12, 14] ["hello"]`);
 });
 
 test('concat joins arrays and values', async () => {
