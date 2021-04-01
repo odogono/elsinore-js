@@ -74,17 +74,13 @@ test('select bf using eids', async () => {
     let id = 100; const idgen = () => ++id;
     let [stack,es] = await prepES(`
     [
-        [ 100 103 ]
+        [ 100 109 ]
         /component/piece/pawn !bf
         @eid
     ] select
     `, 'chess', {idgen});
 
-    // console.log( stack.popValue() );
-
-    // await printAll(es, undefined, ['/component/piece/pawn']);
-    // let eids = new Set( stack.popValue().map( c => c['@e'] ) );
-    assert.equal( stack.popValue(), [103] );
+    assert.equal( stack.popValue(), [109] );
 });
 
 test('multi select condition using eids', async () => {
@@ -470,7 +466,7 @@ test('super select', async () => {
 
     // Log.debug( stack.toString() );
     assert.equal(stack.popValue(),
-        '["/component/channel_member", {"@e": 14,"channel": 3,"client": 11}]');
+        '[ /component/channel_member { @e: 14 channel: 3 client: 11 } ]');
 })
 
 test('multi fn query', async () => {

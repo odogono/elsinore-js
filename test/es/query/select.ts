@@ -71,17 +71,13 @@ test('select bf using eids', async () => {
     let id = 100; const idgen = () => ++id;
     let [stack,es] = await prepES(`
     [
-        [ 100 103 ]
+        [ 100 109 ]
         /component/piece/pawn !bf
         @eid
     ] select
     `, 'chess', {idgen});
 
-    // console.log( stack.popValue() );
-
-    // await printAll(es, undefined, ['/component/piece/pawn']);
-    // let eids = new Set( stack.popValue().map( c => c['@e'] ) );
-    assert.equal( stack.popValue(), [103] );
+    assert.equal( stack.popValue(), [109] );
 });
 
 test('multi select condition using eids', async () => {
@@ -464,7 +460,7 @@ test('super select', async () => {
 
     // Log.debug( stack.toString() );
     assert.equal(stack.popValue(),
-        '["/component/channel_member", {"@e": 14,"channel": 3,"client": 11}]');
+        '[ /component/channel_member { @e: 14 channel: 3 client: 11 } ]');
 })
 
 test('multi fn query', async () => {
@@ -579,41 +575,35 @@ test('selecting component by attribute', async () => {
 });
 
 
-test('selecting component against bf', async () => {
+test('selecting component by attribute', async () => {
     let id = 1000;
     let idgen = () => ++id;
-    const es = createEntitySet({ idgen });
+    const es = createEntitySet({idgen});
 
     const stmt = es.prepare(`
         [ "/component/src", ["url"] ] !d
-        [ "/component/upd", [{name:op, type:integer}] ] !d
+        [ "/component/dst", ["url"] ] !d
         gather // wraps previous into a list
         + // add list to es
 
-        [ /component/src {url: "file:///about.txt"} ] !c
-        gather
-        +
         [ /component/src {url: "file:///readme.txt"} ] !c
-        [ /component/upd {op: 1} ] !c
+        [ /component/dst {url: "file:///about.txt"} ] !c
         gather
         +
 
         [ 
             /component/src#url !ca ~r/^file\:\/\// == 
-            [/component/upd /component/src] !bf
-            and
+            // note - without this bitfield, both components will be selected
+            /component/src !bf
             @c 
         ] select
-
-        // prints
     `);
 
     const res = await stmt.getResult();
 
+    assert.equal( res.length, 1 );
+    assert.equal( res[0].url, 'file:///readme.txt' );
 
-
-    assert.equal(res.length, 2);
-    assert.equal(res[1].url, 'file:///readme.txt');
 });
 
 
@@ -670,7 +660,7 @@ test('and/or component', async () => {
     assert.equal(res[0].url, 'file:///misc/style.scss');
 });
 
-test.only('bf or', async () => {
+test('bf or', async () => {
     let id = 1000;
     let idgen = () => ++id;
     const es = createEntitySet({ idgen });

@@ -16,19 +16,21 @@ let test = suite('es/mem/query - Reference Words');
 
 test.before.each( beforeEach );
 
+
+
 test('pops an earlier word', async () => {
     let [stack] = await prep(`planet world hello $1`);
-    assert.equal(stack.toString(), '"world" "hello" "planet"');
+    assert.equal(stack.toString(), 'world hello planet');
 });
 
 test('works within a list', async () => {
     let [stack] = await prep(`planet world [ hello $0 ]`);
-    assert.equal(stack.toString(), '["hello"] "world" "planet"');
+    assert.equal(stack.toString(), '[ hello ] world planet');
 });
 
 test('pops above a list', async () => {
     let [stack] = await prep(`planet [ world [ hello ^^$0 ]]`);
-    assert.equal(stack.toString(), '["world", ["hello", "planet"]]');
+    assert.equal(stack.toString(), '[ world [ hello planet ] ]');
 });
 
 
@@ -36,7 +38,7 @@ test('pops above a list', async () => {
 test('not evaluated the first time', async () => {
     // spread evaluates the reference    
     let [stack] = await prep(`planet world [ hello ^$1 ] spread`);
-    assert.equal(stack.toString(), '"planet" "hello" "world"');
+    assert.equal(stack.toString(), 'planet hello world');
 });
 
 test('accesses defined words', async () => {
@@ -44,7 +46,7 @@ test('accesses defined words', async () => {
             active status let
             [ status is $status ] eval
             `);
-    assert.equal(stack.toString(), '["status", "is", "active"]');
+    assert.equal(stack.toString(), '[ status is active ]');
 });
 
 
@@ -62,7 +64,7 @@ test('a let word pushes', async () => {
 
 test('peeks an earlier word', async () => {
     let [stack] = await prep(`planet world hello %1`);
-    assert.equal(stack.toString(), '"world" "hello" "world" "planet"');
+    assert.equal(stack.toString(), 'world hello world planet');
 })
 
 test('out of range on peeking an earlier word', async () => {
@@ -73,5 +75,15 @@ test('out of range on peeking an earlier word', async () => {
     }
     // assert.equal(stack.toString(), '"hello" "world" "planet"');
 })
+
+
+test('evals map', async () => {
+    let [stack] = await prep(`
+            active status let
+            { status: $status }
+            `);
+    assert.equal(stack.toString(), '{ status: active }');
+});
+
 
 test.run();

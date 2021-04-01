@@ -49,7 +49,7 @@ test('stops execution from if', async () => {
     [ ok @! ] swap size! 0 == if
     failed
     `);
-    assert.equal(stack.toString(), '"ok"');
+    assert.equal(stack.toString(), 'ok');
 });
 
 test('stops list execution', async () => {
@@ -73,7 +73,7 @@ test('stops defined list execution', async () => {
     done
     `);
     
-    assert.equal(stack.toString(), '"done" 3 2 1');
+    assert.equal(stack.toString(), 'done 3 2 1');
 });
 
 
@@ -155,7 +155,7 @@ test('inner function break', async () => {
     `);
 
     // console.log( stack.items );
-    assert.equal( stack.toString(), '"hello" "nothing"' );
+    assert.equal( stack.toString(), 'hello nothing' );
 })
 
 

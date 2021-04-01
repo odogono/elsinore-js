@@ -45,6 +45,16 @@ test('stops and restarts stack execution 2', async () => {
 });
 
 
+
+test('stops execution from if', async () => {
+    let [stack] = await prep(`
+    []
+    [ ok @! ] swap size! 0 == if
+    failed
+    `);
+    assert.equal(stack.toString(), 'ok');
+});
+
 test('stops list execution', async () => {
     let [stack] = await prep(`[1 2 3 @! 4 @>] spread 5`);
     assert.equal(stack.toString(), '5 3 2 1');
@@ -66,7 +76,7 @@ test('stops defined list execution', async () => {
     done
     `);
     
-    assert.equal(stack.toString(), '"done" 3 2 1');
+    assert.equal(stack.toString(), 'done 3 2 1');
 });
 
 
@@ -77,7 +87,7 @@ test('stops loop execution', async () => {
     10
     [
         1 +
-        dup [ @! ] swap 15 <= if
+        dup [ @! ] swap 15 >= if
         true
     ] loop
     
@@ -88,71 +98,12 @@ test('stops loop execution', async () => {
 });
 
 
-`
-
-
-`
-
-// test('break with value', async () => {
-//     // console.log('');
-//     let [stack] = await prep(`
-
-//     // in this case, the break escapes the word scope only
-//     // and doesnt affect the caller
-//     // [ a @! b @> ] nopeBreak define
-
-//     // because the break is escaped, it doesn't affect
-//     // the word scope, but is passed to whatever is being called
-//     // [ a @! b ] nadaBreak define
-
-//     // nopeBreak valid
-
-//     // nadaBreak invalid @> valid
-//     // hello
-
-//     // [ nope @!] 1 0 < if invalid
-    
-
-
-//     // [
-//     //     // in this case, the break is only in the word scope
-//     //     [ true @! ] swap 2 swap % 0 == if
-//     //     false
-//     //     @>
-//     // ] isEven define
-
-    
-//     // 6 isEven valid
-//     // "hello?>>" .
-//     // 5 isEven valid
-    
-//     // [ nope break] 1 0 < if invalid
-//     // break invalid
-    
-//     // [
-//     //     [ red @! ] true if
-//     //     cyan
-//     //     @>
-//     // ] theValue define
-
-//     // [ theValue @! ] 1 0 < if
-//     // blue
-//     // prints
-//     // // blue break 1 0 > if
-//     // // red
-//     `);
-
-//     // console.log( stack.items );
-
-//     // assert.equal( stack.popValue(), 'red'); 
-// });
-
 
 test('break function', async () => {
     let [stack] = await prep(`
     // only returns false if the value is not even
     [
-        [ true @! ] swap 2 swap % 0 == if
+        [ true @! ] swap 2 % 0 == if
         false
         @>
     ] isNotEven define
@@ -170,7 +121,7 @@ test('break function', async () => {
 test('defined break', async () => {
     let [stack] = await prep(`
     [
-        [ true @! ] swap 2 swap % 0 == if
+        [ true @! ] swap 2 % 0 == if
         false
         @>
     ] isEven define
@@ -207,7 +158,7 @@ test('inner function break', async () => {
     `);
 
     // console.log( stack.items );
-    assert.equal( stack.toString(), '"hello" "nothing"' );
+    assert.equal( stack.toString(), 'hello nothing' );
 })
 
 

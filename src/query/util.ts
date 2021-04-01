@@ -21,12 +21,12 @@ export function stackToString(stack: QueryStack, reverse:boolean = true, items:S
     return strs.join(' ');
 }
 
-export function valueToString(val: StackValue, listToString:boolean = false): string {
+export function valueToString(val: StackValue, listToString:boolean = false, ignoreWhiteSpace:boolean = false): string {
     if( !Array.isArray(val) ){
         return val as any;
     }
     const [type, value] = val;
-    const strCheck = /^[a-z0-9\/_$]+$/i;
+    const whitespaceCheck = /\s+/;
 
     // Log.debug('[valueToString]', type, value);
     switch (type) {
@@ -38,7 +38,7 @@ export function valueToString(val: StackValue, listToString:boolean = false): st
             return `(${type} ${value.uri})`;
         case SType.Component:
             if (Array.isArray(value)) {
-                return `[${type},` + value.map(v => stringify(v)).join(', ') + ']';
+                return `[ ${stringValueToString(type)},` + value.map(v => stringify(v)).join(', ') + ']';
             }
             return `(${type} ${getComponentId(value)})`;
         case SType.Entity:
@@ -48,15 +48,15 @@ export function valueToString(val: StackValue, listToString:boolean = false): st
             return String(getEntityId(value));
         case SType.List:
             if( listToString ){
-                return value.map(v => valueToString(v)).join(' ');
+                return value.map(v => valueToString(v, false, true)).join(' ');
             }
-            return `[` + value.map(v => valueToString(v)).join(', ') + ']';
+            return `[ ` + value.map(v => valueToString(v)).join(' ') + ' ]';
         case SType.Map:
-            return '{' + Object.keys(value).reduce((res, key) => {
-                return [...res, `"${key}": ${valueToString(value[key])}`];
-            }, []).join(',') + '}';
+            return '{ ' + Object.keys(value).reduce((res, key) => {
+                return [...res, `${stringValueToString(key)}: ${valueToString(value[key])}`];
+            }, []).join(' ') + ' }';
         case SType.Value:
-            return strCheck.test(value) ? stringify(value) : value;
+            return stringValueToString(value, ignoreWhiteSpace);
             // return JSON.stringify(value);
         case SType.Filter:
             let [op, left, right] = value;
@@ -72,6 +72,10 @@ export function valueToString(val: StackValue, listToString:boolean = false): st
     }
 }
 
+function stringValueToString( value:string, ignoreWhiteSpace:boolean = false ){
+    const whitespaceCheck = /\s+/;
+    return (!ignoreWhiteSpace && whitespaceCheck.test(value)) ? stringify(value) : value;
+}
 
 
 /**
