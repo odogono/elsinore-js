@@ -51,12 +51,13 @@ import {
  * 
  */
  export class EntitySetMem extends EntitySet {
-    type: string = 'mem';
-
-    isEntitySetMem: boolean = true;
+    
 
     components = new Map<ComponentId, Component>();
     entities = new Map<EntityId, BitField>();
+     
+    type: string;
+    isEntitySetMem!: boolean;
 
     constructor(data?: EntitySet, options: EntitySetOptions = {}) {
         super(data, options);
@@ -755,3 +756,5 @@ import {
 
 }
 
+EntitySetMem.prototype.type = 'mem';
+EntitySetMem.prototype.isEntitySetMem = true;

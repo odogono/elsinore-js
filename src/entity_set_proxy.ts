@@ -19,7 +19,9 @@ import { StackValue } from "./query/types";
  */
 export class ProxyEntitySet extends QueryableEntitySet {
     es: QueryableEntitySet;
-    type: string = 'proxy';
+    
+    type!: string;
+    isProxyEntitySet!: boolean;
 
     constructor(es: QueryableEntitySet, options: EntitySetOptions = {}) {
         super(undefined, options);
@@ -107,3 +109,6 @@ export class ProxyEntitySet extends QueryableEntitySet {
         return this.es.createComponent(defId, attributes);
     }
 }
+
+ProxyEntitySet.prototype.type = 'proxy';
+ProxyEntitySet.prototype.isProxyEntitySet = true;

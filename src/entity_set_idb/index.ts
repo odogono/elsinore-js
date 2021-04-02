@@ -91,8 +91,9 @@ export class EntitySetIDB extends EntitySetMem {
     // cached component defs
     componentDefs: ComponentDefIDB[];
 
-    type: string = 'idb';
-    isAsync: boolean = true;
+    type!: string;
+    isAsync!: boolean;
+    isEntitySetIDB!: boolean;
 
 
     constructor(data?: EntitySetIDB) {
@@ -192,11 +193,11 @@ export class EntitySetIDB extends EntitySetMem {
      * in the es
      * 
      */
-    async * [Symbol.asyncIterator]() {
+    async *[Symbol.asyncIterator]() {
         await this.openEntitySet();
         const store = this.db.transaction(STORE_ENTITIES, 'readonly').objectStore(STORE_ENTITIES);
 
-        
+
 
         // for (const eid of eids) {
         //     yield eid;
@@ -514,7 +515,7 @@ export class EntitySetIDB extends EntitySetMem {
             }
             request.onerror = () => rej(request.error);
         })
-        
+
         // read existing component defs into local cache
         if (readDefs === true) {
             await this.getComponentDefs();
@@ -568,7 +569,9 @@ export class EntitySetIDB extends EntitySetMem {
     }
 }
 
-
+EntitySetIDB.prototype.type = 'idb';
+EntitySetIDB.prototype.isAsync = true;
+EntitySetIDB.prototype.isEntitySetIDB = true;
 
 
 function closeEntitySet(es: EntitySet) {

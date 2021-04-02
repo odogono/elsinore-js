@@ -104,6 +104,8 @@ export interface SQLCloneOptions extends CloneOptions {
 export interface EntitySetSQL extends EntitySetMem, QueryableEntitySet {};
 
 
+
+
 /**
  * As a storage backed ES, this entityset has functions
  * as a ComponentRegistry
@@ -117,8 +119,9 @@ export class EntitySetSQL extends QueryableEntitySetMem {
     isMemory: boolean;
     debug: boolean;
 
-    type: string = 'sql';
-    isAsync: boolean = true;
+    type!: string;
+    isAsync!: boolean;
+    isEntitySetSQL!: boolean;
     
     constructor(options: SQLEntitySetOptions = {}) {
         super(undefined, options);
@@ -518,3 +521,6 @@ export class EntitySetSQL extends QueryableEntitySetMem {
 
 }
 
+EntitySetSQL.prototype.type = 'sqlite';
+EntitySetSQL.prototype.isAsync = true;
+EntitySetSQL.prototype.isEntitySetSQL = true;

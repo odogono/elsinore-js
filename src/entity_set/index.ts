@@ -80,9 +80,10 @@ export type RemoveEntityType = EntityId | EntityId[] | Entity | Entity[];
 let workerIdBase = 0;
 
 export abstract class EntitySet {
-    isEntitySet: boolean = true;
-    isAsync: boolean = false;
-    type: string = 'es';
+    
+    isEntitySet!: boolean;
+    isAsync!: boolean;
+    type!: string;
 
     uuid: string = createUUID();
 
@@ -108,6 +109,7 @@ export abstract class EntitySet {
     readonly eidEpoch: number = 1609459200000; // 2021-01-01T00:00:00.000Z
 
     stack: QueryStack;
+    
 
     constructor(data?: EntitySet, options: EntitySetOptions = {}) {
         if (data !== undefined) {
@@ -471,3 +473,6 @@ export abstract class EntitySet {
     }
 }
 
+EntitySet.prototype.isEntitySet = true;
+EntitySet.prototype.isAsync = true;
+EntitySet.prototype.type = 'es';
