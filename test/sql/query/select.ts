@@ -721,4 +721,43 @@ test('bf or', async () => {
 
 });
 
+
+test('multi bitfield select', async () => {
+    let id = 1000;
+    let idgen = () => ++id;
+    const es = createEntitySet({ idgen });
+
+    const stmt = es.prepare(`
+    [ "/component/src", ["url"] ] !d
+    [ "/component/dst", ["url"] ] !d
+    gather +
+
+    [ /component/src {url: "file:///about.txt"} ] !c 
+    [ /component/dst {url: "/about"} ] !c 
+    gather +
+
+    [ /component/src {url: "file:///projects.txt"} ] !c 
+    [ /component/dst {url: "/projects"} ] !c 
+    gather +
+    
+    [ /component/src {url: "file:///contact.txt"} ] !c 
+    gather +
+
+    [
+        // select eids which have both /src and /dst
+        [ /component/src /component/dst ] !bf @eid
+
+        // select just /src
+        // this is an arg of @c
+        /component/src !bf
+        @c
+    ] select
+
+    /url pluck!
+    `);
+
+    const res = await stmt.getResult();
+    assert.equal(res, [ 'file:///about.txt', 'file:///projects.txt' ]);
+});
+
 test.run();

@@ -23,6 +23,7 @@ import {
     onUndefined,
     onRegexBuild,
     onCompare,
+    onThrow,
 } from "./words";
 import { onPluck } from "./words/pluck";
 import { onDefine, onFetchWord } from "./words/define";
@@ -356,6 +357,7 @@ export function createStdLibStack(stack?: QueryStack) {
         ['!e', onEntity, SType.Value],
         ['assert_type', onAssertType],
         ['prints', onPrintStack],
+        ['throw', onThrow, SType.Value],
     ]);
 
     return stack;

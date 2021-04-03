@@ -323,7 +323,7 @@ export async function onPrint<QS extends QueryStack>(stack: QS, val: StackValue)
     let msg;
     const [, op] = val;
     if (op === '..') {
-        console.info('[onPrint][stack]', '(', stackToString(stack), ')');
+        console.info('[onPrint][stack]', '(', stackToString(stack, true), ')');
     } else {
         // let msg =  await onToString(stack, [,'to_str!']);
         let msg = stack.pop();
@@ -695,6 +695,14 @@ export function onPrintStack<QS extends QueryStack>(stack: QS): InstResult {
     // Log.debug( '??', stack.toString() );
     return undefined;
 }
+
+
+export function onThrow<QS extends QueryStack>(stack: QS): InstResult {
+    const msg = stack.popValue();
+
+    throw new StackError(msg);
+}
+
 
 function printType(indent: number = 0, val: StackValue) {
     if (!Array.isArray(val)) {

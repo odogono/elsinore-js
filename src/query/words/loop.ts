@@ -2,6 +2,8 @@ import { StackValue, InstResult, AsyncInstResult, SType, StackError } from "../t
 import { QueryStack } from "../stack";
 import { unpackStackValue, unpackStackValueR } from "../util";
 
+const LOOP_OOC = 1000;
+
 
 export async function onDo(stack: QueryStack, [,op]: StackValue): AsyncInstResult {
     const isSame = op === '?do';
@@ -21,13 +23,14 @@ export async function onLoop(stack: QueryStack, [, op]: StackValue): AsyncInstRe
     return evalLoop(stack, expr);
 };
 
-async function evalLoop(stack: QueryStack, expr: StackValue[], exitOnNonTrue: boolean = true, start: number = 0, end: number = 10000) {
+async function evalLoop(stack: QueryStack, expr: StackValue[], exitOnNonTrue: boolean = true, start: number = 0, end: number = LOOP_OOC) {
     let count = start;
     let isLooping = true;
     let result: StackValue = undefined;
     const wasActive = stack.isActive;
 
 
+    
     while (count < end && isLooping) {
         stack.addUDWord('i', [SType.Value, count]);
 
@@ -61,7 +64,7 @@ async function evalLoop(stack: QueryStack, expr: StackValue[], exitOnNonTrue: bo
         count++;
     }
 
-    if (count > end) {
+    if (count === LOOP_OOC) {
         throw new StackError(`loop out of control ${count} > ${end}`);
     }
 

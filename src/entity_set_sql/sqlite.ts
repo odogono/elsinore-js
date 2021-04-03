@@ -35,7 +35,7 @@ import {
 } from '@odgn/utils/bitfield';
 import { Component, ComponentId, getComponentDefId, getComponentEntityId, toComponentId } from '../component';
 import { StackError, SType } from '../query/types';
-import { isBoolean, isRegex, isDate, isValidDate } from '@odgn/utils';
+import { isBoolean, isRegex, isDate, isValidDate, toInteger, toNumber } from '@odgn/utils';
 import { compareDates } from '../query/words/util';
 import { hashToString } from '@odgn/utils';
 import { stringify } from '@odgn/utils';
@@ -340,6 +340,7 @@ export function sqlUpdateComponent(ref: SqlRef, com: Component, def: ComponentDe
         // }
         // Log.debug('[sqlUpdateComponent][insert]', eid, changes);
 
+        // Log.debug('[sqlUpdateComponent][insert]', eid, did, sql, {colString, vals});
         // if( debug ) Log.debug('[sqlUpdateComponent][insert]', eid, did, sql, names, 'vals', vals );
         // if( debug ) Log.debug('[sqlUpdateComponent][insert]', 'result cid', {cid} );
 
@@ -367,12 +368,21 @@ export function sqlCommit(ref: SqlRef) {
 }
 
 function valueToSQL(value: any, property?: ComponentDefProperty) {
+    if( value === undefined ){
+        return undefined;
+    }
+    if( value === null ){
+        return null;
+    }
     if (property !== undefined) {
         switch (property.type) {
             case 'integer':
+            case 'entity':
+                return toInteger(value);
             case 'number':
+                return toNumber(value);
             case 'string':
-                return value;
+                return value + '';
             case 'datetime':
                 const dte = new Date(value);
                 return isValidDate(dte) ? dte.toISOString() : undefined;
@@ -390,9 +400,6 @@ function valueToSQL(value: any, property?: ComponentDefProperty) {
     if (isBoolean(value)) {
         return value + '';
     }
-    // if( value === undefined ){
-    // Log.debug('[valueToSQL]', 'dammit', value, property );
-    // }
     return value;
 }
 

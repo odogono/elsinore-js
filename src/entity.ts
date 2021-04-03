@@ -148,11 +148,27 @@ export class Entity {
  * @param entity 
  */
 export function getEntityId(entity: Entity): EntityId {
-    return isEntity(entity) ? entity.id : isInteger(entity as any) ? entity as any : 0;
+    return isEntity(entity) ? entity.id : isEntityId(entity as any) ? entity as any : 0;
 }
 
+/**
+ * Returns true if the value is a valid Entity
+ * 
+ * @param item 
+ * @returns 
+ */
 export function isEntity(item: any): boolean {
-    return isObject(item) && item['isEntity'] === true;
+    return isObject(item) && item.isEntity === true;
+}
+
+/**
+ * Returns true if the value is a valid Entity id
+ * 
+ * @param item 
+ * @returns 
+ */
+export function isEntityId( item:any ): boolean {
+    return isInteger( item );
 }
 
 
