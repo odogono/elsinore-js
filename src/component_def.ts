@@ -38,7 +38,7 @@ export interface ComponentDefRaw {
 
 export interface ComponentDefProperty {
     name: string;
-    type: string;
+    type: PropertyType;
     default: any;
     isDefault?: boolean;
     optional: boolean;
@@ -49,7 +49,7 @@ export interface ComponentDefProperty {
 
 const propertyDefaults = {
     name: undefined,
-    type: 'string',
+    type: 'string' as PropertyType,
     default: undefined,
     optional: false,
     persist: true,
@@ -65,7 +65,7 @@ const typeDefaults = {
     'datetime': undefined,// () => new Date()
 }
 
-export type PropertyType = 'string' | 'integer' | 'boolean' | 'entity' | 'list' | 'map' | 'datetime' | 'json';
+export type PropertyType = 'string' | 'number' | 'integer' | 'boolean' | 'entity' | 'list' | 'map' | 'datetime' | 'json';
 
 
 /**
