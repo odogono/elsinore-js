@@ -134,6 +134,7 @@ export abstract class EntitySet {
 
     /**
      * Returns an entity by its id
+     * The Entity will have all its components retrieved by default
      * 
      * @param eid 
      * @param populate 

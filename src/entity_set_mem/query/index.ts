@@ -883,8 +883,6 @@ export async function fetchEntity(stack: ESMemQueryStack, [, op]: StackValue): A
 
     let arg = stack.peek();
 
-    
-
     if( arg !== undefined ){
         let [type,val] = arg;
         if( type === SType.Value ){
@@ -1013,20 +1011,25 @@ export function matchEntities(es: EntitySetMem, eids: EntityId[], dids: BitField
         }
     }
 
-    if (isAll) {
-        eids = eids !== undefined ? eids : Array.from(es.entities.keys());
-        eids.sort();
+    
 
-        if (limit < Number.MAX_SAFE_INTEGER) {
-            eids = eids.slice(offset, offset + limit);
-        }
+    // if (isAll) {
+    //     eids = eids !== undefined ? eids : Array.from(es.entities.keys());
+    //     eids.sort();
 
-        return eids;
-    }
+    //     if (limit < Number.MAX_SAFE_INTEGER) {
+    //         eids = eids.slice(offset, offset + limit);
+    //     }
 
-    if (bfCount(mbf as BitField) === 0) {
+    //     return eids;
+    // }
+    
+    // console.log('[matchEntities]', {isAll, orderDid, orderType, mbf});
+
+    if (mbf && bfCount(mbf as BitField) === 0) {
         return [];
     }
+
 
     let coll;
 
@@ -1048,7 +1051,7 @@ export function matchEntities(es: EntitySetMem, eids: EntityId[], dids: BitField
 
     for (let [eid, ebf] of coll) {
 
-        if (cmpFn(mbf as BitField, ebf) === false) {
+        if (mbf && cmpFn(mbf as BitField, ebf) === false) {
             continue;
         }
         // console.log('[matchEntities]', bfToValues(mbf), bfToValues(ebf) );

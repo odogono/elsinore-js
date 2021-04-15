@@ -39,6 +39,8 @@ test('limit/orderby on components', async () => {
     ]);
 });
 
+
+
 test('limit/orderby on entities', async () => {
     let [stack,es] = await prepES(`
         [
@@ -50,12 +52,6 @@ test('limit/orderby on entities', async () => {
         `, 'todo');
 
     const result = stack.popValue();
-    // console.log( es.getUrl() );
-
-    // console.log('result', result);
-
-    // result.forEach( e => printEntity(es,e));
-
     assert.equal(result.map(e => e.Title.text), [
         'phone up friend',
         'drink some tea',
@@ -63,7 +59,25 @@ test('limit/orderby on entities', async () => {
     ]);
 });
 
-test('limit/orderby on entities', async () => {
+test('limit/orderby on entities without did', async () => {
+    let [stack,es] = await prepES(`
+        [
+            /component/meta#/createdAt !ca desc order
+            3 0 limit
+            @e
+        ] select
+        `, 'todo');
+
+    // 101, 103, 104
+    const result = stack.popValue();
+    assert.equal(result.map(e => e.Title.text), [
+        'phone up friend',
+        'drink some tea',
+        'do some shopping'
+    ]);
+});
+
+test('limit/orderby on entities again', async () => {
 
     let q = `
     [ "/component/a" [url] ] !d
@@ -101,18 +115,7 @@ test('limit/orderby on entities', async () => {
     const es = createEntitySet({ idgen });
     const result = await es.prepare(q).getResult();
 
-    // console.log('es', es.getUrl());
-    // console.log('result', result);
-
-    // result.forEach( e => printEntity(es,e));
-
     assert.equal( result.map( e => e.id), [1003,1002] );
-
-    // assert.equal(result.map(e => e.Title.text), [
-    //     'phone up friend',
-    //     'drink some tea',
-    //     'do some shopping'
-    // ]);
 });
 
 

@@ -792,24 +792,43 @@ export function sqlRetrieveEntityIds(ref:SqlRef, eids?: EntityId[], options:Retr
  */
 export function sqlRetrieveEntities(ref: SqlRef, eids?: EntityId[], options: RetrieveOptions = {}): Entity[]|EntityId[]|string {
     const { db } = ref;
-    const { offset, limit } = options;
+    let { offset, limit, orderDef, orderAttr, orderDir } = options;
     const returnSQL = options.returnSQL ?? false;
     const returnEid = options.returnEid ?? false;
     let rows, stmt;
 
-    // console.log( {returnSQL, returnEid});
+    orderDir = orderDir ?? 'asc';
+
+    // console.log( {orderDef, orderAttr, orderDir});
+
     if (eids !== undefined) {
         const params = buildInParamString(eids);
-        let sql = `SELECT eid,did FROM tbl_entity_component WHERE eid IN (${eids}) ORDER BY eid LIMIT ${offset}, ${limit}`;
+        let sql = `SELECT eid,did FROM tbl_entity_component 
+            WHERE eid IN (${eids}) 
+            ORDER BY eid LIMIT ${offset}, ${limit}`;
+
         if( returnSQL ){
-            return `SELECT DISTINCT eid FROM tbl_entity_component WHERE eid IN (${eids}) ORDER BY eid LIMIT ${offset}, ${limit}`;
+            return `SELECT DISTINCT eid FROM tbl_entity_component WHERE eid IN (${eids}) ORDER BY eid ${orderDir} LIMIT ${offset}, ${limit}`;
         }
         // Log.debug('[sqlRetrieveEntities]', sql);
         rows = db.prepare(sql).all();
     } else {
-        let sql = `SELECT eid,did FROM tbl_entity_component ORDER BY eid LIMIT ${offset}, ${limit}`;
+
+        let select = returnSQL ? 'SELECT DISTINCT ec.eid' : 'SELECT ec.eid, ec.did';
+        
+        let sql = `${select} FROM tbl_entity_component AS ec ORDER BY eid ${orderDir} LIMIT ${offset}, ${limit}`;
+        if (orderDef !== undefined) {
+            sql = `
+            ${select} FROM tbl_entity_component AS ec
+            JOIN
+            (SELECT eid,${orderAttr} FROM ${orderDef.tblName}
+            ORDER BY ${orderAttr} DESC LIMIT ${offset}, ${limit}
+            ) AS s
+            ON ec.eid = s.eid`;
+        }
+
         if( returnSQL ){
-            return `SELECT DISTINCT eid FROM tbl_entity_component ORDER BY eid LIMIT ${offset}, ${limit}`;
+            return sql;
         }
         // Log.debug('[sqlRetrieveEntities]', sql);
         rows = db.prepare(sql).all();

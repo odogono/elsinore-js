@@ -52,12 +52,25 @@ test('limit/orderby on entities', async () => {
         `, 'todo');
 
     const result = stack.popValue();
-    // console.log( es.getUrl() );
+    
+    assert.equal(result.map(e => e.Title.text), [
+        'phone up friend',
+        'drink some tea',
+        'do some shopping'
+    ]);
+});
 
-    // console.log('result', result);
+test('limit/orderby on entities without did', async () => {
+    let [stack,es] = await prepES(`
+        [
+            /component/meta#/createdAt !ca desc order
+            3 0 limit
+            @e
+        ] select
+        `, 'todo');
 
-    // result.forEach( e => printEntity(es,e));
-
+    // 101, 103, 104
+    const result = stack.popValue();
     assert.equal(result.map(e => e.Title.text), [
         'phone up friend',
         'drink some tea',

@@ -16,13 +16,17 @@ let test = suite('es/sqlite - copying');
 test.before.each( beforeEach );
 
 
-test('cloning without entities', async () => {
+// NOTE - cloning of file backed sqlite currently not
+// implemented. 
+// requires either multiple es within a db
+// OR creation of a new db file
+test.skip('cloning without entities', async () => {
     let [,es] = await prepES(undefined, 'todo');
 
     let es2 = await es.clone({cloneEntities:false});
 
     // console.log('es1', es.getUrl());
-    // console.log('es2', es2);
+    // console.log('es2', es2.getUrl());
 
     assert.equal( (await es2.getComponentDefs()).length, 4 );
     assert.equal( (await es2.size() ), 0 );
