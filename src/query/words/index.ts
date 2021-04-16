@@ -89,16 +89,16 @@ export async function onRot<QS extends QueryStack>(stack: QS): AsyncInstResult {
  * 
  * @param stack 
  */
-export async function onSelect<QS extends QueryStack>(stack: QS): AsyncInstResult {
-
+export async function onSelect<QS extends QueryStack>(stack: QS, [,op]:StackValue): AsyncInstResult {
+    const isCount = op === 'select_count';
     let right = stack.pop();
-    let left = stack.peek(); // NOTE - we do not consume the ES
+    let left = stack.peek(); // the ES is not consumed
 
     let query = unpackStackValue(right, SType.List, false);
     let es: QueryableEntitySet = unpackStackValue(left, SType.EntitySet);
 
-    // Log.debug('[onSelect]', query );
-    let result = await es.select(stack, query);
+    // Log.debug('[onSelect]', query, {isCount} );
+    let result = await es.select(stack, query, {isCount});
 
     if (result) {
         // append output stack

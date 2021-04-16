@@ -119,4 +119,49 @@ test('limit/orderby on entities again', async () => {
 });
 
 
+test('count of entities', async () => {
+    let [stack,es] = await prepES(`
+        [
+            @e
+        ] select_count
+
+        `, 'todo');
+
+    assert.equal(stack.popValue(), 6);
+});
+
+test('count of entities with paging', async () => {
+    let [stack,es] = await prepES(`
+        [
+            /component/meta#/createdAt !ca desc order
+            3 0 limit
+            @e
+        ] select_count
+        `, 'todo');
+
+    assert.equal(stack.popValue(), 6);
+});
+
+
+test('count of components', async () => {
+    let [stack,es] = await prepES(`
+        [
+            @c
+        ] select_count
+        `, 'todo');
+
+    assert.equal(stack.popValue(), 17);
+});
+
+test('count of optional components', async () => {
+    let [stack,es] = await prepES(`
+        [
+            [/component/title /component/completed] !bf
+            @c
+        ] select_count
+        `, 'todo');
+
+    assert.equal(stack.popValue(), 3);
+});
+
 test.run();

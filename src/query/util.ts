@@ -140,7 +140,7 @@ export function unpackStackValueR(val: StackValue, assertType: SType = SType.Any
      */
  export function getComponentDefsFromBitField(es:EntitySet, bf?: BitField | 'all', asDefIds = false): ComponentDef[] | ComponentDefId[] {
     if (bf === undefined || bf === 'all' || (isBitField(bf) && bf.isAllSet)) {
-        let defs = es.componentDefs;
+        let defs = es.componentDefs.filter(Boolean);
         return asDefIds ? defs.map(d => getDefId(d)) : defs;
     }
 

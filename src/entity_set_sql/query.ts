@@ -52,7 +52,6 @@ const Log = createLog('SQLQuery');
 
 class SQLQueryStack extends QueryStack {
     es: EntitySetSQL;
-
 }
 
 /**
@@ -94,6 +93,7 @@ export async function select(stack: QueryStack, query: StackValue[], options: Se
     // reset ordering and limits
     stack.scratch.orderBy = undefined;
     stack.scratch.limit = [0, Number.MAX_SAFE_INTEGER];
+    stack.scratch.isCount = options.isCount ?? false;
 
     // Log.debug('[select] query', query);
     await stack.pushValues(query);
@@ -226,10 +226,7 @@ function buildEntitySelect(stack: SQLQueryStack): string {
     if (bf === undefined) {
         let from = stack.peek();
 
-        if (from === undefined) {
-            // return matchEntities(es, undefined, undefined);
-        }
-        else {
+        if (from !== undefined) {
             stack.pop();
             if (from[0] === SType.Entity) {
                 // throw new StackError('not implemented bES1');
@@ -313,13 +310,13 @@ export function fetchComponents(stack: SQLQueryStack, [, op]: StackValue): InstR
     const returnCid = op === '@cid';
     // let defs: ComponentDefSQL[];
 
-
+    
     // get the bitfield
     // defs = stack.popBitField(true) as ComponentDefSQL[];
     let bf = stack.popBitFieldOpt();
     const defs = getComponentDefsFromBitField(es, bf) as ComponentDefSQL[];
 
-    // Log.debug('[fetchComponent]', 'bf', bf );
+    // Log.debug('[fetchComponent]', 'bf', defs );
 
     left = stack.peek();
 
@@ -343,7 +340,7 @@ export function fetchComponents(stack: SQLQueryStack, [, op]: StackValue): InstR
     let coms = [];
     // Log.debug('[fetchComponent]', 'good', eids, defs );
 
-
+    const isCount = stack.scratch.isCount ?? false;
     let [orderDir, orderDid, orderAttr, orderType] = stack.scratch.orderBy ?? ['desc'];
     let [offset, limit] = stack.scratch.limit ?? [0, Number.MAX_SAFE_INTEGER];
     if (orderType === undefined) {
@@ -369,7 +366,7 @@ export function fetchComponents(stack: SQLQueryStack, [, op]: StackValue): InstR
     const allDefs = bf === undefined || (isBitField(bf) && bf.isAllSet) || defs === undefined;
     const optDefs = bf !== undefined && bf.type === TYPE_OR;
     // Log.debug('[fetchComponent]', {allDefs, isAllSet:(isBitField(bf) && bf.isAllSet), undefined:(defs===undefined)}, bf);
-    const options = { allDefs, optDefs, offset, limit, orderDef, orderDir, orderAttr, returnCid };
+    const options = { allDefs, optDefs, offset, limit, isCount, orderDef, orderDir, orderAttr, returnCid };
 
     // if (returnCid) {
     // coms = sqlRetrieveComponentIds(es.db, eids, defs || es.componentDefs, options);
@@ -377,7 +374,12 @@ export function fetchComponents(stack: SQLQueryStack, [, op]: StackValue): InstR
     // }
 
     // Log.debug('[fetchComponent]', 'options', options);
+    // Log.debug('[fetchComponent]', 'defs', es.componentDefs);
     coms = sqlRetrieveComponents(es.db, eids, defs || es.componentDefs, options);
+
+    if( isCount ){
+        return [SType.Value, coms];
+    }
 
     return [SType.List, returnCid ?
         coms.map(cid => [SType.Value, cid])
@@ -454,6 +456,7 @@ export async function fetchEntity(stack: SQLQueryStack, [, op]: StackValue): Asy
 
     // Log.debug('[fetchEntity]', data, eid);
 
+    const isCount = stack.scratch.isCount ?? false;
     let [orderDir, orderDid, orderAttr, orderType] = stack.scratch.orderBy ?? ['asc'];
     let [offset, limit] = stack.scratch.limit ?? [0, Number.MAX_SAFE_INTEGER];
     if (orderType === undefined) {
@@ -475,7 +478,7 @@ export async function fetchEntity(stack: SQLQueryStack, [, op]: StackValue): Asy
         // Log.debug('[fetchComponent]', 'orderBy', orderDid, orderAttr);
     }
 
-    let matchOptions = { offset, limit, orderDef, orderAttr, orderDir, returnEid };
+    let matchOptions = { isCount, offset, limit, orderDef, orderAttr, orderDir, returnEid };
     
     // !bf || 'all
     bf = stack.popBitFieldOpt();
@@ -506,6 +509,10 @@ export async function fetchEntity(stack: SQLQueryStack, [, op]: StackValue): Asy
     ents = matchEntities(es, bf, eids, matchOptions) as Entity[];
 
     // console.log('[fetchComponent]', 'yo', {returnList, returnEid}, ents, bfToValues(bf));
+
+    if( isCount ){
+        return [SType.Value, ents];
+    }
 
     let result: any;
 

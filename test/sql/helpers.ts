@@ -22,8 +22,8 @@ import {
 import { createLog } from '../../src/util/log';
 
 export { isComponent } from '../../src/component';
-export const parse = (data:string) => tokenizeString(data, { returnValues: true });
-export const sv = (v:unknown): StackValue => [SType.Value, v];
+export const parse = (data: string) => tokenizeString(data, { returnValues: true });
+export const sv = (v: unknown): StackValue => [SType.Value, v];
 
 export { getChanges, ChangeSetOp } from '../../src/change_set';
 export { fromComponentId, getComponentDefId, Component, OrphanComponent } from '../../src/component';
@@ -51,14 +51,14 @@ const liveDB = { path: 'test.sqlite', isMemory: false };
 const testDB = { uuid: 'TEST-1', isMemory: true };
 
 export const createEntitySet = (options?:SQLEntitySetOptions) => new EntitySetSQL({...options,...testDB});
-// export const createEntitySet = (options?:SQLEntitySetOptions) => new EntitySetSQL({...options,...liveDB});
+// export const createEntitySet = (options?: SQLEntitySetOptions) => new EntitySetSQL({ ...options, ...liveDB });
 
 
-export async function beforeEach(){
+export async function beforeEach() {
     await sqlClear('test.sqlite');
 }
 
-export async function buildEntitySet(options?:SQLEntitySetOptions): Promise<[EntitySet, Function]> {
+export async function buildEntitySet(options?: SQLEntitySetOptions): Promise<[EntitySet, Function]> {
     let es = createEntitySet(options);
 
     const defs = [
@@ -66,10 +66,10 @@ export async function buildEntitySet(options?:SQLEntitySetOptions): Promise<[Ent
         { uri: '/component/status', properties: ['status'] },
         { uri: '/component/topic', properties: ['topic'] },
         { uri: '/component/username', properties: ['username'] },
-        { uri: '/component/channel_member', properties: [ {name:'channel', type:'integer'} ] },
+        { uri: '/component/channel_member', properties: [{ name: 'channel', type: 'integer' }] },
     ]
 
-    for( const def of defs ){
+    for (const def of defs) {
         await es.register(def);
     }
     const buildEntity = (es: EntitySet, buildFn: BuildQueryFn, eid: number = 0) => {
@@ -96,7 +96,7 @@ export async function buildStackEntitySet(stack: QueryStack, options?): Promise<
         { uri: "/component/priority", properties: [{ "name": "priority", "type": "integer", "default": 0 }] },
     ];
 
-    for( const def of defs ){
+    for (const def of defs) {
         await es.register(def);
     }
 
@@ -107,7 +107,7 @@ export async function buildStackEntitySet(stack: QueryStack, options?): Promise<
 
 
 export async function prepES(insts?: string, fixture?: string, options: SQLEntitySetOptions = {}): Promise<[QueryStack, EntitySetSQL]> {
-    let es = createEntitySet(options);
+    let es = createEntitySet({ ...options, clearDb: true });
     let values: StackValue[];
 
     if (fixture) {
@@ -118,13 +118,13 @@ export async function prepES(insts?: string, fixture?: string, options: SQLEntit
     //     return [undefined,es];
     // }
 
-    if( insts !== undefined ){
+    if (insts !== undefined) {
         let stack = await es.query(insts, { values });
         return [stack, es];
     }
-    
-    let stack = await es.query(undefined, {values});
-    return [stack,es];
+
+    let stack = await es.query(undefined, { values });
+    return [stack, es];
 }
 
 
@@ -148,8 +148,8 @@ export async function prep(insts?: string): Promise<[QueryStack, EntitySet]> {
  * @param es 
  * @param fixture 
  */
-export async function loadFixtureIntoES( es:EntitySetSQL, fixture:string ){
-    if( es === undefined ){
+export async function loadFixtureIntoES(es: EntitySetSQL, fixture: string) {
+    if (es === undefined) {
         es = createEntitySet();
     }
     let data = await loadFixture(fixture, false);

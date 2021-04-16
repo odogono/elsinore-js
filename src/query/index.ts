@@ -328,6 +328,7 @@ export function createStdLibStack(stack?: QueryStack) {
         ['over', onDup, SType.Any],
         ['rot', onRot, SType.Any, SType.Any, SType.Any],
         ['select', onSelect, SType.Any, SType.List],
+        ['select_count', onSelect, SType.Any, SType.List],
         ['spread', onListSpread, SType.List],
 
         ['eval', onListEval, SType.List],

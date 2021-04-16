@@ -66,7 +66,8 @@ import {
     sqlGetEntities,
     sqlRetrieveComponentsByDef,
     sqlBegin, 
-    sqlCommit
+    sqlCommit,
+    sqlClear
 } from "./sqlite";
 import { createLog } from "../util/log";
 import { select } from "./query";
@@ -74,7 +75,7 @@ import { AddType, AddOptions, RemoveType, EntitySet, EntitySetOptions, CloneOpti
 import { StackValue } from "../query/types";
 import { QueryStack } from "../query";
 import { EntitySetMem } from '../entity_set_mem';
-import { QueryableEntitySetMem } from "../entity_set_mem/query";
+import { QueryableEntitySetMem, SelectOptions } from "../entity_set_mem/query";
 import { QueryableEntitySet } from '../entity_set/queryable';
 
 
@@ -135,6 +136,10 @@ export class EntitySetSQL extends QueryableEntitySetMem {
             this.path = options.path;
         }
         this.db = options.db ?? undefined;
+
+        if( options.clearDb && this.isMemory === false ){
+            sqlClear(this.path);
+        }
     }
 
     getUrl() {
@@ -176,9 +181,9 @@ export class EntitySetSQL extends QueryableEntitySetMem {
         return clone;
     }
 
-    select(stack: QueryStack, query: StackValue[]): Promise<StackValue[]> {
+    select(stack: QueryStack, query: StackValue[], options:SelectOptions): Promise<StackValue[]> {
         stack.es = this as unknown as EntitySet;
-        return select(stack, query);
+        return select(stack, query, options);
     }
 
     // /**
@@ -450,6 +455,7 @@ export class EntitySetSQL extends QueryableEntitySetMem {
         }
 
         const dids = bfToValues( isBitField(populate) ? (populate as BitField) : e.bitField );
+        
         let defs = dids.map(did => this.getByDefId(did));
 
         let coms = sqlRetrieveEntityComponents(this.db, e.id, defs);
@@ -476,7 +482,7 @@ export class EntitySetSQL extends QueryableEntitySetMem {
         def = existing === undefined ? sqlInsertDef(this.db, def) : existing;
 
         const did = def[ComponentDefT];
-        // const { hash, tblName } = (def as ComponentDefSQL);
+        // Log.debug('[register]', did, def.uri);
 
         this.componentDefs[did - 1] = def;
         this.byUri.set(def.uri, did);

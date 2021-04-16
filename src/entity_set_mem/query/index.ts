@@ -58,6 +58,7 @@ class ESMemQueryStack extends QueryStack {
 
 
 export interface SelectOptions {
+    isCount?: boolean;
     stack?: QueryStack;
 }
 
@@ -77,9 +78,9 @@ export class QueryableEntitySetMem extends EntitySetMem {
      * @param query 
      * @returns 
      */
-     select(stack: QueryStack, query: StackValue[]): Promise<StackValue[]> {
+     select(stack: QueryStack, query: StackValue[], options:SelectOptions): Promise<StackValue[]> {
         stack.es = this as unknown as EntitySet;
-        return select(stack, query);
+        return select(stack, query, options);
     }
 
 
@@ -223,6 +224,7 @@ export async function select(stack: QueryStack, query: StackValue[], options: Se
 
     stack.scratch.orderBy = undefined;
     stack.scratch.limit = [0, Number.MAX_SAFE_INTEGER];
+    stack.scratch.isCount = options.isCount ?? false;
 
     await stack.pushValues(query, { evalEscape: true });
 

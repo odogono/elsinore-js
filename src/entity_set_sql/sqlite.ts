@@ -75,6 +75,7 @@ export interface RetrieveOptions {
     orderDef?: ComponentDefSQL;
     returnSQL?: boolean;
     returnEid?: boolean;
+    isCount?: boolean;
 }
 
 
@@ -82,6 +83,7 @@ export interface RetrieveComponentOptions extends RetrieveOptions {
     allDefs?: boolean;
     optDefs?: boolean;
     returnCid?: boolean;
+    isCount?: boolean;
 }
 
 
@@ -511,37 +513,6 @@ function rowToComponent(def: ComponentDefSQL, row: any): Component {
     return com;
 }
 
-// export function sqlRetrieveComponents(ref: SqlRef, eids: EntityId[], dids: ComponentDefId[]): Component[] {
-//     const { db } = ref;
-//     let result = [];
-
-//     if (eids !== undefined && eids.length === 0) {
-//         return result;
-//     }
-
-//     if( dids === undefined ){
-//         let stmt = db.prepare(`
-//     SELECT 
-//         eid,did 
-//     FROM 
-//         tbl_entity_component 
-//     WHERE 
-//         eid IN (
-//             SELECT 
-//                 eid 
-//             FROM 
-//                 tbl_entity_component 
-//             WHERE 
-//                 did IN (?)
-//         ) 
-//     ORDER BY 
-//         eid;
-//     `);
-//     let rows = stmt.all(did);
-//     }
-// }
-
-
 
 /**
  * Returns a generator which yields each component of a given def type
@@ -573,39 +544,65 @@ export function sqlRetrieveComponents(ref: SqlRef, eids: EntityId[], defs: Compo
     const allDefs = options.allDefs ?? false;
     const optDefs = options.optDefs ?? false;
     const returnCid = options.returnCid ?? false;
-    let { offset, limit, orderDir, orderAttr, orderDef } = options;
+    let { isCount, offset, limit, orderDir, orderAttr, orderDef } = options;
 
     if (eids !== undefined && eids.length === 0) {
         return result;
     }
 
     const dids = defs.map(d => getDefId(d));
-    // Log.debug('[sqlRetrieveComponents]', {allDefs}, dids, eids);
 
     const eidCondition = eids === undefined ? '' : `AND eid IN (${eids})`;
 
     // NOTE - this is horrible
     const havingCondition = (allDefs || optDefs) ? '' : `HAVING COUNT(eid) = ${dids.length}`
 
-    const sql = `
-    SELECT DISTINCT eid,did FROM tbl_entity_component
-    WHERE eid IN (
-        SELECT eid FROM tbl_entity_component
-        WHERE did IN (${dids}) ${eidCondition}
-        GROUP BY eid ${havingCondition}
-    )
-    AND did IN (${dids})
-    `;
-    // LIMIT ${offset},${limit}
+    // if( isCount ){
+    //     select = 'SELECT COUNT(DISTINCT(ec.eid)) AS count';
+    // }
 
+    // let sql = `
+    // SELECT DISTINCT eid,did FROM tbl_entity_component
+    // WHERE eid IN (
+    //     SELECT eid FROM tbl_entity_component
+    //     WHERE did IN (${dids}) ${eidCondition}
+    //     GROUP BY eid ${havingCondition}
+    // )
+    // AND did IN (${dids})
+    // `;
+    let select = `eid,did`;
+    if( isCount ){
+        select = `COUNT(eid) AS count`;
+    }
+
+    let sql = `SELECT ${select} FROM tbl_entity_component WHERE did IN (${dids}) ${eidCondition}`;
+
+    if( !(allDefs||optDefs) ){
+        let buffer = [];
+        for(let ii = 0; ii<dids.length;ii++ ){
+            buffer.push( `SELECT eid FROM tbl_entity_component WHERE did = ${dids[ii]} ${eidCondition}` )
+        }
+        sql = buffer.join(' INTERSECT ');
+
+        if( isCount ){
+            sql = `SELECT ${select} FROM ( ${sql} )`;
+        }
+    }
+
+    // Log.debug('[sqlRetrieveComponents]', {dids});
+    // Log.debug('[sqlRetrieveComponents]', 'defs', defs );
     // Log.debug('[sqlRetrieveComponents]', sql);
 
     let stmt = db.prepare(sql);
 
+    if( isCount ){
+        return stmt.get().count;
+    }
+
     // get rid of duplicates - although shouldnt the sql do this?
     eids = Array.from( new Set( stmt.all().map(r => r.eid) ) );
 
-    // Log.debug('[sqlRetrieveComponents]', 'result', eids );
+    // Log.debug('[sqlRetrieveComponents]', 'result', {allDefs,optDefs}, eids );
     // Log.debug('[sqlRetrieveComponents]', 'defs', defs );
     // Log.debug('[sqlRetrieveComponents]', 'orderDef', orderDef );
 
@@ -655,47 +652,6 @@ export function sqlRetrieveComponents(ref: SqlRef, eids: EntityId[], defs: Compo
 }
 
 
-// SELECT a.*,b.createdAt FROM tbl_component_title_cc2c57e6 AS a
-// LEFT JOIN tbl_component_meta_90f607b9 AS b ON b.eid = a.eid
-// WHERE a.eid IN (100, 101, 102, 103, 104)
-// ORDER BY b.createdAt DESC
-
-// export function sqlRetrieveComponentIds(ref: SqlRef, eids: EntityId[], defs: ComponentDefSQL[], options:RetrieveComponentOptions = {}): ComponentId[] {
-//     const { db } = ref;
-//     let result = [];
-//     const allDefs = options.allDefs ?? false;
-
-//     if (eids !== undefined && eids.length === 0) {
-//         return result;
-//     }
-
-//     const dids = defs.map( d => getDefId(d) );
-//     // Log.debug('[sqlRetrieveComponents]', {allDefs}, dids, eids);
-
-//     const eidCondition = eids === undefined ? '' : `AND eid IN (${eids})`;
-
-//     // NOTE - this is horrible
-//     const havingCondition = allDefs ? '' : `HAVING COUNT(eid) = ${dids.length}`
-
-//     const sql = `
-//     SELECT DISTINCT eid,did FROM tbl_entity_component
-//     WHERE eid IN (
-//         SELECT eid FROM tbl_entity_component
-//         WHERE did IN (${dids}) ${eidCondition}
-//         GROUP BY eid ${havingCondition}
-//     )
-//     AND did IN (${dids})
-//     `;
-
-//     // Log.debug('[sqlRetrieveComponents]', sql);
-
-//     let stmt = db.prepare(sql);
-
-//     return stmt.all().map( r => toComponentId(r.eid,r.did) );
-
-
-// }
-
 function buildInParamString(params: any[]): string {
     return '?,'.repeat(params.length).slice(0, -1);;
 }
@@ -734,6 +690,7 @@ export function sqlRetrieveDefs(ref: SqlRef): ComponentDefSQL[] {
 
     return rows.map(row => {
         let { id, schema } = row;
+        // Log.debug('[sqlRetrieveDefs]', id );
         // return createComponentDef(id, JSON.parse(schema));
         return sqlCreateComponentDef(id, schema);
     })
@@ -795,44 +752,57 @@ export function sqlRetrieveEntities(ref: SqlRef, eids?: EntityId[], options: Ret
     let { offset, limit, orderDef, orderAttr, orderDir } = options;
     const returnSQL = options.returnSQL ?? false;
     const returnEid = options.returnEid ?? false;
-    let rows, stmt;
+    const isCount = options.isCount ?? false;
+    let rows;
+    let sql:string;
 
     orderDir = orderDir ?? 'asc';
 
-    // console.log( {orderDef, orderAttr, orderDir});
+    // console.log( options );
 
     if (eids !== undefined) {
-        const params = buildInParamString(eids);
-        let sql = `SELECT eid,did FROM tbl_entity_component 
+        // const params = buildInParamString(eids);
+        sql = `SELECT eid,did FROM tbl_entity_component 
             WHERE eid IN (${eids}) 
             ORDER BY eid LIMIT ${offset}, ${limit}`;
 
         if( returnSQL ){
             return `SELECT DISTINCT eid FROM tbl_entity_component WHERE eid IN (${eids}) ORDER BY eid ${orderDir} LIMIT ${offset}, ${limit}`;
         }
-        // Log.debug('[sqlRetrieveEntities]', sql);
-        rows = db.prepare(sql).all();
+        
     } else {
 
         let select = returnSQL ? 'SELECT DISTINCT ec.eid' : 'SELECT ec.eid, ec.did';
+
+        if( isCount ){
+            select = 'SELECT COUNT(DISTINCT(ec.eid)) AS count';
+        }
+
+        let orderLimit = isCount ? '' : `ORDER BY ${orderAttr} ${orderDir} LIMIT ${offset}, ${limit}`;
         
-        let sql = `${select} FROM tbl_entity_component AS ec ORDER BY eid ${orderDir} LIMIT ${offset}, ${limit}`;
+        sql = `${select} FROM tbl_entity_component AS ec ${orderLimit}`;
         if (orderDef !== undefined) {
             sql = `
             ${select} FROM tbl_entity_component AS ec
             JOIN
             (SELECT eid,${orderAttr} FROM ${orderDef.tblName}
-            ORDER BY ${orderAttr} DESC LIMIT ${offset}, ${limit}
+            ${orderLimit}
             ) AS s
             ON ec.eid = s.eid`;
         }
-
+        
         if( returnSQL ){
             return sql;
         }
-        // Log.debug('[sqlRetrieveEntities]', sql);
-        rows = db.prepare(sql).all();
     }
+    
+    // Log.debug('[sqlRetrieveEntities]', {isCount, orderAttr}, sql);
+
+    if( isCount ){
+        return db.prepare(sql).get().count;
+    }
+
+    rows = db.prepare(sql).all();
 
     // Log.debug('[sqlRetrieveEntities]', returnEid, rows);
     if( returnEid ){
