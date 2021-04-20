@@ -761,7 +761,7 @@ export function sqlRetrieveEntities(ref: SqlRef, eids?: EntityId[], options: Ret
     // console.log( options );
 
     if (eids !== undefined) {
-        // const params = buildInParamString(eids);
+        
         sql = `SELECT eid,did FROM tbl_entity_component 
             WHERE eid IN (${eids}) 
             ORDER BY eid LIMIT ${offset}, ${limit}`;
@@ -771,14 +771,18 @@ export function sqlRetrieveEntities(ref: SqlRef, eids?: EntityId[], options: Ret
         }
         
     } else {
-
         let select = returnSQL ? 'SELECT DISTINCT ec.eid' : 'SELECT ec.eid, ec.did';
 
         if( isCount ){
             select = 'SELECT COUNT(DISTINCT(ec.eid)) AS count';
         }
 
-        let orderLimit = isCount ? '' : `ORDER BY ${orderAttr} ${orderDir} LIMIT ${offset}, ${limit}`;
+        let orderLimit = isCount ? '' : `LIMIT ${offset}, ${limit}`;
+
+        if( !isCount && orderAttr !== undefined ){
+            orderLimit = `ORDER BY ${orderAttr} ${orderDir} ` + orderLimit;
+        }
+        // let orderLimit = isCount ? '' : `ORDER BY ${orderAttr} ${orderDir} LIMIT ${offset}, ${limit}`;
         
         sql = `${select} FROM tbl_entity_component AS ec ${orderLimit}`;
         if (orderDef !== undefined) {
@@ -796,7 +800,7 @@ export function sqlRetrieveEntities(ref: SqlRef, eids?: EntityId[], options: Ret
         }
     }
     
-    // Log.debug('[sqlRetrieveEntities]', {isCount, orderAttr}, sql);
+    // Log.debug('[sqlRetrieveEntities]', {isCount, orderAttr, offset, limit}, sql);
 
     if( isCount ){
         return db.prepare(sql).get().count;

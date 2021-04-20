@@ -40,12 +40,19 @@ import {
     RetrieveOptions
 } from "./sqlite";
 import { onLogicalFilter, parseFilterQuery } from "../entity_set_mem/query/filter";
-import { onComponentAttr, buildBitfield, SelectOptions, stringToComponentAttr, onOrder, applyLimit } from "../entity_set_mem/query";
+import {
+    onComponentAttr,
+    buildBitfield,
+    stringToComponentAttr,
+    onOrder,
+    applyLimit
+} from "../entity_set_mem/query";
 import { onDefine } from "../query/words/define";
 import { onPluck } from "../query/words/pluck";
 import { onBitFieldNot, onBitFieldOr, onPrintStack } from "../query/words";
 import { onDiff } from '../query/words/list';
 import { getProperty } from '../component_def';
+import { SelectOptions } from '../entity_set/queryable';
 
 const Log = createLog('SQLQuery');
 
@@ -87,7 +94,7 @@ export async function select(stack: QueryStack, query: StackValue[], options: Se
         ['<', onLogicalFilter, SType.Any, SType.Any],
         ['<=', onLogicalFilter, SType.Any, SType.Any],
 
-        ['debug', () => {stack.scratch.debug = true;return undefined} ],
+        ['debug', () => { stack.scratch.debug = true; return undefined }],
     ]);
 
     // reset ordering and limits
@@ -274,7 +281,7 @@ export function applyFilter(stack: SQLQueryStack): InstResult {
     let result = parseFilterQuery(es, filter[0], filter[1], filter[2]);
 
     // if( debug ) Log.debug('[applyFilter]', 'filter', filter );
-    if( debug ) Log.debug('[applyFilter]', 'query', result );
+    if (debug) Log.debug('[applyFilter]', 'query', result);
 
     result = sqlRetrieveByFilterQuery(es.db, undefined, result, { selectEidSql: eidSql, debug });
 
@@ -310,7 +317,7 @@ export function fetchComponents(stack: SQLQueryStack, [, op]: StackValue): InstR
     const returnCid = op === '@cid';
     // let defs: ComponentDefSQL[];
 
-    
+
     // get the bitfield
     // defs = stack.popBitField(true) as ComponentDefSQL[];
     let bf = stack.popBitFieldOpt();
@@ -377,7 +384,7 @@ export function fetchComponents(stack: SQLQueryStack, [, op]: StackValue): InstR
     // Log.debug('[fetchComponent]', 'defs', es.componentDefs);
     coms = sqlRetrieveComponents(es.db, eids, defs || es.componentDefs, options);
 
-    if( isCount ){
+    if (isCount) {
         return [SType.Value, coms];
     }
 
@@ -479,7 +486,7 @@ export async function fetchEntity(stack: SQLQueryStack, [, op]: StackValue): Asy
     }
 
     let matchOptions = { isCount, offset, limit, orderDef, orderAttr, orderDir, returnEid };
-    
+
     // !bf || 'all
     bf = stack.popBitFieldOpt();
 
@@ -510,7 +517,7 @@ export async function fetchEntity(stack: SQLQueryStack, [, op]: StackValue): Asy
 
     // console.log('[fetchComponent]', 'yo', {returnList, returnEid}, ents, bfToValues(bf));
 
-    if( isCount ){
+    if (isCount) {
         return [SType.Value, ents];
     }
 
