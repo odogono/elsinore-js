@@ -570,10 +570,19 @@ export function sqlRetrieveComponents(ref: SqlRef, eids: EntityId[], defs: Compo
     // )
     // AND did IN (${dids})
     // `;
+
+    // if( isCount ){
+    //     let sql = `SELECT COUNT(did) AS count FROM tbl_entity_component WHERE did IN (${dids})`;
+    //     return db.prepare(sql).get().count
+    // }
+
+
     let select = `eid,did`;
     if( isCount ){
         select = `COUNT(eid) AS count`;
     }
+
+    // SELECT COUNT(did) AS count FROM tbl_entity_component WHERE did IN (1,2) AND eid IN (
 
     let sql = `SELECT ${select} FROM tbl_entity_component WHERE did IN (${dids}) ${eidCondition}`;
 
@@ -585,13 +594,13 @@ export function sqlRetrieveComponents(ref: SqlRef, eids: EntityId[], defs: Compo
         sql = buffer.join(' INTERSECT ');
 
         if( isCount ){
-            sql = `SELECT ${select} FROM ( ${sql} )`;
+            sql = `SELECT COUNT(did) AS count FROM tbl_entity_component WHERE did IN (${dids}) AND eid IN ( ${sql} )`;
         }
     }
 
     // Log.debug('[sqlRetrieveComponents]', {dids});
     // Log.debug('[sqlRetrieveComponents]', 'defs', defs );
-    // Log.debug('[sqlRetrieveComponents]', sql);
+    // Log.debug('[sqlRetrieveComponents]', {isCount}, sql);
 
     let stmt = db.prepare(sql);
 

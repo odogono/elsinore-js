@@ -14,10 +14,12 @@ let test = suite('es/mem/query - Paging');
 
 
 
-
-test('limit', async () => {
-    let [stack] = await prepES(`
+test('limit/orderby on components', async () => {
+    let [stack,es] = await prepES(`
         [
+            // how to get this param to the parts that need it?
+            // perhaps compiling it into a map for the words to read as args
+            // or maybe setting state on the stack itself
             /component/meta#/createdAt !ca desc order
             3 0 limit
             /component/title !bf
@@ -27,7 +29,7 @@ test('limit', async () => {
         `, 'todo');
 
     const result = stack.popValue();
-    
+    // console.log( es.getUrl() );
 
     // console.log('result', result);
 
@@ -47,12 +49,10 @@ test('limit/orderby on entities', async () => {
             3 0 limit
             /component/title !bf
             @e
-            
         ] select
         `, 'todo');
 
     const result = stack.popValue();
-    
     assert.equal(result.map(e => e.Title.text), [
         'phone up friend',
         'drink some tea',
@@ -78,7 +78,7 @@ test('limit/orderby on entities without did', async () => {
     ]);
 });
 
-test('limit/orderby on entities', async () => {
+test('limit/orderby on entities again', async () => {
 
     let q = `
     [ "/component/a" [url] ] !d
@@ -116,16 +116,54 @@ test('limit/orderby on entities', async () => {
     const es = createEntitySet({ idgen });
     const result = await es.prepare(q).getResult();
 
-    // console.log('result', result);
-
-    // result.forEach( e => printEntity(es,e));
-
     assert.equal( result.map( e => e.id), [1003,1002] );
-    // assert.equal(result.map(e => e.Title.text), [
-    //     'phone up friend',
-    //     'drink some tea',
-    //     'do some shopping'
-    // ]);
+});
+
+
+test('count of entities', async () => {
+    let [stack,es] = await prepES(`
+        [
+            @e
+        ] select_count
+
+        `, 'todo');
+
+    assert.equal(stack.popValue(), 6);
+});
+
+test('count of entities with paging', async () => {
+    let [stack,es] = await prepES(`
+        [
+            /component/meta#/createdAt !ca desc order
+            3 0 limit
+            @e
+        ] select_count
+        `, 'todo');
+
+    assert.equal(stack.popValue(), 6);
+});
+
+
+test('count of components', async () => {
+    let [stack,es] = await prepES(`
+        [
+            @c
+        ] select_count
+        `, 'todo');
+
+    assert.equal(stack.popValue(), 17);
+});
+
+test('count of optional components', async () => {
+    let [stack,es] = await prepES(`
+        [
+            // both dids are required - an AND op
+            [/component/title /component/completed] !bf
+            @c
+        ] select_count
+        `, 'todo');
+
+    assert.equal(stack.popValue(), 6);
 });
 
 test.run();

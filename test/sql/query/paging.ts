@@ -156,12 +156,13 @@ test('count of components', async () => {
 test('count of optional components', async () => {
     let [stack,es] = await prepES(`
         [
+            // both dids are required - an AND op
             [/component/title /component/completed] !bf
             @c
         ] select_count
         `, 'todo');
 
-    assert.equal(stack.popValue(), 3);
+    assert.equal(stack.popValue(), 6);
 });
 
 test.run();
