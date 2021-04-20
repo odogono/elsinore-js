@@ -9,7 +9,7 @@ import {
     RemoveEntityType,
     RemoveType
 } from "./entity_set";
-import { QueryableEntitySet } from "./entity_set/queryable";
+import { QueryableEntitySet, SelectOptions } from "./entity_set/queryable";
 import { QueryOptions, QueryStack, Statement } from "./query";
 import { StackValue } from "./query/types";
 
@@ -19,7 +19,7 @@ import { StackValue } from "./query/types";
  */
 export class ProxyEntitySet extends QueryableEntitySet {
     es: QueryableEntitySet;
-    
+
     type!: string;
     isProxyEntitySet!: boolean;
 
@@ -40,8 +40,8 @@ export class ProxyEntitySet extends QueryableEntitySet {
         return result;
     }
 
-    select(stack: QueryStack, query: StackValue[]): Promise<StackValue[]> {
-        return this.es.select(stack, query);
+    select(stack: QueryStack, query: StackValue[], options: SelectOptions): Promise<StackValue[]> {
+        return this.es.select(stack, query, options);
     }
 
     prepare(q: string, options?: QueryOptions): Statement {

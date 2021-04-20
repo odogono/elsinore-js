@@ -46,7 +46,7 @@ import { compareDates } from '../../query/words/util';
 import { onBitFieldNot, onBitFieldOr, onPrintStack } from '../../query/words';
 import { onDiff } from '../../query/words/list';
 import { EntitySet, EntitySetOptions } from '../../entity_set';
-import { QueryableEntitySet } from '../../entity_set/queryable';
+import { QueryableEntitySet, SelectOptions } from '../../entity_set/queryable';
 import { query, createStdLibStack, QueryOptions, Statement } from '../../query';
 
 const Log = createLog('ESMemQuery');
@@ -54,12 +54,6 @@ const Log = createLog('ESMemQuery');
 
 class ESMemQueryStack extends QueryStack {
     es: EntitySetMem
-}
-
-
-export interface SelectOptions {
-    isCount?: boolean;
-    stack?: QueryStack;
 }
 
 

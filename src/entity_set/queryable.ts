@@ -1,8 +1,16 @@
 import { EntitySet } from ".";
 import { Entity } from "../entity";
-import { SelectOptions } from "../entity_set_mem/query";
 import { QueryOptions, QueryStack, Statement } from "../query";
 import { StackValue } from "../query/types";
+
+
+
+
+export interface SelectOptions {
+    isCount?: boolean;
+    stack?: QueryStack;
+}
+
 
 
 export abstract class QueryableEntitySet extends EntitySet {

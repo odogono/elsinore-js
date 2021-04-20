@@ -390,7 +390,6 @@ test('uses multi conditions', async () => {
 //         all
 //         @c
 //     ] select
-//     prints
 //     `;
 
 //     let [stack] = await prepES(query, 'chess');
@@ -417,7 +416,6 @@ test('and/or condition', async () => {
                 and
                 @c
             ] select
-            // prints
             // exchange the result and the es
             swap
             // drop the original es
@@ -624,8 +622,6 @@ test('and/or component', async () => {
         /component/src !bf
         @c ] 
         select
-
-        // prints
     `);
 
     const res = await stmt.getResult({ref:200});
@@ -678,8 +674,6 @@ test('filter with bf', async () => {
             /component/src !bf
             @c 
         ]  select
-
-        // prints
     `);
 
     const res = await stmt.getResult({ref:200});

@@ -13,7 +13,7 @@ import {
     StackError,
 } from '../query/types';
 
-import { onComponentAttr, buildBitfield, SelectOptions } from "../entity_set_mem/query";
+import { onComponentAttr, buildBitfield } from "../entity_set_mem/query";
 import { onLogicalFilter, parseFilterQuery } from "../entity_set_mem/query/filter";
 import { 
     BitField,
@@ -26,6 +26,7 @@ import { ComponentDefId } from "../component_def";
 import { unpackStackValueR, unpackStackValue } from "../query/util";
 import { onPluck } from "../query/words/pluck";
 import { onDefine } from "../query/words/define";
+import { SelectOptions } from "../entity_set/queryable";
 
 const Log = createLog('IDBQuery');
 
@@ -47,9 +48,7 @@ export class QueryableEntitySetIDB extends EntitySetIDB {
  */
 export async function select(stack:QueryStack, query: StackValue[], options:SelectOptions = {}): Promise<StackValue[]> {
     
-    // stack.es = es;
     stack.setChild();
-
 
     // add first pass words
     stack.addWords([

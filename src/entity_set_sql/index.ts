@@ -75,8 +75,8 @@ import { AddType, AddOptions, RemoveType, EntitySet, EntitySetOptions, CloneOpti
 import { StackValue } from "../query/types";
 import { QueryStack } from "../query";
 import { EntitySetMem } from '../entity_set_mem';
-import { QueryableEntitySetMem, SelectOptions } from "../entity_set_mem/query";
-import { QueryableEntitySet } from '../entity_set/queryable';
+import { QueryableEntitySetMem } from "../entity_set_mem/query";
+import { QueryableEntitySet, SelectOptions } from '../entity_set/queryable';
 
 
 const Log = createLog('EntitySetSQL');
