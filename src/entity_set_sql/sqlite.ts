@@ -966,7 +966,7 @@ export function sqlRetrieveByFilterQuery(ref: SqlRef, eids: EntityId[], query: a
     } else {
         sql = sqlParts.join('\n');
     }
-    if( debug ) Log.debug('[sqlRetrieveByFilterQuery]', sql);
+    // Log.debug('[sqlRetrieveByFilterQuery]', sql);
     let stmt = db.prepare(sql);
 
 

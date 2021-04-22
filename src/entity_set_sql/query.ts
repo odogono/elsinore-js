@@ -70,6 +70,8 @@ export async function select(stack: QueryStack, query: StackValue[], options: Se
 
     stack.setChild();
 
+    // if (stack.scratch.debug) console.log('[select] 1', { _idx: stack._idx, _stacks: stack._stacks });
+
     // add first pass words
     stack.addWords([
         ['!bf', buildBitfield, SType.List],
@@ -94,7 +96,10 @@ export async function select(stack: QueryStack, query: StackValue[], options: Se
         ['<', onLogicalFilter, SType.Any, SType.Any],
         ['<=', onLogicalFilter, SType.Any, SType.Any],
 
-        ['debug', () => { stack.scratch.debug = true; return undefined }],
+        // ['debug', () => { stack.scratch.debug = true; return undefined }],
+        ['debug', () => { stack.scratch.debug = !!!stack.scratch.debug; return undefined }],
+
+        // ['test', () => { console.log('TEST called'); return undefined }],
     ]);
 
     // reset ordering and limits
@@ -107,7 +112,7 @@ export async function select(stack: QueryStack, query: StackValue[], options: Se
 
     // reset stack items and words
     let items = stack.items;
-    stack.clear();
+    stack.clear(true, false, false);
 
     // Log.debug('[select] post');
     // ilog(items);
@@ -131,6 +136,7 @@ export async function select(stack: QueryStack, query: StackValue[], options: Se
         ['intersect', onDiff],
         ['intersect!', onDiff],
         ['prints', onPrintStack],
+        ['debug', () => { stack.scratch.debug = !!!stack.scratch.debug; return undefined }],
     ]);
 
     // make sure any filter values have a following cmd
@@ -141,14 +147,17 @@ export async function select(stack: QueryStack, query: StackValue[], options: Se
         return [...result, value];
     }, []);
 
-    // console.log('[select]', items );
 
     // Log.debug('pushing ', items);
     await stack.pushValues(items);
 
     let result = stack.items;
 
+    // if (stack.scratch.debug) console.log('[select] 2', { _idx: stack._idx, _stacks: stack._stacks });
+    
     stack.restoreParent();
+    
+    // if (stack.scratch.debug) console.log('[select] 3', stack.items );
 
     return result;
 }
@@ -281,7 +290,8 @@ export function applyFilter(stack: SQLQueryStack): InstResult {
     let result = parseFilterQuery(es, filter[0], filter[1], filter[2]);
 
     // if( debug ) Log.debug('[applyFilter]', 'filter', filter );
-    if (debug) Log.debug('[applyFilter]', 'query', result);
+    // if (debug) Log.debug('[applyFilter]', 'query', result);
+    // Log.debug('[applyFilter]', 'query', result);
 
     result = sqlRetrieveByFilterQuery(es.db, undefined, result, { selectEidSql: eidSql, debug });
 
@@ -564,6 +574,10 @@ export async function fetchEntity(stack: SQLQueryStack, [, op]: StackValue): Asy
 function matchEntities(es: EntitySetSQL, mbf?: BitField, eids?: EntityId[], options: RetrieveOptions = { offset: 0, limit: Number.MAX_SAFE_INTEGER, orderDir: 'desc' }): Entity[] | EntityId[] | string {
     if (mbf === undefined || mbf.isAllSet) {
         return sqlRetrieveEntities(es.db, eids, options);
+    }
+
+    if (es.db === undefined) {
+        console.log('UH OH', es);
     }
 
     return sqlRetrieveEntitiesByDefId(es.db, bfToValues(mbf), eids, { ...options, type: mbf.type });

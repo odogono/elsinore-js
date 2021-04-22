@@ -8,7 +8,7 @@ import { ComponentDefId, ComponentDef } from "../component_def";
 import { BitField, create as createBitField, toValues as bfToValues } from '@odgn/utils/bitfield';
 import {
     StackValue, WordFn, SType,
-    StackError, InstResult, AsyncInstResult, WordSpec, WordEntry, Words
+    StackError, InstResult, AsyncInstResult, WordSpec, WordEntry, Words, WordArgs
 } from "./types";
 import { EntitySet } from "../entity_set";
 const Log = createLog('QueryStack');
@@ -78,7 +78,7 @@ export class QueryStack {
     _udWords: { [key: string]: any } = {};
 
     // used by words for temporary storage
-    scratch: { [key:string]: any } = {};
+    scratch: { [key: string]: any } = {};
 
     debug: boolean = false;
 
@@ -180,12 +180,23 @@ export class QueryStack {
         return items[idx];
     }
 
-    clear(clearItems: boolean = true, clearWords: boolean = false): QueryStack {
+    clear(clearItems: boolean = true, clearWords: boolean = false, reset: boolean = true): QueryStack {
+        
+        if (reset) {
+            this._idx = 0;
+            this._stacks = this._stacks.splice(0, 1);
+        }
         if (clearItems) {
             this._stacks[this._idx].items = [];
         }
         if (clearWords) {
             this._stacks[this._idx].words = {};
+        }
+        if (reset) {
+            this.isActive = true;
+            this.isEscapeActive = true;
+            this.isUDWordsActive = true;
+            this._udWords = {};
         }
         return this;
     }
@@ -241,23 +252,26 @@ export class QueryStack {
     async push(input: any | StackValue, options?: PushOptions): Promise<StackValue> {
         let value: StackValue;
         let handler: WordFn;
+        // const debug = options.debug;
         // const ticket = options.ticket;
 
         value = isStackValue(input) ? input : [SType.Value, input];
         let [type, word] = value;
 
-        // Log.debug('[push]', 'pre', this.isActive, value);
+        // if( options.debug ) Log.debug('[push]', 'pre', this.isActive, value);
 
         if (this.isEscapeActive) {
-            if (word == '@!' ) {
+            if (word == '@!') {
                 this.isActive = false;
                 // this.setActive(false, ActiveMode.Return, word);
-            } else if (word == '@>' ) {
+            } else if (word == '@>') {
                 this.isActive = true;
                 // this.setActive(true, ActiveMode.Active, word);
                 return value;
             }
         }
+
+        // if( options.debug ) Log.debug('[push]', 'post', this.isActive, value);
 
         if (this.isActive === false) {
             // Log.debug('[push]', 'inactive stack');
@@ -291,15 +305,15 @@ export class QueryStack {
             }
 
             // escape char for values which might otherwise get processed as words
-            if ( len > 1 && word.charAt(0) === '*') {
+            if (len > 1 && word.charAt(0) === '*') {
                 word = word.substring(1);
                 value = [SType.Value, word] as any;
                 evalWord = evalEscape;// false;
-                
+
                 // if( debug ) Log.debug('[push]', value, 'escaped');
             }
 
-            if( evalWord ) {
+            if (evalWord) {
                 // save the current stack
                 let stackIndex = this._idx;
 
@@ -315,11 +329,11 @@ export class QueryStack {
                 // words beginning with $ refer to offsets on the root stack if they are integers,
                 // or user defined words
                 const pr = word.charAt(0);
-                if (len > 1 && pr === '$' || (len > 1 && pr === '%') ) {
+                if (len > 1 && pr === '$' || (len > 1 && pr === '%')) {
                     let sub = word.substring(1);
                     if (isInteger(sub)) {
                         const idx = toInteger(sub);
-                        
+
                         value = pr === '$' ? this.pop(idx) : this.peek(idx);
                     }
                     else if (this.isUDWordsActive) {
@@ -336,11 +350,12 @@ export class QueryStack {
             }
         }
 
+        // if( debug ) Log.debug('[push]', 'what', {value,handler});
         if (handler !== undefined) {
             try {
                 if (isStackValue(handler)) {
                     value = (handler as any);
-                    if( value[0] === SType.Word ){
+                    if (value[0] === SType.Word) {
                         await this.pushValues(value[1]);
                         value = undefined;
                     }
@@ -350,13 +365,16 @@ export class QueryStack {
                     value = isPromise(result) ? await result : result as InstResult;
                 }
             } catch (err) {
-                if( err instanceof StackError ){
+                if (err instanceof StackError) {
                     throw err;
                 }
                 let e = new StackError(`${err.message}`);
                 e.original = err
                 e.stack = e.stack.split('\n').slice(0, 2).join('\n') + '\n'
                     + [...new Set(err.stack?.split('\n'))].join('\n');
+
+                Log.debug('[push][error]', { value, handler });
+                // Log.debug('[push][error]', this);
                 throw e;
             }
         }
@@ -364,6 +382,7 @@ export class QueryStack {
         if (value !== undefined) {
             this.items.push(value);
         }
+        // if( debug ) Log.debug('[push]', word, this.toString() );
         // Log.debug('[push]', word, value, handler, this.isActive );
         // Log.debug('[push]', this.items );
 
@@ -395,7 +414,9 @@ export class QueryStack {
         let pushed = [];
 
         try {
+            // if( options.debug ){ console.log('[pushValues]', values)}
             for (const value of values) {
+                // if( options.debug ){ console.log('[pushValues]', value)}
                 await this.push(value, options);
                 count++;
                 pushed.push(value);
@@ -407,7 +428,7 @@ export class QueryStack {
             // }
             let dump = stackToString(this, true, pushed.slice(1).slice(-5));
             let msg = err.message;
-            if( msg.indexOf(': (') == -1 ){
+            if (msg.indexOf(': (') == -1) {
                 msg = `${err.message}: (${dump})`;
             } else {
                 throw err;
@@ -502,26 +523,32 @@ export class QueryStack {
         return this._udWords[word];
     }
 
-    addWords(words: WordSpec[], replace: boolean = false): QueryStack {
+    /**
+     * Adds a word function to the stack
+     * 
+     * @param words 
+     * @param replace 
+     * @returns 
+     */
+    addWords(words: WordSpec[], replace:boolean = false): QueryStack {
 
         for (const spec of words) {
             const [word, fn, ...args] = spec;
+            
+            let patterns = replace ? [] : (this.words[word] || []);
 
-            let patterns = replace ?
-                []
-                : (this.words[word] || []);
-            // : Array.isArray(word) ? this.words[word[0]] : (this.words[word] || []);
-            // : Array.isArray(word) ? word.reduce( (o,w) => [...o,this.words[w]], [] ) : (this.words[word] || []);
-            patterns = [...patterns, [fn, (args as (SType[]))]] as WordEntry[];
+            let existing = patterns.findIndex( p => matchWordArgs(args, p) );
 
-            // if( Array.isArray(word) ){
-            //     this.words = word.reduce( (out,w) => ({...out,[w]:patterns }), this.words );
-            //     // console.log('[getWord]', this.words);
-            //     // throw 'stop';
-            // } else {
+            // if the word pattern exists, then replace it
+            if( existing !== -1 ){
+                patterns.splice( existing, 1, [fn, args] as WordEntry );
+            } else {
+                // otherwise add it
+                patterns = [...patterns, [fn, args]] as WordEntry[];
+            }
+
+
             this.words[word] = patterns;
-            // this.words = { ...this.words, [word]: patterns };
-            // }
         }
 
         return this;
@@ -534,8 +561,8 @@ export class QueryStack {
      * @param replace 
      * @returns 
      */
-    addWord(word:string, val:WordFn, replace:boolean = false): QueryStack {
-        return this.addWords([ [word, val] ]);
+    addWord(word: string, val: WordFn): QueryStack {
+        return this.addWords([[word, val]]);
 
         // let patterns = replace ? [] : this.words[word] || [];
         // patterns = [...patterns, [val] ] as WordEntry[];
@@ -647,9 +674,9 @@ export class QueryStack {
 
         let [type, bf] = val;
 
-        if( type === SType.BitField || (type === SType.Value && bf === 'all') ){
+        if (type === SType.BitField || (type === SType.Value && bf === 'all')) {
             stack.pop();
-            const result = getComponentDefsFromBitField( es, bf, asObj === false );
+            const result = getComponentDefsFromBitField(es, bf, asObj === false);
             return asObj ? result as CD[] : result as ComponentDefId[];
         }
 
@@ -744,7 +771,10 @@ export interface ExecuteOptions {
 // };
 
 
-
+function matchWordArgs( find:WordArgs, pattern:WordEntry ){
+    let [fn, pArgs] = pattern;
+    return JSON.stringify(find) === JSON.stringify(pArgs);
+}
 
 export function entityIdFromValue(value: StackValue): EntityId {
     const [type, val] = value;
@@ -760,7 +790,7 @@ export function entityIdFromValue(value: StackValue): EntityId {
 }
 
 function matchStack(stackItems: StackValue[], pattern: SType[]) {
-    if( pattern === undefined ){
+    if (pattern === undefined) {
         return true;
     }
     const pLength = pattern.length;

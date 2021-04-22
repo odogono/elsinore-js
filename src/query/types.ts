@@ -39,10 +39,12 @@ export type WordFn = SyncWordFn | AsyncWordFn;
 export type SyncWordFn = (stack: QueryStack, val: StackValue) => InstResult;
 export type AsyncWordFn = (stack: QueryStack, val: StackValue) => Promise<InstResult>;
 
-export type WordSpec = [ string, WordFn|StackValue, ...(SType|string)[] ];
+export type WordSpec = [ string, WordFn|StackValue, ...(SType)[] ];
 // export type WordSpec = [ (string|string[]), WordFn|StackValue, ...(SType|string)[] ];
 
-export type WordEntry = [ WordFn, SType[] ];
+export type WordArgs = SType[];
+// fn, args
+export type WordEntry = [ WordFn, WordArgs ];
 
 export interface Words {
     [name: string]: WordEntry[]

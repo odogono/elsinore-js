@@ -51,6 +51,7 @@ export interface QueryOptions {
     stack?: QueryStack;
     values?: StackValue[];
     reset?: boolean;
+    insts?: StackValue[];
 }
 
 export interface StatementArgs {
@@ -68,7 +69,7 @@ export class Statement {
     constructor(q: string, options: QueryOptions = {}) {
         this.q = q;
         this.stack = options.stack ?? createStdLibStack();
-        this.insts = tokenizeString(q, { returnValues: true });
+        this.insts = options.insts ?? tokenizeString(q, { returnValues: true });
         this.values = options.values;
     }
 
@@ -79,8 +80,10 @@ export class Statement {
         }
     }
 
-    async run(args?: StatementArgs) {
+    async run(args?: StatementArgs, debug:boolean = false) {
         await this.clear();
+        // if( debug ) console.log('[run]', this.stack );
+        // console.log('[run]', this.stack._idx, this.stack._stacks.map(s => s.id) );
 
         if (args !== undefined) {
             const defines = Object.keys(args).reduce((out, key) => {
@@ -97,8 +100,10 @@ export class Statement {
             await this.stack.pushValues(defines);
         }
 
+        
         try {
-            await this.stack.pushValues(this.insts);
+            // if( debug ) console.log('[run]', this.insts );
+            await this.stack.pushValues(this.insts, {debug});
         } catch( err ){
             console.error('[run]', this.q );
             throw err;
@@ -125,11 +130,12 @@ export class Statement {
      * 
      * @param args 
      */
-    async getResult(args?: StatementArgs) {
-        await this.run(args);
-        // console.log('[getResult]', this.stack.toString() );
+    async getResult(args?: StatementArgs, debug:boolean = false) {
+        await this.run(args, debug);
+        // if( debug ) console.log('[getResult]', this.stack.toString() );
+        // if( debug )console.log('[getResult]', this.stack );
         let result = this.stack.popValue();
-        // console.log('[getResult]', 'result', result );
+        // if( debug ) console.log('[getResult]', 'result', result );
         return result;
     }
 
@@ -359,6 +365,7 @@ export function createStdLibStack(stack?: QueryStack) {
         ['assert_type', onAssertType],
         ['prints', onPrintStack],
         ['throw', onThrow, SType.Value],
+        ['debug', () => { stack.scratch.debug = !!!stack.scratch.debug; return undefined }],
     ]);
 
     return stack;

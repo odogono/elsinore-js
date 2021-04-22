@@ -84,7 +84,7 @@ export class QueryableEntitySetMem extends EntitySetMem {
      * @param options 
      */
     prepare(q: string, options: QueryOptions = {}) {
-        let stmt = new Statement(q, { values: [[SType.EntitySet, this]] });
+        let stmt = new Statement(q, { ...options, values: [[SType.EntitySet, this]] });
         stmt.stack.addWords([
             ['!es', onEntitySet, SType.Map]
         ]);

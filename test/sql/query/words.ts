@@ -86,4 +86,18 @@ test('evals map', async () => {
 });
 
 
+test('re-definition', async () => {
+    let [stack] = await prep(`
+    [ 2 3 + "calling sa" . ] *simpleAdd define
+
+    // escaping the word prevents it being called!
+    [ 6 6 + ] *simpleAdd define
+
+    simpleAdd
+    `);
+
+    assert.equal( stack.popValue(), 12 );
+})
+
+
 test.run();
