@@ -117,7 +117,6 @@ test('removes entities', async () => {
 
     assert.equal( await stmtGetEids.getResult(), [] );
 
-    // printAll( es );
 });
 
 

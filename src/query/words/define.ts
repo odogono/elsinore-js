@@ -1,4 +1,4 @@
-import { StackValue, InstResult, AsyncInstResult, SType } from "../types";
+import { StackValue, InstResult, AsyncInstResult, SType, StackError } from "../types";
 import { QueryStack } from "../stack";
 import { isNumeric, isString, parseUri } from "@odgn/utils";
 import { unpackStackValueR } from "../util";
@@ -21,6 +21,10 @@ export function onDefine(stack: QueryStack, [, op]: StackValue): InstResult {
     
     let [valType,value] = stack.pop();
     let [, word] = wordVal;
+
+    if( word === undefined ){
+        throw new StackError('undefined word');
+    } 
     
     const isDefine = op === 'define';
     
@@ -70,6 +74,7 @@ export function onDefine(stack: QueryStack, [, op]: StackValue): InstResult {
     if( isDefine ){
         stack.addWords([ [word, wordFn] ]);
     } else {
+        
         stack.addUDWord(word, wordFn);
     }
 

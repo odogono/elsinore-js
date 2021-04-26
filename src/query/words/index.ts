@@ -648,13 +648,13 @@ export function onDrop<QS extends QueryStack>(stack: QS): InstResult {
 
 
 export function onClear<QS extends QueryStack>(stack: QS): InstResult {
-    stack.clear();
+    stack.clear(true, false, false);
     return undefined;
 };
 
-export function onVersion<QS extends QueryStack>(stack: QS): InstResult {
-    return [SType.Value, '1.0.0'];
-};
+// export function onVersion<QS extends QueryStack>(stack: QS): InstResult {
+//     return [SType.Value, '1.0.0'];
+// };
 
 // export function onLeave<QS extends QueryStack>(stack: QS, [,op]:StackValue): InstResult {
 //     const mode = op === 'leave' ? ActiveMode.Leave : ActiveMode.Break;

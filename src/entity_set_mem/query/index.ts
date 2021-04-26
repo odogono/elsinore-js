@@ -182,6 +182,7 @@ function onEntitySet<QS extends QueryStack>(stack: QS): InstResult {
  */
 export async function select(stack: QueryStack, query: StackValue[], options: SelectOptions = {}): Promise<StackValue[]> {
 
+    
     stack.setChild();
 
     // add first pass words
@@ -212,10 +213,6 @@ export async function select(stack: QueryStack, query: StackValue[], options: Se
     ]);
 
 
-    // Log.debug('[select]', query );
-    // Log.debug('[select]');
-    // ilog(query);
-
     stack.scratch.orderBy = undefined;
     stack.scratch.limit = [0, Number.MAX_SAFE_INTEGER];
     stack.scratch.isCount = options.isCount ?? false;
@@ -224,15 +221,9 @@ export async function select(stack: QueryStack, query: StackValue[], options: Se
 
     // reset stack items and words
     let items = stack.items;
-    stack.clear();
-    // stack.items = [];
-    // stack.words = {};
-
-    // Log.debug('[select] post');
-    // console.log(items);
-
-
-
+    
+    stack.clear(true, false, false);
+    
     stack.addWords([
         ['@e', fetchEntity],
         ['@eid', fetchEntity],
@@ -259,15 +250,9 @@ export async function select(stack: QueryStack, query: StackValue[], options: Se
         return result;
     }, []);
 
-    // Log.debug('[select]');
-    // ilog(items);
-
     await stack.pushValues(items);
 
     let result = stack.items;
-    // Log.debug('[select] pushing');
-    // ilog(result);
-
     stack.restoreParent();
 
     return result;

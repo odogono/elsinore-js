@@ -13,11 +13,6 @@ import {
 import { EntitySet } from "../entity_set";
 const Log = createLog('QueryStack');
 
-
-// let wordStack = [];
-
-let pushValuesRun = 0;
-
 export interface CloneOptions {
     items?: boolean;
     words?: boolean;
@@ -31,10 +26,6 @@ export const ActiveMode = {
 } as const;
 type ActiveMode = typeof ActiveMode[keyof typeof ActiveMode]
 
-// export const MODE_LEAVE = 0;
-// export const MODE_BREAK = 1;
-
-// type ActiveMode = 0 | 1;
 
 let stackId = 0;
 
@@ -45,10 +36,6 @@ interface QueryStackInst {
     isUDWordsActive: boolean;
     isEscapeActive: boolean;
     isActive: boolean;
-    // pendingActive?: boolean;
-    // leaveSet?: boolean;
-    // wordStack: any[];
-    // udWords: { [key:string]: any };
 }
 
 function createInst(): QueryStackInst {
@@ -59,10 +46,6 @@ function createInst(): QueryStackInst {
         isUDWordsActive: true,
         isEscapeActive: true,
         isActive: true,
-        // pendingActive: undefined,
-        // leaveSet: undefined,
-        // wordStack: []
-        // udWords: {}
     };
 }
 
@@ -122,36 +105,6 @@ export class QueryStack {
         return this._stacks[this._idx].isActive;
     }
 
-    // get wordStack() {
-    //     return this._stacks[this._idx].wordStack;
-    // }
-
-    // setActive(isit: boolean, mode: ActiveMode, reason: string) {
-    //     this._stacks[this._idx].isActive = isit;
-    //     // let entry = this.wordStack.pop();
-    //     // if (entry !== undefined) {
-    //     //     entry = { ...entry, active: isit, mode };
-    //     //     this.wordStack.push(entry);
-    //     //     // Log.debug('[setActive]', reason, entry, mode === ActiveMode.Leave ? 'leave' : 'break');
-    //     // }
-    // }
-
-    // set pendingActive(val: boolean) {
-    //     this._stacks[this._idx].pendingActive = val;
-    // }
-
-    // get pendingActive() {
-    //     return this._stacks[this._idx].pendingActive;
-    // }
-
-    // set leaveSet(val:boolean){
-    //     this._stacks[ this._idx ].leaveSet = val;
-    // }
-    // get leaveSet(){
-    //     return this._stacks[this._idx].leaveSet;
-    // }
-
-
 
     setItems(items: StackValue[]): QueryStack {
         this._stacks[this._idx].items = items;
@@ -176,7 +129,6 @@ export class QueryStack {
         //     throw new StackError(`stack underflow ${offset} / ${length}`);
         // }
 
-        // const stack = this.focus();
         return items[idx];
     }
 
@@ -211,11 +163,6 @@ export class QueryStack {
         return this;
     }
 
-    // focusChild():QueryStack {
-    //     const len = this._stacks.length-1;
-    //     this._idx = this._idx < len ? this._idx + 1 : len;
-    //     return this;
-    // }
 
     setChild(stack?: QueryStack): QueryStack {
         let sub = createInst();
@@ -238,13 +185,6 @@ export class QueryStack {
 
         return this;
     }
-
-    // async push(input: any | StackValue): Promise<StackValue> {
-    //     let [stack, value] = await push(this, input);
-    //     Object.assign(this, stack);
-    //     return value;
-    // }
-
 
     /**
      * Pushes a stack value onto the stack
@@ -681,23 +621,6 @@ export class QueryStack {
         }
 
         return undefined;
-
-        // // Log.debug('[popBitField]', 'yes', stack.items);
-        // if (type === SType.BitField) {
-        //     dids = bfToValues(bf);
-        //     defs = asObj ? dids.map(d => es.getByDefId(d) as CD) : [];
-        // } else if (type === SType.Value && bf === 'all') {
-        //     // get all def ids
-        //     if (asObj) {
-        //         defs = es.componentDefs as CD[];
-        //     } else {
-        //         dids = es.componentDefs.map(d => getDefId(d));
-        //     }
-        // }
-        // if (dids !== undefined || defs !== undefined) {
-        //     stack.pop();
-        // }
-        // return asObj ? defs : dids;
     }
 
     popBitFieldOpt(): BitField {
@@ -728,27 +651,6 @@ export class QueryStack {
 export function isStackValue(value: any): boolean {
     return Array.isArray(value) && value.length == 2;
 }
-
-
-// function printStackLineage(st: QueryStack, result: string = '') {
-//     result += String(st.id);
-//     let curr = st;
-//     let pre = '';
-
-//     while (curr.getParent()) {
-//         pre = `${curr._parent} < ` + pre;
-//         curr = curr.focus(curr._parent);
-//     }
-
-//     curr = st;
-//     let post = '';
-//     while (curr.getChild()) {
-//         post = post + `> ${curr._child}`;
-//         curr = curr.getChild();
-//     }
-
-//     return `${pre} (${st.id}) ${post}`;
-// }
 
 export interface PushOptions {
     debug?: boolean;

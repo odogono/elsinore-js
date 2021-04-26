@@ -82,10 +82,11 @@ export class Statement {
 
     async run(args?: StatementArgs, debug:boolean = false) {
         await this.clear();
-        // if( debug ) console.log('[run]', this.stack );
+        // if( debug ) console.log('[run]', this );
         // console.log('[run]', this.stack._idx, this.stack._stacks.map(s => s.id) );
 
         if (args !== undefined) {
+            // if( debug ) console.log('[run]', 'args', Object.keys(args) );
             const defines = Object.keys(args).reduce((out, key) => {
                 let val = args[key];
                 val = Array.isArray(val) ?
@@ -97,6 +98,7 @@ export class Statement {
                 [SType.Value, 'let']
                 ];
             }, []);
+            // if( debug ) console.log('[run]', 'defines', defines );
             await this.stack.pushValues(defines);
         }
 
@@ -105,7 +107,8 @@ export class Statement {
             // if( debug ) console.log('[run]', this.insts );
             await this.stack.pushValues(this.insts, {debug});
         } catch( err ){
-            console.error('[run]', this.q );
+            console.error('[run]', this.q.substring(0, Math.min(256,this.q.length)) );
+            
             throw err;
         }
 
