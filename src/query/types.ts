@@ -2,20 +2,20 @@ import { EntitySet } from "../entity_set";
 import { QueryStack } from "./stack";
 
 export enum SType {
-    Value = '%v',
-    List = '%[]',
-    Map = '%{}',
-    Word = '%w',
-    BitField = '%bf',
-    Entity = '%e',
-    EntitySet = '%es',
-    Component = '%c',
-    ComponentDef = '%d',
-    ComponentAttr = '%ca',
-    Regex = '%r',
-    DateTime = '%dt',
-    Any = '%*',
-    Filter = '%|',
+    Value = ':v',
+    List = ':[]',
+    Map = ':{}',
+    Word = ':w',
+    BitField = ':bf',
+    Entity = ':e',
+    EntitySet = ':es',
+    Component = ':c',
+    ComponentDef = ':d',
+    ComponentAttr = ':ca',
+    Regex = ':r',
+    DateTime = ':dt',
+    Any = ':*',
+    Filter = ':|',
     // Leave = '%#'
     // Undefined = '%un'
 };

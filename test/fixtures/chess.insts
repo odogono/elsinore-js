@@ -1,5 +1,5 @@
 // assert that an entityset exists on the stack
-%es assert_type
+:es assert_type
 
 
 // position of the entity on the board

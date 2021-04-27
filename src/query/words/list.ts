@@ -135,7 +135,7 @@ export async function evalList<QS extends QueryStack>(stack: QS, list: StackValu
     values = stack.popOfType(type);
     
     values = [...values.reverse(), first];
-    
+
     return [SType.List, values];
 }
 

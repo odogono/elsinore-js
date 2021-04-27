@@ -65,6 +65,8 @@ export class QueryStack {
 
     debug: boolean = false;
 
+    ignoreUndefinedUDWord: boolean = false;
+
     constructor(stack?: QueryStack) {
         this._stacks = [createInst()];
     }
@@ -133,7 +135,7 @@ export class QueryStack {
     }
 
     clear(clearItems: boolean = true, clearWords: boolean = false, reset: boolean = true): QueryStack {
-        
+
         if (reset) {
             this._idx = 0;
             this._stacks = this._stacks.splice(0, 1);
@@ -191,7 +193,7 @@ export class QueryStack {
      */
     async push(input: any | StackValue, options?: PushOptions): Promise<StackValue> {
         let value: StackValue;
-        let handler: WordFn;
+        let handler: WordFn | StackValue;
         // const debug = options.debug;
         // const ticket = options.ticket;
 
@@ -278,6 +280,9 @@ export class QueryStack {
                     }
                     else if (this.isUDWordsActive) {
                         handler = this.getUDWord(sub);
+                        if ( handler === undefined && !this.ignoreUndefinedUDWord) {
+                            handler = [SType.Value, false];
+                        }
                     }
                 }
 
@@ -301,7 +306,7 @@ export class QueryStack {
                     }
                 }
                 else {
-                    let result = handler(this, value);
+                    let result = (handler as WordFn)(this, value);
                     value = isPromise(result) ? await result : result as InstResult;
                 }
             } catch (err) {
@@ -470,18 +475,18 @@ export class QueryStack {
      * @param replace 
      * @returns 
      */
-    addWords(words: WordSpec[], replace:boolean = false): QueryStack {
+    addWords(words: WordSpec[], replace: boolean = false): QueryStack {
 
         for (const spec of words) {
             const [word, fn, ...args] = spec;
-            
+
             let patterns = replace ? [] : (this.words[word] || []);
 
-            let existing = patterns.findIndex( p => matchWordArgs(args, p) );
+            let existing = patterns.findIndex(p => matchWordArgs(args, p));
 
             // if the word pattern exists, then replace it
-            if( existing !== -1 ){
-                patterns.splice( existing, 1, [fn, args] as WordEntry );
+            if (existing !== -1) {
+                patterns.splice(existing, 1, [fn, args] as WordEntry);
             } else {
                 // otherwise add it
                 patterns = [...patterns, [fn, args]] as WordEntry[];
@@ -673,7 +678,7 @@ export interface ExecuteOptions {
 // };
 
 
-function matchWordArgs( find:WordArgs, pattern:WordEntry ){
+function matchWordArgs(find: WordArgs, pattern: WordEntry) {
     let [fn, pArgs] = pattern;
     return JSON.stringify(find) === JSON.stringify(pArgs);
 }

@@ -2,7 +2,7 @@
 // all entity ids are static so as to make testing relationships easier
 
 // assert that an entityset exists on the stack
-%es assert_type
+:es assert_type
 
 // component defs
 

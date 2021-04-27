@@ -38,7 +38,6 @@ test('plucks multiple values', async () => {
                 {@e: 4, text: world, priority: -1, status: active}
             ] [/@e, /text, /status] pluck`);
 
-    // ilog(stack.items);
     let result = stack.popValue();
     assert.equal(result, [
         [ 3, 'hello', undefined ],

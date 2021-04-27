@@ -1,5 +1,5 @@
 // assert that an entityset exists on the stack
-%es assert_type
+:es assert_type
 
 
 // Component Defs
@@ -15,9 +15,8 @@
 
 
 // Components
-
-[ "/component/dir", { "@e":1002, "uri": "file:///test/fixtures/rootA" } ] !c
-[ "/component/file", { "@e":1003, "uri":"file:///test/fixtures/rootA/index.mdx" } ] !c
+[ "/component/dir", { "@e": 1002, "uri": "file:///test/fixtures/rootA" } ] !c
+[ "/component/file", { "@e": 1003, "uri": "file:///test/fixtures/rootA/index.mdx" } ] !c
 [ "/component/dir", { "@e":1004, "uri":"file:///test/fixtures/rootA/purgatory" } ] !c
 [ "/component/dir", { "@e":1005, "uri":"file:///test/fixtures/rootA/static" } ] !c
 [ "/component/file", { "@e":1006, "uri":"file:///test/fixtures/rootA/purgatory/meta.yaml" } ] !c

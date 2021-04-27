@@ -663,9 +663,9 @@ export function onClear<QS extends QueryStack>(stack: QS): InstResult {
 // }
 
 export function onAssertType<QS extends QueryStack>(stack: QS): InstResult {
-    let value: StackValue = stack.pop();
-    let type = unpackStackValue(value, SType.Value);
-    value = stack.peek();
+    let assertValue: StackValue = stack.pop();
+    let type = unpackStackValue(assertValue, SType.Value);
+    let value = stack.peek();
     if (value === undefined) {
         throw new Error(`[onAssertType] stack underflow`);
     }
