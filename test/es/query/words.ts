@@ -67,8 +67,8 @@ test('peeks an earlier word', async () => {
 test('out of range on peeking an earlier word', async () => {
     try {
         await prep(`planet world hello %5`);
-    } catch( err ){
-        assert.equal( err.message, 'stack underflow: ("hello" "world" "planet")');
+    } catch (err) {
+        assert.equal(err.message, 'stack underflow: ("hello" "world" "planet")');
     }
     // assert.equal(stack.toString(), '"hello" "world" "planet"');
 })
@@ -81,6 +81,15 @@ test('evals map', async () => {
             `);
     assert.equal(stack.toString(), '{ status: active }');
 });
+
+
+test('undefined words', async () => {
+    let [stack] = await prep(`
+            // "inactive" status let
+            "missing" $status or
+            `);
+    assert.equal(stack.popValue(), 'missing');
+})
 
 
 test.run();
