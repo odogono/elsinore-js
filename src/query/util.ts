@@ -85,6 +85,10 @@ function stringValueToString( value:string, ignoreWhiteSpace:boolean = false ){
  * @param recursive 
  */
 export function unpackStackValue(val: StackValue, assertType: (SType | SType[]) = SType.Any, recursive: boolean = false): any {
+    if( !Array.isArray(val) ){
+        // console.log('[unpackStackValue]', val);
+        return val;
+    }
     let [type, value] = val;
     if (!Array.isArray(assertType)) {
         assertType = [assertType];
