@@ -12,7 +12,6 @@ import {
     InstResult, AsyncInstResult,
     StackError,
 } from '../query/types';
-
 import { onComponentAttr, buildBitfield } from "../entity_set_mem/query";
 import { onLogicalFilter, parseFilterQuery } from "../entity_set_mem/query/filter";
 import { 
@@ -27,19 +26,24 @@ import { unpackStackValueR, unpackStackValue } from "../query/util";
 import { onPluck } from "../query/words/pluck";
 import { onDefine } from "../query/words/define";
 import { SelectOptions } from "../entity_set/queryable";
+import { EntitySet } from "../entity_set";
 
 const Log = createLog('IDBQuery');
-
-
-class IDBQueryStack extends QueryStack {
-    es: QueryableEntitySetIDB
-}
 
 
 
 export class QueryableEntitySetIDB extends EntitySetIDB {
 
+    select(stack: QueryStack, query: StackValue[]): Promise<StackValue[]> {
+        stack.es = this as unknown as EntitySet;
+        return select(stack, query);
+    }
 }
+
+class IDBQueryStack extends QueryStack {
+    es: QueryableEntitySetIDB
+}
+
 
 /**
  * 

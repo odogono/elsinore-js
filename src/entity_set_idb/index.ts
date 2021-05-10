@@ -64,15 +64,17 @@ import {
     idbDeleteComponents,
     idbRetrieveEntityBitField
 } from "./idb";
-import { select } from "./query";
+// import { select } from "./query";
 import { EntitySet, AddType, AddOptions, RemoveType, EntitySetOptions, CloneOptions } from "../entity_set";
-import { StackValue } from "../query/types";
-import { QueryStack } from "../query";
+// import { StackValue } from "../query/types";
+// import { QueryStack } from "../query";
 import { EntitySetMem } from "../entity_set_mem";
 import { createUUID } from "@odgn/utils";
 
 const Log = createLog('EntitySetIDB');
 
+export interface IDBEntitySetOptions extends EntitySetOptions {
+}
 
 export interface ComponentDefIDB extends ComponentDef {
     tblName?: string;
@@ -96,11 +98,15 @@ export class EntitySetIDB extends EntitySetMem {
     isEntitySetIDB!: boolean;
 
 
-    constructor(data?: EntitySetIDB) {
-        super(data as any);
-        if (data !== undefined) {
-            Object.assign(this, data);
-        }
+    constructor(options: IDBEntitySetOptions = {}) {
+        super(undefined, options);
+    }
+
+    getUrl() {
+        return `es://idb?uuid=${this.uuid}`;
+        // }
+        // const path = this.path.startsWith('/') ? this.path : '/' + this.path;
+        // return `es://sqlite${path}?uuid=${this.uuid}`;
     }
 
     async clone(options: CloneOptions = {}) {
@@ -120,16 +126,13 @@ export class EntitySetIDB extends EntitySetMem {
         return new EntitySetIDB(props as any);
     }
 
-    size(): Promise<number> {
-        this.openEntitySet();
+    async size(): Promise<number> {
+        await this.openEntitySet();
         const store = this.db.transaction(STORE_ENTITIES, 'readonly').objectStore(STORE_ENTITIES);
         return idbCount(store);
     }
 
-    select(stack: QueryStack, query: StackValue[]): Promise<StackValue[]> {
-        stack.es = this as unknown as EntitySet;
-        return select(stack, query);
-    }
+    
 
 
     async applyUpdates() {
@@ -489,15 +492,14 @@ export class EntitySetIDB extends EntitySetMem {
 
 
     async openEntitySet(options: EntitySetOptions = {}): Promise<EntitySetIDB> {
+        // Log.debug('[openEntitySet]');
         if (this.db !== undefined) {
             return Promise.resolve(this);
         }
-        // Log.debug('[openEntitySet]');
 
         const readDefs = options.readDefs === undefined ? true : options.readDefs;
 
         let db = await openMeta();
-
 
         const tx = db.transaction(STORE_ENTITY_SETS, 'readwrite');
         const store = tx.objectStore(STORE_ENTITY_SETS);

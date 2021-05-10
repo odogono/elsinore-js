@@ -7,9 +7,9 @@ import {
     create as createBitField,
     toValues as bfToValues,
     set as bfSet,
-} from "../util/bitfield";
+} from '@odgn/utils/bitfield';
 import Jsonpointer from 'jsonpointer';
-import { isRegex, isDate, isValidDate } from "../util/is";
+import { isRegex, isDate, isValidDate } from '@odgn/utils';
 import { compareDates } from "../query/words/util";
 
 const Log = createLog('IDB', { time: false });

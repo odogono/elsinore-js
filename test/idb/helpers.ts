@@ -29,11 +29,11 @@ export { isComponent } from '../../src/component';
 export const parse = (data) => tokenizeString(data, { returnValues: true });
 export const sv = (v): StackValue => [SType.Value, v];
 
-export { getChanges, ChangeSetOp } from '../../src/entity_set/change_set';
+export { getChanges, ChangeSetOp } from '../../src/change_set';
 export { fromComponentId, getComponentDefId, Component, OrphanComponent } from '../../src/component';
 export const Log = createLog('TestEntitySetSQL');
 
-export { toValues as bfToValues } from '../../src/util/bitfield';
+export { toValues as bfToValues } from '@odgn/utils/bitfield';
 export { Entity, isEntity, getEntityId } from '../../src/entity';
 export { QueryStack } from '../../src/query/stack';
 export {
@@ -51,17 +51,16 @@ import { EntitySetIDB, clearIDB } from '../../src/entity_set_idb';
 export { buildComponents, loadFixture } from '../es/helpers';
 
 
+export const createEntitySet = (options?:EntitySetOptions) => new EntitySetIDB(options);
 
-
-export const createEntitySet = (options?) => new EntitySetIDB();
 
 
 export async function beforeEach(){
     await clearIDB();
 }
 
-export async function buildEntitySet(): Promise<[EntitySet, Function]> {
-    let es = createEntitySet();
+export async function buildEntitySet(options?:EntitySetOptions): Promise<[EntitySet, Function]> {
+    let es = createEntitySet(options);
 
     const defs = [
         { uri: '/component/channel', properties: ['name'] },

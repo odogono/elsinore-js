@@ -432,7 +432,6 @@ test('super select', async () => {
             [
                 uid !
                 [ /component/username#/username !ca  $uid == ] select
-                // $es [ /component/username#/username !ca  $uid == ] select
                 0 @
                 
             ] selectUserId define

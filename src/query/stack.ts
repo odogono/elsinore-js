@@ -540,7 +540,8 @@ export class QueryStack {
         }
 
         // Log.debug('[getWord]', 'match', `'${wval}'`, patterns.map(p => p.slice(1)));
-        // Log.debug('[getWord]', 'match', `'${wval}'`, stackToString(this));
+        Log.debug('[getWord]', 'match', value);
+        Log.debug('[getWord]', 'match', `'${wval}'`, stackToString(this));
         throw new StackError(`invalid params for ${wval}`);
     }
 
