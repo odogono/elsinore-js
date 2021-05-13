@@ -268,6 +268,7 @@ export function onUnique<QS extends QueryStack>(stack: QS): InstResult {
 export function onDiff(stack: QueryStack, [,op]:StackValue): InstResult {
     const isDiff = op === 'diff' || op === 'diff!';
     const isInter = op === 'intersect' || op === 'intersect!';
+    const isUnion = op === 'union' || op === 'union!';
     const isDes = op.endsWith('!');
 
     let left = isDes ? stack.pop() : stack.peek();
@@ -292,6 +293,14 @@ export function onDiff(stack: QueryStack, [,op]:StackValue): InstResult {
             });
             // return isDiff ? !eq : eq;
         } 
+        else if( isUnion ){
+            out = [ ...b ];
+            for( let ii=0;ii<a.length;ii++ ){
+                if( out.findIndex( e => isEqual(e, a[ii] )) === -1 ){
+                    out.push( a[ii] );
+                }
+            }
+        }
     }
     else {
         out = [];

@@ -135,6 +135,8 @@ export async function select(stack: QueryStack, query: StackValue[], options: Se
         ['diff!', onDiff],
         ['intersect', onDiff],
         ['intersect!', onDiff],
+        ['union', onDiff],
+        ['union!', onDiff],
         ['prints', onPrintStack],
         ['debug', () => { stack.scratch.debug = !!!stack.scratch.debug; return undefined }],
     ]);

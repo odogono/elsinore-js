@@ -239,6 +239,8 @@ export async function select(stack: QueryStack, query: StackValue[], options: Se
         ['diff!', onDiff],
         ['intersect', onDiff],
         ['intersect!', onDiff],
+        ['union', onDiff],
+        ['union!', onDiff],
     ]);
 
     // make sure any filter values have a following cmd

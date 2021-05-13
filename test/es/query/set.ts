@@ -28,6 +28,13 @@ test('intersect', async () => {
 });
 
 
-
+test('union', async () => {
+    let [stack] = await prep(`
+            [ 1, 2, 3 ]
+            [ 2, 4, 5 ]
+            union!
+            `);
+    assert.equal(stack.popValue(), [1,2,3,4,5] );
+});
 
 test.run();
