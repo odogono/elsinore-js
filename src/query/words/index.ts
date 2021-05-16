@@ -152,12 +152,12 @@ export function onComponent<QS extends QueryStack>(stack: QS): InstResult {
     stack.es = es;
 
     let raw = unpackStackValue(data, SType.List, true);
-    let [uri, attrs] = raw;
+    let [url, attrs] = raw;
 
-    // Log.debug('[onComponent]', uri, attrs);
+    // Log.debug('[onComponent]', url, attrs);
     // Log.debug('[onComponent]', es );
 
-    let com = es.createComponent(uri, attrs);
+    let com = es.createComponent(url, attrs);
     // let def = createComponentDef( undefined, ...raw );
 
     return [SType.Component, com];
@@ -307,10 +307,10 @@ export function onComponentDef<QS extends QueryStack>(stack: QS): InstResult {
 
 function parseComponentDef(data: any[]) {
     // ensure props are wrapped in an array
-    let [uri, props] = data;
+    let [url, props] = data;
     if (props !== undefined && !Array.isArray(props)) {
         Log.debug('[onComponentDef]', data);
-        throw new StackError(`onComponentDef : properties should be wrapped in array: ${uri}`);
+        throw new StackError(`onComponentDef : properties should be wrapped in array: ${url}`);
     }
 
     return createComponentDef(undefined, ...data);
@@ -488,7 +488,7 @@ export function onValue<QS extends QueryStack>(stack: QS): InstResult {
  */
 export async function onSize<QS extends QueryStack>(stack: QS, [, op]: StackValue): AsyncInstResult {
     let size = 0;
-    // by default, the word consumes what it is measuring
+    // by default, the word consumes what it is measurlng
     const isDes = op === 'size!';
     let [type, val] = isDes ? stack.pop() : stack.peek();
 

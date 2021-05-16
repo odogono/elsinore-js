@@ -63,11 +63,11 @@ export async function buildEntitySet(options?:EntitySetOptions): Promise<[Entity
     let es = createEntitySet(options);
 
     const defs = [
-        { uri: '/component/channel', properties: ['name'] },
-        { uri: '/component/status', properties: ['status'] },
-        { uri: '/component/topic', properties: ['topic'] },
-        { uri: '/component/username', properties: ['username'] },
-        { uri: '/component/channel_member', properties: [ {name:'channel', type:'integer'} ] },
+        { url: '/component/channel', properties: ['name'] },
+        { url: '/component/status', properties: ['status'] },
+        { url: '/component/topic', properties: ['topic'] },
+        { url: '/component/username', properties: ['username'] },
+        { url: '/component/channel_member', properties: [ {name:'channel', type:'integer'} ] },
     ]
 
     for( const def of defs ){
@@ -76,8 +76,8 @@ export async function buildEntitySet(options?:EntitySetOptions): Promise<[Entity
 
     const buildEntity = (es: EntitySet, buildFn: BuildQueryFn, eid: number = 0) => {
         let e = new Entity(eid);
-        const component = (uri: string, props: object) => {
-            let def = es.getByUri(uri);
+        const component = (url: string, props: object) => {
+            let def = es.getByUrl(url);
             let com = es.createComponent(def, props);
             es.addComponentToEntity(e, com);
         };
@@ -93,9 +93,9 @@ export async function buildStackEntitySet(stack: QueryStack, options?): Promise<
     let es = createEntitySet(options);
 
     const defs = [
-        { uri: "/component/title", properties: ["text"] },
-        { uri: "/component/completed", properties: [{ "name": "isComplete", "type": "boolean", "default": false }] },
-        { uri: "/component/priority", properties: [{ "name": "priority", "type": "integer", "default": 0 }] },
+        { url: "/component/title", properties: ["text"] },
+        { url: "/component/completed", properties: [{ "name": "isComplete", "type": "boolean", "default": false }] },
+        { url: "/component/priority", properties: [{ "name": "priority", "type": "integer", "default": 0 }] },
     ];
 
     for( const def of defs ){

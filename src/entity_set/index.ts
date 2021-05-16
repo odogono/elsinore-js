@@ -88,7 +88,7 @@ export abstract class EntitySet {
     uuid: string = createUUID();
 
     componentDefs: ComponentDef[] = [];
-    byUri = new Map<string, number>();
+    byUrl = new Map<string, number>();
     byHash = new Map<number, number>();
 
     entChanges = createChangeSet<number>();
@@ -341,7 +341,7 @@ export abstract class EntitySet {
         let def: ComponentDef = undefined;
 
         if (isString(defId)) {
-            def = this.getByUri(defId as string);
+            def = this.getByUrl(defId as string);
         } else if (isInteger(defId)) {
             def = this.getByHash(defId as number) || this.componentDefs[(defId as number) - 1];
         } else if (isComponentDef(defId)) {
@@ -350,7 +350,7 @@ export abstract class EntitySet {
 
         // Log.debug('[createComponent]', defId, attributes, def );
         if (def === undefined) {
-            // Log.debug('[createComponent]', registry.byUri.get( defId as string ), registry.componentDefs );
+            // Log.debug('[createComponent]', registry.byUrl.get( defId as string ), registry.componentDefs );
             throw new Error(`component def not found: ${defId}`);
         }
 
@@ -365,8 +365,8 @@ export abstract class EntitySet {
         return component;
     }
 
-    getByUri(uri: string): ComponentDef {
-        const did = this.byUri.get(uri);
+    getByUrl(url: string): ComponentDef {
+        const did = this.byUrl.get(url);
         return did === undefined ? undefined : this.componentDefs[did - 1];
     }
 
@@ -394,7 +394,7 @@ export abstract class EntitySet {
             return com as any;
         }
         const sdid = com[DefT] as string;
-        const def = this.getByUri(sdid);
+        const def = this.getByUrl(sdid);
         if (def === undefined) {
             throw new Error(`def id not found ${sdid}`);
         }
@@ -412,7 +412,7 @@ export abstract class EntitySet {
 
         // Log.debug('[resolveComponentDefAttribute]', did,attrName );
 
-        const def = this.getByUri(did);
+        const def = this.getByUrl(did);
 
         if (!def) {
             // Log.debug('[resolveComponentDefAttribute]', 'def not found', did);
@@ -433,7 +433,7 @@ export abstract class EntitySet {
 
 
     /**
-     * Resolves an array of Def identifiers (uri,hash, or did) to ComponentDefs  
+     * Resolves an array of Def identifiers (url,hash, or did) to ComponentDefs  
      * 
      * @param value defId or url
      * @returns a bitfield with the resolved def ids
@@ -449,7 +449,7 @@ export abstract class EntitySet {
         const defs: ComponentDef[] = (dids as []).map(did => {
             // Log.debug('[resolveComponentDefIds]', did, registry );
             if (isString(did)) {
-                return this.getByUri(did);
+                return this.getByUrl(did);
             }
             else if (isInteger(did)) {
                 return this.getByHash(did) || this.componentDefs[did - 1];
@@ -465,11 +465,11 @@ export abstract class EntitySet {
     }
 
     /**
-     * Resolves a def uri to its Did
+     * Resolves a def url to its Did
      * @param value 
      */
     resolveComponentDefId(value: string): ComponentDefId {
-        const def = this.getByUri(value);
+        const def = this.getByUrl(value);
         return def !== undefined ? def[DefT] : 0;
     }
 }

@@ -201,7 +201,7 @@ test('entity without components', async () => {
 
     // console.log(es.getUrl());
     // await printAll(es);
-    // console.log( es.componentDefs.map( d => `${d['@d']} ${d.uri}`).join('\n') );
+    // console.log( es.componentDefs.map( d => `${d['@d']} ${d.url}`).join('\n') );
     assert.equal( stack.popValue(), [103,104,105] );
 });
 

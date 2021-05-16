@@ -28,7 +28,7 @@ Concepts
 
 ### Component
 
-A Component is a collection of data, identified by a uri. (RE-PHRASE)
+A Component is a collection of data, identified by a url. (RE-PHRASE)
 
 
 ### Entity

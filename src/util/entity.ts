@@ -24,7 +24,7 @@ export function getEntityAttribute( es:EntitySet, e:Entity, url:string ){
 
     // console.log( parts );
 
-    const def = es.getByUri( did );
+    const def = es.getByUrl( did );
     if( def === undefined ){
         throw new Error(`com path not found: ${url}`);
     }

@@ -43,7 +43,7 @@ test('adds a def to an EntitySet', async () => {
 
 test('creates a component', async () => {
     let es = createEntitySet();
-    await es.register({ uri: "/component/title", properties: ["text"] });
+    await es.register({ url: "/component/title", properties: ["text"] });
     let stack = await es.query(`[ /component/title { text:introduction } ] !c`);
 
     let result = stack.popValue();
@@ -75,7 +75,7 @@ test('adds components', async () => {
         [ "/component/title", ["text"] ] !d
         
         {   "name":"Completed",
-            "uri":"/component/completed",
+            "url":"/component/completed",
             "properties":[ { "name":"isComplete","type":"boolean" } ] 
         } !d
 
@@ -99,8 +99,8 @@ test('removes entities', async () => {
 
     const stmtGetEids = await es.prepare(`
     [
-        /component/dir#uri !ca ~r/purgatory/ == 
-        /component/file#uri !ca ~r/purgatory/ ==
+        /component/dir#url !ca ~r/purgatory/ == 
+        /component/file#url !ca ~r/purgatory/ ==
         or
         @eid
     ] select
@@ -111,8 +111,8 @@ test('removes entities', async () => {
     
     const stmt = es.prepare(`
         [
-            /component/dir#uri !ca ~r/purgatory/ == 
-            /component/file#uri !ca ~r/purgatory/ ==
+            /component/dir#url !ca ~r/purgatory/ == 
+            /component/file#url !ca ~r/purgatory/ ==
             or
             @eid
         ] select

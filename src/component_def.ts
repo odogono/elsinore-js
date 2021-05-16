@@ -24,7 +24,7 @@ export type ComponentDefUrl = string;
 
 export interface ComponentDef {
     [Type]: number;
-    uri: string;
+    url: string;
     name: string;
     hash: number;
     properties: ComponentDefProperty[];
@@ -32,7 +32,7 @@ export interface ComponentDef {
 }
 
 export interface ComponentDefRaw {
-    uri: string;
+    url: string;
     properties: [];
 }
 
@@ -77,10 +77,6 @@ export function create(...args: any[]): ComponentDef {
     }
 
     const first = args[0];
-    // let id = 0;
-    // let uri = '';
-    // let name = '';
-    // let properties = [];
     let params: any = {};
 
 
@@ -96,7 +92,7 @@ export function create(...args: any[]): ComponentDef {
 
     let second = args[1];
     if (isString(second)) {
-        params.uri = second;
+        params.url = second;
     } else if (isObject(second)) {
         params = { ...second, ...params };
     }
@@ -114,10 +110,10 @@ export function create(...args: any[]): ComponentDef {
 }
 
 
-export function createFromObj({ id, name, uri, properties, ...extra }): ComponentDef {
+export function createFromObj({ id, name, url, properties, ...extra }): ComponentDef {
 
-    // # use the provided or extract from the last part of the uri
-    // name = name || uri |> String.split("/") |> List.last() |> Macro.camelize()
+    // # use the provided or extract from the last part of the url
+    // name = name || url |> String.split("/") |> List.last() |> Macro.camelize()
 
     if (extra['@d'] !== undefined) {
         // if( '@d' in extra ){
@@ -128,15 +124,15 @@ export function createFromObj({ id, name, uri, properties, ...extra }): Componen
     }
 
     if (!name) {
-        // console.log('[createFromObj]', 'creating name from', uri );
-        let parts: string[] = uri.split('/').reverse();
+        // console.log('[createFromObj]', 'creating name from', url );
+        let parts: string[] = url.split('/').reverse();
         name = toCapitalized(toCamelCase(parts[0]));
     }
 
     if (isString(properties) || isObject(properties)) {
         properties = [createProperty(properties)];
     } else if (Array.isArray(properties)) {
-        // console.log('[createFromObj]', 'creating from obj', uri );
+        // console.log('[createFromObj]', 'creating from obj', url );
         properties = properties.map(prop => createProperty(prop));
     } else {
         // console.log('but what', properties );
@@ -145,7 +141,7 @@ export function createFromObj({ id, name, uri, properties, ...extra }): Componen
 
     let def: any = {
         [Type]: id,
-        uri,
+        url,
         name,
         properties,
         additional: new Map<string, any>(),
@@ -157,7 +153,7 @@ export function createFromObj({ id, name, uri, properties, ...extra }): Componen
 }
 
 export function isComponentDef(value: any): boolean {
-    return isObject(value) && 'uri' in value && 'properties' in value;
+    return isObject(value) && 'url' in value && 'properties' in value;
 }
 
 
@@ -185,7 +181,7 @@ export function getProperty(def: ComponentDef, name: string): ComponentDefProper
 export interface ComponentDefObj {
     '@d'?: number;
     name?: string;
-    uri: string;
+    url: string;
     properties?: any[];
 }
 
@@ -193,7 +189,7 @@ export interface ComponentDefObj {
  * Converts the ComponentDef into an object
  */
 export function toObject(def: ComponentDef, includeId: boolean = true): ComponentDefObj {
-    let { [Type]: id, name, uri, properties } = def;
+    let { [Type]: id, name, url, properties } = def;
 
     let objProps: any[];
 
@@ -201,7 +197,7 @@ export function toObject(def: ComponentDef, includeId: boolean = true): Componen
         objProps = properties.map(p => propertyToObject(p, includeId));
     }
 
-    let result: ComponentDefObj = { name, uri };
+    let result: ComponentDefObj = { name, url };
     if (includeId) {
         result['@d'] = id;
     }
@@ -214,7 +210,7 @@ export function toObject(def: ComponentDef, includeId: boolean = true): Componen
 export function toShortObject(def: ComponentDef) {
     // [ "/component/completed", [{"name":"isComplete", "type":"boolean", "default":false}] ]
     let obj = toObject(def, false);
-    return obj.properties ? [obj.uri, obj.properties] : [obj.uri];
+    return obj.properties ? [obj.url, obj.properties] : [obj.url];
 }
 
 

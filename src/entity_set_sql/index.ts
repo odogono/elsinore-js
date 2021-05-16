@@ -52,7 +52,7 @@ import { createUUID, toBoolean } from '@odgn/utils';
 import {
     SqlRef,
     sqlOpen, sqlIsOpen,
-    sqlInsertDef, sqlRetrieveDefByUri, sqlRetrieveDefByHash,
+    sqlInsertDef, sqlRetrieveDefByHash,
     sqlRetrieveDefs,
     getLastEntityId,
     sqlUpdateEntity,
@@ -154,7 +154,7 @@ export class EntitySetSQL extends QueryableEntitySetMem {
         let includeDefs = options.cloneDefs ?? true;
         let includeEnts = includeDefs ? options.cloneEntities ?? true : false;
 
-        let { byUri, byHash, entChanges, comChanges, idgen } = this;
+        let { byUrl, byHash, entChanges, comChanges, idgen } = this;
 
         let path = options.path ?? this.path;
         let isMemory = options.isMemory ?? this.isMemory;
@@ -164,7 +164,7 @@ export class EntitySetSQL extends QueryableEntitySetMem {
             isMemory,
             path,
             uuid: createUUID(),
-            byUri: new Map<string, number>(byUri),
+            byUrl: new Map<string, number>(byUrl),
             byHash: new Map<number, number>(byHash),
             entChanges: createChangeSet(entChanges),
             comChanges: createChangeSet(comChanges),
@@ -215,7 +215,6 @@ export class EntitySetSQL extends QueryableEntitySetMem {
         this.openEntitySet();
 
         for (const def of this.componentDefs) {
-            // console.log('getC', def.uri);
             for (const com of sqlRetrieveComponentsByDef(this.db, def)) {
                 yield com;
             }
@@ -482,10 +481,10 @@ export class EntitySetSQL extends QueryableEntitySetMem {
         def = existing === undefined ? sqlInsertDef(this.db, def) : existing;
 
         const did = def[ComponentDefT];
-        // Log.debug('[register]', did, def.uri);
+        // Log.debug('[register]', did, def.url);
 
         this.componentDefs[did - 1] = def;
-        this.byUri.set(def.uri, did);
+        this.byUrl.set(def.url, did);
         this.byHash.set(def.hash, did);
 
         return def;

@@ -76,7 +76,7 @@ function comToString(es: EntitySet, com: Component) {
     const defId = getComponentDefId(com);
     const def = es.getByDefId(defId);
 
-    out.push(`[ ${def.uri} {`);
+    out.push(`[ ${def.url} {`);
 
 
     for (let key of Object.keys(com)) {
@@ -94,11 +94,11 @@ function comToString(es: EntitySet, com: Component) {
 }
 
 function defToString(def: ComponentDef) {
-    const [uri, props] = toShortObject(def);
+    const [url, props] = toShortObject(def);
     let out = [];
 
 
-    out.push(`[ ${stringify(uri)}`);
+    out.push(`[ ${stringify(url)}`);
     if (props !== undefined) {
         out.push('[');
         for (const prop of props) {

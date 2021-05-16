@@ -7,8 +7,8 @@ import {
     Entity
 } from '../../src/entity';
 
-export type buildDefFn = (uri: string, ...args: any[]) => void;
-export type buildComponentFn = (uri: string, props:object) => void;
+export type buildDefFn = (url: string, ...args: any[]) => void;
+export type buildComponentFn = (url: string, props:object) => void;
 export type buildInstFn = (...args: any[]) => void;
 export type buildEntityFn = () => void;
 export type buildValueFn = (registry: EntitySet) => void;
@@ -65,20 +65,20 @@ export const createEntitySet = (options?) => new QueryableEntitySetMem(undefined
 
 export function buildComponents( es:EntitySet, data:any[] ):Component[] {
     return data.map( props => {
-        let uri = '';
+        let url = '';
         // let props = dd;
         if( props['@d'] !== undefined ){
-            uri = props['@d'];
+            url = props['@d'];
             delete props['@d'];
         } else {
-            uri = props.uri;
-            delete props.uri;
+            url = props.url;
+            delete props.url;
         }
 
-        // let {uri, ...props} = dd;
+        // let {url, ...props} = dd;
         // if( dd['@d'] )
-        // const uri = dd['@d'] ?? dd['uri'];
-        const def = es.getByUri(uri);
+        // const url = dd['@d'] ?? dd['url'];
+        const def = es.getByUrl(url);
         // console.log('build with props', props);
         return es.createComponent(def,props);
     })
@@ -88,11 +88,11 @@ export async function buildEntitySet(options?:EntitySetOptions): Promise<[Querya
     let es = createEntitySet(options);
 
     const defs = [
-        { uri: '/component/channel', properties: ['name'] },
-        { uri: '/component/status', properties: ['status'] },
-        { uri: '/component/topic', properties: ['topic'] },
-        { uri: '/component/username', properties: ['username'] },
-        { uri: '/component/channel_member', properties: ['channel_member'] },
+        { url: '/component/channel', properties: ['name'] },
+        { url: '/component/status', properties: ['status'] },
+        { url: '/component/topic', properties: ['topic'] },
+        { url: '/component/username', properties: ['username'] },
+        { url: '/component/channel_member', properties: ['channel_member'] },
     ]
 
     for( const def of defs ){
@@ -103,8 +103,8 @@ export async function buildEntitySet(options?:EntitySetOptions): Promise<[Querya
 
     const buildEntity = (es: EntitySet, buildFn: BuildQueryFn, eid: number = 0) => {
         let e = new Entity(eid);
-        const component = (uri: string, props: object) => {
-            let def = es.getByUri(uri);
+        const component = (url: string, props: object) => {
+            let def = es.getByUrl(url);
             let com = es.createComponent(def, props);
             es.addComponentToEntity(e, com);
         };
@@ -120,9 +120,9 @@ export async function buildStackEntitySet(stack: QueryStack, options?): Promise<
     let es = createEntitySet(options);
 
     const defs = [
-        { uri: "/component/title", properties: ["text"] },
-        { uri: "/component/completed", properties: [{ "name": "isComplete", "type": "boolean", "default": false }] },
-        { uri: "/component/priority", properties: [{ "name": "priority", "type": "integer", "default": 0 }] },
+        { url: "/component/title", properties: ["text"] },
+        { url: "/component/completed", properties: [{ "name": "isComplete", "type": "boolean", "default": false }] },
+        { url: "/component/priority", properties: [{ "name": "priority", "type": "integer", "default": 0 }] },
     ];
 
     for( const def of defs ){

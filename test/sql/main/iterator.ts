@@ -40,7 +40,7 @@ test('iterates over entity ids', async () => {
     for await( const eid of es.getEntities() ){
         // console.log('eid', eid);
     }
-    const def = es.getByUri('/component/title');
+    const def = es.getByUrl('/component/title');
 
     // for await( const com of sqlRetrieveComponentsByDef(es.db, def) ){
     for await ( const com of es.getComponents() ){

@@ -1,6 +1,6 @@
 {
   "name": "odgn-entity",
-  "version": "6.0.0",
+  "version": "6.1.0",
   "description": "a javascript Entity Component System",
   "keywords": [
     "entity",

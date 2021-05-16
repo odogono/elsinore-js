@@ -47,16 +47,16 @@ test('transfers components to a foreign es', async () => {
     // copy es1 into es2
 
     const defsA = [
-        { uri: '/component/status', properties: ['status'] },
-        { uri: '/component/topic', properties: ['topic'] },
-        { uri: '/component/channel', properties: ['name'] },
-        { uri: '/component/username', properties: ['username'] },
-        { uri: '/component/channel_member', properties: ['channel_member'] },
+        { url: '/component/status', properties: ['status'] },
+        { url: '/component/topic', properties: ['topic'] },
+        { url: '/component/channel', properties: ['name'] },
+        { url: '/component/username', properties: ['username'] },
+        { url: '/component/channel_member', properties: ['channel_member'] },
     ];
     const defsB = [
-        { uri: '/component/topic', properties: ['topic'] },
-        { uri: '/component/channel', properties: ['name', {name:'isOpen', type:'boolean'}] },
-        { uri: '/component/status', properties: ['status', {name:'isActive',type:'boolean'}] },
+        { url: '/component/topic', properties: ['topic'] },
+        { url: '/component/channel', properties: ['name', {name:'isOpen', type:'boolean'}] },
+        { url: '/component/status', properties: ['status', {name:'isActive',type:'boolean'}] },
     ];
 
     let es1 = createEntitySet();
@@ -70,18 +70,18 @@ test('transfers components to a foreign es', async () => {
     }
 
     let data:any = [ 
-        {uri:'/component/status', status:'active'},
-        {uri:'/component/topic', topic:'current affairs'},
-        {uri:'/component/channel', name:'#current-affairs'},
-        {uri:'/component/username', username:'melliott'},
+        {url:'/component/status', status:'active'},
+        {url:'/component/topic', topic:'current affairs'},
+        {url:'/component/channel', name:'#current-affairs'},
+        {url:'/component/username', username:'melliott'},
     ];
     let coms = buildComponents(es1, data);
     await es1.add(coms);
 
     data = [
-        {uri:'/component/status', status:'inactive', isActive:false },
-        {uri:'/component/topic', topic:'Off Topic'},
-        {uri:'/component/channel', name:'#off-topic', isOpen:true },
+        {url:'/component/status', status:'inactive', isActive:false },
+        {url:'/component/topic', topic:'Off Topic'},
+        {url:'/component/channel', name:'#off-topic', isOpen:true },
     ]
     coms = buildComponents(es2, data);
     

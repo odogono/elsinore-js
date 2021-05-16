@@ -88,12 +88,12 @@ test('tokenizeString', () => {
             [
                 ['get out of bed', 0, 0]
             ]],
-        [`{"name":"Completed","uri":"/component/completed","properties":[{"name":"isComplete","type":"boolean"}]} !d`,
+        [`{"name":"Completed","url":"/component/completed","properties":[{"name":"isComplete","type":"boolean"}]} !d`,
             [
                 ["{", 0, 0],
                 ["name", 1, 0],
                 ["Completed", 8, 0],
-                ["uri", 20, 0],
+                ["url", 20, 0],
                 ["/component/completed", 26, 0],
                 ["properties", 49, 0],
                 ["[", 62, 0],
@@ -187,14 +187,14 @@ test('tokenizeString', () => {
             ]
         ],
         [
-            `[ "/component/dir", { "@e":1004, "uri":"file:///test/fixtures/rootA/purgatory" } ]`,
+            `[ "/component/dir", { "@e":1004, "url":"file:///test/fixtures/rootA/purgatory" } ]`,
             [
                 [ '[', 0, 0 ],
                 [ '/component/dir', 2, 0 ],
                 [ '{', 20, 0 ],
                 [ '@e', 22, 0 ],
                 [ 1004, 27, 0 ],
-                [ 'uri', 33, 0 ],
+                [ 'url', 33, 0 ],
                 [ 'file:///test/fixtures/rootA/purgatory', 39, 0 ],
                 [ '}', 79, 0 ],
                 [ ']', 81, 0 ]

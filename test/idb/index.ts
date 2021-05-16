@@ -45,7 +45,7 @@ describe('Entity Set (IndexedDB)', () => {
         it('registers', async () => {
             let def;
             let es = createEntitySet();
-            const data = { uri: '/component/position', properties: [{ name: 'rank', type: 'integer' }, 'file'] };
+            const data = { url: '/component/position', properties: [{ name: 'rank', type: 'integer' }, 'file'] };
             // Log.debug('ok', (Date.now()-start));
             
             def = await es.register(data);
@@ -55,19 +55,19 @@ describe('Entity Set (IndexedDB)', () => {
             def = await es.register("/component/piece/king");
             def = await es.register("/component/piece/queen");
 
-            def = es.getByUri('/component/position');
+            def = es.getByUrl('/component/position');
 
             assert.ok(isComponentDef(def));
 
             def = es.getByHash(hashDef(def));
 
-            assert.equal(def.uri, '/component/position');
+            assert.equal(def.url, '/component/position');
         });
 
         it('persists only marked properties', async () => {
             let es = createEntitySet();
 
-            const data = { uri: '/component/position', properties: [
+            const data = { url: '/component/position', properties: [
                 {name: 'rank', type:'integer'}, 'file',
                 {name: 'notes', type:'string', persist:false }
             ]};
@@ -87,7 +87,7 @@ describe('Entity Set (IndexedDB)', () => {
 
         });
 
-        it('registers same uri, but different properties', async () => {
+        it('registers same url, but different properties', async () => {
             // in effect, the def is overwritten, but existing components are retained
 
             let es = createEntitySet();
@@ -101,7 +101,7 @@ describe('Entity Set (IndexedDB)', () => {
             await es.register("/component/position");
             
             // different, so registered
-            await es.register({uri: '/component/position', properties: ['rank', 'file']});
+            await es.register({url: '/component/position', properties: ['rank', 'file']});
             
             e = es.createEntity();
             e.Position = {rank:'2', file:'b'};
@@ -433,19 +433,19 @@ async function buildEntitySet(): Promise<[EntitySetIDB, Function]> {
     let es = createEntitySet();
 
     const defs = [
-        { uri: '/component/channel', properties: ['name'] },
-        { uri: '/component/status', properties: ['status'] },
-        { uri: '/component/topic', properties: ['topic'] },
-        { uri: '/component/username', properties: ['username'] },
-        { uri: '/component/channel_member', properties: ['channel'] },
+        { url: '/component/channel', properties: ['name'] },
+        { url: '/component/status', properties: ['status'] },
+        { url: '/component/topic', properties: ['topic'] },
+        { url: '/component/username', properties: ['username'] },
+        { url: '/component/channel_member', properties: ['channel'] },
     ]
 
     await defs.reduce( (p,def) => p.then( () => es.register(def)), Promise.resolve() );
 
     const buildEntity = (es: EntitySetIDB, buildFn: BuildQueryFn, eid: number = 0) => {
         let e = new Entity(eid);
-        const component = (uri: string, props: object) => {
-            let def = es.getByUri(uri);
+        const component = (url: string, props: object) => {
+            let def = es.getByUrl(url);
             let com = es.createComponent(def, props);
             es.addComponentToEntity(e, com);
         };

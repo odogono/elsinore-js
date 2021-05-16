@@ -219,9 +219,9 @@ export function sqlInsertDef(ref: SqlRef, def: ComponentDef): ComponentDefSQL {
     const schema = defToObject(def, false);
     let [tblName, sql] = defToStmt(def);
 
-    let stmt = db.prepare('INSERT INTO tbl_component_def (uri,hash,tbl,schema) VALUES (?,?,?,?)');
+    let stmt = db.prepare('INSERT INTO tbl_component_def (url,hash,tbl,schema) VALUES (?,?,?,?)');
 
-    const { lastInsertRowid: did } = stmt.run(def.uri, hash, tblName, JSON.stringify(schema));
+    const { lastInsertRowid: did } = stmt.run(def.url, hash, tblName, JSON.stringify(schema));
     // let did = sqlLastId(ref);
 
 
@@ -705,11 +705,11 @@ export function sqlRetrieveDefs(ref: SqlRef): ComponentDefSQL[] {
     })
 }
 
-export function sqlRetrieveDefByUri(ref: SqlRef, uri: string): ComponentDef {
+export function sqlRetrieveDefByUrl(ref: SqlRef, url: string): ComponentDef {
     const { db } = ref;
 
-    let stmt = db.prepare('SELECT * FROM tbl_component_def WHERE uri = ? LIMIT 1');
-    let row = stmt.get(uri);
+    let stmt = db.prepare('SELECT * FROM tbl_component_def WHERE url = ? LIMIT 1');
+    let row = stmt.get(url);
 
     if (row === undefined) {
         return undefined;
@@ -1091,7 +1091,7 @@ function componentRowToComponent(did, row): Component {
 }
 
 function defToTbl(def: ComponentDef) {
-    return 'tbl' + def.uri.split('/').join('_') + '_' + hashToString(def.hash);
+    return 'tbl' + def.url.split('/').join('_') + '_' + hashToString(def.hash);
 }
 function getDefColumns(def: ComponentDef) {
     let properties = def.properties || [];
@@ -1211,7 +1211,7 @@ const tblEntitySet = `
     CREATE TABLE tbl_component_def (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         eid INTEGER,
-        uri STRING,
+        url STRING,
         hash INTEGER,
         tbl STRING,
         schema STRING,

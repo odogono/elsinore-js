@@ -133,7 +133,7 @@ export function exportComponent( es:EntitySet, com:Component, options: ExportOpt
     }
 
     if (exportUrl) {
-        obj = { '@du': def.uri, ...obj };
+        obj = { '@du': def.url, ...obj };
     }
 
     if (comDid) {

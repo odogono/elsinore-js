@@ -83,7 +83,7 @@ import {
         let includeDefs = options.cloneDefs ?? true;
         let includeEnts = includeDefs ? options.cloneEntities ?? true : false;
 
-        let { componentDefs, components, entities, byUri, byHash, entChanges, comChanges } = this;
+        let { componentDefs, components, entities, byUrl, byHash, entChanges, comChanges } = this;
         if (!includeEnts) {
             components = undefined;
             entities = undefined;
@@ -93,7 +93,7 @@ import {
         if (!includeDefs) {
             componentDefs = undefined;
             byHash = undefined;
-            byUri = undefined;
+            byUrl = undefined;
         }
         let props = {
             ...this,
@@ -101,7 +101,7 @@ import {
             components: new Map<ComponentId, Component>(components),
             entities: new Map<EntityId, BitField>(entities),
             componentDefs: componentDefs ? [...componentDefs] : [],
-            byUri: new Map<string, number>(byUri),
+            byUrl: new Map<string, number>(byUrl),
             byHash: new Map<number, number>(byHash),
             entChanges: createChangeSet(entChanges),
             comChanges: createChangeSet(comChanges),
@@ -135,7 +135,7 @@ import {
 
         const existing = this.getByHash(hash);
         if (existing !== undefined) {
-            // throw new Error(`component definition already exists (${existing[DefT]}/${existing.uri})`);
+            // throw new Error(`component definition already exists (${existing[DefT]}/${existing.url})`);
             return existing;
         }
 
@@ -143,7 +143,7 @@ import {
         def = { ...def, [DefT]: did };
 
         this.byHash.set(hash, did);
-        this.byUri.set(def.uri, did);
+        this.byUrl.set(def.url, did);
 
         this.componentDefs = [...this.componentDefs, def];
 

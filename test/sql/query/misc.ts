@@ -31,7 +31,7 @@ test('selects using string compare', async () => {
     let es = createEntitySet();
 
     const defs = [
-        { uri: '/component/file', properties: ['uri', 'path', 'ext'] },
+        { url: '/component/file', properties: ['url', 'path', 'ext'] },
     ];
 
     for( const def of defs ){
@@ -39,8 +39,8 @@ test('selects using string compare', async () => {
     }
     
     const data = [
-        { '@d': '/component/file', uri: 'file:///temp/welcome.txt' },
-        { '@d': '/component/file', uri: 'file:///work/odgn/readme.md' }
+        { '@d': '/component/file', url: 'file:///temp/welcome.txt' },
+        { '@d': '/component/file', url: 'file:///work/odgn/readme.md' }
     ]
     let coms = buildComponents(es, data);
     await es.add(coms);
@@ -49,9 +49,9 @@ test('selects using string compare', async () => {
     // console.log('\n');
     // printAll( es );
 
-    const uri = 'file:///temp/welcome.txt';
+    const url = 'file:///temp/welcome.txt';
     const query = `[
-        /component/file#uri !ca "${uri}" ==
+        /component/file#url !ca "${url}" ==
         @c
     ] select`;
 

@@ -35,7 +35,7 @@ export function valueToString(val: StackValue, listToString:boolean = false, ign
         case SType.ComponentAttr:
             return `(${type}, ${stringify(value)})`;
         case SType.ComponentDef:
-            return `(${type} ${value.uri})`;
+            return `(${type} ${value.url})`;
         case SType.Component:
             if (Array.isArray(value)) {
                 return `[ ${stringValueToString(type)},` + value.map(v => stringify(v)).join(', ') + ']';

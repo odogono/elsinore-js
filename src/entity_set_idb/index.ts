@@ -110,14 +110,14 @@ export class EntitySetIDB extends EntitySetMem {
     }
 
     async clone(options: CloneOptions = {}) {
-        const { byUri, byHash, entChanges, comChanges } = this;
+        const { byUrl, byHash, entChanges, comChanges } = this;
         let componentDefs = this.componentDefs.map(d => ({ ...d }));
 
         let props = {
             ...this,
             componentDefs,
             uuid: createUUID(),
-            byUri: new Map<string, number>(byUri),
+            byUrl: new Map<string, number>(byUrl),
             byHash: new Map<number, number>(byHash),
             entChanges: createChangeSet(entChanges),
             comChanges: createChangeSet(comChanges),
@@ -483,7 +483,7 @@ export class EntitySetIDB extends EntitySetMem {
         await idbPut(store, { ...record, '_hash': def.hash });
 
         this.componentDefs[did - 1] = def;
-        this.byUri.set(def.uri, did);
+        this.byUrl.set(def.url, did);
         this.byHash.set(def.hash, did);
 
 
@@ -544,7 +544,7 @@ export class EntitySetIDB extends EntitySetMem {
                     const hash = hashDef(def);
                     this.componentDefs[did - 1] = def;
                     this.byHash.set(hash, did);
-                    this.byUri.set(def.uri, did);
+                    this.byUrl.set(def.url, did);
                     result.push(def);
                     cursor.continue();
                 } else {
@@ -626,7 +626,7 @@ function onEntitySetUpgrade(db: IDBDatabase, ev: IDBVersionChangeEvent) {
     store.createIndex('by_did', ['_d', '_e'], { unique: true });
 
     store = db.createObjectStore(STORE_COMPONENT_DEFS, { autoIncrement: true });
-    store.createIndex('by_uri', 'uri', { unique: false });
+    store.createIndex('by_url', 'url', { unique: false });
     store.createIndex('by_hash', '_hash', { unique: true });
 
 }

@@ -28,7 +28,7 @@ test.before.each( beforeEach );
 test('registers', async () => {
     let def;
     let es = createEntitySet();
-    const data = { uri: '/component/position', properties: [{ name: 'rank', type: 'integer' }, 'file'] };
+    const data = { url: '/component/position', properties: [{ name: 'rank', type: 'integer' }, 'file'] };
     // Log.debug('ok', (Date.now()-start));
     
     def = await es.register(data);
@@ -38,18 +38,18 @@ test('registers', async () => {
     def = await es.register("/component/piece/king");
     def = await es.register("/component/piece/queen");
 
-    def = es.getByUri('/component/position');
+    def = es.getByUrl('/component/position');
 
     assert.ok(isComponentDef(def));
 
     def = es.getByHash(hashDef(def));
 
-    assert.equal(def.uri, '/component/position');
+    assert.equal(def.url, '/component/position');
 });
 
 test('registering again wont add', async () => {
     let es = createEntitySet();
-    const data = { uri: '/component/position', properties: [{ name: 'rank', type: 'integer' }, 'file'] };
+    const data = { url: '/component/position', properties: [{ name: 'rank', type: 'integer' }, 'file'] };
     
     await es.register(data);
 
@@ -64,7 +64,7 @@ test('registering again wont add', async () => {
     assert.is( defs.length, 1 );
 })
 
-test('registers same uri, but different properties', async () => {
+test('registers same url, but different properties', async () => {
     // in effect, the def is overwritten, but existing components are retained
 
     let es = createEntitySet();
@@ -78,7 +78,7 @@ test('registers same uri, but different properties', async () => {
     await es.register("/component/position");
     
     // different, so registered
-    await es.register({uri: '/component/position', properties: ['rank', 'file']});
+    await es.register({url: '/component/position', properties: ['rank', 'file']});
     
     e = es.createEntity();
     e.Position = {rank:'2', file:'b'};

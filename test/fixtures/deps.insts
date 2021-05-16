@@ -10,23 +10,23 @@
     {"name":"type", "type":"string"}
 ] ] !d +
 
-[ "/component/dir", [ {"name":"uri"}] ] !d +
-[ "/component/file", [ {"name":"uri"}] ] !d +
+[ "/component/dir", [ {"name":"url"}] ] !d +
+[ "/component/file", [ {"name":"url"}] ] !d +
 
 
 // Components
-[ "/component/dir", { "@e": 1002, "uri": "file:///test/fixtures/rootA" } ] !c
-[ "/component/file", { "@e": 1003, "uri": "file:///test/fixtures/rootA/index.mdx" } ] !c
-[ "/component/dir", { "@e":1004, "uri":"file:///test/fixtures/rootA/purgatory" } ] !c
-[ "/component/dir", { "@e":1005, "uri":"file:///test/fixtures/rootA/static" } ] !c
-[ "/component/file", { "@e":1006, "uri":"file:///test/fixtures/rootA/purgatory/meta.yaml" } ] !c
-[ "/component/dir", { "@e":1007, "uri":"file:///test/fixtures/rootA/static/alt" } ] !c
-[ "/component/file", { "@e":1008, "uri":"file:///test/fixtures/rootA/static/meta.yaml" } ] !c
-[ "/component/file", { "@e":1009, "uri":"file:///test/fixtures/rootA/static/style.scss" } ] !c
-[ "/component/file", { "@e":1010, "uri":"file:///test/fixtures/rootA/static/tac.jpg" } ] !c
-[ "/component/file", { "@e":1011, "uri":"file:///test/fixtures/rootA/static/alt/meta.yaml" } ] !c
-[ "/component/dir", { "@e":1012, "uri":"file:///test/fixtures/rootA/static/alt/style" } ] !c
-[ "/component/file", { "@e":1013, "uri":"file:///test/fixtures/rootA/static/alt/style/meta.yaml" } ] !c
+[ "/component/dir", { "@e": 1002, "url": "file:///test/fixtures/rootA" } ] !c
+[ "/component/file", { "@e": 1003, "url": "file:///test/fixtures/rootA/index.mdx" } ] !c
+[ "/component/dir", { "@e":1004, "url":"file:///test/fixtures/rootA/purgatory" } ] !c
+[ "/component/dir", { "@e":1005, "url":"file:///test/fixtures/rootA/static" } ] !c
+[ "/component/file", { "@e":1006, "url":"file:///test/fixtures/rootA/purgatory/meta.yaml" } ] !c
+[ "/component/dir", { "@e":1007, "url":"file:///test/fixtures/rootA/static/alt" } ] !c
+[ "/component/file", { "@e":1008, "url":"file:///test/fixtures/rootA/static/meta.yaml" } ] !c
+[ "/component/file", { "@e":1009, "url":"file:///test/fixtures/rootA/static/style.scss" } ] !c
+[ "/component/file", { "@e":1010, "url":"file:///test/fixtures/rootA/static/tac.jpg" } ] !c
+[ "/component/file", { "@e":1011, "url":"file:///test/fixtures/rootA/static/alt/meta.yaml" } ] !c
+[ "/component/dir", { "@e":1012, "url":"file:///test/fixtures/rootA/static/alt/style" } ] !c
+[ "/component/file", { "@e":1013, "url":"file:///test/fixtures/rootA/static/alt/style/meta.yaml" } ] !c
 
 
 

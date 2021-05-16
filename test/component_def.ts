@@ -34,13 +34,13 @@ test('should create', () => {
     // Log.debug('def', def);
     // Log.debug('def', componentDefToObject(def));
 
-    // /def @d, uri, name
+    // /def @d, url, name
     // /property/status status
     assert.equal(componentDefToObject(def),
         {
             '@d': 2,
             name: 'Status',
-            uri: '/component/status',
+            url: '/component/status',
             properties: [
                 { name: 'status' }, { name: 'updated_at' }
             ]
@@ -48,7 +48,7 @@ test('should create', () => {
 });
 
 test('should create from an id/obj form', () => {
-    const data = { uri: '/component/piece/knight', properties: ['rank', 'file'] };
+    const data = { url: '/component/piece/knight', properties: ['rank', 'file'] };
     let def = createComponentDef(19, data);
 
     // Log.debug('def', def);
@@ -57,25 +57,25 @@ test('should create from an id/obj form', () => {
     assert.equal(componentDefToObject(def), {
         '@d': 19,
         name: 'Knight',
-        uri: '/component/piece/knight',
+        url: '/component/piece/knight',
         properties: [{ name: 'rank' }, { name: 'file' }]
     });
 });
 
-test('should create from uri/prop array', () => {
+test('should create from url/prop array', () => {
     const data = ['/component/completed', [{ name: 'isComplete', type: 'boolean', default: false }]];
     let def = createComponentDef(undefined, ...data);
 
     assert.equal(componentDefToObject(def), {
         '@d': undefined,
         name: 'Completed',
-        uri: '/component/completed',
-        properties: [{ name: 'isComplete', type: 'boolean', default: false }]
+        url: '/component/completed',
+        properties: [{ name: 'isComplete', type: 'boolean' }]
     });
 })
 
 test('should create from an instance', () => {
-    const data = { uri: '/component/piece/knight', properties: ['rank', 'file'] };
+    const data = { url: '/component/piece/knight', properties: ['rank', 'file'] };
     let def = createComponentDef(data);
 
     def = createComponentDef(22, def);
@@ -86,7 +86,7 @@ test('should create from an instance', () => {
 });
 
 test('hash should return identical values', () => {
-    const data = { uri: '/component/piece/knight', properties: ['rank', 'file'] };
+    const data = { url: '/component/piece/knight', properties: ['rank', 'file'] };
     let def = createComponentDef(data);
     let hashA = hashComponentDef(def);
 
@@ -103,12 +103,12 @@ test('hash should return identical values', () => {
 
 test('hashes even with additional properties', () => {
     const dataA = {
-        uri: '/component/completed', properties: [
+        url: '/component/completed', properties: [
             { name: 'isComplete', type: 'boolean', default: false }
         ]
     };
     const dataB = {
-        uri: '/component/completed', properties: [
+        url: '/component/completed', properties: [
             { name: 'isComplete', type: 'boolean', default: false, descr: 'indicates completeness' }
         ]
     };

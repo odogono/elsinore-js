@@ -44,7 +44,7 @@ export function assertHasComponents<ES extends EntitySet>(es:ES, e:Entity, dids:
 
         if( !bfGet(bf,did) ){
         // if( defs.find( def => getDefId(def) === did ) === undefined ){
-            throw new Error(`entity has component ${def.uri}`);
+            throw new Error(`entity has component ${def.url}`);
         }
     }
 }
