@@ -51,7 +51,7 @@
     "@odgn/utils": "^0.5.1",
     "better-sqlite3": "^7.4.0",
     "fs-extra": "^10.0.0",
-    "jsonpointer": "^4.1.0"
+    "jsonpointer": "^5.0.0"
   },
   "non-dependencies": {},
   "devDependencies": {
